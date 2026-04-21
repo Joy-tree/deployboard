@@ -1,0 +1,18 @@
+# ── DeployBoard Environment Variables ──────────────────────────────────────
+PORT=3001
+MONGODB_URI=mongodb://mongo:27017/deployboard
+SITES_DIR=/var/www/user-sites
+TMP_DIR=/tmp/deployboard-builds
+
+# Your GitHub token for private repos (optional)
+GITHUB_TOKEN=
+
+# Your domain — every deployed app gets subdomain.BASE_DOMAIN
+BASE_DOMAIN=yourdomain.com
+
+# Cloudflare — set CF_WILDCARD_MODE=true if you have a wildcard A record
+CF_WILDCARD_MODE=true
+CF_API_TOKEN=
+CF_ZONE_ID=
+CF_TUNNEL_ID=
+CF_ACCOUNT_ID=
