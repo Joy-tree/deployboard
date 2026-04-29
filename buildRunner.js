@@ -1,5 +1,10 @@
 'use strict';
 
+// UPDATED (2026-04-29):
+// - Fixes proxy registration for Node.js deployments that still returned Cloudflare 502.
+// - Normalizes malformed appPort values and detects a reachable runtime port before writing ports.json.
+// - Keeps Render/Vercel-style behavior while avoiding bad host mappings.
+
 /**
  * buildRunner.js
  *
@@ -318,6 +323,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const startCmd  = (project.startCmd || '').trim();
   const nodeImage = `node:${project.nodeVer || '20'}-alpine`;
   const containerName = `db-${project.subdomain}`;
+  const expectedPort = normalizePort(appPort, 4000);
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
   const env = resolveEnvVars(project.envVars);
@@ -428,7 +434,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     '--network',      'deployboard_deployboard-net',
     '--cpu-shares',   CPU_SHARES,
     '--pids-limit',   PIDS_LIMIT,
-    '-e',             `PORT=${appPort}`,
+    '-e',             `PORT=${expectedPort}`,
     '-e',             `NODE_ENV=production`,
     '-v',             `${dockerMountSrc}:/app`,
     '-w',             '/app',
@@ -474,12 +480,13 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     const pFile    = path.join(sitesDir, 'ports.json');
     let registry   = {};
     try { registry = JSON.parse(fs.readFileSync(pFile, 'utf8')); } catch(e) {}
-    const livePort = await detectLivePort(containerName, appPort, log);
-    registry[project.subdomain] = `${containerName}:${livePort || appPort}`;
+    const livePort = await detectLivePort(containerName, expectedPort, log);
+    const targetPort = normalizePort(livePort, expectedPort);
+    registry[project.subdomain] = `${containerName}:${targetPort}`;
     fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
-    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${livePort || appPort}\x1b[0m`);
-    if ((livePort || appPort) !== Number(appPort)) {
-      log(`\x1b[33m[docker] App ignored PORT=${appPort}; routing to detected port ${(livePort || appPort)}\x1b[0m`);
+    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${targetPort}\x1b[0m`);
+    if (targetPort !== expectedPort) {
+      log(`\x1b[33m[docker] App ignored PORT=${expectedPort}; routing to detected port ${targetPort}\x1b[0m`);
     }
     log(`\x1b[90m[docker] Health checks happen on live traffic (Render/Vercel-style startup)\x1b[0m`);
   } catch(e) {
@@ -496,6 +503,22 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\n\x1b[32;1m✓ Server app deployed in isolated container!\x1b[0m`);
 }
 
+
+
+function normalizePort(raw, fallback = 0) {
+  if (Number.isInteger(raw) && raw > 0) return raw;
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) return Math.floor(raw);
+  const text = String(raw || '').trim();
+  if (!text) return fallback;
+  const direct = Number(text);
+  if (Number.isInteger(direct) && direct > 0) return direct;
+  const match = text.match(/:(\d{2,5})$/) || text.match(/(\d{2,5})$/);
+  if (match) {
+    const p = Number(match[1]);
+    if (Number.isInteger(p) && p > 0) return p;
+  }
+  return fallback;
+}
 
 async function detectLivePort(containerName, preferredPort, log) {
   const candidates = [];
