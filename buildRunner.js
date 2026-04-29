@@ -21,7 +21,6 @@ const MEM_SWAP   = '921m';  // memory+swap = same as RAM = no swap
 const CPU_SHARES = '512';   // half CPU priority (1024 = full)
 const PIDS_LIMIT = '200';   // max processes inside container
 
-
 // ── Entry point ───────────────────────────────────────────────────────────────
 async function runBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, isDockerfileDeploy, isWorker }) {
   // Merge flags from args or from project record
@@ -159,11 +158,12 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
   const nodeImage     = 'node:' + (project.nodeVer || '18') + '-alpine';
-  const startCmd      = (project.startCmd || 'node worker.js').trim();
+  const startCmd      = (project.startCmd || '').trim();
   const appDir        = path.join(sitesDir, project.subdomain, 'app');
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
   const env = resolveEnvVars(project.envVars);
+  const envFile = writeDockerEnvFile(env, 'production');
 
   // Step 1: Clone
   emitStep(emit, 'clone', 'active');
@@ -178,21 +178,18 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   // Step 2: Install
   emitStep(emit, 'install', 'active');
   log(`\n\x1b[36m━━━ Step 2/4 — Install ━━━\x1b[0m`);
-  const installCmd = project.installCmd || 'npm install';
+  const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
   log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-  await exec(...splitCmd(installCmd), {
-    cwd: projectRoot,
-    env: { ...process.env, ...env, NODE_ENV: 'production', CI: 'false' }
-  }, log);
+  await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: installCmd, log });
   emitStep(emit, 'install', 'done');
 
   // Step 3: Build
   emitStep(emit, 'build', 'active');
   log(`\n\x1b[36m━━━ Step 3/4 — Build ━━━\x1b[0m`);
-  const buildCmd = project.buildCmd || 'echo skip';
+  const buildCmd = (project.buildCmd || '').trim() || 'echo skip';
   if (buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
-    await exec(...splitCmd(buildCmd), { cwd: projectRoot, env: { ...process.env, ...env } }, log);
+    await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: buildCmd, log });
   } else { log('\x1b[90m(no build step)\x1b[0m'); }
   emitStep(emit, 'build', 'done');
 
@@ -220,7 +217,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     '-v', `${appDir}:/app`,
     ...Object.entries(env).flatMap(([k,v]) => ['-e', `${k}=${v}`]),
     nodeImage, 'sh', '-c',
-    `cd /app && ${startCmd}`
+    `cd /app && ${startCmd || getDefaultStartCmd(appDir)}`
   ];
 
   log(`\x1b[90m[docker] Starting worker: ${startCmd}\x1b[0m`);
@@ -245,6 +242,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\x1b[32m[docker] ✓ Background worker is running\x1b[0m`);
   emitStep(emit, 'start', 'done');
   fs.rmSync(buildDir, { recursive: true, force: true });
+  try { fs.unlinkSync(envFile); } catch(e) {}
 }
 
 // ── STATIC BUILD ──────────────────────────────────────────────────────────────
@@ -254,6 +252,8 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
   const env = resolveEnvVars(project.envVars);
+  const nodeImage = `node:${project.nodeVer || '20'}-alpine`;
+  const envFile = writeDockerEnvFile(env, 'development');
 
   // ── Step 1: Clone ──────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
@@ -270,27 +270,18 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   // ── Step 2: Install ────────────────────────────────────────────────────────
   emitStep(emit, 'install', 'active');
   log(`\n\x1b[36m━━━ Step 2/5 — Install ━━━\x1b[0m`);
-  const installCmd = project.installCmd || 'npm install';
+  const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
   log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-  await exec(...splitCmd(installCmd), {
-    cwd: projectRoot,
-    env: { ...process.env, ...env, NODE_ENV: 'development', CI: 'false' }
-  }, log);
+  await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: installCmd, log });
   emitStep(emit, 'install', 'done');
 
   // ── Step 3: Build ──────────────────────────────────────────────────────────
   emitStep(emit, 'build', 'active');
   log(`\n\x1b[36m━━━ Step 3/5 — Build ━━━\x1b[0m`);
-  const buildCmd = project.buildCmd || 'npm run build';
+  const buildCmd = (project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot);
   if (buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
-    const localBin = path.join(projectRoot, 'node_modules', '.bin');
-    await exec(...splitCmd(buildCmd), {
-      cwd: projectRoot,
-      env: { ...process.env, ...env,
-             PATH: localBin + ':' + process.env.PATH,
-             NODE_ENV: 'production', CI: 'false' }
-    }, log);
+    await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: buildCmd, log });
   } else {
     log(`\x1b[90m[build] Skipping build step\x1b[0m`);
   }
@@ -325,6 +316,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   emitStep(emit, 'cleanup', 'active');
   log(`\n\x1b[36m━━━ Step 5/5 — Cleanup ━━━\x1b[0m`);
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
+  try { fs.unlinkSync(envFile); } catch(e) {}
   emitStep(emit, 'cleanup', 'done');
   log(`\n\x1b[32;1m✓ Static site deployed!\x1b[0m`);
 }
@@ -335,12 +327,13 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog }) {
   const buildDir  = path.join(tmpDir, deployId);
   const appDir    = path.join(sitesDir, project.subdomain, 'app');
-  const startCmd  = (project.startCmd || 'npm start').trim();
+  const startCmd  = (project.startCmd || '').trim();
   const nodeImage = `node:${project.nodeVer || '20'}-alpine`;
   const containerName = `db-${project.subdomain}`;
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
   const env = resolveEnvVars(project.envVars);
+  const envFile = writeDockerEnvFile(env, 'development');
 
   // ── Step 1: Clone ──────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
@@ -355,27 +348,18 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   // ── Step 2: Install ────────────────────────────────────────────────────────
   emitStep(emit, 'install', 'active');
   log(`\n\x1b[36m━━━ Step 2/6 — Install ━━━\x1b[0m`);
-  const installCmd = project.installCmd || 'npm install';
+  const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
   log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-  await exec(...splitCmd(installCmd), {
-    cwd: projectRoot,
-    env: { ...process.env, ...env, NODE_ENV: 'development', CI: 'false' }
-  }, log);
+  await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: installCmd, log });
   emitStep(emit, 'install', 'done');
 
   // ── Step 3: Build ──────────────────────────────────────────────────────────
   emitStep(emit, 'build', 'active');
   log(`\n\x1b[36m━━━ Step 3/6 — Build ━━━\x1b[0m`);
-  const buildCmd = project.buildCmd || 'npm run build';
+  const buildCmd = (project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot);
   if (buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
-    const localBin = path.join(projectRoot, 'node_modules', '.bin');
-    await exec(...splitCmd(buildCmd), {
-      cwd: projectRoot,
-      env: { ...process.env, ...env,
-             PATH: localBin + ':' + process.env.PATH,
-             NODE_ENV: 'production', CI: 'false' }
-    }, log);
+    await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: buildCmd, log });
   }
   emitStep(emit, 'build', 'done');
 
@@ -434,7 +418,8 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\n\x1b[36m━━━ Step 5/6 — Launch Container ━━━\x1b[0m`);
   log(`\x1b[90m[docker] Image:     ${nodeImage}\x1b[0m`);
   log(`\x1b[90m[docker] Container: ${containerName}\x1b[0m`);
-  log(`\x1b[90m[docker] Command:   ${startCmd}\x1b[0m`);
+  const resolvedStartCmd = startCmd || getDefaultStartCmd(usedBuildDir || projectRoot);
+  log(`\x1b[90m[docker] Command:   ${resolvedStartCmd}\x1b[0m`);
 
   // Stop previous container
   try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
@@ -477,7 +462,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     log(`\x1b[33m[docker] Using cached image\x1b[0m`);
   }
 
-  dockerArgs.push(nodeImage, 'sh', '-c', startCmd);
+  dockerArgs.push(nodeImage, 'sh', '-c', resolvedStartCmd);
   await exec('docker', dockerArgs, {}, log);
   log(`\x1b[32m[docker] ✓ Container started\x1b[0m`);
 
@@ -559,6 +544,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   emitStep(emit, 'cleanup', 'active');
   log(`\n\x1b[36m━━━ Step 6/6 — Cleanup ━━━\x1b[0m`);
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
+  try { fs.unlinkSync(envFile); } catch(e) {}
   emitStep(emit, 'cleanup', 'done');
   log(`\n\x1b[32;1m✓ Server app deployed in isolated container!\x1b[0m`);
 }
@@ -567,7 +553,10 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
 async function cloneRepo(project, buildDir, githubToken, log) {
   let cloneUrl = project.repoUrl.trim();
-  if (githubToken) cloneUrl = cloneUrl.replace(/^https:\/\//, `https://${githubToken}@`);
+  if (githubToken && /^https:\/\/github\.com\//i.test(cloneUrl)) {
+    const token = encodeURIComponent(githubToken);
+    cloneUrl = cloneUrl.replace(/^https:\/\/github\.com\//i, `https://x-access-token:${token}@github.com/`);
+  }
   const branch = (project.branch || 'main').trim();
   const fallback = branch === 'main' ? 'master' : 'main';
 
@@ -660,6 +649,56 @@ function waitForPort(host, port, timeoutMs) {
     }
     resolve(false);
   });
+}
+
+function writeDockerEnvFile(envObj, nodeEnv = 'development') {
+  const file = path.join('/tmp', `deployboard-env-${Date.now()}-${Math.random().toString(36).slice(2)}.list`);
+  const lines = [`CI=false`, `NODE_ENV=${nodeEnv}`];
+  for (const [k, v] of Object.entries(envObj || {})) lines.push(`${k}=${String(v ?? '')}`);
+  fs.writeFileSync(file, lines.join('\n'));
+  return file;
+}
+
+async function runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command, log }) {
+  try { await exec('docker', ['pull', nodeImage], {}, () => {}); } catch(e) {}
+  const commandWithCorepack = `corepack enable >/dev/null 2>&1 || true; ${command}`;
+  log(`\x1b[90m[docker-build] ${nodeImage} :: ${command}\x1b[0m`);
+  await exec('docker', [
+    'run', '--rm',
+    '--env-file', envFile,
+    '-v', `${projectRoot}:/workspace`,
+    '-w', '/workspace',
+    nodeImage,
+    'sh', '-lc', commandWithCorepack
+  ], {}, log);
+}
+
+function detectPackageManager(projectRoot) {
+  if (fs.existsSync(path.join(projectRoot, 'pnpm-lock.yaml'))) return 'pnpm';
+  if (fs.existsSync(path.join(projectRoot, 'yarn.lock'))) return 'yarn';
+  if (fs.existsSync(path.join(projectRoot, 'package-lock.json'))) return 'npm';
+  return 'npm';
+}
+
+function getDefaultInstallCmd(projectRoot) {
+  const pm = detectPackageManager(projectRoot);
+  if (pm === 'pnpm') return 'pnpm install --frozen-lockfile';
+  if (pm === 'yarn') return 'yarn install --frozen-lockfile';
+  return fs.existsSync(path.join(projectRoot, 'package-lock.json')) ? 'npm ci' : 'npm install';
+}
+
+function getDefaultBuildCmd(projectRoot) {
+  const pm = detectPackageManager(projectRoot);
+  if (pm === 'pnpm') return 'pnpm run build';
+  if (pm === 'yarn') return 'yarn build';
+  return 'npm run build';
+}
+
+function getDefaultStartCmd(projectRoot) {
+  const pm = detectPackageManager(projectRoot);
+  if (pm === 'pnpm') return 'pnpm start';
+  if (pm === 'yarn') return 'yarn start';
+  return 'npm start';
 }
 
 function exec(cmd, args, options, logFn) {
