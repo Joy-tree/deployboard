@@ -166,7 +166,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
   const nodeImage     = 'node:' + (project.nodeVer || '18') + '-alpine';
-  const startCmd      = (project.startCmd || 'node worker.js').trim();
+  const startCmd      = (project.startCmd || '').trim();
   const appDir        = path.join(sitesDir, project.subdomain, 'app');
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
@@ -186,7 +186,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   // Step 2: Install
   emitStep(emit, 'install', 'active');
   log(`\n\x1b[36m━━━ Step 2/4 — Install ━━━\x1b[0m`);
-  const installCmd = project.installCmd || 'npm install';
+  const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
   log(`\x1b[90m$ ${installCmd}\x1b[0m`);
   await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: installCmd, log });
   emitStep(emit, 'install', 'done');
@@ -194,7 +194,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   // Step 3: Build
   emitStep(emit, 'build', 'active');
   log(`\n\x1b[36m━━━ Step 3/4 — Build ━━━\x1b[0m`);
-  const buildCmd = project.buildCmd || 'echo skip';
+  const buildCmd = (project.buildCmd || '').trim() || 'echo skip';
   if (buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
     await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: buildCmd, log });
@@ -225,7 +225,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     '-v', `${appDir}:/app`,
     ...Object.entries(env).flatMap(([k,v]) => ['-e', `${k}=${v}`]),
     nodeImage, 'sh', '-c',
-    `cd /app && ${startCmd}`
+    `cd /app && ${startCmd || getDefaultStartCmd(appDir)}`
   ];
 
   log(`\x1b[90m[docker] Starting worker: ${startCmd}\x1b[0m`);
@@ -278,7 +278,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   // ── Step 2: Install ────────────────────────────────────────────────────────
   emitStep(emit, 'install', 'active');
   log(`\n\x1b[36m━━━ Step 2/5 — Install ━━━\x1b[0m`);
-  const installCmd = project.installCmd || 'npm install';
+  const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
   log(`\x1b[90m$ ${installCmd}\x1b[0m`);
   await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: installCmd, log });
   emitStep(emit, 'install', 'done');
@@ -286,7 +286,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   // ── Step 3: Build ──────────────────────────────────────────────────────────
   emitStep(emit, 'build', 'active');
   log(`\n\x1b[36m━━━ Step 3/5 — Build ━━━\x1b[0m`);
-  const buildCmd = project.buildCmd || 'npm run build';
+  const buildCmd = (project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot);
   if (buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
     await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: buildCmd, log });
@@ -335,7 +335,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog }) {
   const buildDir  = path.join(tmpDir, deployId);
   const appDir    = path.join(sitesDir, project.subdomain, 'app');
-  const startCmd  = (project.startCmd || 'npm start').trim();
+  const startCmd  = (project.startCmd || '').trim();
   const nodeImage = `node:${project.nodeVer || '20'}-alpine`;
   const containerName = `db-${project.subdomain}`;
 
@@ -356,7 +356,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   // ── Step 2: Install ────────────────────────────────────────────────────────
   emitStep(emit, 'install', 'active');
   log(`\n\x1b[36m━━━ Step 2/6 — Install ━━━\x1b[0m`);
-  const installCmd = project.installCmd || 'npm install';
+  const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
   log(`\x1b[90m$ ${installCmd}\x1b[0m`);
   await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: installCmd, log });
   emitStep(emit, 'install', 'done');
@@ -364,7 +364,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   // ── Step 3: Build ──────────────────────────────────────────────────────────
   emitStep(emit, 'build', 'active');
   log(`\n\x1b[36m━━━ Step 3/6 — Build ━━━\x1b[0m`);
-  const buildCmd = project.buildCmd || 'npm run build';
+  const buildCmd = (project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot);
   if (buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
     await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: buildCmd, log });
@@ -426,7 +426,8 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\n\x1b[36m━━━ Step 5/6 — Launch Container ━━━\x1b[0m`);
   log(`\x1b[90m[docker] Image:     ${nodeImage}\x1b[0m`);
   log(`\x1b[90m[docker] Container: ${containerName}\x1b[0m`);
-  log(`\x1b[90m[docker] Command:   ${startCmd}\x1b[0m`);
+  const resolvedStartCmd = startCmd || getDefaultStartCmd(usedBuildDir || projectRoot);
+  log(`\x1b[90m[docker] Command:   ${resolvedStartCmd}\x1b[0m`);
 
   // Stop previous container
   try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
@@ -469,7 +470,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     log(`\x1b[33m[docker] Using cached image\x1b[0m`);
   }
 
-  dockerArgs.push(nodeImage, 'sh', '-c', startCmd);
+  dockerArgs.push(nodeImage, 'sh', '-c', resolvedStartCmd);
   await exec('docker', dockerArgs, {}, log);
   log(`\x1b[32m[docker] ✓ Container started\x1b[0m`);
 
@@ -668,6 +669,7 @@ function writeDockerEnvFile(envObj, nodeEnv = 'development') {
 
 async function runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command, log }) {
   try { await exec('docker', ['pull', nodeImage], {}, () => {}); } catch(e) {}
+  const commandWithCorepack = `corepack enable >/dev/null 2>&1 || true; ${command}`;
   log(`\x1b[90m[docker-build] ${nodeImage} :: ${command}\x1b[0m`);
   await exec('docker', [
     'run', '--rm',
@@ -679,8 +681,36 @@ async function runBuildCommandInContainer({ projectRoot, nodeImage, envFile, com
     '-v', `${projectRoot}:/workspace`,
     '-w', '/workspace',
     nodeImage,
-    'sh', '-lc', command
+    'sh', '-lc', commandWithCorepack
   ], {}, log);
+}
+
+function detectPackageManager(projectRoot) {
+  if (fs.existsSync(path.join(projectRoot, 'pnpm-lock.yaml'))) return 'pnpm';
+  if (fs.existsSync(path.join(projectRoot, 'yarn.lock'))) return 'yarn';
+  if (fs.existsSync(path.join(projectRoot, 'package-lock.json'))) return 'npm';
+  return 'npm';
+}
+
+function getDefaultInstallCmd(projectRoot) {
+  const pm = detectPackageManager(projectRoot);
+  if (pm === 'pnpm') return 'pnpm install --frozen-lockfile';
+  if (pm === 'yarn') return 'yarn install --frozen-lockfile';
+  return fs.existsSync(path.join(projectRoot, 'package-lock.json')) ? 'npm ci' : 'npm install';
+}
+
+function getDefaultBuildCmd(projectRoot) {
+  const pm = detectPackageManager(projectRoot);
+  if (pm === 'pnpm') return 'pnpm run build';
+  if (pm === 'yarn') return 'yarn build';
+  return 'npm run build';
+}
+
+function getDefaultStartCmd(projectRoot) {
+  const pm = detectPackageManager(projectRoot);
+  if (pm === 'pnpm') return 'pnpm start';
+  if (pm === 'yarn') return 'yarn start';
+  return 'npm start';
 }
 
 function exec(cmd, args, options, logFn) {
