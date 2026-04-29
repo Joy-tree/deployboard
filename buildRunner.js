@@ -456,76 +456,35 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   await exec('docker', dockerArgs, {}, log);
   log(`\x1b[32m[docker] ✓ Container started\x1b[0m`);
 
-  // Wait for container to start and get its IP
-  log(`\x1b[90m[docker] Waiting for app to start…\x1b[0m`);
+  // Give container a moment, then verify it's still running.
+  log(`\x1b[90m[docker] Waiting for process to stabilize…\x1b[0m`);
   await new Promise(r => setTimeout(r, 3000));
-
-  // Get container's internal IP (retry a few times in case container is still initialising)
-  let containerIP = '';
-  for (let attempt = 1; attempt <= 5; attempt++) {
-    try {
-      const { execSync } = require('child_process');
-      const ip = execSync(
-        `docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${containerName}`,
-        { encoding: 'utf8' }
-      ).trim();
-      if (ip) { containerIP = ip; break; }
-    } catch(e) {}
-    await new Promise(r => setTimeout(r, 2000));
-  }
-  if (containerIP) {
-    log(`\x1b[90m[docker] Container IP: ${containerIP}\x1b[0m`);
-  } else {
-    log(`\x1b[31m[docker] Could not get container IP after 5 attempts\x1b[0m`);
-  }
-
-  // Poll for app to start listening — retry for up to 60 seconds
-  // Checks the ports the app is most likely to use. Most Node.js apps respect
-  // the PORT env var we set, but some frameworks hardcode 3000/8080.
-  const portsToCheck = [appPort, 3000, 8080, 8000, 5000, 4000, 3001].filter((p, i, a) => p && a.indexOf(p) === i);
-  let actualPort = 0;
-
-  if (containerIP) {
-    log(`\x1b[90m[docker] Polling for open port (up to 60s)…\x1b[0m`);
-    const deadline = Date.now() + 120000; // 2 min for large monorepos
-    outer:
-    while (Date.now() < deadline) {
-      for (const p of portsToCheck) {
-        const open = await checkTcpPort(containerIP, p, 1500);
-        if (open) { actualPort = p; break outer; }
-      }
-      await new Promise(r => setTimeout(r, 3000));
-    }
-    if (actualPort) {
-      log(`\x1b[32m[docker] ✓ App is listening on port ${actualPort}\x1b[0m`);
-    }
-  }
-
-  if (!actualPort) {
-    // App not responding — show logs then fail the deployment clearly
-    log(`\x1b[31m[docker] ✗ App did not open any port within 60s — showing container logs:\x1b[0m`);
+  let state = 'unknown';
+  try {
+    const { execSync } = require('child_process');
+    state = execSync(`docker inspect --format='{{.State.Status}}' ${containerName}`, { encoding: 'utf8' }).trim();
+  } catch(e) {}
+  if (state !== 'running') {
+    log(`\x1b[31m[docker] ✗ Container is not running (state: ${state})\x1b[0m`);
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
     try { await exec('docker', ['logs', '--tail', '60', containerName], {}, log); } catch(e) {}
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
-    log(`\x1b[31m[hint] Make sure your app calls server.listen(process.env.PORT || 3000)\x1b[0m`);
-    log(`\x1b[31m[hint] If your start command is wrong, check it in project settings.\x1b[0m`);
-    log(`\x1b[31m[hint] For monorepos (Lerna/Nx/Turborepo): set start command to the specific app, e.g. "cd apps/server && npm start"\x1b[0m`);
-    log(`\x1b[31m[hint] For apps needing a build first, set build command to "npm run build" and start to "npm start"\x1b[0m`);
-    throw new Error(`Container "${containerName}" started but app never opened a port. Check logs above.`);
-  } else {
-    // Save containerIP:actualPort to ports registry so server.js proxies correctly
-    try {
-      const sitesDir = (usedBuildDir.startsWith('/tmp') ? appDir : usedBuildDir).replace(`/${project.subdomain}/app`, '');
-      const pFile    = path.join(sitesDir, 'ports.json');
-      let registry   = {};
-      try { registry = JSON.parse(fs.readFileSync(pFile, 'utf8')); } catch(e) {}
-      // Store as "ip:port" string so server.js knows the full address
-      registry[project.subdomain] = `${containerIP}:${actualPort}`;
-      fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
-      log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerIP}:${actualPort}\x1b[0m`);
-    } catch(e) {
-      log(`\x1b[33m[docker] Could not update port registry: ${e.message}\x1b[0m`);
-    }
+    throw new Error(`Container "${containerName}" exited during startup. Check logs above.`);
+  }
+
+  // Register proxy by stable container DNS name + expected app port.
+  // Docker network DNS resolves containerName reliably and avoids fragile IP polling.
+  try {
+    const sitesDir = (usedBuildDir.startsWith('/tmp') ? appDir : usedBuildDir).replace(`/${project.subdomain}/app`, '');
+    const pFile    = path.join(sitesDir, 'ports.json');
+    let registry   = {};
+    try { registry = JSON.parse(fs.readFileSync(pFile, 'utf8')); } catch(e) {}
+    registry[project.subdomain] = `${containerName}:${appPort}`;
+    fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
+    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${appPort}\x1b[0m`);
+    log(`\x1b[90m[docker] Health checks happen on live traffic (Render/Vercel-style startup)\x1b[0m`);
+  } catch(e) {
+    log(`\x1b[33m[docker] Could not update port registry: ${e.message}\x1b[0m`);
   }
 
   emitStep(emit, 'start', 'done');
@@ -614,31 +573,6 @@ function resolveEnvVars(evars) {
   if (typeof evars.toObject === 'function') return evars.toObject();
   if (evars instanceof Map) return Object.fromEntries(evars);
   return evars;
-}
-
-/** Check if a TCP port is open on a specific host (works across Docker network) */
-function checkTcpPort(host, port, timeoutMs) {
-  return new Promise(resolve => {
-    const net    = require('net');
-    const socket = new net.Socket();
-    const timer  = setTimeout(() => { socket.destroy(); resolve(false); }, timeoutMs);
-    socket.connect(port, host, () => { clearTimeout(timer); socket.destroy(); resolve(true); });
-    socket.on('error', () => { clearTimeout(timer); resolve(false); });
-  });
-}
-
-/** Wait for a TCP port on a specific host to open (polls checkTcpPort).
- *  Works correctly across Docker networks — /proc/net/tcp only shows the
- *  host's own ports, so we use an actual TCP connect instead. */
-function waitForPort(host, port, timeoutMs) {
-  return new Promise(async resolve => {
-    const deadline = Date.now() + timeoutMs;
-    while (Date.now() < deadline) {
-      if (await checkTcpPort(host, port, 1500)) return resolve(true);
-      await new Promise(r => setTimeout(r, 2000));
-    }
-    resolve(false);
-  });
 }
 
 function writeDockerEnvFile(envObj, nodeEnv = 'development') {
