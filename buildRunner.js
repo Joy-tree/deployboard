@@ -102,7 +102,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
   const networkName = 'deployboard_deployboard-net';
   const runArgs = [
     'run', '-d', '--restart=unless-stopped',
-    '--name',         containerName,
+    '--name',         candidateContainerName,
     '--network',      networkName,
     '--cpu-shares',   CPU_SHARES,
     '--pids-limit',   PIDS_LIMIT,
@@ -205,7 +205,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const networkName = 'deployboard_deployboard-net';
   const runArgs = [
     'run', '-d', '--restart=unless-stopped',
-    '--name',         containerName,
+    '--name',         candidateContainerName,
     '--network',      networkName,
     '--cpu-shares',   CPU_SHARES,
     '--pids-limit',   PIDS_LIMIT,
@@ -225,7 +225,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   let running = false;
   try {
     const { execSync } = require('child_process');
-    const state = execSync(`docker inspect --format='{{.State.Status}}' ${containerName}`, { encoding: 'utf8' }).trim();
+    const state = execSync(`docker inspect --format='{{.State.Status}}' ${candidateContainerName}`, { encoding: 'utf8' }).trim();
     running = state === 'running';
   } catch(e) {}
 
@@ -323,6 +323,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const startCmd  = (project.startCmd || '').trim();
   const nodeImage = `node:${project.nodeVer || '20'}-alpine`;
   const containerName = `db-${project.subdomain}`;
+  const candidateContainerName = `${containerName}-cand-${String(deployId).slice(0,8)}`;
   const expectedPort = normalizePort(appPort, 4000);
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
@@ -410,12 +411,12 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   emitStep(emit, 'start', 'active');
   log(`\n\x1b[36m━━━ Step 5/6 — Launch Container ━━━\x1b[0m`);
   log(`\x1b[90m[docker] Image:     ${nodeImage}\x1b[0m`);
-  log(`\x1b[90m[docker] Container: ${containerName}\x1b[0m`);
+  log(`\x1b[90m[docker] Container: ${candidateContainerName} (candidate)\x1b[0m`);
   const resolvedStartCmd = startCmd || getDefaultStartCmd(usedBuildDir || projectRoot);
   log(`\x1b[90m[docker] Command:   ${resolvedStartCmd}\x1b[0m`);
 
-  // Stop previous container
-  try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
+  // Remove stale candidate with same name if any
+  try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(e) {}
 
   // Map the permanent app dir to the Docker volume path the container can see
   const hostAppDir = usedBuildDir.replace('/var/www/user-sites', '/var/lib/docker/volumes/deployboard_sites-data/_data')
@@ -429,7 +430,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   const dockerArgs = [
     'run', '-d',
-    '--name',         containerName,
+    '--name',         candidateContainerName,
     '--restart',      'unless-stopped',
     '--network',      'deployboard_deployboard-net',
     '--cpu-shares',   CPU_SHARES,
@@ -463,14 +464,14 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   let state = 'unknown';
   try {
     const { execSync } = require('child_process');
-    state = execSync(`docker inspect --format='{{.State.Status}}' ${containerName}`, { encoding: 'utf8' }).trim();
+    state = execSync(`docker inspect --format='{{.State.Status}}' ${candidateContainerName}`, { encoding: 'utf8' }).trim();
   } catch(e) {}
   if (state !== 'running') {
     log(`\x1b[31m[docker] ✗ Container is not running (state: ${state})\x1b[0m`);
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
-    try { await exec('docker', ['logs', '--tail', '60', containerName], {}, log); } catch(e) {}
+    try { await exec('docker', ['logs', '--tail', '60', candidateContainerName], {}, log); } catch(e) {}
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
-    throw new Error(`Container "${containerName}" exited during startup. Check logs above.`);
+    throw new Error(`Container "${candidateContainerName}" exited during startup. Check logs above.`);
   }
 
   // Register proxy by stable container DNS name + expected app port.
@@ -480,15 +481,19 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     const pFile    = path.join(sitesDir, 'ports.json');
     let registry   = {};
     try { registry = JSON.parse(fs.readFileSync(pFile, 'utf8')); } catch(e) {}
-    const livePort = await detectLivePort(containerName, expectedPort, log);
+    const livePort = await detectLivePort(candidateContainerName, expectedPort, log);
     const targetPort = normalizePort(livePort, expectedPort);
-    registry[project.subdomain] = `${containerName}:${targetPort}`;
+    registry[project.subdomain] = `${candidateContainerName}:${targetPort}`;
     fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
-    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${targetPort}\x1b[0m`);
+    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${candidateContainerName}:${targetPort}\x1b[0m`);
     if (targetPort !== expectedPort) {
       log(`\x1b[33m[docker] App ignored PORT=${expectedPort}; routing to detected port ${targetPort}\x1b[0m`);
     }
     log(`\x1b[90m[docker] Health checks happen on live traffic (Render/Vercel-style startup)\x1b[0m`);
+
+    // Promote: remove previous stable container after candidate is live.
+    try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
+
   } catch(e) {
     log(`\x1b[33m[docker] Could not update port registry: ${e.message}\x1b[0m`);
   }
