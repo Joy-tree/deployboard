@@ -13,11 +13,7 @@ const { spawn } = require('child_process');
 const path      = require('path');
 const fs        = require('fs');
 
-// ── Resource limits ────────────────────────────────────────────────────────────
-// Free tier: 921MB RAM per container (~0.90GB)
-// Prevents any single app from OOM-killing the VPS
-const MEM_LIMIT  = '921m';  // hard RAM limit per container
-const MEM_SWAP   = '921m';  // memory+swap = same as RAM = no swap
+// ── Container tuning ──────────────────────────────────────────────────────────
 const CPU_SHARES = '512';   // half CPU priority (1024 = full)
 const PIDS_LIMIT = '200';   // max processes inside container
 
@@ -103,8 +99,6 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
     'run', '-d', '--restart=unless-stopped',
     '--name',         containerName,
     '--network',      networkName,
-    '--memory',       MEM_LIMIT,
-    '--memory-swap',  MEM_SWAP,
     '--cpu-shares',   CPU_SHARES,
     '--pids-limit',   PIDS_LIMIT,
     '-e', `PORT=${exposedPort}`,
@@ -112,7 +106,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
     imageName
   ];
 
-  log(`\x1b[90m[docker] Memory limit: ${MEM_LIMIT} | CPU shares: ${CPU_SHARES}\x1b[0m`);
+  log(`\x1b[90m[docker] CPU shares: ${CPU_SHARES}\x1b[0m`);
   await exec('docker', runArgs, {}, log);
   emitStep(emit, 'copy', 'done');
 
@@ -209,8 +203,6 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     'run', '-d', '--restart=unless-stopped',
     '--name',         containerName,
     '--network',      networkName,
-    '--memory',       MEM_LIMIT,
-    '--memory-swap',  MEM_SWAP,
     '--cpu-shares',   CPU_SHARES,
     '--pids-limit',   PIDS_LIMIT,
     '-w', '/app',
@@ -221,7 +213,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   ];
 
   log(`\x1b[90m[docker] Starting worker: ${startCmd}\x1b[0m`);
-  log(`\x1b[90m[docker] Memory limit: ${MEM_LIMIT} | CPU shares: ${CPU_SHARES}\x1b[0m`);
+  log(`\x1b[90m[docker] CPU shares: ${CPU_SHARES}\x1b[0m`);
   await exec('docker', runArgs, {}, log);
   await new Promise(r => setTimeout(r, 3000));
 
@@ -439,8 +431,6 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     '--name',         containerName,
     '--restart',      'unless-stopped',
     '--network',      'deployboard_deployboard-net',
-    '--memory',       MEM_LIMIT,
-    '--memory-swap',  MEM_SWAP,
     '--cpu-shares',   CPU_SHARES,
     '--pids-limit',   PIDS_LIMIT,
     '-e',             `PORT=${appPort}`,
@@ -448,7 +438,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     '-v',             `${dockerMountSrc}:/app`,
     '-w',             '/app',
   ];
-  log(`\x1b[90m[docker] Free tier limits: ${MEM_LIMIT} RAM | ${CPU_SHARES} CPU shares | ${PIDS_LIMIT} max processes\x1b[0m`);
+  log(`\x1b[90m[docker] Runtime limits: ${CPU_SHARES} CPU shares | ${PIDS_LIMIT} max processes\x1b[0m`);
 
   for (const [k, v] of Object.entries(env)) {
     dockerArgs.push('-e', `${k}=${v}`);
