@@ -157,7 +157,6 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
   const env = resolveEnvVars(project.envVars);
-  const envFile = writeDockerEnvFile(env, 'production');
 
   // Step 1: Clone
   emitStep(emit, 'clone', 'active');
@@ -174,7 +173,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\n\x1b[36m━━━ Step 2/4 — Install ━━━\x1b[0m`);
   const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
   log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-  await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: installCmd, log });
+  await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'production', command: installCmd, log });
   emitStep(emit, 'install', 'done');
 
   // Step 3: Build
@@ -183,7 +182,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildCmd = (project.buildCmd || '').trim() || 'echo skip';
   if (buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
-    await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: buildCmd, log });
+    await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'production', command: buildCmd, log });
   } else { log('\x1b[90m(no build step)\x1b[0m'); }
   emitStep(emit, 'build', 'done');
 
@@ -234,7 +233,6 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\x1b[32m[docker] ✓ Background worker is running\x1b[0m`);
   emitStep(emit, 'start', 'done');
   fs.rmSync(buildDir, { recursive: true, force: true });
-  try { fs.unlinkSync(envFile); } catch(e) {}
 }
 
 // ── STATIC BUILD ──────────────────────────────────────────────────────────────
@@ -245,7 +243,6 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
   const env = resolveEnvVars(project.envVars);
   const nodeImage = `node:${project.nodeVer || '20'}-alpine`;
-  const envFile = writeDockerEnvFile(env, 'development');
 
   // ── Step 1: Clone ──────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
@@ -264,7 +261,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\n\x1b[36m━━━ Step 2/5 — Install ━━━\x1b[0m`);
   const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
   log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-  await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: installCmd, log });
+  await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: installCmd, log });
   emitStep(emit, 'install', 'done');
 
   // ── Step 3: Build ──────────────────────────────────────────────────────────
@@ -273,7 +270,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildCmd = (project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot);
   if (buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
-    await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: buildCmd, log });
+    await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: buildCmd, log });
   } else {
     log(`\x1b[90m[build] Skipping build step\x1b[0m`);
   }
@@ -308,7 +305,6 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   emitStep(emit, 'cleanup', 'active');
   log(`\n\x1b[36m━━━ Step 5/5 — Cleanup ━━━\x1b[0m`);
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
-  try { fs.unlinkSync(envFile); } catch(e) {}
   emitStep(emit, 'cleanup', 'done');
   log(`\n\x1b[32;1m✓ Static site deployed!\x1b[0m`);
 }
@@ -325,7 +321,6 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
   const env = resolveEnvVars(project.envVars);
-  const envFile = writeDockerEnvFile(env, 'development');
 
   // ── Step 1: Clone ──────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
@@ -342,7 +337,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\n\x1b[36m━━━ Step 2/6 — Install ━━━\x1b[0m`);
   const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
   log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-  await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: installCmd, log });
+  await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: installCmd, log });
   emitStep(emit, 'install', 'done');
 
   // ── Step 3: Build ──────────────────────────────────────────────────────────
@@ -351,7 +346,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildCmd = (project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot);
   if (buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
-    await runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command: buildCmd, log });
+    await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: buildCmd, log });
   }
   emitStep(emit, 'build', 'done');
 
@@ -456,76 +451,35 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   await exec('docker', dockerArgs, {}, log);
   log(`\x1b[32m[docker] ✓ Container started\x1b[0m`);
 
-  // Wait for container to start and get its IP
-  log(`\x1b[90m[docker] Waiting for app to start…\x1b[0m`);
+  // Give container a moment, then verify it's still running.
+  log(`\x1b[90m[docker] Waiting for process to stabilize…\x1b[0m`);
   await new Promise(r => setTimeout(r, 3000));
-
-  // Get container's internal IP (retry a few times in case container is still initialising)
-  let containerIP = '';
-  for (let attempt = 1; attempt <= 5; attempt++) {
-    try {
-      const { execSync } = require('child_process');
-      const ip = execSync(
-        `docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${containerName}`,
-        { encoding: 'utf8' }
-      ).trim();
-      if (ip) { containerIP = ip; break; }
-    } catch(e) {}
-    await new Promise(r => setTimeout(r, 2000));
-  }
-  if (containerIP) {
-    log(`\x1b[90m[docker] Container IP: ${containerIP}\x1b[0m`);
-  } else {
-    log(`\x1b[31m[docker] Could not get container IP after 5 attempts\x1b[0m`);
-  }
-
-  // Poll for app to start listening — retry for up to 60 seconds
-  // Checks the ports the app is most likely to use. Most Node.js apps respect
-  // the PORT env var we set, but some frameworks hardcode 3000/8080.
-  const portsToCheck = [appPort, 3000, 8080, 8000, 5000, 4000, 3001].filter((p, i, a) => p && a.indexOf(p) === i);
-  let actualPort = 0;
-
-  if (containerIP) {
-    log(`\x1b[90m[docker] Polling for open port (up to 60s)…\x1b[0m`);
-    const deadline = Date.now() + 120000; // 2 min for large monorepos
-    outer:
-    while (Date.now() < deadline) {
-      for (const p of portsToCheck) {
-        const open = await checkTcpPort(containerIP, p, 1500);
-        if (open) { actualPort = p; break outer; }
-      }
-      await new Promise(r => setTimeout(r, 3000));
-    }
-    if (actualPort) {
-      log(`\x1b[32m[docker] ✓ App is listening on port ${actualPort}\x1b[0m`);
-    }
-  }
-
-  if (!actualPort) {
-    // App not responding — show logs then fail the deployment clearly
-    log(`\x1b[31m[docker] ✗ App did not open any port within 60s — showing container logs:\x1b[0m`);
+  let state = 'unknown';
+  try {
+    const { execSync } = require('child_process');
+    state = execSync(`docker inspect --format='{{.State.Status}}' ${containerName}`, { encoding: 'utf8' }).trim();
+  } catch(e) {}
+  if (state !== 'running') {
+    log(`\x1b[31m[docker] ✗ Container is not running (state: ${state})\x1b[0m`);
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
     try { await exec('docker', ['logs', '--tail', '60', containerName], {}, log); } catch(e) {}
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
-    log(`\x1b[31m[hint] Make sure your app calls server.listen(process.env.PORT || 3000)\x1b[0m`);
-    log(`\x1b[31m[hint] If your start command is wrong, check it in project settings.\x1b[0m`);
-    log(`\x1b[31m[hint] For monorepos (Lerna/Nx/Turborepo): set start command to the specific app, e.g. "cd apps/server && npm start"\x1b[0m`);
-    log(`\x1b[31m[hint] For apps needing a build first, set build command to "npm run build" and start to "npm start"\x1b[0m`);
-    throw new Error(`Container "${containerName}" started but app never opened a port. Check logs above.`);
-  } else {
-    // Save containerIP:actualPort to ports registry so server.js proxies correctly
-    try {
-      const sitesDir = (usedBuildDir.startsWith('/tmp') ? appDir : usedBuildDir).replace(`/${project.subdomain}/app`, '');
-      const pFile    = path.join(sitesDir, 'ports.json');
-      let registry   = {};
-      try { registry = JSON.parse(fs.readFileSync(pFile, 'utf8')); } catch(e) {}
-      // Store as "ip:port" string so server.js knows the full address
-      registry[project.subdomain] = `${containerIP}:${actualPort}`;
-      fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
-      log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerIP}:${actualPort}\x1b[0m`);
-    } catch(e) {
-      log(`\x1b[33m[docker] Could not update port registry: ${e.message}\x1b[0m`);
-    }
+    throw new Error(`Container "${containerName}" exited during startup. Check logs above.`);
+  }
+
+  // Register proxy by stable container DNS name + expected app port.
+  // Docker network DNS resolves containerName reliably and avoids fragile IP polling.
+  try {
+    const sitesDir = (usedBuildDir.startsWith('/tmp') ? appDir : usedBuildDir).replace(`/${project.subdomain}/app`, '');
+    const pFile    = path.join(sitesDir, 'ports.json');
+    let registry   = {};
+    try { registry = JSON.parse(fs.readFileSync(pFile, 'utf8')); } catch(e) {}
+    registry[project.subdomain] = `${containerName}:${appPort}`;
+    fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
+    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${appPort}\x1b[0m`);
+    log(`\x1b[90m[docker] Health checks happen on live traffic (Render/Vercel-style startup)\x1b[0m`);
+  } catch(e) {
+    log(`\x1b[33m[docker] Could not update port registry: ${e.message}\x1b[0m`);
   }
 
   emitStep(emit, 'start', 'done');
@@ -534,7 +488,6 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   emitStep(emit, 'cleanup', 'active');
   log(`\n\x1b[36m━━━ Step 6/6 — Cleanup ━━━\x1b[0m`);
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
-  try { fs.unlinkSync(envFile); } catch(e) {}
   emitStep(emit, 'cleanup', 'done');
   log(`\n\x1b[32;1m✓ Server app deployed in isolated container!\x1b[0m`);
 }
@@ -616,46 +569,18 @@ function resolveEnvVars(evars) {
   return evars;
 }
 
-/** Check if a TCP port is open on a specific host (works across Docker network) */
-function checkTcpPort(host, port, timeoutMs) {
-  return new Promise(resolve => {
-    const net    = require('net');
-    const socket = new net.Socket();
-    const timer  = setTimeout(() => { socket.destroy(); resolve(false); }, timeoutMs);
-    socket.connect(port, host, () => { clearTimeout(timer); socket.destroy(); resolve(true); });
-    socket.on('error', () => { clearTimeout(timer); resolve(false); });
-  });
-}
-
-/** Wait for a TCP port on a specific host to open (polls checkTcpPort).
- *  Works correctly across Docker networks — /proc/net/tcp only shows the
- *  host's own ports, so we use an actual TCP connect instead. */
-function waitForPort(host, port, timeoutMs) {
-  return new Promise(async resolve => {
-    const deadline = Date.now() + timeoutMs;
-    while (Date.now() < deadline) {
-      if (await checkTcpPort(host, port, 1500)) return resolve(true);
-      await new Promise(r => setTimeout(r, 2000));
-    }
-    resolve(false);
-  });
-}
-
-function writeDockerEnvFile(envObj, nodeEnv = 'development') {
-  const file = path.join('/tmp', `deployboard-env-${Date.now()}-${Math.random().toString(36).slice(2)}.list`);
-  const lines = [`CI=false`, `NODE_ENV=${nodeEnv}`];
-  for (const [k, v] of Object.entries(envObj || {})) lines.push(`${k}=${String(v ?? '')}`);
-  fs.writeFileSync(file, lines.join('\n'));
-  return file;
-}
-
-async function runBuildCommandInContainer({ projectRoot, nodeImage, envFile, command, log }) {
+async function runBuildCommandInContainer({ projectRoot, nodeImage, envObj, nodeEnv = 'development', command, log }) {
   try { await exec('docker', ['pull', nodeImage], {}, () => {}); } catch(e) {}
   const commandWithCorepack = `corepack enable >/dev/null 2>&1 || true; ${command}`;
   log(`\x1b[90m[docker-build] ${nodeImage} :: ${command}\x1b[0m`);
+  const envArgs = [
+    '-e', `CI=false`,
+    '-e', `NODE_ENV=${nodeEnv}`,
+    ...Object.entries(envObj || {}).flatMap(([k, v]) => ['-e', `${k}=${String(v ?? '')}`]),
+  ];
   await exec('docker', [
     'run', '--rm',
-    '--env-file', envFile,
+    ...envArgs,
     '-v', `${projectRoot}:/workspace`,
     '-w', '/workspace',
     nodeImage,
