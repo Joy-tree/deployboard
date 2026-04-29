@@ -1,5 +1,11 @@
 'use strict';
 
+// UPDATED (2026-04-29): Render-like rollout + dependency-aware runtime
+// - Fixes proxy registration for Node.js deployments that still returned Cloudflare 502.
+// - Normalizes malformed appPort values and detects a reachable runtime port before writing ports.json.
+// - Adds strict startup verification so slow/heavy apps don't get marked LIVE before they're actually reachable.
+// - Adds per-app service env injection (DB/Redis), rollback on failed candidate, and configurable runtime limits.
+
 /**
  * buildRunner.js
  *
@@ -16,6 +22,7 @@ const fs        = require('fs');
 // ── Container tuning ──────────────────────────────────────────────────────────
 const CPU_SHARES = '512';   // half CPU priority (1024 = full)
 const PIDS_LIMIT = '200';   // max processes inside container
+const DEFAULT_STARTUP_TIMEOUT_SECONDS = 120;
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 async function runBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, isDockerfileDeploy, isWorker }) {
@@ -41,6 +48,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
   const imageName     = 'deployboard-' + project.subdomain;
+  const candidateContainerName = `${containerName}-cand-${String(deployId).slice(0,8)}`;
   const dfPath        = project.dockerfilePath || 'Dockerfile';
   const exposedPort   = project.exposedPort   || 3000;
 
@@ -97,7 +105,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
   const networkName = 'deployboard_deployboard-net';
   const runArgs = [
     'run', '-d', '--restart=unless-stopped',
-    '--name',         containerName,
+    '--name',         candidateContainerName,
     '--network',      networkName,
     '--cpu-shares',   CPU_SHARES,
     '--pids-limit',   PIDS_LIMIT,
@@ -151,6 +159,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
 async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog }) {
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
+  const candidateContainerName = `${containerName}-cand-${String(deployId).slice(0,8)}`;
   const nodeImage     = 'node:' + (project.nodeVer || '18') + '-alpine';
   const startCmd      = (project.startCmd || '').trim();
   const appDir        = path.join(sitesDir, project.subdomain, 'app');
@@ -200,7 +209,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const networkName = 'deployboard_deployboard-net';
   const runArgs = [
     'run', '-d', '--restart=unless-stopped',
-    '--name',         containerName,
+    '--name',         candidateContainerName,
     '--network',      networkName,
     '--cpu-shares',   CPU_SHARES,
     '--pids-limit',   PIDS_LIMIT,
@@ -220,7 +229,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   let running = false;
   try {
     const { execSync } = require('child_process');
-    const state = execSync(`docker inspect --format='{{.State.Status}}' ${containerName}`, { encoding: 'utf8' }).trim();
+    const state = execSync(`docker inspect --format='{{.State.Status}}' ${candidateContainerName}`, { encoding: 'utf8' }).trim();
     running = state === 'running';
   } catch(e) {}
 
@@ -318,9 +327,12 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const startCmd  = (project.startCmd || '').trim();
   const nodeImage = `node:${project.nodeVer || '20'}-alpine`;
   const containerName = `db-${project.subdomain}`;
+  const candidateContainerName = `${containerName}-cand-${String(deployId).slice(0,8)}`;
+  const expectedPort = normalizePort(appPort, 4000);
+  const runtime = getRuntimeConfig(project);
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
-  const env = resolveEnvVars(project.envVars);
+  const env = { ...resolveEnvVars(project.envVars), ...resolveServiceEnv(project) };
 
   // ── Step 1: Clone ──────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
@@ -404,12 +416,12 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   emitStep(emit, 'start', 'active');
   log(`\n\x1b[36m━━━ Step 5/6 — Launch Container ━━━\x1b[0m`);
   log(`\x1b[90m[docker] Image:     ${nodeImage}\x1b[0m`);
-  log(`\x1b[90m[docker] Container: ${containerName}\x1b[0m`);
+  log(`\x1b[90m[docker] Container: ${candidateContainerName} (candidate)\x1b[0m`);
   const resolvedStartCmd = startCmd || getDefaultStartCmd(usedBuildDir || projectRoot);
   log(`\x1b[90m[docker] Command:   ${resolvedStartCmd}\x1b[0m`);
 
-  // Stop previous container
-  try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
+  // Remove stale candidate with same name if any
+  try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(e) {}
 
   // Map the permanent app dir to the Docker volume path the container can see
   const hostAppDir = usedBuildDir.replace('/var/www/user-sites', '/var/lib/docker/volumes/deployboard_sites-data/_data')
@@ -423,17 +435,18 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   const dockerArgs = [
     'run', '-d',
-    '--name',         containerName,
+    '--name',         candidateContainerName,
     '--restart',      'unless-stopped',
     '--network',      'deployboard_deployboard-net',
-    '--cpu-shares',   CPU_SHARES,
+    '--cpu-shares',   runtime.cpuShares,
     '--pids-limit',   PIDS_LIMIT,
-    '-e',             `PORT=${appPort}`,
+    '-m',             runtime.memory,
+    '-e',             `PORT=${expectedPort}`,
     '-e',             `NODE_ENV=production`,
     '-v',             `${dockerMountSrc}:/app`,
     '-w',             '/app',
   ];
-  log(`\x1b[90m[docker] Runtime limits: ${CPU_SHARES} CPU shares | ${PIDS_LIMIT} max processes\x1b[0m`);
+  log(`\x1b[90m[docker] Runtime limits: ${runtime.cpuShares} CPU shares | ${runtime.memory} memory | ${PIDS_LIMIT} max processes\x1b[0m`);
 
   for (const [k, v] of Object.entries(env)) {
     dockerArgs.push('-e', `${k}=${v}`);
@@ -457,29 +470,53 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   let state = 'unknown';
   try {
     const { execSync } = require('child_process');
-    state = execSync(`docker inspect --format='{{.State.Status}}' ${containerName}`, { encoding: 'utf8' }).trim();
+    state = execSync(`docker inspect --format='{{.State.Status}}' ${candidateContainerName}`, { encoding: 'utf8' }).trim();
   } catch(e) {}
   if (state !== 'running') {
     log(`\x1b[31m[docker] ✗ Container is not running (state: ${state})\x1b[0m`);
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
-    try { await exec('docker', ['logs', '--tail', '60', containerName], {}, log); } catch(e) {}
+    try { await exec('docker', ['logs', '--tail', '60', candidateContainerName], {}, log); } catch(e) {}
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
-    throw new Error(`Container "${containerName}" exited during startup. Check logs above.`);
+    throw new Error(`Container "${candidateContainerName}" exited during startup. Check logs above.`);
   }
 
   // Register proxy by stable container DNS name + expected app port.
   // Docker network DNS resolves containerName reliably and avoids fragile IP polling.
+  const pFile = path.join(sitesDir, 'ports.json');
+  const previousTarget = readRegistryTarget(pFile, project.subdomain);
   try {
-    const sitesDir = (usedBuildDir.startsWith('/tmp') ? appDir : usedBuildDir).replace(`/${project.subdomain}/app`, '');
-    const pFile    = path.join(sitesDir, 'ports.json');
     let registry   = {};
     try { registry = JSON.parse(fs.readFileSync(pFile, 'utf8')); } catch(e) {}
-    registry[project.subdomain] = `${containerName}:${appPort}`;
+    const livePort = await detectLivePort(candidateContainerName, expectedPort, runtime.startupTimeoutSeconds, log);
+    if (!livePort) {
+      throw new Error(`Readiness gate failed after ${runtime.startupTimeoutSeconds}s`);
+    }
+    const targetPort = normalizePort(livePort, expectedPort);
+    registry[project.subdomain] = `${candidateContainerName}:${targetPort}`;
     fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
-    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${appPort}\x1b[0m`);
-    log(`\x1b[90m[docker] Health checks happen on live traffic (Render/Vercel-style startup)\x1b[0m`);
+    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${candidateContainerName}:${targetPort}\x1b[0m`);
+    if (targetPort !== expectedPort) {
+      log(`\x1b[33m[docker] App ignored PORT=${expectedPort}; routing to detected port ${targetPort}\x1b[0m`);
+    }
+    log(`\x1b[90m[docker] Strict readiness gate passed before promotion\x1b[0m`);
+
+    // Promote: remove previous stable container after candidate is live.
+    try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
+
   } catch(e) {
-    log(`\x1b[33m[docker] Could not update port registry: ${e.message}\x1b[0m`);
+    log(`\x1b[31m[docker] Candidate failed: ${e.message}\x1b[0m`);
+    try { await exec('docker', ['logs', '--tail', '80', candidateContainerName], {}, log); } catch(_) {}
+    try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(_) {}
+    if (previousTarget) {
+      log(`\x1b[33m[docker] Rolled back to previous live mapping: ${project.subdomain} → ${previousTarget}\x1b[0m`);
+    } else {
+      let registry = {};
+      try { registry = JSON.parse(fs.readFileSync(pFile, 'utf8')); } catch(_) {}
+      delete registry[project.subdomain];
+      fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
+      log(`\x1b[33m[docker] No previous mapping found; subdomain removed from registry to prevent stale 502 route\x1b[0m`);
+    }
+    throw e;
   }
 
   emitStep(emit, 'start', 'done');
@@ -490,6 +527,94 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
   emitStep(emit, 'cleanup', 'done');
   log(`\n\x1b[32;1m✓ Server app deployed in isolated container!\x1b[0m`);
+}
+
+
+
+function normalizePort(raw, fallback = 0) {
+  if (Number.isInteger(raw) && raw > 0) return raw;
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) return Math.floor(raw);
+  const text = String(raw || '').trim();
+  if (!text) return fallback;
+  const direct = Number(text);
+  if (Number.isInteger(direct) && direct > 0) return direct;
+  const match = text.match(/:(\d{2,5})$/) || text.match(/(\d{2,5})$/);
+  if (match) {
+    const p = Number(match[1]);
+    if (Number.isInteger(p) && p > 0) return p;
+  }
+  return fallback;
+}
+
+async function detectLivePort(containerName, preferredPort, startupTimeoutSeconds, log) {
+  const candidates = [];
+  const add = (v) => {
+    const n = Number(v);
+    if (Number.isInteger(n) && n > 0 && !candidates.includes(n)) candidates.push(n);
+  };
+
+  add(preferredPort);
+  [3000, 3001, 4000, 4173, 5000, 5173, 8000, 8080, 8787].forEach(add);
+
+  for (let attempt = 1; attempt <= startupTimeoutSeconds; attempt++) {
+    for (const port of candidates) {
+      try {
+        await probeHttp(containerName, port, 1500);
+        await new Promise(r => setTimeout(r, 800));
+        await probeHttp(containerName, port, 1500);
+        log(`\x1b[32m[docker] ✓ App reachable on ${containerName}:${port}\x1b[0m`);
+        return port;
+      } catch (_) {}
+    }
+    await new Promise(r => setTimeout(r, 1000));
+    if (attempt % 15 === 0) log(`\x1b[90m[docker] Still waiting for app HTTP port... (${attempt}s)\x1b[0m`);
+  }
+
+  return 0;
+}
+
+function getRuntimeConfig(project) {
+  return {
+    cpuShares: String(normalizePort(project.cpuShares, normalizePort(project.cpu, Number(CPU_SHARES)))),
+    memory: (project.memoryLimit || project.memory || '768m').toString(),
+    startupTimeoutSeconds: normalizePort(project.startupTimeoutSeconds || project.startupTimeout, DEFAULT_STARTUP_TIMEOUT_SECONDS)
+  };
+}
+
+function resolveServiceEnv(project) {
+  const out = {};
+  if (project.mongoUrl) out.MONGO_URL = String(project.mongoUrl);
+  if (project.redisUrl) out.REDIS_URL = String(project.redisUrl);
+  const deps = Array.isArray(project.services) ? project.services : [];
+  for (const dep of deps) {
+    if (!dep || !dep.type || !dep.url) continue;
+    const t = String(dep.type).toLowerCase();
+    if ((t === 'mongo' || t === 'mongodb') && !out.MONGO_URL) out.MONGO_URL = String(dep.url);
+    if (t === 'redis' && !out.REDIS_URL) out.REDIS_URL = String(dep.url);
+  }
+  return out;
+}
+
+function readRegistryTarget(portsFile, subdomain) {
+  try {
+    const registry = JSON.parse(fs.readFileSync(portsFile, 'utf8'));
+    return registry[subdomain] || '';
+  } catch (_) {
+    return '';
+  }
+}
+
+function probeHttp(host, port, timeoutMs = 1000) {
+  const http = require('http');
+  return new Promise((resolve, reject) => {
+    const req = http.request({ host, port, path: '/', method: 'GET', timeout: timeoutMs }, (res) => {
+      res.resume();
+      resolve(res.statusCode || 200);
+    });
+    req.on('timeout', () => { req.destroy(new Error('timeout')); });
+    req.on('error', reject);
+    req.end();
+  });
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
