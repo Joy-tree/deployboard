@@ -599,7 +599,13 @@ function getDefaultInstallCmd(projectRoot) {
   const pm = detectPackageManager(projectRoot);
   if (pm === 'pnpm') return 'pnpm install --frozen-lockfile';
   if (pm === 'yarn') return 'yarn install --frozen-lockfile';
-  return fs.existsSync(path.join(projectRoot, 'package-lock.json')) ? 'npm ci' : 'npm install';
+
+  // npm v7+ enforces peer dependency resolution and can fail builds for
+  // otherwise-runnable apps. Use legacy peer resolution by default to make
+  // third-party app deployments more resilient.
+  return fs.existsSync(path.join(projectRoot, 'package-lock.json'))
+    ? 'npm ci --legacy-peer-deps'
+    : 'npm install --legacy-peer-deps';
 }
 
 function getDefaultBuildCmd(projectRoot) {
