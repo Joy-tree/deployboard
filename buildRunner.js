@@ -3,7 +3,7 @@
 // UPDATED (2026-04-29):
 // - Fixes proxy registration for Node.js deployments that still returned Cloudflare 502.
 // - Normalizes malformed appPort values and detects a reachable runtime port before writing ports.json.
-// - Keeps Render/Vercel-style behavior while avoiding bad host mappings.
+// - Adds strict startup verification so slow/heavy apps don't get marked LIVE before they're actually reachable.
 
 /**
  * buildRunner.js
@@ -530,18 +530,21 @@ async function detectLivePort(containerName, preferredPort, log) {
   add(preferredPort);
   [3000, 3001, 4000, 4173, 5000, 5173, 8000, 8080, 8787].forEach(add);
 
-  for (let attempt = 1; attempt <= 20; attempt++) {
+  for (let attempt = 1; attempt <= 120; attempt++) {
     for (const port of candidates) {
       try {
-        await probeHttp(containerName, port, 1200);
+        await probeHttp(containerName, port, 1500);
+        await new Promise(r => setTimeout(r, 800));
+        await probeHttp(containerName, port, 1500);
         log(`\x1b[32m[docker] ✓ App reachable on ${containerName}:${port}\x1b[0m`);
         return port;
       } catch (_) {}
     }
     await new Promise(r => setTimeout(r, 1000));
+    if (attempt % 15 === 0) log(`\x1b[90m[docker] Still waiting for app HTTP port... (${attempt}s)\x1b[0m`);
   }
 
-  return Number(preferredPort) || 0;
+  return 0;
 }
 
 function probeHttp(host, port, timeoutMs = 1000) {
