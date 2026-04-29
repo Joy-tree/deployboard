@@ -474,9 +474,13 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     const pFile    = path.join(sitesDir, 'ports.json');
     let registry   = {};
     try { registry = JSON.parse(fs.readFileSync(pFile, 'utf8')); } catch(e) {}
-    registry[project.subdomain] = `${containerName}:${appPort}`;
+    const livePort = await detectLivePort(containerName, appPort, log);
+    registry[project.subdomain] = `${containerName}:${livePort || appPort}`;
     fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
-    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${appPort}\x1b[0m`);
+    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${livePort || appPort}\x1b[0m`);
+    if ((livePort || appPort) !== Number(appPort)) {
+      log(`\x1b[33m[docker] App ignored PORT=${appPort}; routing to detected port ${(livePort || appPort)}\x1b[0m`);
+    }
     log(`\x1b[90m[docker] Health checks happen on live traffic (Render/Vercel-style startup)\x1b[0m`);
   } catch(e) {
     log(`\x1b[33m[docker] Could not update port registry: ${e.message}\x1b[0m`);
@@ -490,6 +494,44 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
   emitStep(emit, 'cleanup', 'done');
   log(`\n\x1b[32;1m✓ Server app deployed in isolated container!\x1b[0m`);
+}
+
+
+async function detectLivePort(containerName, preferredPort, log) {
+  const candidates = [];
+  const add = (v) => {
+    const n = Number(v);
+    if (Number.isInteger(n) && n > 0 && !candidates.includes(n)) candidates.push(n);
+  };
+
+  add(preferredPort);
+  [3000, 3001, 4000, 4173, 5000, 5173, 8000, 8080, 8787].forEach(add);
+
+  for (let attempt = 1; attempt <= 20; attempt++) {
+    for (const port of candidates) {
+      try {
+        await probeHttp(containerName, port, 1200);
+        log(`\x1b[32m[docker] ✓ App reachable on ${containerName}:${port}\x1b[0m`);
+        return port;
+      } catch (_) {}
+    }
+    await new Promise(r => setTimeout(r, 1000));
+  }
+
+  return Number(preferredPort) || 0;
+}
+
+function probeHttp(host, port, timeoutMs = 1000) {
+  const http = require('http');
+  return new Promise((resolve, reject) => {
+    const req = http.request({ host, port, path: '/', method: 'GET', timeout: timeoutMs }, (res) => {
+      res.resume();
+      resolve(res.statusCode || 200);
+    });
+    req.on('timeout', () => { req.destroy(new Error('timeout')); });
+    req.on('error', reject);
+    req.end();
+  });
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
