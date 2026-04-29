@@ -553,7 +553,10 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
 async function cloneRepo(project, buildDir, githubToken, log) {
   let cloneUrl = project.repoUrl.trim();
-  if (githubToken) cloneUrl = cloneUrl.replace(/^https:\/\//, `https://${githubToken}@`);
+  if (githubToken && /^https:\/\/github\.com\//i.test(cloneUrl)) {
+    const token = encodeURIComponent(githubToken);
+    cloneUrl = cloneUrl.replace(/^https:\/\/github\.com\//i, `https://x-access-token:${token}@github.com/`);
+  }
   const branch = (project.branch || 'main').trim();
   const fallback = branch === 'main' ? 'master' : 'main';
 
