@@ -21,6 +21,13 @@ const MEM_SWAP   = '921m';  // memory+swap = same as RAM = no swap
 const CPU_SHARES = '512';   // half CPU priority (1024 = full)
 const PIDS_LIMIT = '200';   // max processes inside container
 
+// Build containers need more headroom than runtime containers.
+// Large monorepos (Lerna/Nx/Turborepo) can fail install/build under 1GB.
+const BUILD_MEM_LIMIT  = process.env.BUILD_MEM_LIMIT  || '3g';
+const BUILD_MEM_SWAP   = process.env.BUILD_MEM_SWAP   || '4g';
+const BUILD_CPU_SHARES = process.env.BUILD_CPU_SHARES || '1024';
+const BUILD_PIDS_LIMIT = process.env.BUILD_PIDS_LIMIT || '512';
+
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 async function runBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, isDockerfileDeploy, isWorker }) {
@@ -664,10 +671,10 @@ async function runBuildCommandInContainer({ projectRoot, nodeImage, envFile, com
   log(`\x1b[90m[docker-build] ${nodeImage} :: ${command}\x1b[0m`);
   await exec('docker', [
     'run', '--rm',
-    '--memory', MEM_LIMIT,
-    '--memory-swap', MEM_SWAP,
-    '--cpu-shares', CPU_SHARES,
-    '--pids-limit', PIDS_LIMIT,
+    '--memory', BUILD_MEM_LIMIT,
+    '--memory-swap', BUILD_MEM_SWAP,
+    '--cpu-shares', BUILD_CPU_SHARES,
+    '--pids-limit', BUILD_PIDS_LIMIT,
     '--env-file', envFile,
     '-v', `${projectRoot}:/workspace`,
     '-w', '/workspace',
