@@ -32,7 +32,8 @@ const fs        = require('fs');
 // ── Container tuning ──────────────────────────────────────────────────────────
 const CPU_SHARES = '512';   // half CPU priority (1024 = full)
 const PIDS_LIMIT = '200';   // max processes inside container
-const DEFAULT_STARTUP_TIMEOUT_SECONDS = 120;
+const DEFAULT_STARTUP_TIMEOUT_SECONDS = 300;
+const BUILD_STEP_TIMEOUT_MINUTES = normalizePort(process.env.BUILD_STEP_TIMEOUT_MINUTES, 20);
 const DEPLOY_HISTORY_KEEP = normalizePort(process.env.DEPLOY_HISTORY_KEEP, 2);
 
 // ── Entry point ───────────────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
   const imageName     = 'deployboard-' + project.subdomain;
-  const candidateContainerName = `${containerName}-cand-${String(deployId).slice(0,8)}`;
+  const candidateContainerName = `${containerName}-cand-${safeDockerToken(deployId, 'build').slice(0,20)}`;
   const dfPath        = project.dockerfilePath || 'Dockerfile';
   const exposedPort   = project.exposedPort   || 3000;
 
@@ -170,8 +171,8 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
 async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog }) {
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
-  const candidateContainerName = `${containerName}-cand-${String(deployId).slice(0,8)}`;
-  const nodeImage     = 'node:' + (project.nodeVer || '18') + '-alpine';
+  const candidateContainerName = `${containerName}-cand-${safeDockerToken(deployId, 'build').slice(0,20)}`;
+  const nodeImage     = 'node:' + (project.nodeVer || '18') + '-bullseye';
   const startCmd      = (project.startCmd || '').trim();
   const appDir        = path.join(sitesDir, project.subdomain, 'app');
 
@@ -262,7 +263,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
   const env = resolveEnvVars(project.envVars);
-  const nodeImage = `node:${project.nodeVer || '20'}-alpine`;
+  const nodeImage = `node:${project.nodeVer || '20'}-bullseye`;
 
   // ── Step 1: Clone ──────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
@@ -273,7 +274,9 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findProjectRoot(buildDir, log);
+  let projectRoot = findProjectRoot(buildDir, log);
+  projectRoot = resolveDeployableRoot(projectRoot, buildDir, startCmd, log);
+  assertDeployableServerApp(projectRoot, startCmd, log);
   const outputDir   = path.join(projectRoot, project.outputDir || 'dist');
 
   // ── Step 2: Install ────────────────────────────────────────────────────────
@@ -336,9 +339,9 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildDir  = path.join(tmpDir, deployId);
   const appDir    = path.join(sitesDir, project.subdomain, 'app');
   const startCmd  = (project.startCmd || '').trim();
-  const nodeImage = `node:${project.nodeVer || '20'}-alpine`;
+  const nodeImage = `node:${project.nodeVer || '20'}-bullseye`;
   const containerName = `db-${project.subdomain}`;
-  const candidateContainerName = `${containerName}-cand-${String(deployId).slice(0,8)}`;
+  const candidateContainerName = `${containerName}-cand-${safeDockerToken(deployId, 'build').slice(0,20)}`;
   const expectedPort = normalizePort(appPort, 4000);
   const runtime = getRuntimeConfig(project);
 
@@ -428,7 +431,11 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\n\x1b[36m━━━ Step 5/6 — Launch Container ━━━\x1b[0m`);
   log(`\x1b[90m[docker] Image:     ${nodeImage}\x1b[0m`);
   log(`\x1b[90m[docker] Container: ${candidateContainerName} (candidate)\x1b[0m`);
-  const resolvedStartCmd = startCmd || getDefaultStartCmd(usedBuildDir || projectRoot);
+  const resolvedStartCmd = resolveRuntimeStartCommand({
+    projectRoot: usedBuildDir || projectRoot,
+    startCmd,
+    expectedPort
+  });
   log(`\x1b[90m[docker] Command:   ${resolvedStartCmd}\x1b[0m`);
 
   // Remove stale candidate with same name if any
@@ -454,12 +461,20 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     '-m',             runtime.memory,
     '-e',             `PORT=${expectedPort}`,
     '-e',             `NODE_ENV=production`,
+    '-e',             `HOST=0.0.0.0`,
+    '-e',             `HOSTNAME=0.0.0.0`,
     '-v',             `${dockerMountSrc}:/app`,
     '-w',             '/app',
   ];
+  if (runtime.memorySwap) {
+    dockerArgs.push('--memory-swap', runtime.memorySwap);
+  }
   log(`\x1b[90m[docker] Runtime limits: ${runtime.cpuShares} CPU shares | ${runtime.memory} memory | ${PIDS_LIMIT} max processes\x1b[0m`);
 
   for (const [k, v] of Object.entries(env)) {
+    const key = String(k || '').toUpperCase();
+    // Keep platform runtime binding values authoritative.
+    if (key === 'PORT' || key === 'HOST' || key === 'HOSTNAME') continue;
     dockerArgs.push('-e', `${k}=${v}`);
   }
 
@@ -482,6 +497,17 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     let state = 'unknown';
     try { state = await getContainerState(candidateContainerName); } catch (_) {}
     log(`\x1b[31m[docker] ✗ Container is not running (state: ${state})\x1b[0m`);
+    try {
+      const inspectLines = [];
+      await exec(
+        'docker',
+        ['inspect', '--format={{.State.Status}}|oom={{.State.OOMKilled}}|exit={{.State.ExitCode}}|error={{.State.Error}}', candidateContainerName],
+        {},
+        (line) => inspectLines.push(line)
+      );
+      const diag = (inspectLines.join('\n').trim().split('\n').pop() || '').trim();
+      if (diag) log(`\x1b[33m[docker] State details: ${diag}\x1b[0m`);
+    } catch (_) {}
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
     try { await exec('docker', ['logs', '--tail', '60', candidateContainerName], {}, log); } catch(e) {}
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
@@ -555,17 +581,50 @@ function normalizePort(raw, fallback = 0) {
   return fallback;
 }
 
+function safeDockerToken(value, fallback = 'token') {
+  const cleaned = String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return cleaned || fallback;
+}
+
 async function detectLivePort(containerName, preferredPort, startupTimeoutSeconds, log) {
   const candidates = [];
+  const seedPorts = new Set();
   const add = (v) => {
     const n = Number(v);
-    if (Number.isInteger(n) && n > 0 && !candidates.includes(n)) candidates.push(n);
+    if (!Number.isInteger(n) || n <= 0) return;
+    if (!candidates.includes(n)) candidates.push(n);
+  };
+  const addSeed = (v) => {
+    const n = Number(v);
+    if (!Number.isInteger(n) || n <= 0) return;
+    seedPorts.add(n);
+    add(n);
   };
 
-  add(preferredPort);
-  [3000, 3001, 4000, 4173, 5000, 5173, 8000, 8080, 8787].forEach(add);
+  addSeed(preferredPort);
+  [3000, 3001, 4000, 4173, 5000, 5173, 8000, 8080, 8787].forEach(addSeed);
+  let fallbackIP = '';
+  try { fallbackIP = await getContainerIP(containerName); } catch (_) {}
+  if (fallbackIP) log(`\x1b[90m[docker] Fallback probe IP: ${fallbackIP}\x1b[0m`);
 
   for (let attempt = 1; attempt <= startupTimeoutSeconds; attempt++) {
+    if (attempt === 1 || attempt % 10 === 0) {
+      try {
+        const discovered = await detectListeningPorts(containerName);
+        // Include discovered ports, but ignore high ephemeral listeners that
+        // are rarely app HTTP ports and often produce false positives.
+        discovered
+          .filter((p) => p <= 20000 || p === Number(preferredPort))
+          .forEach(add);
+        if (discovered.length) {
+          log(`\x1b[90m[docker] Discovered listening ports: ${discovered.join(', ')}\x1b[0m`);
+        }
+      } catch (_) {}
+    }
     for (const port of candidates) {
       try {
         await probeHttp(containerName, port, 1500);
@@ -576,26 +635,92 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
       } catch (_) {
         // Some apps don't return valid HTTP on "/" during warmup but still listen.
         // Accept open TCP socket as a fallback readiness signal.
-        try {
-          await probeTcp(containerName, port, 1200);
-          log(`\x1b[32m[docker] ✓ TCP listener detected on ${containerName}:${port} (HTTP / probe not ready yet)\x1b[0m`);
-          return port;
-        } catch (_) {}
+        // Only allow TCP-only readiness for known web defaults.
+        if (seedPorts.has(port)) {
+          try {
+            await probeTcp(containerName, port, 1200);
+            log(`\x1b[32m[docker] ✓ TCP listener detected on ${containerName}:${port} (seed port)\x1b[0m`);
+            return port;
+          } catch (_) {}
+        }
+
+        // DNS/container-name routing can fail in some Docker/network edge cases.
+        // Fall back to direct container IP probing before giving up.
+        if (fallbackIP) {
+          try {
+            await probeHttp(fallbackIP, port, 1500);
+            await new Promise(r => setTimeout(r, 500));
+            await probeHttp(fallbackIP, port, 1500);
+            log(`\x1b[32m[docker] ✓ App reachable on ${fallbackIP}:${port} (IP fallback)\x1b[0m`);
+            return port;
+          } catch (_) {
+            if (seedPorts.has(port)) {
+              try {
+                await probeTcp(fallbackIP, port, 1200);
+                log(`\x1b[32m[docker] ✓ TCP listener on ${fallbackIP}:${port} (IP fallback seed port)\x1b[0m`);
+                return port;
+              } catch (_) {}
+            }
+          }
+        }
       }
     }
     await new Promise(r => setTimeout(r, 1000));
-    if (attempt % 15 === 0) log(`\x1b[90m[docker] Still waiting for app HTTP port... (${attempt}s)\x1b[0m`);
+    if (attempt % 5 === 0) log(`\x1b[90m[docker] Still waiting for app HTTP port... (${attempt}s)\x1b[0m`);
   }
 
   return 0;
 }
 
+async function detectListeningPorts(containerName) {
+  const rows = [];
+  await exec(
+    'docker',
+    ['exec', containerName, 'sh', '-lc', 'cat /proc/net/tcp /proc/net/tcp6 2>/dev/null || true'],
+    {},
+    (line) => rows.push(line)
+  );
+  const ports = new Set();
+  for (const row of rows) {
+    const m = String(row).match(/:\s*([0-9A-Fa-f]{8}):([0-9A-Fa-f]{4})\s+[0-9A-Fa-f]{8}:[0-9A-Fa-f]{4}\s+0A/);
+    if (!m) continue;
+    const p = parseInt(m[2], 16);
+    if (Number.isInteger(p) && p > 0 && p < 65536) ports.add(p);
+  }
+  return Array.from(ports).sort((a, b) => a - b);
+}
+
 function getRuntimeConfig(project) {
+  const requestedMemory = (project.memoryLimit || project.memory || '2g').toString();
   return {
     cpuShares: String(normalizePort(project.cpuShares, normalizePort(project.cpu, Number(CPU_SHARES)))),
-    memory: (project.memoryLimit || project.memory || '768m').toString(),
+    memory: normalizeMemoryLimit(requestedMemory),
+    memorySwap: (project.memorySwap || process.env.DEFAULT_APP_MEMORY_SWAP || '3g').toString(),
     startupTimeoutSeconds: normalizePort(project.startupTimeoutSeconds || project.startupTimeout, DEFAULT_STARTUP_TIMEOUT_SECONDS)
   };
+}
+
+function normalizeMemoryLimit(value) {
+  const text = String(value || '').trim().toLowerCase();
+  const m = text.match(/^(\d+)([mg])$/);
+  if (!m) return '2g';
+  const num = Number(m[1]);
+  const unit = m[2];
+  const mb = unit === 'g' ? num * 1024 : num;
+  // Keep large apps from restart loops caused by very low default memory.
+  if (mb < 1024) return '1g';
+  return unit === 'g' ? `${num}g` : `${num}m`;
+}
+
+async function getContainerIP(containerName) {
+  const chunks = [];
+  await exec(
+    'docker',
+    ['inspect', '--format={{range $k,$v := .NetworkSettings.Networks}}{{.IPAddress}}{{end}}', containerName],
+    {},
+    (line) => chunks.push(line)
+  );
+  return (chunks.join('\n').trim().split('\n').pop() || '').trim();
 }
 
 function resolveServiceEnv(project) {
@@ -833,6 +958,89 @@ function getDefaultStartCmd(projectRoot) {
   return 'npm start';
 }
 
+function assertDeployableServerApp(projectRoot, startCmd, log) {
+  const explicitStart = (startCmd || '').trim();
+  if (explicitStart) return;
+
+  const pkgPath = path.join(projectRoot, 'package.json');
+  let pkg = null;
+  try { pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8')); } catch (_) {}
+  const scripts = pkg && pkg.scripts && typeof pkg.scripts === 'object' ? pkg.scripts : {};
+  const hasStartScript = typeof scripts.start === 'string' && scripts.start.trim().length > 0;
+  const hasServerEntry =
+    fs.existsSync(path.join(projectRoot, 'server.js')) ||
+    fs.existsSync(path.join(projectRoot, 'app.js')) ||
+    fs.existsSync(path.join(projectRoot, 'index.js'));
+
+  if (!hasStartScript && !hasServerEntry) {
+    log(`\x1b[31m[deploy] This repository does not define a runnable web server start command.\x1b[0m`);
+    log(`\x1b[33m[deploy] Add a custom start command in DeployBoard (e.g. \"node server.js\") or use an app repository instead of a framework/library source repo.\x1b[0m`);
+    throw new Error('No start script/server entry found. This repo looks like source code for a package/library, not a deployable web app.');
+  }
+}
+
+function isDeployableServerProject(projectRoot, startCmd = '') {
+  if ((startCmd || '').trim()) return true;
+  const pkgPath = path.join(projectRoot, 'package.json');
+  let pkg = null;
+  try { pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8')); } catch (_) {}
+  const scripts = pkg && pkg.scripts && typeof pkg.scripts === 'object' ? pkg.scripts : {};
+  const hasStartScript = typeof scripts.start === 'string' && scripts.start.trim().length > 0;
+  const hasServerEntry =
+    fs.existsSync(path.join(projectRoot, 'server.js')) ||
+    fs.existsSync(path.join(projectRoot, 'app.js')) ||
+    fs.existsSync(path.join(projectRoot, 'index.js'));
+  return hasStartScript || hasServerEntry;
+}
+
+function resolveDeployableRoot(currentRoot, buildDir, startCmd, log) {
+  if (isDeployableServerProject(currentRoot, startCmd)) return currentRoot;
+
+  const candidates = [];
+  const walk = (dir, depth) => {
+    if (depth > 6) return;
+    let entries = [];
+    try { entries = fs.readdirSync(dir); } catch (_) { return; }
+    if (fs.existsSync(path.join(dir, 'package.json'))) candidates.push({ dir, depth });
+    for (const entry of entries) {
+      if (['node_modules', '.git', '.next', 'dist', 'build', 'out', '.cache'].includes(entry)) continue;
+      if (entry.startsWith('.')) continue;
+      const full = path.join(dir, entry);
+      try { if (fs.lstatSync(full).isDirectory()) walk(full, depth + 1); } catch (_) {}
+    }
+  };
+  walk(buildDir, 0);
+
+  const deployable = candidates
+    .filter(c => c.dir !== currentRoot && isDeployableServerProject(c.dir, startCmd))
+    .sort((a, b) => a.depth - b.depth)[0];
+
+  if (deployable) {
+    log(`\x1b[33m[deploy] Root package is not runnable; using deployable subproject: ${path.relative(buildDir, deployable.dir) || '.'}\x1b[0m`);
+    return deployable.dir;
+  }
+
+  assertDeployableServerApp(currentRoot, startCmd, log);
+  return currentRoot;
+}
+
+function resolveRuntimeStartCommand({ projectRoot, startCmd, expectedPort }) {
+  const raw = (startCmd || '').trim() || getDefaultStartCmd(projectRoot);
+  const normalized = raw.replace(/\s+/g, ' ').trim().toLowerCase();
+  const hostFlags = `--host 0.0.0.0 --port ${expectedPort}`;
+
+  if (normalized === 'npm start') {
+    return `npm start -- ${hostFlags} || npm start`;
+  }
+  if (normalized === 'yarn start') {
+    return `yarn start ${hostFlags} || yarn start`;
+  }
+  if (normalized === 'pnpm start') {
+    return `pnpm start ${hostFlags} || pnpm start`;
+  }
+  return raw;
+}
+
 function exec(cmd, args, options, logFn) {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, {
@@ -843,11 +1051,11 @@ function exec(cmd, args, options, logFn) {
       // 2GB virtual memory limit for npm install/build (RSS stays much lower)
     });
 
-    // Kill process if it hangs for more than 10 minutes (e.g. npm install waiting for input)
-    const hardTimeout = setTimeout(() => {
+  // Kill process if it hangs for too long (heavy native installs can take a while).
+  const hardTimeout = setTimeout(() => {
       child.kill('SIGTERM');
-      reject(new Error(`"${cmd}" timed out after 10 minutes. Check your install/build commands.`));
-    }, 10 * 60 * 1000);
+      reject(new Error(`"${cmd}" timed out after ${BUILD_STEP_TIMEOUT_MINUTES} minutes. Check your install/build commands.`));
+    }, BUILD_STEP_TIMEOUT_MINUTES * 60 * 1000);
 
     let lastLines = [];
     const onLine  = (line, isErr) => {
