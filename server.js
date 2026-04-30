@@ -718,7 +718,11 @@ app.post('/api/deploy', async (req, res) => {
   const cleanSub = subdomain.toLowerCase()
     .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 
-  const isServerApp = (siteType === 'server') || !!(startCmd || '').trim();
+  // Respect explicit site type first so static deployments are not forced into
+  // server mode when UI/default data still contains a start command.
+  const explicitType = String(siteType || '').trim().toLowerCase();
+  const hasStartCmd = !!String(startCmd || '').trim();
+  const isServerApp = explicitType === 'server' || (!explicitType && hasStartCmd);
 
   // Assign port for server apps
   let appPort = 0;

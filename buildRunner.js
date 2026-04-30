@@ -333,6 +333,24 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   fs.mkdirSync(destDir, { recursive: true });
   copyDir(finalSrcDir, destDir);
   const count = countFiles(destDir);
+
+  // Defensive cleanup: static deployments must not retain server proxy targets.
+  // If an old server deploy left a ports.json entry/container behind, requests
+  // could proxy to a dead upstream and return Cloudflare 502.
+  const portsFile = path.join(sitesDir, 'ports.json');
+  try {
+    let registry = {};
+    try { registry = JSON.parse(fs.readFileSync(portsFile, 'utf8')); } catch (_) {}
+    if (registry[project.subdomain]) {
+      delete registry[project.subdomain];
+      fs.writeFileSync(portsFile, JSON.stringify(registry, null, 2));
+      log(`\x1b[90m[static] Removed stale proxy target for ${project.subdomain}\x1b[0m`);
+    }
+  } catch (e) {
+    log(`\x1b[33m[static] Could not update ports registry: ${e.message}\x1b[0m`);
+  }
+  try { await exec('docker', ['rm', '-f', `db-${project.subdomain}`], {}, () => {}); } catch (_) {}
+
   emitStep(emit, 'copy', 'done');
   log(`\x1b[32m[deploy] ✓ ${count} files deployed\x1b[0m`);
 
