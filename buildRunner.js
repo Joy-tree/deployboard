@@ -48,7 +48,11 @@ async function runBuild({ deployId, project, sitesDir, tmpDir, githubToken, appP
   if (workerDeploy) {
     return runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
   }
-  const isServerApp = (project.siteType === 'server') || !!(project.startCmd || '').trim();
+  // Respect explicit site type first. If "static" is selected, do NOT force
+  // server mode just because startCmd has a default value (e.g. "npm start").
+  const explicitType = String(project.siteType || '').trim().toLowerCase();
+  const hasStartCmd = !!String(project.startCmd || '').trim();
+  const isServerApp = explicitType === 'server' || (!explicitType && hasStartCmd);
   return isServerApp
     ? runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog })
     : runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken, emit, onLog });
