@@ -455,9 +455,14 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     '-m',             runtime.memory,
     '-e',             `PORT=${expectedPort}`,
     '-e',             `NODE_ENV=production`,
+    '-e',             `HOST=0.0.0.0`,
+    '-e',             `HOSTNAME=0.0.0.0`,
     '-v',             `${dockerMountSrc}:/app`,
     '-w',             '/app',
   ];
+  if (runtime.memorySwap) {
+    dockerArgs.push('--memory-swap', runtime.memorySwap);
+  }
   log(`\x1b[90m[docker] Runtime limits: ${runtime.cpuShares} CPU shares | ${runtime.memory} memory | ${PIDS_LIMIT} max processes\x1b[0m`);
 
   for (const [k, v] of Object.entries(env)) {
@@ -483,6 +488,17 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     let state = 'unknown';
     try { state = await getContainerState(candidateContainerName); } catch (_) {}
     log(`\x1b[31m[docker] ✗ Container is not running (state: ${state})\x1b[0m`);
+    try {
+      const inspectLines = [];
+      await exec(
+        'docker',
+        ['inspect', '--format={{.State.Status}}|oom={{.State.OOMKilled}}|exit={{.State.ExitCode}}|error={{.State.Error}}', candidateContainerName],
+        {},
+        (line) => inspectLines.push(line)
+      );
+      const diag = (inspectLines.join('\n').trim().split('\n').pop() || '').trim();
+      if (diag) log(`\x1b[33m[docker] State details: ${diag}\x1b[0m`);
+    } catch (_) {}
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
     try { await exec('docker', ['logs', '--tail', '60', candidateContainerName], {}, log); } catch(e) {}
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
@@ -594,7 +610,8 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
 function getRuntimeConfig(project) {
   return {
     cpuShares: String(normalizePort(project.cpuShares, normalizePort(project.cpu, Number(CPU_SHARES)))),
-    memory: (project.memoryLimit || project.memory || '768m').toString(),
+    memory: (project.memoryLimit || project.memory || '2g').toString(),
+    memorySwap: (project.memorySwap || process.env.DEFAULT_APP_MEMORY_SWAP || '3g').toString(),
     startupTimeoutSeconds: normalizePort(project.startupTimeoutSeconds || project.startupTimeout, DEFAULT_STARTUP_TIMEOUT_SECONDS)
   };
 }
