@@ -620,11 +620,10 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
     if (attempt === 1 || attempt % 10 === 0) {
       try {
         const discovered = await detectListeningPorts(containerName);
-        // Include discovered ports, but ignore high ephemeral listeners that
-        // are rarely app HTTP ports and often produce false positives.
-        discovered
-          .filter((p) => p <= 20000 || p === Number(preferredPort))
-          .forEach(add);
+        // Include all discovered listeners; HTTP probe still gates readiness.
+        discovered.forEach(add);
+        const logPort = await detectPortFromContainerLogs(containerName);
+        if (logPort) add(logPort);
         if (discovered.length) {
           log(`\x1b[90m[docker] Discovered listening ports: ${discovered.join(', ')}\x1b[0m`);
         }
@@ -693,6 +692,29 @@ async function detectListeningPorts(containerName) {
     if (Number.isInteger(p) && p > 0 && p < 65536) ports.add(p);
   }
   return Array.from(ports).sort((a, b) => a - b);
+}
+
+async function detectPortFromContainerLogs(containerName) {
+  const lines = [];
+  try {
+    await exec('docker', ['logs', '--tail', '80', containerName], {}, (line) => lines.push(String(line || '')));
+  } catch (_) {
+    return 0;
+  }
+  const text = lines.join('\n');
+  const patterns = [
+    /(?:listening|listen|started|server)\D{0,40}(?:port|:)\s*(\d{2,5})/ig,
+    /https?:\/\/[^\s:]+:(\d{2,5})/ig,
+    /\bPORT[=\s:]+(\d{2,5})\b/ig
+  ];
+  for (const re of patterns) {
+    let m;
+    while ((m = re.exec(text))) {
+      const p = Number(m[1]);
+      if (Number.isInteger(p) && p > 0 && p < 65536) return p;
+    }
+  }
+  return 0;
 }
 
 function getRuntimeConfig(project) {
