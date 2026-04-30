@@ -528,9 +528,9 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
       throw new Error(`Readiness gate failed after ${runtime.startupTimeoutSeconds}s`);
     }
     const targetPort = normalizePort(livePort, expectedPort);
-    registry[project.subdomain] = `${candidateContainerName}:${targetPort}`;
+    registry[project.subdomain] = `${containerName}:${targetPort}`;
     fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
-    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${candidateContainerName}:${targetPort}\x1b[0m`);
+    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${targetPort}\x1b[0m`);
     if (targetPort !== expectedPort) {
       log(`\x1b[33m[docker] App ignored PORT=${expectedPort}; routing to detected port ${targetPort}\x1b[0m`);
     }
@@ -538,6 +538,8 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
     // Promote: archive previous stable container for fast rollback, then prune old archives.
     await archivePreviousContainer(containerName, project.subdomain, log);
+    await exec('docker', ['rename', candidateContainerName, containerName], {}, () => {});
+    log(`\x1b[90m[docker] Promoted candidate to stable: ${containerName}\x1b[0m`);
     await cleanupArchivedContainers(project.subdomain, DEPLOY_HISTORY_KEEP, log);
 
   } catch(e) {
