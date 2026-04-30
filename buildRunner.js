@@ -271,29 +271,29 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  let projectRoot = findProjectRoot(buildDir, log);
-  projectRoot = resolveDeployableRoot(projectRoot, buildDir, startCmd, log);
-  assertDeployableServerApp(projectRoot, startCmd, log);
+  const projectRoot = findProjectRoot(buildDir, log);
+  const hasPackageJson = fs.existsSync(path.join(projectRoot, 'package.json'));
   const profile = detectProjectProfile(projectRoot);
-  log(`\x1b[90m[detect] Project type: ${profile.kind}${profile.framework ? ' · framework: ' + profile.framework : ''}\x1b[0m`);
-  if (profile.needsDatabase && !hasAnyDbEnv(env)) {
-    log(`\x1b[33m[detect] This project likely needs a database connection (TypeORM/Prisma/etc). Add DB env vars before deploy to avoid startup failures.\x1b[0m`);
-  }
+  log(`\x1b[90m[detect] Static project type: ${profile.kind}${profile.framework ? ' · framework: ' + profile.framework : ''}\x1b[0m`);
   const outputDir   = path.join(projectRoot, project.outputDir || 'dist');
 
   // ── Step 2: Install ────────────────────────────────────────────────────────
   emitStep(emit, 'install', 'active');
   log(`\n\x1b[36m━━━ Step 2/5 — Install ━━━\x1b[0m`);
-  const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
-  log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-  await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: installCmd, log });
+  if (hasPackageJson) {
+    const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
+    log(`\x1b[90m$ ${installCmd}\x1b[0m`);
+    await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: installCmd, log });
+  } else {
+    log(`\x1b[90m[install] No package.json found — skipping install for plain static files\x1b[0m`);
+  }
   emitStep(emit, 'install', 'done');
 
   // ── Step 3: Build ──────────────────────────────────────────────────────────
   emitStep(emit, 'build', 'active');
   log(`\n\x1b[36m━━━ Step 3/5 — Build ━━━\x1b[0m`);
-  const buildCmd = (project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot);
-  if (buildCmd !== 'echo skip') {
+  const buildCmd = (project.buildCmd || '').trim() || (hasPackageJson ? getDefaultBuildCmd(projectRoot) : 'echo skip');
+  if (hasPackageJson && buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
     await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: buildCmd, log });
   } else {
@@ -310,7 +310,13 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
     ? projectRoot
     : outputDir;
 
-  if (!fs.existsSync(srcDir)) {
+  let finalSrcDir = srcDir;
+  if (!fs.existsSync(finalSrcDir) && !hasPackageJson) {
+    finalSrcDir = projectRoot;
+    log(`\x1b[33m[deploy] Output dir missing; serving repo root for plain static site\x1b[0m`);
+  }
+
+  if (!fs.existsSync(finalSrcDir)) {
     const dirs = fs.readdirSync(buildDir).filter(f => {
       try { return fs.lstatSync(path.join(buildDir, f)).isDirectory(); } catch(e) { return false; }
     });
@@ -321,7 +327,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   if (fs.existsSync(destDir)) fs.rmSync(destDir, { recursive: true, force: true });
   fs.mkdirSync(destDir, { recursive: true });
-  copyDir(srcDir, destDir);
+  copyDir(finalSrcDir, destDir);
   const count = countFiles(destDir);
   emitStep(emit, 'copy', 'done');
   log(`\x1b[32m[deploy] ✓ ${count} files deployed\x1b[0m`);
