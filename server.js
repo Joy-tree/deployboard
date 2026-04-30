@@ -454,6 +454,43 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
+
+app.get('/debug/host', (req, res) => {
+  const token = (req.query.token || req.headers['x-debug-token'] || '').toString();
+  const requiredToken = process.env.DEBUG_HOST_TOKEN || '';
+  const isLocal = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
+
+  if (requiredToken && token !== requiredToken) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  if (!requiredToken && !isLocal) {
+    return res.status(403).json({ error: 'Set DEBUG_HOST_TOKEN to enable remote host debugging' });
+  }
+
+  const rawForwardedHost = req.headers['x-forwarded-host'] || '';
+  const rawHost = req.headers.host || '';
+
+  res.json({
+    ok: true,
+    now: new Date().toISOString(),
+    baseDomain: BASE_DOMAIN,
+    ip: req.ip,
+    ips: req.ips || [],
+    headers: {
+      host: rawHost,
+      xForwardedHost: rawForwardedHost,
+      xForwardedProto: req.headers['x-forwarded-proto'] || '',
+      cfRay: req.headers['cf-ray'] || '',
+      cfConnectingIp: req.headers['cf-connecting-ip'] || ''
+    },
+    normalized: {
+      host: normalizeHostHeader(rawHost),
+      forwardedHost: normalizeHostHeader(rawForwardedHost),
+      effectiveHost: normalizeHostHeader(rawForwardedHost || rawHost)
+    }
+  });
+});
+
 app.get('/api/projects', async (req, res) => {
   try {
     const projects  = await Project.find().sort({ createdAt: -1 });
