@@ -4747,7 +4747,12 @@ function showPage(id, navEl) {
   if (id === 'deployments')   renderDeployments();
   if (id === 'dashboard')     renderDashboard();
   if (id === 'env-manager')   renderEnvManager();
-  if (id === 'logs')          initTerminal();
+  if (id === 'logs') {
+    initTerminal();
+    if (!activeBuildId) {
+      writeTerm('\x1b[90m[info] Logs will show here once deployment starts.\x1b[0m');
+    }
+  }
   if (id === 'settings')      loadSettingsUI();
   if (id === 'new-deploy')    initDeployForm();
   if (id === 'analytics')     renderAnalytics();
@@ -5422,6 +5427,7 @@ function initTerminal() {
       } else {
         term.writeln('\x1b[32m[system]\x1b[0m \x1b[90mConnected · ready for deployment\x1b[0m');
       }
+      term.writeln('\x1b[90m[info] Logs will show here once deployment starts.\x1b[0m');
       term.writeln('\x1b[90m─────────────────────────────────────────────────────\x1b[0m');
     }
   } catch(e) {
@@ -5437,6 +5443,20 @@ var pendingTermLines = [];
 // flows naturally instead of spawning all at once
 var _writeQueue = [];
 var _writeDraining = false;
+var _hasWrittenBuildLogs = false;
+function _tsNow() {
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
+}
+function _withTs(line) {
+  if (!line || !String(line).trim()) return line;
+  // Avoid double-stamping if server already includes a leading timestamp.
+  if (/^\[\d{2}:\d{2}:\d{2}\]/.test(String(line))) return line;
+  return `\x1b[90m[${_tsNow()}]\x1b[0m ${line}`;
+}
 function _drainWriteQueue() {
   if (!_writeQueue.length) { _writeDraining = false; return; }
   _writeDraining = true;
@@ -5446,11 +5466,13 @@ function _drainWriteQueue() {
 }
 
 function writeTerm(line) {
+  const stamped = _withTs(line);
+  if (stamped && String(stamped).trim()) _hasWrittenBuildLogs = true;
   if (term) {
-    _writeQueue.push(line);
+    _writeQueue.push(stamped);
     if (!_writeDraining) _drainWriteQueue();
   } else {
-    pendingTermLines.push(line);
+    pendingTermLines.push(stamped);
     if (pendingTermLines.length > 2000) pendingTermLines.shift();
   }
 }
@@ -5459,6 +5481,7 @@ function clearTerminal() {
   if (term) term.clear();
   logBuffer = [];
   pendingTermLines = [];
+  _hasWrittenBuildLogs = false;
 }
 
 function downloadLogs() {
