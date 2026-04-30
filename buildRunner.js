@@ -33,6 +33,7 @@ const fs        = require('fs');
 const CPU_SHARES = '512';   // half CPU priority (1024 = full)
 const PIDS_LIMIT = '200';   // max processes inside container
 const DEFAULT_STARTUP_TIMEOUT_SECONDS = 120;
+const BUILD_STEP_TIMEOUT_MINUTES = normalizePort(process.env.BUILD_STEP_TIMEOUT_MINUTES, 20);
 const DEPLOY_HISTORY_KEEP = normalizePort(process.env.DEPLOY_HISTORY_KEEP, 2);
 
 // ── Entry point ───────────────────────────────────────────────────────────────
@@ -171,7 +172,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
   const candidateContainerName = `${containerName}-cand-${String(deployId).slice(0,8)}`;
-  const nodeImage     = 'node:' + (project.nodeVer || '18') + '-alpine';
+  const nodeImage     = 'node:' + (project.nodeVer || '18') + '-bullseye';
   const startCmd      = (project.startCmd || '').trim();
   const appDir        = path.join(sitesDir, project.subdomain, 'app');
 
@@ -262,7 +263,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
   const env = resolveEnvVars(project.envVars);
-  const nodeImage = `node:${project.nodeVer || '20'}-alpine`;
+  const nodeImage = `node:${project.nodeVer || '20'}-bullseye`;
 
   // ── Step 1: Clone ──────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
@@ -336,7 +337,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildDir  = path.join(tmpDir, deployId);
   const appDir    = path.join(sitesDir, project.subdomain, 'app');
   const startCmd  = (project.startCmd || '').trim();
-  const nodeImage = `node:${project.nodeVer || '20'}-alpine`;
+  const nodeImage = `node:${project.nodeVer || '20'}-bullseye`;
   const containerName = `db-${project.subdomain}`;
   const candidateContainerName = `${containerName}-cand-${String(deployId).slice(0,8)}`;
   const expectedPort = normalizePort(appPort, 4000);
@@ -843,11 +844,11 @@ function exec(cmd, args, options, logFn) {
       // 2GB virtual memory limit for npm install/build (RSS stays much lower)
     });
 
-    // Kill process if it hangs for more than 10 minutes (e.g. npm install waiting for input)
-    const hardTimeout = setTimeout(() => {
+  // Kill process if it hangs for too long (heavy native installs can take a while).
+  const hardTimeout = setTimeout(() => {
       child.kill('SIGTERM');
-      reject(new Error(`"${cmd}" timed out after 10 minutes. Check your install/build commands.`));
-    }, 10 * 60 * 1000);
+      reject(new Error(`"${cmd}" timed out after ${BUILD_STEP_TIMEOUT_MINUTES} minutes. Check your install/build commands.`));
+    }, BUILD_STEP_TIMEOUT_MINUTES * 60 * 1000);
 
     let lastLines = [];
     const onLine  = (line, isErr) => {
