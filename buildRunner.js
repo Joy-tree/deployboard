@@ -33,6 +33,7 @@ const fs        = require('fs');
 const CPU_SHARES = '512';   // half CPU priority (1024 = full)
 const PIDS_LIMIT = '200';   // max processes inside container
 const DEFAULT_STARTUP_TIMEOUT_SECONDS = 120;
+const BUILD_STEP_TIMEOUT_MINUTES = normalizePort(process.env.BUILD_STEP_TIMEOUT_MINUTES, 20);
 const DEPLOY_HISTORY_KEEP = normalizePort(process.env.DEPLOY_HISTORY_KEEP, 2);
 
 // ── Entry point ───────────────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
   const imageName     = 'deployboard-' + project.subdomain;
-  const candidateContainerName = `${containerName}-cand-${String(deployId).slice(0,8)}`;
+  const candidateContainerName = `${containerName}-cand-${safeDockerToken(deployId, 'build').slice(0,20)}`;
   const dfPath        = project.dockerfilePath || 'Dockerfile';
   const exposedPort   = project.exposedPort   || 3000;
 
@@ -170,8 +171,8 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
 async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog }) {
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
-  const candidateContainerName = `${containerName}-cand-${String(deployId).slice(0,8)}`;
-  const nodeImage     = 'node:' + (project.nodeVer || '18') + '-alpine';
+  const candidateContainerName = `${containerName}-cand-${safeDockerToken(deployId, 'build').slice(0,20)}`;
+  const nodeImage     = 'node:' + (project.nodeVer || '18') + '-bullseye';
   const startCmd      = (project.startCmd || '').trim();
   const appDir        = path.join(sitesDir, project.subdomain, 'app');
 
@@ -262,7 +263,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
   const env = resolveEnvVars(project.envVars);
-  const nodeImage = `node:${project.nodeVer || '20'}-alpine`;
+  const nodeImage = `node:${project.nodeVer || '20'}-bullseye`;
 
   // ── Step 1: Clone ──────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
@@ -336,9 +337,9 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildDir  = path.join(tmpDir, deployId);
   const appDir    = path.join(sitesDir, project.subdomain, 'app');
   const startCmd  = (project.startCmd || '').trim();
-  const nodeImage = `node:${project.nodeVer || '20'}-alpine`;
+  const nodeImage = `node:${project.nodeVer || '20'}-bullseye`;
   const containerName = `db-${project.subdomain}`;
-  const candidateContainerName = `${containerName}-cand-${String(deployId).slice(0,8)}`;
+  const candidateContainerName = `${containerName}-cand-${safeDockerToken(deployId, 'build').slice(0,20)}`;
   const expectedPort = normalizePort(appPort, 4000);
   const runtime = getRuntimeConfig(project);
 
@@ -454,9 +455,14 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     '-m',             runtime.memory,
     '-e',             `PORT=${expectedPort}`,
     '-e',             `NODE_ENV=production`,
+    '-e',             `HOST=0.0.0.0`,
+    '-e',             `HOSTNAME=0.0.0.0`,
     '-v',             `${dockerMountSrc}:/app`,
     '-w',             '/app',
   ];
+  if (runtime.memorySwap) {
+    dockerArgs.push('--memory-swap', runtime.memorySwap);
+  }
   log(`\x1b[90m[docker] Runtime limits: ${runtime.cpuShares} CPU shares | ${runtime.memory} memory | ${PIDS_LIMIT} max processes\x1b[0m`);
 
   for (const [k, v] of Object.entries(env)) {
@@ -482,6 +488,17 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     let state = 'unknown';
     try { state = await getContainerState(candidateContainerName); } catch (_) {}
     log(`\x1b[31m[docker] ✗ Container is not running (state: ${state})\x1b[0m`);
+    try {
+      const inspectLines = [];
+      await exec(
+        'docker',
+        ['inspect', '--format={{.State.Status}}|oom={{.State.OOMKilled}}|exit={{.State.ExitCode}}|error={{.State.Error}}', candidateContainerName],
+        {},
+        (line) => inspectLines.push(line)
+      );
+      const diag = (inspectLines.join('\n').trim().split('\n').pop() || '').trim();
+      if (diag) log(`\x1b[33m[docker] State details: ${diag}\x1b[0m`);
+    } catch (_) {}
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
     try { await exec('docker', ['logs', '--tail', '60', candidateContainerName], {}, log); } catch(e) {}
     log(`\x1b[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
@@ -555,6 +572,15 @@ function normalizePort(raw, fallback = 0) {
   return fallback;
 }
 
+function safeDockerToken(value, fallback = 'token') {
+  const cleaned = String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return cleaned || fallback;
+}
+
 async function detectLivePort(containerName, preferredPort, startupTimeoutSeconds, log) {
   const candidates = [];
   const add = (v) => {
@@ -593,7 +619,8 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
 function getRuntimeConfig(project) {
   return {
     cpuShares: String(normalizePort(project.cpuShares, normalizePort(project.cpu, Number(CPU_SHARES)))),
-    memory: (project.memoryLimit || project.memory || '768m').toString(),
+    memory: (project.memoryLimit || project.memory || '2g').toString(),
+    memorySwap: (project.memorySwap || process.env.DEFAULT_APP_MEMORY_SWAP || '3g').toString(),
     startupTimeoutSeconds: normalizePort(project.startupTimeoutSeconds || project.startupTimeout, DEFAULT_STARTUP_TIMEOUT_SECONDS)
   };
 }
@@ -843,11 +870,11 @@ function exec(cmd, args, options, logFn) {
       // 2GB virtual memory limit for npm install/build (RSS stays much lower)
     });
 
-    // Kill process if it hangs for more than 10 minutes (e.g. npm install waiting for input)
-    const hardTimeout = setTimeout(() => {
+  // Kill process if it hangs for too long (heavy native installs can take a while).
+  const hardTimeout = setTimeout(() => {
       child.kill('SIGTERM');
-      reject(new Error(`"${cmd}" timed out after 10 minutes. Check your install/build commands.`));
-    }, 10 * 60 * 1000);
+      reject(new Error(`"${cmd}" timed out after ${BUILD_STEP_TIMEOUT_MINUTES} minutes. Check your install/build commands.`));
+    }, BUILD_STEP_TIMEOUT_MINUTES * 60 * 1000);
 
     let lastLines = [];
     const onLine  = (line, isErr) => {
