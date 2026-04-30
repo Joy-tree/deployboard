@@ -48,7 +48,11 @@ async function runBuild({ deployId, project, sitesDir, tmpDir, githubToken, appP
   if (workerDeploy) {
     return runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
   }
-  const isServerApp = (project.siteType === 'server') || !!(project.startCmd || '').trim();
+  // Respect explicit site type first. If "static" is selected, do NOT force
+  // server mode just because startCmd has a default value (e.g. "npm start").
+  const explicitType = String(project.siteType || '').trim().toLowerCase();
+  const hasStartCmd = !!String(project.startCmd || '').trim();
+  const isServerApp = explicitType === 'server' || (!explicitType && hasStartCmd);
   return isServerApp
     ? runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog })
     : runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken, emit, onLog });
@@ -136,30 +140,27 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
   log('\x1b[90m[docker] Waiting for app to start…\x1b[0m');
   await new Promise(r => setTimeout(r, 3000));
 
-  let containerIP = '';
-  for (let i = 0; i < 5; i++) {
-    try {
-      const { execSync } = require('child_process');
-      const ip = execSync(
-        `docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${containerName}`,
-        { encoding: 'utf8' }
-      ).trim();
-      if (ip) { containerIP = ip; break; }
-    } catch(e) {}
-    await new Promise(r => setTimeout(r, 2000));
+  const stable = await waitForContainerRunning(candidateContainerName, 30, log);
+  if (!stable) {
+    try { await exec('docker', ['logs', '--tail', '60', candidateContainerName], {}, log); } catch(e) {}
+    throw new Error('Dockerfile container exited during startup. Check logs above.');
   }
 
-  if (!containerIP) throw new Error('Could not get container IP. Check docker logs: docker logs ' + containerName);
-  log(`\x1b[90m[docker] Container IP: ${containerIP}\x1b[0m`);
+  const livePort = await detectLivePort(candidateContainerName, exposedPort, 60, log);
+  const targetPort = livePort || exposedPort;
+
+  // Promote candidate to stable name used by proxy/registry
+  try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
+  await exec('docker', ['rename', candidateContainerName, containerName], {}, () => {});
 
   // Register in port registry
   const portsFile = path.join(sitesDir, 'ports.json');
   let registry = {};
   try { registry = JSON.parse(fs.readFileSync(portsFile, 'utf8')); } catch(e) {}
-  registry[project.subdomain] = containerIP + ':' + exposedPort;
+  registry[project.subdomain] = `${containerName}:${targetPort}`;
   fs.writeFileSync(portsFile, JSON.stringify(registry, null, 2));
 
-  log(`\x1b[32m[docker] ✓ Dockerfile app is live at ${project.subdomain}\x1b[0m`);
+  log(`\x1b[32m[docker] ✓ Dockerfile app is live at ${project.subdomain} → ${containerName}:${targetPort}\x1b[0m`);
   emitStep(emit, 'start', 'done');
 
   // Cleanup
@@ -274,29 +275,29 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  let projectRoot = findProjectRoot(buildDir, log);
-  projectRoot = resolveDeployableRoot(projectRoot, buildDir, startCmd, log);
-  assertDeployableServerApp(projectRoot, startCmd, log);
+  const projectRoot = findProjectRoot(buildDir, log);
+  const hasPackageJson = fs.existsSync(path.join(projectRoot, 'package.json'));
   const profile = detectProjectProfile(projectRoot);
-  log(`\x1b[90m[detect] Project type: ${profile.kind}${profile.framework ? ' · framework: ' + profile.framework : ''}\x1b[0m`);
-  if (profile.needsDatabase && !hasAnyDbEnv(env)) {
-    log(`\x1b[33m[detect] This project likely needs a database connection (TypeORM/Prisma/etc). Add DB env vars before deploy to avoid startup failures.\x1b[0m`);
-  }
+  log(`\x1b[90m[detect] Static project type: ${profile.kind}${profile.framework ? ' · framework: ' + profile.framework : ''}\x1b[0m`);
   const outputDir   = path.join(projectRoot, project.outputDir || 'dist');
 
   // ── Step 2: Install ────────────────────────────────────────────────────────
   emitStep(emit, 'install', 'active');
   log(`\n\x1b[36m━━━ Step 2/5 — Install ━━━\x1b[0m`);
-  const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
-  log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-  await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: installCmd, log });
+  if (hasPackageJson) {
+    const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
+    log(`\x1b[90m$ ${installCmd}\x1b[0m`);
+    await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: installCmd, log });
+  } else {
+    log(`\x1b[90m[install] No package.json found — skipping install for plain static files\x1b[0m`);
+  }
   emitStep(emit, 'install', 'done');
 
   // ── Step 3: Build ──────────────────────────────────────────────────────────
   emitStep(emit, 'build', 'active');
   log(`\n\x1b[36m━━━ Step 3/5 — Build ━━━\x1b[0m`);
-  const buildCmd = (project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot);
-  if (buildCmd !== 'echo skip') {
+  const buildCmd = (project.buildCmd || '').trim() || (hasPackageJson ? getDefaultBuildCmd(projectRoot) : 'echo skip');
+  if (hasPackageJson && buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
     await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: buildCmd, log });
   } else {
@@ -313,7 +314,13 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
     ? projectRoot
     : outputDir;
 
-  if (!fs.existsSync(srcDir)) {
+  let finalSrcDir = srcDir;
+  if (!fs.existsSync(finalSrcDir) && !hasPackageJson) {
+    finalSrcDir = projectRoot;
+    log(`\x1b[33m[deploy] Output dir missing; serving repo root for plain static site\x1b[0m`);
+  }
+
+  if (!fs.existsSync(finalSrcDir)) {
     const dirs = fs.readdirSync(buildDir).filter(f => {
       try { return fs.lstatSync(path.join(buildDir, f)).isDirectory(); } catch(e) { return false; }
     });
@@ -324,7 +331,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   if (fs.existsSync(destDir)) fs.rmSync(destDir, { recursive: true, force: true });
   fs.mkdirSync(destDir, { recursive: true });
-  copyDir(srcDir, destDir);
+  copyDir(finalSrcDir, destDir);
   const count = countFiles(destDir);
   emitStep(emit, 'copy', 'done');
   log(`\x1b[32m[deploy] ✓ ${count} files deployed\x1b[0m`);
@@ -531,9 +538,9 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
       throw new Error(`Readiness gate failed after ${runtime.startupTimeoutSeconds}s`);
     }
     const targetPort = normalizePort(livePort, expectedPort);
-    registry[project.subdomain] = `${candidateContainerName}:${targetPort}`;
+    registry[project.subdomain] = `${containerName}:${targetPort}`;
     fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
-    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${candidateContainerName}:${targetPort}\x1b[0m`);
+    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${targetPort}\x1b[0m`);
     if (targetPort !== expectedPort) {
       log(`\x1b[33m[docker] App ignored PORT=${expectedPort}; routing to detected port ${targetPort}\x1b[0m`);
     }
@@ -541,6 +548,8 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
     // Promote: archive previous stable container for fast rollback, then prune old archives.
     await archivePreviousContainer(containerName, project.subdomain, log);
+    await exec('docker', ['rename', candidateContainerName, containerName], {}, () => {});
+    log(`\x1b[90m[docker] Promoted candidate to stable: ${containerName}\x1b[0m`);
     await cleanupArchivedContainers(project.subdomain, DEPLOY_HISTORY_KEEP, log);
 
   } catch(e) {
