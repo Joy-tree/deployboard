@@ -24,11 +24,32 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/deploy
 const SITES_DIR   = process.env.SITES_DIR   || '/var/www/user-sites';
 const TMP_DIR     = process.env.TMP_DIR     || '/tmp/deployboard-builds';
 const GITHUB_TOKEN= process.env.GITHUB_TOKEN|| '';
-const BASE_DOMAIN = process.env.BASE_DOMAIN || 'localhost';
+const BASE_DOMAIN = normalizeBaseDomain(process.env.BASE_DOMAIN || 'localhost');
 const CF_API_TOKEN  = process.env.CF_API_TOKEN  || '';
 const CF_ZONE_ID    = process.env.CF_ZONE_ID    || '';
 const CF_TUNNEL_ID  = process.env.CF_TUNNEL_ID  || '';
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || '';
+
+function normalizeBaseDomain(value) {
+  return String(value || 'localhost')
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .split('/')[0]
+    .replace(/:[0-9]+$/, '')
+    .replace(/^\.+|\.+$/g, '');
+}
+
+function normalizeHostHeader(value) {
+  return String(value || '')
+    .toLowerCase()
+    .split(',')[0]
+    .trim()
+    .replace(/^https?:\/\//, '')
+    .split('/')[0]
+    .replace(/:[0-9]+$/, '')
+    .replace(/^\.+|\.+$/g, '');
+}
 
 // ── Ensure directories ────────────────────────────────────────────────────────
 [SITES_DIR, TMP_DIR].forEach(d => { try { fs.mkdirSync(d, { recursive: true }); } catch(e) {} });
@@ -93,11 +114,11 @@ function serveStatic(req, res, distDir) {
 // ── Custom domain routing ─────────────────────────────────────────────────────
 // If the incoming host matches a saved custom domain, serve that project directly
 app.use(async (req, res, next) => {
-  const host = (
+  const host = normalizeHostHeader(
     req.headers['x-forwarded-host'] ||
     req.headers.host ||
     ''
-  ).toLowerCase().split(',')[0].trim().replace(/:[0-9]+$/, '');
+  );
 
   // Skip if it looks like the base domain or localhost
   if (!host || host === BASE_DOMAIN || host.endsWith('.' + BASE_DOMAIN) || host === 'localhost') {
@@ -169,11 +190,11 @@ app.use(async (req, res, next) => {
 app.use((req, res, next) => {
   // Cloudflare Tunnel forwards the original hostname in X-Forwarded-Host.
   // Fall back to the Host header when running locally or without a tunnel.
-  const host = (
+  const host = normalizeHostHeader(
     req.headers['x-forwarded-host'] ||
     req.headers.host ||
     ''
-  ).toLowerCase().split(',')[0].trim(); // x-forwarded-host can be a comma list
+  );
 
   const regex = new RegExp(`^([a-z0-9][a-z0-9-]{0,61}[a-z0-9]?)\\.${BASE_DOMAIN.replace(/\./g,'\\.')}$`);
   const match = host.match(regex);
