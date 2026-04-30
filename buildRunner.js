@@ -429,7 +429,11 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\n\x1b[36m━━━ Step 5/6 — Launch Container ━━━\x1b[0m`);
   log(`\x1b[90m[docker] Image:     ${nodeImage}\x1b[0m`);
   log(`\x1b[90m[docker] Container: ${candidateContainerName} (candidate)\x1b[0m`);
-  const resolvedStartCmd = startCmd || getDefaultStartCmd(usedBuildDir || projectRoot);
+  const resolvedStartCmd = resolveRuntimeStartCommand({
+    projectRoot: usedBuildDir || projectRoot,
+    startCmd,
+    expectedPort
+  });
   log(`\x1b[90m[docker] Command:   ${resolvedStartCmd}\x1b[0m`);
 
   // Remove stale candidate with same name if any
@@ -947,6 +951,23 @@ function getDefaultStartCmd(projectRoot) {
   if (pm === 'pnpm') return 'pnpm start';
   if (pm === 'yarn') return 'yarn start';
   return 'npm start';
+}
+
+function resolveRuntimeStartCommand({ projectRoot, startCmd, expectedPort }) {
+  const raw = (startCmd || '').trim() || getDefaultStartCmd(projectRoot);
+  const normalized = raw.replace(/\s+/g, ' ').trim().toLowerCase();
+  const hostFlags = `--host 0.0.0.0 --port ${expectedPort}`;
+
+  if (normalized === 'npm start') {
+    return `npm start -- ${hostFlags} || npm start`;
+  }
+  if (normalized === 'yarn start') {
+    return `yarn start ${hostFlags} || yarn start`;
+  }
+  if (normalized === 'pnpm start') {
+    return `pnpm start ${hostFlags} || pnpm start`;
+  }
+  return raw;
 }
 
 function exec(cmd, args, options, logFn) {
