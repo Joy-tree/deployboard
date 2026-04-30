@@ -470,6 +470,9 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\x1b[90m[docker] Runtime limits: ${runtime.cpuShares} CPU shares | ${runtime.memory} memory | ${PIDS_LIMIT} max processes\x1b[0m`);
 
   for (const [k, v] of Object.entries(env)) {
+    const key = String(k || '').toUpperCase();
+    // Keep platform runtime binding values authoritative.
+    if (key === 'PORT' || key === 'HOST' || key === 'HOSTNAME') continue;
     dockerArgs.push('-e', `${k}=${v}`);
   }
 
