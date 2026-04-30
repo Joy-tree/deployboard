@@ -1,5 +1,12 @@
 'use strict';
 
+// ===== DEPLOYBOARD UPDATE MARKER (VISIBLE) =====
+// UPDATED BY AGENT: 2026-04-29T00:00:00Z
+// DNS behavior in this version:
+// - supports Cloudflare specific-record UPSERT (create/update)
+// - supports CF_FORCE_SPECIFIC_RECORDS=true to force per-subdomain records
+// ===============================================
+
 const express  = require('express');
 const http     = require('http');
 const { Server: SocketIO } = require('socket.io');
@@ -291,20 +298,33 @@ function noRootRoutePage(subdomain, port) {
 // ── Cloudflare ────────────────────────────────────────────────────────────────
 async function registerSubdomain(subdomain) {
   const fullDomain  = `${subdomain}.${BASE_DOMAIN}`;
+  const forceSpecificRecords = process.env.CF_FORCE_SPECIFIC_RECORDS === 'true';
   const wildcardMode = process.env.CF_WILDCARD_MODE !== 'false';
-  if (wildcardMode || !CF_API_TOKEN || !CF_ZONE_ID) {
+  const shouldSkipRecordCreate = wildcardMode && !forceSpecificRecords;
+  if (shouldSkipRecordCreate || !CF_API_TOKEN || !CF_ZONE_ID) {
     return { ok: true, url: `https://${fullDomain}` };
   }
   try {
     const target = CF_TUNNEL_ID ? `${CF_TUNNEL_ID}.cfargotunnel.com` : BASE_DOMAIN;
-    const r = await fetch(`https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/dns_records`, {
-      method: 'POST',
+    const lookup = await fetch(`https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/dns_records?name=${fullDomain}`, {
+      headers: { 'Authorization': `Bearer ${CF_API_TOKEN}` }
+    });
+    const lookupData = await lookup.json();
+    const existing = lookupData?.result?.[0];
+
+    const body = { type: 'CNAME', name: subdomain, content: target, proxied: true, ttl: 1 };
+    const endpoint = existing
+      ? `https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/dns_records/${existing.id}`
+      : `https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/dns_records`;
+    const method = existing ? 'PUT' : 'POST';
+    const r = await fetch(endpoint, {
+      method,
       headers: { 'Authorization': `Bearer ${CF_API_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'CNAME', name: subdomain, content: target, proxied: true, ttl: 1 })
+      body: JSON.stringify(body)
     });
     const d = await r.json();
-    if (!d.success && !d.errors?.[0]?.message?.toLowerCase().includes('already exists')) {
-      return { ok: false, reason: d.errors?.[0]?.message || 'DNS error' };
+    if (!d.success) {
+      return { ok: false, reason: d.errors?.[0]?.message || 'DNS upsert error' };
     }
   } catch(e) { return { ok: false, reason: e.message }; }
   return { ok: true, url: `https://${fullDomain}` };
