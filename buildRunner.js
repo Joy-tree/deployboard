@@ -136,30 +136,27 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
   log('\x1b[90m[docker] Waiting for app to start…\x1b[0m');
   await new Promise(r => setTimeout(r, 3000));
 
-  let containerIP = '';
-  for (let i = 0; i < 5; i++) {
-    try {
-      const { execSync } = require('child_process');
-      const ip = execSync(
-        `docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${containerName}`,
-        { encoding: 'utf8' }
-      ).trim();
-      if (ip) { containerIP = ip; break; }
-    } catch(e) {}
-    await new Promise(r => setTimeout(r, 2000));
+  const stable = await waitForContainerRunning(candidateContainerName, 30, log);
+  if (!stable) {
+    try { await exec('docker', ['logs', '--tail', '60', candidateContainerName], {}, log); } catch(e) {}
+    throw new Error('Dockerfile container exited during startup. Check logs above.');
   }
 
-  if (!containerIP) throw new Error('Could not get container IP. Check docker logs: docker logs ' + containerName);
-  log(`\x1b[90m[docker] Container IP: ${containerIP}\x1b[0m`);
+  const livePort = await detectLivePort(candidateContainerName, exposedPort, 60, log);
+  const targetPort = livePort || exposedPort;
+
+  // Promote candidate to stable name used by proxy/registry
+  try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
+  await exec('docker', ['rename', candidateContainerName, containerName], {}, () => {});
 
   // Register in port registry
   const portsFile = path.join(sitesDir, 'ports.json');
   let registry = {};
   try { registry = JSON.parse(fs.readFileSync(portsFile, 'utf8')); } catch(e) {}
-  registry[project.subdomain] = containerIP + ':' + exposedPort;
+  registry[project.subdomain] = `${containerName}:${targetPort}`;
   fs.writeFileSync(portsFile, JSON.stringify(registry, null, 2));
 
-  log(`\x1b[32m[docker] ✓ Dockerfile app is live at ${project.subdomain}\x1b[0m`);
+  log(`\x1b[32m[docker] ✓ Dockerfile app is live at ${project.subdomain} → ${containerName}:${targetPort}\x1b[0m`);
   emitStep(emit, 'start', 'done');
 
   // Cleanup
@@ -531,9 +528,9 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
       throw new Error(`Readiness gate failed after ${runtime.startupTimeoutSeconds}s`);
     }
     const targetPort = normalizePort(livePort, expectedPort);
-    registry[project.subdomain] = `${candidateContainerName}:${targetPort}`;
+    registry[project.subdomain] = `${containerName}:${targetPort}`;
     fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
-    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${candidateContainerName}:${targetPort}\x1b[0m`);
+    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${targetPort}\x1b[0m`);
     if (targetPort !== expectedPort) {
       log(`\x1b[33m[docker] App ignored PORT=${expectedPort}; routing to detected port ${targetPort}\x1b[0m`);
     }
@@ -541,6 +538,8 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
     // Promote: archive previous stable container for fast rollback, then prune old archives.
     await archivePreviousContainer(containerName, project.subdomain, log);
+    await exec('docker', ['rename', candidateContainerName, containerName], {}, () => {});
+    log(`\x1b[90m[docker] Promoted candidate to stable: ${containerName}\x1b[0m`);
     await cleanupArchivedContainers(project.subdomain, DEPLOY_HISTORY_KEEP, log);
 
   } catch(e) {
