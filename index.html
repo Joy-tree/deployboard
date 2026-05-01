@@ -270,6 +270,24 @@ body::before{
 .hero-trust-sep{color:var(--border);font-size:0.85rem;}
 @media(max-width:480px){.hero-trust{gap:0.4rem 0.6rem;}.hero-trust-sep{display:none;}}
 
+.langs-section{
+  padding:20px max(24px,6vw) 70px;
+}
+.langs-grid{
+  max-width:900px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px 16px;
+}
+.lang-card{
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:18px 10px;
+  text-align:center;
+}
+.lang-icon{width:54px;height:54px;object-fit:contain;filter:grayscale(1) opacity(0.9);}
+.lang-name{margin-top:10px;color:#a78bfa;font-weight:600;font-size:1rem;}
+@media(max-width:640px){.langs-grid{grid-template-columns:repeat(3,1fr);gap:14px 10px;}.lang-icon{width:46px;height:46px;}}
+
 /* ── Terminal hero ────────────────────────────────────────────────── */
 .hero-terminal{
   width:100%;max-width:740px;
@@ -1989,6 +2007,20 @@ textarea.input { resize: vertical; min-height: 80px; }
     <div class="terminal-body" id="terminalBody">
       <span class="tl tl-prompt">$ <span class="tl-cmd">git push origin main</span></span>
     </div>
+  </div>
+</section>
+
+<section class="langs-section" aria-label="Supported languages">
+  <div class="langs-grid">
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js"><div class="lang-name">Node.js</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-original.svg" alt="Ruby"><div class="lang-name">Ruby</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python"><div class="lang-name">Python</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" alt="Java"><div class="lang-name">Java</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg" alt="PHP"><div class="lang-name">PHP</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg" alt="Go"><div class="lang-name">Go</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/scala/scala-original.svg" alt="Scala"><div class="lang-name">Scala</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/clojure/clojure-original.svg" alt="Clojure"><div class="lang-name">Clojure</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg" alt=".NET"><div class="lang-name">.NET</div></div>
   </div>
 </section>
 
