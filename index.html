@@ -1243,6 +1243,15 @@ textarea.input { resize: vertical; min-height: 80px; }
   background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
   border-radius: 0 0 var(--radius) var(--radius);
 }
+.terminal-empty{
+  position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg, rgba(2,6,23,.72), rgba(2,6,23,.9));
+}
+.terminal-empty.hide{display:none;}
+.terminal-empty-card{text-align:center;max-width:420px;padding:20px;color:#94a3b8;}
+.terminal-empty-icon{font-family:var(--font-mono);font-size:2.4rem;color:#64748b;line-height:1;}
+.terminal-empty-title{font-family:var(--font-mono);font-size:1.9rem;margin-top:12px;color:#94a3b8;}
+.terminal-empty-sub{font-family:var(--font-mono);font-size:1rem;line-height:1.45;margin-top:10px;color:#6b7280;}
 
 @media(max-width:768px) {
   #terminal { height: clamp(280px, 48vh, 600px); }
@@ -3204,6 +3213,13 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           </div>
           <div class="terminal-wrap">
             <div id="terminal"></div>
+            <div id="terminalEmptyState" class="terminal-empty">
+              <div class="terminal-empty-card">
+                <div class="terminal-empty-icon">&gt;_</div>
+                <div class="terminal-empty-title">No logs available</div>
+                <div class="terminal-empty-sub">Logs will appear here when your application starts generating them.</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -4839,9 +4855,7 @@ function showPage(id, navEl) {
   if (id === 'env-manager')   renderEnvManager();
   if (id === 'logs') {
     initTerminal();
-    if (!activeBuildId) {
-      writeTerm('\x1b[90m[info] Logs will show here once deployment starts.\x1b[0m');
-    }
+    updateTerminalEmptyState();
   }
   if (id === 'settings')      loadSettingsUI();
   if (id === 'new-deploy')    initDeployForm();
@@ -5542,6 +5556,8 @@ var pendingTermLines = [];
 // flows naturally instead of spawning all at once
 var _writeQueue = [];
 var _writeDraining = false;
+var _writeBatchSize = 6;
+var _writeBatchDelayMs = 55;
 var _hasWrittenBuildLogs = false;
 function _tsNow() {
   const d = new Date();
@@ -5559,9 +5575,14 @@ function _withTs(line) {
 function _drainWriteQueue() {
   if (!_writeQueue.length) { _writeDraining = false; return; }
   _writeDraining = true;
-  const line = _writeQueue.shift();
-  if (term) term.writeln(line);
-  setTimeout(_drainWriteQueue, 18);
+  let wrote = 0;
+  while (_writeQueue.length && wrote < _writeBatchSize) {
+    const line = _writeQueue.shift();
+    if (term) term.writeln(line);
+    wrote++;
+  }
+  if (term) term.scrollToBottom();
+  setTimeout(_drainWriteQueue, _writeBatchDelayMs);
 }
 
 function writeTerm(line) {
@@ -5574,6 +5595,22 @@ function writeTerm(line) {
     pendingTermLines.push(stamped);
     if (pendingTermLines.length > 2000) pendingTermLines.shift();
   }
+  updateTerminalEmptyState();
+}
+
+function updateTerminalEmptyState() {
+  const el = document.getElementById('terminalEmptyState');
+  if (!el) return;
+  const hasLogs = (logBuffer && logBuffer.length > 0) || (pendingTermLines && pendingTermLines.length > 0) || _writeQueue.length > 0;
+  el.classList.toggle('hide', hasLogs || !!activeBuildId);
+}
+
+function writeBench(title, detail='') {
+  writeTerm('');
+  writeTerm('\x1b[36m╭──────────────────────────────────────────────────────────────╮\x1b[0m');
+  writeTerm('\x1b[36m│\x1b[0m \x1b[1m' + title.padEnd(58).slice(0,58) + '\x1b[0m \x1b[36m│\x1b[0m');
+  if (detail) writeTerm('\x1b[36m│\x1b[0m ' + String(detail).padEnd(58).slice(0,58) + ' \x1b[36m│\x1b[0m');
+  writeTerm('\x1b[36m╰──────────────────────────────────────────────────────────────╯\x1b[0m');
 }
 
 function clearTerminal() {
@@ -5581,6 +5618,7 @@ function clearTerminal() {
   logBuffer = [];
   pendingTermLines = [];
   _hasWrittenBuildLogs = false;
+  updateTerminalEmptyState();
 }
 
 function downloadLogs() {
@@ -5624,8 +5662,7 @@ function initSocket() {
 
     socket.on('connect', () => {
       console.log('[Socket.io] Connected:', socket.id);
-      writeTerm('\x1b[32m[system]\x1b[0m \x1b[90mConnected to build server · session \x1b[0m\x1b[36m' + socket.id.substring(0,12) + '…\x1b[0m');
-      writeTerm('\x1b[90m─────────────────────────────────────────────────────\x1b[0m');
+      writeBench('DEPLOYBOARD LIVE LOG STREAM', 'Connected · session ' + socket.id.substring(0,12) + '…');
       const statusEl = document.getElementById('statusSocket');
       if (statusEl) {
         statusEl.className = 'badge badge-success';
@@ -5634,7 +5671,6 @@ function initSocket() {
     });
 
     socket.on('disconnect', (reason) => {
-      writeTerm('\x1b[90m─────────────────────────────────────────────────────\x1b[0m');
       writeTerm('\x1b[33m[system]\x1b[0m \x1b[90mDisconnected from build server · ' + reason + '\x1b[0m');
       const statusEl = document.getElementById('statusSocket');
       if (statusEl) {
@@ -5705,6 +5741,17 @@ function initSocket() {
         if (desc && sc) desc.textContent = sc;
       }
       if (stepMap[step.id]) setStep(stepMap[step.id], step.state);
+      if (step.state === 'active') {
+        const stepTitles = {
+          clone: 'Step 1 · Clone Repository',
+          install: 'Step 2 · Install Dependencies',
+          build: 'Step 3 · Build Project',
+          copy: 'Step 4 · Publish Artifacts',
+          start: 'Step 5 · Start Runtime',
+          cleanup: 'Step 6 · Cleanup'
+        };
+        writeBench(stepTitles[step.id] || `Step · ${step.id}`, 'Streaming logs in structured batches');
+      }
     });
 
     // ── Build finished ───────────────────────────────────────────
