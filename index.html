@@ -122,6 +122,12 @@ body::before{
 }
 #landing-view .nav-link:hover{color:var(--text);background:rgba(255,255,255,0.04);}
 #landing-view .nav-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+#landing-view .btn-nav-menu{
+  width:38px;height:38px;border-radius:10px;
+  border:1px solid var(--border-h);background:transparent;color:var(--text);
+  display:inline-flex;align-items:center;justify-content:center;
+}
+#landing-view .btn-nav-menu svg{width:20px;height:20px;}
 #landing-view .btn-nav{
   padding:8px 18px;border-radius:8px;font-size:0.85rem;font-weight:600;
   border:1px solid var(--border);color:var(--text-2);background:transparent;
@@ -269,6 +275,42 @@ body::before{
 .hero-trust-item svg{width:13px;height:13px;stroke:var(--green);flex-shrink:0;}
 .hero-trust-sep{color:var(--border);font-size:0.85rem;}
 @media(max-width:480px){.hero-trust{gap:0.4rem 0.6rem;}.hero-trust-sep{display:none;}}
+
+.langs-section{
+  padding:20px max(24px,6vw) 70px;
+}
+.langs-grid{
+  max-width:900px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px 16px;
+}
+.lang-card{
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:18px 10px;
+  text-align:center;
+}
+.lang-icon{width:54px;height:54px;object-fit:contain;filter:grayscale(1) opacity(0.9);}
+.lang-name{margin-top:10px;color:#a78bfa;font-weight:600;font-size:1rem;}
+@media(max-width:640px){.langs-grid{grid-template-columns:repeat(3,1fr);gap:14px 10px;}.lang-icon{width:46px;height:46px;}}
+
+.landing-drawer-overlay{position:fixed;inset:0;background:rgba(2,6,23,.65);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.2s;z-index:950;}
+.landing-drawer-overlay.open{opacity:1;pointer-events:auto;}
+.landing-drawer{
+  position:fixed;top:0;right:0;height:100vh;width:min(86vw,380px);z-index:960;
+  background:#f8fafc;color:#0f172a;transform:translateX(100%);transition:.24s ease;
+  padding:20px 18px 28px;overflow-y:auto;
+}
+.landing-drawer.open{transform:translateX(0);}
+.landing-drawer h3{font-size:1.05rem;margin:14px 0 8px;}
+.landing-drawer .ld-close{border:none;background:none;font-size:1.7rem;line-height:1;float:right;color:#334155;}
+.landing-drawer .ld-link{display:block;padding:8px 0;color:#0f172a;text-decoration:underline;font-weight:500;}
+.landing-drawer .ld-sub{font-size:.78rem;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin-top:18px;margin-bottom:8px;font-weight:700;}
+.landing-drawer .ld-chip{display:inline-block;margin:5px 6px 0 0;padding:6px 10px;border-radius:999px;background:#e2e8f0;color:#0f172a;font-size:.82rem;}
+.rich-image-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:980px;margin:10px auto 0;}
+.rich-image{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#0b1221;}
+.rich-image img{width:100%;height:140px;object-fit:cover;display:block;}
+.rich-image .cap{padding:8px 10px;font-size:.84rem;color:var(--text-2);}
 
 /* ── Terminal hero ────────────────────────────────────────────────── */
 .hero-terminal{
@@ -1201,6 +1243,15 @@ textarea.input { resize: vertical; min-height: 80px; }
   background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
   border-radius: 0 0 var(--radius) var(--radius);
 }
+.terminal-empty{
+  position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg, rgba(2,6,23,.72), rgba(2,6,23,.9));
+}
+.terminal-empty.hide{display:none;}
+.terminal-empty-card{text-align:center;max-width:420px;padding:20px;color:#94a3b8;}
+.terminal-empty-icon{font-family:var(--font-mono);font-size:2.4rem;color:#64748b;line-height:1;}
+.terminal-empty-title{font-family:var(--font-mono);font-size:1.9rem;margin-top:12px;color:#94a3b8;}
+.terminal-empty-sub{font-family:var(--font-mono);font-size:1rem;line-height:1.45;margin-top:10px;color:#6b7280;}
 
 @media(max-width:768px) {
   #terminal { height: clamp(280px, 48vh, 600px); }
@@ -1927,8 +1978,29 @@ textarea.input { resize: vertical; min-height: 80px; }
     <a href="#how-it-works" class="nav-link">How it works</a>
     <a href="#snippets" class="nav-link">Docs</a>
   </div>
-  <div class="nav-actions"></div>
+  <div class="nav-actions">
+    <button class="btn-nav-menu" onclick="openLandingDrawer()" aria-label="Open menu">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
 </nav>
+
+<div id="landingDrawerOverlay" class="landing-drawer-overlay" onclick="closeLandingDrawer()"></div>
+<aside id="landingDrawer" class="landing-drawer" aria-label="Landing navigation">
+  <button class="ld-close" onclick="closeLandingDrawer()" aria-label="Close">×</button>
+  <h3>Build with DeployBoard</h3>
+  <a class="ld-link" href="#features" onclick="closeLandingDrawer()">Platform Features</a>
+  <a class="ld-link" href="#how-it-works" onclick="closeLandingDrawer()">How DeployBoard Works</a>
+  <a class="ld-link" href="#language-guides" onclick="closeLandingDrawer()">Programming Language Guides</a>
+  <div class="ld-sub">Project Kickstarts</div>
+  <a class="ld-link" href="#guide-nodejs" onclick="closeLandingDrawer()">Node.js</a>
+  <a class="ld-link" href="#guide-python" onclick="closeLandingDrawer()">Python</a>
+  <a class="ld-link" href="#guide-java" onclick="closeLandingDrawer()">Java</a>
+  <a class="ld-link" href="#guide-go" onclick="closeLandingDrawer()">Go</a>
+  <a class="ld-link" href="#guide-dotnet" onclick="closeLandingDrawer()">.NET</a>
+  <div class="ld-sub">More Frameworks</div>
+  <span class="ld-chip">React</span><span class="ld-chip">Next.js</span><span class="ld-chip">Vue</span><span class="ld-chip">Nuxt</span><span class="ld-chip">Svelte</span>
+</aside>
 
 <!-- ── HERO ──────────────────────────────────────────────────────────── -->
 <section class="hero">
@@ -1989,6 +2061,33 @@ textarea.input { resize: vertical; min-height: 80px; }
     <div class="terminal-body" id="terminalBody">
       <span class="tl tl-prompt">$ <span class="tl-cmd">git push origin main</span></span>
     </div>
+  </div>
+</section>
+
+<section class="langs-section" aria-label="Supported languages">
+  <div class="langs-grid">
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js"><div class="lang-name">Node.js</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-original.svg" alt="Ruby"><div class="lang-name">Ruby</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python"><div class="lang-name">Python</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" alt="Java"><div class="lang-name">Java</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg" alt="PHP"><div class="lang-name">PHP</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg" alt="Go"><div class="lang-name">Go</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/scala/scala-original.svg" alt="Scala"><div class="lang-name">Scala</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/clojure/clojure-original.svg" alt="Clojure"><div class="lang-name">Clojure</div></div>
+    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg" alt=".NET"><div class="lang-name">.NET</div></div>
+  </div>
+</section>
+
+<section class="section reveal" id="language-guides">
+  <h2 class="section-title">Language Deployment Guides</h2>
+  <p class="section-sub">Learn official docs and how DeployBoard helps you ship each stack faster.</p>
+  <div class="rich-image-grid">
+    <a id="guide-nodejs" class="rich-image" href="https://nodejs.org/en/docs" target="_blank"><img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop" alt="Node.js guide"><div class="cap">Node.js docs + DeployBoard server deploy flow</div></a>
+    <a id="guide-python" class="rich-image" href="https://docs.python.org/3/" target="_blank"><img src="https://images.unsplash.com/photo-1526379095098-d400fd0bf935?q=80&w=1200&auto=format&fit=crop" alt="Python guide"><div class="cap">Python app hosting guide</div></a>
+    <a id="guide-java" class="rich-image" href="https://docs.oracle.com/en/java/" target="_blank"><img src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1200&auto=format&fit=crop" alt="Java guide"><div class="cap">Java build/runtime guide</div></a>
+    <a id="guide-go" class="rich-image" href="https://go.dev/doc/" target="_blank"><img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?q=80&w=1200&auto=format&fit=crop" alt="Go guide"><div class="cap">Go service deployment guide</div></a>
+    <a id="guide-dotnet" class="rich-image" href="https://learn.microsoft.com/dotnet/" target="_blank"><img src="https://images.unsplash.com/photo-1516116216624-53e697fedbea?q=80&w=1200&auto=format&fit=crop" alt=".NET guide"><div class="cap">.NET build and deploy guide</div></a>
+    <a class="rich-image" href="#how-it-works"><img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop" alt="DeployBoard features"><div class="cap">How DeployBoard automates build, release and routing</div></a>
   </div>
 </section>
 
@@ -3114,6 +3213,13 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           </div>
           <div class="terminal-wrap">
             <div id="terminal"></div>
+            <div id="terminalEmptyState" class="terminal-empty">
+              <div class="terminal-empty-card">
+                <div class="terminal-empty-icon">&gt;_</div>
+                <div class="terminal-empty-title">No logs available</div>
+                <div class="terminal-empty-sub">Logs will appear here when your application starts generating them.</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -4749,9 +4855,7 @@ function showPage(id, navEl) {
   if (id === 'env-manager')   renderEnvManager();
   if (id === 'logs') {
     initTerminal();
-    if (!activeBuildId) {
-      writeTerm('\x1b[90m[info] Logs will show here once deployment starts.\x1b[0m');
-    }
+    updateTerminalEmptyState();
   }
   if (id === 'settings')      loadSettingsUI();
   if (id === 'new-deploy')    initDeployForm();
@@ -4783,6 +4887,15 @@ function toggleSidebar() {
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+function openLandingDrawer() {
+  document.getElementById('landingDrawer')?.classList.add('open');
+  document.getElementById('landingDrawerOverlay')?.classList.add('open');
+}
+function closeLandingDrawer() {
+  document.getElementById('landingDrawer')?.classList.remove('open');
+  document.getElementById('landingDrawerOverlay')?.classList.remove('open');
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -5443,6 +5556,8 @@ var pendingTermLines = [];
 // flows naturally instead of spawning all at once
 var _writeQueue = [];
 var _writeDraining = false;
+var _writeBatchSize = 6;
+var _writeBatchDelayMs = 55;
 var _hasWrittenBuildLogs = false;
 function _tsNow() {
   const d = new Date();
@@ -5460,9 +5575,14 @@ function _withTs(line) {
 function _drainWriteQueue() {
   if (!_writeQueue.length) { _writeDraining = false; return; }
   _writeDraining = true;
-  const line = _writeQueue.shift();
-  if (term) term.writeln(line);
-  setTimeout(_drainWriteQueue, 18);
+  let wrote = 0;
+  while (_writeQueue.length && wrote < _writeBatchSize) {
+    const line = _writeQueue.shift();
+    if (term) term.writeln(line);
+    wrote++;
+  }
+  if (term) term.scrollToBottom();
+  setTimeout(_drainWriteQueue, _writeBatchDelayMs);
 }
 
 function writeTerm(line) {
@@ -5475,6 +5595,22 @@ function writeTerm(line) {
     pendingTermLines.push(stamped);
     if (pendingTermLines.length > 2000) pendingTermLines.shift();
   }
+  updateTerminalEmptyState();
+}
+
+function updateTerminalEmptyState() {
+  const el = document.getElementById('terminalEmptyState');
+  if (!el) return;
+  const hasLogs = (logBuffer && logBuffer.length > 0) || (pendingTermLines && pendingTermLines.length > 0) || _writeQueue.length > 0;
+  el.classList.toggle('hide', hasLogs || !!activeBuildId);
+}
+
+function writeBench(title, detail='') {
+  writeTerm('');
+  writeTerm('\x1b[36m╭──────────────────────────────────────────────────────────────╮\x1b[0m');
+  writeTerm('\x1b[36m│\x1b[0m \x1b[1m' + title.padEnd(58).slice(0,58) + '\x1b[0m \x1b[36m│\x1b[0m');
+  if (detail) writeTerm('\x1b[36m│\x1b[0m ' + String(detail).padEnd(58).slice(0,58) + ' \x1b[36m│\x1b[0m');
+  writeTerm('\x1b[36m╰──────────────────────────────────────────────────────────────╯\x1b[0m');
 }
 
 function clearTerminal() {
@@ -5482,6 +5618,7 @@ function clearTerminal() {
   logBuffer = [];
   pendingTermLines = [];
   _hasWrittenBuildLogs = false;
+  updateTerminalEmptyState();
 }
 
 function downloadLogs() {
@@ -5525,8 +5662,7 @@ function initSocket() {
 
     socket.on('connect', () => {
       console.log('[Socket.io] Connected:', socket.id);
-      writeTerm('\x1b[32m[system]\x1b[0m \x1b[90mConnected to build server · session \x1b[0m\x1b[36m' + socket.id.substring(0,12) + '…\x1b[0m');
-      writeTerm('\x1b[90m─────────────────────────────────────────────────────\x1b[0m');
+      writeBench('DEPLOYBOARD LIVE LOG STREAM', 'Connected · session ' + socket.id.substring(0,12) + '…');
       const statusEl = document.getElementById('statusSocket');
       if (statusEl) {
         statusEl.className = 'badge badge-success';
@@ -5535,7 +5671,6 @@ function initSocket() {
     });
 
     socket.on('disconnect', (reason) => {
-      writeTerm('\x1b[90m─────────────────────────────────────────────────────\x1b[0m');
       writeTerm('\x1b[33m[system]\x1b[0m \x1b[90mDisconnected from build server · ' + reason + '\x1b[0m');
       const statusEl = document.getElementById('statusSocket');
       if (statusEl) {
@@ -5606,6 +5741,17 @@ function initSocket() {
         if (desc && sc) desc.textContent = sc;
       }
       if (stepMap[step.id]) setStep(stepMap[step.id], step.state);
+      if (step.state === 'active') {
+        const stepTitles = {
+          clone: 'Step 1 · Clone Repository',
+          install: 'Step 2 · Install Dependencies',
+          build: 'Step 3 · Build Project',
+          copy: 'Step 4 · Publish Artifacts',
+          start: 'Step 5 · Start Runtime',
+          cleanup: 'Step 6 · Cleanup'
+        };
+        writeBench(stepTitles[step.id] || `Step · ${step.id}`, 'Streaming logs in structured batches');
+      }
     });
 
     // ── Build finished ───────────────────────────────────────────
