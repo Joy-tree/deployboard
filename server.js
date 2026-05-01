@@ -823,6 +823,11 @@ app.post('/api/deploy', async (req, res) => {
       emit('build:log', { line: `\x1b[32m[CF]\x1b[0m Live at: \x1b[1m${cf.url}\x1b[0m` });
       try { await Project.findByIdAndUpdate(project._id, { liveUrl: cf.url }); } catch(e) {}
     }
+    if (!isServerApp) {
+      const live = cf?.url || `https://${cleanSub}.${BASE_DOMAIN}`;
+      emit('build:log', { line: `\x1b[90m[static] OAuth note: add ${live} callback URL(s) in GitHub/Google OAuth settings.\x1b[0m` });
+      emit('build:log', { line: `\x1b[90m[static] Turnstile note: add ${cleanSub}.${BASE_DOMAIN} to your widget domain allowlist.\x1b[0m` });
+    }
 
     const duration = Math.round((Date.now() - buildStart) / 1000);
     deployment.status = 'success'; deployment.duration = duration; deployment.endedAt = new Date();

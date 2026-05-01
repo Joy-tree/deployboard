@@ -886,11 +886,31 @@ function probeTcp(host, port, timeoutMs = 1000) {
 
 async function cloneRepo(project, buildDir, githubToken, log) {
   let cloneUrl = project.repoUrl.trim();
+  let forcedBranch = '';
+
+  // Accept GitHub "tree" URLs pasted from browser:
+  // https://github.com/<owner>/<repo>/tree/<branch>[/subdir]
+  // Convert them to cloneable repo URL + inferred branch.
+  const ghTree = cloneUrl.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)(\/.*)?$/i);
+  if (ghTree) {
+    const owner = ghTree[1];
+    const repo = ghTree[2].replace(/\.git$/i, '');
+    forcedBranch = decodeURIComponent(ghTree[3] || '').trim();
+    cloneUrl = `https://github.com/${owner}/${repo}.git`;
+    log(`\x1b[90m[clone] Detected GitHub tree URL — using repo root ${cloneUrl} and branch "${forcedBranch || 'main'}"\x1b[0m`);
+  }
+
+  // Normalize plain GitHub web URLs to .git clone URL.
+  const ghRepo = cloneUrl.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/i);
+  if (ghRepo) {
+    cloneUrl = `https://github.com/${ghRepo[1]}/${ghRepo[2].replace(/\.git$/i, '')}.git`;
+  }
+
   if (githubToken && /^https:\/\/github\.com\//i.test(cloneUrl)) {
     const token = encodeURIComponent(githubToken);
     cloneUrl = cloneUrl.replace(/^https:\/\/github\.com\//i, `https://x-access-token:${token}@github.com/`);
   }
-  const branch = (project.branch || 'main').trim();
+  const branch = (forcedBranch || project.branch || 'main').trim();
   const fallback = branch === 'main' ? 'master' : 'main';
 
   log(`\x1b[90m$ git clone --depth=1 --branch ${branch} ${project.repoUrl} ${buildDir}\x1b[0m`);
@@ -961,8 +981,9 @@ function resolveEnvVars(evars) {
 
 async function runBuildCommandInContainer({ projectRoot, nodeImage, envObj, nodeEnv = 'development', command, log }) {
   try { await exec('docker', ['pull', nodeImage], {}, () => {}); } catch(e) {}
-  const commandWithCorepack = `corepack enable >/dev/null 2>&1 || true; ${command}`;
-  log(`\x1b[90m[docker-build] ${nodeImage} :: ${command}\x1b[0m`);
+  const normalizedCommand = normalizeInstallLikeCommand(command, projectRoot);
+  const commandWithCorepack = `corepack enable >/dev/null 2>&1 || true; ${normalizedCommand}`;
+  log(`\x1b[90m[docker-build] ${nodeImage} :: ${normalizedCommand}\x1b[0m`);
   const envArgs = [
     '-e', `CI=false`,
     '-e', `NODE_ENV=${nodeEnv}`,
@@ -976,6 +997,31 @@ async function runBuildCommandInContainer({ projectRoot, nodeImage, envObj, node
     nodeImage,
     'sh', '-lc', commandWithCorepack
   ], {}, log);
+}
+
+function normalizeInstallLikeCommand(command, projectRoot) {
+  const raw = String(command || '').trim();
+  const low = raw.toLowerCase();
+  const hasNpmLock = fs.existsSync(path.join(projectRoot, 'package-lock.json'));
+
+  if (low === 'npm i' || low === 'npm install') {
+    return hasNpmLock
+      ? 'npm ci --legacy-peer-deps --no-audit --no-fund --progress=false'
+      : 'npm install --legacy-peer-deps --no-audit --no-fund --progress=false';
+  }
+  if (low.startsWith('npm ci')) {
+    return `${raw} --no-audit --no-fund --progress=false`;
+  }
+  if (low.startsWith('npm install') || low.startsWith('npm i ')) {
+    return `${raw} --no-audit --no-fund --progress=false`;
+  }
+  if (low.startsWith('yarn install') && !low.includes('--non-interactive')) {
+    return `${raw} --non-interactive`;
+  }
+  if (low.startsWith('pnpm install') && !low.includes('--reporter=')) {
+    return `${raw} --reporter=append-only`;
+  }
+  return raw;
 }
 
 function detectPackageManager(projectRoot) {
