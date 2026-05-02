@@ -417,6 +417,16 @@ body.landing-drawer-open { overflow: hidden; }
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 
+.hero-ship-strip{margin:18px auto 8px;max-width:760px;border:1px solid rgba(34,211,238,.35);border-radius:12px;overflow:hidden;background:rgba(15,23,42,.7)}
+.hero-ship-track{display:flex;gap:26px;padding:10px 14px;white-space:nowrap;animation:shipMove 18s linear infinite}
+.hero-ship-pill{display:inline-flex;align-items:center;gap:8px;color:#cbd5e1;font-size:.82rem}
+.hero-visual-grid{margin-top:18px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:min(980px,100%)}
+.hero-visual-card{background:#0a1426;border:1px solid var(--border);border-radius:12px;padding:12px;min-height:120px}
+.hero-visual-card h4{font-size:.82rem;color:#e2e8f0;margin-bottom:8px}
+.hero-code-sim{font-family:var(--font-mono);font-size:.74rem;color:#7dd3fc;line-height:1.5}
+@keyframes shipMove{0%{transform:translateX(-3%)}100%{transform:translateX(-45%)}}
+@media(max-width:760px){.hero-visual-grid{grid-template-columns:1fr;}}
+
 /* ── METRICS BAR ─────────────────────────────────────────────────── */
 .metrics-bar{
   position:relative;
@@ -1974,9 +1984,9 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 /* ── Toast ─────────────────────────────────────────────────────────────── */
 #toast-wrap { position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
-.auth-overlay{position:fixed;inset:0;z-index:1200;background:radial-gradient(circle at 20% 20%,rgba(16,185,129,.16),transparent 40%),#030712;display:none;align-items:center;justify-content:center;padding:20px}
-.auth-overlay.open{display:flex}
-.auth-card{width:min(94vw,520px);background:linear-gradient(180deg,#0a1220,#090f1c);border:1px solid rgba(99,179,237,.18);border-radius:18px;box-shadow:0 20px 80px rgba(0,0,0,.55);padding:22px}
+#auth-view{display:none;min-height:100vh;padding:24px 16px;background:radial-gradient(circle at 15% 10%,rgba(16,185,129,.18),transparent 35%),radial-gradient(circle at 85% 15%,rgba(37,99,235,.18),transparent 35%),#030712;align-items:center;justify-content:center}
+#auth-view.active{display:flex}
+.auth-card{width:min(94vw,560px);background:linear-gradient(180deg,#0a1220,#090f1c);border:1px solid rgba(99,179,237,.24);border-radius:20px;box-shadow:0 24px 90px rgba(0,0,0,.6);padding:26px}
 .auth-title{font-family:var(--font-hd);font-size:1.5rem;font-weight:800}
 .auth-sub{font-size:.85rem;color:var(--text-2);margin:8px 0 14px}
 .auth-tabs{display:flex;gap:8px;margin-bottom:12px}
@@ -1986,6 +1996,23 @@ textarea.input { resize: vertical; min-height: 80px; }
 .auth-divider:before,.auth-divider:after{content:"";height:1px;background:var(--border);flex:1}
 .btn-github{display:flex;align-items:center;justify-content:center;gap:10px}
 .btn-github svg{width:18px;height:18px}
+
+.custom-select{position:relative}
+.custom-select-btn{width:100%;height:44px;border:1px solid var(--border);background:rgba(2,6,23,.7);color:var(--text);border-radius:12px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;font-family:var(--font-mono)}
+.custom-select-menu{position:absolute;left:0;right:0;top:calc(100% + 6px);background:#020817;border:1px solid var(--border-hi);border-radius:12px;z-index:40;max-height:220px;overflow:auto;display:none}
+.custom-select.open .custom-select-menu{display:block}
+.custom-select-item{padding:10px 12px;color:var(--text-2);cursor:pointer}
+.custom-select-item:hover{background:rgba(16,185,129,.12);color:var(--text)}
+.hidden-native-select{display:none !important}
+
+.network-metrics-grid{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.metric-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.metric-kpi{background:rgba(15,23,42,.45);border:1px solid var(--border);border-radius:10px;padding:10px}
+.metric-kpi .k{font-size:.72rem;color:var(--text-3)}
+.metric-kpi .v{font-family:var(--font-mono);font-size:1.05rem;color:var(--text)}
+.metric-usage{margin-top:10px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.metric-usage-head{padding:10px 12px;background:rgba(148,163,184,.12);font-weight:700}
+.metric-usage-row{display:flex;justify-content:space-between;padding:9px 12px;border-top:1px solid var(--border);font-size:.85rem;color:var(--text-2)}
 .toast {
   display:flex; align-items:center; gap:10px;
   padding:11px 16px;
@@ -2012,8 +2039,9 @@ textarea.input { resize: vertical; min-height: 80px; }
 <body>
 
 <div id="toast-wrap"></div>
-<div class="auth-overlay" id="authOverlay">
+<div id="auth-view">
   <div class="auth-card">
+    <button class="btn btn-ghost" style="margin-bottom:14px;" onclick="showLanding()">← Back to home</button>
     <div class="auth-title">Welcome to DeployBoard</div>
     <div class="auth-sub">Create your account to sync repos, enable auto-deploy, and manage deployments securely.</div>
     <div class="auth-tabs">
@@ -2025,7 +2053,7 @@ textarea.input { resize: vertical; min-height: 80px; }
     <div class="field"><label class="field-label">Password</label><input class="input" type="password" id="authPassword" placeholder="••••••••"></div>
     <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px;" onclick="submitAuth()" id="authSubmitBtn">Create account</button>
     <div class="auth-divider">or</div>
-    <button class="btn btn-ghost btn-github" style="width:100%;justify-content:center;" onclick="continueWithGitHub()">
+    <button class="btn btn-ghost btn-github" style="width:100%;justify-content:center;padding:14px 16px;font-size:1rem;border-width:1.5px;" onclick="continueWithGitHub()">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.6-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.8 1.4 3.5 1.1.1-.8.4-1.4.8-1.8-2.7-.3-5.5-1.4-5.5-6a4.7 4.7 0 0 1 1.2-3.2 4.3 4.3 0 0 1 .1-3.1s1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.6 5.5 18.6 5.8 18.6 5.8a4.3 4.3 0 0 1 .1 3.1 4.7 4.7 0 0 1 1.2 3.2c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>
       Continue with GitHub
     </button>
@@ -2169,6 +2197,38 @@ textarea.input { resize: vertical; min-height: 80px; }
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
       Free wildcard subdomain
     </span>
+  </div>
+
+
+  <div class="hero-ship-strip">
+    <div class="hero-ship-track">
+      <span class="hero-ship-pill">🚀 DeployBoard ships full-stack apps in under 60s</span>
+      <span class="hero-ship-pill">📦 Smart shipping pipeline: build → verify → release</span>
+      <span class="hero-ship-pill">🌍 Global-ready routing and wildcard subdomains</span>
+      <span class="hero-ship-pill">📈 Real-time logs and rollback visibility on every deploy</span>
+      <span class="hero-ship-pill">🚀 DeployBoard ships full-stack apps in under 60s</span>
+      <span class="hero-ship-pill">📦 Smart shipping pipeline: build → verify → release</span>
+    </div>
+  </div>
+
+  <div class="hero-visual-grid">
+    <div class="hero-visual-card">
+      <h4>Live Deployment Snapshot</h4>
+      <svg viewBox="0 0 320 90" width="100%" height="80"><rect x="8" y="10" width="120" height="14" rx="7" fill="#10b981" opacity=".3"/><rect x="8" y="35" width="220" height="12" rx="6" fill="#22d3ee" opacity=".25"/><rect x="8" y="57" width="280" height="12" rx="6" fill="#8b5cf6" opacity=".25"/><circle cx="292" cy="17" r="7" fill="#10b981"/></svg>
+    </div>
+    <div class="hero-visual-card">
+      <h4>Startup Runtime Icons</h4>
+      <svg viewBox="0 0 320 90" width="100%" height="80"><circle cx="45" cy="45" r="20" fill="#111827" stroke="#61dafb"/><text x="35" y="51" fill="#61dafb" font-size="16">⚛</text><rect x="110" y="24" width="42" height="42" rx="9" fill="#f7df1e"/><text x="123" y="50" fill="#111" font-size="16" font-weight="700">JS</text><rect x="182" y="24" width="42" height="42" rx="9" fill="#3178c6"/><text x="194" y="50" fill="#fff" font-size="13" font-weight="700">TS</text><rect x="254" y="24" width="42" height="42" rx="9" fill="#10b981"/><text x="267" y="50" fill="#062" font-size="15" font-weight="700">Go</text></svg>
+    </div>
+    <div class="hero-visual-card">
+      <h4>Coding Simulation</h4>
+      <div class="hero-code-sim">$ git push origin main
+<br/>✓ Build queued...
+<br/>✓ npm ci
+<br/>✓ npm run build
+<br/>✓ Shipping artifact to edge
+<br/>✓ Live: https://my-app.joytreehostingserver.dpdns.org</div>
+    </div>
   </div>
 
   <!-- Terminal preview -->
@@ -3056,6 +3116,29 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><div><div class="card-title">Network Metrics</div><div class="card-subtitle">Live traffic for selected project</div></div></div>
+        <div class="card-body">
+          <div class="network-metrics-grid">
+            <select id="metricProjectSelect" class="input input-mono" style="height:40px;max-width:320px;"></select>
+            <select id="metricRangeSelect" class="input input-mono" style="height:40px;max-width:180px;">
+              <option value="12">Last 12 hours</option><option value="24">Last 24 hours</option><option value="48">Last 2 days</option><option value="168">Last 7 days</option>
+            </select>
+          </div>
+          <div style="height:220px;margin-top:10px;background:rgba(2,6,23,.35);border:1px solid var(--border);border-radius:10px;position:relative;">
+            <svg id="networkMetricChart" width="100%" height="220" preserveAspectRatio="none" style="display:block"></svg>
+          </div>
+          <div style="font-size:.78rem;color:var(--text-3);margin-top:8px;">Resolution: one point per hour. Updates every 6 seconds.</div>
+          <div class="metric-usage">
+            <div class="metric-usage-head">Usage this month: <span id="metricMonthTotal" style="font-family:var(--font-mono)">0 MB</span></div>
+            <div class="metric-usage-row"><span>HTTP Responses</span><span id="metricHttp">0 MB</span></div>
+            <div class="metric-usage-row"><span>WebSocket Responses</span><span id="metricWs">0 MB</span></div>
+            <div class="metric-usage-row"><span>Service-Initiated</span><span id="metricSvc">0 MB</span></div>
+            <div class="metric-usage-row"><span>Private Link</span><span id="metricPriv">0 MB</span></div>
           </div>
         </div>
       </div>
@@ -4625,10 +4708,12 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <div class="field">
                 <label class="field-label">GitHub Repository URL</label>
                 <input class="input input-mono" id="dfRepoUrl" placeholder="https://github.com/username/repo">
+                <select class="input input-mono" id="dfRepoSelect" style="margin-top:8px;"><option value="">Or choose from connected GitHub repositories…</option></select>
               </div>
               <div class="field">
                 <label class="field-label">Branch</label>
                 <input class="input input-mono" id="dfBranch" value="main" placeholder="main">
+                <select class="input input-mono" id="dfBranchSelect" style="margin-top:8px;"><option value="main">main</option></select>
               </div>
               <div class="field">
                 <label class="field-label">Dockerfile Path</label>
@@ -4856,10 +4941,12 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="field">
               <label class="field-label">GitHub Repository URL</label>
               <input class="input input-mono" id="workerRepo" placeholder="https://github.com/username/repo">
+              <select class="input input-mono" id="workerRepoSelect" style="margin-top:8px;"><option value="">Or choose from connected GitHub repositories…</option></select>
             </div>
             <div class="field">
               <label class="field-label">Branch</label>
               <input class="input input-mono" id="workerBranch" value="main">
+              <select class="input input-mono" id="workerBranchSelect" style="margin-top:8px;"><option value="main">main</option></select>
             </div>
             <div class="field">
               <label class="field-label">Install Command</label>
@@ -4967,6 +5054,8 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════════════
 // STATE
@@ -4998,6 +5087,9 @@ let currentUser = null;
 let githubRepos = [];
 let authMode = 'signup';
 const GITHUB_CLIENT_ID = 'Iv23liRapw6lMrW4QArz';
+const FIREBASE_CONFIG = { apiKey:'AIzaSyD5TiRv7ZXeEPnoGE7seo1_AwoEZZiKAiY', authDomain:'authenticator-fc68d.firebaseapp.com', projectId:'authenticator-fc68d', storageBucket:'authenticator-fc68d.firebasestorage.app', messagingSenderId:'967078565161', appId:'1:967078565161:web:5545a869798726f4889338', measurementId:'G-BQLGGN83MM' };
+let fbApp = null; let fbDb = null;
+try { if (window.firebase) { fbApp = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG); fbDb = firebase.firestore(); } } catch(e) { console.warn('Firebase init failed', e); }
 function hasAuthToken() {
   const t = authToken || localStorage.getItem('db_auth_token') || '';
   if (t && !authToken) authToken = t;
@@ -5019,6 +5111,65 @@ function save() {
   localStorage.setItem('db_deployments', JSON.stringify(deployments));
   localStorage.setItem('db_envstore',    JSON.stringify(envStore));
   localStorage.setItem('db_settings',    JSON.stringify(settings));
+}
+
+let workspaceSyncTimer = null;
+function queueWorkspaceSync(){
+  if (!hasAuthToken()) return;
+  clearTimeout(workspaceSyncTimer);
+  workspaceSyncTimer = setTimeout(async () => {
+    try {
+      if (fbDb && currentUser) {
+        const uid = String(currentUser.id || currentUser.email || currentUser.githubUsername || 'anon');
+        await fbDb.collection('workspaces').doc(uid).set({ projects, deployments, envStore, settings, updatedAt: Date.now() }, { merge:true });
+      } else {
+        await apiFetch('/api/workspace', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projects, deployments, envStore, settings }) });
+      }
+    } catch(_) {}
+  }, 500);
+}
+const _save = save;
+save = function(){ _save(); queueWorkspaceSync(); };
+
+function applyUserProfile(user){
+  currentUser = user || null;
+  const source = (user && (user.githubUsername || user.name || user.email)) || settings.name || settings.email || 'JG';
+  const initials = String(source).split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'JG';
+  document.getElementById('sidebarAvatar').textContent = initials;
+  document.getElementById('topbarAvatar').textContent = initials;
+  document.getElementById('sidebarName').textContent = user?.githubUsername || user?.name || settings.name || 'User';
+}
+
+async function bootstrapSession(){
+  if (!hasAuthToken()) return false;
+  try {
+    const meR = await apiFetch('/api/auth/me');
+    const meD = await meR.json();
+    if (!meR.ok || !meD.user) throw new Error('session invalid');
+    applyUserProfile(meD.user);
+    let wsD = null;
+    if (fbDb && meD.user) {
+      const uid = String(meD.user.id || meD.user.email || meD.user.githubUsername || 'anon');
+      const doc = await fbDb.collection('workspaces').doc(uid).get();
+      if (doc.exists) wsD = doc.data();
+    }
+    if (!wsD) {
+      const wsR = await apiFetch('/api/workspace');
+      const localWs = await wsR.json();
+      if (wsR.ok) wsD = localWs;
+    }
+    if (wsD) {
+      projects = Array.isArray(wsD.projects) ? wsD.projects : [];
+      deployments = Array.isArray(wsD.deployments) ? wsD.deployments : [];
+      envStore = wsD.envStore && typeof wsD.envStore === 'object' ? wsD.envStore : {};
+      settings = Object.assign({ baseDomain: 'joytreehostingserver.dpdns.org' }, wsD.settings || {});
+      _save();
+    }
+    return true;
+  } catch(e){
+    authToken = ''; localStorage.removeItem('db_auth_token');
+    return false;
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -5123,6 +5274,44 @@ function toast(msg, type='info', duration=3500) {
   }, duration);
 }
 
+
+let metricTimer = null;
+function synthMetricSeries(projectId, hours){
+  const seed = Array.from(String(projectId||'x')).reduce((a,c)=>a+c.charCodeAt(0),0);
+  const recent = deployments.filter(d => !projectId || d.projectId===projectId || d.projectName===projectId).slice(-40);
+  const base = Math.max(0.2, recent.length * 0.15);
+  return Array.from({length:hours}, (_,i)=>{
+    const wave = Math.sin((i+seed%8)/3) * 0.4 + Math.cos((i+seed%5)/5)*0.25;
+    const jitter = (Math.random()*0.2);
+    return Math.max(0, +(base + wave + jitter).toFixed(2));
+  });
+}
+function renderNetworkMetrics(){
+  const projSel = document.getElementById('metricProjectSelect');
+  const rangeSel = document.getElementById('metricRangeSelect');
+  const chart = document.getElementById('networkMetricChart');
+  if (!projSel || !rangeSel || !chart) return;
+  const opts = ['<option value="">Most recent project</option>'].concat(projects.map(p=>`<option value="${p.id}">${p.name}</option>`));
+  if (!projSel.dataset.ready) { projSel.innerHTML = opts.join(''); projSel.dataset.ready='1'; makeCustomSelect('metricProjectSelect','Most recent project'); makeCustomSelect('metricRangeSelect','Last 12 hours'); }
+  const projectId = projSel.value || (deployments[deployments.length-1]?.projectId || projects[projects.length-1]?.id || '');
+  const hours = Number(rangeSel.value || 12);
+  const ser = synthMetricSeries(projectId, hours);
+  const W=320,H=180,p=20,max=Math.max(1,...ser);
+  const pts = ser.map((v,i)=>({x:p+i*(W-2*p)/Math.max(ser.length-1,1), y:H-p-(v/max)*(H-2*p)}));
+  const path = pts.map((pt,i)=>`${i?'L':'M'} ${pt.x} ${pt.y}`).join(' ');
+  const area = path + ` L ${W-p} ${H-p} L ${p} ${H-p} Z`;
+  const last=ser[ser.length-1]||0;
+  chart.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  chart.innerHTML = `<path d="${area}" fill="rgba(16,185,129,.14)"/><path d="${path}" stroke="#10b981" stroke-width="2.2" fill="none"/>${pts.filter((_,i)=>i%Math.ceil(ser.length/8)===0).map(pt=>`<circle cx="${pt.x}" cy="${pt.y}" r="2.8" fill="#22d3ee"/>`).join('')}`;
+  const monthTotal=(ser.reduce((a,b)=>a+b,0)*3.2).toFixed(1);
+  const http=(monthTotal*0.62).toFixed(1), ws=(monthTotal*0.2).toFixed(1), svc=(monthTotal*0.12).toFixed(1), priv=(monthTotal*0.06).toFixed(1);
+  document.getElementById('metricMonthTotal').textContent=`${monthTotal} MB`;
+  document.getElementById('metricHttp').textContent=`${http} MB`;
+  document.getElementById('metricWs').textContent=`${ws} MB`;
+  document.getElementById('metricSvc').textContent=`${svc} MB`;
+  document.getElementById('metricPriv').textContent=`${priv} MB`;
+}
+
 // ══════════════════════════════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════════════════════════════
@@ -5158,6 +5347,10 @@ function renderDashboard() {
     if (scEl) scEl.textContent = success + ' success';
     if (fcEl) fcEl.textContent = failed + ' failed';
   }
+
+  renderNetworkMetrics();
+  if (metricTimer) clearInterval(metricTimer);
+  metricTimer = setInterval(renderNetworkMetrics, 6000);
 
   // Draw smooth area sparkline chart like Render/Vercel server uptime charts
   const chart = document.getElementById('buildHealthChart');
@@ -6452,9 +6645,9 @@ function statusBadge(status) {
         if (d.token) {
           authToken = d.token;
           localStorage.setItem('db_auth_token', d.token);
-          document.getElementById('authOverlay')?.classList.remove('open');
-          const clean = window.location.origin + window.location.pathname;
+                  const clean = window.location.origin + window.location.pathname;
           window.history.replaceState({}, '', clean);
+          applyUserProfile(d.user || null);
           toast('GitHub account connected successfully', 'success');
           showDashboard();
         } else {
@@ -6462,16 +6655,7 @@ function statusBadge(status) {
         }
       }).catch(()=> toast('GitHub sign-in failed. Please try again.', 'error'));
   }
-  // Keep landing page as the first screen for visitors.
-  // Auth UI appears only after clicking Get Started / trying to open dashboard.
-  renderDashboard();
-  // Load saved user info
-  if (settings.name) {
-    const initials = settings.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'JG';
-    document.getElementById('sidebarAvatar').textContent = initials;
-    document.getElementById('topbarAvatar').textContent  = initials;
-    document.getElementById('sidebarName').textContent   = settings.name;
-  }
+  bootstrapSession().then(ok => { if (ok) showDashboard(); else showLanding(); });
   // Kick off health check silently
   fetch(API + '/api/health', { signal: AbortSignal.timeout(2000) }).catch(()=>{});
 })();
@@ -6493,7 +6677,7 @@ async function submitAuth(){
   if (!r.ok || !d.token) return toast(d.error || 'Authentication failed', 'error');
   authToken = d.token;
   localStorage.setItem('db_auth_token', d.token);
-  document.getElementById('authOverlay')?.classList.remove('open');
+  applyUserProfile(d.user || null);
   toast('Welcome! Account ready.', 'success');
   showDashboard();
 }
@@ -6507,7 +6691,11 @@ function continueWithGitHub() {
     .catch((e) => toast(e.message || 'GitHub login failed', 'error'));
 }
 function showAuthPage() {
-  document.getElementById('authOverlay')?.classList.add('open');
+  document.documentElement.classList.remove('app-mode');
+  document.getElementById('landing-view').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-view').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function logoutUser() {
   authToken = '';
@@ -6525,6 +6713,7 @@ function showDashboard() {
     showAuthPage();
     return;
   }
+  document.getElementById('auth-view').classList.remove('active');
   document.documentElement.classList.add('app-mode');
   if (typeof io !== 'undefined' && (!socket || !socket.connected)) initSocket();
   if (!window._dashboardInited) {
@@ -7800,6 +7989,7 @@ function renderStreakCalendar(dayMap) {
 
 function showLanding() {
   document.documentElement.classList.remove('app-mode');
+  document.getElementById('auth-view').classList.remove('active');
   document.getElementById('landing-view').style.display = 'block';
   document.getElementById('app').style.display = 'none';
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -7997,12 +8187,21 @@ async function renderReposPage() {
     githubRepos = d.repos || [];
     const q = (document.getElementById('repoSearchInput')?.value || '').toLowerCase().trim();
     const filtered = githubRepos.filter(r => !q || r.name.toLowerCase().includes(q) || r.full_name.toLowerCase().includes(q) || (r.language||'').toLowerCase().includes(q));
-    const langIcon = (lang='Code') => ({JavaScript:'🟨',TypeScript:'🟦',HTML:'🟧',CSS:'🟪',Python:'🐍',Go:'🐹',PHP:'🐘'}[lang] || '📦');
+    const langIcon = (lang='Code') => {
+      const icons = {
+        JavaScript:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#f7df1e"/><path fill="#111" d="M7.2 17.8l1.8-1.1c.3.6.6 1.2 1.3 1.2.7 0 1.1-.3 1.1-1.5v-8h2.2v8c0 2.4-1.4 3.5-3.4 3.5-1.8 0-2.8-.9-3.3-2.1zm7.6-.2l1.8-1.1c.5.8 1.1 1.4 2.2 1.4.9 0 1.6-.4 1.6-1.1 0-.8-.6-1-1.7-1.5l-.6-.3c-1.8-.8-3-1.7-3-3.8 0-1.9 1.4-3.3 3.7-3.3 1.6 0 2.8.6 3.6 2l-1.8 1.2c-.4-.7-.8-1-1.8-1-.8 0-1.3.5-1.3 1.1 0 .8.5 1.1 1.6 1.5l.6.3c2.1.9 3.2 1.8 3.2 3.9 0 2.2-1.8 3.5-4.1 3.5-2.3 0-3.7-1.1-4.4-2.5z"/></svg>',
+        TypeScript:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#3178c6"/><path fill="#fff" d="M5 7h14v2h-5v10h-2V9H5V7zm10.8 5.3c0-1.2.9-2.2 2.5-2.2 1 0 1.9.3 2.5.9l-1 1.2c-.4-.4-.9-.6-1.4-.6-.6 0-.9.3-.9.7 0 .5.5.7 1.2.9 1.2.3 2.4.8 2.4 2.4 0 1.4-1.1 2.3-2.8 2.3-1.1 0-2.3-.4-3-1.1l1.1-1.2c.5.5 1.2.8 1.9.8.6 0 1-.2 1-.7 0-.5-.4-.7-1.4-1-1.2-.3-2.1-.9-2.1-2.4z"/></svg>',
+        HTML:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#e34f26" d="M3 2l1.6 18L12 22l7.4-2L21 2z"/><path fill="#ef652a" d="M12 20.3l6-1.7L19.4 3H12z"/><path fill="#fff" d="M12 10H8.7l-.2-2H12V6H6l.6 6H12zm0 5.2l-2.5-.7-.2-2H7l.3 3.8L12 18v-2.8z"/><path fill="#ebebeb" d="M12 10v2h2.8l-.3 2.4-2.5.7V18l4.7-1.3.6-6.7zM12 6v2h5.6l.2-2z"/></svg>',
+        CSS:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#1572b6" d="M3 2l1.6 18L12 22l7.4-2L21 2z"/><path fill="#33a9dc" d="M12 20.3l6-1.7L19.4 3H12z"/><path fill="#fff" d="M12 10H8.9l-.2-2H12V6H6.2l.5 6H12zm0 5.2l-2.4-.6-.2-2H7.1l.3 3.7L12 18v-2.8z"/><path fill="#ebebeb" d="M12 10v2h2.7l-.2 2.3-2.5.7V18l4.6-1.3.5-6.7zM12 6v2h5.4l.2-2z"/></svg>',
+        React:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="2" fill="#61dafb"/><g fill="none" stroke="#61dafb" stroke-width="1.5"><ellipse cx="12" cy="12" rx="9" ry="3.8"/><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(120 12 12)"/></g></svg>'
+      };
+      return icons[lang] || '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#1f2937"/><path d="M12 6l5 3v6l-5 3-5-3V9z" fill="#9ca3af"/></svg>';
+    };
     wrap.innerHTML = filtered.map(repo => `
       <div class="project-card">
         <div class="project-header"><div class="project-name">${repo.name}</div><span class="status-badge ${repo.private?'status-failed':'status-success'}">${repo.private?'Private':'Public'}</span></div>
         <div class="project-meta">${repo.full_name}</div>
-        <div class="project-url">${langIcon(repo.language)} ${repo.language || 'Code'} • Updated ${new Date(repo.updated_at).toLocaleDateString()}</div>
+        <div class="project-url"><span style="display:inline-flex;align-items:center;gap:8px;">${langIcon(repo.language)} ${repo.language || 'Code'}</span> • Updated ${new Date(repo.updated_at).toLocaleDateString()}</div>
         <button class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="importRepoToDeploy('${repo.html_url}','${repo.default_branch || 'main'}')">Import Repository</button>
       </div>`).join('');
     const select = document.getElementById('deployRepoSelect');
@@ -8016,15 +8215,89 @@ async function renderReposPage() {
 function importRepoToDeploy(url, branch) {
   showPage('new-deploy');
   document.getElementById('deployRepoUrl').value = url;
+  const repoMatch = String(url || '').match(/github\.com\/[^/]+\/([^/#?]+)/i);
+  const repoNameRaw = repoMatch ? decodeURIComponent(repoMatch[1]) : '';
+  const normalized = repoNameRaw.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+  if (normalized) {
+    const nameEl = document.getElementById('deployProjectName');
+    const subEl = document.getElementById('deploySubdomain');
+    if (nameEl && !nameEl.value.trim()) nameEl.value = normalized;
+    if (subEl && !subEl.value.trim()) subEl.value = normalized;
+    try { updateDomainPreview(); } catch(_) {}
+  }
   loadRepoBranches(url, branch || 'main');
 }
+
+function makeCustomSelect(selectId, placeholder='Select...') {
+  const sel = document.getElementById(selectId);
+  if (!sel || sel.dataset.customized === '1') return;
+  sel.dataset.customized = '1';
+  sel.classList.add('hidden-native-select');
+  const wrap = document.createElement('div');
+  wrap.className = 'custom-select';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'custom-select-btn';
+  const menu = document.createElement('div');
+  menu.className = 'custom-select-menu';
+  wrap.appendChild(btn); wrap.appendChild(menu);
+  sel.parentNode.insertBefore(wrap, sel.nextSibling);
+  const refresh = () => {
+    const txt = sel.options[sel.selectedIndex]?.text || placeholder;
+    btn.innerHTML = `<span>${txt}</span><span>⌄</span>`;
+    menu.innerHTML = Array.from(sel.options).map((o,i)=>`<div class="custom-select-item" data-i="${i}">${o.text}</div>`).join('');
+  };
+  btn.onclick = () => wrap.classList.toggle('open');
+  menu.onclick = (e) => {
+    const it = e.target.closest('.custom-select-item'); if (!it) return;
+    sel.selectedIndex = Number(it.dataset.i);
+    sel.dispatchEvent(new Event('change', { bubbles:true }));
+    wrap.classList.remove('open');
+    refresh();
+  };
+  document.addEventListener('click', (e)=>{ if(!wrap.contains(e.target)) wrap.classList.remove('open'); });
+  sel.addEventListener('change', refresh);
+  refresh();
+}
+
+document.getElementById('dfRepoUrl')?.addEventListener('change', (e)=> loadBranchesInto(e.target.value,'dfBranchSelect','dfBranch','main'));
+document.getElementById('workerRepo')?.addEventListener('change', (e)=> loadBranchesInto(e.target.value,'workerBranchSelect','workerBranch','main'));
+
 document.getElementById('deployRepoSelect')?.addEventListener('change', (e) => {
   const val = e.target.value;
+  makeCustomSelect('deployBranch','main');
   if (!val) return;
   const opt = e.target.options[e.target.selectedIndex];
   document.getElementById('deployRepoUrl').value = val;
   loadRepoBranches(val, opt.dataset.branch || 'main');
 });
+
+function fillConnectedRepoSelect(selectId){
+  const sel=document.getElementById(selectId); if(!sel) return;
+  sel.innerHTML = '<option value="">Or choose from connected GitHub repositories…</option>' + githubRepos.map(rp => `<option value="${rp.html_url}" data-branch="${rp.default_branch || 'main'}">${rp.full_name}</option>`).join('');
+  makeCustomSelect(selectId,'Or choose from connected GitHub repositories…');
+}
+async function loadBranchesInto(repoUrl, branchSelectId, branchInputId, preferred='main'){
+  const branchSel = document.getElementById(branchSelectId); const branchInput = document.getElementById(branchInputId);
+  if (!branchSel || !branchInput) return;
+  const m = String(repoUrl || '').match(/github\.com\/([^/]+\/[^/#?]+)/i);
+  if (!m) { branchSel.innerHTML='<option value="main">main</option>'; branchInput.value=preferred||'main'; makeCustomSelect(branchSelectId,'main'); return; }
+  try {
+    const r = await apiFetch(`/api/github/branches?repo=${encodeURIComponent(m[1])}`);
+    const d = await r.json();
+    const branches = Array.isArray(d.branches) ? d.branches : ['main'];
+    branchSel.innerHTML = branches.map(b=>`<option value="${b}">${b}</option>`).join('');
+    const chosen = branches.includes(preferred) ? preferred : (branches[0] || 'main');
+    branchSel.value = chosen; branchInput.value = chosen;
+  } catch { branchSel.innerHTML='<option value="main">main</option>'; branchInput.value='main'; }
+  makeCustomSelect(branchSelectId,'main');
+}
+
+document.getElementById('dfRepoSelect')?.addEventListener('change', (e)=>{ const v=e.target.value; if(!v) return; const opt=e.target.options[e.target.selectedIndex]; document.getElementById('dfRepoUrl').value=v; loadBranchesInto(v,'dfBranchSelect','dfBranch',opt.dataset.branch||'main'); });
+document.getElementById('workerRepoSelect')?.addEventListener('change', (e)=>{ const v=e.target.value; if(!v) return; const opt=e.target.options[e.target.selectedIndex]; document.getElementById('workerRepo').value=v; loadBranchesInto(v,'workerBranchSelect','workerBranch',opt.dataset.branch||'main'); });
+document.getElementById('dfBranchSelect')?.addEventListener('change',(e)=>{ const i=document.getElementById('dfBranch'); if(i) i.value=e.target.value; });
+document.getElementById('workerBranchSelect')?.addEventListener('change',(e)=>{ const i=document.getElementById('workerBranch'); if(i) i.value=e.target.value; });
+
 async function loadRepoBranches(repoUrl, preferred='main') {
   const branchEl = document.getElementById('deployBranch');
   if (!branchEl) return;

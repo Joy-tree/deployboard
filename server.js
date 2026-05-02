@@ -418,6 +418,12 @@ const userSchema = new mongoose.Schema({
   githubId: { type: String, default: '', index: true },
   githubUsername: { type: String, default: '' },
   githubAccessToken: { type: String, default: '' },
+  workspace: {
+    projects: { type: Array, default: [] },
+    deployments: { type: Array, default: [] },
+    envStore: { type: Object, default: {} },
+    settings: { type: Object, default: {} }
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -564,13 +570,14 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 app.get('/api/auth/github/url', (req, res) => {
   if (!GITHUB_CLIENT_ID) return res.status(400).json({ error: 'GitHub OAuth client ID is not configured' });
   const origin = `${req.protocol}://${req.get('host')}`;
-  const redirectUri = `${origin}/`;
+  const configuredRedirect = process.env.GITHUB_REDIRECT_URI || process.env.GITHUB_OAUTH_REDIRECT_URI || '';
+  const redirectUri = configuredRedirect || `${origin}/`;
   const url = new URL('https://github.com/login/oauth/authorize');
   url.searchParams.set('client_id', GITHUB_CLIENT_ID);
   url.searchParams.set('redirect_uri', redirectUri);
   url.searchParams.set('scope', 'repo read:user user:email');
   url.searchParams.set('state', 'deployboard_github_auth');
-  res.json({ url: url.toString() });
+  res.json({ url: url.toString(), redirectUri });
 });
 
 app.post('/api/auth/github/exchange', async (req, res) => {
@@ -629,11 +636,41 @@ app.post('/api/auth/github/exchange', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+
+app.get('/api/workspace', requireAuth, async (req, res) => {
+  const ws = req.user.workspace || {};
+  res.json({
+    projects: Array.isArray(ws.projects) ? ws.projects : [],
+    deployments: Array.isArray(ws.deployments) ? ws.deployments : [],
+    envStore: ws.envStore && typeof ws.envStore === 'object' ? ws.envStore : {},
+    settings: ws.settings && typeof ws.settings === 'object' ? ws.settings : {}
+  });
+});
+
+app.post('/api/workspace', requireAuth, async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const workspace = {
+      projects: Array.isArray(payload.projects) ? payload.projects : [],
+      deployments: Array.isArray(payload.deployments) ? payload.deployments : [],
+      envStore: payload.envStore && typeof payload.envStore === 'object' ? payload.envStore : {},
+      settings: payload.settings && typeof payload.settings === 'object' ? payload.settings : {}
+    };
+    if (isDbReady()) {
+      await User.updateOne({ _id: req.user._id }, { $set: { workspace, updatedAt: new Date() } });
+    } else {
+      const user = localAuth.users.find(u => String(u.id) === String(req.user.id));
+      if (user) user.workspace = workspace;
+      saveLocalAuth();
+    }
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 app.get('/api/github/repos', requireAuth, async (req, res) => {
   try {
     const token = req.user.githubAccessToken;
     if (!token) return res.status(400).json({ error: 'GitHub account not connected' });
-    const r = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
+    const r = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated&visibility=all&affiliation=owner,collaborator,organization_member', {
       headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'deployboard' }
     });
     const data = await r.json();
