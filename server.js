@@ -29,6 +29,9 @@ const CF_API_TOKEN  = process.env.CF_API_TOKEN  || '';
 const CF_ZONE_ID    = process.env.CF_ZONE_ID    || '';
 const CF_TUNNEL_ID  = process.env.CF_TUNNEL_ID  || '';
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || '';
+const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || '';
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || '';
+const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 30);
 
 function normalizeBaseDomain(value) {
   return String(value || 'localhost')
@@ -407,8 +410,55 @@ const deploymentSchema = new mongoose.Schema({
   endedAt:     Date
 });
 
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  passwordHash: { type: String, default: '' },
+  passwordSalt: { type: String, default: '' },
+  name: { type: String, default: '' },
+  githubId: { type: String, default: '', index: true },
+  githubUsername: { type: String, default: '' },
+  githubAccessToken: { type: String, default: '' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+const sessionSchema = new mongoose.Schema({
+  token: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  createdAt: { type: Date, default: Date.now },
+  expiresAt: { type: Date, required: true }
+});
+
 const Project    = mongoose.model('Project',    projectSchema);
 const Deployment = mongoose.model('Deployment', deploymentSchema);
+const User = mongoose.model('User', userSchema);
+const Session = mongoose.model('Session', sessionSchema);
+
+const crypto = require('crypto');
+function createPasswordHash(password, salt = crypto.randomBytes(16).toString('hex')) {
+  const hash = crypto.pbkdf2Sync(password, salt, 120000, 64, 'sha512').toString('hex');
+  return { salt, hash };
+}
+function createSessionToken() {
+  return crypto.randomBytes(36).toString('hex');
+}
+async function getAuthUser(req) {
+  const auth = (req.headers.authorization || '').trim();
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!token) return null;
+  const session = await Session.findOne({ token, expiresAt: { $gt: new Date() } }).lean();
+  if (!session) return null;
+  return User.findById(session.userId);
+}
+async function requireAuth(req, res, next) {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    req.user = user;
+    next();
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+}
 
 // Connect with retry so container startup timing doesn't break things
 function connectMongo(retries=5, delay=3000) {
@@ -452,6 +502,96 @@ app.get('/api/health', async (req, res) => {
     uptime: Math.round(process.uptime()) + 's',
     runningContainers, diskUsed
   });
+});
+
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
+    const name = String(req.body.name || '').trim();
+    if (!email || !password || password.length < 6) return res.status(400).json({ error: 'Invalid signup payload' });
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(409).json({ error: 'Email already exists' });
+    const { salt, hash } = createPasswordHash(password);
+    const user = await User.create({ email, name, passwordSalt: salt, passwordHash: hash });
+    const token = createSessionToken();
+    const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
+    await Session.create({ token, userId: user._id, expiresAt });
+    res.json({ token, user: { id: user._id, email: user.email, name: user.name, githubUsername: user.githubUsername } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
+    const user = await User.findOne({ email });
+    if (!user || !user.passwordSalt || !user.passwordHash) return res.status(401).json({ error: 'Invalid credentials' });
+    const { hash } = createPasswordHash(password, user.passwordSalt);
+    if (hash !== user.passwordHash) return res.status(401).json({ error: 'Invalid credentials' });
+    const token = createSessionToken();
+    const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
+    await Session.create({ token, userId: user._id, expiresAt });
+    res.json({ token, user: { id: user._id, email: user.email, name: user.name, githubUsername: user.githubUsername } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/auth/me', requireAuth, async (req, res) => {
+  res.json({ user: { id: req.user._id, email: req.user.email, name: req.user.name, githubUsername: req.user.githubUsername } });
+});
+
+app.post('/api/auth/github/exchange', async (req, res) => {
+  try {
+    if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) return res.status(400).json({ error: 'GitHub OAuth is not configured' });
+    const code = String(req.body.code || '');
+    if (!code) return res.status(400).json({ error: 'Missing code' });
+    const tokenResp = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: GITHUB_CLIENT_ID, client_secret: GITHUB_CLIENT_SECRET, code })
+    });
+    const tokenData = await tokenResp.json();
+    if (!tokenData.access_token) return res.status(400).json({ error: tokenData.error_description || 'GitHub token exchange failed' });
+    const ghUserResp = await fetch('https://api.github.com/user', {
+      headers: { 'Authorization': `Bearer ${tokenData.access_token}`, 'User-Agent': 'deployboard' }
+    });
+    const ghUser = await ghUserResp.json();
+    const email = ghUser.email || `${ghUser.login}@github.local`;
+    let user = await User.findOne({ githubId: String(ghUser.id) });
+    if (!user) user = await User.findOne({ email });
+    if (!user) user = new User({ email });
+    user.githubId = String(ghUser.id);
+    user.githubUsername = ghUser.login || '';
+    user.githubAccessToken = tokenData.access_token;
+    user.name = user.name || ghUser.name || ghUser.login || '';
+    user.updatedAt = new Date();
+    await user.save();
+    const token = createSessionToken();
+    await Session.create({ token, userId: user._id, expiresAt: new Date(Date.now() + SESSION_TTL_DAYS * 86400000) });
+    res.json({ token, user: { id: user._id, email: user.email, name: user.name, githubUsername: user.githubUsername } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/github/repos', requireAuth, async (req, res) => {
+  try {
+    const token = req.user.githubAccessToken;
+    if (!token) return res.status(400).json({ error: 'GitHub account not connected' });
+    const r = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
+      headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'deployboard' }
+    });
+    const data = await r.json();
+    const repos = Array.isArray(data) ? data.map((repo) => ({
+      id: repo.id,
+      name: repo.name,
+      full_name: repo.full_name,
+      private: repo.private,
+      html_url: repo.html_url,
+      default_branch: repo.default_branch,
+      updated_at: repo.updated_at,
+      language: repo.language
+    })) : [];
+    res.json({ repos });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 
