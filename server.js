@@ -29,6 +29,9 @@ const CF_API_TOKEN  = process.env.CF_API_TOKEN  || '';
 const CF_ZONE_ID    = process.env.CF_ZONE_ID    || '';
 const CF_TUNNEL_ID  = process.env.CF_TUNNEL_ID  || '';
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || '';
+const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || process.env.GITHUB_OAUTH_CLIENT_ID || process.env.GH_CLIENT_ID || '';
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || process.env.GITHUB_OAUTH_CLIENT_SECRET || process.env.GH_CLIENT_SECRET || '';
+const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 30);
 
 function normalizeBaseDomain(value) {
   return String(value || 'localhost')
@@ -407,8 +410,67 @@ const deploymentSchema = new mongoose.Schema({
   endedAt:     Date
 });
 
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  passwordHash: { type: String, default: '' },
+  passwordSalt: { type: String, default: '' },
+  name: { type: String, default: '' },
+  githubId: { type: String, default: '', index: true },
+  githubUsername: { type: String, default: '' },
+  githubAccessToken: { type: String, default: '' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+const sessionSchema = new mongoose.Schema({
+  token: { type: String, required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  createdAt: { type: Date, default: Date.now },
+  expiresAt: { type: Date, required: true }
+});
+
 const Project    = mongoose.model('Project',    projectSchema);
 const Deployment = mongoose.model('Deployment', deploymentSchema);
+const User = mongoose.model('User', userSchema);
+const Session = mongoose.model('Session', sessionSchema);
+
+const crypto = require('crypto');
+const LOCAL_AUTH_FILE = path.join(SITES_DIR, 'local-auth.json');
+let localAuth = { users: [], sessions: [] };
+try {
+  if (fs.existsSync(LOCAL_AUTH_FILE)) localAuth = JSON.parse(fs.readFileSync(LOCAL_AUTH_FILE, 'utf8'));
+} catch {}
+function saveLocalAuth() { try { fs.writeFileSync(LOCAL_AUTH_FILE, JSON.stringify(localAuth, null, 2)); } catch {} }
+function isDbReady() { return mongoose.connection.readyState === 1; }
+function createPasswordHash(password, salt = crypto.randomBytes(16).toString('hex')) {
+  const hash = crypto.pbkdf2Sync(password, salt, 120000, 64, 'sha512').toString('hex');
+  return { salt, hash };
+}
+function createSessionToken() {
+  return crypto.randomBytes(36).toString('hex');
+}
+async function getAuthUser(req) {
+  const auth = (req.headers.authorization || '').trim();
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!token) return null;
+  if (isDbReady()) {
+    const session = await Session.findOne({ token, expiresAt: { $gt: new Date() } }).lean();
+    if (!session) return null;
+    return User.findById(session.userId);
+  }
+  const session = localAuth.sessions.find(s => s.token === token && new Date(s.expiresAt) > new Date());
+  if (!session) return null;
+  return localAuth.users.find(u => u.id === session.userId) || null;
+}
+async function requireAuth(req, res, next) {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    req.user = user;
+    next();
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+}
 
 // Connect with retry so container startup timing doesn't break things
 function connectMongo(retries=5, delay=3000) {
@@ -452,6 +514,129 @@ app.get('/api/health', async (req, res) => {
     uptime: Math.round(process.uptime()) + 's',
     runningContainers, diskUsed
   });
+});
+
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
+    const name = String(req.body.name || '').trim();
+    if (!email || !password || password.length < 6) return res.status(400).json({ error: 'Invalid signup payload' });
+    let existing = null;
+    if (isDbReady()) existing = await User.findOne({ email });
+    else existing = localAuth.users.find(u => u.email === email);
+    if (existing) return res.status(409).json({ error: 'Email already exists' });
+    const { salt, hash } = createPasswordHash(password);
+    let user;
+    if (isDbReady()) user = await User.create({ email, name, passwordSalt: salt, passwordHash: hash });
+    else {
+      user = { id: 'u_' + Date.now(), email, name, passwordSalt: salt, passwordHash: hash, githubUsername: '', githubAccessToken: '' };
+      localAuth.users.push(user); saveLocalAuth();
+    }
+    const token = createSessionToken();
+    const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
+    if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt });
+    else { localAuth.sessions.push({ token, userId: user.id, expiresAt }); saveLocalAuth(); }
+    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
+    const user = isDbReady() ? await User.findOne({ email }) : localAuth.users.find(u => u.email === email);
+    if (!user || !user.passwordSalt || !user.passwordHash) return res.status(401).json({ error: 'Invalid credentials' });
+    const { hash } = createPasswordHash(password, user.passwordSalt);
+    if (hash !== user.passwordHash) return res.status(401).json({ error: 'Invalid credentials' });
+    const token = createSessionToken();
+    const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
+    if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt });
+    else { localAuth.sessions.push({ token, userId: user.id, expiresAt }); saveLocalAuth(); }
+    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/auth/me', requireAuth, async (req, res) => {
+  res.json({ user: { id: req.user._id || req.user.id, email: req.user.email, name: req.user.name, githubUsername: req.user.githubUsername } });
+});
+
+app.post('/api/auth/github/exchange', async (req, res) => {
+  try {
+    if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
+      return res.status(400).json({
+        error: 'GitHub OAuth is not configured',
+        details: {
+          missingClientId: !GITHUB_CLIENT_ID,
+          missingClientSecret: !GITHUB_CLIENT_SECRET,
+          acceptedEnvVars: [
+            'GITHUB_CLIENT_ID','GITHUB_OAUTH_CLIENT_ID','GH_CLIENT_ID',
+            'GITHUB_CLIENT_SECRET','GITHUB_OAUTH_CLIENT_SECRET','GH_CLIENT_SECRET'
+          ]
+        }
+      });
+    }
+    const code = String(req.body.code || '');
+    if (!code) return res.status(400).json({ error: 'Missing code' });
+    const tokenResp = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: GITHUB_CLIENT_ID, client_secret: GITHUB_CLIENT_SECRET, code })
+    });
+    const tokenData = await tokenResp.json();
+    if (!tokenData.access_token) return res.status(400).json({ error: tokenData.error_description || 'GitHub token exchange failed' });
+    const ghUserResp = await fetch('https://api.github.com/user', {
+      headers: { 'Authorization': `Bearer ${tokenData.access_token}`, 'User-Agent': 'deployboard' }
+    });
+    const ghUser = await ghUserResp.json();
+    const email = ghUser.email || `${ghUser.login}@github.local`;
+    let user;
+    if (isDbReady()) {
+      user = await User.findOne({ githubId: String(ghUser.id) });
+      if (!user) user = await User.findOne({ email });
+      if (!user) user = new User({ email });
+      user.githubId = String(ghUser.id);
+      user.githubUsername = ghUser.login || '';
+      user.githubAccessToken = tokenData.access_token;
+      user.name = user.name || ghUser.name || ghUser.login || '';
+      user.updatedAt = new Date();
+      await user.save();
+    } else {
+      user = localAuth.users.find(u => u.githubId === String(ghUser.id)) || localAuth.users.find(u => u.email === email);
+      if (!user) { user = { id: 'u_' + Date.now(), email }; localAuth.users.push(user); }
+      user.githubId = String(ghUser.id);
+      user.githubUsername = ghUser.login || '';
+      user.githubAccessToken = tokenData.access_token;
+      user.name = user.name || ghUser.name || ghUser.login || '';
+      saveLocalAuth();
+    }
+    const token = createSessionToken();
+    if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt: new Date(Date.now() + SESSION_TTL_DAYS * 86400000) });
+    else { localAuth.sessions.push({ token, userId: user.id, expiresAt: new Date(Date.now() + SESSION_TTL_DAYS * 86400000) }); saveLocalAuth(); }
+    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/github/repos', requireAuth, async (req, res) => {
+  try {
+    const token = req.user.githubAccessToken;
+    if (!token) return res.status(400).json({ error: 'GitHub account not connected' });
+    const r = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
+      headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'deployboard' }
+    });
+    const data = await r.json();
+    const repos = Array.isArray(data) ? data.map((repo) => ({
+      id: repo.id,
+      name: repo.name,
+      full_name: repo.full_name,
+      private: repo.private,
+      html_url: repo.html_url,
+      default_branch: repo.default_branch,
+      updated_at: repo.updated_at,
+      language: repo.language
+    })) : [];
+    res.json({ repos });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 
