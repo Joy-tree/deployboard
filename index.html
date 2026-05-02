@@ -1974,6 +1974,18 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 /* ── Toast ─────────────────────────────────────────────────────────────── */
 #toast-wrap { position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+.auth-overlay{position:fixed;inset:0;z-index:1200;background:radial-gradient(circle at 20% 20%,rgba(16,185,129,.16),transparent 40%),#030712;display:none;align-items:center;justify-content:center;padding:20px}
+.auth-overlay.open{display:flex}
+.auth-card{width:min(94vw,520px);background:linear-gradient(180deg,#0a1220,#090f1c);border:1px solid rgba(99,179,237,.18);border-radius:18px;box-shadow:0 20px 80px rgba(0,0,0,.55);padding:22px}
+.auth-title{font-family:var(--font-hd);font-size:1.5rem;font-weight:800}
+.auth-sub{font-size:.85rem;color:var(--text-2);margin:8px 0 14px}
+.auth-tabs{display:flex;gap:8px;margin-bottom:12px}
+.auth-tab{flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-weight:700}
+.auth-tab.active{background:rgba(16,185,129,.14);border-color:rgba(16,185,129,.4);color:#d1fae5}
+.auth-divider{display:flex;align-items:center;gap:10px;color:var(--text-3);font-size:.72rem;margin:12px 0}
+.auth-divider:before,.auth-divider:after{content:"";height:1px;background:var(--border);flex:1}
+.btn-github{display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-github svg{width:18px;height:18px}
 .toast {
   display:flex; align-items:center; gap:10px;
   padding:11px 16px;
@@ -2000,6 +2012,25 @@ textarea.input { resize: vertical; min-height: 80px; }
 <body>
 
 <div id="toast-wrap"></div>
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-title">Welcome to DeployBoard</div>
+    <div class="auth-sub">Create your account to sync repos, enable auto-deploy, and manage deployments securely.</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabSignup" onclick="switchAuthMode('signup')">Sign Up</button>
+      <button class="auth-tab" id="tabLogin" onclick="switchAuthMode('login')">Login</button>
+    </div>
+    <div class="field"><label class="field-label">Email</label><input class="input" id="authEmail" placeholder="you@example.com"></div>
+    <div class="field" id="authNameRow"><label class="field-label">Full Name</label><input class="input" id="authName" placeholder="Jane Doe"></div>
+    <div class="field"><label class="field-label">Password</label><input class="input" type="password" id="authPassword" placeholder="••••••••"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px;" onclick="submitAuth()" id="authSubmitBtn">Create account</button>
+    <div class="auth-divider">or</div>
+    <button class="btn btn-ghost btn-github" style="width:100%;justify-content:center;" onclick="continueWithGitHub()">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.6-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.8 1.4 3.5 1.1.1-.8.4-1.4.8-1.8-2.7-.3-5.5-1.4-5.5-6a4.7 4.7 0 0 1 1.2-3.2 4.3 4.3 0 0 1 .1-3.1s1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.6 5.5 18.6 5.8 18.6 5.8a4.3 4.3 0 0 1 .1 3.1 4.7 4.7 0 0 1 1.2 3.2c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>
+      Continue with GitHub
+    </button>
+  </div>
+</div>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 
@@ -2051,7 +2082,7 @@ textarea.input { resize: vertical; min-height: 80px; }
     <span class="ld-brand-name">DeployBoard Navigator</span>
   </div>
   <div class="ld-actions">
-    <a class="ld-action-btn" href="#" onclick="showDashboard();closeLandingDrawer();return false;">
+    <a class="ld-action-btn" href="#" onclick="showAuthPage();closeLandingDrawer();return false;">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z"/></svg>
       Dashboard
     </a>
@@ -2113,7 +2144,7 @@ textarea.input { resize: vertical; min-height: 80px; }
   </p>
 
   <div class="hero-actions">
-    <a href="#" onclick="showDashboard();return false;" class="btn-hero-primary">
+    <a href="#" onclick="showAuthPage();return false;" class="btn-hero-primary">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
       Get Started — It's Free
     </a>
@@ -2591,7 +2622,7 @@ textarea.input { resize: vertical; min-height: 80px; }
     <h2 class="cta-title">Ready to ship your first project?</h2>
     <p class="cta-sub">Open the dashboard, connect your GitHub repo, and have your site live in under two minutes.</p>
     <div class="cta-actions">
-      <a href="#" onclick="showDashboard();return false;" class="btn-hero-primary">
+      <a href="#" onclick="showAuthPage();return false;" class="btn-hero-primary">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>
         </svg>
@@ -2621,7 +2652,7 @@ textarea.input { resize: vertical; min-height: 80px; }
   <div class="footer-links">
     <a href="#features" class="footer-link">Features</a>
     <a href="#how-it-works" class="footer-link">How it works</a>
-    <a href="#" onclick="showDashboard();return false;" class="footer-link">Dashboard</a>
+    <a href="#" onclick="showAuthPage();return false;" class="footer-link">Dashboard</a>
     <a href="#snippets" class="footer-link">Docs</a>
   </div>
   <div class="footer-copy">Built by developers, for developers.</div>
@@ -2758,6 +2789,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       Deployments
       <span class="nav-badge" id="deploymentsCount">0</span>
+    </div>
+    <div class="nav-item" data-page="repos" onclick="showPage('repos',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6a2 2 0 0 1 2-2h6l2 2h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Repositories
     </div>
 
     <div class="sidebar-section">Tools</div>
@@ -3097,6 +3132,21 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>
     </div>
 
+    <div class="page" id="page-repos">
+      <div class="page-header">
+        <div class="page-title">GitHub Repositories</div>
+        <div class="page-subtitle">Authorize once and import repos directly into deployments.</div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-body">
+          <input class="input" id="repoSearchInput" placeholder="Search repositories..." oninput="renderReposPage()">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body" id="reposGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;"></div>
+      </div>
+    </div>
+
     <!-- ════════ NEW DEPLOY PAGE ════════ -->
     <div class="page" id="page-new-deploy">
       <div class="page-header">
@@ -3135,11 +3185,16 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <div class="field">
                 <label class="field-label">GitHub Repository URL</label>
                 <input class="input input-mono" id="deployRepoUrl" placeholder="https://github.com/username/repo" autocomplete="off">
+                <select class="input input-mono" id="deployRepoSelect" style="margin-top:8px;">
+                  <option value="">Or choose from connected GitHub repositories…</option>
+                </select>
                 <div class="field-hint">Public or private repos supported. For private repos ensure your GitHub token is configured.</div>
               </div>
               <div class="field">
                 <label class="field-label">Branch</label>
-                <input class="input input-mono" id="deployBranch" placeholder="main" value="main" autocomplete="off">
+                <select class="input input-mono" id="deployBranch" style="height:44px;">
+                  <option value="main">main</option>
+                </select>
               </div>
             </div>
           </div>
@@ -3309,6 +3364,19 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>
 
       <div style="width:100%;margin-bottom:0;">
+      <div class="card" style="margin-bottom:10px;">
+        <div class="card-body" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <select id="logTypeFilter" class="input input-mono" style="max-width:140px;height:38px;" onchange="setLogTypeFilter(this.value)">
+            <option value="all">All logs</option>
+            <option value="build">Build logs</option>
+            <option value="app">Application logs</option>
+          </select>
+          <button class="btn btn-ghost" id="liveTailBtn" onclick="toggleLiveTail()">⚡ Live tail</button>
+          <input id="logSearchInput" class="input" placeholder="Search in logs..." style="flex:1;min-width:180px;" oninput="applyLogSearch()">
+          <button class="btn btn-ghost" onclick="toggleLogOrder()">Order: <span id="logOrderLabel">Desc</span></button>
+          <button class="btn btn-ghost" onclick="copyLogs()">Copy logs</button>
+        </div>
+      </div>
       <div style="width:100%;">
           <div class="terminal-topbar">
             <div class="term-dots">
@@ -3331,6 +3399,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <div class="terminal-empty-sub">Logs will appear here when your application starts generating them.</div>
               </div>
             </div>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <div class="card-header"><div class="card-title">Structured Logs (click a line)</div></div>
+            <div class="card-body" id="structuredLogs" style="max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:6px;"></div>
           </div>
         </div>
       </div>
@@ -3613,6 +3685,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <input class="input" id="settingsEmail" type="email" placeholder="you@example.com">
               </div>
               <button class="btn btn-primary" onclick="saveAccountSettings()">Save Account</button>
+              <button class="btn btn-ghost" onclick="logoutUser()" style="margin-top:10px;">Logout</button>
             </div>
           </div>
           <div class="card">
@@ -4920,6 +4993,23 @@ let pendingDelete= null;
 let activeBuildId= null;
 let deployFormInitialized = false;
 let deployFormPrefillMode = false;
+let authToken = localStorage.getItem('db_auth_token') || '';
+let currentUser = null;
+let githubRepos = [];
+let authMode = 'signup';
+const GITHUB_CLIENT_ID = 'Iv23liRapw6lMrW4QArz';
+function hasAuthToken() {
+  const t = authToken || localStorage.getItem('db_auth_token') || '';
+  if (t && !authToken) authToken = t;
+  return !!t;
+}
+
+async function apiFetch(url, opts={}) {
+  const headers = Object.assign({}, opts.headers || {});
+  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+  const res = await fetch(url, Object.assign({}, opts, { headers }));
+  return res;
+}
 
 // ══════════════════════════════════════════════════════════════════
 // SAVE / LOAD
@@ -4984,6 +5074,7 @@ function showPage(id, navEl) {
   if (id === 'usage')         renderUsage();
   if (id === 'activity')      renderActivity();
   if (id === 'secrets')       renderSecrets();
+  if (id === 'repos')         renderReposPage();
 
   closeSidebar();
 }
@@ -5664,21 +5755,16 @@ function initTerminal() {
 
     // Flush buffered lines that arrived before terminal was open
     if (pendingTermLines.length) {
-      pendingTermLines.forEach(l => term.writeln(l));
+      pendingTermLines.forEach(l => _writeQueue.push(l));
+      if (!_writeDraining) _drainWriteQueue();
       pendingTermLines = [];
     } else {
-      // Professional startup banner
-      term.writeln('\x1b[36m╔══════════════════════════════════════════════════════╗\x1b[0m');
-      term.writeln('\x1b[36m║\x1b[0m  \x1b[1;37mDeployBoard\x1b[0m \x1b[90m— Build Terminal\x1b[0m                     \x1b[36m║\x1b[0m');
-      term.writeln('\x1b[36m╚══════════════════════════════════════════════════════╝\x1b[0m');
-      term.writeln('');
       if (!socket || !socket.connected) {
-        term.writeln('\x1b[90m[system] Connecting to build server…\x1b[0m');
+        term.writeln('\x1b[90m[system] connecting to build server…\x1b[0m');
       } else {
-        term.writeln('\x1b[32m[system]\x1b[0m \x1b[90mConnected · ready for deployment\x1b[0m');
+        term.writeln('\x1b[32m[system]\x1b[0m \x1b[90mconnected · ready for deployment\x1b[0m');
       }
-      term.writeln('\x1b[90m[info] Logs will show here once deployment starts.\x1b[0m');
-      term.writeln('\x1b[90m─────────────────────────────────────────────────────\x1b[0m');
+      term.writeln('\x1b[90m[info] waiting for deployment logs...\x1b[0m');
     }
   } catch(e) {
     console.warn('Xterm init error:', e);
@@ -5693,9 +5779,13 @@ var pendingTermLines = [];
 // flows naturally instead of spawning all at once
 var _writeQueue = [];
 var _writeDraining = false;
-var _writeBatchSize = 6;
-var _writeBatchDelayMs = 55;
+var _writeBatchSize = 2;
+var _writeBatchDelayMs = 120;
 var _hasWrittenBuildLogs = false;
+var _liveTail = true;
+var _logOrder = 'desc';
+var _logTypeFilter = 'all';
+var _logSearch = '';
 function _tsNow() {
   const d = new Date();
   const hh = String(d.getHours()).padStart(2, '0');
@@ -5704,6 +5794,7 @@ function _tsNow() {
   return `${hh}:${mm}:${ss}`;
 }
 function _withTs(line) {
+  line = String(line || '').replace(/\[DeployBoard\]\s*/g, '').replace(/\[CF\]\s*/g, 'Cloudflare ');
   if (!line || !String(line).trim()) return line;
   // Avoid double-stamping if server already includes a leading timestamp.
   if (/^\[\d{2}:\d{2}:\d{2}\]/.test(String(line))) return line;
@@ -5723,8 +5814,14 @@ function _drainWriteQueue() {
 }
 
 function writeTerm(line) {
+  const raw = String(line || '');
+  const lower = raw.toLowerCase();
+  if (_logTypeFilter === 'build' && !(lower.includes('build') || lower.includes('clone') || lower.includes('install'))) return;
+  if (_logTypeFilter === 'app' && (lower.includes('build') || lower.includes('clone') || lower.includes('install'))) return;
+  if (_logSearch && !lower.includes(_logSearch)) return;
   const stamped = _withTs(line);
   if (stamped && String(stamped).trim()) _hasWrittenBuildLogs = true;
+  if (!_liveTail) return;
   if (term) {
     _writeQueue.push(stamped);
     if (!_writeDraining) _drainWriteQueue();
@@ -5744,10 +5841,8 @@ function updateTerminalEmptyState() {
 
 function writeBench(title, detail='') {
   writeTerm('');
-  writeTerm('\x1b[36m╭──────────────────────────────────────────────────────────────╮\x1b[0m');
-  writeTerm('\x1b[36m│\x1b[0m \x1b[1m' + title.padEnd(58).slice(0,58) + '\x1b[0m \x1b[36m│\x1b[0m');
-  if (detail) writeTerm('\x1b[36m│\x1b[0m ' + String(detail).padEnd(58).slice(0,58) + ' \x1b[36m│\x1b[0m');
-  writeTerm('\x1b[36m╰──────────────────────────────────────────────────────────────╯\x1b[0m');
+  writeTerm('\x1b[1;36m==> ' + title + '\x1b[0m');
+  if (detail) writeTerm('\x1b[90m    ' + detail + '\x1b[0m');
 }
 
 function clearTerminal() {
@@ -5755,7 +5850,38 @@ function clearTerminal() {
   logBuffer = [];
   pendingTermLines = [];
   _hasWrittenBuildLogs = false;
+  renderStructuredLogs();
   updateTerminalEmptyState();
+}
+function copyLogs() {
+  const txt = logBuffer.join('\n');
+  navigator.clipboard.writeText(txt || 'No logs').then(()=>toast('Logs copied', 'success'));
+}
+function toggleLiveTail() {
+  _liveTail = !_liveTail;
+  const b = document.getElementById('liveTailBtn');
+  if (b) b.textContent = _liveTail ? '⚡ Live tail' : '⏸ Paused';
+  if (_liveTail && !_writeDraining && _writeQueue.length) _drainWriteQueue();
+}
+function toggleLogOrder() {
+  _logOrder = _logOrder === 'desc' ? 'asc' : 'desc';
+  const l = document.getElementById('logOrderLabel');
+  if (l) l.textContent = _logOrder === 'desc' ? 'Desc' : 'Asc';
+  const lines = [...logBuffer];
+  if (_logOrder === 'desc') lines.reverse();
+  if (term) { term.clear(); lines.slice(-500).forEach(x => writeTerm(x)); }
+}
+function setLogTypeFilter(v){ _logTypeFilter = v; if (term) { term.clear(); logBuffer.slice(-500).forEach(x => writeTerm(x)); } }
+function applyLogSearch(){ _logSearch = (document.getElementById('logSearchInput')?.value || '').toLowerCase().trim(); if (term) { term.clear(); logBuffer.slice(-1000).forEach(x => writeTerm(x)); } }
+function renderStructuredLogs() {
+  const wrap = document.getElementById('structuredLogs');
+  if (!wrap) return;
+  const lines = logBuffer.slice(-120);
+  wrap.innerHTML = lines.map((line, idx) => `<div onclick="copyLogLine(${idx})" style="font-family:var(--font-mono);font-size:0.78rem;padding:8px 10px;border:1px solid rgba(139,92,246,0.25);border-radius:8px;background:rgba(2,6,23,0.6);cursor:pointer;white-space:pre-wrap;">${escHtml(line)}</div>`).join('');
+}
+function copyLogLine(idx){
+  const line = logBuffer.slice(-120)[idx] || '';
+  navigator.clipboard.writeText(line).then(()=>toast('Log line copied', 'success'));
 }
 
 function downloadLogs() {
@@ -5799,7 +5925,7 @@ function initSocket() {
 
     socket.on('connect', () => {
       console.log('[Socket.io] Connected:', socket.id);
-      writeBench('DEPLOYBOARD LIVE LOG STREAM', 'Connected · session ' + socket.id.substring(0,12) + '…');
+      writeBench('LIVE LOG STREAM', 'Connected · session ' + socket.id.substring(0,12) + '…');
       const statusEl = document.getElementById('statusSocket');
       if (statusEl) {
         statusEl.className = 'badge badge-success';
@@ -5836,6 +5962,7 @@ function initSocket() {
       // Write to terminal immediately
       writeTerm(line);
       logBuffer.push(line);
+      renderStructuredLogs();
 
       // Save to in-memory deployment record
       const d = deployments.find(x => x.id === deployId);
@@ -6314,6 +6441,29 @@ function statusBadge(status) {
 // INIT
 // ══════════════════════════════════════════════════════════════════
 (function() {
+  const params = new URLSearchParams(window.location.search);
+  const ghCode = params.get('code');
+  const ghState = params.get('state');
+  const stateOk = !ghState || ghState === 'deployboard_github_auth';
+  if (ghCode && stateOk) {
+    fetch('/api/auth/github/exchange', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ code: ghCode }) })
+      .then(r => r.json())
+      .then(d => {
+        if (d.token) {
+          authToken = d.token;
+          localStorage.setItem('db_auth_token', d.token);
+          document.getElementById('authOverlay')?.classList.remove('open');
+          const clean = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, '', clean);
+          toast('GitHub account connected successfully', 'success');
+          showDashboard();
+        } else {
+          toast(d.error || 'GitHub sign-in failed. Please try again.', 'error');
+        }
+      }).catch(()=> toast('GitHub sign-in failed. Please try again.', 'error'));
+  }
+  // Keep landing page as the first screen for visitors.
+  // Auth UI appears only after clicking Get Started / trying to open dashboard.
   renderDashboard();
   // Load saved user info
   if (settings.name) {
@@ -6325,10 +6475,56 @@ function statusBadge(status) {
   // Kick off health check silently
   fetch(API + '/api/health', { signal: AbortSignal.timeout(2000) }).catch(()=>{});
 })();
+function switchAuthMode(mode){
+  authMode = mode;
+  document.getElementById('tabSignup').classList.toggle('active', mode==='signup');
+  document.getElementById('tabLogin').classList.toggle('active', mode==='login');
+  document.getElementById('authNameRow').style.display = mode==='signup' ? 'block' : 'none';
+  document.getElementById('authSubmitBtn').textContent = mode==='signup' ? 'Create account' : 'Login';
+}
+async function submitAuth(){
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const name = document.getElementById('authName').value.trim();
+  const endpoint = authMode === 'signup' ? '/api/auth/signup' : '/api/auth/login';
+  const payload = authMode === 'signup' ? { email, password, name } : { email, password };
+  const r = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+  const d = await r.json();
+  if (!r.ok || !d.token) return toast(d.error || 'Authentication failed', 'error');
+  authToken = d.token;
+  localStorage.setItem('db_auth_token', d.token);
+  document.getElementById('authOverlay')?.classList.remove('open');
+  toast('Welcome! Account ready.', 'success');
+  showDashboard();
+}
+function continueWithGitHub() {
+  fetch('/api/auth/github/url')
+    .then(r => r.json())
+    .then(d => {
+      if (!d.url) throw new Error(d.error || 'Failed to create GitHub auth URL');
+      window.location.assign(d.url);
+    })
+    .catch((e) => toast(e.message || 'GitHub login failed', 'error'));
+}
+function showAuthPage() {
+  document.getElementById('authOverlay')?.classList.add('open');
+}
+function logoutUser() {
+  authToken = '';
+  localStorage.removeItem('db_auth_token');
+  githubRepos = [];
+  document.documentElement.classList.remove('app-mode');
+  showPage('dashboard');
+  toast('Logged out successfully', 'success');
+}
 // ══════════════════════════════════════════════════════════════════
 // VIEW SWITCHING — landing ↔ dashboard
 // ══════════════════════════════════════════════════════════════════
 function showDashboard() {
+  if (!hasAuthToken()) {
+    showAuthPage();
+    return;
+  }
   document.documentElement.classList.add('app-mode');
   if (typeof io !== 'undefined' && (!socket || !socket.connected)) initSocket();
   if (!window._dashboardInited) {
@@ -7790,6 +7986,61 @@ function copyDeploySuccessUrl() {
 document.getElementById('deploySuccessOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeDeploySuccess();
 });
+
+async function renderReposPage() {
+  const wrap = document.getElementById('reposGrid');
+  if (!wrap) return;
+  try {
+    const r = await apiFetch('/api/github/repos');
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Failed to load repos');
+    githubRepos = d.repos || [];
+    const q = (document.getElementById('repoSearchInput')?.value || '').toLowerCase().trim();
+    const filtered = githubRepos.filter(r => !q || r.name.toLowerCase().includes(q) || r.full_name.toLowerCase().includes(q) || (r.language||'').toLowerCase().includes(q));
+    const langIcon = (lang='Code') => ({JavaScript:'🟨',TypeScript:'🟦',HTML:'🟧',CSS:'🟪',Python:'🐍',Go:'🐹',PHP:'🐘'}[lang] || '📦');
+    wrap.innerHTML = filtered.map(repo => `
+      <div class="project-card">
+        <div class="project-header"><div class="project-name">${repo.name}</div><span class="status-badge ${repo.private?'status-failed':'status-success'}">${repo.private?'Private':'Public'}</span></div>
+        <div class="project-meta">${repo.full_name}</div>
+        <div class="project-url">${langIcon(repo.language)} ${repo.language || 'Code'} • Updated ${new Date(repo.updated_at).toLocaleDateString()}</div>
+        <button class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="importRepoToDeploy('${repo.html_url}','${repo.default_branch || 'main'}')">Import Repository</button>
+      </div>`).join('');
+    const select = document.getElementById('deployRepoSelect');
+    if (select) {
+      select.innerHTML = '<option value=\"\">Or choose from connected GitHub repositories…</option>' + githubRepos.map(rp => `<option value="${rp.html_url}" data-branch="${rp.default_branch || 'main'}">${rp.full_name}</option>`).join('');
+    }
+  } catch (e) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-title">${e.message}</div></div>`;
+  }
+}
+function importRepoToDeploy(url, branch) {
+  showPage('new-deploy');
+  document.getElementById('deployRepoUrl').value = url;
+  loadRepoBranches(url, branch || 'main');
+}
+document.getElementById('deployRepoSelect')?.addEventListener('change', (e) => {
+  const val = e.target.value;
+  if (!val) return;
+  const opt = e.target.options[e.target.selectedIndex];
+  document.getElementById('deployRepoUrl').value = val;
+  loadRepoBranches(val, opt.dataset.branch || 'main');
+});
+async function loadRepoBranches(repoUrl, preferred='main') {
+  const branchEl = document.getElementById('deployBranch');
+  if (!branchEl) return;
+  const m = String(repoUrl || '').match(/github\.com\/([^/]+\/[^/#?]+)/i);
+  if (!m) { branchEl.innerHTML = '<option value="main">main</option>'; branchEl.value = preferred || 'main'; return; }
+  try {
+    const r = await apiFetch(`/api/github/branches?repo=${encodeURIComponent(m[1])}`);
+    const d = await r.json();
+    const branches = (d.branches || []).filter(Boolean);
+    if (!branches.length) throw new Error('No branches');
+    branchEl.innerHTML = branches.map(b => `<option value="${b}">${b}</option>`).join('');
+    branchEl.value = branches.includes(preferred) ? preferred : branches[0];
+  } catch {
+    branchEl.innerHTML = `<option value="${preferred || 'main'}">${preferred || 'main'}</option>`;
+  }
+}
 </script>
 </body>
 </html>

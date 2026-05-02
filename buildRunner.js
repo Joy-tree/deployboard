@@ -299,7 +299,15 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildCmd = (project.buildCmd || '').trim() || (hasPackageJson ? getDefaultBuildCmd(projectRoot) : 'echo skip');
   if (hasPackageJson && buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
-    await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: buildCmd, log });
+    try {
+      await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: buildCmd, log });
+    } catch (e) {
+      if (/missing script: build|npm ERR!.*build/i.test(String(e.message || ''))) {
+        log(`\x1b[33m[auto] No build script found. Using "echo skip" and continuing static deploy.\x1b[0m`);
+      } else {
+        throw e;
+      }
+    }
   } else {
     log(`\x1b[90m[build] Skipping build step\x1b[0m`);
   }
@@ -387,6 +395,15 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   emitStep(emit, 'clone', 'done');
 
   const projectRoot = findProjectRoot(buildDir, log);
+  const packageJsonPath = path.join(projectRoot, 'package.json');
+  let pkg = {};
+  try { if (fs.existsSync(packageJsonPath)) pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')); } catch (_) {}
+  const hasStartScript = !!(pkg.scripts && pkg.scripts.start);
+  if (!startCmd && !hasStartScript) {
+    log(`\x1b[33m[auto] No start command/script found. Falling back to static deployment flow.\x1b[0m`);
+    const fallbackProject = { ...project, siteType: 'static', buildCmd: project.buildCmd || 'echo skip', outputDir: project.outputDir || '.' };
+    return runStaticBuild({ deployId, project: fallbackProject, sitesDir, tmpDir, githubToken, emit, onLog });
+  }
 
   // ── Step 2: Install ────────────────────────────────────────────────────────
   emitStep(emit, 'install', 'active');
@@ -402,7 +419,15 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildCmd = (project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot);
   if (buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
-    await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: buildCmd, log });
+    try {
+      await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: buildCmd, log });
+    } catch (e) {
+      if (/missing script: build|npm ERR!.*build/i.test(String(e.message || ''))) {
+        log(`\x1b[33m[auto] No build script found. Switching build step to "echo skip" and continuing.\x1b[0m`);
+      } else {
+        throw e;
+      }
+    }
   }
   emitStep(emit, 'build', 'done');
 
