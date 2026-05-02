@@ -1974,6 +1974,16 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 /* ── Toast ─────────────────────────────────────────────────────────────── */
 #toast-wrap { position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+.auth-overlay{position:fixed;inset:0;z-index:1200;background:radial-gradient(circle at 20% 20%,rgba(16,185,129,.16),transparent 40%),#030712;display:none;align-items:center;justify-content:center;padding:20px}
+.auth-overlay.open{display:flex}
+.auth-card{width:min(94vw,460px);background:linear-gradient(180deg,#0a1220,#090f1c);border:1px solid rgba(99,179,237,.18);border-radius:18px;box-shadow:0 20px 80px rgba(0,0,0,.55);padding:22px}
+.auth-title{font-family:var(--font-hd);font-size:1.5rem;font-weight:800}
+.auth-sub{font-size:.85rem;color:var(--text-2);margin:8px 0 14px}
+.auth-tabs{display:flex;gap:8px;margin-bottom:12px}
+.auth-tab{flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-weight:700}
+.auth-tab.active{background:rgba(16,185,129,.14);border-color:rgba(16,185,129,.4);color:#d1fae5}
+.auth-divider{display:flex;align-items:center;gap:10px;color:var(--text-3);font-size:.72rem;margin:12px 0}
+.auth-divider:before,.auth-divider:after{content:"";height:1px;background:var(--border);flex:1}
 .toast {
   display:flex; align-items:center; gap:10px;
   padding:11px 16px;
@@ -2000,6 +2010,24 @@ textarea.input { resize: vertical; min-height: 80px; }
 <body>
 
 <div id="toast-wrap"></div>
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-title">Welcome to DeployBoard</div>
+    <div class="auth-sub">Create your account to sync repos, enable auto-deploy, and manage deployments securely.</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabSignup" onclick="switchAuthMode('signup')">Sign Up</button>
+      <button class="auth-tab" id="tabLogin" onclick="switchAuthMode('login')">Login</button>
+    </div>
+    <div class="field"><label class="field-label">Email</label><input class="input" id="authEmail" placeholder="you@example.com"></div>
+    <div class="field" id="authNameRow"><label class="field-label">Full Name</label><input class="input" id="authName" placeholder="Jane Doe"></div>
+    <div class="field"><label class="field-label">Password</label><input class="input" type="password" id="authPassword" placeholder="••••••••"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px;" onclick="submitAuth()" id="authSubmitBtn">Create account</button>
+    <div class="auth-divider">or</div>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;" onclick="continueWithGitHub()">
+      Continue with GitHub
+    </button>
+  </div>
+</div>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 
@@ -2759,6 +2787,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       Deployments
       <span class="nav-badge" id="deploymentsCount">0</span>
     </div>
+    <div class="nav-item" data-page="repos" onclick="showPage('repos',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6a2 2 0 0 1 2-2h6l2 2h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Repositories
+    </div>
 
     <div class="sidebar-section">Tools</div>
     <div class="nav-item" data-page="new-resource" onclick="showPage('new-resource',this)">
@@ -3097,6 +3129,16 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>
     </div>
 
+    <div class="page" id="page-repos">
+      <div class="page-header">
+        <div class="page-title">GitHub Repositories</div>
+        <div class="page-subtitle">Authorize once and import repos directly into deployments.</div>
+      </div>
+      <div class="card">
+        <div class="card-body" id="reposGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;"></div>
+      </div>
+    </div>
+
     <!-- ════════ NEW DEPLOY PAGE ════════ -->
     <div class="page" id="page-new-deploy">
       <div class="page-header">
@@ -3135,6 +3177,9 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <div class="field">
                 <label class="field-label">GitHub Repository URL</label>
                 <input class="input input-mono" id="deployRepoUrl" placeholder="https://github.com/username/repo" autocomplete="off">
+                <select class="input input-mono" id="deployRepoSelect" style="margin-top:8px;">
+                  <option value="">Or choose from connected GitHub repositories…</option>
+                </select>
                 <div class="field-hint">Public or private repos supported. For private repos ensure your GitHub token is configured.</div>
               </div>
               <div class="field">
@@ -3613,6 +3658,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <input class="input" id="settingsEmail" type="email" placeholder="you@example.com">
               </div>
               <button class="btn btn-primary" onclick="saveAccountSettings()">Save Account</button>
+              <button class="btn btn-ghost" onclick="logoutUser()" style="margin-top:10px;">Logout</button>
             </div>
           </div>
           <div class="card">
@@ -4920,6 +4966,23 @@ let pendingDelete= null;
 let activeBuildId= null;
 let deployFormInitialized = false;
 let deployFormPrefillMode = false;
+let authToken = localStorage.getItem('db_auth_token') || '';
+let currentUser = null;
+let githubRepos = [];
+let authMode = 'signup';
+const GITHUB_CLIENT_ID = 'Iv23liRapw6lMrW4QArz';
+function hasAuthToken() {
+  const t = authToken || localStorage.getItem('db_auth_token') || '';
+  if (t && !authToken) authToken = t;
+  return !!t;
+}
+
+async function apiFetch(url, opts={}) {
+  const headers = Object.assign({}, opts.headers || {});
+  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+  const res = await fetch(url, Object.assign({}, opts, { headers }));
+  return res;
+}
 
 // ══════════════════════════════════════════════════════════════════
 // SAVE / LOAD
@@ -4984,6 +5047,7 @@ function showPage(id, navEl) {
   if (id === 'usage')         renderUsage();
   if (id === 'activity')      renderActivity();
   if (id === 'secrets')       renderSecrets();
+  if (id === 'repos')         renderReposPage();
 
   closeSidebar();
 }
@@ -6314,6 +6378,29 @@ function statusBadge(status) {
 // INIT
 // ══════════════════════════════════════════════════════════════════
 (function() {
+  const params = new URLSearchParams(window.location.search);
+  const ghCode = params.get('code');
+  const ghState = params.get('state');
+  const stateOk = !ghState || ghState === 'deployboard_github_auth';
+  if (ghCode && stateOk) {
+    fetch('/api/auth/github/exchange', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ code: ghCode }) })
+      .then(r => r.json())
+      .then(d => {
+        if (d.token) {
+          authToken = d.token;
+          localStorage.setItem('db_auth_token', d.token);
+          document.getElementById('authOverlay')?.classList.remove('open');
+          const clean = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, '', clean);
+          toast('GitHub account connected successfully', 'success');
+          showDashboard();
+        } else {
+          toast(d.error || 'GitHub sign-in failed. Please try again.', 'error');
+        }
+      }).catch(()=> toast('GitHub sign-in failed. Please try again.', 'error'));
+  }
+  // Keep landing page as the first screen for visitors.
+  // Auth UI appears only after clicking Get Started / trying to open dashboard.
   renderDashboard();
   // Load saved user info
   if (settings.name) {
@@ -6325,10 +6412,49 @@ function statusBadge(status) {
   // Kick off health check silently
   fetch(API + '/api/health', { signal: AbortSignal.timeout(2000) }).catch(()=>{});
 })();
+function switchAuthMode(mode){
+  authMode = mode;
+  document.getElementById('tabSignup').classList.toggle('active', mode==='signup');
+  document.getElementById('tabLogin').classList.toggle('active', mode==='login');
+  document.getElementById('authNameRow').style.display = mode==='signup' ? 'block' : 'none';
+  document.getElementById('authSubmitBtn').textContent = mode==='signup' ? 'Create account' : 'Login';
+}
+async function submitAuth(){
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const name = document.getElementById('authName').value.trim();
+  const endpoint = authMode === 'signup' ? '/api/auth/signup' : '/api/auth/login';
+  const payload = authMode === 'signup' ? { email, password, name } : { email, password };
+  const r = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+  const d = await r.json();
+  if (!r.ok || !d.token) return toast(d.error || 'Authentication failed', 'error');
+  authToken = d.token;
+  localStorage.setItem('db_auth_token', d.token);
+  document.getElementById('authOverlay')?.classList.remove('open');
+  toast('Welcome! Account ready.', 'success');
+  showDashboard();
+}
+function continueWithGitHub() {
+  const redirectUri = window.location.origin + window.location.pathname;
+  const url = `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(GITHUB_CLIENT_ID)}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo%20read:user%20user:email&state=deployboard_github_auth`;
+  window.location.href = url;
+}
+function logoutUser() {
+  authToken = '';
+  localStorage.removeItem('db_auth_token');
+  githubRepos = [];
+  document.documentElement.classList.remove('app-mode');
+  showPage('dashboard');
+  toast('Logged out successfully', 'success');
+}
 // ══════════════════════════════════════════════════════════════════
 // VIEW SWITCHING — landing ↔ dashboard
 // ══════════════════════════════════════════════════════════════════
 function showDashboard() {
+  if (!hasAuthToken()) {
+    document.getElementById('authOverlay')?.classList.add('open');
+    return;
+  }
   document.documentElement.classList.add('app-mode');
   if (typeof io !== 'undefined' && (!socket || !socket.connected)) initSocket();
   if (!window._dashboardInited) {
@@ -7789,6 +7915,42 @@ function copyDeploySuccessUrl() {
 // Close overlay when clicking backdrop
 document.getElementById('deploySuccessOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeDeploySuccess();
+});
+
+async function renderReposPage() {
+  const wrap = document.getElementById('reposGrid');
+  if (!wrap) return;
+  try {
+    const r = await apiFetch('/api/github/repos');
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Failed to load repos');
+    githubRepos = d.repos || [];
+    wrap.innerHTML = githubRepos.map(repo => `
+      <div class="project-card">
+        <div class="project-header"><div class="project-name">${repo.name}</div><span class="status-badge ${repo.private?'status-failed':'status-success'}">${repo.private?'Private':'Public'}</span></div>
+        <div class="project-meta">${repo.full_name}</div>
+        <div class="project-url">${repo.language || 'Code'} • ${new Date(repo.updated_at).toLocaleDateString()}</div>
+        <button class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="importRepoToDeploy('${repo.html_url}','${repo.default_branch || 'main'}')">Import</button>
+      </div>`).join('');
+    const select = document.getElementById('deployRepoSelect');
+    if (select) {
+      select.innerHTML = '<option value=\"\">Or choose from connected GitHub repositories…</option>' + githubRepos.map(rp => `<option value="${rp.html_url}" data-branch="${rp.default_branch || 'main'}">${rp.full_name}</option>`).join('');
+    }
+  } catch (e) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-title">${e.message}</div></div>`;
+  }
+}
+function importRepoToDeploy(url, branch) {
+  showPage('new-deploy');
+  document.getElementById('deployRepoUrl').value = url;
+  document.getElementById('deployBranch').value = branch || 'main';
+}
+document.getElementById('deployRepoSelect')?.addEventListener('change', (e) => {
+  const val = e.target.value;
+  if (!val) return;
+  const opt = e.target.options[e.target.selectedIndex];
+  document.getElementById('deployRepoUrl').value = val;
+  document.getElementById('deployBranch').value = opt.dataset.branch || 'main';
 });
 </script>
 </body>
