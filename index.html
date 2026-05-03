@@ -833,6 +833,17 @@ ul { list-style:none; }
 .page-loader-dots::after {
   content:''; animation:dots 1.2s steps(3,end) infinite;
 }
+.page-loader-gears{position:relative;width:116px;height:88px}
+.gear{position:absolute;border:4px solid rgba(134,239,172,.9);border-radius:50%;display:grid;place-items:center;box-shadow:0 0 18px rgba(74,222,128,.24)}
+.gear::before{content:'';width:34%;height:34%;border-radius:50%;background:rgba(134,239,172,.92)}
+.gear::after{content:'';position:absolute;inset:-7px;border-radius:50%;
+  background:repeating-conic-gradient(rgba(134,239,172,.9) 0 8deg,transparent 8deg 22deg);
+  -webkit-mask:radial-gradient(circle,transparent 58%,#000 59%);
+  mask:radial-gradient(circle,transparent 58%,#000 59%);
+}
+.gear.g1{width:70px;height:70px;left:22px;top:12px;animation:spin 3.5s linear infinite}
+.gear.g2{width:42px;height:42px;left:0;top:44px;animation:spin 2.2s linear infinite reverse}
+.gear.g3{width:48px;height:48px;right:0;top:8px;animation:spin 2.6s linear infinite reverse}
 @keyframes dots {
   0%   { content:''; }
   33%  { content:'.'; }
@@ -1580,6 +1591,17 @@ textarea.input { resize: vertical; min-height: 80px; }
 .admin-only { display:none !important; }
 
 
+
+.logs-hero{margin-bottom:12px;background:linear-gradient(135deg,rgba(2,6,23,.9),rgba(3,16,37,.92));border:1px solid var(--border-hi);border-radius:14px;padding:14px 16px;display:flex;gap:14px;justify-content:space-between;flex-wrap:wrap}
+.logs-hero-title{font-family:var(--font-hd);font-weight:800;font-size:1.2rem;letter-spacing:-.02em;color:#e2f9ff}
+.logs-hero-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.logs-chip{padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(15,23,42,.55);font-size:.76rem;color:var(--text-2);font-family:var(--font-mono)}
+.logs-chip a{color:#7dd3fc;text-decoration:none}
+.manual-menu{position:relative}.manual-menu-list{position:absolute;top:calc(100% + 8px);left:0;min-width:260px;background:#020817;border:1px solid var(--border-hi);border-radius:12px;padding:8px;display:none;z-index:80;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.manual-menu.open .manual-menu-list{display:block}
+.manual-item{width:100%;text-align:left;background:transparent;border:none;color:var(--text);padding:10px 12px;border-radius:8px;cursor:pointer;font-size:.84rem}
+.manual-item:hover{background:rgba(16,185,129,.12)}
+
 /* ── Dashboard Quick Action Buttons ────────────────────────────────────────── */
 .dash-qa-btn {
   display:flex; align-items:center; gap:8px;
@@ -2071,9 +2093,11 @@ textarea.input { resize: vertical; min-height: 80px; }
   <div class="page-loader-logo">
     Deploy<span>Board</span>
   </div>
-  <div class="page-loader-spinner"></div>
+  <div class="page-loader-gears" aria-hidden="true">
+    <div class="gear g1"></div><div class="gear g2"></div><div class="gear g3"></div>
+  </div>
   <div class="page-loader-text">
-    Initializing<span class="page-loader-dots"></span>
+    Loading<span class="page-loader-dots"></span>
   </div>
 </div>
 
@@ -3442,6 +3466,26 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Download
             </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="logs-hero" id="logsHero">
+        <div>
+          <div class="logs-hero-title" id="logsProjectName">No project selected</div>
+          <div class="logs-hero-meta">
+            <span class="logs-chip" id="logsRepoChip">Repo: —</span>
+            <span class="logs-chip" id="logsBranchChip">Branch: —</span>
+            <span class="logs-chip" id="logsDateChip">Date: —</span>
+            <span class="logs-chip" id="logsTzChip">Timezone: —</span>
+          </div>
+        </div>
+        <div class="manual-menu" id="manualDeployMenu">
+          <button class="btn btn-primary" onclick="toggleManualDeployMenu()">Manual Deploy ▾</button>
+          <div class="manual-menu-list">
+            <button class="manual-item" onclick="manualDeployAction('latest')">Deploy latest commit</button>
+            <button class="manual-item" onclick="manualDeployAction('ref')">Deploy from branch/ref…</button>
+            <button class="manual-item" onclick="manualDeployAction('clean')">Clear terminal + deploy</button>
           </div>
         </div>
       </div>
@@ -5106,6 +5150,12 @@ async function apiFetch(url, opts={}) {
 // ══════════════════════════════════════════════════════════════════
 // SAVE / LOAD
 // ══════════════════════════════════════════════════════════════════
+function resetWorkspaceState() {
+  projects = []; deployments = []; envStore = {};
+  settings = { ...settings, baseDomain: settings.baseDomain || 'joytreehostingserver.dpdns.org' };
+  ['db_projects','db_deployments','db_envstore','db_settings','db_activity','db_webhooks','db_cronjobs','db_cron_execs'].forEach(k => localStorage.removeItem(k));
+}
+
 function save() {
   localStorage.setItem('db_projects',    JSON.stringify(projects));
   localStorage.setItem('db_deployments', JSON.stringify(deployments));
@@ -5145,7 +5195,11 @@ async function bootstrapSession(){
   try {
     const meR = await apiFetch('/api/auth/me');
     const meD = await meR.json();
-    if (!meR.ok || !meD.user) throw new Error('session invalid');
+    if (!meR.ok || !meD.user) {
+      const err = new Error('session invalid');
+      err.status = meR.status;
+      throw err;
+    }
     applyUserProfile(meD.user);
     let wsD = null;
     if (fbDb && meD.user) {
@@ -5167,9 +5221,29 @@ async function bootstrapSession(){
     }
     return true;
   } catch(e){
-    authToken = ''; localStorage.removeItem('db_auth_token');
+    if (e && (e.status === 401 || e.status === 403)) {
+      authToken = '';
+      localStorage.removeItem('db_auth_token');
+    }
     return false;
   }
+}
+
+function showBootLoader(message = 'Loading') {
+  const loader = document.getElementById('pageLoader');
+  if (!loader) return;
+  const txt = loader.querySelector('.page-loader-text');
+  if (txt) txt.innerHTML = `${message}<span class="page-loader-dots"></span>`;
+  loader.style.display = 'flex';
+  loader.classList.remove('hidden');
+}
+function hideBootLoader(delay = 200) {
+  const loader = document.getElementById('pageLoader');
+  if (!loader) return;
+  setTimeout(() => {
+    loader.classList.add('hidden');
+    setTimeout(() => loader.style.display = 'none', 450);
+  }, delay);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -5210,6 +5284,13 @@ function showPage(id, navEl) {
   if (id === 'logs') {
     initTerminal();
     updateTerminalEmptyState();
+    const contextDeploy = resolveLogsContextDeployment();
+    updateLogsHero(contextDeploy);
+    if (contextDeploy) {
+      document.getElementById('termTitle').textContent = (contextDeploy.projectName || 'Deployment') + ' · ' + contextDeploy.id.slice(-8);
+      document.getElementById('termStatus').innerHTML = statusBadge(contextDeploy.status);
+      if (!activeBuildId) activeBuildId = contextDeploy.id;
+    }
   }
   if (id === 'settings')      loadSettingsUI();
   if (id === 'new-deploy')    initDeployForm();
@@ -5449,7 +5530,7 @@ function renderDashboard() {
     if (proj && proj.liveUrl && (depStatus === 'building' || !depStatus)) depStatus = 'success';
     // Also fix duration display — "running..." for old building states that are actually done
     const durText = d.duration ? d.duration + 's' : (depStatus === 'success' ? '—' : 'running…');
-    return `<div class="dash-deploy-row" onclick="showPage('logs')" style="cursor:pointer;">
+    return `<div class="dash-deploy-row" onclick="viewDeployLogs('${d.id}')" style="cursor:pointer;">
       <div class="dash-deploy-dot">${statusDot(depStatus)}</div>
       <div class="dash-deploy-info">
         <div class="dash-deploy-name">${escHtml(d.projectName||'—')}</div>
@@ -5537,6 +5618,7 @@ function renderProjects() {
           </div>
           ${displayStatus ? statusBadge(displayStatus) : '<span class="badge badge-idle"><span class="badge-dot"></span>Not deployed</span>'}
         </div>
+        ${(lastDeploy && ['pending','building'].includes(lastDeploy.status)) ? '<div style="margin:6px 0 2px;color:var(--green);font-size:0.78rem;font-weight:700;">↻ Redeploying latest commit…</div>' : ''}
         <div class="project-meta">
           <div class="project-meta-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
@@ -5600,9 +5682,49 @@ function renderDeployments() {
 }
 document.getElementById('deployFilterStatus')?.addEventListener('change', renderDeployments);
 
+
+function resolveLogsContextDeployment() {
+  const byActiveId = activeBuildId ? deployments.find(x => x.id === activeBuildId) : null;
+  if (byActiveId) return byActiveId;
+  if (!deployments.length) return null;
+  return [...deployments].sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0))[0];
+}
+
+function updateLogsHero(deploy) {
+  const d = deploy || resolveLogsContextDeployment();
+  const project = d ? (projects.find(p => p.id === d.projectId) || {}) : {};
+  const now = new Date();
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const dt = now.toLocaleString([], { year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  document.getElementById('logsProjectName').textContent = d?.projectName || project.name || 'No project selected';
+  const repo = project.repoUrl || d?.repoUrl || '—';
+  document.getElementById('logsRepoChip').innerHTML = repo !== '—' ? `Repo: <a href="${repo}" target="_blank" rel="noopener">${repo.replace('https://github.com/','')}</a>` : 'Repo: —';
+  document.getElementById('logsBranchChip').textContent = 'Branch: ' + (d?.branch || project.branch || 'main');
+  document.getElementById('logsDateChip').textContent = 'Date: ' + dt;
+  document.getElementById('logsTzChip').textContent = 'Timezone: ' + tz;
+}
+function toggleManualDeployMenu(){ document.getElementById('manualDeployMenu')?.classList.toggle('open'); }
+async function manualDeployAction(type){
+  const d = deployments.find(x => x.id === activeBuildId);
+  if (!d) return toast('Open a deployment log first', 'error');
+  const p = projects.find(x => x.id === d.projectId);
+  if (!p) return toast('Project not found for this deployment', 'error');
+  document.getElementById('manualDeployMenu')?.classList.remove('open');
+  if (type === 'clean') clearTerminal();
+  if (type === 'ref') {
+    const ref = prompt('Enter branch or ref to deploy', p.branch || 'main');
+    if (!ref) return;
+    p.branch = ref.trim();
+    saveData();
+  }
+  await redeploy(p.id);
+}
+document.addEventListener('click', (e)=>{ if(!e.target.closest('#manualDeployMenu')) document.getElementById('manualDeployMenu')?.classList.remove('open'); });
+
 function viewDeployLogs(deployId) {
   activeBuildId = deployId;
   showPage('logs');
+  updateLogsHero(deployments.find(x => x.id === deployId));
   const d = deployments.find(x => x.id === deployId);
   if (d && d.logs) {
     if (term) {
@@ -5790,6 +5912,7 @@ async function startDeployment() {
 
   // Navigate to logs
   showPage('logs');
+  updateLogsHero({ projectName: name, branch: branch || 'main', repoUrl });
   toast('Build started for ' + name, 'info');
 
   // Call API
@@ -6285,15 +6408,7 @@ function initSocket() {
 // window.onload fires after ALL scripts (including CDN) have loaded
 window.onload = function() {
   initSocket();
-  // Hide the page loader after a short delay — gives enough time for
-  // fonts/CSS to settle so there's no flash of unstyled content
-  setTimeout(() => {
-    const loader = document.getElementById('pageLoader');
-    if (loader) {
-      loader.classList.add('hidden');
-      setTimeout(() => loader.style.display = 'none', 450);
-    }
-  }, 700);
+  // Loader visibility is controlled by auth/bootstrap lifecycle.
 };
 
 // Toggle collapsible build steps panel
@@ -6634,6 +6749,7 @@ function statusBadge(status) {
 // INIT
 // ══════════════════════════════════════════════════════════════════
 (function() {
+  showBootLoader('Loading');
   const params = new URLSearchParams(window.location.search);
   const ghCode = params.get('code');
   const ghState = params.get('state');
@@ -6645,6 +6761,7 @@ function statusBadge(status) {
         if (d.token) {
           authToken = d.token;
           localStorage.setItem('db_auth_token', d.token);
+          resetWorkspaceState();
                   const clean = window.location.origin + window.location.pathname;
           window.history.replaceState({}, '', clean);
           applyUserProfile(d.user || null);
@@ -6655,7 +6772,9 @@ function statusBadge(status) {
         }
       }).catch(()=> toast('GitHub sign-in failed. Please try again.', 'error'));
   }
-  bootstrapSession().then(ok => { if (ok) showDashboard(); else showLanding(); });
+  bootstrapSession()
+    .then(ok => { if (ok) showDashboard(); else showLanding(); })
+    .finally(() => hideBootLoader(120));
   // Kick off health check silently
   fetch(API + '/api/health', { signal: AbortSignal.timeout(2000) }).catch(()=>{});
 })();
@@ -6677,16 +6796,34 @@ async function submitAuth(){
   if (!r.ok || !d.token) return toast(d.error || 'Authentication failed', 'error');
   authToken = d.token;
   localStorage.setItem('db_auth_token', d.token);
+  resetWorkspaceState();
   applyUserProfile(d.user || null);
   toast('Welcome! Account ready.', 'success');
   showDashboard();
 }
+function normalizeGitHubAuthorizeUrl(rawUrl) {
+  const input = String(rawUrl || '').trim();
+  if (!input) return '';
+  if (/^https?:\/\/github\.com\/login\/oauth\/authorize\?/.test(input)) return input;
+  if (/^https?:\/\/github\.com\/login\/oauth\/authorize[^?].*/.test(input)) {
+    return input.replace('https://github.com/login/oauth/authorize', 'https://github.com/login/oauth/authorize?');
+  }
+  if (/^(?:gho_|github_pat_|[A-Za-z0-9_\-]{10,})&redirect_uri=/.test(input)) {
+    return 'https://github.com/login/oauth/authorize?client_id=' + input;
+  }
+  return input;
+}
+
 function continueWithGitHub() {
   fetch('/api/auth/github/url')
     .then(r => r.json())
     .then(d => {
       if (!d.url) throw new Error(d.error || 'Failed to create GitHub auth URL');
-      window.location.assign(d.url);
+      const authUrl = normalizeGitHubAuthorizeUrl(d.url);
+      if (!/^https:\/\/github\.com\/login\/oauth\/authorize\?/.test(authUrl)) {
+        throw new Error('GitHub auth URL is invalid. Check GITHUB_CLIENT_ID and OAuth app callback URL.');
+      }
+      window.location.assign(authUrl);
     })
     .catch((e) => toast(e.message || 'GitHub login failed', 'error'));
 }
@@ -6700,6 +6837,7 @@ function showAuthPage() {
 function logoutUser() {
   authToken = '';
   localStorage.removeItem('db_auth_token');
+  resetWorkspaceState();
   githubRepos = [];
   document.documentElement.classList.remove('app-mode');
   showPage('dashboard');
@@ -8230,8 +8368,13 @@ function importRepoToDeploy(url, branch) {
 
 function makeCustomSelect(selectId, placeholder='Select...') {
   const sel = document.getElementById(selectId);
-  if (!sel || sel.dataset.customized === '1') return;
-  sel.dataset.customized = '1';
+  if (!sel) return;
+  if (!window.__customSelectRefreshers) window.__customSelectRefreshers = {};
+  if (window.__customSelectRefreshers[selectId]) {
+    window.__customSelectRefreshers[selectId]();
+    return;
+  }
+
   sel.classList.add('hidden-native-select');
   const wrap = document.createElement('div');
   wrap.className = 'custom-select';
@@ -8242,11 +8385,14 @@ function makeCustomSelect(selectId, placeholder='Select...') {
   menu.className = 'custom-select-menu';
   wrap.appendChild(btn); wrap.appendChild(menu);
   sel.parentNode.insertBefore(wrap, sel.nextSibling);
+
   const refresh = () => {
     const txt = sel.options[sel.selectedIndex]?.text || placeholder;
     btn.innerHTML = `<span>${txt}</span><span>⌄</span>`;
     menu.innerHTML = Array.from(sel.options).map((o,i)=>`<div class="custom-select-item" data-i="${i}">${o.text}</div>`).join('');
   };
+
+  window.__customSelectRefreshers[selectId] = refresh;
   btn.onclick = () => wrap.classList.toggle('open');
   menu.onclick = (e) => {
     const it = e.target.closest('.custom-select-item'); if (!it) return;
@@ -8258,6 +8404,13 @@ function makeCustomSelect(selectId, placeholder='Select...') {
   document.addEventListener('click', (e)=>{ if(!wrap.contains(e.target)) wrap.classList.remove('open'); });
   sel.addEventListener('change', refresh);
   refresh();
+}
+
+function initCustomSelects() {
+  ['deployRepoSelect','deployBranch','logTypeFilter','metricProjectSelect','metricRangeSelect','dfRepoSelect','dfBranchSelect','workerRepoSelect','workerBranchSelect'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) makeCustomSelect(id, el.options[el.selectedIndex]?.text || 'Select...');
+  });
 }
 
 document.getElementById('dfRepoUrl')?.addEventListener('change', (e)=> loadBranchesInto(e.target.value,'dfBranchSelect','dfBranch','main'));
@@ -8314,6 +8467,8 @@ async function loadRepoBranches(repoUrl, preferred='main') {
     branchEl.innerHTML = `<option value="${preferred || 'main'}">${preferred || 'main'}</option>`;
   }
 }
+
+initCustomSelects();
 </script>
 </body>
 </html>
