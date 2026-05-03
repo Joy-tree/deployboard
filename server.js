@@ -687,7 +687,7 @@ app.get('/api/github/repos', requireAuth, async (req, res) => {
     if (!token) return res.status(400).json({ error: 'GitHub account not connected' });
     let all = [];
     for (let page = 1; page <= 3; page++) {
-      const r = await fetch(`https://api.github.com/user/repos?per_page=100&page=${page}&sort=updated&visibility=all&affiliation=owner,collaborator,organization_member&type=all`, {
+      const r = await fetch(`https://api.github.com/user/repos?per_page=100&page=${page}&sort=updated&visibility=all&affiliation=owner,collaborator,organization_member`, {
         headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'deployboard' }
       });
       const data = await r.json();
