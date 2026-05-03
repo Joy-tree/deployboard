@@ -833,23 +833,29 @@ ul { list-style:none; }
 .page-loader-dots::after {
   content:''; animation:dots 1.2s steps(3,end) infinite;
 }
-.page-loader-gears{position:relative;width:116px;height:88px}
-.gear{position:absolute;border:4px solid rgba(134,239,172,.9);border-radius:50%;display:grid;place-items:center;box-shadow:0 0 18px rgba(74,222,128,.24)}
-.gear::before{content:'';width:34%;height:34%;border-radius:50%;background:rgba(134,239,172,.92)}
-.gear::after{content:'';position:absolute;inset:-7px;border-radius:50%;
-  background:repeating-conic-gradient(rgba(134,239,172,.9) 0 8deg,transparent 8deg 22deg);
-  -webkit-mask:radial-gradient(circle,transparent 58%,#000 59%);
-  mask:radial-gradient(circle,transparent 58%,#000 59%);
-}
-.gear.g1{width:70px;height:70px;left:22px;top:12px;animation:spin 3.5s linear infinite}
-.gear.g2{width:42px;height:42px;left:0;top:44px;animation:spin 2.2s linear infinite reverse}
-.gear.g3{width:48px;height:48px;right:0;top:8px;animation:spin 2.6s linear infinite reverse}
+.page-loader-gears{width:min(74vw,290px);height:auto;filter:drop-shadow(0 0 16px rgba(52,211,153,.28))}
+.gear-svg{width:100%;height:auto;overflow:visible}
+.gear-body{fill:none;stroke:#86efac;stroke-width:5.5;stroke-linecap:round;opacity:.95}
+.gear-hub{fill:#86efac;opacity:.92}
+.gear-spoke{stroke:#86efac;stroke-width:5;stroke-linecap:round;opacity:.85}
+.gear--big{transform-origin:130px 95px;animation:gearSpin 8.5s linear infinite}
+.gear--left{transform-origin:68px 148px;animation:gearSpinRev 5.5s linear infinite}
+.gear--right{transform-origin:198px 70px;animation:gearSpinRev 6.2s linear infinite}
+.loader-panel{display:flex;align-items:center;gap:14px;margin-top:2px}
+.loader-percent{width:68px;height:68px;border-radius:50%;border:2px solid rgba(134,239,172,.45);display:grid;place-items:center;color:#86efac;font-family:var(--font-mono);font-weight:800;font-size:1.1rem;box-shadow:inset 0 0 0 4px rgba(134,239,172,.12),0 0 18px rgba(74,222,128,.16)}
+.loader-progress{width:min(62vw,360px);height:58px;padding:9px 12px;border-radius:12px;border:1px solid rgba(134,239,172,.45);background:linear-gradient(180deg, rgba(16,185,129,.08), rgba(2,6,23,.35))}
+.loader-progress svg{width:100%;height:100%}
+.loader-track{fill:rgba(15,23,42,.65);stroke:rgba(134,239,172,.26);stroke-width:1}
+.loader-fill{fill:url(#loaderGrad);transition:width .45s linear}
+.loader-segment{fill:rgba(134,239,172,.26)}
 @keyframes dots {
   0%   { content:''; }
   33%  { content:'.'; }
   66%  { content:'..'; }
   100% { content:'...'; }
 }
+@keyframes gearSpin { to{ transform:rotate(360deg);} }
+@keyframes gearSpinRev { to{ transform:rotate(-360deg);} }
 
 /* ── Mobile viewport height fix (address bar issues) ──────────────────── */
 @supports (height: 100dvh) {
@@ -2094,7 +2100,34 @@ textarea.input { resize: vertical; min-height: 80px; }
     Deploy<span>Board</span>
   </div>
   <div class="page-loader-gears" aria-hidden="true">
-    <div class="gear g1"></div><div class="gear g2"></div><div class="gear g3"></div>
+    <svg class="gear-svg" viewBox="0 0 265 190" aria-hidden="true">
+      <g class="gear--big">
+        <circle class="gear-body" cx="130" cy="95" r="48" stroke-dasharray="8 14"/>
+        <circle class="gear-body" cx="130" cy="95" r="34"/>
+        <line class="gear-spoke" x1="130" y1="95" x2="162" y2="95"/><line class="gear-spoke" x1="130" y1="95" x2="113" y2="124"/><line class="gear-spoke" x1="130" y1="95" x2="116" y2="66"/>
+        <circle class="gear-hub" cx="130" cy="95" r="12"/><circle cx="130" cy="95" r="4" fill="#041522"/>
+      </g>
+      <g class="gear--left">
+        <circle class="gear-body" cx="68" cy="148" r="26" stroke-dasharray="7 12"/><circle class="gear-body" cx="68" cy="148" r="18"/>
+        <line class="gear-spoke" x1="68" y1="148" x2="85" y2="148"/><line class="gear-spoke" x1="68" y1="148" x2="59" y2="163"/><line class="gear-spoke" x1="68" y1="148" x2="59" y2="132"/>
+        <circle class="gear-hub" cx="68" cy="148" r="8"/><circle cx="68" cy="148" r="3" fill="#041522"/>
+      </g>
+      <g class="gear--right">
+        <circle class="gear-body" cx="198" cy="70" r="34" stroke-dasharray="7 12"/><circle class="gear-body" cx="198" cy="70" r="23"/>
+        <line class="gear-spoke" x1="198" y1="70" x2="218" y2="70"/><line class="gear-spoke" x1="198" y1="70" x2="189" y2="88"/><line class="gear-spoke" x1="198" y1="70" x2="189" y2="52"/>
+        <circle class="gear-hub" cx="198" cy="70" r="9"/><circle cx="198" cy="70" r="3.2" fill="#041522"/>
+      </g>
+    </svg>
+  </div>
+  <div class="loader-panel">
+    <div class="loader-percent" id="loaderPercent">0%</div>
+    <div class="loader-progress">
+      <svg viewBox="0 0 360 38" preserveAspectRatio="none">
+        <defs><linearGradient id="loaderGrad" x1="0" x2="1"><stop offset="0%" stop-color="#86efac"/><stop offset="100%" stop-color="#22d3ee"/></linearGradient></defs>
+        <rect class="loader-track" x="0.5" y="0.5" width="359" height="37" rx="8"/>
+        <rect id="loaderFillBar" class="loader-fill" x="2" y="3" width="0" height="32" rx="6"/>
+      </svg>
+    </div>
   </div>
   <div class="page-loader-text">
     Loading<span class="page-loader-dots"></span>
@@ -5230,17 +5263,34 @@ async function bootstrapSession(){
   }
 }
 
+let bootLoaderTimer = null;
 function showBootLoader(message = 'Loading') {
   const loader = document.getElementById('pageLoader');
   if (!loader) return;
   const txt = loader.querySelector('.page-loader-text');
   if (txt) txt.innerHTML = `${message}<span class="page-loader-dots"></span>`;
+  const pct = loader.querySelector('#loaderPercent');
+  const bar = loader.querySelector('#loaderFillBar');
+  if (bootLoaderTimer) clearInterval(bootLoaderTimer);
+  let p = 0;
+  if (pct) pct.textContent = '0%';
+  if (bar) bar.setAttribute('width', '0');
+  bootLoaderTimer = setInterval(() => {
+    p = Math.min(94, p + (p < 55 ? 4 : (p < 80 ? 2 : 1)));
+    if (pct) pct.textContent = `${p}%`;
+    if (bar) bar.setAttribute('width', String((356 * p) / 100));
+  }, 260);
   loader.style.display = 'flex';
   loader.classList.remove('hidden');
 }
 function hideBootLoader(delay = 200) {
   const loader = document.getElementById('pageLoader');
   if (!loader) return;
+  const pct = loader.querySelector('#loaderPercent');
+  const bar = loader.querySelector('#loaderFillBar');
+  if (bootLoaderTimer) { clearInterval(bootLoaderTimer); bootLoaderTimer = null; }
+  if (pct) pct.textContent = '100%';
+  if (bar) bar.setAttribute('width', '356');
   setTimeout(() => {
     loader.classList.add('hidden');
     setTimeout(() => loader.style.display = 'none', 450);
@@ -5373,10 +5423,43 @@ function renderNetworkMetrics(){
   const rangeSel = document.getElementById('metricRangeSelect');
   const chart = document.getElementById('networkMetricChart');
   if (!projSel || !rangeSel || !chart) return;
-  const opts = ['<option value="">Most recent project</option>'].concat(projects.map(p=>`<option value="${p.id}">${p.name}</option>`));
-  if (!projSel.dataset.ready) { projSel.innerHTML = opts.join(''); projSel.dataset.ready='1'; makeCustomSelect('metricProjectSelect','Most recent project'); makeCustomSelect('metricRangeSelect','Last 12 hours'); }
-  const projectId = projSel.value || (deployments[deployments.length-1]?.projectId || projects[projects.length-1]?.id || '');
+  const latestProjectId = deployments[deployments.length-1]?.projectId || projects[projects.length-1]?.id || '';
+  const latestProjectName = projects.find(p => p.id === latestProjectId)?.name || 'Most recent project';
+  const opts = [`<option value="">${latestProjectName}</option>`].concat(projects.map(p=>`<option value="${p.id}">${p.name}</option>`));
+  if (!projSel.dataset.ready) {
+    projSel.innerHTML = opts.join('');
+    projSel.dataset.ready='1';
+    makeCustomSelect('metricProjectSelect', latestProjectName);
+    makeCustomSelect('metricRangeSelect','Last 12 hours');
+  } else if (projSel.options.length && projSel.options[0].textContent !== latestProjectName) {
+    projSel.options[0].textContent = latestProjectName;
+    const custom = document.querySelector('.select[data-for="metricProjectSelect"] .label');
+    if (custom && !projSel.value) custom.textContent = latestProjectName;
+  }
+  const projectId = projSel.value || latestProjectId;
   const hours = Number(rangeSel.value || 12);
+  const hasProjects = projects.length > 0;
+  const projectDeployments = deployments.filter(d => !projectId || d.projectId === projectId || d.projectName === projectId);
+  const hasMetricData = hasProjects && projectDeployments.length > 0;
+  if (!hasMetricData) {
+    const W = 320, H = 180, p = 20;
+    chart.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    chart.innerHTML = `
+      <rect x="${p}" y="${p}" width="${W-(p*2)}" height="${H-(p*2)}" rx="10" fill="rgba(15,23,42,.35)" stroke="rgba(148,163,184,.18)"/>
+      <text x="50%" y="48%" text-anchor="middle" dominant-baseline="middle" fill="#94a3b8" font-size="11.5" font-family="Inter, sans-serif">No project metrics yet</text>
+      <text x="50%" y="58%" text-anchor="middle" dominant-baseline="middle" fill="#64748b" font-size="10" font-family="Inter, sans-serif">Create and run a deployment to start collecting data</text>
+    `;
+    document.getElementById('metricMonthTotal').textContent = `0.0 MB`;
+    document.getElementById('metricHttp').textContent = `0.0 MB`;
+    document.getElementById('metricWs').textContent = `0.0 MB`;
+    document.getElementById('metricSvc').textContent = `0.0 MB`;
+    document.getElementById('metricPriv').textContent = `0.0 MB`;
+    const tooltip = document.getElementById('metricChartTooltip');
+    if (tooltip) tooltip.style.display = 'none';
+    chart.onmousemove = chart.onmouseenter = chart.onmouseleave = null;
+    chart.ontouchstart = chart.ontouchmove = chart.ontouchend = null;
+    return;
+  }
   const ser = synthMetricSeries(projectId, hours);
   const W=320,H=180,p=20,max=Math.max(1,...ser);
   const pts = ser.map((v,i)=>({x:p+i*(W-2*p)/Math.max(ser.length-1,1), y:H-p-(v/max)*(H-2*p)}));
