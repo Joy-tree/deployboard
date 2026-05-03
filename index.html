@@ -5423,9 +5423,20 @@ function renderNetworkMetrics(){
   const rangeSel = document.getElementById('metricRangeSelect');
   const chart = document.getElementById('networkMetricChart');
   if (!projSel || !rangeSel || !chart) return;
-  const opts = ['<option value="">Most recent project</option>'].concat(projects.map(p=>`<option value="${p.id}">${p.name}</option>`));
-  if (!projSel.dataset.ready) { projSel.innerHTML = opts.join(''); projSel.dataset.ready='1'; makeCustomSelect('metricProjectSelect','Most recent project'); makeCustomSelect('metricRangeSelect','Last 12 hours'); }
-  const projectId = projSel.value || (deployments[deployments.length-1]?.projectId || projects[projects.length-1]?.id || '');
+  const latestProjectId = deployments[deployments.length-1]?.projectId || projects[projects.length-1]?.id || '';
+  const latestProjectName = projects.find(p => p.id === latestProjectId)?.name || 'Most recent project';
+  const opts = [`<option value="">${latestProjectName}</option>`].concat(projects.map(p=>`<option value="${p.id}">${p.name}</option>`));
+  if (!projSel.dataset.ready) {
+    projSel.innerHTML = opts.join('');
+    projSel.dataset.ready='1';
+    makeCustomSelect('metricProjectSelect', latestProjectName);
+    makeCustomSelect('metricRangeSelect','Last 12 hours');
+  } else if (projSel.options.length && projSel.options[0].textContent !== latestProjectName) {
+    projSel.options[0].textContent = latestProjectName;
+    const custom = document.querySelector('.select[data-for="metricProjectSelect"] .label');
+    if (custom && !projSel.value) custom.textContent = latestProjectName;
+  }
+  const projectId = projSel.value || latestProjectId;
   const hours = Number(rangeSel.value || 12);
   const hasProjects = projects.length > 0;
   const projectDeployments = deployments.filter(d => !projectId || d.projectId === projectId || d.projectName === projectId);
