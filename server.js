@@ -572,12 +572,13 @@ app.get('/api/auth/github/url', (req, res) => {
   const origin = `${req.protocol}://${req.get('host')}`;
   const configuredRedirect = process.env.GITHUB_REDIRECT_URI || process.env.GITHUB_OAUTH_REDIRECT_URI || '';
   const redirectUri = configuredRedirect || `${origin}/`;
+  const normalizedClientId = String(GITHUB_CLIENT_ID || '').trim().replace(/^Iv([0-9])\./, 'Iv$1.').replace(/^Iv(?![0-9]\.)/, 'Iv1.');
   const url = new URL('https://github.com/login/oauth/authorize');
-  url.searchParams.set('client_id', GITHUB_CLIENT_ID);
+  url.searchParams.set('client_id', normalizedClientId);
   url.searchParams.set('redirect_uri', redirectUri);
   url.searchParams.set('scope', 'repo read:user user:email');
   url.searchParams.set('state', 'deployboard_github_auth');
-  res.json({ url: url.toString(), redirectUri });
+  res.json({ url: url.toString(), redirectUri, clientIdHint: normalizedClientId.slice(0,6) + '...' });
 });
 
 app.post('/api/auth/github/exchange', async (req, res) => {
@@ -1114,3 +1115,54 @@ server.listen(PORT, () => {
   console.log(`[DeployBoard] Base domain: ${BASE_DOMAIN}`);
   console.log(`[DeployBoard] Sites dir:   ${SITES_DIR}`);
 });
+function parseGitHubRepo(repoUrl = '') {
+  const m = String(repoUrl).match(/github\.com\/([^/]+)\/([^/#?]+)/i);
+  if (!m) return null;
+  return { owner: m[1], repo: m[2].replace(/\.git$/i, '') };
+}
+
+const autoDeployState = new Map();
+async function checkAndAutoDeployProjects() {
+  if (!GITHUB_TOKEN) return;
+  let allProjects = [];
+  try { allProjects = await Project.find().lean().maxTimeMS(7000); } catch { return; }
+  for (const p of allProjects) {
+    const parsed = parseGitHubRepo(p.repoUrl);
+    if (!parsed) continue;
+    const key = String(p._id);
+    if (autoDeployState.get(key)?.deploying) continue;
+    try {
+      const branch = p.branch || 'main';
+      const r = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/commits/${encodeURIComponent(branch)}`, {
+        headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'User-Agent': 'DeployBoard AutoDeploy' }
+      });
+      if (!r.ok) continue;
+      const d = await r.json();
+      const sha = d?.sha;
+      if (!sha) continue;
+      const prev = autoDeployState.get(key)?.sha;
+      autoDeployState.set(key, { sha, deploying: false });
+      if (!prev || prev === sha) continue;
+
+      const active = await Deployment.findOne({ projectId: p._id, status: { $in: ['pending','building'] } }).lean().maxTimeMS(3000).catch(()=>null);
+      if (active) continue;
+
+      autoDeployState.set(key, { sha, deploying: true });
+      addActivity('deploy', `↻ Auto deploy queued for ${p.name} (${branch})`);
+      const payload = {
+        name: p.name, subdomain: p.subdomain, repoUrl: p.repoUrl, branch,
+        installCmd: p.installCmd || 'npm install', buildCmd: p.buildCmd || 'npm run build',
+        startCmd: p.startCmd || '', outputDir: p.outputDir || 'dist', nodeVer: p.nodeVer || '20',
+        siteType: p.siteType || 'static', envVars: p.envVars || {}, isDockerfileDeploy: !!p.isDockerfileDeploy,
+        isWorker: !!p.isWorker, dockerfilePath: p.dockerfilePath || 'Dockerfile', exposedPort: p.exposedPort || 3000
+      };
+      fetch(`http://127.0.0.1:${PORT}/api/deploy`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+        .catch(()=>{})
+        .finally(()=> autoDeployState.set(key, { sha, deploying: false }));
+    } catch {}
+  }
+}
+setInterval(checkAndAutoDeployProjects, 90000);
+setTimeout(checkAndAutoDeployProjects, 12000);
+
+
