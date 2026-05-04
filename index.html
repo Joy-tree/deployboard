@@ -5134,6 +5134,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════════════
 // STATE
@@ -5165,7 +5166,7 @@ let currentUser = null;
 let githubRepos = [];
 let authMode = 'signup';
 const GITHUB_CLIENT_ID = 'Iv23liRapw6lMrW4QArz';
-const FIREBASE_CONFIG = { apiKey:'AIzaSyD5TiRv7ZXeEPnoGE7seo1_AwoEZZiKAiY', authDomain:'authenticator-fc68d.firebaseapp.com', projectId:'authenticator-fc68d', storageBucket:'authenticator-fc68d.firebasestorage.app', messagingSenderId:'967078565161', appId:'1:967078565161:web:5545a869798726f4889338', measurementId:'G-BQLGGN83MM' };
+const FIREBASE_CONFIG = { apiKey:'AIzaSyD5TiRv7ZXeEPnoGE7seo1_AwoEZZiKAiY', authDomain:'authenticator-fc68d.firebaseapp.com', databaseURL:'https://authenticator-fc68d-default-rtdb.firebaseio.com', projectId:'authenticator-fc68d', storageBucket:'authenticator-fc68d.firebasestorage.app', messagingSenderId:'967078565161', appId:'1:967078565161:web:5545a869798726f4889338', measurementId:'G-BQLGGN83MM' };
 let fbApp = null; let fbDb = null;
 try { if (window.firebase) { fbApp = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG); fbDb = firebase.firestore(); } } catch(e) { console.warn('Firebase init failed', e); }
 function hasAuthToken() {
@@ -6058,7 +6059,7 @@ async function startDeployment() {
 
   // Call API
   try {
-    const res = await fetch(API + '/api/deploy', {
+    const res = await apiFetch(API + '/api/deploy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ projectId: project.id, name, subdomain, repoUrl, branch, installCmd, buildCmd, startCmd, outputDir, nodeVer, siteType, envVars, customPort: customPort || undefined })
@@ -6709,6 +6710,25 @@ function showProjectDetail(projectId) {
         '</div>' +
       '</div>' +
 
+      '<div class="card">' +
+        '<div class="card-header"><div class="card-title">Auto Deploy (GitHub Webhook)</div></div>' +
+        '<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">' +
+          '<label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--text-2);">' +
+            '<input type="checkbox" ' + (p.autoDeployEnabled ? 'checked' : '') + ' onchange="toggleProjectAutoDeploy(\'' + p.id + '\', this.checked)"> Enable auto deploy on push' +
+          '</label>' +
+          '<div style="font-size:0.76rem;color:var(--text-3);">Webhook URL</div>' +
+          '<div style="display:flex;gap:8px;align-items:center;">' +
+            '<input class="input input-mono" id="autoDeployUrl-' + p.id + '" value="' + escHtml((location.origin + '/api/github/webhook/' + p.id)) + '" readonly style="font-size:0.72rem;">' +
+            '<button class="btn btn-ghost btn-sm" onclick="copyFieldValue(\'autoDeployUrl-' + p.id + '\')">Copy</button>' +
+          '</div>' +
+          '<div style="font-size:0.76rem;color:var(--text-3);">Webhook Secret</div>' +
+          '<div style="display:flex;gap:8px;align-items:center;">' +
+            '<input class="input input-mono" id="autoDeploySecret-' + p.id + '" value="' + escHtml(p.autoDeploySecret || '') + '" readonly placeholder="Enable auto-deploy to generate" style="font-size:0.72rem;">' +
+            '<button class="btn btn-ghost btn-sm" onclick="copyFieldValue(\'autoDeploySecret-' + p.id + '\')">Copy</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
       // ── Deployment History
       '<div class="card">' +
         '<div class="card-header"><div class="card-title">Deployment History</div></div>' +
@@ -6739,6 +6759,32 @@ function _configRow(label, valueHtml) {
 function showEditProject(id) {
   // TODO: open edit modal
   toast('Edit settings — coming soon', 'info');
+}
+
+
+async function toggleProjectAutoDeploy(projectId, enabled) {
+  try {
+    const r = await apiFetch('/api/projects/' + encodeURIComponent(projectId) + '/autodeploy', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ enabled: !!enabled })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Failed to update auto-deploy');
+    const p = projects.find(x => x.id === projectId);
+    if (p) { p.autoDeployEnabled = !!d.enabled; p.autoDeploySecret = d.secret || p.autoDeploySecret || ''; save(); }
+    const sec = document.getElementById('autoDeploySecret-' + projectId);
+    if (sec && d.secret) sec.value = d.secret;
+    const url = document.getElementById('autoDeployUrl-' + projectId);
+    if (url && d.webhookUrl) url.value = d.webhookUrl;
+    toast('Auto deploy ' + (d.enabled ? 'enabled' : 'disabled'), 'success');
+  } catch (e) {
+    toast(e.message || 'Failed to update auto deploy', 'error');
+  }
+}
+function copyFieldValue(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.select(); el.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(el.value || '').then(()=>toast('Copied', 'success')).catch(()=>toast('Copy failed', 'error'));
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -6938,17 +6984,28 @@ async function submitAuth(){
   const email = document.getElementById('authEmail').value.trim();
   const password = document.getElementById('authPassword').value;
   const name = document.getElementById('authName').value.trim();
-  const endpoint = authMode === 'signup' ? '/api/auth/signup' : '/api/auth/login';
-  const payload = authMode === 'signup' ? { email, password, name } : { email, password };
-  const r = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-  const d = await r.json();
-  if (!r.ok || !d.token) return toast(d.error || 'Authentication failed', 'error');
-  authToken = d.token;
-  localStorage.setItem('db_auth_token', d.token);
-  resetWorkspaceState();
-  applyUserProfile(d.user || null);
-  toast('Welcome! Account ready.', 'success');
-  showDashboard();
+  try {
+    if (!window.firebase || !firebase.auth) throw new Error('Firebase auth not loaded');
+    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    let cred;
+    if (authMode === 'signup') {
+      cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+      if (name && cred.user) await cred.user.updateProfile({ displayName: name });
+    } else {
+      cred = await firebase.auth().signInWithEmailAndPassword(email, password);
+    }
+    const idToken = await cred.user.getIdToken();
+    const r = await fetch('/api/auth/firebase', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idToken }) });
+    const d = await r.json();
+    if (!r.ok || !d.token) throw new Error(d.error || 'Authentication failed');
+    authToken = d.token;
+    localStorage.setItem('db_auth_token', d.token);
+    applyUserProfile(d.user || null);
+    toast('Welcome! Account ready.', 'success');
+    showDashboard();
+  } catch (e) {
+    toast(e.message || 'Authentication failed', 'error');
+  }
 }
 function normalizeGitHubAuthorizeUrl(rawUrl) {
   const input = String(rawUrl || '').trim();
@@ -7909,7 +7966,7 @@ async function deployDockerfile() {
 
   toast('Starting Dockerfile deployment…', 'info');
   try {
-    const r = await fetch('/api/deploy', {
+    const r = await apiFetch('/api/deploy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -8175,7 +8232,7 @@ async function deployWorker() {
 
   toast('Deploying worker…', 'info');
   try {
-    const r = await fetch('/api/deploy', {
+    const r = await apiFetch('/api/deploy', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, subdomain, repoUrl: repo, branch, installCmd: install, buildCmd: build, startCmd: start, outputDir: '.', siteType: 'server', nodeVersion: 'node:18-alpine', envVars: envObj, isWorker: true })
     });

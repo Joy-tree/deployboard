@@ -31,6 +31,7 @@ const CF_TUNNEL_ID  = process.env.CF_TUNNEL_ID  || '';
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || '';
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || process.env.GITHUB_OAUTH_CLIENT_ID || process.env.GH_CLIENT_ID || '';
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || process.env.GITHUB_OAUTH_CLIENT_SECRET || process.env.GH_CLIENT_SECRET || '';
+const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || '';
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 30);
 
 function normalizeBaseDomain(value) {
@@ -421,6 +422,7 @@ const userSchema = new mongoose.Schema({
   githubId: { type: String, default: '', index: true },
   githubUsername: { type: String, default: '' },
   githubAccessToken: { type: String, default: '' },
+  firebaseUid: { type: String, default: '', index: true },
   workspace: {
     projects: { type: Array, default: [] },
     deployments: { type: Array, default: [] },
@@ -470,6 +472,16 @@ async function getAuthUser(req) {
   if (!session) return null;
   return localAuth.users.find(u => u.id === session.userId) || null;
 }
+async function verifyFirebaseIdToken(idToken) {
+  if (!FIREBASE_API_KEY) throw new Error('FIREBASE_API_KEY is not configured on server');
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(FIREBASE_API_KEY)}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken })
+  });
+  const d = await r.json();
+  if (!r.ok || !Array.isArray(d.users) || !d.users[0]) throw new Error(d.error?.message || 'Invalid Firebase ID token');
+  return d.users[0];
+}
+
 async function requireAuth(req, res, next) {
   try {
     const user = await getAuthUser(req);
@@ -533,6 +545,29 @@ app.get('/api/health', async (req, res) => {
     uptime: Math.round(process.uptime()) + 's',
     runningContainers, diskUsed
   });
+});
+
+app.post('/api/auth/firebase', async (req, res) => {
+  try {
+    const idToken = String(req.body.idToken || '');
+    if (!idToken) return res.status(400).json({ error: 'Missing Firebase idToken' });
+    const fbUser = await verifyFirebaseIdToken(idToken);
+    const email = String(fbUser.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Firebase user has no email' });
+    let user = isDbReady() ? await User.findOne({ email }) : localAuth.users.find(u => u.email === email);
+    if (!user) {
+      if (isDbReady()) user = await User.create({ email, name: fbUser.displayName || '', firebaseUid: fbUser.localId || '' });
+      else { user = { id: 'u_' + Date.now(), email, name: fbUser.displayName || '', firebaseUid: fbUser.localId || '', githubUsername: '', githubAccessToken: '' }; localAuth.users.push(user); saveLocalAuth(); }
+    }
+    user.firebaseUid = fbUser.localId || user.firebaseUid || '';
+    user.name = user.name || fbUser.displayName || '';
+    if (isDbReady()) await user.save(); else saveLocalAuth();
+    const token = createSessionToken();
+    const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
+    if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt });
+    else { localAuth.sessions.push({ token, userId: user.id, expiresAt }); saveLocalAuth(); }
+    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, firebaseUid: user.firebaseUid } });
+  } catch (e) { res.status(401).json({ error: e.message }); }
 });
 
 app.post('/api/auth/signup', async (req, res) => {
