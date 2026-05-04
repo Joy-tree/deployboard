@@ -396,7 +396,10 @@ const projectSchema = new mongoose.Schema({
   envVars:    { type: Map, of: String, default: {} },
   liveUrl:    { type: String, default: '' },
   createdAt:  { type: Date,   default: Date.now },
-  updatedAt:  { type: Date,   default: Date.now }
+  updatedAt:  { type: Date,   default: Date.now },
+  ownerUserId: { type: String, default: '', index: true },
+  autoDeployEnabled: { type: Boolean, default: false },
+  autoDeploySecret: { type: String, default: '' }
 });
 
 const deploymentSchema = new mongoose.Schema({
@@ -984,7 +987,7 @@ app.get('/api/activity', async (req, res) => {
 });
 
 // ── Deploy endpoint ───────────────────────────────────────────────────────────
-app.post('/api/deploy', attachAuthIfPresent, async (req, res) => {
+app.post('/api/deploy', requireAuth, async (req, res) => {
   const { name, subdomain, repoUrl, branch, installCmd, buildCmd,
           startCmd, outputDir, nodeVer, siteType, envVars,
           isDockerfileDeploy, isWorker, dockerfilePath, exposedPort } = req.body;
@@ -1086,14 +1089,30 @@ app.post('/api/deploy', attachAuthIfPresent, async (req, res) => {
     emit('build:log', { line: `\x1b[90mTarget: https://${cleanSub}.${BASE_DOMAIN}\x1b[0m` });
     emit('build:log', { line: '' });
 
-    const deployGithubToken = (req.user && req.user.githubAccessToken) ? req.user.githubAccessToken : GITHUB_TOKEN;
+    const deployGithubToken = req.user?.githubAccessToken || '';
+    if (/github\.com/i.test(repoUrl) && !deployGithubToken) {
+      throw new Error('GitHub account not connected for this user. Connect GitHub in your account to deploy private repositories.');
+    }
+    let saveTimer = null;
+    const flushLogs = async () => {
+      if (!deployment || !deployment.save) return;
+      try { await deployment.save(); } catch (_) {}
+    };
     await runBuild({
       deployId, project, sitesDir: SITES_DIR, tmpDir: TMP_DIR,
       githubToken: deployGithubToken, appPort, emit,
       isDockerfileDeploy: !!isDockerfileDeploy,
       isWorker:           !!isWorker,
-      onLog: (line) => { deployment.logs = deployment.logs || []; deployment.logs.push(line); }
+      onLog: (line) => {
+        deployment.logs = deployment.logs || [];
+        deployment.logs.push(line);
+        if (!saveTimer) {
+          saveTimer = setTimeout(async () => { saveTimer = null; await flushLogs(); }, 1500);
+        }
+      }
     });
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+    await flushLogs();
 
     // Register CF subdomain
     emit('build:log', { line: `\x1b[36m[DeployBoard]\x1b[0m Registering subdomain…` });
@@ -1122,9 +1141,10 @@ app.post('/api/deploy', attachAuthIfPresent, async (req, res) => {
     addActivity('deploy', '✗ Deployment failed: ' + name + ' — ' + buildErr.message.slice(0,80));
     const buildDir = path.join(TMP_DIR, deployId);
     try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
-    emit('build:log', { line: `\x1b[31m[DeployBoard]\x1b[0m Build failed: ${buildErr.message}` });
+    const safeErr = sanitizeSecrets(buildErr.message);
+    emit('build:log', { line: `\x1b[31m[DeployBoard]\x1b[0m Build failed: ${safeErr}` });
     emit('build:done', { status: 'failed', duration });
-    console.error(`[Deploy] FAILED ${name}:`, buildErr.message);
+    console.error(`[Deploy] FAILED ${name}:`, sanitizeSecrets(buildErr.message));
   }
 });
 
@@ -1132,6 +1152,37 @@ app.post('/api/deploy', attachAuthIfPresent, async (req, res) => {
 io.on('connection', socket => {
   console.log('[Socket.io] Connected:', socket.id);
   socket.on('disconnect', () => console.log('[Socket.io] Disconnected:', socket.id));
+});
+
+
+
+app.post('/api/projects/:id/autodeploy', requireAuth, async (req, res) => {
+  try {
+    const id = String(req.params.id || '');
+    const enabled = !!req.body.enabled;
+    const project = await Project.findById(id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (String(project.ownerUserId || '') !== String(req.user._id || req.user.id || '')) return res.status(403).json({ error: 'Forbidden' });
+    if (!project.autoDeploySecret) project.autoDeploySecret = crypto.randomBytes(24).toString('hex');
+    project.autoDeployEnabled = enabled;
+    await project.save();
+    res.json({ ok:true, enabled: project.autoDeployEnabled, webhookUrl: `${req.protocol}://${req.get('host')}/api/github/webhook/${project._id}`, secret: project.autoDeploySecret });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/github/webhook/:projectId', async (req, res) => {
+  try {
+    const project = await Project.findById(String(req.params.projectId || ''));
+    if (!project || !project.autoDeployEnabled || !project.autoDeploySecret) return res.status(404).json({ error: 'Webhook not configured' });
+    const provided = String(req.headers['x-deployboard-secret'] || req.query.secret || '');
+    if (!provided || provided !== project.autoDeploySecret) return res.status(401).json({ error: 'Invalid webhook secret' });
+    const event = String(req.headers['x-github-event'] || '');
+    if (event && event !== 'push') return res.json({ ok:true, ignored:true, reason:'event_not_push' });
+    const ref = String(req.body?.ref || '');
+    const branch = ref.startsWith('refs/heads/') ? ref.slice('refs/heads/'.length) : (project.branch || 'main');
+    triggerProjectDeploy(project, branch).catch(()=>{});
+    res.json({ ok:true, queued:true, branch });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ── Dashboard static serving — MUST be after all API routes ──────────────────
@@ -1144,15 +1195,43 @@ server.listen(PORT, () => {
   console.log(`[DeployBoard] Base domain: ${BASE_DOMAIN}`);
   console.log(`[DeployBoard] Sites dir:   ${SITES_DIR}`);
 });
+
+function sanitizeSecrets(text = '') {
+  return String(text)
+    .replace(/github_pat_[A-Za-z0-9_]+/g, 'github_pat_[REDACTED]')
+    .replace(/ghp_[A-Za-z0-9]+/g, 'ghp_[REDACTED]')
+    .replace(/x-access-token:[^@\s]+@github\.com/gi, 'x-access-token:[REDACTED]@github.com')
+    .replace(/AUTHORIZATION:\s*bearer\s+[^\s"']+/gi, 'AUTHORIZATION: bearer [REDACTED]');
+}
+
 function parseGitHubRepo(repoUrl = '') {
   const m = String(repoUrl).match(/github\.com\/([^/]+)\/([^/#?]+)/i);
   if (!m) return null;
   return { owner: m[1], repo: m[2].replace(/\.git$/i, '') };
 }
 
+
+async function triggerProjectDeploy(p, branchOverride = null) {
+  const ownerId = String(p.ownerUserId || '');
+  if (!ownerId) return;
+  const owner = await User.findById(ownerId).catch(()=>null);
+  if (!owner) return;
+  const token = createSessionToken();
+  const expiresAt = new Date(Date.now() + 10 * 60000);
+  await Session.create({ token, userId: owner._id, expiresAt }).catch(()=>null);
+  const payload = {
+    name: p.name, subdomain: p.subdomain, repoUrl: p.repoUrl, branch: branchOverride || p.branch || 'main',
+    installCmd: p.installCmd || 'npm install', buildCmd: p.buildCmd || 'npm run build',
+    startCmd: p.startCmd || '', outputDir: p.outputDir || 'dist', nodeVer: p.nodeVer || '20',
+    siteType: p.siteType || 'static', envVars: p.envVars || {}, isDockerfileDeploy: !!p.isDockerfileDeploy,
+    isWorker: !!p.isWorker, dockerfilePath: p.dockerfilePath || 'Dockerfile', exposedPort: p.exposedPort || 3000
+  };
+  await fetch(`http://127.0.0.1:${PORT}/api/deploy`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify(payload) }).catch(()=>{});
+}
+
 const autoDeployState = new Map();
 async function checkAndAutoDeployProjects() {
-  if (!GITHUB_TOKEN) return;
+
   let allProjects = [];
   try { allProjects = await Project.find().lean().maxTimeMS(7000); } catch { return; }
   for (const p of allProjects) {
@@ -1163,7 +1242,7 @@ async function checkAndAutoDeployProjects() {
     try {
       const branch = p.branch || 'main';
       const r = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/commits/${encodeURIComponent(branch)}`, {
-        headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'User-Agent': 'DeployBoard AutoDeploy' }
+        headers: { 'Authorization': `Bearer ${(await User.findById(p.ownerUserId).lean().catch(()=>null))?.githubAccessToken || ''}`, 'User-Agent': 'DeployBoard AutoDeploy' }
       });
       if (!r.ok) continue;
       const d = await r.json();
@@ -1178,15 +1257,7 @@ async function checkAndAutoDeployProjects() {
 
       autoDeployState.set(key, { sha, deploying: true });
       addActivity('deploy', `↻ Auto deploy queued for ${p.name} (${branch})`);
-      const payload = {
-        name: p.name, subdomain: p.subdomain, repoUrl: p.repoUrl, branch,
-        installCmd: p.installCmd || 'npm install', buildCmd: p.buildCmd || 'npm run build',
-        startCmd: p.startCmd || '', outputDir: p.outputDir || 'dist', nodeVer: p.nodeVer || '20',
-        siteType: p.siteType || 'static', envVars: p.envVars || {}, isDockerfileDeploy: !!p.isDockerfileDeploy,
-        isWorker: !!p.isWorker, dockerfilePath: p.dockerfilePath || 'Dockerfile', exposedPort: p.exposedPort || 3000
-      };
-      fetch(`http://127.0.0.1:${PORT}/api/deploy`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
-        .catch(()=>{})
+      triggerProjectDeploy(p, branch)
         .finally(()=> autoDeployState.set(key, { sha, deploying: false }));
     } catch {}
   }

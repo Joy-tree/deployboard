@@ -5174,6 +5174,26 @@ function hasAuthToken() {
   return !!t;
 }
 
+
+async function ensureBackendSessionFromFirebase() {
+  try {
+    if (!window.firebase || !firebase.auth) return false;
+    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    const fbUser = firebase.auth().currentUser;
+    if (!fbUser) return false;
+    const idToken = await fbUser.getIdToken();
+    const r = await fetch('/api/auth/firebase', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idToken })
+    });
+    const d = await r.json();
+    if (!r.ok || !d.token) return false;
+    authToken = d.token;
+    localStorage.setItem('db_auth_token', d.token);
+    applyUserProfile(d.user || null);
+    return true;
+  } catch (_) { return false; }
+}
+
 async function apiFetch(url, opts={}) {
   const headers = Object.assign({}, opts.headers || {});
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
@@ -5225,7 +5245,10 @@ function applyUserProfile(user){
 }
 
 async function bootstrapSession(){
-  if (!hasAuthToken()) return false;
+  if (!hasAuthToken()) {
+    const recovered = await ensureBackendSessionFromFirebase();
+    if (!recovered) return false;
+  }
   try {
     const meR = await apiFetch('/api/auth/me');
     const meD = await meR.json();
