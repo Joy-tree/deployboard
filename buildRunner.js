@@ -912,6 +912,7 @@ function probeTcp(host, port, timeoutMs = 1000) {
 async function cloneRepo(project, buildDir, githubToken, log) {
   let cloneUrl = project.repoUrl.trim();
   let forcedBranch = '';
+  const rawGithubToken = String(githubToken || '').trim();
 
   // Accept GitHub "tree" URLs pasted from browser:
   // https://github.com/<owner>/<repo>/tree/<branch>[/subdir]
@@ -931,8 +932,8 @@ async function cloneRepo(project, buildDir, githubToken, log) {
     cloneUrl = `https://github.com/${ghRepo[1]}/${ghRepo[2].replace(/\.git$/i, '')}.git`;
   }
 
-  if (githubToken && /^https:\/\/github\.com\//i.test(cloneUrl)) {
-    const token = encodeURIComponent(githubToken);
+  if (rawGithubToken && /^https:\/\/github\.com\//i.test(cloneUrl)) {
+    const token = encodeURIComponent(rawGithubToken);
     cloneUrl = cloneUrl.replace(/^https:\/\/github\.com\//i, `https://x-access-token:${token}@github.com/`);
   }
   const branch = (forcedBranch || project.branch || 'main').trim();
@@ -943,6 +944,23 @@ async function cloneRepo(project, buildDir, githubToken, log) {
     await exec('git', ['clone','--depth=1','--branch',branch,'--single-branch','--progress',cloneUrl,buildDir],
       { env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } }, log);
   } catch(e) {
+    const canRetryWithHeader = rawGithubToken && /^https:\/\/github\.com\//i.test(project.repoUrl || '');
+    const authErr = /authentication failed|could not read username|repository not found|access denied|permission denied|http basic/i.test(String(e.message || ''));
+    if (canRetryWithHeader && authErr) {
+      log(`\x1b[33m[clone] Token URL auth failed — retrying with Authorization header...\x1b[0m`);
+      fs.rmSync(buildDir, { recursive: true, force: true });
+      fs.mkdirSync(buildDir, { recursive: true });
+      const cleanCloneUrl = String(project.repoUrl || '').trim().replace(/\/$/, '').replace(/\.git$/i, '') + '.git';
+      try {
+        await exec('git', ['-c', `http.https://github.com/.extraheader=AUTHORIZATION: bearer ${rawGithubToken}`, 'clone','--depth=1','--branch',branch,'--single-branch','--progress',cleanCloneUrl,buildDir],
+          { env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } }, log);
+        log(`\x1b[32m[clone] ✓ Cloned successfully with header auth\x1b[0m`);
+        return;
+      } catch (e2) {
+        log(`\x1b[31m[clone] Header auth retry failed. If this is an org repo with SSO, authorize DeployBoard token in GitHub SSO.\x1b[0m`);
+        throw e2;
+      }
+    }
     if (e.message.match(/not found|not exist|Remote branch|Could not find/i)) {
       log(`\x1b[33m[clone] Branch "${branch}" not found — trying "${fallback}"…\x1b[0m`);
       fs.rmSync(buildDir, { recursive: true, force: true });
