@@ -13,6 +13,7 @@ const { Server: SocketIO } = require('socket.io');
 const path     = require('path');
 const fs       = require('fs');
 const mongoose = require('mongoose');
+const crypto   = require('crypto');
 require('dotenv').config();
 
 const app    = express();
@@ -446,7 +447,6 @@ const Deployment = mongoose.model('Deployment', deploymentSchema);
 const User = mongoose.model('User', userSchema);
 const Session = mongoose.model('Session', sessionSchema);
 
-const crypto = require('crypto');
 const LOCAL_AUTH_FILE = path.join(SITES_DIR, 'local-auth.json');
 let localAuth = { users: [], sessions: [] };
 try {
@@ -611,7 +611,7 @@ app.post('/api/auth/signup', async (req, res) => {
     const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
     if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt });
     else { localAuth.sessions.push({ token, userId: user.id, expiresAt }); saveLocalAuth(); }
-    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername } });
+    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, firebaseUid: user.firebaseUid || '' } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -627,12 +627,12 @@ app.post('/api/auth/login', async (req, res) => {
     const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
     if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt });
     else { localAuth.sessions.push({ token, userId: user.id, expiresAt }); saveLocalAuth(); }
-    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername } });
+    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, firebaseUid: user.firebaseUid || '' } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/auth/me', requireAuth, async (req, res) => {
-  res.json({ user: { id: req.user._id || req.user.id, email: req.user.email, name: req.user.name, githubUsername: req.user.githubUsername } });
+  res.json({ user: { id: req.user._id || req.user.id, email: req.user.email, name: req.user.name, githubUsername: req.user.githubUsername, firebaseUid: req.user.firebaseUid || '' } });
 });
 
 function normalizeGitHubClientId(value) {
@@ -692,6 +692,7 @@ app.post('/api/auth/github/exchange', async (req, res) => {
       user.githubUsername = ghUser.login || '';
       user.githubAccessToken = tokenData.access_token;
       user.name = user.name || ghUser.name || ghUser.login || '';
+      user.firebaseUid = fbGh?.localId || user.firebaseUid || '';
       user.updatedAt = new Date();
       await user.save();
     } else {
@@ -701,12 +702,13 @@ app.post('/api/auth/github/exchange', async (req, res) => {
       user.githubUsername = ghUser.login || '';
       user.githubAccessToken = tokenData.access_token;
       user.name = user.name || ghUser.name || ghUser.login || '';
+      user.firebaseUid = fbGh?.localId || user.firebaseUid || '';
       saveLocalAuth();
     }
     const token = createSessionToken();
     if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt: new Date(Date.now() + SESSION_TTL_DAYS * 86400000) });
     else { localAuth.sessions.push({ token, userId: user.id, expiresAt: new Date(Date.now() + SESSION_TTL_DAYS * 86400000) }); saveLocalAuth(); }
-    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername } });
+    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, firebaseUid: user.firebaseUid || '' } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
