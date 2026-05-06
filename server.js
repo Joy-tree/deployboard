@@ -13,6 +13,7 @@ const { Server: SocketIO } = require('socket.io');
 const path     = require('path');
 const fs       = require('fs');
 const mongoose = require('mongoose');
+const crypto   = require('crypto');
 require('dotenv').config();
 
 const app    = express();
@@ -446,7 +447,6 @@ const Deployment = mongoose.model('Deployment', deploymentSchema);
 const User = mongoose.model('User', userSchema);
 const Session = mongoose.model('Session', sessionSchema);
 
-const crypto = require('crypto');
 const LOCAL_AUTH_FILE = path.join(SITES_DIR, 'local-auth.json');
 let localAuth = { users: [], sessions: [] };
 try {
