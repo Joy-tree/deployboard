@@ -5542,8 +5542,9 @@ function renderNetworkMetrics(){
 // DASHBOARD
 // ══════════════════════════════════════════════════════════════════
 function renderDashboard() {
-  const total   = projects.length;
-  const success = deployments.filter(d => d.status === 'success').length;
+  try {
+    const total   = projects.length;
+    const success = deployments.filter(d => d.status === 'success').length;
   const failed  = deployments.filter(d => d.status === 'failed').length;
   const times   = deployments.filter(d => d.duration).map(d => d.duration);
   const avgTime = times.length ? Math.round(times.reduce((a,b)=>a+b,0)/times.length) : null;
@@ -5689,8 +5690,9 @@ function renderDashboard() {
     </div>`;
   }).join('');
   } catch (err) {
-    console.warn('[activity] render failed:', err?.message || err);
-    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:0.82rem;">Could not load activity. Tap refresh.</div>';
+    console.warn('[dashboard] render failed:', err?.message || err);
+    const rc = document.getElementById('dashRecentDeploys');
+    if (rc) rc.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:0.82rem;">Could not load dashboard activity. Tap refresh.</div>';
   }
 }
 
@@ -6603,11 +6605,12 @@ async function loadEnvForProject() {
   const projectId = document.getElementById('envProjectSelect').value;
   const display   = document.getElementById('envVarsDisplay');
   if (!display) return;
-  if (!projectId) {
-    display.innerHTML = '<div class="empty-state" style="padding:30px 0;"><div style="font-size:0.82rem;color:var(--text-3);">Select a project to manage its variables.</div></div>';
-    return;
-  }
-  display.innerHTML = '<div style="font-size:0.82rem;color:var(--text-3);padding:16px 0;">Loading…</div>';
+  try {
+    if (!projectId) {
+      display.innerHTML = '<div class="empty-state" style="padding:30px 0;"><div style="font-size:0.82rem;color:var(--text-3);">Select a project to manage its variables.</div></div>';
+      return;
+    }
+    display.innerHTML = '<div style="font-size:0.82rem;color:var(--text-3);padding:16px 0;">Loading…</div>';
 
   // Load from API (real persistent storage)
   let vars = {};
@@ -6636,8 +6639,8 @@ async function loadEnvForProject() {
     '</div>';
   }).join('');
   } catch (err) {
-    console.warn('[activity] render failed:', err?.message || err);
-    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:0.82rem;">Could not load activity. Tap refresh.</div>';
+    console.warn('[env] render failed:', err?.message || err);
+    display.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:0.82rem;">Could not load environment variables. Tap refresh.</div>';
   }
 }
 
@@ -6983,10 +6986,11 @@ function statusBadge(status) {
 // ══════════════════════════════════════════════════════════════════
 (async function() {
   showBootLoader('Loading');
-  const params = new URLSearchParams(window.location.search);
-  const ghCode = params.get('code');
-  const ghState = params.get('state');
-  const stateOk = !ghState || ghState === 'deployboard_github_auth';
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const ghCode = params.get('code');
+    const ghState = params.get('state');
+    const stateOk = !ghState || ghState === 'deployboard_github_auth';
   if (ghCode && stateOk) {
     try {
       const r = await fetch('/api/auth/github/exchange', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ code: ghCode }) });
@@ -7019,9 +7023,22 @@ function statusBadge(status) {
   } else {
     showLanding();
   }
-  hideBootLoader(120);
-  // Kick off health check silently
-  fetch(API + '/api/health', { signal: AbortSignal.timeout(2000) }).catch(()=>{});
+    // Kick off health check silently
+    fetch(API + '/api/health', { signal: AbortSignal.timeout(2000) }).catch(()=>{});
+  } catch (err) {
+    console.warn('[boot] startup failed:', err?.message || err);
+    try {
+      if (hasAuthToken()) showDashboard();
+      else showLanding();
+    } catch (fallbackErr) {
+      console.warn('[boot] fallback view failed:', fallbackErr?.message || fallbackErr);
+      document.documentElement.classList.remove('app-mode');
+      const landing = document.getElementById('landing-view');
+      if (landing) landing.style.display = 'block';
+    }
+  } finally {
+    hideBootLoader(120);
+  }
 })();
 function switchAuthMode(mode){
   authMode = mode;
@@ -8165,11 +8182,12 @@ async function executeCronJob(job) {
 function renderCronJobs() {
   const el = document.getElementById('cronJobsList');
   if (!el) return;
-  if (!cronJobs.length) {
-    el.innerHTML = "<div style='padding:40px 20px;text-align:center;'><div style='font-size:0.85rem;font-weight:600;color:var(--text-2);padding:20px 0;'>No cron jobs yet</div></div>";
-    return;
-  }
-  el.innerHTML = cronJobs.map(j => {
+  try {
+    if (!cronJobs.length) {
+      el.innerHTML = "<div style='padding:40px 20px;text-align:center;'><div style='font-size:0.85rem;font-weight:600;color:var(--text-2);padding:20px 0;'>No cron jobs yet</div></div>";
+      return;
+    }
+    el.innerHTML = cronJobs.map(j => {
     const badge = j.lastStatus === 'success' ? '<span class="badge badge-success"><span class="badge-dot"></span>OK</span>'
                 : j.lastStatus === 'error'   ? '<span class="badge badge-error"><span class="badge-dot"></span>Error</span>'
                 : '<span class="badge badge-idle"><span class="badge-dot"></span>Pending</span>';
@@ -8191,8 +8209,8 @@ function renderCronJobs() {
     </div>`;
   }).join('');
   } catch (err) {
-    console.warn('[activity] render failed:', err?.message || err);
-    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:0.82rem;">Could not load activity. Tap refresh.</div>';
+    console.warn('[cron] render failed:', err?.message || err);
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:0.82rem;">Could not load cron jobs. Tap refresh.</div>';
   }
 }
 
