@@ -13,6 +13,7 @@ const { Server: SocketIO } = require('socket.io');
 const path     = require('path');
 const fs       = require('fs');
 const mongoose = require('mongoose');
+const crypto   = require('crypto');
 require('dotenv').config();
 
 const app    = express();
@@ -424,6 +425,7 @@ const userSchema = new mongoose.Schema({
   githubId: { type: String, default: '', index: true },
   githubUsername: { type: String, default: '' },
   githubAccessToken: { type: String, default: '' },
+  githubAvatarUrl: { type: String, default: '' },
   firebaseUid: { type: String, default: '', index: true },
   workspace: {
     projects: { type: Array, default: [] },
@@ -446,7 +448,6 @@ const Deployment = mongoose.model('Deployment', deploymentSchema);
 const User = mongoose.model('User', userSchema);
 const Session = mongoose.model('Session', sessionSchema);
 
-const crypto = require('crypto');
 const LOCAL_AUTH_FILE = path.join(SITES_DIR, 'local-auth.json');
 let localAuth = { users: [], sessions: [] };
 try {
@@ -586,7 +587,7 @@ app.post('/api/auth/firebase', async (req, res) => {
     const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
     if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt });
     else { localAuth.sessions.push({ token, userId: user.id, expiresAt }); saveLocalAuth(); }
-    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, firebaseUid: user.firebaseUid } });
+    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, githubAvatarUrl: user.githubAvatarUrl || '', firebaseUid: user.firebaseUid } });
   } catch (e) { res.status(401).json({ error: e.message }); }
 });
 
@@ -611,7 +612,7 @@ app.post('/api/auth/signup', async (req, res) => {
     const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
     if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt });
     else { localAuth.sessions.push({ token, userId: user.id, expiresAt }); saveLocalAuth(); }
-    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername } });
+    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, githubAvatarUrl: user.githubAvatarUrl || '', firebaseUid: user.firebaseUid || '' } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -627,12 +628,12 @@ app.post('/api/auth/login', async (req, res) => {
     const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
     if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt });
     else { localAuth.sessions.push({ token, userId: user.id, expiresAt }); saveLocalAuth(); }
-    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername } });
+    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, githubAvatarUrl: user.githubAvatarUrl || '', firebaseUid: user.firebaseUid || '' } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/auth/me', requireAuth, async (req, res) => {
-  res.json({ user: { id: req.user._id || req.user.id, email: req.user.email, name: req.user.name, githubUsername: req.user.githubUsername } });
+  res.json({ user: { id: req.user._id || req.user.id, email: req.user.email, name: req.user.name, githubUsername: req.user.githubUsername, githubAvatarUrl: req.user.githubAvatarUrl || '', firebaseUid: req.user.firebaseUid || '' } });
 });
 
 function normalizeGitHubClientId(value) {
@@ -678,6 +679,7 @@ app.post('/api/auth/github/exchange', async (req, res) => {
     const tokenData = await tokenResp.json();
     if (!tokenData.access_token) return res.status(400).json({ error: tokenData.error_description || 'GitHub token exchange failed' });
     const fbGh = await upsertFirebaseGitHubUser(tokenData.access_token);
+    const firebaseLinked = !!(fbGh && fbGh.localId);
     const ghUserResp = await fetch('https://api.github.com/user', {
       headers: { 'Authorization': `Bearer ${tokenData.access_token}`, 'User-Agent': 'deployboard' }
     });
@@ -691,22 +693,26 @@ app.post('/api/auth/github/exchange', async (req, res) => {
       user.githubId = String(ghUser.id);
       user.githubUsername = ghUser.login || '';
       user.githubAccessToken = tokenData.access_token;
+      user.githubAvatarUrl = ghUser.avatar_url || user.githubAvatarUrl || '';
       user.name = user.name || ghUser.name || ghUser.login || '';
+      user.firebaseUid = fbGh?.localId || user.firebaseUid || '';
       user.updatedAt = new Date();
       await user.save();
     } else {
       user = localAuth.users.find(u => u.githubId === String(ghUser.id)) || localAuth.users.find(u => u.email === email);
-      if (!user) { user = { id: 'u_' + Date.now(), email }; localAuth.users.push(user); }
+      if (!user) { user = { id: 'u_' + Date.now(), email, githubAvatarUrl: '' }; localAuth.users.push(user); }
       user.githubId = String(ghUser.id);
       user.githubUsername = ghUser.login || '';
       user.githubAccessToken = tokenData.access_token;
+      user.githubAvatarUrl = ghUser.avatar_url || user.githubAvatarUrl || '';
       user.name = user.name || ghUser.name || ghUser.login || '';
+      user.firebaseUid = fbGh?.localId || user.firebaseUid || '';
       saveLocalAuth();
     }
     const token = createSessionToken();
     if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt: new Date(Date.now() + SESSION_TTL_DAYS * 86400000) });
     else { localAuth.sessions.push({ token, userId: user.id, expiresAt: new Date(Date.now() + SESSION_TTL_DAYS * 86400000) }); saveLocalAuth(); }
-    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername } });
+    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, githubAvatarUrl: user.githubAvatarUrl || '', firebaseUid: user.firebaseUid || '' }, firebaseLinked });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
