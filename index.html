@@ -1738,6 +1738,34 @@ textarea.input { resize: vertical; min-height: 80px; }
 .app-hero::after{content:'';position:absolute;right:-80px;top:-120px;width:260px;height:260px;border-radius:999px;border:1px solid rgba(16,185,129,.16);box-shadow:0 0 80px rgba(16,185,129,.14);pointer-events:none}.app-hero-kicker{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#67e8f9;margin-bottom:8px}.app-hero-title{font-family:var(--font-hd);font-size:clamp(1.65rem,3vw,2.45rem);font-weight:800;letter-spacing:-.045em;color:#f8fafc;line-height:1.05}.app-hero-subtitle{max-width:720px;margin-top:10px;color:#94a3b8;font-size:.95rem;line-height:1.55}.app-hero-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.hero-metrics{display:grid;grid-template-columns:repeat(3,minmax(92px,1fr));gap:10px;min-width:min(420px,42vw)}.hero-metric{padding:14px 16px;border:1px solid rgba(16,185,129,.13);border-radius:16px;background:rgba(2,6,23,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}.hero-metric-value{font-family:var(--font-mono);font-size:1.35rem;font-weight:800;color:#d1fae5;line-height:1}.hero-metric-label{margin-top:5px;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#64748b}.hero-status-pill{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 11px;border:1px solid rgba(16,185,129,.24);border-radius:999px;background:rgba(16,185,129,.08);font-size:.75rem;font-weight:700;color:#bbf7d0}.hero-status-pill::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 14px rgba(16,185,129,.8);animation:pulse 1.5s infinite}
 #page-dashboard .stats-grid .stat-card,#page-projects .project-card,#page-deployments .card,#page-env-manager .card,#page-webhooks .card,#page-dashboard .card{border-color:rgba(16,185,129,.13);background:linear-gradient(180deg,rgba(15,23,42,.88),rgba(2,6,23,.9));box-shadow:0 16px 48px rgba(0,0,0,.16);border-radius:20px}#page-dashboard .card:hover,#page-deployments .card:hover,#page-env-manager .card:hover,#page-webhooks .card:hover{border-color:rgba(16,185,129,.28);box-shadow:0 20px 58px rgba(0,0,0,.22),0 0 36px rgba(16,185,129,.05)}#page-dashboard .card-header,#page-deployments .card-header,#page-env-manager .card-header,#page-webhooks .card-header{background:linear-gradient(90deg,rgba(16,185,129,.07),transparent);border-bottom-color:rgba(16,185,129,.09)}#page-dashboard .network-metrics-grid{display:flex;gap:10px;flex-wrap:wrap}.dash-qa-btn{min-height:58px;background:linear-gradient(135deg,rgba(15,23,42,.5),rgba(2,6,23,.5))}.dash-qa-btn:hover{background:rgba(16,185,129,.1);transform:translateY(-1px)}#page-projects .projects-grid{gap:18px}#page-projects .project-card{border-radius:22px}#page-projects .project-thumb{height:158px;background:radial-gradient(circle at 50% 0%,rgba(16,185,129,.1),transparent 42%),var(--bg-2)}#page-projects .project-card::after{content:'';position:absolute;inset:0;border-radius:22px;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.04),transparent 36%);opacity:.6}.deployment-table-shell{overflow:hidden}.deployment-table-shell table{border-collapse:separate;border-spacing:0 8px;padding:8px 12px 14px}.deployment-table-shell thead th{border:0;color:#64748b;text-transform:uppercase;font-size:.66rem;letter-spacing:.09em}.deployment-table-shell tbody tr{background:rgba(15,23,42,.62);box-shadow:inset 0 0 0 1px rgba(16,185,129,.08)}.deployment-table-shell tbody td{border-top:1px solid rgba(16,185,129,.08);border-bottom:1px solid rgba(16,185,129,.08)}.deployment-table-shell tbody td:first-child{border-left:1px solid rgba(16,185,129,.08);border-radius:12px 0 0 12px}.deployment-table-shell tbody td:last-child{border-right:1px solid rgba(16,185,129,.08);border-radius:0 12px 12px 0}.env-command-card{position:relative;overflow:hidden}.env-command-card::after{content:'ENV';position:absolute;right:18px;bottom:-18px;font-family:var(--font-mono);font-size:4rem;font-weight:800;color:rgba(16,185,129,.035);pointer-events:none}.webhook-event-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.webhook-event-card{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(2,6,23,.48);border:1px solid rgba(16,185,129,.1);border-radius:14px;gap:10px}.webhook-event-card:hover{border-color:rgba(16,185,129,.26);background:rgba(16,185,129,.055)}@media(max-width:900px){.app-hero{grid-template-columns:1fr}.app-hero-actions{justify-content:flex-start}.hero-metrics{min-width:0;width:100%;grid-template-columns:repeat(3,1fr)}}@media(max-width:640px){.hero-metrics{grid-template-columns:1fr}.app-hero{padding:18px;border-radius:20px}.app-hero-title{font-size:1.55rem}}
 
+/* Global app gradient unification: green-forward, reduced blue tint */
+#app{--cyan:#34d399;}
+#page-dashboard,#page-projects,#page-deployments,#page-env-manager,#page-webhooks,#page-domains,#page-workers,#page-streaks,#page-analytics,#page-settings,#page-cronjobs{
+  background:radial-gradient(circle at 8% 0%,rgba(16,185,129,.12),transparent 30%),radial-gradient(circle at 92% 8%,rgba(52,211,153,.08),transparent 34%);
+}
+
+/* Analytics + Settings + Env + Cron premium refresh */
+#page-analytics .page-header,#page-settings .page-header,#page-env-manager .page-header,#page-cronjobs .page-header{
+  border:1px solid rgba(16,185,129,.16);border-radius:22px;padding:18px 20px;margin-bottom:18px;
+  background:radial-gradient(circle at 8% 12%,rgba(16,185,129,.18),transparent 34%),linear-gradient(135deg,rgba(15,23,42,.92),rgba(3,7,18,.96));
+}
+#page-analytics .page-title,#page-settings .page-title,#page-env-manager .page-title,#page-cronjobs .page-title{font-family:var(--font-hd);font-weight:800;letter-spacing:-.02em}
+#page-env-manager .form-label,#page-settings .field-label,#page-cronjobs .card-title{font-weight:800;color:#e5fdf3}
+#page-env-manager .input,#page-settings .input,#page-cronjobs .input{
+  min-height:52px;border-radius:14px;border:1px solid rgba(16,185,129,.2);background:rgba(2,6,23,.8);
+}
+#page-env-manager .input:focus,#page-settings .input:focus,#page-cronjobs .input:focus{box-shadow:0 0 0 4px rgba(16,185,129,.1)}
+#page-env-manager .custom-select-trigger{
+  min-height:54px;border-radius:14px;border:1px solid rgba(16,185,129,.24);background:linear-gradient(145deg,rgba(15,23,42,.95),rgba(8,13,24,.96));font-weight:700;
+}
+#page-env-manager .custom-select-dropdown{border:1px solid rgba(16,185,129,.24);border-radius:14px;background:#03121b}
+#page-env-manager .cs-option{font-weight:600}
+#page-env-manager .cs-option:hover,#page-env-manager .cs-option.selected{background:rgba(16,185,129,.12);color:#d1fae5}
+#page-env-manager .card,#page-settings .card,#page-analytics .card,#page-cronjobs .card{border-color:rgba(16,185,129,.14);border-radius:20px}
+#page-cronjobs #cronJobsList > div,#page-cronjobs #cronExecutionLog > div{
+  border-radius:12px;margin:8px 10px;background:rgba(15,23,42,.52);border:1px solid rgba(16,185,129,.1)
+}
+
 /* ── Resource Cards ─────────────────────────────────────────────────────── */
 .resource-card {
   display:flex; align-items:center; gap:14px; padding:16px;
@@ -1770,6 +1798,20 @@ textarea.input { resize: vertical; min-height: 80px; }
 .deploy-stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 18px}.deploy-stepper-item{padding:12px;border:1px solid rgba(16,185,129,.12);border-radius:16px;background:rgba(2,6,23,.44);display:flex;align-items:center;gap:10px;color:var(--text-2);font-size:.78rem}.deploy-stepper-badge{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;background:rgba(16,185,129,.13);color:var(--green);font-family:var(--font-mono);font-weight:800}.deploy-side-panel{position:relative;overflow:hidden}.deploy-side-panel::after{content:'';position:absolute;right:-55px;bottom:-55px;width:170px;height:170px;border-radius:50%;border:1px solid rgba(16,185,129,.12);box-shadow:0 0 80px rgba(16,185,129,.1)}#page-new-deploy #deployBtn{min-height:56px;border-radius:16px;font-size:1rem;font-weight:800;box-shadow:0 16px 34px rgba(16,185,129,.2)}
 #page-new-deploy .custom-select-btn{height:54px;border-radius:15px;border-color:rgba(16,185,129,.18);background:rgba(2,6,23,.78);font-size:.92rem;padding:0 16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.015)}#page-new-deploy .custom-select-menu{border-radius:16px;border-color:rgba(16,185,129,.24);background:#020817;box-shadow:0 18px 54px rgba(0,0,0,.48);max-height:300px}.custom-select-item.repo-select-item{display:flex;align-items:center;gap:10px;padding:12px}.repo-select-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(16,185,129,.12);color:var(--green);font-weight:900}.repo-select-main{font-weight:800;color:var(--text);font-size:.84rem}.repo-select-sub{font-family:var(--font-mono);font-size:.68rem;color:var(--text-3);margin-top:2px}.custom-select-item.branch-select-item{display:flex;align-items:center;justify-content:space-between;font-family:var(--font-mono)}.custom-select-item.branch-select-item::after{content:'branch';font-size:.62rem;color:var(--text-3);border:1px solid rgba(148,163,184,.12);border-radius:999px;padding:2px 6px}
 @media(max-width:768px){.resource-grid{grid-template-columns:1fr}.resource-card{min-height:118px}.deploy-stepper{grid-template-columns:1fr}#page-new-deploy .card-body{padding:20px}#page-new-deploy .two-col{display:block}#page-new-deploy .two-col>div{margin-bottom:16px}}
+@media(min-width:1100px){#page-new-deploy .two-col{grid-template-columns:minmax(0,1fr) minmax(300px,360px)}}
+#page-new-deploy .two-col > div{min-width:0}
+#page-new-deploy .deploy-side-panel{position:sticky;top:14px}
+@media(max-width:1099px){#page-new-deploy .deploy-side-panel{position:relative;top:auto}}
+#page-new-deploy #summaryUrl,#page-new-deploy #summaryName{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+
+/* Deployments table responsive containment */
+#page-deployments .deployment-table-shell{overflow-x:auto;padding-bottom:6px}
+#page-deployments .deployment-table-shell table{min-width:760px}
+@media(max-width:760px){
+  #page-deployments .card-header{flex-direction:column;align-items:flex-start;gap:10px}
+  #page-deployments .card-actions{width:100%}
+  #page-deployments #cs_deployFilterStatus{width:100%}
+}
 
 /* ── Cron Preset Buttons ─────────────────────────────────────────────────── */
 .cron-preset {
@@ -1778,6 +1820,34 @@ textarea.input { resize: vertical; min-height: 80px; }
   color:var(--text);
 }
 .cron-preset:hover { border-color:var(--primary); background:rgba(16,185,129,0.06); }
+
+
+/* ── Domains, Workers, Streaks premium surfaces ───────────────────────────── */
+.surface-hero{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1.4fr) auto;gap:18px;align-items:center;margin-bottom:18px;padding:22px;border:1px solid rgba(16,185,129,.16);border-radius:24px;background:radial-gradient(circle at 8% 20%,rgba(16,185,129,.2),transparent 34%),radial-gradient(circle at 92% 0%,rgba(6,182,212,.16),transparent 30%),linear-gradient(135deg,rgba(15,23,42,.92),rgba(3,7,18,.96));box-shadow:0 22px 70px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.04)}
+.surface-kicker{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#67e8f9;margin-bottom:8px}
+.surface-title{font-family:var(--font-hd);font-size:clamp(1.55rem,3vw,2.3rem);font-weight:800;letter-spacing:-.035em;color:#f8fafc;line-height:1.06}
+.surface-sub{max-width:720px;margin-top:10px;color:#94a3b8;font-size:.93rem;line-height:1.5}
+.surface-metrics{display:grid;grid-template-columns:repeat(3,minmax(94px,1fr));gap:10px;min-width:min(390px,42vw)}
+.surface-metric{padding:14px 16px;border:1px solid rgba(16,185,129,.13);border-radius:16px;background:rgba(2,6,23,.5)}
+.surface-metric-value{font-family:var(--font-mono);font-size:1.2rem;font-weight:800;color:#d1fae5}.surface-metric-label{margin-top:4px;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
+.list-shell{border:1px solid rgba(16,185,129,.12);border-radius:18px;overflow:hidden;background:linear-gradient(180deg,rgba(8,13,24,.8),rgba(2,6,23,.92))}
+.list-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(16,185,129,.09);flex-wrap:wrap}
+.list-row:last-child{border-bottom:0}
+.inline-chip{font-size:.68rem;padding:4px 9px;border-radius:999px;border:1px solid rgba(148,163,184,.18);background:rgba(148,163,184,.08);color:var(--text-2)}
+.streak-card{border:1px solid rgba(16,185,129,.13)!important;background:linear-gradient(180deg,rgba(15,23,42,.92),rgba(3,7,18,.94))!important;border-radius:20px!important}
+.streak-card .value{font-size:2.1rem;font-family:var(--font-mono);font-weight:800}
+@media(max-width:900px){.surface-hero{grid-template-columns:1fr}.surface-metrics{min-width:0;width:100%;grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){.surface-metrics{grid-template-columns:1fr}}
+
+.pd-hero{padding:18px;border:1px solid rgba(16,185,129,.16);border-radius:20px;background:linear-gradient(145deg,rgba(15,23,42,.95),rgba(8,13,24,.98));margin-bottom:16px}
+.pd-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pd-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.pd-meta .chip{padding:10px;border:1px solid rgba(16,185,129,.14);border-radius:12px;background:rgba(2,6,23,.45);font-size:.72rem;color:var(--text-2)}
+.pd-meta .chip strong{display:block;color:#d1fae5;font-size:.96rem;margin-top:2px}
+.pd-config-row{display:flex;justify-content:space-between;gap:14px;padding:12px 16px;border-bottom:1px solid rgba(16,185,129,.08);align-items:flex-start}
+.pd-config-row .k{color:var(--text-2);font-size:.82rem}
+.pd-config-row .v{max-width:70%;text-align:right;word-break:break-word}
+@media(max-width:760px){.pd-actions,.pd-meta{grid-template-columns:1fr}.pd-config-row .v{max-width:100%;text-align:left}}
 
 /* ── Streak Calendar ─────────────────────────────────────────────────────── */
 .streak-grid { display:flex; gap:3px; }
@@ -4320,10 +4390,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
     <!-- ════════ DOMAINS PAGE ════════ -->
     <div class="page" id="page-domains">
-      <div class="page-header page-header-row">
+      <div class="surface-hero">
         <div>
-          <div class="page-title">Domains</div>
-          <div class="page-subtitle">Manage subdomains and custom domains for your projects.</div>
+          <div class="surface-kicker">Routing & SSL</div><div class="surface-title">Domains Control Center</div>
+          <div class="surface-sub">Manage wildcard routing, subdomains, and custom DNS with a polished control plane built to match your dashboard gradient.</div>
         </div>
         <button class="btn btn-primary" onclick="showPage('domain-add',this)">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -4355,7 +4425,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <div class="card-title">Project Subdomains</div>
           <div class="card-subtitle">Auto-generated live URL for every deployed project</div>
         </div>
-        <div class="card-body" style="padding:0;" id="domainsProjectList">
+        <div class="card-body list-shell" style="padding:0;" id="domainsProjectList">
           <div style="padding:24px;color:var(--text-3);font-size:0.82rem;text-align:center;">No projects deployed yet.</div>
         </div>
       </div>
@@ -4368,7 +4438,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="card-subtitle">Your own domains pointing to DeployBoard projects</div>
           </div>
         </div>
-        <div id="customDomainsList">
+        <div id="customDomainsList" class="list-shell">
           <div style="padding:40px 20px;text-align:center;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" width="32" height="32" style="margin:0 auto 12px;display:block;opacity:0.4;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             <div style="font-size:0.85rem;font-weight:600;color:var(--text-2);">No custom domains yet</div>
@@ -5187,10 +5257,11 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <!-- ════════ BACKGROUND WORKERS PAGE ════════ -->
     <div class="page" id="page-workers">
       <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-      <div class="page-header page-header-row">
+      <div class="surface-hero">
         <div>
-          <div class="page-title">Background Workers</div>
-          <div class="page-subtitle">Long-running processes that run without a web port — queues, listeners, batch jobs.</div>
+          <div class="surface-kicker">Async Compute</div>
+          <div class="surface-title">Background Workers</div>
+          <div class="surface-sub">Run durable queue processors, listeners, and automation workers with the same premium deployment experience as your apps.</div>
         </div>
         <button class="btn btn-primary" onclick="showPage('worker-create')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -5199,7 +5270,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>
       <div class="card" style="margin-bottom:20px;">
         <div class="card-header"><div class="card-title">Active Workers</div></div>
-        <div id="workersList">
+        <div id="workersList" class="list-shell">
           <div style="padding:40px 20px;text-align:center;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" width="36" height="36" style="margin:0 auto 12px;display:block;opacity:0.4;"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
             <div style="font-size:0.85rem;font-weight:600;color:var(--text-2);">No background workers yet</div>
@@ -5278,22 +5349,30 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <!-- ════════ DEPLOY STREAKS PAGE ════════ -->
     <div class="page" id="page-streaks">
       <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-      <div class="page-header">
-        <div class="page-title">Deploy Streaks</div>
-        <div class="page-subtitle">Track your deployment activity over time.</div>
+      <div class="surface-hero">
+        <div>
+          <div class="surface-kicker">Velocity Analytics</div>
+          <div class="surface-title">Deploy Streaks</div>
+          <div class="surface-sub">Stay consistent with visual streak intelligence and yearly activity density.</div>
+        </div>
+        <div class="surface-metrics">
+          <div class="surface-metric"><div class="surface-metric-value" id="streakHeroDeploys">0</div><div class="surface-metric-label">Total Deploys</div></div>
+          <div class="surface-metric"><div class="surface-metric-value" id="streakHeroDays">0</div><div class="surface-metric-label">Active Days</div></div>
+          <div class="surface-metric"><div class="surface-metric-value" id="streakHeroRate">0%</div><div class="surface-metric-label">Consistency</div></div>
+        </div>
       </div>
       <div class="three-col" style="margin-bottom:20px;">
-        <div class="card" style="text-align:center;padding:24px 16px;">
+        <div class="card streak-card" style="text-align:center;padding:24px 16px;">
           <div style="font-size:1.8rem;margin-bottom:6px;">🔥</div>
           <div style="font-size:2rem;font-weight:800;color:var(--green);font-family:var(--font-mono);" id="streakCurrent">0</div>
           <div style="font-size:0.78rem;color:var(--text-2);margin-top:4px;">Current Streak (days)</div>
         </div>
-        <div class="card" style="text-align:center;padding:24px 16px;">
+        <div class="card streak-card" style="text-align:center;padding:24px 16px;">
           <div style="font-size:1.8rem;margin-bottom:6px;">⚡</div>
           <div style="font-size:2rem;font-weight:800;color:var(--text);font-family:var(--font-mono);" id="streakLongest">0</div>
           <div style="font-size:0.78rem;color:var(--text-2);margin-top:4px;">Longest Streak (days)</div>
         </div>
-        <div class="card" style="text-align:center;padding:24px 16px;">
+        <div class="card streak-card" style="text-align:center;padding:24px 16px;">
           <div style="font-size:1.8rem;margin-bottom:6px;">📊</div>
           <div style="font-size:2rem;font-weight:800;color:var(--text);font-family:var(--font-mono);" id="streakAvg">0</div>
           <div style="font-size:0.78rem;color:var(--text-2);margin-top:4px;">Avg / Active Day</div>
@@ -7046,7 +7125,7 @@ function showProjectDetail(projectId) {
 
   document.getElementById('projectDetailContent').innerHTML =
     // ── Header
-    '<div style="margin-bottom:20px;">' +
+    '<div class="pd-hero">' +
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:8px;">' +
         '<div style="min-width:0;">' +
           '<h1 style="font-size:1.6rem;font-weight:800;color:var(--text);margin:0 0 4px;">' + escHtml(p.name) + '</h1>' +
@@ -7058,7 +7137,7 @@ function showProjectDetail(projectId) {
         (lastStatus ? statusBadge(lastStatus) : '') +
       '</div>' +
       // Action buttons
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<div class="pd-actions">' +
         '<button class="btn btn-primary" data-id="' + p.id + '" onclick="redeploy(this.dataset.id)" style="flex:1;min-width:120px;justify-content:center;">' +
           '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
           ' Redeploy' +
@@ -7068,6 +7147,11 @@ function showProjectDetail(projectId) {
           ' Live Logs' +
         '</button>' +
         '<button class="btn btn-danger" data-id="' + p.id + '" onclick="openDeleteModal(this.dataset.id)" style="min-width:90px;justify-content:center;">Delete</button>' +
+      '</div>' +
+      '<div class="pd-meta">' +
+        '<div class="chip">Status<strong>' + (lastStatus ? escHtml(lastStatus) : 'idle') + '</strong></div>' +
+        '<div class="chip">Deployments<strong>' + deploys.length + '</strong></div>' +
+        '<div class="chip">Runtime<strong>' + escHtml((p.siteType||'static').toUpperCase()) + '</strong></div>' +
       '</div>' +
     '</div>' +
 
@@ -7130,9 +7214,9 @@ function showProjectDetail(projectId) {
 }
 
 function _configRow(label, valueHtml) {
-  return '<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;">' +
-    '<span style="font-size:0.82rem;color:var(--text-2);flex-shrink:0;">' + label + '</span>' +
-    '<div style="text-align:right;max-width:65%;">' + valueHtml + '</div>' +
+  return '<div class="pd-config-row">' +
+    '<span class="k">' + label + '</span>' +
+    '<div class="v">' + valueHtml + '</div>' +
   '</div>';
 }
 
@@ -7717,7 +7801,7 @@ async function renderDomains() {
         const url = 'https://' + p.subdomain + '.' + baseDomain;
         const last = deployments.filter(d => d.projectId === (p._id||p.id)).slice(-1)[0];
         const status = last ? last.status : 'idle';
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;">' +
+        return '<div class="list-row">' +
           '<div style="min-width:0;flex:1;">' +
             '<div style="font-size:0.85rem;font-weight:600;color:var(--text);">' + p.name + '</div>' +
             '<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-2);margin-top:3px;word-break:break-all;">' + url + '</div>' +
@@ -7751,7 +7835,7 @@ async function renderDomains() {
         const badge = d.verified
           ? '<span class="badge badge-success"><span class="badge-dot"></span>Verified</span>'
           : '<span class="badge badge-pending"><span class="badge-dot"></span>DNS Pending</span>';
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;">' +
+        return '<div class="list-row">' +
           '<div style="min-width:0;flex:1;">' +
             '<div style="font-size:0.85rem;font-weight:600;color:var(--text);">' + d.domain + '</div>' +
             '<div style="font-size:0.72rem;color:var(--text-2);margin-top:3px;">→ ' + d.subdomain + '</div>' +
@@ -8007,7 +8091,7 @@ function renderTeam() {
     pendingEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-3);font-size:0.82rem;">No pending invites.</div>';
   } else {
     pendingEl.innerHTML = teamInvites.map((inv, i) => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;">
+      <div class="list-row">
         <div>
           <div style="font-size:0.85rem;color:var(--text);">${inv.email}</div>
           <div style="font-size:0.72rem;color:var(--text-2);margin-top:2px;">Role: ${inv.role} • Sent ${timeAgo(new Date(inv.sentAt))}</div>
@@ -8198,7 +8282,7 @@ function renderSecrets() {
     return;
   }
   el.innerHTML = globalSecrets.map((s, i) => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;">
+    <div class="list-row">
       <div style="min-width:0;flex:1;">
         <div style="font-family:var(--font-mono);font-size:0.82rem;font-weight:600;color:var(--text);">${s.key}</div>
         <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-3);margin-top:2px;">••••••••••••  (${s.key.length > 0 ? 'set' : 'empty'})</div>
@@ -8640,7 +8724,7 @@ function renderWorkers() {
   // Workers are deployed via same API as server apps - show from deployments
   const workerDeploys = (deployments || []).filter(d => d.isWorker);
   if (!workerDeploys.length) {
-    el.innerHTML = "<div style='padding:40px 20px;text-align:center;'><div style='font-size:0.85rem;font-weight:600;color:var(--text-2);padding:20px 0;'>No cron jobs yet</div></div>";
+    el.innerHTML = "<div style='padding:40px 20px;text-align:center;'><div style='font-size:0.85rem;font-weight:600;color:var(--text-2);padding:20px 0;'>No background workers yet</div></div>";
     return;
   }
   el.innerHTML = workerDeploys.map(w => `
@@ -8716,11 +8800,15 @@ function renderStreaks() {
   const totalActive = Object.keys(dayMap).length;
   const totalDeploys = Object.values(dayMap).reduce((a,b)=>a+b,0);
   const avg = totalActive ? (totalDeploys / totalActive).toFixed(1) : 0;
+  const consistency = Math.round((totalActive / 365) * 100);
 
   const el = id => document.getElementById(id);
   if (el('streakCurrent')) el('streakCurrent').textContent = current;
   if (el('streakLongest')) el('streakLongest').textContent = longest;
   if (el('streakAvg'))     el('streakAvg').textContent = avg;
+  if (el('streakHeroDeploys')) el('streakHeroDeploys').textContent = totalDeploys;
+  if (el('streakHeroDays')) el('streakHeroDays').textContent = totalActive;
+  if (el('streakHeroRate')) el('streakHeroRate').textContent = consistency + '%';
 
   renderStreakCalendar(dayMap);
 }
