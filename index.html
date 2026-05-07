@@ -798,64 +798,50 @@ ul { list-style:none; }
 
 /* ── Page Loading Spinner ─────────────────────────────────────────── */
 #pageLoader {
-  position:fixed; inset:0; z-index:99999;
-  background:var(--bg); display:flex; flex-direction:column;
-  align-items:center; justify-content:center; gap:1.5rem;
-  transition:opacity 0.4s ease;
+  position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+  background:radial-gradient(circle at 50% 22%, rgba(34,211,238,.1), transparent 44%),linear-gradient(180deg,#020617,#010612 72%);
+  transition:opacity .45s ease;
 }
 #pageLoader.hidden { opacity:0; pointer-events:none; }
-.page-loader-logo {
-  display:flex; align-items:center; gap:12px;
-  font-family:var(--font-head); font-size:1.4rem; font-weight:900;
-  letter-spacing:-0.03em; color:var(--text);
-}
-.page-loader-logo span { color:var(--primary); }
-.page-loader-spinner {
-  width:44px; height:44px; position:relative;
-}
-.page-loader-spinner::before,
-.page-loader-spinner::after {
-  content:''; position:absolute; inset:0; border-radius:50%;
-  border:3px solid transparent;
-}
-.page-loader-spinner::before {
-  border-top-color:var(--primary);
-  animation:spin 0.8s linear infinite;
-}
-.page-loader-spinner::after {
-  border-bottom-color:rgba(16,185,129,0.3);
-  animation:spin 1.4s linear infinite reverse;
+.page-loader-badge {
+  font-family:var(--font-mono);font-size:.78rem;letter-spacing:.28em;color:#67e8f9;
+  padding:8px 14px;border:1px solid rgba(103,232,249,.4);border-radius:999px;
+  background:linear-gradient(180deg,rgba(8,47,73,.45),rgba(2,6,23,.45));box-shadow:0 0 24px rgba(34,211,238,.22);
 }
 .page-loader-text {
-  font-size:0.78rem; color:var(--text-3); font-family:var(--font-mono);
-  letter-spacing:0.05em;
+  font-family:var(--font-mono);font-size:1.18rem;font-weight:700;color:#93c5fd;letter-spacing:.2em;text-transform:uppercase;
 }
-.page-loader-dots::after {
-  content:''; animation:dots 1.2s steps(3,end) infinite;
-}
-.page-loader-gears{width:min(74vw,290px);height:auto;filter:drop-shadow(0 0 16px rgba(52,211,153,.28))}
+.page-loader-dots::after { content:'...'; animation:dots 1.5s steps(3,end) infinite; }
+.page-loader-gears{width:min(78vw,320px);height:auto;filter:drop-shadow(0 0 20px rgba(52,211,153,.26));}
 .gear-svg{width:100%;height:auto;overflow:visible}
-.gear-body{fill:none;stroke:#86efac;stroke-width:5.5;stroke-linecap:round;opacity:.95}
-.gear-hub{fill:#86efac;opacity:.92}
-.gear-spoke{stroke:#86efac;stroke-width:5;stroke-linecap:round;opacity:.85}
-.gear--big{transform-origin:130px 95px;animation:gearSpin 8.5s linear infinite}
-.gear--left{transform-origin:68px 148px;animation:gearSpinRev 5.5s linear infinite}
-.gear--right{transform-origin:198px 70px;animation:gearSpinRev 6.2s linear infinite}
-.loader-panel{display:flex;align-items:center;gap:14px;margin-top:2px}
-.loader-percent{width:68px;height:68px;border-radius:50%;border:2px solid rgba(134,239,172,.45);display:grid;place-items:center;color:#86efac;font-family:var(--font-mono);font-weight:800;font-size:1.1rem;box-shadow:inset 0 0 0 4px rgba(134,239,172,.12),0 0 18px rgba(74,222,128,.16)}
-.loader-progress{width:min(62vw,360px);height:58px;padding:9px 12px;border-radius:12px;border:1px solid rgba(134,239,172,.45);background:linear-gradient(180deg, rgba(16,185,129,.08), rgba(2,6,23,.35))}
+.gear-body{fill:none;stroke:#86efac;stroke-width:8.2;stroke-linecap:round;opacity:.98}
+.gear-hub{fill:#86efac;opacity:.95}
+.gear-spoke{stroke:#86efac;stroke-width:7;stroke-linecap:round;opacity:.9}
+.gear--big{transform-origin:130px 95px;animation:gearSpinPhysics 7.2s cubic-bezier(.55,.1,.34,1) infinite}
+.gear--left{transform-origin:68px 148px;animation:gearSpinRevPhysics 5.1s cubic-bezier(.5,.15,.38,1) infinite}
+.gear--right{transform-origin:198px 70px;animation:gearSpinRevPhysics 5.8s cubic-bezier(.6,.12,.4,1) infinite;animation-delay:.2s}
+.loader-panel{display:flex;align-items:center;gap:16px;margin-top:4px}
+.loader-percent{width:74px;height:74px;border-radius:50%;border:2px solid rgba(103,232,249,.5);display:grid;place-items:center;color:#67e8f9;font-family:var(--font-mono);font-weight:800;font-size:1.12rem;box-shadow:inset 0 0 0 5px rgba(34,211,238,.18),0 0 20px rgba(34,211,238,.2);background:radial-gradient(circle at 35% 30%,rgba(34,211,238,.24),rgba(2,6,23,.7));}
+.loader-progress{position:relative;width:min(66vw,390px);height:66px;padding:10px 14px;border-radius:12px;border:1px solid rgba(34,211,238,.55);background:linear-gradient(180deg,rgba(8,47,73,.38),rgba(2,6,23,.5));box-shadow:inset 0 0 0 1px rgba(103,232,249,.12),0 0 22px rgba(34,211,238,.12)}
+.loader-progress:before{content:'';position:absolute;inset:-6px 14px auto 14px;height:2px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.75),transparent)}
 .loader-progress svg{width:100%;height:100%}
-.loader-track{fill:rgba(15,23,42,.65);stroke:rgba(134,239,172,.26);stroke-width:1}
-.loader-fill{fill:url(#loaderGrad);transition:width .45s linear}
-.loader-segment{fill:rgba(134,239,172,.26)}
-@keyframes dots {
-  0%   { content:''; }
-  33%  { content:'.'; }
-  66%  { content:'..'; }
-  100% { content:'...'; }
+.loader-track{fill:rgba(15,23,42,.82);stroke:rgba(34,211,238,.42);stroke-width:1.2}
+.loader-fill{fill:url(#loaderGrad);transition:width .45s linear;filter:drop-shadow(0 0 8px rgba(34,211,238,.42));}
+.loader-segment{fill:rgba(34,211,238,.3)}
+@keyframes gearSpinPhysics {
+  0%{transform:rotate(0deg)}
+  22%{transform:rotate(82deg)}
+  48%{transform:rotate(175deg)}
+  72%{transform:rotate(265deg)}
+  100%{transform:rotate(360deg)}
 }
-@keyframes gearSpin { to{ transform:rotate(360deg);} }
-@keyframes gearSpinRev { to{ transform:rotate(-360deg);} }
+@keyframes gearSpinRevPhysics {
+  0%{transform:rotate(0deg)}
+  20%{transform:rotate(-70deg)}
+  46%{transform:rotate(-168deg)}
+  74%{transform:rotate(-268deg)}
+  100%{transform:rotate(-360deg)}
+}
 
 /* ── Mobile viewport height fix (address bar issues) ──────────────────── */
 @supports (height: 100dvh) {
@@ -967,11 +953,13 @@ ul { list-style:none; }
 }
 .user-chip:hover { background: var(--bg-hover); }
 .user-avatar {
-  width: 30px; height: 30px; border-radius: 8px;
+  width: 30px; height: 30px; border-radius: 10px;
   background: linear-gradient(135deg, var(--primary), var(--purple));
   display: flex; align-items: center; justify-content: center;
   font-size: 0.8rem; font-weight: 700; color: #fff;
   flex-shrink: 0;
+  background-size: cover; background-position: center;
+  border:1px solid rgba(148,163,184,.28); overflow:hidden;
 }
 .user-info { min-width: 0; }
 .user-name { font-size: 0.82rem; font-weight: 600; color: var(--text); line-height: 1.2; }
@@ -1333,10 +1321,12 @@ textarea.input { resize: vertical; min-height: 80px; }
   background:linear-gradient(180deg, rgba(2,6,23,.72), rgba(2,6,23,.9));
 }
 .terminal-empty.hide{display:none;}
-.terminal-empty-card{text-align:center;max-width:420px;padding:20px;color:#94a3b8;}
+.terminal-empty-card{text-align:center;max-width:520px;padding:28px 22px;color:#cbd5e1;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:linear-gradient(180deg,rgba(15,23,42,.55),rgba(2,6,23,.62));box-shadow:0 12px 40px rgba(2,6,23,.35);}
 .terminal-empty-icon{font-family:var(--font-mono);font-size:2.4rem;color:#64748b;line-height:1;}
-.terminal-empty-title{font-family:var(--font-mono);font-size:1.9rem;margin-top:12px;color:#94a3b8;}
-.terminal-empty-sub{font-family:var(--font-mono);font-size:1rem;line-height:1.45;margin-top:10px;color:#6b7280;}
+.terminal-empty-title{font-family:var(--font-hd);font-weight:800;font-size:2rem;letter-spacing:-.02em;margin-top:12px;color:#e2e8f0;}
+.terminal-empty-sub{font-family:var(--font-ui);font-size:1rem;line-height:1.5;margin-top:10px;color:#94a3b8;}
+.terminal-empty-cta{margin-top:16px;display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:1px solid rgba(16,185,129,.45);background:rgba(16,185,129,.12);color:#d1fae5;font-weight:700;font-size:.85rem;}
+.terminal-empty-cta:hover{background:rgba(16,185,129,.18);}
 
 @media(max-width:768px) {
   #terminal { height: clamp(280px, 48vh, 600px); }
@@ -2096,9 +2086,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 <!-- ── PAGE LOADING SPINNER ─────────────────────────────────────── -->
 <div id="pageLoader">
-  <div class="page-loader-logo">
-    Deploy<span>Board</span>
-  </div>
+  <div class="page-loader-badge" aria-hidden="true">SYSTEM BOOT SEQUENCE</div>
   <div class="page-loader-gears" aria-hidden="true">
     <svg class="gear-svg" viewBox="0 0 265 190" aria-hidden="true">
       <g class="gear--big">
@@ -2130,7 +2118,7 @@ textarea.input { resize: vertical; min-height: 80px; }
     </div>
   </div>
   <div class="page-loader-text">
-    Loading<span class="page-loader-dots"></span>
+    Loading Sequence<span class="page-loader-dots"></span>
   </div>
 </div>
 
@@ -3556,8 +3544,11 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div id="terminalEmptyState" class="terminal-empty">
               <div class="terminal-empty-card">
                 <div class="terminal-empty-icon">&gt;_</div>
-                <div class="terminal-empty-title">No logs available</div>
-                <div class="terminal-empty-sub">Logs will appear here when your application starts generating them.</div>
+                <div class="terminal-empty-title" id="terminalEmptyTitle">No logs available</div>
+                <div class="terminal-empty-sub" id="terminalEmptySub">Logs will appear here when your application starts generating them.</div>
+                <button class="terminal-empty-cta" id="terminalEmptyCta" onclick="showPage('deploy')">
+                  + Create your first deployment
+                </button>
               </div>
             </div>
           </div>
@@ -5169,6 +5160,12 @@ const GITHUB_CLIENT_ID = 'Iv23liRapw6lMrW4QArz';
 const FIREBASE_CONFIG = { apiKey:'AIzaSyD5TiRv7ZXeEPnoGE7seo1_AwoEZZiKAiY', authDomain:'authenticator-fc68d.firebaseapp.com', databaseURL:'https://authenticator-fc68d-default-rtdb.firebaseio.com', projectId:'authenticator-fc68d', storageBucket:'authenticator-fc68d.firebasestorage.app', messagingSenderId:'967078565161', appId:'1:967078565161:web:5545a869798726f4889338', measurementId:'G-BQLGGN83MM' };
 let fbApp = null; let fbDb = null;
 try { if (window.firebase) { fbApp = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG); fbDb = firebase.firestore(); } } catch(e) { console.warn('Firebase init failed', e); }
+
+function getWorkspaceDocId(user){
+  if (!user) return 'anon';
+  return String(user.firebaseUid || user.email || user.id || user.githubUsername || 'anon');
+}
+
 function hasAuthToken() {
   const t = authToken || localStorage.getItem('db_auth_token') || '';
   if (t && !authToken) authToken = t;
@@ -5224,24 +5221,37 @@ function queueWorkspaceSync(){
   clearTimeout(workspaceSyncTimer);
   workspaceSyncTimer = setTimeout(async () => {
     try {
-      if (fbDb && currentUser) {
-        const uid = String(currentUser.id || currentUser.email || currentUser.githubUsername || 'anon');
-        await fbDb.collection('workspaces').doc(uid).set({ projects, deployments, envStore, settings, updatedAt: Date.now() }, { merge:true });
-      } else {
-        await apiFetch('/api/workspace', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projects, deployments, envStore, settings }) });
-      }
-    } catch(_) {}
+      const syncRes = await apiFetch('/api/workspace', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projects, deployments, envStore, settings }) });
+      if (!syncRes.ok) throw new Error('Workspace sync failed: ' + syncRes.status);
+    } catch(err) {
+      console.warn('[workspace-sync]', err?.message || err);
+    }
   }, 500);
 }
 const _save = save;
 save = function(){ _save(); queueWorkspaceSync(); };
 
+
+function setUserAvatar(el, user, fallback='JG') {
+  if (!el) return;
+  const src = String(user?.githubAvatarUrl || '').trim();
+  if (src) {
+    el.textContent = '';
+    el.style.backgroundImage = `url(${src})`;
+    el.style.backgroundColor = 'transparent';
+    return;
+  }
+  const source = (user && (user.githubUsername || user.name || user.email)) || fallback || 'JG';
+  const initials = String(source).split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'JG';
+  el.textContent = initials;
+  el.style.backgroundImage = '';
+  el.style.backgroundColor = '';
+}
+
 function applyUserProfile(user){
   currentUser = user || null;
-  const source = (user && (user.githubUsername || user.name || user.email)) || settings.name || settings.email || 'JG';
-  const initials = String(source).split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'JG';
-  document.getElementById('sidebarAvatar').textContent = initials;
-  document.getElementById('topbarAvatar').textContent = initials;
+  setUserAvatar(document.getElementById('sidebarAvatar'), user, settings.name || settings.email || 'JG');
+  setUserAvatar(document.getElementById('topbarAvatar'), user, settings.name || settings.email || 'JG');
   document.getElementById('sidebarName').textContent = user?.githubUsername || user?.name || settings.name || 'User';
 }
 
@@ -5251,7 +5261,7 @@ async function bootstrapSession(){
     if (!recovered) return false;
   }
   try {
-    const meR = await apiFetch('/api/auth/me');
+    const meR = await apiFetch('/api/auth/me', { signal: AbortSignal.timeout(5000) });
     const meD = await meR.json();
     if (!meR.ok || !meD.user) {
       const err = new Error('session invalid');
@@ -5260,16 +5270,9 @@ async function bootstrapSession(){
     }
     applyUserProfile(meD.user);
     let wsD = null;
-    if (fbDb && meD.user) {
-      const uid = String(meD.user.id || meD.user.email || meD.user.githubUsername || 'anon');
-      const doc = await fbDb.collection('workspaces').doc(uid).get();
-      if (doc.exists) wsD = doc.data();
-    }
-    if (!wsD) {
-      const wsR = await apiFetch('/api/workspace');
-      const localWs = await wsR.json();
-      if (wsR.ok) wsD = localWs;
-    }
+    const wsR = await apiFetch('/api/workspace', { signal: AbortSignal.timeout(5000) });
+    const localWs = await wsR.json();
+    if (wsR.ok) wsD = localWs;
     if (wsD) {
       projects = Array.isArray(wsD.projects) ? wsD.projects : [];
       deployments = Array.isArray(wsD.deployments) ? wsD.deployments : [];
@@ -5685,6 +5688,10 @@ function renderDashboard() {
       <div class="dash-deploy-badge">${statusBadge(depStatus)}</div>
     </div>`;
   }).join('');
+  } catch (err) {
+    console.warn('[activity] render failed:', err?.message || err);
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:0.82rem;">Could not load activity. Tap refresh.</div>';
+  }
 }
 
 // Compact inline dot for deploy rows
@@ -6293,7 +6300,22 @@ function writeTerm(line) {
 function updateTerminalEmptyState() {
   const el = document.getElementById('terminalEmptyState');
   if (!el) return;
+  const titleEl = document.getElementById('terminalEmptyTitle');
+  const subEl = document.getElementById('terminalEmptySub');
+  const ctaEl = document.getElementById('terminalEmptyCta');
   const hasLogs = (logBuffer && logBuffer.length > 0) || (pendingTermLines && pendingTermLines.length > 0) || _writeQueue.length > 0;
+  const hasAnyDeployments = Array.isArray(deployments) && deployments.length > 0;
+
+  if (!hasAnyDeployments) {
+    if (titleEl) titleEl.textContent = 'No deployment yet';
+    if (subEl) subEl.textContent = 'Run your first deployment to unlock live build logs and application output here.';
+    if (ctaEl) ctaEl.style.display = 'inline-flex';
+  } else {
+    if (titleEl) titleEl.textContent = 'No logs available';
+    if (subEl) subEl.textContent = 'Logs will appear here when your application starts generating them.';
+    if (ctaEl) ctaEl.style.display = 'none';
+  }
+
   el.classList.toggle('hide', hasLogs || !!activeBuildId);
 }
 
@@ -6613,6 +6635,10 @@ async function loadEnvForProject() {
       '</button>' +
     '</div>';
   }).join('');
+  } catch (err) {
+    console.warn('[activity] render failed:', err?.message || err);
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:0.82rem;">Could not load activity. Tap refresh.</div>';
+  }
 }
 
 async function saveEnvVar() {
@@ -6855,10 +6881,8 @@ function saveAccountSettings() {
   settings.name  = document.getElementById('settingsName').value;
   settings.email = document.getElementById('settingsEmail').value;
   save();
-  const name = settings.name || settings.email || 'JG';
-  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'JG';
-  document.getElementById('sidebarAvatar').textContent  = initials;
-  document.getElementById('topbarAvatar').textContent   = initials;
+  setUserAvatar(document.getElementById('sidebarAvatar'), currentUser, settings.name || settings.email || 'JG');
+  setUserAvatar(document.getElementById('topbarAvatar'), currentUser, settings.name || settings.email || 'JG');
   document.getElementById('sidebarName').textContent    = settings.name || 'User';
   toast('Account updated', 'success');
 }
@@ -6973,7 +6997,11 @@ function statusBadge(status) {
         const clean = window.location.origin + window.location.pathname;
         window.history.replaceState({}, '', clean);
         applyUserProfile(d.user || null);
-        toast('GitHub account connected successfully', 'success');
+        if (d.firebaseLinked === false) {
+          toast('GitHub connected, but Firebase account link failed. Check Firebase GitHub provider config.', 'error');
+        } else {
+          toast('GitHub account connected successfully', 'success');
+        }
       } else {
         toast(d.error || 'GitHub sign-in failed. Please try again.', 'error');
       }
@@ -6981,7 +7009,7 @@ function statusBadge(status) {
       toast('GitHub sign-in failed. Please try again.', 'error');
     }
   }
-  const ok = await bootstrapSession();
+  const ok = await Promise.race([bootstrapSession(), new Promise(resolve => setTimeout(() => resolve(false), 7000))]);
   if (ok) {
     showDashboard();
   } else if (hasAuthToken()) {
@@ -7709,6 +7737,7 @@ async function renderActivity() {
   if (!el) return;
   el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-3);font-size:0.82rem;">Loading…</div>';
 
+  try {
   // Always build local feed from deployments array first (instant, no network)
   const localFeed = [...activityLog];
   (deployments || []).slice().reverse().forEach(d => {
@@ -7723,12 +7752,14 @@ async function renderActivity() {
   // Merge with server feed
   let serverFeed = [];
   try {
-    const r = await fetch('/api/activity');
+    const r = await apiFetch('/api/activity', { signal: AbortSignal.timeout(2500) });
     if (r.ok) {
       const data = await r.json();
       if (Array.isArray(data)) serverFeed = data;
     }
-  } catch(e) {}
+  } catch(e) {
+    console.warn('[activity] using local feed only:', e?.message || e);
+  }
 
   // De-duplicate by message+time, server takes precedence
   const seen = new Set();
@@ -7770,6 +7801,10 @@ async function renderActivity() {
       '</div>' +
     '</div>';
   }).join('');
+  } catch (err) {
+    console.warn('[activity] render failed:', err?.message || err);
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:0.82rem;">Could not load activity. Tap refresh.</div>';
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -8155,6 +8190,10 @@ function renderCronJobs() {
       </div>
     </div>`;
   }).join('');
+  } catch (err) {
+    console.warn('[activity] render failed:', err?.message || err);
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:0.82rem;">Could not load activity. Tap refresh.</div>';
+  }
 }
 
 function renderCronExecutions() {
