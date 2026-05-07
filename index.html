@@ -354,10 +354,15 @@ body.landing-drawer-open { overflow: hidden; }
 .onboard-item{font-size:.86rem;color:#cbd5e1;font-weight:500;}
 .onboard-item b{color:#22d3ee;}
 @keyframes marq{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.rich-image-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:980px;margin:10px auto 0;}
-.rich-image{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#0b1221;}
-.rich-image img{width:100%;height:140px;object-fit:cover;display:block;}
-.rich-image .cap{padding:8px 10px;font-size:.84rem;color:var(--text-2);}
+.home-product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:1040px;margin:14px auto 0}
+.home-product-card{position:relative;border:1px solid rgba(16,185,129,.16);border-radius:16px;padding:16px;background:linear-gradient(145deg,rgba(15,23,42,.95),rgba(8,13,24,.98));display:flex;flex-direction:column;gap:10px;min-height:188px;transition:.18s transform,.18s border-color,.18s box-shadow}
+.home-product-card:hover{transform:translateY(-3px);border-color:rgba(16,185,129,.38);box-shadow:0 18px 44px rgba(0,0,0,.25)}
+.home-product-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.24);color:#6ee7b7}
+.home-product-title{font-size:1rem;font-weight:800;color:#e2e8f0}
+.home-product-copy{font-size:.84rem;line-height:1.45;color:#94a3b8}
+.home-product-meta{margin-top:auto;font-family:var(--font-mono);font-size:.7rem;color:#67e8f9;letter-spacing:.06em;text-transform:uppercase}
+@media(max-width:900px){.home-product-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.home-product-grid{grid-template-columns:1fr}}
 .live-border{
   position:relative;border:1px solid rgba(56,189,248,.25);border-radius:14px;overflow:hidden;
 }
@@ -2556,15 +2561,45 @@ textarea.input { resize: vertical; min-height: 80px; }
 </section>
 
 <section class="section reveal" id="language-guides">
-  <h2 class="section-title">Language Deployment Guides</h2>
-  <p class="section-sub">Learn official docs and how DeployBoard helps you ship each stack faster.</p>
-  <div class="rich-image-grid">
-    <a id="guide-nodejs" class="rich-image" href="https://nodejs.org/en/docs" target="_blank"><img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop" alt="Node.js guide"><div class="cap">Node.js docs + DeployBoard server deploy flow</div></a>
-    <a id="guide-python" class="rich-image" href="https://docs.python.org/3/" target="_blank"><img src="https://images.unsplash.com/photo-1526379095098-d400fd0bf935?q=80&w=1200&auto=format&fit=crop" alt="Python guide"><div class="cap">Python app hosting guide</div></a>
-    <a id="guide-java" class="rich-image" href="https://docs.oracle.com/en/java/" target="_blank"><img src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1200&auto=format&fit=crop" alt="Java guide"><div class="cap">Java build/runtime guide</div></a>
-    <a id="guide-go" class="rich-image" href="https://go.dev/doc/" target="_blank"><img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?q=80&w=1200&auto=format&fit=crop" alt="Go guide"><div class="cap">Go service deployment guide</div></a>
-    <a id="guide-dotnet" class="rich-image" href="https://learn.microsoft.com/dotnet/" target="_blank"><img src="https://images.unsplash.com/photo-1516116216624-53e697fedbea?q=80&w=1200&auto=format&fit=crop" alt=".NET guide"><div class="cap">.NET build and deploy guide</div></a>
-    <a class="rich-image" href="#how-it-works"><img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop" alt="DeployBoard features"><div class="cap">How DeployBoard automates build, release and routing</div></a>
+  <h2 class="section-title">DeployBoard Product Surfaces</h2>
+  <p class="section-sub">Real platform capabilities presented as live product cards — no stock images, only actual DeployBoard workflows.</p>
+  <div class="home-product-grid">
+    <a class="home-product-card" href="#features">
+      <div class="home-product-icon">⚡</div>
+      <div class="home-product-title">Live Build Pipeline</div>
+      <div class="home-product-copy">Stream real-time logs, step progression, and build diagnostics from clone to live release.</div>
+      <div class="home-product-meta">terminal • timeline • health</div>
+    </a>
+    <a class="home-product-card" href="#how-it-works">
+      <div class="home-product-icon">🌍</div>
+      <div class="home-product-title">Domains + SSL Control</div>
+      <div class="home-product-copy">Provision wildcard routing, map custom domains, and verify DNS with automatic SSL handling.</div>
+      <div class="home-product-meta">dns • routing • edge ssl</div>
+    </a>
+    <a class="home-product-card" href="#features">
+      <div class="home-product-icon">🧩</div>
+      <div class="home-product-title">Runtime Flexibility</div>
+      <div class="home-product-copy">Deploy static apps, server runtimes, Docker workloads, and background workers in one platform.</div>
+      <div class="home-product-meta">static • server • docker</div>
+    </a>
+    <a class="home-product-card" href="#features">
+      <div class="home-product-icon">🔐</div>
+      <div class="home-product-title">Secrets + Env Governance</div>
+      <div class="home-product-copy">Manage encrypted global secrets and per-project environment variables with clean operational UX.</div>
+      <div class="home-product-meta">vault • env • compliance</div>
+    </a>
+    <a class="home-product-card" href="#features">
+      <div class="home-product-icon">🕒</div>
+      <div class="home-product-title">Automation & Schedules</div>
+      <div class="home-product-copy">Create cron automations, monitor execution status, and keep recurring operational tasks reliable.</div>
+      <div class="home-product-meta">cron • webhooks • jobs</div>
+    </a>
+    <a class="home-product-card" href="#features">
+      <div class="home-product-icon">📊</div>
+      <div class="home-product-title">Analytics + Audit Trail</div>
+      <div class="home-product-copy">Track deploy velocity, streak consistency, and audit events to understand platform behavior fast.</div>
+      <div class="home-product-meta">insights • streaks • audit</div>
+    </a>
   </div>
 </section>
 
@@ -6752,13 +6787,17 @@ function updateTerminalEmptyState() {
   const subEl = document.getElementById('terminalEmptySub');
   const ctaEl = document.getElementById('terminalEmptyCta');
   const activeDeploy = resolveActiveDeployment();
+  const contextDeploy = resolveLogsContextDeployment();
   updateTerminalHud(activeDeploy);
 
   if (titleEl) titleEl.textContent = 'No logs available';
   if (subEl) subEl.textContent = 'Logs will appear here when your application starts generating them';
   if (ctaEl) ctaEl.style.display = 'none';
 
-  el.classList.toggle('hide', !!activeDeploy);
+  // Hide empty cover whenever user has any deployment context selected/viewed.
+  // Show it only before any deployment has ever been started.
+  const hasDeploymentContext = !!contextDeploy || !!activeBuildId || _hasWrittenBuildLogs || (Array.isArray(deployments) && deployments.length > 0);
+  el.classList.toggle('hide', hasDeploymentContext);
 }
 
 function writeBench(title, detail='') {
@@ -6973,7 +7012,8 @@ function initSocket() {
         });
       }
       save();
-      if (!resolveActiveDeployment()) activeBuildId = null;
+      // Keep activeBuildId pinned to the last viewed deployment so terminal
+      // context remains visible after success/failure and empty cover doesn't flash.
       updateTerminalEmptyState();
 
       const statusEl = document.getElementById('termStatus');
