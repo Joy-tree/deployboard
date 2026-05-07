@@ -5169,6 +5169,12 @@ const GITHUB_CLIENT_ID = 'Iv23liRapw6lMrW4QArz';
 const FIREBASE_CONFIG = { apiKey:'AIzaSyD5TiRv7ZXeEPnoGE7seo1_AwoEZZiKAiY', authDomain:'authenticator-fc68d.firebaseapp.com', databaseURL:'https://authenticator-fc68d-default-rtdb.firebaseio.com', projectId:'authenticator-fc68d', storageBucket:'authenticator-fc68d.firebasestorage.app', messagingSenderId:'967078565161', appId:'1:967078565161:web:5545a869798726f4889338', measurementId:'G-BQLGGN83MM' };
 let fbApp = null; let fbDb = null;
 try { if (window.firebase) { fbApp = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG); fbDb = firebase.firestore(); } } catch(e) { console.warn('Firebase init failed', e); }
+
+function getWorkspaceDocId(user){
+  if (!user) return 'anon';
+  return String(user.firebaseUid || user.email || user.id || user.githubUsername || 'anon');
+}
+
 function hasAuthToken() {
   const t = authToken || localStorage.getItem('db_auth_token') || '';
   if (t && !authToken) authToken = t;
@@ -5224,13 +5230,11 @@ function queueWorkspaceSync(){
   clearTimeout(workspaceSyncTimer);
   workspaceSyncTimer = setTimeout(async () => {
     try {
-      if (fbDb && currentUser) {
-        const uid = String(currentUser.id || currentUser.email || currentUser.githubUsername || 'anon');
-        await fbDb.collection('workspaces').doc(uid).set({ projects, deployments, envStore, settings, updatedAt: Date.now() }, { merge:true });
-      } else {
-        await apiFetch('/api/workspace', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projects, deployments, envStore, settings }) });
-      }
-    } catch(_) {}
+      const syncRes = await apiFetch('/api/workspace', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projects, deployments, envStore, settings }) });
+      if (!syncRes.ok) throw new Error('Workspace sync failed: ' + syncRes.status);
+    } catch(err) {
+      console.warn('[workspace-sync]', err?.message || err);
+    }
   }, 500);
 }
 const _save = save;
@@ -5260,16 +5264,9 @@ async function bootstrapSession(){
     }
     applyUserProfile(meD.user);
     let wsD = null;
-    if (fbDb && meD.user) {
-      const uid = String(meD.user.id || meD.user.email || meD.user.githubUsername || 'anon');
-      const doc = await fbDb.collection('workspaces').doc(uid).get();
-      if (doc.exists) wsD = doc.data();
-    }
-    if (!wsD) {
-      const wsR = await apiFetch('/api/workspace');
-      const localWs = await wsR.json();
-      if (wsR.ok) wsD = localWs;
-    }
+    const wsR = await apiFetch('/api/workspace');
+    const localWs = await wsR.json();
+    if (wsR.ok) wsD = localWs;
     if (wsD) {
       projects = Array.isArray(wsD.projects) ? wsD.projects : [];
       deployments = Array.isArray(wsD.deployments) ? wsD.deployments : [];
@@ -6973,7 +6970,11 @@ function statusBadge(status) {
         const clean = window.location.origin + window.location.pathname;
         window.history.replaceState({}, '', clean);
         applyUserProfile(d.user || null);
-        toast('GitHub account connected successfully', 'success');
+        if (d.firebaseLinked === false) {
+          toast('GitHub connected, but Firebase account link failed. Check Firebase GitHub provider config.', 'error');
+        } else {
+          toast('GitHub account connected successfully', 'success');
+        }
       } else {
         toast(d.error || 'GitHub sign-in failed. Please try again.', 'error');
       }
