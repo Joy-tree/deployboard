@@ -753,7 +753,7 @@ app.get('/api/github/repos', requireAuth, async (req, res) => {
     let all = [];
     for (let page = 1; page <= 3; page++) {
       const r = await fetch(`https://api.github.com/user/repos?per_page=100&page=${page}&sort=updated&visibility=all&affiliation=owner,collaborator,organization_member`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'deployboard' }
+        headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'deployboard', 'Accept': 'application/vnd.github+json' }
       });
       const data = await r.json();
       if (!r.ok) {
@@ -773,11 +773,53 @@ app.get('/api/github/repos', requireAuth, async (req, res) => {
       name: repo.name,
       full_name: repo.full_name,
       private: repo.private,
+      visibility: repo.visibility,
+      description: repo.description || '',
       html_url: repo.html_url,
+      homepage: repo.homepage || '',
       default_branch: repo.default_branch,
       updated_at: repo.updated_at,
-      language: repo.language
+      pushed_at: repo.pushed_at,
+      created_at: repo.created_at,
+      language: repo.language,
+      languages: {},
+      topics: Array.isArray(repo.topics) ? repo.topics : [],
+      fork: !!repo.fork,
+      archived: !!repo.archived,
+      disabled: !!repo.disabled,
+      stargazers_count: repo.stargazers_count || 0,
+      forks_count: repo.forks_count || 0,
+      open_issues_count: repo.open_issues_count || 0,
+      watchers_count: repo.watchers_count || 0,
+      size: repo.size || 0,
+      license: repo.license ? { key: repo.license.key, name: repo.license.name, spdx_id: repo.license.spdx_id } : null,
+      languages_url: repo.languages_url
     }));
+
+    const languageHeaders = {
+      'Authorization': `Bearer ${token}`,
+      'User-Agent': 'deployboard',
+      'Accept': 'application/vnd.github+json'
+    };
+    const languageEnrichmentLimit = Math.min(repos.length, 100);
+    for (let i = 0; i < languageEnrichmentLimit; i += 20) {
+      const batch = repos.slice(i, i + 20);
+      await Promise.all(batch.map(async (repo) => {
+        if (!repo.languages_url) return;
+        try {
+          const lr = await fetch(repo.languages_url, { headers: languageHeaders, signal: AbortSignal.timeout(2500) });
+          if (!lr.ok) return;
+          const languages = await lr.json();
+          if (!languages || typeof languages !== 'object' || Array.isArray(languages)) return;
+          repo.languages = languages;
+          if (!repo.language) {
+            const primary = Object.entries(languages).sort((a,b) => Number(b[1] || 0) - Number(a[1] || 0))[0];
+            if (primary) repo.language = primary[0];
+          }
+        } catch (_) {}
+      }));
+    }
+
     res.json({ repos });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

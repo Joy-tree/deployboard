@@ -1328,6 +1328,40 @@ textarea.input { resize: vertical; min-height: 80px; }
 .terminal-empty-cta{margin-top:16px;display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:1px solid rgba(16,185,129,.45);background:rgba(16,185,129,.12);color:#d1fae5;font-weight:700;font-size:.85rem;}
 .terminal-empty-cta:hover{background:rgba(16,185,129,.18);}
 
+.terminal-empty-card.empty-logs-polished{
+  position:relative;overflow:hidden;width:min(88%,560px);min-height:56%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:10px;border:1px solid rgba(148,163,184,.12);
+  background:
+    radial-gradient(circle at 50% 24%,rgba(148,163,184,.08),transparent 30%),
+    linear-gradient(180deg,rgba(8,13,24,.62),rgba(2,6,23,.74));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.02),0 24px 70px rgba(0,0,0,.32);
+}
+.terminal-empty-card.empty-logs-polished::before{
+  content:'';position:absolute;inset:0;border-radius:10px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(148,163,184,.055),transparent);
+  opacity:.5;
+}
+.terminal-empty-icon{position:relative;font-size:3.4rem;color:#5b6472;text-shadow:0 0 28px rgba(148,163,184,.18);}
+.terminal-empty-icon::after{content:'';display:block;width:30px;height:4px;border-radius:999px;background:#5b6472;margin:-8px 0 0 40px;box-shadow:0 0 18px rgba(148,163,184,.2);}
+.terminal-empty-title{font-family:var(--font-mono);font-weight:700;font-size:1.45rem;letter-spacing:.02em;margin-top:18px;color:#848892;}
+.terminal-empty-sub{font-family:var(--font-mono);font-size:1rem;line-height:1.45;margin-top:10px;color:#747883;max-width:440px;}
+.matrix-terminal-card{display:none;margin-bottom:10px;border:1px solid rgba(16,185,129,.2);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(0,20,10,.94),rgba(0,8,5,.98));box-shadow:0 18px 60px rgba(0,0,0,.34),0 0 36px rgba(16,185,129,.08);}
+.matrix-terminal-card.active{display:block;animation:matrixPanelIn .32s ease both;}
+.matrix-topbar{height:38px;display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid rgba(16,185,129,.16);background:linear-gradient(180deg,rgba(4,30,16,.92),rgba(0,13,6,.94));}
+.matrix-title{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;color:#86efac;text-transform:uppercase;flex:1;text-shadow:0 0 12px rgba(74,222,128,.45);}
+.matrix-badge{font-family:var(--font-mono);font-size:.62rem;color:#bbf7d0;border:1px solid rgba(34,197,94,.28);border-radius:999px;padding:3px 8px;background:rgba(16,185,129,.1);}
+.matrix-stage{position:relative;height:190px;overflow:hidden;background:radial-gradient(circle at 50% 45%,rgba(16,185,129,.12),transparent 32%),#010503;}
+.matrix-stage::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035),rgba(255,255,255,.035) 1px,transparent 1px,transparent 4px);mix-blend-mode:screen;opacity:.26;z-index:2;pointer-events:none;}
+.matrix-stage::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(1,5,3,.9),transparent 16%,transparent 78%,rgba(1,5,3,.95));z-index:3;pointer-events:none;}
+.matrix-column{position:absolute;top:-120%;white-space:pre-line;font-family:var(--font-mono);font-weight:800;font-size:.82rem;line-height:1.15;color:#22c55e;text-shadow:0 0 7px rgba(34,197,94,.9),0 0 18px rgba(16,185,129,.5);opacity:.86;animation:matrixRain linear infinite;will-change:transform;}
+.matrix-column:nth-child(3n){color:#86efac;font-size:.74rem;opacity:.72;filter:blur(.15px)}
+.matrix-column:nth-child(4n){color:#06f56f;font-size:.9rem;opacity:.95;text-shadow:0 0 10px rgba(6,245,111,.95),0 0 24px rgba(34,197,94,.7)}
+.matrix-column:nth-child(5n){color:#67e8f9;text-shadow:0 0 9px rgba(103,232,249,.75),0 0 18px rgba(34,211,238,.42)}
+.matrix-overlay-text{position:absolute;left:18px;right:18px;bottom:14px;z-index:4;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-family:var(--font-mono);font-size:.72rem;color:#d1fae5;text-shadow:0 0 12px rgba(16,185,129,.75);}
+.matrix-overlay-text span{padding:5px 8px;border:1px solid rgba(16,185,129,.24);border-radius:8px;background:rgba(1,10,5,.62);backdrop-filter:blur(4px)}
+@keyframes matrixRain{from{transform:translateY(-35%)}to{transform:translateY(240%)}}
+@keyframes matrixPanelIn{from{opacity:0;transform:translateY(-10px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+
 @media(max-width:768px) {
   #terminal { height: clamp(280px, 48vh, 600px); }
   .terminal-topbar { padding: 9px 12px; }
@@ -1457,6 +1491,83 @@ textarea.input { resize: vertical; min-height: 80px; }
 .project-meta-item { display:flex; align-items:center; gap:4px; font-size:0.72rem; color:var(--text-3); }
 .project-meta-item svg { width:12px; height:12px; }
 .project-actions { display:flex; gap:7px; margin-top:14px; }
+
+
+/* ── GitHub repositories page ─────────────────────────────────────────── */
+.repo-hero {
+  display:grid; grid-template-columns:minmax(0,1.3fr) auto; gap:16px; align-items:end;
+  padding:18px; border:1px solid rgba(16,185,129,.14); border-radius:18px;
+  background:
+    radial-gradient(circle at 12% 15%,rgba(16,185,129,.18),transparent 34%),
+    radial-gradient(circle at 92% 0%,rgba(34,211,238,.12),transparent 30%),
+    linear-gradient(135deg,rgba(15,23,42,.88),rgba(6,11,20,.92));
+  box-shadow:0 18px 60px rgba(0,0,0,.2);
+  margin-bottom:16px;
+}
+.repo-hero-kicker { font-family:var(--font-mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--cyan); margin-bottom:6px; }
+.repo-hero-title { font-family:var(--font-head); font-weight:800; font-size:clamp(1.4rem,4vw,2.2rem); color:var(--text); line-height:1.05; }
+.repo-hero-subtitle { color:var(--text-2); font-size:.9rem; max-width:680px; margin-top:8px; }
+.repo-stats { display:grid; grid-template-columns:repeat(3,minmax(82px,1fr)); gap:10px; min-width:min(100%,320px); }
+.repo-stat { padding:12px; border:1px solid var(--border); border-radius:14px; background:rgba(2,6,23,.38); }
+.repo-stat-value { font-family:var(--font-mono); color:var(--text); font-size:1.1rem; font-weight:800; }
+.repo-stat-label { color:var(--text-3); font-size:.68rem; text-transform:uppercase; letter-spacing:.08em; margin-top:2px; }
+.repo-toolbar { display:flex; gap:10px; align-items:center; }
+.repo-search-wrap { position:relative; flex:1; }
+.repo-search-wrap svg { position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--text-3); pointer-events:none; }
+.repo-search-wrap .input { padding-left:42px; min-height:46px; }
+.repo-refresh-btn { min-height:46px; padding-inline:18px; }
+.repo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:18px; }
+.repo-card {
+  position:relative; overflow:hidden; min-height:330px; padding:18px;
+  border:1px solid rgba(16,185,129,.13); border-radius:20px;
+  background:
+    radial-gradient(circle at 78% 6%,rgba(34,211,238,.13),transparent 30%),
+    linear-gradient(180deg,rgba(15,23,42,.96),rgba(8,13,24,.96));
+  box-shadow:0 16px 42px rgba(0,0,0,.18);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.repo-card:hover { transform:translateY(-3px); border-color:rgba(16,185,129,.36); box-shadow:0 22px 58px rgba(0,0,0,.28); }
+.repo-card::before { content:''; position:absolute; inset:0 0 auto; height:3px; background:linear-gradient(90deg,var(--primary),var(--cyan),var(--purple)); opacity:.78; }
+.repo-card-top { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; margin-bottom:14px; }
+.repo-lang-emblem {
+  width:74px; height:74px; border-radius:18px; flex-shrink:0;
+  display:grid; place-items:center;
+  background:linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+  border:1px solid rgba(148,163,184,.14);
+  box-shadow:inset 0 0 28px rgba(255,255,255,.035),0 10px 28px rgba(0,0,0,.18);
+}
+.repo-lang-emblem img,.repo-lang-emblem svg { width:48px; height:48px; object-fit:contain; filter:drop-shadow(0 8px 16px rgba(0,0,0,.28)); }
+.repo-title { font-weight:800; color:var(--text); font-size:1.08rem; line-height:1.15; overflow-wrap:anywhere; }
+.repo-fullname { margin-top:5px; font-family:var(--font-mono); color:var(--cyan); font-size:.74rem; overflow-wrap:anywhere; }
+.repo-desc { min-height:42px; color:var(--text-2); font-size:.84rem; line-height:1.45; margin:10px 0 14px; }
+.repo-badges { display:flex; gap:7px; flex-wrap:wrap; margin-top:10px; }
+.repo-pill { display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border-radius:999px; border:1px solid rgba(148,163,184,.12); background:rgba(148,163,184,.07); color:var(--text-2); font-size:.68rem; font-weight:700; }
+.repo-pill.green { border-color:rgba(16,185,129,.24); background:rgba(16,185,129,.11); color:var(--green); }
+.repo-pill.red { border-color:rgba(239,68,68,.22); background:rgba(239,68,68,.1); color:var(--red); }
+.repo-pill.amber { border-color:rgba(245,158,11,.22); background:rgba(245,158,11,.1); color:var(--amber); }
+.repo-meta-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0; }
+.repo-metric { padding:9px 10px; border-radius:12px; background:rgba(2,6,23,.35); border:1px solid rgba(148,163,184,.09); }
+.repo-metric-label { font-size:.64rem; color:var(--text-3); text-transform:uppercase; letter-spacing:.06em; }
+.repo-metric-value { margin-top:2px; color:var(--text); font-family:var(--font-mono); font-size:.78rem; font-weight:800; }
+.repo-language-row { display:flex; align-items:center; justify-content:space-between; gap:10px; color:var(--text-2); font-size:.78rem; margin-top:8px; }
+.repo-language-list { color:var(--text-3); font-family:var(--font-mono); font-size:.68rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.repo-import-btn { width:100%; min-height:52px; margin-top:14px; border-radius:14px; font-size:.93rem; font-weight:800; box-shadow:0 14px 30px rgba(16,185,129,.2); }
+.repo-import-btn svg { width:18px; height:18px; }
+.repo-loading { padding:44px 18px; text-align:center; color:var(--text-2); font-size:.85rem; }
+.repo-empty { padding:44px 18px; text-align:center; color:var(--text-2); }
+.repo-empty strong { display:block; color:var(--text); font-size:1rem; margin-bottom:4px; }
+
+@media(max-width:768px) {
+  .repo-hero { grid-template-columns:1fr; padding:16px; }
+  .repo-stats { grid-template-columns:repeat(3,1fr); min-width:0; }
+  .repo-toolbar { flex-direction:column; align-items:stretch; }
+  .repo-refresh-btn { width:100%; }
+  .repo-grid { grid-template-columns:1fr; gap:14px; }
+  .repo-card { min-height:0; padding:16px; border-radius:18px; }
+  .repo-lang-emblem { width:66px; height:66px; border-radius:16px; }
+  .repo-lang-emblem img,.repo-lang-emblem svg { width:42px; height:42px; }
+  .repo-meta-grid { grid-template-columns:repeat(2,1fr); }
+}
 
 /* ── Deploy Success Overlay ──────────────────────────────────────── */
 .deploy-success-overlay {
@@ -3262,18 +3373,31 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     </div>
 
     <div class="page" id="page-repos">
-      <div class="page-header">
-        <div class="page-title">GitHub Repositories</div>
-        <div class="page-subtitle">Authorize once and import repos directly into deployments.</div>
-      </div>
-      <div class="card" style="margin-bottom:12px;">
-        <div class="card-body">
-          <input class="input" id="repoSearchInput" placeholder="Search repositories..." oninput="renderReposPage()">
+      <div class="repo-hero">
+        <div>
+          <div class="repo-hero-kicker">GitHub workspace</div>
+          <div class="repo-hero-title">Repositories</div>
+          <div class="repo-hero-subtitle">Browse live GitHub metadata, inspect stack signals, and import the right repository into a deployment-ready workflow.</div>
+        </div>
+        <div class="repo-stats" aria-label="Repository summary">
+          <div class="repo-stat"><div class="repo-stat-value" id="repoStatTotal">—</div><div class="repo-stat-label">Total</div></div>
+          <div class="repo-stat"><div class="repo-stat-value" id="repoStatPrivate">—</div><div class="repo-stat-label">Private</div></div>
+          <div class="repo-stat"><div class="repo-stat-value" id="repoStatLanguages">—</div><div class="repo-stat-label">Stacks</div></div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-body" id="reposGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;"></div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-body repo-toolbar">
+          <div class="repo-search-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="input" id="repoSearchInput" placeholder="Search by repository, language, topic, or description…" oninput="renderReposPage()">
+          </div>
+          <button class="btn btn-ghost repo-refresh-btn" onclick="renderReposPage(true)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Refresh live repos
+          </button>
+        </div>
       </div>
+      <div id="reposGrid" class="repo-grid"></div>
     </div>
 
     <!-- ════════ NEW DEPLOY PAGE ════════ -->
@@ -3513,6 +3637,18 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>
 
       <div style="width:100%;margin-bottom:0;">
+      <div class="matrix-terminal-card" id="matrixTerminalCard" aria-hidden="true">
+        <div class="matrix-topbar">
+          <div class="term-dots"><div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div></div>
+          <div class="matrix-title" id="matrixTerminalTitle">port-forward matrix · deployment stream</div>
+          <div class="matrix-badge">LIVE ROUTING</div>
+        </div>
+        <div class="matrix-stage" id="matrixRainStage">
+          <div class="matrix-overlay-text" id="matrixOverlayText">
+            <span>allocating edge tunnel</span><span>mapping 0.0.0.0:443 → container</span><span>streaming deploy packets</span>
+          </div>
+        </div>
+      </div>
       <div class="card" style="margin-bottom:10px;">
         <div class="card-body" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <select id="logTypeFilter" class="input input-mono" style="max-width:140px;height:38px;" onchange="setLogTypeFilter(this.value)">
@@ -3542,11 +3678,11 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <div class="terminal-wrap">
             <div id="terminal"></div>
             <div id="terminalEmptyState" class="terminal-empty">
-              <div class="terminal-empty-card">
-                <div class="terminal-empty-icon">&gt;_</div>
+              <div class="terminal-empty-card empty-logs-polished">
+                <div class="terminal-empty-icon">&gt;</div>
                 <div class="terminal-empty-title" id="terminalEmptyTitle">No logs available</div>
-                <div class="terminal-empty-sub" id="terminalEmptySub">Logs will appear here when your application starts generating them.</div>
-                <button class="terminal-empty-cta" id="terminalEmptyCta" onclick="showPage('deploy')">
+                <div class="terminal-empty-sub" id="terminalEmptySub">Logs will appear here when your application starts generating them</div>
+                <button class="terminal-empty-cta" id="terminalEmptyCta" onclick="showPage('new-deploy')" style="display:none;">
                   + Create your first deployment
                 </button>
               </div>
@@ -5155,6 +5291,7 @@ let deployFormPrefillMode = false;
 let authToken = localStorage.getItem('db_auth_token') || '';
 let currentUser = null;
 let githubRepos = [];
+let githubReposLoaded = false;
 let authMode = 'signup';
 const GITHUB_CLIENT_ID = 'Iv23liRapw6lMrW4QArz';
 const FIREBASE_CONFIG = { apiKey:'AIzaSyD5TiRv7ZXeEPnoGE7seo1_AwoEZZiKAiY', authDomain:'authenticator-fc68d.firebaseapp.com', databaseURL:'https://authenticator-fc68d-default-rtdb.firebaseio.com', projectId:'authenticator-fc68d', storageBucket:'authenticator-fc68d.firebasestorage.app', messagingSenderId:'967078565161', appId:'1:967078565161:web:5545a869798726f4889338', measurementId:'G-BQLGGN83MM' };
@@ -5877,6 +6014,7 @@ function viewDeployLogs(deployId) {
   showPage('logs');
   updateLogsHero(deployments.find(x => x.id === deployId));
   const d = deployments.find(x => x.id === deployId);
+  if (d?.status === 'building') showMatrixTerminal(d); else hideMatrixTerminal();
   if (d && d.logs) {
     if (term) {
       term.clear();
@@ -6061,9 +6199,10 @@ async function startDeployment() {
   const startRow = document.getElementById('step-start-row');
   if (startRow) startRow.style.display = siteType === 'server' && startCmd ? '' : 'none';
 
-  // Navigate to logs
+  // Navigate to logs and open the deployment matrix stream above the terminal
   showPage('logs');
   updateLogsHero({ projectName: name, branch: branch || 'main', repoUrl });
+  showMatrixTerminal({ projectName: name, repoUrl, branch });
   toast('Build started for ' + name, 'info');
 
   // Call API
@@ -6105,6 +6244,7 @@ async function startDeployment() {
 function markDeployFailed(deployId, reason) {
   const d = deployments.find(x => x.id === deployId);
   if (d) { d.status = 'failed'; d.endedAt = new Date().toISOString(); save(); }
+  hideMatrixTerminal(900);
 }
 
 function simulateLocalBuild(deployId, project) {
@@ -6175,6 +6315,74 @@ async function redeploy(projectId) {
   deployFormPrefillMode = true;
   showPage('new-deploy');
   toast('Form pre-filled for re-deployment', 'info');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MATRIX DEPLOYMENT STREAM
+// ══════════════════════════════════════════════════════════════════
+let matrixRainTimer = null;
+const MATRIX_TOKENS = [
+  'TLS', '443', '80', '8080', '3000', '4000', 'TCP', 'UDP', 'DNS', 'A', 'AAAA', 'CNAME',
+  'EDGE', 'TUNNEL', 'PROXY', 'NAT', 'ROUTE', 'PORT', 'BIND', 'LISTEN', 'SYN', 'ACK', 'HTTP/2',
+  'BUILD', 'CLONE', 'CACHE', 'NPM', 'VITE', 'ASSET', 'DIST', 'DEPLOY', 'HEALTH', '200', '301', 'UPLINK',
+  '0.0.0.0', '127.0.0.1', '::1', '/dist', '/api', 'sha256', 'gzip', 'br', 'cf-ray'
+];
+function matrixRandomToken() {
+  return MATRIX_TOKENS[Math.floor(Math.random() * MATRIX_TOKENS.length)] || 'DEPLOY';
+}
+function buildMatrixColumn() {
+  const len = 10 + Math.floor(Math.random() * 16);
+  return Array.from({ length: len }, () => matrixRandomToken()).join('\n');
+}
+function renderMatrixRain(projectName='deployment') {
+  const stage = document.getElementById('matrixRainStage');
+  if (!stage) return;
+  stage.querySelectorAll('.matrix-column').forEach(n => n.remove());
+  const width = stage.clientWidth || 720;
+  const count = Math.max(32, Math.min(74, Math.floor(width / 10)));
+  for (let i = 0; i < count; i++) {
+    const col = document.createElement('span');
+    col.className = 'matrix-column';
+    col.textContent = buildMatrixColumn();
+    col.style.left = Math.max(0, (i / count) * 100 + (Math.random() * 1.7 - .85)) + '%';
+    col.style.animationDuration = (5.8 + Math.random() * 4.8).toFixed(2) + 's';
+    col.style.animationDelay = (-Math.random() * 7).toFixed(2) + 's';
+    col.style.opacity = String(0.52 + Math.random() * 0.44);
+    stage.appendChild(col);
+  }
+  const overlay = document.getElementById('matrixOverlayText');
+  if (overlay) {
+    overlay.innerHTML = [
+      'deploying ' + escHtml(projectName),
+      'port forwarding 443 → runtime',
+      'edge route propagation active',
+      'container health probe streaming'
+    ].map(x => `<span>${x}</span>`).join('');
+  }
+}
+function showMatrixTerminal(context={}) {
+  const card = document.getElementById('matrixTerminalCard');
+  if (!card) return;
+  const projectName = context.projectName || context.name || resolveLogsContextDeployment()?.projectName || 'deployment';
+  const title = document.getElementById('matrixTerminalTitle');
+  if (title) title.textContent = `port-forward matrix · ${projectName}`;
+  card.classList.add('active');
+  card.setAttribute('aria-hidden', 'false');
+  renderMatrixRain(projectName);
+  clearInterval(matrixRainTimer);
+  matrixRainTimer = setInterval(() => renderMatrixRain(projectName), 9000);
+}
+function hideMatrixTerminal(delay = 0) {
+  const card = document.getElementById('matrixTerminalCard');
+  const done = () => {
+    if (card) {
+      card.classList.remove('active');
+      card.setAttribute('aria-hidden', 'true');
+    }
+    clearInterval(matrixRainTimer);
+    matrixRainTimer = null;
+  };
+  if (delay) setTimeout(done, delay); else done();
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -6306,17 +6514,10 @@ function updateTerminalEmptyState() {
   const subEl = document.getElementById('terminalEmptySub');
   const ctaEl = document.getElementById('terminalEmptyCta');
   const hasLogs = (logBuffer && logBuffer.length > 0) || (pendingTermLines && pendingTermLines.length > 0) || _writeQueue.length > 0;
-  const hasAnyDeployments = Array.isArray(deployments) && deployments.length > 0;
 
-  if (!hasAnyDeployments) {
-    if (titleEl) titleEl.textContent = 'No deployment yet';
-    if (subEl) subEl.textContent = 'Run your first deployment to unlock live build logs and application output here.';
-    if (ctaEl) ctaEl.style.display = 'inline-flex';
-  } else {
-    if (titleEl) titleEl.textContent = 'No logs available';
-    if (subEl) subEl.textContent = 'Logs will appear here when your application starts generating them.';
-    if (ctaEl) ctaEl.style.display = 'none';
-  }
+  if (titleEl) titleEl.textContent = 'No logs available';
+  if (subEl) subEl.textContent = 'Logs will appear here when your application starts generating them';
+  if (ctaEl) ctaEl.style.display = 'none';
 
   el.classList.toggle('hide', hasLogs || !!activeBuildId);
 }
@@ -6435,6 +6636,8 @@ function initSocket() {
 
     // ── Build log line received ──────────────────────────────────
     socket.on('build:log', ({ deployId, line }) => {
+      const liveDep = deployments.find(x => x.id === deployId) || deployments.find(x => x.id === activeBuildId);
+      if (liveDep?.status === 'building') showMatrixTerminal(liveDep);
       // Fire deployment.started webhook on first log line
       if (!window._whFiredStart) {
         window._whFiredStart = deployId;
@@ -6469,6 +6672,8 @@ function initSocket() {
 
     // ── Build step state changed ─────────────────────────────────
     socket.on('build:step', ({ deployId, step }) => {
+      const stepDep = deployments.find(x => x.id === deployId) || deployments.find(x => x.id === activeBuildId);
+      if (stepDep?.status === 'building') showMatrixTerminal(stepDep);
       const stepMap = {
         clone:   'step-clone',
         install: 'step-install',
@@ -6541,6 +6746,8 @@ function initSocket() {
           ? name + ' — ' + (status === 'success' ? '✓ deployed' : '✗ failed')
           : 'deployboard — build terminal';
       }
+
+      hideMatrixTerminal(1800);
 
       if (status === 'success') {
         toast('Build succeeded in ' + duration + 's!', 'success');
@@ -6964,14 +7171,17 @@ function genId() { return Date.now().toString(36) + Math.random().toString(36).s
 function escHtml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-function relTime(iso) {
-  if (!iso) return '—';
-  const diff = Date.now() - new Date(iso).getTime();
+function relTime(value) {
+  if (!value) return '—';
+  const ts = value instanceof Date ? value.getTime() : new Date(value).getTime();
+  if (!Number.isFinite(ts)) return '—';
+  const diff = Math.max(0, Date.now() - ts);
   if (diff < 60000)  return 'just now';
   if (diff < 3600000)return Math.floor(diff/60000) + 'm ago';
   if (diff < 86400000)return Math.floor(diff/3600000) + 'h ago';
   return Math.floor(diff/86400000) + 'd ago';
 }
+function timeAgo(value) { return relTime(value); }
 function statusBadge(status) {
   const map = {
     success: 'badge-success', failed: 'badge-error',
@@ -7112,6 +7322,7 @@ function logoutUser() {
   localStorage.removeItem('db_auth_token');
   resetWorkspaceState();
   githubRepos = [];
+  githubReposLoaded = false;
   document.documentElement.classList.remove('app-mode');
   showPage('dashboard');
   toast('Logged out successfully', 'success');
@@ -7813,8 +8024,8 @@ async function renderActivity() {
     return '<div style="display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-bottom:1px solid var(--border);">' +
       '<div style="width:28px;height:28px;border-radius:8px;background:rgba(0,0,0,0.2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:' + color + ';margin-top:1px;">' + icon + '</div>' +
       '<div style="flex:1;min-width:0;">' +
-        '<div style="font-size:0.83rem;color:var(--text);word-break:break-word;">' + (ev.message || '') + '</div>' +
-        '<div style="font-size:0.7rem;color:var(--text-3);margin-top:3px;">' + timeAgo(new Date(ev.time||Date.now())) + '</div>' +
+        '<div style="font-size:0.83rem;color:var(--text);word-break:break-word;">' + escHtml(ev.message || '') + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--text-3);margin-top:3px;">' + timeAgo(ev.time || Date.now()) + '</div>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -8604,41 +8815,192 @@ document.getElementById('deploySuccessOverlay').addEventListener('click', functi
   if (e.target === this) closeDeploySuccess();
 });
 
-async function renderReposPage() {
+const LANGUAGE_META = {
+  javascript:{ label:'JavaScript', slug:'javascript/javascript-original' },
+  typescript:{ label:'TypeScript', slug:'typescript/typescript-original' },
+  html:{ label:'HTML', slug:'html5/html5-original' }, html5:{ label:'HTML', slug:'html5/html5-original' },
+  css:{ label:'CSS', slug:'css3/css3-original' }, css3:{ label:'CSS', slug:'css3/css3-original' },
+  python:{ label:'Python', slug:'python/python-original' },
+  java:{ label:'Java', slug:'java/java-original' },
+  php:{ label:'PHP', slug:'php/php-original' },
+  go:{ label:'Go', slug:'go/go-original' }, golang:{ label:'Go', slug:'go/go-original' },
+  ruby:{ label:'Ruby', slug:'ruby/ruby-original' },
+  node:{ label:'Node.js', slug:'nodejs/nodejs-original' }, nodejs:{ label:'Node.js', slug:'nodejs/nodejs-original' }, 'node.js':{ label:'Node.js', slug:'nodejs/nodejs-original' },
+  react:{ label:'React', slug:'react/react-original' }, reactjs:{ label:'React', slug:'react/react-original' },
+  vue:{ label:'Vue.js', slug:'vuejs/vuejs-original' }, vuejs:{ label:'Vue.js', slug:'vuejs/vuejs-original' }, 'vue.js':{ label:'Vue.js', slug:'vuejs/vuejs-original' },
+  svelte:{ label:'Svelte', slug:'svelte/svelte-original' },
+  docker:{ label:'Docker', slug:'docker/docker-original' }, dockerfile:{ label:'Docker', slug:'docker/docker-original' },
+  rust:{ label:'Rust', slug:'rust/rust-original' },
+  c:{ label:'C', slug:'c/c-original' },
+  cpp:{ label:'C++', slug:'cplusplus/cplusplus-original' }, 'c++':{ label:'C++', slug:'cplusplus/cplusplus-original' },
+  csharp:{ label:'C#', slug:'csharp/csharp-original' }, 'c#':{ label:'C#', slug:'csharp/csharp-original' },
+  swift:{ label:'Swift', slug:'swift/swift-original' },
+  kotlin:{ label:'Kotlin', slug:'kotlin/kotlin-original' },
+  dart:{ label:'Dart', slug:'dart/dart-original' },
+  scala:{ label:'Scala', slug:'scala/scala-original' },
+  clojure:{ label:'Clojure', slug:'clojure/clojure-original' },
+  dotnet:{ label:'.NET', slug:'dot-net/dot-net-original' }, '.net':{ label:'.NET', slug:'dot-net/dot-net-original' },
+  r:{ label:'R', slug:'r/r-original' },
+  lua:{ label:'Lua', slug:'lua/lua-original' },
+  perl:{ label:'Perl', slug:'perl/perl-original' },
+  haskell:{ label:'Haskell', slug:'haskell/haskell-original' },
+  elixir:{ label:'Elixir', slug:'elixir/elixir-original' },
+  erlang:{ label:'Erlang', slug:'erlang/erlang-original' },
+  bash:{ label:'Shell', slug:'bash/bash-original' }, shell:{ label:'Shell', slug:'bash/bash-original' },
+  powershell:{ label:'PowerShell', slug:'powershell/powershell-original' },
+  angular:{ label:'Angular', slug:'angularjs/angularjs-original' },
+  laravel:{ label:'Laravel', slug:'laravel/laravel-original' },
+  django:{ label:'Django', slug:'django/django-plain' },
+  flask:{ label:'Flask', slug:'flask/flask-original' },
+  next:{ label:'Next.js', slug:'nextjs/nextjs-original' }, nextjs:{ label:'Next.js', slug:'nextjs/nextjs-original' },
+  vite:{ label:'Vite', slug:'vitejs/vitejs-original' },
+  tailwind:{ label:'Tailwind CSS', slug:'tailwindcss/tailwindcss-original' }
+};
+
+function normalizeLanguageKey(value='') {
+  return String(value).trim().toLowerCase().replace(/\s+/g, '').replace(/-/g, '').replace(/_/g, '');
+}
+function getRepoLanguageEntries(repo) {
+  return Object.entries(repo.languages || {})
+    .filter(([,bytes]) => Number(bytes) > 0)
+    .sort((a,b) => Number(b[1]) - Number(a[1]));
+}
+function detectRepoLanguage(repo={}) {
+  const entries = getRepoLanguageEntries(repo);
+  const candidates = [repo.language, entries[0]?.[0], ...(repo.topics || [])];
+  const haystack = [repo.name, repo.full_name, repo.description, ...(repo.topics || [])].join(' ').toLowerCase();
+  const inferred = [
+    [/\bnext(?:js)?\b/, 'nextjs'], [/\breact\b/, 'react'], [/\bvue(?:js)?\b/, 'vue'], [/\bsvelte\b/, 'svelte'],
+    [/\bnode(?:js)?\b|express/, 'nodejs'], [/\bpython\b|django|flask|fastapi/, 'python'], [/\bruby\b|rails/, 'ruby'],
+    [/\bphp\b|laravel/, 'php'], [/\bgolang\b|\bgo\b/, 'go'], [/\bdocker\b|dockerfile/, 'docker'],
+    [/\btypescript\b|\bts\b/, 'typescript'], [/\bjavascript\b|\bjs\b/, 'javascript'], [/\bhtml\b/, 'html'], [/\bcss\b|tailwind/, 'css']
+  ].find(([rx]) => rx.test(haystack));
+  if (inferred) candidates.push(inferred[1]);
+  for (const candidate of candidates) {
+    const meta = LANGUAGE_META[normalizeLanguageKey(candidate)] || LANGUAGE_META[String(candidate || '').trim().toLowerCase()];
+    if (meta) return { ...meta, raw: candidate || meta.label };
+  }
+  const fallback = repo.language || entries[0]?.[0] || 'Code';
+  return { label: fallback, slug: '', raw: fallback };
+}
+function repoLanguageIcon(repo) {
+  const meta = detectRepoLanguage(repo);
+  if (meta.slug) {
+    return `<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${meta.slug}.svg" alt="${escHtml(meta.label)} logo" loading="lazy">`;
+  }
+  return '<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#1f2937"/><path d="M32 13l18 10v18L32 51 14 41V23z" fill="#94a3b8" opacity=".9"/><path d="M32 13v38M14 23l18 10 18-10" fill="none" stroke="#cbd5e1" stroke-width="2" opacity=".45"/></svg>';
+}
+function formatRepoSize(kb=0) {
+  const size = Number(kb) || 0;
+  if (size >= 1024 * 1024) return (size / 1024 / 1024).toFixed(1) + ' GB';
+  if (size >= 1024) return (size / 1024).toFixed(1) + ' MB';
+  return size + ' KB';
+}
+function formatCount(n=0) {
+  const value = Number(n) || 0;
+  if (value >= 1000000) return (value/1000000).toFixed(1).replace(/\.0$/,'') + 'm';
+  if (value >= 1000) return (value/1000).toFixed(1).replace(/\.0$/,'') + 'k';
+  return String(value);
+}
+function languageBreakdown(repo) {
+  const entries = getRepoLanguageEntries(repo);
+  const total = entries.reduce((sum, [,bytes]) => sum + Number(bytes || 0), 0);
+  if (!entries.length || !total) return '';
+  return entries.slice(0,3).map(([lang,bytes]) => `${lang} ${Math.round((Number(bytes) / total) * 100)}%`).join(' · ');
+}
+function repoSearchText(repo) {
+  return [repo.name, repo.full_name, repo.description, repo.language, Object.keys(repo.languages || {}).join(' '), (repo.topics || []).join(' '), repo.default_branch]
+    .join(' ').toLowerCase();
+}
+function updateRepoStats(repos) {
+  const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+  const languages = new Set();
+  repos.forEach(repo => {
+    const detected = detectRepoLanguage(repo).label;
+    if (detected && detected !== 'Code') languages.add(detected);
+    Object.keys(repo.languages || {}).forEach(lang => languages.add(lang));
+  });
+  set('repoStatTotal', repos.length);
+  set('repoStatPrivate', repos.filter(r => r.private).length);
+  set('repoStatLanguages', languages.size || '—');
+}
+
+async function renderReposPage(force = false) {
   const wrap = document.getElementById('reposGrid');
   if (!wrap) return;
   try {
-    const r = await apiFetch('/api/github/repos');
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error || 'Failed to load repos');
-    githubRepos = d.repos || [];
+    if (force || !githubReposLoaded) {
+      wrap.innerHTML = '<div class="repo-loading" style="grid-column:1/-1;">Syncing live repository metadata from GitHub…</div>';
+      const r = await apiFetch('/api/github/repos');
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed to load repos');
+      githubRepos = Array.isArray(d.repos) ? d.repos : [];
+      githubReposLoaded = true;
+    }
+
+    updateRepoStats(githubRepos);
     const q = (document.getElementById('repoSearchInput')?.value || '').toLowerCase().trim();
-    const filtered = githubRepos.filter(r => !q || r.name.toLowerCase().includes(q) || r.full_name.toLowerCase().includes(q) || (r.language||'').toLowerCase().includes(q));
-    const langIcon = (lang='Code') => {
-      const icons = {
-        JavaScript:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#f7df1e"/><path fill="#111" d="M7.2 17.8l1.8-1.1c.3.6.6 1.2 1.3 1.2.7 0 1.1-.3 1.1-1.5v-8h2.2v8c0 2.4-1.4 3.5-3.4 3.5-1.8 0-2.8-.9-3.3-2.1zm7.6-.2l1.8-1.1c.5.8 1.1 1.4 2.2 1.4.9 0 1.6-.4 1.6-1.1 0-.8-.6-1-1.7-1.5l-.6-.3c-1.8-.8-3-1.7-3-3.8 0-1.9 1.4-3.3 3.7-3.3 1.6 0 2.8.6 3.6 2l-1.8 1.2c-.4-.7-.8-1-1.8-1-.8 0-1.3.5-1.3 1.1 0 .8.5 1.1 1.6 1.5l.6.3c2.1.9 3.2 1.8 3.2 3.9 0 2.2-1.8 3.5-4.1 3.5-2.3 0-3.7-1.1-4.4-2.5z"/></svg>',
-        TypeScript:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#3178c6"/><path fill="#fff" d="M5 7h14v2h-5v10h-2V9H5V7zm10.8 5.3c0-1.2.9-2.2 2.5-2.2 1 0 1.9.3 2.5.9l-1 1.2c-.4-.4-.9-.6-1.4-.6-.6 0-.9.3-.9.7 0 .5.5.7 1.2.9 1.2.3 2.4.8 2.4 2.4 0 1.4-1.1 2.3-2.8 2.3-1.1 0-2.3-.4-3-1.1l1.1-1.2c.5.5 1.2.8 1.9.8.6 0 1-.2 1-.7 0-.5-.4-.7-1.4-1-1.2-.3-2.1-.9-2.1-2.4z"/></svg>',
-        HTML:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#e34f26" d="M3 2l1.6 18L12 22l7.4-2L21 2z"/><path fill="#ef652a" d="M12 20.3l6-1.7L19.4 3H12z"/><path fill="#fff" d="M12 10H8.7l-.2-2H12V6H6l.6 6H12zm0 5.2l-2.5-.7-.2-2H7l.3 3.8L12 18v-2.8z"/><path fill="#ebebeb" d="M12 10v2h2.8l-.3 2.4-2.5.7V18l4.7-1.3.6-6.7zM12 6v2h5.6l.2-2z"/></svg>',
-        CSS:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#1572b6" d="M3 2l1.6 18L12 22l7.4-2L21 2z"/><path fill="#33a9dc" d="M12 20.3l6-1.7L19.4 3H12z"/><path fill="#fff" d="M12 10H8.9l-.2-2H12V6H6.2l.5 6H12zm0 5.2l-2.4-.6-.2-2H7.1l.3 3.7L12 18v-2.8z"/><path fill="#ebebeb" d="M12 10v2h2.7l-.2 2.3-2.5.7V18l4.6-1.3.5-6.7zM12 6v2h5.4l.2-2z"/></svg>',
-        React:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="2" fill="#61dafb"/><g fill="none" stroke="#61dafb" stroke-width="1.5"><ellipse cx="12" cy="12" rx="9" ry="3.8"/><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(120 12 12)"/></g></svg>'
-      };
-      return icons[lang] || '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#1f2937"/><path d="M12 6l5 3v6l-5 3-5-3V9z" fill="#9ca3af"/></svg>';
-    };
-    wrap.innerHTML = filtered.map(repo => `
-      <div class="project-card">
-        <div class="project-header"><div class="project-name">${repo.name}</div><span class="status-badge ${repo.private?'status-failed':'status-success'}">${repo.private?'Private':'Public'}</span></div>
-        <div class="project-meta">${repo.full_name}</div>
-        <div class="project-url"><span style="display:inline-flex;align-items:center;gap:8px;">${langIcon(repo.language)} ${repo.language || 'Code'}</span> • Updated ${new Date(repo.updated_at).toLocaleDateString()}</div>
-        <button class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="importRepoToDeploy('${repo.html_url}','${repo.default_branch || 'main'}')">Import Repository</button>
-      </div>`).join('');
+    const filtered = githubRepos.filter(repo => !q || repoSearchText(repo).includes(q));
+    if (!filtered.length) {
+      wrap.innerHTML = '<div class="repo-empty" style="grid-column:1/-1;"><strong>No repositories found</strong><span>Try a different search term or refresh your GitHub connection.</span></div>';
+      return;
+    }
+
+    wrap.innerHTML = filtered.map(repo => {
+      const lang = detectRepoLanguage(repo);
+      const breakdown = languageBreakdown(repo);
+      const topics = (repo.topics || []).slice(0,3).map(t => `<span class="repo-pill">#${escHtml(t)}</span>`).join('');
+      const license = repo.license?.spdx_id && repo.license.spdx_id !== 'NOASSERTION' ? repo.license.spdx_id : (repo.license?.name || 'No license');
+      return `<article class="repo-card">
+        <div class="repo-card-top">
+          <div style="min-width:0;">
+            <div class="repo-title">${escHtml(repo.name)}</div>
+            <div class="repo-fullname">${escHtml(repo.full_name)}</div>
+            <div class="repo-badges">
+              <span class="repo-pill ${repo.private ? 'red' : 'green'}">${repo.private ? 'Private' : 'Public'}</span>
+              ${repo.fork ? '<span class="repo-pill amber">Fork</span>' : ''}
+              ${repo.archived ? '<span class="repo-pill amber">Archived</span>' : ''}
+              ${topics}
+            </div>
+          </div>
+          <div class="repo-lang-emblem" title="${escHtml(lang.label)}">${repoLanguageIcon(repo)}</div>
+        </div>
+        <div class="repo-desc">${escHtml(repo.description || 'No description provided yet. Add a GitHub description to make this repository easier to identify.')}</div>
+        <div class="repo-language-row">
+          <span style="display:inline-flex;align-items:center;gap:7px;font-weight:800;color:var(--text);">${escHtml(lang.label)}</span>
+          <span class="repo-language-list">${escHtml(breakdown || 'Primary language')}</span>
+        </div>
+        <div class="repo-meta-grid">
+          <div class="repo-metric"><div class="repo-metric-label">Stars</div><div class="repo-metric-value">★ ${formatCount(repo.stargazers_count)}</div></div>
+          <div class="repo-metric"><div class="repo-metric-label">Forks</div><div class="repo-metric-value">⑂ ${formatCount(repo.forks_count)}</div></div>
+          <div class="repo-metric"><div class="repo-metric-label">Issues</div><div class="repo-metric-value">${formatCount(repo.open_issues_count)}</div></div>
+          <div class="repo-metric"><div class="repo-metric-label">Branch</div><div class="repo-metric-value">${escHtml(repo.default_branch || 'main')}</div></div>
+          <div class="repo-metric"><div class="repo-metric-label">Updated</div><div class="repo-metric-value">${relTime(repo.updated_at)}</div></div>
+          <div class="repo-metric"><div class="repo-metric-label">Size</div><div class="repo-metric-value">${formatRepoSize(repo.size)}</div></div>
+        </div>
+        <div class="repo-language-row">
+          <span>License: ${escHtml(license)}</span>
+          <a href="${escHtml(repo.html_url)}" target="_blank" rel="noopener" style="color:var(--cyan);font-family:var(--font-mono);font-size:.7rem;">View on GitHub</a>
+        </div>
+        <button class="btn btn-primary repo-import-btn" data-url="${escHtml(repo.html_url)}" data-branch="${escHtml(repo.default_branch || 'main')}" onclick="importRepoButton(this)">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          Import Repository
+        </button>
+      </article>`;
+    }).join('');
+
     const select = document.getElementById('deployRepoSelect');
     if (select) {
-      select.innerHTML = '<option value=\"\">Or choose from connected GitHub repositories…</option>' + githubRepos.map(rp => `<option value="${rp.html_url}" data-branch="${rp.default_branch || 'main'}">${rp.full_name}</option>`).join('');
+      select.innerHTML = '<option value="">Or choose from connected GitHub repositories…</option>' + githubRepos.map(rp => `<option value="${escHtml(rp.html_url)}" data-branch="${escHtml(rp.default_branch || 'main')}">${escHtml(rp.full_name)}</option>`).join('');
     }
   } catch (e) {
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-title">${e.message}</div></div>`;
+    wrap.innerHTML = `<div class="repo-empty" style="grid-column:1/-1;"><strong>${escHtml(e.message || 'Failed to load repositories')}</strong><span>Reconnect GitHub or tap refresh to try again.</span></div>`;
   }
 }
+function importRepoButton(btn) {
+  importRepoToDeploy(btn?.dataset?.url || '', btn?.dataset?.branch || 'main');
+}
+
 function importRepoToDeploy(url, branch) {
   showPage('new-deploy');
   document.getElementById('deployRepoUrl').value = url;
