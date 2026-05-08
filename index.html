@@ -70,6 +70,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size
 a{text-decoration:none;color:inherit;}
 button{cursor:pointer;font-family:var(--font-ui);}
 img{max-width:100%;}
+/* remove default browser tap/click focus ring to match polished UI */
+*{-webkit-tap-highlight-color:transparent;}
+:focus{outline:none;}
+:focus-visible{outline:none;box-shadow:none;}
 
 /* ── Scrollbar ───────────────────────────────────────────────────── */
 ::-webkit-scrollbar{width:5px;}
