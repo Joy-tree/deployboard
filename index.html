@@ -935,6 +935,9 @@ ul { list-style:none; }
   font-weight: 600;
 }
 .nav-item.active svg { opacity:1; color: var(--primary); }
+.nav-item.logout-item{color:#fca5a5;border:1px solid rgba(239,68,68,.18);background:rgba(127,29,29,.15);font-weight:700}
+.nav-item.logout-item svg{opacity:1;color:#f87171}
+.nav-item.logout-item:hover{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.34);color:#fecaca}
 .nav-badge {
   margin-left: auto;
   font-size: 0.65rem;
@@ -3262,6 +3265,22 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       Documentation
     </div>
+    <div class="nav-item" onclick="showLanding()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      Home Page
+    </div>
+    <div class="nav-item" data-page="faq" onclick="showPage('faq',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 1 1 5.8 1c-.4 1-1.3 1.4-2.1 1.9-.7.4-1.3 1-1.3 2.1"/><circle cx="12" cy="17" r=".8"/></svg>
+      FAQ
+    </div>
+    <div class="nav-item" data-page="support" onclick="showPage('support',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10a8 8 0 0 1 16 0v7a2 2 0 0 1-2 2h-3"/><rect x="2" y="10" width="4" height="8" rx="2"/><rect x="18" y="10" width="4" height="8" rx="2"/><path d="M12 19v2"/></svg>
+      Support
+    </div>
+    <div class="nav-item logout-item" onclick="logoutUser()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </div>
   </nav>
 
   <div class="sidebar-bottom">
@@ -3725,6 +3744,15 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                   </div>
                   <input type="hidden" id="deployNodeVersion" value="18">
                 </div>
+              </div>
+              <div class="field">
+                <label class="field-label">Working Directory <span style="color:var(--text-3);font-weight:400;">(optional)</span></label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input class="input input-mono" id="deployWorkingDir" list="deployWorkingDirList" placeholder="e.g. lovable-ui or apps/web" style="flex:1;">
+                  <button class="btn btn-ghost btn-sm" type="button" onclick="suggestWorkingDirs('deployRepoUrl','deployBranch','deployWorkingDir','deployWorkingDirList')">Browse</button>
+                </div>
+                <datalist id="deployWorkingDirList"></datalist>
+                <div class="field-hint">Browse repo folders or type manually. Deploy commands will run from this directory when set.</div>
               </div>
             </div>
           </div>
@@ -4303,6 +4331,25 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         Back to Projects
       </div>
       <div id="projectDetailContent"></div>
+    </div>
+
+    <div class="page" id="page-faq">
+      <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+      <div class="app-hero"><div><div class="app-hero-kicker">Knowledge base</div><div class="app-hero-title">FAQ</div><div class="app-hero-subtitle">Answers to common deployment, domains, and runtime questions.</div></div></div>
+      <div class="card"><div class="card-header"><div class="card-title">Frequently Asked Questions</div></div><div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+        <div><strong>How do I deploy?</strong><div style="color:var(--text-2);font-size:.85rem;">Go to New Deployment, connect repo, choose branch, and start build.</div></div>
+        <div><strong>How do custom domains work?</strong><div style="color:var(--text-2);font-size:.85rem;">Add a CNAME in your registrar and verify from Domains page.</div></div>
+        <div><strong>Where are logs?</strong><div style="color:var(--text-2);font-size:.85rem;">Open Live Logs to stream build and runtime output.</div></div>
+      </div></div>
+    </div>
+
+    <div class="page" id="page-support">
+      <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+      <div class="app-hero"><div><div class="app-hero-kicker">Help center</div><div class="app-hero-title">Support</div><div class="app-hero-subtitle">Reach assistance quickly for deployments, domains, and account issues.</div></div></div>
+      <div class="two-col">
+        <div class="card"><div class="card-header"><div class="card-title">Contact</div></div><div class="card-body"><div style="color:var(--text-2);font-size:.86rem;line-height:1.6;">Email: <strong style="color:var(--text);">support@deployboard.app</strong><br/>Include project name and deployment id for fastest help.</div></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Troubleshooting</div></div><div class="card-body"><div style="color:var(--text-2);font-size:.86rem;line-height:1.6;">Check Live Logs, verify repo permissions, confirm DNS records, and retry deployment.</div></div></div>
+      </div>
     </div>
 
 
@@ -5163,6 +5210,15 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <input class="input input-mono" id="dfPath" value="Dockerfile" placeholder="Dockerfile">
                 <div class="field-hint">Relative to repo root. Default is <code style="font-family:var(--font-mono);">Dockerfile</code></div>
               </div>
+              <div class="field">
+                <label class="field-label">Working Directory <span style="color:var(--text-3);font-weight:400;">(optional)</span></label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input class="input input-mono" id="dfWorkingDir" list="dfWorkingDirList" placeholder="e.g. lovable-ui or apps/web" style="flex:1;">
+                  <button class="btn btn-ghost btn-sm" type="button" onclick="suggestWorkingDirs('dfRepoUrl','dfBranch','dfWorkingDir','dfWorkingDirList')">Browse</button>
+                </div>
+                <datalist id="dfWorkingDirList"></datalist>
+                <div class="field-hint">Browse repo folders or type manually. Build/deploy commands run from this directory when set.</div>
+              </div>
             </div>
           </div>
           <div class="card">
@@ -5410,6 +5466,15 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <label class="field-label">Start Command</label>
               <input class="input input-mono" id="workerStart" placeholder="node worker.js or npm run worker">
               <div class="field-hint">This command runs your worker. It should NOT start an HTTP server.</div>
+            </div>
+            <div class="field">
+              <label class="field-label">Working Directory <span style="color:var(--text-3);font-weight:400;">(optional)</span></label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input class="input input-mono" id="workerWorkingDir" list="workerWorkingDirList" placeholder="e.g. lovable-ui or services/worker" style="flex:1;">
+                <button class="btn btn-ghost btn-sm" type="button" onclick="suggestWorkingDirs('workerRepo','workerBranch','workerWorkingDir','workerWorkingDirList')">Browse</button>
+              </div>
+              <datalist id="workerWorkingDirList"></datalist>
+              <div class="field-hint">Browse repo folders or type manually. Install/build/start commands run from this directory when set.</div>
             </div>
           </div>
         </div>
@@ -5724,7 +5789,8 @@ const PAGE_LABELS = {
   analytics:'Analytics', domains:'Domains', webhooks:'Webhooks', 'domain-add':'Add Domain',
   team:'Team', usage:'Usage & Limits', activity:'Activity Log', secrets:'Secrets',
   'new-resource':'New Resource', cronjobs:'Cron Jobs', workers:'Background Workers', streaks:'Deploy Streaks',
-  'dockerfile-deploy':'Dockerfile Deploy', 'cron-create':'Create Cron Job', 'worker-create':'New Worker'
+  'dockerfile-deploy':'Dockerfile Deploy', 'cron-create':'Create Cron Job', 'worker-create':'New Worker',
+  faq:'FAQ', support:'Support'
 };
 function showPage(id, navEl) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -6436,6 +6502,56 @@ function getEnvVars() {
   return result;
 }
 
+function normalizeWorkingDir(dir) {
+  return String(dir || '').trim().replace(/^\/+|\/+$/g, '');
+}
+
+function applyWorkingDir(cmd, dir) {
+  const clean = normalizeWorkingDir(dir);
+  return clean ? `cd ${clean} && ${cmd}` : cmd;
+}
+
+async function suggestWorkingDirs(repoInputId, branchInputId, workingDirInputId, datalistId) {
+  const repoUrl = (document.getElementById(repoInputId)?.value || '').trim();
+  const branch = (document.getElementById(branchInputId)?.value || 'main').trim() || 'main';
+  const input = document.getElementById(workingDirInputId);
+  const datalist = document.getElementById(datalistId);
+  if (!input || !datalist) return;
+
+  const m = repoUrl.match(/github\.com\/([^/]+\/[^/#?]+)/i);
+  if (!m) { toast('Enter a valid GitHub repo URL first', 'error'); return; }
+
+  input.setAttribute('aria-busy', 'true');
+  toast('Looking up repository folders…', 'info');
+  try {
+    const repo = m[1];
+    let dirs = [];
+    try {
+      const r = await apiFetch(`/api/github/tree?repo=${encodeURIComponent(repo)}&branch=${encodeURIComponent(branch)}`);
+      const d = await r.json();
+      dirs = Array.isArray(d.tree)
+        ? d.tree.filter(n => n && n.type === 'tree' && n.path).map(n => n.path)
+        : [];
+    } catch {
+      const r = await fetch(`https://api.github.com/repos/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`);
+      const d = await r.json();
+      dirs = Array.isArray(d.tree)
+        ? d.tree.filter(n => n && n.type === 'tree' && n.path).map(n => n.path)
+        : [];
+    }
+    dirs = dirs.sort((a,b) => a.localeCompare(b));
+
+    datalist.innerHTML = dirs.map(p => `<option value="${escHtml(p)}"></option>`).join('');
+    input.focus();
+    if (input.showPicker) input.showPicker();
+    toast(dirs.length ? `Found ${dirs.length} directories` : 'No subdirectories found; you can still type manually', dirs.length ? 'success' : 'info');
+  } catch (e) {
+    toast('Could not load folders; you can still type it manually', 'error');
+  } finally {
+    input.removeAttribute('aria-busy');
+  }
+}
+
 // ══════════════════════════════════════════════════════════════════
 // DEPLOYMENT TRIGGER
 // ══════════════════════════════════════════════════════════════════
@@ -6452,6 +6568,10 @@ async function startDeployment() {
   const siteType  = document.getElementById('deploySiteType')?.value        || 'static';
   const customPort= (document.getElementById('deployCustomPort')?.value || '').trim();
   const envVars   = getEnvVars();
+  const workingDir= normalizeWorkingDir(document.getElementById('deployWorkingDir')?.value || '');
+  const runInstallCmd = applyWorkingDir(installCmd, workingDir);
+  const runBuildCmd   = applyWorkingDir(buildCmd, workingDir);
+  const runStartCmd   = startCmd ? applyWorkingDir(startCmd, workingDir) : '';
 
   if (!name)      { toast('Project name is required', 'error'); return; }
   if (!subdomain) { toast('Subdomain is required', 'error'); return; }
@@ -6463,10 +6583,10 @@ async function startDeployment() {
   // Create or update project
   let project = projects.find(p => p.subdomain === subdomain);
   if (!project) {
-    project = { id: genId(), name, subdomain, repoUrl, branch, installCmd, buildCmd, startCmd, outputDir, nodeVer, siteType, createdAt: new Date().toISOString() };
+    project = { id: genId(), name, subdomain, repoUrl, branch, installCmd, buildCmd, startCmd, outputDir, nodeVer, siteType, workingDir, createdAt: new Date().toISOString() };
     projects.push(project);
   } else {
-    Object.assign(project, { name, repoUrl, branch, installCmd, buildCmd, startCmd, outputDir, nodeVer, siteType });
+    Object.assign(project, { name, repoUrl, branch, installCmd, buildCmd, startCmd, outputDir, nodeVer, siteType, workingDir });
   }
   // Track status directly on project so card badge updates instantly
   project.lastStatus = 'building';
@@ -6509,7 +6629,7 @@ async function startDeployment() {
     const res = await apiFetch(API + '/api/deploy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId: project.id, name, subdomain, repoUrl, branch, installCmd, buildCmd, startCmd, outputDir, nodeVer, siteType, envVars, customPort: customPort || undefined })
+      body: JSON.stringify({ projectId: project.id, name, subdomain, repoUrl, branch, installCmd: runInstallCmd, buildCmd: runBuildCmd, startCmd: runStartCmd, outputDir, nodeVer, siteType, envVars, workingDir: workingDir || undefined, customPort: customPort || undefined })
     });
     const data = await res.json();
     if (!res.ok) {
@@ -8575,6 +8695,7 @@ async function deployDockerfile() {
   const branch    = (document.getElementById('dfBranch').value || 'main').trim();
   const dfPath    = (document.getElementById('dfPath').value || 'Dockerfile').trim();
   const port      = parseInt(document.getElementById('dfPort').value) || 3000;
+  const workingDir= normalizeWorkingDir(document.getElementById('dfWorkingDir')?.value || '');
 
   if (!name || !subdomain || !repoUrl) { toast('Fill in all required fields', 'error'); return; }
 
@@ -8585,16 +8706,17 @@ async function deployDockerfile() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name, subdomain, repoUrl, branch,
-        installCmd: 'echo skip',
-        buildCmd: `docker build -f ${dfPath} -t db-${subdomain} .`,
-        startCmd: `npm start`,
+        installCmd: applyWorkingDir('echo skip', workingDir),
+        buildCmd: applyWorkingDir(`docker build -f ${dfPath} -t db-${subdomain} .`, workingDir),
+        startCmd: applyWorkingDir('npm start', workingDir),
         outputDir: '.',
         siteType: 'server',
         nodeVersion: 'node:18-alpine',
         envVars: dfBuildArgs.reduce((o,a) => { if(a.key) o[a.key]=a.value; return o; }, {}),
         isDockerfileDeploy: true,
         dockerfilePath: dfPath,
-        exposedPort: port
+        exposedPort: port,
+        workingDir: workingDir || undefined
       })
     });
     const d = await r.json();
@@ -8843,6 +8965,7 @@ async function deployWorker() {
   const install = (document.getElementById('workerInstall').value || 'npm install').trim();
   const build   = (document.getElementById('workerBuild').value || 'echo skip').trim();
   const start   = (document.getElementById('workerStart').value || '').trim();
+  const workingDir = normalizeWorkingDir(document.getElementById('workerWorkingDir')?.value || '');
 
   if (!name || !repo || !start) { toast('Fill in all required fields', 'error'); return; }
 
@@ -8853,7 +8976,7 @@ async function deployWorker() {
   try {
     const r = await apiFetch('/api/deploy', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, subdomain, repoUrl: repo, branch, installCmd: install, buildCmd: build, startCmd: start, outputDir: '.', siteType: 'server', nodeVersion: 'node:18-alpine', envVars: envObj, isWorker: true })
+      body: JSON.stringify({ name, subdomain, repoUrl: repo, branch, installCmd: applyWorkingDir(install, workingDir), buildCmd: applyWorkingDir(build, workingDir), startCmd: applyWorkingDir(start, workingDir), outputDir: '.', siteType: 'server', nodeVersion: 'node:18-alpine', envVars: envObj, workingDir: workingDir || undefined, isWorker: true })
     });
     const d = await r.json();
     if (!r.ok) { toast(d.error || 'Deploy failed', 'error'); return; }
