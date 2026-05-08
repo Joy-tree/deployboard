@@ -70,6 +70,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size
 a{text-decoration:none;color:inherit;}
 button{cursor:pointer;font-family:var(--font-ui);}
 img{max-width:100%;}
+/* remove default browser tap/click focus ring to match polished UI */
+*{-webkit-tap-highlight-color:transparent;}
+:focus{outline:none;}
+:focus-visible{outline:none;box-shadow:none;}
 
 /* ── Scrollbar ───────────────────────────────────────────────────── */
 ::-webkit-scrollbar{width:5px;}
@@ -298,16 +302,16 @@ body::before{
 .landing-drawer-overlay{position:fixed;inset:0;background:rgba(2,6,23,.65);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.2s;z-index:950;}
 .landing-drawer-overlay.open{opacity:1;pointer-events:auto;}
 .landing-drawer{
-  position:fixed;top:0;right:0;height:100vh;width:min(86vw,380px);z-index:960;
+  position:fixed;top:0;right:0;height:100vh;width:100vw;max-width:none;z-index:960;
   background:
     radial-gradient(circle at 10% 10%, rgba(16,185,129,.14), transparent 35%),
     radial-gradient(circle at 90% 0%, rgba(59,130,246,.18), transparent 40%),
     linear-gradient(180deg,#050c19 0%,#071225 100%);
   color:#e2e8f0;transform:translateX(100%);transition:.24s ease;
   padding:20px 18px 28px;overflow-y:auto;
-  border-left:1px solid rgba(99,179,237,.25);
-  box-shadow:-18px 0 40px rgba(2,6,23,.65);
-  border-top-left-radius:20px;border-bottom-left-radius:20px;
+  border-left:none;
+  box-shadow:none;
+  border-top-left-radius:0;border-bottom-left-radius:0;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
@@ -354,10 +358,15 @@ body.landing-drawer-open { overflow: hidden; }
 .onboard-item{font-size:.86rem;color:#cbd5e1;font-weight:500;}
 .onboard-item b{color:#22d3ee;}
 @keyframes marq{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.rich-image-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:980px;margin:10px auto 0;}
-.rich-image{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#0b1221;}
-.rich-image img{width:100%;height:140px;object-fit:cover;display:block;}
-.rich-image .cap{padding:8px 10px;font-size:.84rem;color:var(--text-2);}
+.home-product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:1040px;margin:14px auto 0}
+.home-product-card{position:relative;border:1px solid rgba(16,185,129,.16);border-radius:16px;padding:16px;background:linear-gradient(145deg,rgba(15,23,42,.95),rgba(8,13,24,.98));display:flex;flex-direction:column;gap:10px;min-height:188px;transition:.18s transform,.18s border-color,.18s box-shadow}
+.home-product-card:hover{transform:translateY(-3px);border-color:rgba(16,185,129,.38);box-shadow:0 18px 44px rgba(0,0,0,.25)}
+.home-product-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.24);color:#6ee7b7}
+.home-product-title{font-size:1rem;font-weight:800;color:#e2e8f0}
+.home-product-copy{font-size:.84rem;line-height:1.45;color:#94a3b8}
+.home-product-meta{margin-top:auto;font-family:var(--font-mono);font-size:.7rem;color:#67e8f9;letter-spacing:.06em;text-transform:uppercase}
+@media(max-width:900px){.home-product-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.home-product-grid{grid-template-columns:1fr}}
 .live-border{
   position:relative;border:1px solid rgba(56,189,248,.25);border-radius:14px;overflow:hidden;
 }
@@ -926,6 +935,9 @@ ul { list-style:none; }
   font-weight: 600;
 }
 .nav-item.active svg { opacity:1; color: var(--primary); }
+.nav-item.logout-item{color:#fca5a5;border:1px solid rgba(239,68,68,.18);background:rgba(127,29,29,.15);font-weight:700}
+.nav-item.logout-item svg{opacity:1;color:#f87171}
+.nav-item.logout-item:hover{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.34);color:#fecaca}
 .nav-badge {
   margin-left: auto;
   font-size: 0.65rem;
@@ -1738,6 +1750,34 @@ textarea.input { resize: vertical; min-height: 80px; }
 .app-hero::after{content:'';position:absolute;right:-80px;top:-120px;width:260px;height:260px;border-radius:999px;border:1px solid rgba(16,185,129,.16);box-shadow:0 0 80px rgba(16,185,129,.14);pointer-events:none}.app-hero-kicker{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#67e8f9;margin-bottom:8px}.app-hero-title{font-family:var(--font-hd);font-size:clamp(1.65rem,3vw,2.45rem);font-weight:800;letter-spacing:-.045em;color:#f8fafc;line-height:1.05}.app-hero-subtitle{max-width:720px;margin-top:10px;color:#94a3b8;font-size:.95rem;line-height:1.55}.app-hero-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.hero-metrics{display:grid;grid-template-columns:repeat(3,minmax(92px,1fr));gap:10px;min-width:min(420px,42vw)}.hero-metric{padding:14px 16px;border:1px solid rgba(16,185,129,.13);border-radius:16px;background:rgba(2,6,23,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}.hero-metric-value{font-family:var(--font-mono);font-size:1.35rem;font-weight:800;color:#d1fae5;line-height:1}.hero-metric-label{margin-top:5px;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#64748b}.hero-status-pill{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 11px;border:1px solid rgba(16,185,129,.24);border-radius:999px;background:rgba(16,185,129,.08);font-size:.75rem;font-weight:700;color:#bbf7d0}.hero-status-pill::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 14px rgba(16,185,129,.8);animation:pulse 1.5s infinite}
 #page-dashboard .stats-grid .stat-card,#page-projects .project-card,#page-deployments .card,#page-env-manager .card,#page-webhooks .card,#page-dashboard .card{border-color:rgba(16,185,129,.13);background:linear-gradient(180deg,rgba(15,23,42,.88),rgba(2,6,23,.9));box-shadow:0 16px 48px rgba(0,0,0,.16);border-radius:20px}#page-dashboard .card:hover,#page-deployments .card:hover,#page-env-manager .card:hover,#page-webhooks .card:hover{border-color:rgba(16,185,129,.28);box-shadow:0 20px 58px rgba(0,0,0,.22),0 0 36px rgba(16,185,129,.05)}#page-dashboard .card-header,#page-deployments .card-header,#page-env-manager .card-header,#page-webhooks .card-header{background:linear-gradient(90deg,rgba(16,185,129,.07),transparent);border-bottom-color:rgba(16,185,129,.09)}#page-dashboard .network-metrics-grid{display:flex;gap:10px;flex-wrap:wrap}.dash-qa-btn{min-height:58px;background:linear-gradient(135deg,rgba(15,23,42,.5),rgba(2,6,23,.5))}.dash-qa-btn:hover{background:rgba(16,185,129,.1);transform:translateY(-1px)}#page-projects .projects-grid{gap:18px}#page-projects .project-card{border-radius:22px}#page-projects .project-thumb{height:158px;background:radial-gradient(circle at 50% 0%,rgba(16,185,129,.1),transparent 42%),var(--bg-2)}#page-projects .project-card::after{content:'';position:absolute;inset:0;border-radius:22px;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.04),transparent 36%);opacity:.6}.deployment-table-shell{overflow:hidden}.deployment-table-shell table{border-collapse:separate;border-spacing:0 8px;padding:8px 12px 14px}.deployment-table-shell thead th{border:0;color:#64748b;text-transform:uppercase;font-size:.66rem;letter-spacing:.09em}.deployment-table-shell tbody tr{background:rgba(15,23,42,.62);box-shadow:inset 0 0 0 1px rgba(16,185,129,.08)}.deployment-table-shell tbody td{border-top:1px solid rgba(16,185,129,.08);border-bottom:1px solid rgba(16,185,129,.08)}.deployment-table-shell tbody td:first-child{border-left:1px solid rgba(16,185,129,.08);border-radius:12px 0 0 12px}.deployment-table-shell tbody td:last-child{border-right:1px solid rgba(16,185,129,.08);border-radius:0 12px 12px 0}.env-command-card{position:relative;overflow:hidden}.env-command-card::after{content:'ENV';position:absolute;right:18px;bottom:-18px;font-family:var(--font-mono);font-size:4rem;font-weight:800;color:rgba(16,185,129,.035);pointer-events:none}.webhook-event-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.webhook-event-card{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(2,6,23,.48);border:1px solid rgba(16,185,129,.1);border-radius:14px;gap:10px}.webhook-event-card:hover{border-color:rgba(16,185,129,.26);background:rgba(16,185,129,.055)}@media(max-width:900px){.app-hero{grid-template-columns:1fr}.app-hero-actions{justify-content:flex-start}.hero-metrics{min-width:0;width:100%;grid-template-columns:repeat(3,1fr)}}@media(max-width:640px){.hero-metrics{grid-template-columns:1fr}.app-hero{padding:18px;border-radius:20px}.app-hero-title{font-size:1.55rem}}
 
+/* Global app gradient unification: green-forward, reduced blue tint */
+#app{--cyan:#34d399;}
+#page-dashboard,#page-projects,#page-deployments,#page-env-manager,#page-webhooks,#page-domains,#page-workers,#page-streaks,#page-analytics,#page-settings,#page-cronjobs{
+  background:radial-gradient(circle at 8% 0%,rgba(16,185,129,.12),transparent 30%),radial-gradient(circle at 92% 8%,rgba(52,211,153,.08),transparent 34%);
+}
+
+/* Analytics + Settings + Env + Cron premium refresh */
+#page-analytics .page-header,#page-settings .page-header,#page-env-manager .page-header,#page-cronjobs .page-header{
+  border:1px solid rgba(16,185,129,.16);border-radius:22px;padding:18px 20px;margin-bottom:18px;
+  background:radial-gradient(circle at 8% 12%,rgba(16,185,129,.18),transparent 34%),linear-gradient(135deg,rgba(15,23,42,.92),rgba(3,7,18,.96));
+}
+#page-analytics .page-title,#page-settings .page-title,#page-env-manager .page-title,#page-cronjobs .page-title{font-family:var(--font-hd);font-weight:800;letter-spacing:-.02em}
+#page-env-manager .form-label,#page-settings .field-label,#page-cronjobs .card-title{font-weight:800;color:#e5fdf3}
+#page-env-manager .input,#page-settings .input,#page-cronjobs .input{
+  min-height:52px;border-radius:14px;border:1px solid rgba(16,185,129,.2);background:rgba(2,6,23,.8);
+}
+#page-env-manager .input:focus,#page-settings .input:focus,#page-cronjobs .input:focus{box-shadow:0 0 0 4px rgba(16,185,129,.1)}
+#page-env-manager .custom-select-trigger{
+  min-height:54px;border-radius:14px;border:1px solid rgba(16,185,129,.24);background:linear-gradient(145deg,rgba(15,23,42,.95),rgba(8,13,24,.96));font-weight:700;
+}
+#page-env-manager .custom-select-dropdown{border:1px solid rgba(16,185,129,.24);border-radius:14px;background:#03121b}
+#page-env-manager .cs-option{font-weight:600}
+#page-env-manager .cs-option:hover,#page-env-manager .cs-option.selected{background:rgba(16,185,129,.12);color:#d1fae5}
+#page-env-manager .card,#page-settings .card,#page-analytics .card,#page-cronjobs .card{border-color:rgba(16,185,129,.14);border-radius:20px}
+#page-cronjobs #cronJobsList > div,#page-cronjobs #cronExecutionLog > div{
+  border-radius:12px;margin:8px 10px;background:rgba(15,23,42,.52);border:1px solid rgba(16,185,129,.1)
+}
+
 /* ── Resource Cards ─────────────────────────────────────────────────────── */
 .resource-card {
   display:flex; align-items:center; gap:14px; padding:16px;
@@ -1770,6 +1810,20 @@ textarea.input { resize: vertical; min-height: 80px; }
 .deploy-stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 18px}.deploy-stepper-item{padding:12px;border:1px solid rgba(16,185,129,.12);border-radius:16px;background:rgba(2,6,23,.44);display:flex;align-items:center;gap:10px;color:var(--text-2);font-size:.78rem}.deploy-stepper-badge{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;background:rgba(16,185,129,.13);color:var(--green);font-family:var(--font-mono);font-weight:800}.deploy-side-panel{position:relative;overflow:hidden}.deploy-side-panel::after{content:'';position:absolute;right:-55px;bottom:-55px;width:170px;height:170px;border-radius:50%;border:1px solid rgba(16,185,129,.12);box-shadow:0 0 80px rgba(16,185,129,.1)}#page-new-deploy #deployBtn{min-height:56px;border-radius:16px;font-size:1rem;font-weight:800;box-shadow:0 16px 34px rgba(16,185,129,.2)}
 #page-new-deploy .custom-select-btn{height:54px;border-radius:15px;border-color:rgba(16,185,129,.18);background:rgba(2,6,23,.78);font-size:.92rem;padding:0 16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.015)}#page-new-deploy .custom-select-menu{border-radius:16px;border-color:rgba(16,185,129,.24);background:#020817;box-shadow:0 18px 54px rgba(0,0,0,.48);max-height:300px}.custom-select-item.repo-select-item{display:flex;align-items:center;gap:10px;padding:12px}.repo-select-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(16,185,129,.12);color:var(--green);font-weight:900}.repo-select-main{font-weight:800;color:var(--text);font-size:.84rem}.repo-select-sub{font-family:var(--font-mono);font-size:.68rem;color:var(--text-3);margin-top:2px}.custom-select-item.branch-select-item{display:flex;align-items:center;justify-content:space-between;font-family:var(--font-mono)}.custom-select-item.branch-select-item::after{content:'branch';font-size:.62rem;color:var(--text-3);border:1px solid rgba(148,163,184,.12);border-radius:999px;padding:2px 6px}
 @media(max-width:768px){.resource-grid{grid-template-columns:1fr}.resource-card{min-height:118px}.deploy-stepper{grid-template-columns:1fr}#page-new-deploy .card-body{padding:20px}#page-new-deploy .two-col{display:block}#page-new-deploy .two-col>div{margin-bottom:16px}}
+@media(min-width:1100px){#page-new-deploy .two-col{grid-template-columns:minmax(0,1fr) minmax(300px,360px)}}
+#page-new-deploy .two-col > div{min-width:0}
+#page-new-deploy .deploy-side-panel{position:sticky;top:14px}
+@media(max-width:1099px){#page-new-deploy .deploy-side-panel{position:relative;top:auto}}
+#page-new-deploy #summaryUrl,#page-new-deploy #summaryName{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+
+/* Deployments table responsive containment */
+#page-deployments .deployment-table-shell{overflow-x:auto;padding-bottom:6px}
+#page-deployments .deployment-table-shell table{min-width:760px}
+@media(max-width:760px){
+  #page-deployments .card-header{flex-direction:column;align-items:flex-start;gap:10px}
+  #page-deployments .card-actions{width:100%}
+  #page-deployments #cs_deployFilterStatus{width:100%}
+}
 
 /* ── Cron Preset Buttons ─────────────────────────────────────────────────── */
 .cron-preset {
@@ -1778,6 +1832,62 @@ textarea.input { resize: vertical; min-height: 80px; }
   color:var(--text);
 }
 .cron-preset:hover { border-color:var(--primary); background:rgba(16,185,129,0.06); }
+
+
+/* ── Domains, Workers, Streaks premium surfaces ───────────────────────────── */
+.surface-hero{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1.4fr) auto;gap:18px;align-items:center;margin-bottom:18px;padding:22px;border:1px solid rgba(16,185,129,.16);border-radius:24px;background:radial-gradient(circle at 8% 20%,rgba(16,185,129,.2),transparent 34%),radial-gradient(circle at 92% 0%,rgba(6,182,212,.16),transparent 30%),linear-gradient(135deg,rgba(15,23,42,.92),rgba(3,7,18,.96));box-shadow:0 22px 70px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.04)}
+.surface-kicker{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#67e8f9;margin-bottom:8px}
+.surface-title{font-family:var(--font-hd);font-size:clamp(1.55rem,3vw,2.3rem);font-weight:800;letter-spacing:-.035em;color:#f8fafc;line-height:1.06}
+.surface-sub{max-width:720px;margin-top:10px;color:#94a3b8;font-size:.93rem;line-height:1.5}
+.surface-metrics{display:grid;grid-template-columns:repeat(3,minmax(94px,1fr));gap:10px;min-width:min(390px,42vw)}
+.surface-metric{padding:14px 16px;border:1px solid rgba(16,185,129,.13);border-radius:16px;background:rgba(2,6,23,.5)}
+.surface-metric-value{font-family:var(--font-mono);font-size:1.2rem;font-weight:800;color:#d1fae5}.surface-metric-label{margin-top:4px;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
+.list-shell{border:1px solid rgba(16,185,129,.12);border-radius:18px;overflow:hidden;background:linear-gradient(180deg,rgba(8,13,24,.8),rgba(2,6,23,.92))}
+.list-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(16,185,129,.09);flex-wrap:wrap}
+.list-row:last-child{border-bottom:0}
+.inline-chip{font-size:.68rem;padding:4px 9px;border-radius:999px;border:1px solid rgba(148,163,184,.18);background:rgba(148,163,184,.08);color:var(--text-2)}
+.streak-card{border:1px solid rgba(16,185,129,.13)!important;background:linear-gradient(180deg,rgba(15,23,42,.92),rgba(3,7,18,.94))!important;border-radius:20px!important}
+.streak-card .value{font-size:2.1rem;font-family:var(--font-mono);font-weight:800}
+@media(max-width:900px){.surface-hero{grid-template-columns:1fr}.surface-metrics{min-width:0;width:100%;grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){.surface-metrics{grid-template-columns:1fr}}
+@media(max-width:760px){#domainQuickStats{grid-template-columns:1fr!important}}
+
+.pd-hero{padding:18px;border:1px solid rgba(16,185,129,.16);border-radius:20px;background:linear-gradient(145deg,rgba(15,23,42,.95),rgba(8,13,24,.98));margin-bottom:16px}
+.pd-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pd-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.pd-meta .chip{padding:10px;border:1px solid rgba(16,185,129,.14);border-radius:12px;background:rgba(2,6,23,.45);font-size:.72rem;color:var(--text-2)}
+.pd-meta .chip strong{display:block;color:#d1fae5;font-size:.96rem;margin-top:2px}
+.pd-config-row{display:flex;justify-content:space-between;gap:14px;padding:12px 16px;border-bottom:1px solid rgba(16,185,129,.08);align-items:flex-start}
+.pd-config-row .k{color:var(--text-2);font-size:.82rem}
+.pd-config-row .v{max-width:70%;text-align:right;word-break:break-word}
+@media(max-width:760px){.pd-actions,.pd-meta{grid-template-columns:1fr}.pd-config-row .v{max-width:100%;text-align:left}}
+
+/* Create Domain + Create Cron major redesign */
+#page-domain-add .wizard-hero,#page-cron-create .wizard-hero{padding:20px;border:1px solid rgba(16,185,129,.18);border-radius:22px;margin-bottom:16px;background:radial-gradient(circle at 12% 10%,rgba(16,185,129,.18),transparent 34%),linear-gradient(145deg,rgba(15,23,42,.95),rgba(8,13,24,.98))}
+#page-domain-add .wizard-title,#page-cron-create .wizard-title{font-family:var(--font-hd);font-size:clamp(1.45rem,4vw,2rem);font-weight:800;line-height:1.04}
+#page-domain-add .wizard-sub,#page-cron-create .wizard-sub{margin-top:8px;color:var(--text-2);font-size:.92rem}
+#page-domain-add .card,#page-cron-create .card{border-radius:22px;border-color:rgba(16,185,129,.14);overflow:visible}
+#page-domain-add .card-header,#page-cron-create .card-header{padding:18px 20px;background:linear-gradient(90deg,rgba(16,185,129,.08),transparent)}
+#page-domain-add .card-body,#page-cron-create .card-body{padding:22px}
+#page-domain-add .input,#page-cron-create .input{min-height:54px;border-radius:14px}
+#page-domain-add .btn-primary,#page-cron-create .btn-primary{min-height:54px;font-size:.95rem;font-weight:800}
+
+/* Worker create + Dockerfile deploy consistency/responsiveness */
+#page-worker-create .page-header,#page-dockerfile-deploy .page-header{display:none}
+#page-worker-create .config-hero,#page-dockerfile-deploy .config-hero{
+  position:relative;overflow:hidden;border:1px solid rgba(16,185,129,.16);border-radius:22px;padding:20px;margin-bottom:16px;
+  background:radial-gradient(circle at 12% 15%,rgba(16,185,129,.18),transparent 34%),radial-gradient(circle at 88% 5%,rgba(34,211,238,.12),transparent 30%),linear-gradient(135deg,rgba(15,23,42,.88),rgba(6,11,20,.94));
+}
+#page-worker-create .config-kicker,#page-dockerfile-deploy .config-kicker{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);margin-bottom:6px}
+#page-worker-create .config-title,#page-dockerfile-deploy .config-title{font-family:var(--font-head);font-size:clamp(1.5rem,4vw,2.1rem);font-weight:800;line-height:1.05}
+#page-worker-create .config-sub,#page-dockerfile-deploy .config-sub{margin-top:8px;color:var(--text-2);font-size:.9rem}
+#page-worker-create .card,#page-dockerfile-deploy .card{border-radius:22px;border-color:rgba(16,185,129,.13);background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(8,13,24,.96))}
+#page-worker-create .card-header,#page-dockerfile-deploy .card-header{padding:18px 20px;background:linear-gradient(90deg,rgba(16,185,129,.08),transparent)}
+#page-worker-create .card-body,#page-dockerfile-deploy .card-body{padding:20px}
+#page-worker-create .input,#page-dockerfile-deploy .input{min-height:52px;border-radius:14px}
+#page-worker-create .two-col,#page-dockerfile-deploy .two-col{gap:16px}
+@media(min-width:1100px){#page-worker-create .two-col,#page-dockerfile-deploy .two-col{grid-template-columns:minmax(0,1fr) minmax(300px,380px)}}
+@media(max-width:900px){#page-worker-create .two-col,#page-dockerfile-deploy .two-col{grid-template-columns:1fr}#page-worker-create .page-back,#page-dockerfile-deploy .page-back{margin-bottom:10px}}
 
 /* ── Streak Calendar ─────────────────────────────────────────────────────── */
 .streak-grid { display:flex; gap:3px; }
@@ -2475,15 +2585,45 @@ textarea.input { resize: vertical; min-height: 80px; }
 </section>
 
 <section class="section reveal" id="language-guides">
-  <h2 class="section-title">Language Deployment Guides</h2>
-  <p class="section-sub">Learn official docs and how DeployBoard helps you ship each stack faster.</p>
-  <div class="rich-image-grid">
-    <a id="guide-nodejs" class="rich-image" href="https://nodejs.org/en/docs" target="_blank"><img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop" alt="Node.js guide"><div class="cap">Node.js docs + DeployBoard server deploy flow</div></a>
-    <a id="guide-python" class="rich-image" href="https://docs.python.org/3/" target="_blank"><img src="https://images.unsplash.com/photo-1526379095098-d400fd0bf935?q=80&w=1200&auto=format&fit=crop" alt="Python guide"><div class="cap">Python app hosting guide</div></a>
-    <a id="guide-java" class="rich-image" href="https://docs.oracle.com/en/java/" target="_blank"><img src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1200&auto=format&fit=crop" alt="Java guide"><div class="cap">Java build/runtime guide</div></a>
-    <a id="guide-go" class="rich-image" href="https://go.dev/doc/" target="_blank"><img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?q=80&w=1200&auto=format&fit=crop" alt="Go guide"><div class="cap">Go service deployment guide</div></a>
-    <a id="guide-dotnet" class="rich-image" href="https://learn.microsoft.com/dotnet/" target="_blank"><img src="https://images.unsplash.com/photo-1516116216624-53e697fedbea?q=80&w=1200&auto=format&fit=crop" alt=".NET guide"><div class="cap">.NET build and deploy guide</div></a>
-    <a class="rich-image" href="#how-it-works"><img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop" alt="DeployBoard features"><div class="cap">How DeployBoard automates build, release and routing</div></a>
+  <h2 class="section-title">DeployBoard Product Surfaces</h2>
+  <p class="section-sub">Real platform capabilities presented as live product cards — no stock images, only actual DeployBoard workflows.</p>
+  <div class="home-product-grid">
+    <a class="home-product-card" href="#features">
+      <div class="home-product-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 12-14h-8l0-6z"/></svg></div>
+      <div class="home-product-title">Live Build Pipeline</div>
+      <div class="home-product-copy">Stream real-time logs, step progression, and build diagnostics from clone to live release.</div>
+      <div class="home-product-meta">terminal • timeline • health</div>
+    </a>
+    <a class="home-product-card" href="#how-it-works">
+      <div class="home-product-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></div>
+      <div class="home-product-title">Domains + SSL Control</div>
+      <div class="home-product-copy">Provision wildcard routing, map custom domains, and verify DNS with automatic SSL handling.</div>
+      <div class="home-product-meta">dns • routing • edge ssl</div>
+    </a>
+    <a class="home-product-card" href="#features">
+      <div class="home-product-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h3a2 2 0 1 1 4 0h2a2 2 0 0 1 2 2v3a2 2 0 1 1 0 4v3a2 2 0 0 1-2 2h-3a2 2 0 1 1-4 0H9a2 2 0 0 1-2-2v-2a2 2 0 1 1 0-4V5a2 2 0 0 1 2-2z"/></svg></div>
+      <div class="home-product-title">Runtime Flexibility</div>
+      <div class="home-product-copy">Deploy static apps, server runtimes, Docker workloads, and background workers in one platform.</div>
+      <div class="home-product-meta">static • server • docker</div>
+    </a>
+    <a class="home-product-card" href="#features">
+      <div class="home-product-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 1 1 8 0v3"/></svg></div>
+      <div class="home-product-title">Secrets + Env Governance</div>
+      <div class="home-product-copy">Manage encrypted global secrets and per-project environment variables with clean operational UX.</div>
+      <div class="home-product-meta">vault • env • compliance</div>
+    </a>
+    <a class="home-product-card" href="#features">
+      <div class="home-product-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+      <div class="home-product-title">Automation & Schedules</div>
+      <div class="home-product-copy">Create cron automations, monitor execution status, and keep recurring operational tasks reliable.</div>
+      <div class="home-product-meta">cron • webhooks • jobs</div>
+    </a>
+    <a class="home-product-card" href="#features">
+      <div class="home-product-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16"/><rect x="6" y="11" width="3" height="6"/><rect x="11" y="8" width="3" height="9"/><rect x="16" y="5" width="3" height="12"/></svg></div>
+      <div class="home-product-title">Analytics + Audit Trail</div>
+      <div class="home-product-copy">Track deploy velocity, streak consistency, and audit events to understand platform behavior fast.</div>
+      <div class="home-product-meta">insights • streaks • audit</div>
+    </a>
   </div>
 </section>
 
@@ -2961,7 +3101,14 @@ const lines = [
 const tb = document.getElementById('terminalBody');
 let li = 0;
 function addLine() {
-  if (li >= lines.length) return;
+  if (li >= lines.length) {
+    setTimeout(() => {
+      tb.innerHTML = '';
+      li = 0;
+      addLine();
+    }, 1800);
+    return;
+  }
   const { cls, text } = lines[li++];
   const span = document.createElement('span');
   span.className = 'tl ' + cls;
@@ -3009,8 +3156,6 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 });
 </script>
 </div>
-
-<!-- ═══════════════════════════════════════════
 
 <!-- ═══════════════════════════════════════════
      DASHBOARD VIEW
@@ -3119,6 +3264,22 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <div class="nav-item" data-page="docs" onclick="showPage('docs',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       Documentation
+    </div>
+    <div class="nav-item" onclick="showLanding()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      Home Page
+    </div>
+    <div class="nav-item" data-page="faq" onclick="showPage('faq',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 1 1 5.8 1c-.4 1-1.3 1.4-2.1 1.9-.7.4-1.3 1-1.3 2.1"/><circle cx="12" cy="17" r=".8"/></svg>
+      FAQ
+    </div>
+    <div class="nav-item" data-page="support" onclick="showPage('support',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10a8 8 0 0 1 16 0v7a2 2 0 0 1-2 2h-3"/><rect x="2" y="10" width="4" height="8" rx="2"/><rect x="18" y="10" width="4" height="8" rx="2"/><path d="M12 19v2"/></svg>
+      Support
+    </div>
+    <div class="nav-item logout-item" onclick="logoutUser()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
     </div>
   </nav>
 
@@ -3583,6 +3744,16 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                   </div>
                   <input type="hidden" id="deployNodeVersion" value="18">
                 </div>
+              </div>
+              <div class="field">
+                <label class="field-label">Working Directory <span style="color:var(--text-3);font-weight:400;">(optional)</span></label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input class="input input-mono" id="deployWorkingDir" list="deployWorkingDirList" placeholder="e.g. lovable-ui or apps/web" style="flex:1;">
+                  <button class="btn btn-ghost btn-sm" type="button" onclick="suggestWorkingDirs('deployRepoUrl','deployBranch','deployWorkingDir','deployWorkingDirList')">Browse</button>
+                </div>
+                <datalist id="deployWorkingDirList"></datalist>
+                <select class="input input-mono" id="deployWorkingDirSelect" style="margin-top:8px;display:none;" onchange="selectWorkingDirValue('deployWorkingDir', this.value)"></select>
+                <div class="field-hint">Browse repo folders or type manually. Deploy commands will run from this directory when set.</div>
               </div>
             </div>
           </div>
@@ -4163,6 +4334,25 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <div id="projectDetailContent"></div>
     </div>
 
+    <div class="page" id="page-faq">
+      <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+      <div class="app-hero"><div><div class="app-hero-kicker">Knowledge base</div><div class="app-hero-title">FAQ</div><div class="app-hero-subtitle">Answers to common deployment, domains, and runtime questions.</div></div></div>
+      <div class="card"><div class="card-header"><div class="card-title">Frequently Asked Questions</div></div><div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+        <div><strong>How do I deploy?</strong><div style="color:var(--text-2);font-size:.85rem;">Go to New Deployment, connect repo, choose branch, and start build.</div></div>
+        <div><strong>How do custom domains work?</strong><div style="color:var(--text-2);font-size:.85rem;">Add a CNAME in your registrar and verify from Domains page.</div></div>
+        <div><strong>Where are logs?</strong><div style="color:var(--text-2);font-size:.85rem;">Open Live Logs to stream build and runtime output.</div></div>
+      </div></div>
+    </div>
+
+    <div class="page" id="page-support">
+      <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+      <div class="app-hero"><div><div class="app-hero-kicker">Help center</div><div class="app-hero-title">Support</div><div class="app-hero-subtitle">Reach assistance quickly for deployments, domains, and account issues.</div></div></div>
+      <div class="two-col">
+        <div class="card"><div class="card-header"><div class="card-title">Contact</div></div><div class="card-body"><div style="color:var(--text-2);font-size:.86rem;line-height:1.6;">Email: <strong style="color:var(--text);">support@deployboard.app</strong><br/>Include project name and deployment id for fastest help.</div></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Troubleshooting</div></div><div class="card-body"><div style="color:var(--text-2);font-size:.86rem;line-height:1.6;">Check Live Logs, verify repo permissions, confirm DNS records, and retry deployment.</div></div></div>
+      </div>
+    </div>
+
 
     <!-- ════════ ANALYTICS PAGE ════════ -->
     <div class="page" id="page-analytics">
@@ -4320,15 +4510,20 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
     <!-- ════════ DOMAINS PAGE ════════ -->
     <div class="page" id="page-domains">
-      <div class="page-header page-header-row">
+      <div class="surface-hero">
         <div>
-          <div class="page-title">Domains</div>
-          <div class="page-subtitle">Manage subdomains and custom domains for your projects.</div>
+          <div class="surface-kicker">Routing & SSL</div><div class="surface-title">Domains Control Center</div>
+          <div class="surface-sub">A fully redesigned domain cockpit for wildcard routing, DNS verification, and launch-ready SSL at scale.</div>
         </div>
-        <button class="btn btn-primary" onclick="showPage('domain-add',this)">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Custom Domain
-        </button>
+        <div class="surface-metrics">
+          <div class="surface-metric"><div class="surface-metric-value" id="domainHeroProjects">0</div><div class="surface-metric-label">Project URLs</div></div>
+          <div class="surface-metric"><div class="surface-metric-value" id="domainHeroCustom">0</div><div class="surface-metric-label">Custom Domains</div></div>
+          <div class="surface-metric"><button class="btn btn-primary" onclick="showPage('domain-add',this)" style="width:100%;min-height:50px;font-weight:800;">Add Domain</button></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;" id="domainQuickStats">
+        <div class="card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">Wildcard</div><div style="margin-top:6px;font-family:var(--font-mono);font-size:.82rem;color:var(--green);" id="domainWildcardMini">*.joytreehostingserver.dpdns.org</div></div>
+        <div class="card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">SSL Status</div><div style="margin-top:6px;font-size:.9rem;font-weight:700;color:#d1fae5;">Auto-managed via Cloudflare</div></div>
       </div>
 
       <!-- Wildcard -->
@@ -4355,7 +4550,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <div class="card-title">Project Subdomains</div>
           <div class="card-subtitle">Auto-generated live URL for every deployed project</div>
         </div>
-        <div class="card-body" style="padding:0;" id="domainsProjectList">
+        <div class="card-body list-shell" style="padding:0;" id="domainsProjectList">
           <div style="padding:24px;color:var(--text-3);font-size:0.82rem;text-align:center;">No projects deployed yet.</div>
         </div>
       </div>
@@ -4368,7 +4563,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="card-subtitle">Your own domains pointing to DeployBoard projects</div>
           </div>
         </div>
-        <div id="customDomainsList">
+        <div id="customDomainsList" class="list-shell">
           <div style="padding:40px 20px;text-align:center;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" width="32" height="32" style="margin:0 auto 12px;display:block;opacity:0.4;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             <div style="font-size:0.85rem;font-weight:600;color:var(--text-2);">No custom domains yet</div>
@@ -4380,13 +4575,13 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
     <!-- ════════ ADD CUSTOM DOMAIN PAGE ════════ -->
     <div class="page" id="page-domain-add">
-      <div class="page-header">
+      <div class="wizard-hero">
         <div class="back-link" onclick="showPage('domains',this)" style="cursor:pointer;display:flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--text-2);margin-bottom:12px;">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
           Back to Domains
         </div>
-        <div class="page-title">Add Custom Domain</div>
-        <div class="page-subtitle">Follow these steps to connect your own domain.</div>
+        <div class="wizard-title">Connect Custom Domain</div>
+        <div class="wizard-sub">Premium DNS onboarding flow: map domain, verify records, and activate secure routing.</div>
       </div>
 
       <!-- Step 1 -->
@@ -4820,12 +5015,13 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <!-- ════════ ACTIVITY LOG PAGE ════════ -->
     <div class="page" id="page-activity">
       <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-      <div class="page-header page-header-row">
+      <div class="app-hero">
         <div>
-          <div class="page-title">Activity Log</div>
-          <div class="page-subtitle">A full audit trail of everything that happens on your platform.</div>
+          <div class="app-hero-kicker">Audit timeline</div>
+          <div class="app-hero-title">Activity Log</div>
+          <div class="app-hero-subtitle">A stunning operations timeline of deployments, secrets updates, settings changes, and runtime activity.</div>
         </div>
-        <button class="btn btn-ghost" onclick="renderActivity()" style="font-size:0.8rem;">
+        <button class="btn btn-primary" onclick="renderActivity()" style="font-size:0.92rem;min-height:48px;padding-inline:20px;">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           Refresh
         </button>
@@ -4845,12 +5041,13 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <!-- ════════ SECRETS PAGE ════════ -->
     <div class="page" id="page-secrets">
       <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-      <div class="page-header page-header-row">
+      <div class="app-hero">
         <div>
-          <div class="page-title">Secrets</div>
-          <div class="page-subtitle">Global secret variables shared across all projects.</div>
+          <div class="app-hero-kicker">Security vault</div>
+          <div class="app-hero-title">Secrets</div>
+          <div class="app-hero-subtitle">Centralized encrypted credentials for all projects with better governance and safer rollout workflows.</div>
         </div>
-        <button class="btn btn-primary" onclick="openAddSecretModal()">
+        <button class="btn btn-primary" onclick="openAddSecretModal()" style="min-height:52px;padding-inline:24px;font-size:0.95rem;font-weight:800;">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add Secret
         </button>
@@ -4968,6 +5165,11 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <!-- ════════ DOCKERFILE DEPLOY PAGE ════════ -->
     <div class="page" id="page-dockerfile-deploy">
       <button class="page-back" onclick="showPage('new-resource')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to New Resource</button>
+      <div class="config-hero">
+        <div class="config-kicker">Container release</div>
+        <div class="config-title">Deploy with Dockerfile</div>
+        <div class="config-sub">Configure repository, Dockerfile path, build args, and launch settings from a mobile-friendly deployment surface.</div>
+      </div>
       <div class="page-header page-header-row">
         <div>
           <div class="page-title">Deploy with Dockerfile</div>
@@ -5009,6 +5211,16 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <input class="input input-mono" id="dfPath" value="Dockerfile" placeholder="Dockerfile">
                 <div class="field-hint">Relative to repo root. Default is <code style="font-family:var(--font-mono);">Dockerfile</code></div>
               </div>
+              <div class="field">
+                <label class="field-label">Working Directory <span style="color:var(--text-3);font-weight:400;">(optional)</span></label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input class="input input-mono" id="dfWorkingDir" list="dfWorkingDirList" placeholder="e.g. lovable-ui or apps/web" style="flex:1;">
+                  <button class="btn btn-ghost btn-sm" type="button" onclick="suggestWorkingDirs('dfRepoUrl','dfBranch','dfWorkingDir','dfWorkingDirList')">Browse</button>
+                </div>
+                <datalist id="dfWorkingDirList"></datalist>
+                <select class="input input-mono" id="dfWorkingDirSelect" style="margin-top:8px;display:none;" onchange="selectWorkingDirValue('dfWorkingDir', this.value)"></select>
+                <div class="field-hint">Browse repo folders or type manually. Build/deploy commands run from this directory when set.</div>
+              </div>
             </div>
           </div>
           <div class="card">
@@ -5048,12 +5260,13 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <!-- ════════ CRON JOBS PAGE ════════ -->
     <div class="page" id="page-cronjobs">
       <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-      <div class="page-header page-header-row">
+      <div class="app-hero">
         <div>
-          <div class="page-title">Cron Jobs</div>
-          <div class="page-subtitle">Schedule automated HTTP requests on a timer.</div>
+          <div class="app-hero-kicker">Automation engine</div>
+          <div class="app-hero-title">Cron Jobs</div>
+          <div class="app-hero-subtitle">Run production-grade schedules, monitor results, and keep workflows reliable with a redesigned command center.</div>
         </div>
-        <button class="btn btn-primary" onclick="showPage('cron-create')">
+        <button class="btn btn-primary" onclick="showPage('cron-create')" style="min-height:52px;padding-inline:24px;font-size:0.95rem;font-weight:800;">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           New Cron Job
         </button>
@@ -5079,9 +5292,9 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <!-- ════════ CREATE CRON JOB PAGE ════════ -->
     <div class="page" id="page-cron-create">
       <button class="page-back" onclick="showPage('cronjobs')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Cron Jobs</button>
-      <div class="page-header">
-        <div class="page-title">Create Cron Job</div>
-        <div class="page-subtitle">Schedule automated HTTP requests to monitor or trigger your services.</div>
+      <div class="wizard-hero">
+        <div class="wizard-title">Create Cron Job</div>
+        <div class="wizard-sub">Build automation jobs with professional scheduling controls, presets, and runtime observability.</div>
       </div>
       <div class="two-col" style="align-items:start;">
         <div style="display:flex;flex-direction:column;gap:16px;">
@@ -5187,10 +5400,11 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <!-- ════════ BACKGROUND WORKERS PAGE ════════ -->
     <div class="page" id="page-workers">
       <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-      <div class="page-header page-header-row">
+      <div class="surface-hero">
         <div>
-          <div class="page-title">Background Workers</div>
-          <div class="page-subtitle">Long-running processes that run without a web port — queues, listeners, batch jobs.</div>
+          <div class="surface-kicker">Async Compute</div>
+          <div class="surface-title">Background Workers</div>
+          <div class="surface-sub">Run durable queue processors, listeners, and automation workers with the same premium deployment experience as your apps.</div>
         </div>
         <button class="btn btn-primary" onclick="showPage('worker-create')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -5199,7 +5413,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>
       <div class="card" style="margin-bottom:20px;">
         <div class="card-header"><div class="card-title">Active Workers</div></div>
-        <div id="workersList">
+        <div id="workersList" class="list-shell">
           <div style="padding:40px 20px;text-align:center;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" width="36" height="36" style="margin:0 auto 12px;display:block;opacity:0.4;"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
             <div style="font-size:0.85rem;font-weight:600;color:var(--text-2);">No background workers yet</div>
@@ -5215,6 +5429,11 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <!-- ════════ CREATE WORKER PAGE ════════ -->
     <div class="page" id="page-worker-create">
       <button class="page-back" onclick="showPage('workers')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Workers</button>
+      <div class="config-hero">
+        <div class="config-kicker">Async compute</div>
+        <div class="config-title">New Background Worker</div>
+        <div class="config-sub">Set repo, branch, install/build/start commands, and env variables in a fully responsive worker configuration flow.</div>
+      </div>
       <div class="page-header">
         <div class="page-title">New Background Worker</div>
         <div class="page-subtitle">Deploy a process that runs continuously without a web port.</div>
@@ -5250,6 +5469,16 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <input class="input input-mono" id="workerStart" placeholder="node worker.js or npm run worker">
               <div class="field-hint">This command runs your worker. It should NOT start an HTTP server.</div>
             </div>
+            <div class="field">
+              <label class="field-label">Working Directory <span style="color:var(--text-3);font-weight:400;">(optional)</span></label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input class="input input-mono" id="workerWorkingDir" list="workerWorkingDirList" placeholder="e.g. lovable-ui or services/worker" style="flex:1;">
+                <button class="btn btn-ghost btn-sm" type="button" onclick="suggestWorkingDirs('workerRepo','workerBranch','workerWorkingDir','workerWorkingDirList')">Browse</button>
+              </div>
+              <datalist id="workerWorkingDirList"></datalist>
+              <select class="input input-mono" id="workerWorkingDirSelect" style="margin-top:8px;display:none;" onchange="selectWorkingDirValue('workerWorkingDir', this.value)"></select>
+              <div class="field-hint">Browse repo folders or type manually. Install/build/start commands run from this directory when set.</div>
+            </div>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:16px;">
@@ -5278,22 +5507,30 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <!-- ════════ DEPLOY STREAKS PAGE ════════ -->
     <div class="page" id="page-streaks">
       <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-      <div class="page-header">
-        <div class="page-title">Deploy Streaks</div>
-        <div class="page-subtitle">Track your deployment activity over time.</div>
+      <div class="surface-hero">
+        <div>
+          <div class="surface-kicker">Velocity Analytics</div>
+          <div class="surface-title">Deploy Streaks</div>
+          <div class="surface-sub">Stay consistent with visual streak intelligence and yearly activity density.</div>
+        </div>
+        <div class="surface-metrics">
+          <div class="surface-metric"><div class="surface-metric-value" id="streakHeroDeploys">0</div><div class="surface-metric-label">Total Deploys</div></div>
+          <div class="surface-metric"><div class="surface-metric-value" id="streakHeroDays">0</div><div class="surface-metric-label">Active Days</div></div>
+          <div class="surface-metric"><div class="surface-metric-value" id="streakHeroRate">0%</div><div class="surface-metric-label">Consistency</div></div>
+        </div>
       </div>
       <div class="three-col" style="margin-bottom:20px;">
-        <div class="card" style="text-align:center;padding:24px 16px;">
+        <div class="card streak-card" style="text-align:center;padding:24px 16px;">
           <div style="font-size:1.8rem;margin-bottom:6px;">🔥</div>
           <div style="font-size:2rem;font-weight:800;color:var(--green);font-family:var(--font-mono);" id="streakCurrent">0</div>
           <div style="font-size:0.78rem;color:var(--text-2);margin-top:4px;">Current Streak (days)</div>
         </div>
-        <div class="card" style="text-align:center;padding:24px 16px;">
+        <div class="card streak-card" style="text-align:center;padding:24px 16px;">
           <div style="font-size:1.8rem;margin-bottom:6px;">⚡</div>
           <div style="font-size:2rem;font-weight:800;color:var(--text);font-family:var(--font-mono);" id="streakLongest">0</div>
           <div style="font-size:0.78rem;color:var(--text-2);margin-top:4px;">Longest Streak (days)</div>
         </div>
-        <div class="card" style="text-align:center;padding:24px 16px;">
+        <div class="card streak-card" style="text-align:center;padding:24px 16px;">
           <div style="font-size:1.8rem;margin-bottom:6px;">📊</div>
           <div style="font-size:2rem;font-weight:800;color:var(--text);font-family:var(--font-mono);" id="streakAvg">0</div>
           <div style="font-size:0.78rem;color:var(--text-2);margin-top:4px;">Avg / Active Day</div>
@@ -5555,7 +5792,8 @@ const PAGE_LABELS = {
   analytics:'Analytics', domains:'Domains', webhooks:'Webhooks', 'domain-add':'Add Domain',
   team:'Team', usage:'Usage & Limits', activity:'Activity Log', secrets:'Secrets',
   'new-resource':'New Resource', cronjobs:'Cron Jobs', workers:'Background Workers', streaks:'Deploy Streaks',
-  'dockerfile-deploy':'Dockerfile Deploy', 'cron-create':'Create Cron Job', 'worker-create':'New Worker'
+  'dockerfile-deploy':'Dockerfile Deploy', 'cron-create':'Create Cron Job', 'worker-create':'New Worker',
+  faq:'FAQ', support:'Support'
 };
 function showPage(id, navEl) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -6267,6 +6505,145 @@ function getEnvVars() {
   return result;
 }
 
+function normalizeWorkingDir(dir) {
+  return String(dir || '').trim().replace(/^\/+|\/+$/g, '');
+}
+
+function applyWorkingDir(cmd, dir) {
+  const clean = normalizeWorkingDir(dir);
+  return clean ? `cd ${clean} && ${cmd}` : cmd;
+}
+
+function looksLikeDevServerCmd(cmd = '') {
+  const v = String(cmd || '').trim().toLowerCase();
+  return /(^|\s)(npm|pnpm|yarn)\s+run\s+dev(\s|$)/.test(v) || /(^|\s)next\s+dev(\s|$)/.test(v) || /(^|\s)vite(\s|$)/.test(v);
+}
+
+function isSkipBuildCmd(cmd = '') {
+  const v = String(cmd || '').trim().toLowerCase();
+  return v === 'echo skip' || v === 'skip';
+}
+
+const DEPLOY_PRESETS = [
+  { key: 'nextjs', label: 'Next.js', match: (s) => s.has('next.config.js') || s.has('next.config.mjs'), install: 'npm install', build: 'npm run build', start: 'npm start', output: '.next', siteType: 'server' },
+  { key: 'nuxt', label: 'Nuxt', match: (s) => s.has('nuxt.config.ts') || s.has('nuxt.config.js'), install: 'npm install', build: 'npm run build', start: 'npm run start', output: '.output', siteType: 'server' },
+  { key: 'vite', label: 'Vite', match: (s) => s.has('vite.config.ts') || s.has('vite.config.js'), install: 'npm install', build: 'npm run build', start: '', output: 'dist', siteType: 'static' },
+  { key: 'python', label: 'Python', match: (s) => s.has('requirements.txt') || s.has('pyproject.toml'), install: 'pip install -r requirements.txt', build: 'echo skip', start: 'python app.py', output: '.', siteType: 'server' },
+  { key: 'go', label: 'Go', match: (s) => s.has('go.mod'), install: 'go mod download', build: 'go build -o app .', start: './app', output: '.', siteType: 'server' },
+  { key: 'rust', label: 'Rust', match: (s) => s.has('cargo.toml'), install: 'cargo fetch', build: 'cargo build --release', start: './target/release/app', output: '.', siteType: 'server' },
+  { key: 'java', label: 'Java', match: (s) => s.has('pom.xml') || s.has('build.gradle') || s.has('build.gradle.kts'), install: './mvnw -q -DskipTests dependency:resolve', build: './mvnw -q -DskipTests package', start: 'java -jar target/*.jar', output: '.', siteType: 'server' },
+  { key: 'dotnet', label: '.NET', match: (s) => Array.from(s).some(p => p.endsWith('.csproj')), install: 'dotnet restore', build: 'dotnet publish -c Release', start: 'dotnet run --no-build', output: '.', siteType: 'server' },
+  { key: 'php', label: 'PHP', match: (s) => s.has('composer.json'), install: 'composer install --no-dev --optimize-autoloader', build: 'echo skip', start: 'php -S 0.0.0.0:${PORT:-3000} -t public', output: 'public', siteType: 'server' },
+];
+
+async function detectDeployPreset(repoUrl, branch = 'main') {
+  const m = String(repoUrl || '').match(/github\.com\/([^/]+\/[^/#?]+)/i);
+  if (!m) return null;
+  try {
+    const r = await apiFetch(`/api/github/tree?repo=${encodeURIComponent(m[1])}&branch=${encodeURIComponent(branch)}`);
+    const d = await r.json();
+    const paths = new Set((Array.isArray(d.tree) ? d.tree : []).map(n => String(n.path || '').toLowerCase()));
+    const preset = DEPLOY_PRESETS.find(p => p.match(paths));
+    return preset || null;
+  } catch {
+    return null;
+  }
+}
+
+function applyPresetToForm(preset, type = 'deploy') {
+  if (!preset) return;
+  if (type === 'deploy') {
+    const install = document.getElementById('deployInstallCmd');
+    const build = document.getElementById('deployBuildCmd');
+    const start = document.getElementById('deployStartCmd');
+    const output = document.getElementById('deployOutputDir');
+    const siteType = document.getElementById('deploySiteType');
+    if (install && !install.value.trim()) install.value = preset.install;
+    if (build && !build.value.trim()) build.value = preset.build;
+    if (start && !start.value.trim() && preset.start) start.value = preset.start;
+    if (output && (!output.value.trim() || output.value.trim() === 'dist')) output.value = preset.output;
+    if (siteType && preset.siteType && siteType.value !== preset.siteType) {
+      siteType.value = preset.siteType;
+      try { onSiteTypeChange(siteType.value); } catch (_) {}
+    }
+    toast(`Detected ${preset.label}. Suggested production commands applied.`, 'success');
+    return;
+  }
+  if (type === 'docker') {
+    const build = document.getElementById('dfBuildCmd');
+    const start = document.getElementById('dfStartCmd');
+    if (build && !build.value.trim()) build.value = preset.build;
+    if (start && !start.value.trim() && preset.start) start.value = preset.start;
+    toast(`Detected ${preset.label}. Suggested Docker deploy commands applied.`, 'success');
+    return;
+  }
+  if (type === 'worker') {
+    const install = document.getElementById('workerInstall');
+    const build = document.getElementById('workerBuild');
+    const start = document.getElementById('workerStart');
+    if (install && !install.value.trim()) install.value = preset.install;
+    if (build && !build.value.trim()) build.value = preset.build;
+    if (start && !start.value.trim() && preset.start) start.value = preset.start;
+    toast(`Detected ${preset.label}. Suggested worker commands applied.`, 'success');
+  }
+}
+
+function selectWorkingDirValue(inputId, value) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  input.value = value === '.' ? '' : value;
+}
+
+async function suggestWorkingDirs(repoInputId, branchInputId, workingDirInputId, datalistId, selectId) {
+  const repoUrl = (document.getElementById(repoInputId)?.value || '').trim();
+  const branch = (document.getElementById(branchInputId)?.value || 'main').trim() || 'main';
+  const input = document.getElementById(workingDirInputId);
+  const datalist = document.getElementById(datalistId);
+  const select = document.getElementById(selectId || (workingDirInputId + 'Select'));
+  if (!input || !datalist) return;
+
+  const m = repoUrl.match(/github\.com\/([^/]+\/[^/#?]+)/i);
+  if (!m) { toast('Enter a valid GitHub repo URL first', 'error'); return; }
+
+  input.setAttribute('aria-busy', 'true');
+  toast('Looking up repository folders…', 'info');
+  try {
+    const repo = m[1];
+    let dirs = [];
+    try {
+      const r = await apiFetch(`/api/github/tree?repo=${encodeURIComponent(repo)}&branch=${encodeURIComponent(branch)}`);
+      const d = await r.json();
+      dirs = Array.isArray(d.tree)
+        ? d.tree.filter(n => n && n.type === 'tree' && n.path).map(n => n.path)
+        : [];
+    } catch {
+      const r = await fetch(`https://api.github.com/repos/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`);
+      const d = await r.json();
+      dirs = Array.isArray(d.tree)
+        ? d.tree.filter(n => n && n.type === 'tree' && n.path).map(n => n.path)
+        : [];
+    }
+    dirs = ['.', ...dirs.filter(Boolean)].sort((a,b) => {
+      if (a === '.') return -1;
+      if (b === '.') return 1;
+      return a.localeCompare(b);
+    });
+
+    datalist.innerHTML = dirs.map(p => `<option value="${escHtml(p)}"></option>`).join('');
+    if (select) {
+      select.innerHTML = dirs.map(p => `<option value="${escHtml(p)}">${p === '.' ? 'Repository root (.)' : escHtml(p)}</option>`).join('');
+      select.style.display = '';
+      select.value = input.value || '.';
+    }
+    input.focus();
+    toast(dirs.length ? `Found ${dirs.length} directories` : 'No subdirectories found; you can still type manually', dirs.length ? 'success' : 'info');
+  } catch (e) {
+    toast('Could not load folders; you can still type it manually', 'error');
+  } finally {
+    input.removeAttribute('aria-busy');
+  }
+}
+
 // ══════════════════════════════════════════════════════════════════
 // DEPLOYMENT TRIGGER
 // ══════════════════════════════════════════════════════════════════
@@ -6283,6 +6660,18 @@ async function startDeployment() {
   const siteType  = document.getElementById('deploySiteType')?.value        || 'static';
   const customPort= (document.getElementById('deployCustomPort')?.value || '').trim();
   const envVars   = getEnvVars();
+  const workingDir= normalizeWorkingDir(document.getElementById('deployWorkingDir')?.value || '');
+  const runInstallCmd = applyWorkingDir(installCmd, workingDir);
+  const runBuildCmd   = applyWorkingDir(buildCmd, workingDir);
+  const runStartCmd   = startCmd ? applyWorkingDir(startCmd, workingDir) : '';
+  if (siteType === 'server' && looksLikeDevServerCmd(startCmd)) {
+    toast('Use a production start command (e.g. npm start). npm run dev is not suitable for deployment.', 'error');
+    return;
+  }
+  if (siteType === 'server' && isSkipBuildCmd(buildCmd)) {
+    toast('Build command cannot be "echo skip" for server deployments.', 'error');
+    return;
+  }
 
   if (!name)      { toast('Project name is required', 'error'); return; }
   if (!subdomain) { toast('Subdomain is required', 'error'); return; }
@@ -6294,10 +6683,10 @@ async function startDeployment() {
   // Create or update project
   let project = projects.find(p => p.subdomain === subdomain);
   if (!project) {
-    project = { id: genId(), name, subdomain, repoUrl, branch, installCmd, buildCmd, startCmd, outputDir, nodeVer, siteType, createdAt: new Date().toISOString() };
+    project = { id: genId(), name, subdomain, repoUrl, branch, installCmd, buildCmd, startCmd, outputDir, nodeVer, siteType, workingDir, createdAt: new Date().toISOString() };
     projects.push(project);
   } else {
-    Object.assign(project, { name, repoUrl, branch, installCmd, buildCmd, startCmd, outputDir, nodeVer, siteType });
+    Object.assign(project, { name, repoUrl, branch, installCmd, buildCmd, startCmd, outputDir, nodeVer, siteType, workingDir });
   }
   // Track status directly on project so card badge updates instantly
   project.lastStatus = 'building';
@@ -6340,7 +6729,7 @@ async function startDeployment() {
     const res = await apiFetch(API + '/api/deploy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId: project.id, name, subdomain, repoUrl, branch, installCmd, buildCmd, startCmd, outputDir, nodeVer, siteType, envVars, customPort: customPort || undefined })
+      body: JSON.stringify({ projectId: project.id, name, subdomain, repoUrl, branch, installCmd: runInstallCmd, buildCmd: runBuildCmd, startCmd: runStartCmd, outputDir, nodeVer, siteType, envVars, workingDir: workingDir || undefined, customPort: customPort || undefined })
     });
     const data = await res.json();
     if (!res.ok) {
@@ -6654,13 +7043,17 @@ function updateTerminalEmptyState() {
   const subEl = document.getElementById('terminalEmptySub');
   const ctaEl = document.getElementById('terminalEmptyCta');
   const activeDeploy = resolveActiveDeployment();
+  const contextDeploy = resolveLogsContextDeployment();
   updateTerminalHud(activeDeploy);
 
   if (titleEl) titleEl.textContent = 'No logs available';
   if (subEl) subEl.textContent = 'Logs will appear here when your application starts generating them';
   if (ctaEl) ctaEl.style.display = 'none';
 
-  el.classList.toggle('hide', !!activeDeploy);
+  // Hide empty cover whenever user has any deployment context selected/viewed.
+  // Show it only before any deployment has ever been started.
+  const hasDeploymentContext = !!contextDeploy || !!activeBuildId || _hasWrittenBuildLogs || (Array.isArray(deployments) && deployments.length > 0);
+  el.classList.toggle('hide', hasDeploymentContext);
 }
 
 function writeBench(title, detail='') {
@@ -6875,7 +7268,8 @@ function initSocket() {
         });
       }
       save();
-      if (!resolveActiveDeployment()) activeBuildId = null;
+      // Keep activeBuildId pinned to the last viewed deployment so terminal
+      // context remains visible after success/failure and empty cover doesn't flash.
       updateTerminalEmptyState();
 
       const statusEl = document.getElementById('termStatus');
@@ -7046,7 +7440,7 @@ function showProjectDetail(projectId) {
 
   document.getElementById('projectDetailContent').innerHTML =
     // ── Header
-    '<div style="margin-bottom:20px;">' +
+    '<div class="pd-hero">' +
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:8px;">' +
         '<div style="min-width:0;">' +
           '<h1 style="font-size:1.6rem;font-weight:800;color:var(--text);margin:0 0 4px;">' + escHtml(p.name) + '</h1>' +
@@ -7058,7 +7452,7 @@ function showProjectDetail(projectId) {
         (lastStatus ? statusBadge(lastStatus) : '') +
       '</div>' +
       // Action buttons
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<div class="pd-actions">' +
         '<button class="btn btn-primary" data-id="' + p.id + '" onclick="redeploy(this.dataset.id)" style="flex:1;min-width:120px;justify-content:center;">' +
           '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
           ' Redeploy' +
@@ -7068,6 +7462,11 @@ function showProjectDetail(projectId) {
           ' Live Logs' +
         '</button>' +
         '<button class="btn btn-danger" data-id="' + p.id + '" onclick="openDeleteModal(this.dataset.id)" style="min-width:90px;justify-content:center;">Delete</button>' +
+      '</div>' +
+      '<div class="pd-meta">' +
+        '<div class="chip">Status<strong>' + (lastStatus ? escHtml(lastStatus) : 'idle') + '</strong></div>' +
+        '<div class="chip">Deployments<strong>' + deploys.length + '</strong></div>' +
+        '<div class="chip">Runtime<strong>' + escHtml((p.siteType||'static').toUpperCase()) + '</strong></div>' +
       '</div>' +
     '</div>' +
 
@@ -7130,9 +7529,9 @@ function showProjectDetail(projectId) {
 }
 
 function _configRow(label, valueHtml) {
-  return '<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;">' +
-    '<span style="font-size:0.82rem;color:var(--text-2);flex-shrink:0;">' + label + '</span>' +
-    '<div style="text-align:right;max-width:65%;">' + valueHtml + '</div>' +
+  return '<div class="pd-config-row">' +
+    '<span class="k">' + label + '</span>' +
+    '<div class="v">' + valueHtml + '</div>' +
   '</div>';
 }
 
@@ -7706,10 +8105,13 @@ async function renderAnalytics() {
 // DOMAINS
 // ══════════════════════════════════════════════════════════════════
 async function renderDomains() {
+  const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytreehostingserver.dpdns.org';
+  const mini = document.getElementById('domainWildcardMini'); if (mini) mini.textContent = '*.' + baseDomain;
+  const wild = document.getElementById('domainWildcardDisplay'); if (wild) wild.textContent = '*.' + baseDomain;
+  const heroProj = document.getElementById('domainHeroProjects'); if (heroProj) heroProj.textContent = projects.length;
   // Project subdomains
   const list = document.getElementById('domainsProjectList');
   if (list) {
-    const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytreehostingserver.dpdns.org';
     if (!projects.length) {
       list.innerHTML = '<div style="padding:24px;color:var(--text-3);font-size:0.82rem;text-align:center;">No projects deployed yet.</div>';
     } else {
@@ -7717,7 +8119,7 @@ async function renderDomains() {
         const url = 'https://' + p.subdomain + '.' + baseDomain;
         const last = deployments.filter(d => d.projectId === (p._id||p.id)).slice(-1)[0];
         const status = last ? last.status : 'idle';
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;">' +
+        return '<div class="list-row">' +
           '<div style="min-width:0;flex:1;">' +
             '<div style="font-size:0.85rem;font-weight:600;color:var(--text);">' + p.name + '</div>' +
             '<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-2);margin-top:3px;word-break:break-all;">' + url + '</div>' +
@@ -7740,6 +8142,7 @@ async function renderDomains() {
   try {
     const r  = await fetch('/api/domains');
     const ds = await r.json();
+    const heroCustom = document.getElementById('domainHeroCustom'); if (heroCustom) heroCustom.textContent = Array.isArray(ds) ? ds.length : 0;
     if (!Array.isArray(ds) || !ds.length) {
       cdList.innerHTML = '<div style="padding:40px 20px;text-align:center;">' +
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" width="32" height="32" style="margin:0 auto 12px;display:block;opacity:0.4;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' +
@@ -7751,7 +8154,7 @@ async function renderDomains() {
         const badge = d.verified
           ? '<span class="badge badge-success"><span class="badge-dot"></span>Verified</span>'
           : '<span class="badge badge-pending"><span class="badge-dot"></span>DNS Pending</span>';
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;">' +
+        return '<div class="list-row">' +
           '<div style="min-width:0;flex:1;">' +
             '<div style="font-size:0.85rem;font-weight:600;color:var(--text);">' + d.domain + '</div>' +
             '<div style="font-size:0.72rem;color:var(--text-2);margin-top:3px;">→ ' + d.subdomain + '</div>' +
@@ -8007,7 +8410,7 @@ function renderTeam() {
     pendingEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-3);font-size:0.82rem;">No pending invites.</div>';
   } else {
     pendingEl.innerHTML = teamInvites.map((inv, i) => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;">
+      <div class="list-row">
         <div>
           <div style="font-size:0.85rem;color:var(--text);">${inv.email}</div>
           <div style="font-size:0.72rem;color:var(--text-2);margin-top:2px;">Role: ${inv.role} • Sent ${timeAgo(new Date(inv.sentAt))}</div>
@@ -8198,7 +8601,7 @@ function renderSecrets() {
     return;
   }
   el.innerHTML = globalSecrets.map((s, i) => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;">
+    <div class="list-row">
       <div style="min-width:0;flex:1;">
         <div style="font-family:var(--font-mono);font-size:0.82rem;font-weight:600;color:var(--text);">${s.key}</div>
         <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-3);margin-top:2px;">••••••••••••  (${s.key.length > 0 ? 'set' : 'empty'})</div>
@@ -8392,6 +8795,7 @@ async function deployDockerfile() {
   const branch    = (document.getElementById('dfBranch').value || 'main').trim();
   const dfPath    = (document.getElementById('dfPath').value || 'Dockerfile').trim();
   const port      = parseInt(document.getElementById('dfPort').value) || 3000;
+  const workingDir= normalizeWorkingDir(document.getElementById('dfWorkingDir')?.value || '');
 
   if (!name || !subdomain || !repoUrl) { toast('Fill in all required fields', 'error'); return; }
 
@@ -8402,16 +8806,17 @@ async function deployDockerfile() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name, subdomain, repoUrl, branch,
-        installCmd: 'echo skip',
-        buildCmd: `docker build -f ${dfPath} -t db-${subdomain} .`,
-        startCmd: `npm start`,
+        installCmd: applyWorkingDir('echo skip', workingDir),
+        buildCmd: applyWorkingDir(`docker build -f ${dfPath} -t db-${subdomain} .`, workingDir),
+        startCmd: applyWorkingDir('npm start', workingDir),
         outputDir: '.',
         siteType: 'server',
         nodeVersion: 'node:18-alpine',
         envVars: dfBuildArgs.reduce((o,a) => { if(a.key) o[a.key]=a.value; return o; }, {}),
         isDockerfileDeploy: true,
         dockerfilePath: dfPath,
-        exposedPort: port
+        exposedPort: port,
+        workingDir: workingDir || undefined
       })
     });
     const d = await r.json();
@@ -8640,7 +9045,7 @@ function renderWorkers() {
   // Workers are deployed via same API as server apps - show from deployments
   const workerDeploys = (deployments || []).filter(d => d.isWorker);
   if (!workerDeploys.length) {
-    el.innerHTML = "<div style='padding:40px 20px;text-align:center;'><div style='font-size:0.85rem;font-weight:600;color:var(--text-2);padding:20px 0;'>No cron jobs yet</div></div>";
+    el.innerHTML = "<div style='padding:40px 20px;text-align:center;'><div style='font-size:0.85rem;font-weight:600;color:var(--text-2);padding:20px 0;'>No background workers yet</div></div>";
     return;
   }
   el.innerHTML = workerDeploys.map(w => `
@@ -8660,8 +9065,11 @@ async function deployWorker() {
   const install = (document.getElementById('workerInstall').value || 'npm install').trim();
   const build   = (document.getElementById('workerBuild').value || 'echo skip').trim();
   const start   = (document.getElementById('workerStart').value || '').trim();
+  const workingDir = normalizeWorkingDir(document.getElementById('workerWorkingDir')?.value || '');
 
   if (!name || !repo || !start) { toast('Fill in all required fields', 'error'); return; }
+  if (looksLikeDevServerCmd(start)) { toast('Use a production worker start command (avoid npm run dev).', 'error'); return; }
+  if (isSkipBuildCmd(build)) { toast('Build command cannot be "echo skip" for worker deployments.', 'error'); return; }
 
   const subdomain = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g,'-');
   const envObj = workerEnvVars.reduce((o, v) => { if (v.key) o[v.key] = v.value; return o; }, {});
@@ -8670,7 +9078,7 @@ async function deployWorker() {
   try {
     const r = await apiFetch('/api/deploy', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, subdomain, repoUrl: repo, branch, installCmd: install, buildCmd: build, startCmd: start, outputDir: '.', siteType: 'server', nodeVersion: 'node:18-alpine', envVars: envObj, isWorker: true })
+      body: JSON.stringify({ name, subdomain, repoUrl: repo, branch, installCmd: applyWorkingDir(install, workingDir), buildCmd: applyWorkingDir(build, workingDir), startCmd: applyWorkingDir(start, workingDir), outputDir: '.', siteType: 'server', nodeVersion: 'node:18-alpine', envVars: envObj, workingDir: workingDir || undefined, isWorker: true })
     });
     const d = await r.json();
     if (!r.ok) { toast(d.error || 'Deploy failed', 'error'); return; }
@@ -8716,11 +9124,15 @@ function renderStreaks() {
   const totalActive = Object.keys(dayMap).length;
   const totalDeploys = Object.values(dayMap).reduce((a,b)=>a+b,0);
   const avg = totalActive ? (totalDeploys / totalActive).toFixed(1) : 0;
+  const consistency = Math.round((totalActive / 365) * 100);
 
   const el = id => document.getElementById(id);
   if (el('streakCurrent')) el('streakCurrent').textContent = current;
   if (el('streakLongest')) el('streakLongest').textContent = longest;
   if (el('streakAvg'))     el('streakAvg').textContent = avg;
+  if (el('streakHeroDeploys')) el('streakHeroDeploys').textContent = totalDeploys;
+  if (el('streakHeroDays')) el('streakHeroDays').textContent = totalActive;
+  if (el('streakHeroRate')) el('streakHeroRate').textContent = consistency + '%';
 
   renderStreakCalendar(dayMap);
 }
@@ -8768,10 +9180,6 @@ function renderStreakCalendar(dayMap) {
 })();
 
 function showLanding() {
-  if (hasAuthToken()) {
-    showDashboard();
-    return;
-  }
   document.documentElement.classList.remove('app-mode');
   document.getElementById('auth-view').classList.remove('active');
   document.getElementById('landing-view').style.display = 'block';
@@ -9227,6 +9635,21 @@ function initCustomSelects() {
 
 document.getElementById('dfRepoUrl')?.addEventListener('change', (e)=> loadBranchesInto(e.target.value,'dfBranchSelect','dfBranch','main'));
 document.getElementById('workerRepo')?.addEventListener('change', (e)=> loadBranchesInto(e.target.value,'workerBranchSelect','workerBranch','main'));
+document.getElementById('deployRepoUrl')?.addEventListener('change', async (e) => {
+  const branch = (document.getElementById('deployBranch')?.value || 'main').trim() || 'main';
+  const preset = await detectDeployPreset(e.target.value, branch);
+  applyPresetToForm(preset, 'deploy');
+});
+document.getElementById('dfRepoUrl')?.addEventListener('blur', async (e) => {
+  const branch = (document.getElementById('dfBranch')?.value || 'main').trim() || 'main';
+  const preset = await detectDeployPreset(e.target.value, branch);
+  applyPresetToForm(preset, 'docker');
+});
+document.getElementById('workerRepo')?.addEventListener('blur', async (e) => {
+  const branch = (document.getElementById('workerBranch')?.value || 'main').trim() || 'main';
+  const preset = await detectDeployPreset(e.target.value, branch);
+  applyPresetToForm(preset, 'worker');
+});
 
 document.getElementById('deployRepoSelect')?.addEventListener('change', (e) => {
   const val = e.target.value;
@@ -9235,6 +9658,7 @@ document.getElementById('deployRepoSelect')?.addEventListener('change', (e) => {
   const opt = e.target.options[e.target.selectedIndex];
   document.getElementById('deployRepoUrl').value = val;
   loadRepoBranches(val, opt.dataset.branch || 'main');
+  detectDeployPreset(val, opt.dataset.branch || 'main').then(preset => applyPresetToForm(preset, 'deploy'));
 });
 
 function fillConnectedRepoSelect(selectId){
@@ -9258,8 +9682,8 @@ async function loadBranchesInto(repoUrl, branchSelectId, branchInputId, preferre
   makeCustomSelect(branchSelectId,'main');
 }
 
-document.getElementById('dfRepoSelect')?.addEventListener('change', (e)=>{ const v=e.target.value; if(!v) return; const opt=e.target.options[e.target.selectedIndex]; document.getElementById('dfRepoUrl').value=v; loadBranchesInto(v,'dfBranchSelect','dfBranch',opt.dataset.branch||'main'); });
-document.getElementById('workerRepoSelect')?.addEventListener('change', (e)=>{ const v=e.target.value; if(!v) return; const opt=e.target.options[e.target.selectedIndex]; document.getElementById('workerRepo').value=v; loadBranchesInto(v,'workerBranchSelect','workerBranch',opt.dataset.branch||'main'); });
+document.getElementById('dfRepoSelect')?.addEventListener('change', (e)=>{ const v=e.target.value; if(!v) return; const opt=e.target.options[e.target.selectedIndex]; document.getElementById('dfRepoUrl').value=v; loadBranchesInto(v,'dfBranchSelect','dfBranch',opt.dataset.branch||'main'); detectDeployPreset(v, opt.dataset.branch||'main').then(preset => applyPresetToForm(preset, 'docker')); });
+document.getElementById('workerRepoSelect')?.addEventListener('change', (e)=>{ const v=e.target.value; if(!v) return; const opt=e.target.options[e.target.selectedIndex]; document.getElementById('workerRepo').value=v; loadBranchesInto(v,'workerBranchSelect','workerBranch',opt.dataset.branch||'main'); detectDeployPreset(v, opt.dataset.branch||'main').then(preset => applyPresetToForm(preset, 'worker')); });
 document.getElementById('dfBranchSelect')?.addEventListener('change',(e)=>{ const i=document.getElementById('dfBranch'); if(i) i.value=e.target.value; });
 document.getElementById('workerBranchSelect')?.addEventListener('change',(e)=>{ const i=document.getElementById('workerBranch'); if(i) i.value=e.target.value; });
 
