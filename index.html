@@ -1815,6 +1815,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 #page-new-deploy .deploy-side-panel{position:sticky;top:14px}
 @media(max-width:1099px){#page-new-deploy .deploy-side-panel{position:relative;top:auto}}
 #page-new-deploy #summaryUrl,#page-new-deploy #summaryName{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+#page-new-deploy .settings-collapse{border:1px solid rgba(16,185,129,.13);border-radius:22px;background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(8,13,24,.96));box-shadow:0 16px 46px rgba(0,0,0,.18);overflow:visible}#page-new-deploy .settings-collapse-summary{min-height:72px;padding:0 24px;display:flex;align-items:center;gap:14px;list-style:none;cursor:pointer;color:var(--text);user-select:none}#page-new-deploy .settings-collapse-summary::-webkit-details-marker{display:none}#page-new-deploy .settings-collapse-chevron{width:30px;height:30px;display:grid;place-items:center;color:#94a3b8;transition:transform .18s ease,color .18s ease;flex-shrink:0}#page-new-deploy .settings-collapse-chevron svg{width:26px;height:26px}#page-new-deploy .settings-collapse-title{font-size:1.02rem;font-weight:800;letter-spacing:.01em}#page-new-deploy .settings-collapse[open] .settings-collapse-chevron{transform:rotate(90deg);color:var(--green)}#page-new-deploy .settings-collapse[open] .settings-collapse-summary{border-bottom:1px solid rgba(16,185,129,.09);background:linear-gradient(90deg,rgba(16,185,129,.08),transparent);border-radius:22px 22px 0 0}#page-new-deploy .settings-collapse-body{padding:24px}#page-new-deploy .env-settings-panel{margin-top:8px;padding-top:22px;border-top:1px solid rgba(16,185,129,.12)}#page-new-deploy .env-settings-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}#page-new-deploy .env-settings-title{font-size:1.02rem;font-weight:800;color:var(--text)}#page-new-deploy .env-settings-subtitle{font-size:.86rem;color:var(--text-2);margin-top:4px}@media(max-width:640px){#page-new-deploy .settings-collapse-summary{min-height:72px;padding:0 18px}#page-new-deploy .settings-collapse-body{padding:20px}#page-new-deploy .env-settings-header{align-items:flex-start;flex-direction:column}#page-new-deploy .env-settings-header .btn{width:100%}}
 
 /* Deployments table responsive containment */
 #page-deployments .deployment-table-shell{overflow-x:auto;padding-bottom:6px}
@@ -1887,7 +1888,14 @@ textarea.input { resize: vertical; min-height: 80px; }
 #page-worker-create .input,#page-dockerfile-deploy .input{min-height:52px;border-radius:14px}
 #page-worker-create .two-col,#page-dockerfile-deploy .two-col{gap:16px}
 @media(min-width:1100px){#page-worker-create .two-col,#page-dockerfile-deploy .two-col{grid-template-columns:minmax(0,1fr) minmax(300px,380px)}}
+#page-worker-create .two-col > *,#page-dockerfile-deploy .two-col > *,#page-worker-create .card,#page-dockerfile-deploy .card,#page-worker-create .field,#page-dockerfile-deploy .field,#page-worker-create .field > div,#page-dockerfile-deploy .field > div{min-width:0;max-width:100%}
+#page-worker-create .input,#page-worker-create select.input,#page-dockerfile-deploy .input,#page-dockerfile-deploy select.input{width:100%;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+#page-worker-create .config-title,#page-dockerfile-deploy .config-title,#page-worker-create .config-sub,#page-dockerfile-deploy .config-sub{overflow-wrap:anywhere}
+#page-dockerfile-deploy #dfSubdomain{flex:1 1 auto;min-width:0}
+#page-dockerfile-deploy #dfSubdomain + span{min-width:0;max-width:45%;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:900px){#page-worker-create .two-col,#page-dockerfile-deploy .two-col{grid-template-columns:1fr}#page-worker-create .page-back,#page-dockerfile-deploy .page-back{margin-bottom:10px}}
+@media(max-width:768px){#page-worker-create,#page-dockerfile-deploy{padding-left:10px;padding-right:10px}#page-worker-create .config-hero,#page-dockerfile-deploy .config-hero{padding:18px 16px;border-radius:20px;margin-bottom:14px}#page-worker-create .config-title,#page-dockerfile-deploy .config-title{font-size:clamp(1.75rem,9vw,2.45rem);letter-spacing:-.03em}#page-worker-create .config-sub,#page-dockerfile-deploy .config-sub{font-size:.95rem;line-height:1.65}#page-worker-create .card-header,#page-dockerfile-deploy .card-header{padding:16px}#page-worker-create .card-body,#page-dockerfile-deploy .card-body{padding:16px!important}#page-worker-create .input,#page-dockerfile-deploy .input{min-height:54px;font-size:.9rem;padding-left:14px;padding-right:14px}#page-worker-create select.input,#page-dockerfile-deploy select.input{font-size:.82rem}#page-dockerfile-deploy #dfSubdomain + span{max-width:38%;font-size:.7rem;padding-left:8px;padding-right:8px}#workerEnvList,#dfBuildArgsList{padding-left:16px!important;padding-right:16px!important}}
+@media(max-width:520px){#page-worker-create .field > div[style*="display:flex"],#page-dockerfile-deploy .field > div[style*="display:flex"]{gap:6px!important}#workerEnvList > div[style*="display:flex"],#dfBuildArgsList > div[style*="display:flex"]{display:grid!important;grid-template-columns:1fr auto;align-items:center}#workerEnvList > div[style*="display:flex"] input:first-child,#dfBuildArgsList > div[style*="display:flex"] input:first-child{grid-column:1 / -1}#workerEnvList > div[style*="display:flex"] input,#dfBuildArgsList > div[style*="display:flex"] input{min-width:0}}
 
 /* ── Streak Calendar ─────────────────────────────────────────────────────── */
 .streak-grid { display:flex; gap:3px; }
@@ -3681,14 +3689,14 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             </div>
           </div>
 
-          <div class="card">
-            <div class="card-header">
-              <div>
-                <div class="card-title">Build Settings</div>
-                <div class="card-subtitle">Commands to install and build your project</div>
-              </div>
-            </div>
-            <div class="card-body">
+          <details class="settings-collapse build-settings-collapse" open>
+            <summary class="settings-collapse-summary">
+              <span class="settings-collapse-chevron" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </span>
+              <span class="settings-collapse-title">Build Settings</span>
+            </summary>
+            <div class="settings-collapse-body">
               <div class="deploy-form-grid">
                 <div class="field">
                   <label class="field-label">Install Command</label>
@@ -3698,6 +3706,11 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                   <label class="field-label">Build Command</label>
                   <input class="input input-mono" id="deployBuildCmd" value="npm run build" placeholder="npm run build">
                 </div>
+              </div>
+              <div class="field" id="startCmdField" style="display:none;">
+                <label class="field-label">Start Command</label>
+                <input class="input input-mono" id="deployStartCmd" value="npm start" placeholder="npm start">
+                <div class="field-hint">Command to start your server after deployment (e.g. <code style="font-family:var(--font-mono)">npm start</code>, <code style="font-family:var(--font-mono)">node dist/server.js</code>). Only for Server Apps.</div>
               </div>
               <div class="field">
                 <label class="field-label">Output Directory</label>
@@ -3718,11 +3731,6 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                   <input type="hidden" id="deploySiteType" value="static">
                 </div>
                 <div class="field-hint">Static sites serve files directly. Server apps run a persistent process.</div>
-              </div>
-              <div class="field" id="startCmdField" style="display:none;">
-                <label class="field-label">Start Command</label>
-                <input class="input input-mono" id="deployStartCmd" value="npm start" placeholder="npm start">
-                <div class="field-hint">Command to start your server after deployment (e.g. <code style="font-family:var(--font-mono)">npm start</code>, <code style="font-family:var(--font-mono)">node dist/server.js</code>). Only for Server Apps.</div>
               </div>
               <div class="field" id="customPortField" style="display:none;">
                 <label class="field-label">Custom App Port <span style="color:var(--text-3);font-weight:400;">(optional)</span></label>
@@ -3755,33 +3763,30 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <select class="input input-mono" id="deployWorkingDirSelect" style="margin-top:8px;display:none;" onchange="selectWorkingDirValue('deployWorkingDir', this.value)"></select>
                 <div class="field-hint">Browse repo folders or type manually. Deploy commands will run from this directory when set.</div>
               </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header">
-              <div>
-                <div class="card-title">Environment Variables</div>
-                <div class="card-subtitle">Injected into the build environment</div>
-              </div>
-              <button class="btn btn-ghost btn-sm" onclick="addEnvRow()">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add Variable
-              </button>
-            </div>
-            <div class="card-body">
-              <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;">
-                <div style="font-size:0.72rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;">Name</div>
-                <div style="font-size:0.72rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;">Value</div>
-                <div></div>
-              </div>
-              <div id="envVarsContainer">
-                <div class="empty-state" style="padding:24px 0;" id="envEmptyState">
-                  <div style="font-size:0.82rem;color:var(--text-3);">No environment variables added.</div>
+              <div class="env-settings-panel">
+                <div class="env-settings-header">
+                  <div>
+                    <div class="env-settings-title">Environment Variables</div>
+                    <div class="env-settings-subtitle">Injected into the build environment</div>
+                  </div>
+                  <button class="btn btn-ghost btn-sm" type="button" onclick="addEnvRow()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Variable
+                  </button>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;">
+                  <div style="font-size:0.72rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;">Name</div>
+                  <div style="font-size:0.72rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;">Value</div>
+                  <div></div>
+                </div>
+                <div id="envVarsContainer">
+                  <div class="empty-state" style="padding:24px 0;" id="envEmptyState">
+                    <div style="font-size:0.82rem;color:var(--text-3);">No environment variables added.</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </details>
         </div>
 
         <!-- Right: summary + deploy btn -->
