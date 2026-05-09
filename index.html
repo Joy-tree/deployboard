@@ -1341,26 +1341,18 @@ textarea.input { resize: vertical; min-height: 80px; }
 .terminal-empty-cta:hover{background:rgba(16,185,129,.18);}
 
 .terminal-empty-card.empty-logs-polished{
-  position:relative;overflow:hidden;width:min(88%,560px);min-height:56%;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  border-radius:10px;border:1px solid rgba(148,163,184,.12);
-  background:
-    radial-gradient(circle at 50% 24%,rgba(148,163,184,.08),transparent 30%),
-    linear-gradient(180deg,rgba(8,13,24,.62),rgba(2,6,23,.74));
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.02),0 24px 70px rgba(0,0,0,.32);
+  position:relative;overflow:hidden;width:calc(100% - 56px);min-height:calc(100% - 64px);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:0;border:1px solid rgba(148,163,184,.12);
+  background:#080b12;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.018);
 }
-.terminal-empty-card.empty-logs-polished::before{
-  content:'';position:absolute;inset:0;border-radius:10px;pointer-events:none;
-  background:linear-gradient(90deg,transparent,rgba(148,163,184,.055),transparent);
-  opacity:.5;
-}
-.terminal-empty-icon{position:relative;font-size:3.4rem;color:#5b6472;text-shadow:0 0 28px rgba(148,163,184,.18);}
-.terminal-empty-icon::after{content:'';display:block;width:30px;height:4px;border-radius:999px;background:#5b6472;margin:-8px 0 0 40px;box-shadow:0 0 18px rgba(148,163,184,.2);}
-.terminal-empty-title{font-family:var(--font-mono);font-weight:700;font-size:1.45rem;letter-spacing:.02em;margin-top:18px;color:#848892;}
-.terminal-empty-sub{font-family:var(--font-mono);font-size:1rem;line-height:1.45;margin-top:10px;color:#747883;max-width:440px;}
-.terminal-empty-card.empty-logs-polished .idle-orbit{position:absolute;width:170px;height:170px;border:1px solid rgba(148,163,184,.07);border-radius:50%;animation:idleOrbit 12s linear infinite;}
-.terminal-empty-card.empty-logs-polished .idle-orbit::before,.terminal-empty-card.empty-logs-polished .idle-orbit::after{content:'';position:absolute;border-radius:50%;background:#5b6472;box-shadow:0 0 18px rgba(148,163,184,.28);}
-.terminal-empty-card.empty-logs-polished .idle-orbit::before{width:6px;height:6px;left:22px;top:18px}.terminal-empty-card.empty-logs-polished .idle-orbit::after{width:4px;height:4px;right:28px;bottom:24px}
-.terminal-idle-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:18px;position:relative;z-index:1}.terminal-idle-chips span{font-family:var(--font-mono);font-size:.68rem;color:#7f8794;border:1px solid rgba(148,163,184,.12);background:rgba(15,23,42,.42);border-radius:999px;padding:5px 9px}
+.terminal-empty-card.empty-logs-polished::before{content:none;}
+.terminal-empty-icon{position:relative;font-size:3.4rem;color:#5b6472;text-shadow:0 0 28px rgba(148,163,184,.14);font-family:var(--font-mono);line-height:1;}
+.terminal-empty-icon::after{content:'';display:block;width:30px;height:4px;border-radius:999px;background:#5b6472;margin:-8px 0 0 40px;box-shadow:0 0 18px rgba(148,163,184,.16);}
+.terminal-empty-title{font-family:var(--font-mono);font-weight:500;font-size:1.45rem;letter-spacing:.02em;margin-top:22px;color:#848892;}
+.terminal-empty-sub{font-family:var(--font-mono);font-size:1rem;line-height:1.45;margin-top:10px;color:#747883;max-width:520px;text-align:center;}
+.terminal-empty-card.empty-logs-polished .idle-orbit,.terminal-idle-chips{display:none;}
+@media(max-width:640px){.terminal-empty-card.empty-logs-polished{width:calc(100% - 32px);min-height:calc(100% - 40px)}.terminal-empty-title{font-size:1.1rem}.terminal-empty-sub{font-size:.86rem;max-width:300px}.terminal-empty-icon{font-size:2.8rem}}
 .terminal-hud{position:absolute;left:14px;right:14px;bottom:12px;z-index:2;display:none;align-items:center;gap:8px;flex-wrap:wrap;pointer-events:none}.terminal-wrap.active-deploy .terminal-hud{display:flex}.terminal-hud span{font-family:var(--font-mono);font-size:.65rem;color:#bbf7d0;border:1px solid rgba(16,185,129,.2);border-radius:999px;padding:5px 8px;background:rgba(1,12,7,.72);box-shadow:0 0 16px rgba(16,185,129,.08)}
 .terminal-wrap.active-deploy{box-shadow:0 0 0 1px rgba(16,185,129,.1),0 22px 70px rgba(0,0,0,.38),0 0 45px rgba(16,185,129,.08)}
 .terminal-wrap.active-deploy::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(circle at 15% 10%,rgba(16,185,129,.12),transparent 28%),linear-gradient(90deg,rgba(16,185,129,.05),transparent 18%,transparent 82%,rgba(34,211,238,.05));}
@@ -6388,13 +6380,18 @@ function viewDeployLogs(deployId) {
   updateLogsHero(deployments.find(x => x.id === deployId));
   const d = deployments.find(x => x.id === deployId);
   if (d?.status === 'building') showMatrixTerminal(d); else hideMatrixTerminal();
-  if (d && d.logs) {
+  if (d) {
+    const lines = Array.isArray(d.logs) ? d.logs : [];
+    logBuffer = lines.slice();
+    _hasWrittenBuildLogs = lines.length > 0;
     if (term) {
       term.clear();
-      d.logs.forEach(l => term.writeln(l));
+      lines.forEach(l => term.writeln(l));
     }
+    renderStructuredLogs();
     document.getElementById('termTitle').textContent = d.projectName + ' · ' + d.id.slice(-8);
     document.getElementById('termStatus').innerHTML = statusBadge(d.status);
+    updateTerminalEmptyState();
   }
 }
 
@@ -7055,10 +7052,10 @@ function updateTerminalEmptyState() {
   if (subEl) subEl.textContent = 'Logs will appear here when your application starts generating them';
   if (ctaEl) ctaEl.style.display = 'none';
 
-  // Hide empty cover whenever user has any deployment context selected/viewed.
-  // Show it only before any deployment has ever been started.
-  const hasDeploymentContext = !!contextDeploy || !!activeBuildId || _hasWrittenBuildLogs || (Array.isArray(deployments) && deployments.length > 0);
-  el.classList.toggle('hide', hasDeploymentContext);
+  const contextLogs = Array.isArray(contextDeploy?.logs) ? contextDeploy.logs : [];
+  const hasCapturedLogs = contextLogs.length > 0 || (Array.isArray(logBuffer) && logBuffer.length > 0);
+  const shouldShowEmptyCover = !activeDeploy && !hasCapturedLogs;
+  el.classList.toggle('hide', !shouldShowEmptyCover);
 }
 
 function writeBench(title, detail='') {
@@ -8357,7 +8354,7 @@ async function saveCustomDomain() {
       statusEl.style.background = 'rgba(245,158,11,0.1)';
       statusEl.style.border = '1px solid rgba(245,158,11,0.2)';
       statusEl.style.color = 'var(--amber)';
-      statusEl.innerHTML = '⚠ Domain saved but DNS not detected yet. Make sure you added the CNAME record, then click "Save & Check DNS" again.';
+      statusEl.innerHTML = '⚠ Domain saved but DNS not detected yet. ' + (vd.reason || 'Make sure you added the CNAME record, then click "Save & Check DNS" again.');
       toast('Domain saved — DNS pending', 'info');
     }
     await renderDomains();
@@ -8386,7 +8383,7 @@ async function verifyCustomDomain(domain) {
     if (d.verified) {
       toast(domain + ' verified! ✓', 'success');
     } else {
-      toast('DNS not detected yet for ' + domain, 'error');
+      toast(d.reason || ('DNS not detected yet for ' + domain), 'error');
     }
     renderDomains();
   } catch(e) { toast('Verification failed', 'error'); }
