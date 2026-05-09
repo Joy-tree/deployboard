@@ -95,7 +95,9 @@ function getOrAssignPort(subdomain) {
 }
 
 // ── Middleware ────────────────────────────────────────────────────────────────
-app.use(express.json());
+app.use(express.json({
+  verify: (req, _res, buf) => { req.rawBody = Buffer.from(buf || ''); }
+}));
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin',  '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
@@ -1352,8 +1354,7 @@ app.post('/api/projects/:id/autodeploy', requireAuth, async (req, res) => {
 
 app.post('/api/github/webhook', async (req, res) => {
   try {
-    const provided = String(req.headers['x-deployboard-secret'] || req.query.secret || '');
-    if (provided !== GLOBAL_WEBHOOK_SECRET) return res.status(401).json({ error: 'Invalid webhook secret' });
+    if (!verifyGitHubWebhookSecret(req, GLOBAL_WEBHOOK_SECRET)) return res.status(401).json({ error: 'Invalid webhook secret' });
     const event = String(req.headers['x-github-event'] || '');
     if (event && event !== 'push') return res.json({ ok:true, ignored:true, reason:'event_not_push' });
     const repoFull = String(req.body?.repository?.full_name || '').toLowerCase();
@@ -1380,8 +1381,7 @@ app.post('/api/github/webhook/:projectId', async (req, res) => {
   try {
     const project = await Project.findById(String(req.params.projectId || ''));
     if (!project || !project.autoDeployEnabled || !project.autoDeploySecret) return res.status(404).json({ error: 'Webhook not configured' });
-    const provided = String(req.headers['x-deployboard-secret'] || req.query.secret || '');
-    if (!provided || provided !== project.autoDeploySecret) return res.status(401).json({ error: 'Invalid webhook secret' });
+    if (!verifyGitHubWebhookSecret(req, project.autoDeploySecret)) return res.status(401).json({ error: 'Invalid webhook secret' });
     const event = String(req.headers['x-github-event'] || '');
     if (event && event !== 'push') return res.json({ ok:true, ignored:true, reason:'event_not_push' });
     const ref = String(req.body?.ref || '');
@@ -1392,13 +1392,19 @@ app.post('/api/github/webhook/:projectId', async (req, res) => {
 });
 
 
-app.get('/api/webhook/global-secret', requireAuth, async (_req, res) => {
-  res.json({ ok:true, secret: GLOBAL_WEBHOOK_SECRET || '', webhookUrl: '/api/github/webhook' });
+app.get('/api/webhook/global-secret', requireAuth, async (req, res) => {
+  res.json({
+    ok:true,
+    secret: GLOBAL_WEBHOOK_SECRET || '',
+    webhookUrl: `${req.protocol}://${req.get('host')}/api/github/webhook`,
+    envConfigured: !!(process.env.GLOBAL_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET),
+    note: 'Use this one GitHub webhook secret for every repository webhook. DeployBoard matches the pushed repository/branch to all enabled projects.'
+  });
 });
 
-app.post('/api/webhook/global-secret/regenerate', requireAuth, async (_req, res) => {
+app.post('/api/webhook/global-secret/regenerate', requireAuth, async (req, res) => {
   GLOBAL_WEBHOOK_SECRET = crypto.randomBytes(24).toString('hex');
-  res.json({ ok:true, secret: GLOBAL_WEBHOOK_SECRET, webhookUrl: '/api/github/webhook', note: 'Runtime value updated. Persist in .env as GLOBAL_WEBHOOK_SECRET after restart.' });
+  res.json({ ok:true, secret: GLOBAL_WEBHOOK_SECRET, webhookUrl: `${req.protocol}://${req.get('host')}/api/github/webhook`, envConfigured: false, note: 'Runtime value updated. Persist in .env as GLOBAL_WEBHOOK_SECRET after restart.' });
 });
 
 // ── Dashboard static serving — MUST be after all API routes ──────────────────
@@ -1424,6 +1430,30 @@ function parseGitHubRepo(repoUrl = '') {
   const m = String(repoUrl).match(/github\.com\/([^/]+)\/([^/#?]+)/i);
   if (!m) return null;
   return { owner: m[1], repo: m[2].replace(/\.git$/i, '') };
+}
+
+
+function timingSafeEqualString(a = '', b = '') {
+  const left = Buffer.from(String(a));
+  const right = Buffer.from(String(b));
+  return left.length === right.length && crypto.timingSafeEqual(left, right);
+}
+
+function verifyGitHubWebhookSecret(req, secret) {
+  const expectedSecret = String(secret || '').trim();
+  if (!expectedSecret) return false;
+
+  // Legacy/manual mode: useful for curl tests or older DeployBoard webhook docs.
+  const provided = String(req.headers['x-deployboard-secret'] || req.query.secret || '').trim();
+  if (provided && timingSafeEqualString(provided, expectedSecret)) return true;
+
+  // GitHub's real webhook "Secret" field is not sent as a plain header. GitHub
+  // signs the raw request body and sends the HMAC in X-Hub-Signature-256.
+  const signature = String(req.headers['x-hub-signature-256'] || '').trim();
+  if (!signature.startsWith('sha256=')) return false;
+  const rawBody = req.rawBody && req.rawBody.length ? req.rawBody : Buffer.from(JSON.stringify(req.body || {}));
+  const digest = 'sha256=' + crypto.createHmac('sha256', expectedSecret).update(rawBody).digest('hex');
+  return timingSafeEqualString(signature, digest);
 }
 
 
