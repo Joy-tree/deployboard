@@ -946,19 +946,26 @@ app.get('/api/domains', async (req, res) => {
 app.post('/api/domains', async (req, res) => {
   const { domain, subdomain } = req.body;
   if (!domain || !subdomain) return res.status(400).json({ error: 'domain and subdomain are required' });
-  const clean = domain.toLowerCase().trim().replace('https://', '').replace('http://', '').replace(/\/$/, '');
+  const clean = normalizeHostHeader(domain);
+  if (!clean) return res.status(400).json({ error: 'Invalid domain' });
   try {
     if (!isMongoReady()) {
       // In-memory fallback
       const exists = memDomains.find(d => d.domain === clean);
-      if (exists) return res.status(409).json({ error: 'Domain already registered' });
+      if (exists) {
+        if (exists.subdomain !== subdomain) return res.status(409).json({ error: 'Domain already registered to another project' });
+        return res.json({ ok: true, domain: exists, existing: true, warning: 'MongoDB unavailable — domain saved in memory only and will reset on restart' });
+      }
       const entry = { domain: clean, subdomain, verified: false, createdAt: new Date() };
       memDomains.push(entry);
       addActivity('domain', 'Custom domain added (mem): ' + clean + ' → ' + subdomain);
       return res.json({ ok: true, domain: entry, warning: 'MongoDB unavailable — domain saved in memory only and will reset on restart' });
     }
     const existing = await CustomDomain.findOne({ domain: clean }).lean().maxTimeMS(5000);
-    if (existing) return res.status(409).json({ error: 'Domain already registered' });
+    if (existing) {
+      if (existing.subdomain !== subdomain) return res.status(409).json({ error: 'Domain already registered to another project' });
+      return res.json({ ok: true, domain: existing, existing: true });
+    }
     const project = await Project.findOne({ subdomain }).lean().maxTimeMS(5000);
     if (!project) return res.status(404).json({ error: 'Project not found for subdomain: ' + subdomain });
     const cd = await new CustomDomain({ domain: clean, subdomain, verified: false }).save();
@@ -971,33 +978,86 @@ app.post('/api/domains', async (req, res) => {
   }
 });
 
+function isCloudflareIpv4(ip) {
+  const parts = String(ip || '').split('.').map(Number);
+  if (parts.length !== 4 || parts.some(n => Number.isNaN(n) || n < 0 || n > 255)) return false;
+  const n = (((parts[0] << 24) >>> 0) + (parts[1] << 16) + (parts[2] << 8) + parts[3]) >>> 0;
+  const ranges = [
+    ['173.245.48.0', 20], ['103.21.244.0', 22], ['103.22.200.0', 22], ['103.31.4.0', 22],
+    ['141.101.64.0', 18], ['108.162.192.0', 18], ['190.93.240.0', 20], ['188.114.96.0', 20],
+    ['197.234.240.0', 22], ['198.41.128.0', 17], ['162.158.0.0', 15], ['104.16.0.0', 13],
+    ['104.24.0.0', 14], ['172.64.0.0', 13], ['131.0.72.0', 22]
+  ];
+  return ranges.some(([base, bits]) => {
+    const b = base.split('.').map(Number);
+    const m = bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0;
+    const bn = (((b[0] << 24) >>> 0) + (b[1] << 16) + (b[2] << 8) + b[3]) >>> 0;
+    return (n & m) === (bn & m);
+  });
+}
+
+function isCloudflareIpv6(ip) {
+  const s = String(ip || '').toLowerCase();
+  return s.startsWith('2400:cb00:') || s.startsWith('2606:4700:') || s.startsWith('2803:f800:') ||
+         s.startsWith('2405:b500:') || s.startsWith('2405:8100:') || s.startsWith('2a06:98c0:') ||
+         s.startsWith('2c0f:f248:');
+}
+
+async function resolveDnsRecords(domain) {
+  const dns = require('dns');
+  const resolvers = [dns.promises];
+  const publicResolver = new dns.promises.Resolver();
+  publicResolver.setServers(['1.1.1.1', '8.8.8.8']);
+  resolvers.push(publicResolver);
+  const records = { cname: [], a: [], aaaa: [] };
+  for (const resolver of resolvers) {
+    for (const [type, fn] of [['cname', 'resolveCname'], ['a', 'resolve4'], ['aaaa', 'resolve6']]) {
+      try {
+        const vals = await resolver[fn](domain);
+        for (const v of vals || []) if (!records[type].includes(v)) records[type].push(v);
+      } catch (_) {}
+    }
+  }
+  return records;
+}
+
+async function verifyDomainDns(domain) {
+  const clean = normalizeHostHeader(domain);
+  const expectedTunnel = CF_TUNNEL_ID ? `${CF_TUNNEL_ID}.cfargotunnel.com` : '';
+  const expected = [expectedTunnel, BASE_DOMAIN, 'cfargotunnel.com'].filter(Boolean).map(v => v.toLowerCase().replace(/\.$/, ''));
+  const records = await resolveDnsRecords(clean);
+  const cnames = records.cname.map(v => String(v).toLowerCase().replace(/\.$/, ''));
+  const cnameMatch = cnames.some(c => expected.some(t => c === t || c.endsWith('.' + t) || c.includes(t)));
+  const proxiedCloudflare = records.a.some(isCloudflareIpv4) || records.aaaa.some(isCloudflareIpv6);
+  return {
+    verified: cnameMatch || proxiedCloudflare,
+    method: cnameMatch ? 'cname' : (proxiedCloudflare ? 'cloudflare-proxy' : 'pending'),
+    records,
+    expected: expectedTunnel || BASE_DOMAIN,
+    reason: cnameMatch
+      ? 'CNAME points to the expected DeployBoard target.'
+      : (proxiedCloudflare
+        ? 'Cloudflare proxy detected. Proxied records hide the CNAME publicly, so this is accepted.'
+        : 'No matching CNAME or Cloudflare-proxied DNS record was detected yet.')
+  };
+}
+
 app.post('/api/domains/:domain/verify', async (req, res) => {
-  const domain = req.params.domain;
+  const domain = normalizeHostHeader(req.params.domain);
+  if (!domain) return res.status(400).json({ error: 'Invalid domain' });
   try {
-    const { execSync } = require('child_process');
-    let verified = false;
-    try {
-      let result = '';
-      // Try dig first, fall back to nslookup, fall back to a simple DNS check
-      const cmds = [
-        'dig +short CNAME ' + domain,
-        'nslookup ' + domain + ' | grep -i cname',
-        'host ' + domain,
-      ];
-      for (const cmd of cmds) {
-        try {
-          result = execSync(cmd + ' 2>/dev/null', { encoding: 'utf8', timeout: 5000 }).trim();
-          if (result) break;
-        } catch(ex) {}
-      }
-      if (result.includes('cfargotunnel.com') || result.includes(BASE_DOMAIN)) {
-        verified = true;
-      }
-      // If no DNS tools available, mark as pending (user can verify later)
-    } catch(e) {}
-    await CustomDomain.findOneAndUpdate({ domain }, { verified }).maxTimeMS(5000);
-    res.json({ ok: true, verified });
-  } catch(e) { res.status(500).json({ error: e.message }); }
+    const result = await verifyDomainDns(domain);
+    if (!isMongoReady()) {
+      const entry = memDomains.find(d => d.domain === domain);
+      if (entry) entry.verified = result.verified;
+    } else {
+      await CustomDomain.findOneAndUpdate({ domain }, { verified: result.verified }).maxTimeMS(5000);
+    }
+    res.json({ ok: true, ...result });
+  } catch(e) {
+    console.error('[CustomDomain] verify error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.delete('/api/domains/:domain', async (req, res) => {
