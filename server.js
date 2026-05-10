@@ -1339,7 +1339,7 @@ app.post('/api/projects/:id/autodeploy', requireAuth, async (req, res) => {
     const enabled = !!req.body.enabled;
     if (!isDbReady()) {
       memAutoDeploy.set(id, { enabled: !!enabled, updatedAt: Date.now() });
-      return res.json({ ok:true, enabled: !!enabled, webhookUrl: `${req.protocol}://${req.get('host')}/api/github/webhook`, secret: GLOBAL_WEBHOOK_SECRET, mode: 'global-memory' });
+      return res.json({ ok:true, enabled: !!enabled, webhookUrl: `${getPublicOrigin(req)}/api/github/webhook`, secret: GLOBAL_WEBHOOK_SECRET, mode: 'global-memory' });
     }
     const project = await findProjectByAnyId(id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
@@ -1347,7 +1347,7 @@ app.post('/api/projects/:id/autodeploy', requireAuth, async (req, res) => {
     if (!project.autoDeploySecret) project.autoDeploySecret = crypto.randomBytes(24).toString('hex');
     project.autoDeployEnabled = enabled;
     await project.save();
-    res.json({ ok:true, enabled: project.autoDeployEnabled, webhookUrl: `${req.protocol}://${req.get('host')}/api/github/webhook`, secret: GLOBAL_WEBHOOK_SECRET || project.autoDeploySecret, mode: GLOBAL_WEBHOOK_SECRET ? 'global' : 'project' });
+    res.json({ ok:true, enabled: project.autoDeployEnabled, webhookUrl: `${getPublicOrigin(req)}/api/github/webhook`, secret: GLOBAL_WEBHOOK_SECRET || project.autoDeploySecret, mode: GLOBAL_WEBHOOK_SECRET ? 'global' : 'project' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1396,7 +1396,7 @@ app.get('/api/webhook/global-secret', requireAuth, async (req, res) => {
   res.json({
     ok:true,
     secret: GLOBAL_WEBHOOK_SECRET || '',
-    webhookUrl: `${req.protocol}://${req.get('host')}/api/github/webhook`,
+    webhookUrl: `${getPublicOrigin(req)}/api/github/webhook`,
     envConfigured: !!(process.env.GLOBAL_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET),
     note: 'Use this one GitHub webhook secret for every repository webhook. DeployBoard matches the pushed repository/branch to all enabled projects.'
   });
@@ -1404,7 +1404,7 @@ app.get('/api/webhook/global-secret', requireAuth, async (req, res) => {
 
 app.post('/api/webhook/global-secret/regenerate', requireAuth, async (req, res) => {
   GLOBAL_WEBHOOK_SECRET = crypto.randomBytes(24).toString('hex');
-  res.json({ ok:true, secret: GLOBAL_WEBHOOK_SECRET, webhookUrl: `${req.protocol}://${req.get('host')}/api/github/webhook`, envConfigured: false, note: 'Runtime value updated. Persist in .env as GLOBAL_WEBHOOK_SECRET after restart.' });
+  res.json({ ok:true, secret: GLOBAL_WEBHOOK_SECRET, webhookUrl: `${getPublicOrigin(req)}/api/github/webhook`, envConfigured: false, note: 'Runtime value updated. Persist in .env as GLOBAL_WEBHOOK_SECRET after restart.' });
 });
 
 // ── Dashboard static serving — MUST be after all API routes ──────────────────
@@ -1430,6 +1430,15 @@ function parseGitHubRepo(repoUrl = '') {
   const m = String(repoUrl).match(/github\.com\/([^/]+)\/([^/#?]+)/i);
   if (!m) return null;
   return { owner: m[1], repo: m[2].replace(/\.git$/i, '') };
+}
+
+function getPublicOrigin(req) {
+  const host = String(req.headers['x-forwarded-host'] || req.get('host') || '').trim();
+  const xfProtoRaw = String(req.headers['x-forwarded-proto'] || '').trim();
+  const xfProto = xfProtoRaw.split(',')[0].trim().toLowerCase();
+  const hostLooksPublic = host && !/^localhost(?::\d+)?$/i.test(host) && !/^127(?:\.\d{1,3}){3}(?::\d+)?$/.test(host);
+  const proto = xfProto || (req.secure ? 'https' : (hostLooksPublic ? 'https' : 'http'));
+  return `${proto}://${host}`;
 }
 
 
