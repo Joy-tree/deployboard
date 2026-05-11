@@ -654,16 +654,16 @@ function normalizeGitHubClientId(value) {
 
 app.get('/api/auth/github/url', (req, res) => {
   if (!GITHUB_CLIENT_ID) return res.status(400).json({ error: 'GitHub OAuth client ID is not configured' });
-  const origin = `${req.protocol}://${req.get('host')}`;
+  const origin = getPublicOrigin(req);
   const configuredRedirect = process.env.GITHUB_REDIRECT_URI || process.env.GITHUB_OAUTH_REDIRECT_URI || '';
-  const redirectUri = configuredRedirect || `${origin}/`;
+  const redirectUri = configuredRedirect || '';
   const normalizedClientId = normalizeGitHubClientId(GITHUB_CLIENT_ID);
   const url = new URL('https://github.com/login/oauth/authorize');
   url.searchParams.set('client_id', normalizedClientId);
-  url.searchParams.set('redirect_uri', redirectUri);
+  if (redirectUri) url.searchParams.set('redirect_uri', redirectUri);
   url.searchParams.set('scope', 'repo read:user user:email');
   url.searchParams.set('state', 'deployboard_github_auth');
-  res.json({ url: url.toString(), redirectUri, clientIdHint: normalizedClientId.slice(0,6) + '...' });
+  res.json({ url: url.toString(), redirectUri: redirectUri || '(using GitHub OAuth app default callback URL)', origin, clientIdHint: normalizedClientId.slice(0,6) + '...' });
 });
 
 app.post('/api/auth/github/exchange', async (req, res) => {
