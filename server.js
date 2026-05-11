@@ -1519,16 +1519,20 @@ const autoDeployState = new Map();
 async function checkAndAutoDeployProjects() {
 
   let allProjects = [];
-  try { allProjects = await Project.find().lean().maxTimeMS(7000); } catch { return; }
+  try { allProjects = await Project.find({ autoDeployEnabled: true }).lean().maxTimeMS(7000); } catch { return; }
   for (const p of allProjects) {
+    if (!p || !p.autoDeployEnabled) continue;
     const parsed = parseGitHubRepo(p.repoUrl);
     if (!parsed) continue;
     const key = String(p._id);
     if (autoDeployState.get(key)?.deploying) continue;
     try {
       const branch = p.branch || 'main';
+      const owner = await User.findById(p.ownerUserId).lean().catch(()=>null);
+      const token = String(owner?.githubAccessToken || '').trim();
+      if (!token) continue;
       const r = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/commits/${encodeURIComponent(branch)}`, {
-        headers: { 'Authorization': `Bearer ${(await User.findById(p.ownerUserId).lean().catch(()=>null))?.githubAccessToken || ''}`, 'User-Agent': 'DeployBoard AutoDeploy' }
+        headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'DeployBoard AutoDeploy' }
       });
       if (!r.ok) continue;
       const d = await r.json();
