@@ -7946,7 +7946,19 @@ function normalizeGitHubAuthorizeUrl(rawUrl) {
 
 function continueWithGitHub() {
   fetch('/api/auth/github/url')
-    .then(r => r.json())
+    .then(async (r) => {
+      const raw = await r.text();
+      let d = null;
+      try { d = JSON.parse(raw); } catch (_) {}
+      if (!r.ok) {
+        const msg = d?.error || `GitHub auth endpoint failed (${r.status})`;
+        throw new Error(msg);
+      }
+      if (!d) {
+        throw new Error('GitHub auth endpoint returned non-JSON response. Check server/API routing.');
+      }
+      return d;
+    })
     .then(d => {
       if (!d.url) throw new Error(d.error || 'Failed to create GitHub auth URL');
       const authUrl = normalizeGitHubAuthorizeUrl(d.url);
