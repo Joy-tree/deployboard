@@ -1,6 +1,6 @@
 'use strict';
 
-// ===== DEPLOYBOARD UPDATE MARKER (VISIBLE) =====
+// ===== DEPLOYBOARD UPDATE MARKER (VISIBLE) ====
 // UPDATED BY AGENT: 2026-04-29T00:00:00Z
 // DNS behavior in this version:
 // - supports Cloudflare specific-record UPSERT (create/update)
