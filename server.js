@@ -35,6 +35,7 @@ const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || process.env.GIT
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || '';
 let GLOBAL_WEBHOOK_SECRET = process.env.GLOBAL_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET || '';
 if (!GLOBAL_WEBHOOK_SECRET) GLOBAL_WEBHOOK_SECRET = crypto.randomBytes(24).toString('hex');
+const INTERNAL_DEPLOY_KEY = process.env.INTERNAL_DEPLOY_KEY || crypto.randomBytes(24).toString('hex');
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 30);
 
 function normalizeBaseDomain(value) {
@@ -507,6 +508,15 @@ async function verifyFirebaseIdToken(idToken) {
 
 async function requireAuth(req, res, next) {
   try {
+    const internalKey = String(req.headers['x-deployboard-internal-key'] || '');
+    if (internalKey && timingSafeEqualString(internalKey, INTERNAL_DEPLOY_KEY)) {
+      const ownerId = String(req.headers['x-deployboard-owner-id'] || '').trim();
+      if (!ownerId) return res.status(401).json({ error: 'Unauthorized' });
+      const owner = await User.findById(ownerId).catch(()=>null);
+      if (!owner) return res.status(401).json({ error: 'Unauthorized' });
+      req.user = owner;
+      return next();
+    }
     const user = await getAuthUser(req);
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
     req.user = user;
@@ -639,21 +649,32 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 });
 
 function normalizeGitHubClientId(value) {
-  return String(value || '').trim().replace(/^Iv([0-9])\./, 'Iv$1.').replace(/^Iv(?![0-9]\.)/, 'Iv1.');
+  return String(value || '').trim();
 }
 
 app.get('/api/auth/github/url', (req, res) => {
   if (!GITHUB_CLIENT_ID) return res.status(400).json({ error: 'GitHub OAuth client ID is not configured' });
-  const origin = `${req.protocol}://${req.get('host')}`;
+  const origin = getPublicOrigin(req);
   const configuredRedirect = process.env.GITHUB_REDIRECT_URI || process.env.GITHUB_OAUTH_REDIRECT_URI || '';
-  const redirectUri = configuredRedirect || `${origin}/`;
+  let redirectUri = `${origin}/`;
+  try {
+    if (configuredRedirect) {
+      const normalizedRedirect = /^https?:\/\//i.test(configuredRedirect)
+        ? configuredRedirect
+        : `https://${configuredRedirect.replace(/^\/+/, '')}`;
+      const parsed = new URL(normalizedRedirect);
+      if (parsed.protocol === 'https:' || parsed.hostname === 'localhost') {
+        redirectUri = normalizedRedirect;
+      }
+    }
+  } catch (_) {}
   const normalizedClientId = normalizeGitHubClientId(GITHUB_CLIENT_ID);
   const url = new URL('https://github.com/login/oauth/authorize');
   url.searchParams.set('client_id', normalizedClientId);
   url.searchParams.set('redirect_uri', redirectUri);
   url.searchParams.set('scope', 'repo read:user user:email');
   url.searchParams.set('state', 'deployboard_github_auth');
-  res.json({ url: url.toString(), redirectUri, clientIdHint: normalizedClientId.slice(0,6) + '...' });
+  res.json({ url: url.toString(), redirectUri, origin, clientIdHint: normalizedClientId.slice(0,6) + '...' });
 });
 
 app.post('/api/auth/github/exchange', async (req, res) => {
@@ -1339,7 +1360,7 @@ app.post('/api/projects/:id/autodeploy', requireAuth, async (req, res) => {
     const enabled = !!req.body.enabled;
     if (!isDbReady()) {
       memAutoDeploy.set(id, { enabled: !!enabled, updatedAt: Date.now() });
-      return res.json({ ok:true, enabled: !!enabled, webhookUrl: `${req.protocol}://${req.get('host')}/api/github/webhook`, secret: GLOBAL_WEBHOOK_SECRET, mode: 'global-memory' });
+      return res.json({ ok:true, enabled: !!enabled, webhookUrl: `${getPublicOrigin(req)}/api/github/webhook`, secret: GLOBAL_WEBHOOK_SECRET, mode: 'global-memory' });
     }
     const project = await findProjectByAnyId(id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
@@ -1347,7 +1368,7 @@ app.post('/api/projects/:id/autodeploy', requireAuth, async (req, res) => {
     if (!project.autoDeploySecret) project.autoDeploySecret = crypto.randomBytes(24).toString('hex');
     project.autoDeployEnabled = enabled;
     await project.save();
-    res.json({ ok:true, enabled: project.autoDeployEnabled, webhookUrl: `${req.protocol}://${req.get('host')}/api/github/webhook`, secret: GLOBAL_WEBHOOK_SECRET || project.autoDeploySecret, mode: GLOBAL_WEBHOOK_SECRET ? 'global' : 'project' });
+    res.json({ ok:true, enabled: project.autoDeployEnabled, webhookUrl: `${getPublicOrigin(req)}/api/github/webhook`, secret: GLOBAL_WEBHOOK_SECRET || project.autoDeploySecret, mode: GLOBAL_WEBHOOK_SECRET ? 'global' : 'project' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1362,18 +1383,28 @@ app.post('/api/github/webhook', async (req, res) => {
     const branch = ref.startsWith('refs/heads/') ? ref.slice('refs/heads/'.length) : '';
     if (!repoFull) return res.status(400).json({ error: 'Missing repository.full_name' });
     const all = isDbReady() ? await Project.find({ autoDeployEnabled: true }).lean().maxTimeMS(6000).catch(()=>[]) : [];
+    let matched = 0;
     let queued = 0;
+    const skipped = [];
     for (const p of all) {
       const parsed = parseGitHubRepo(p.repoUrl || '');
       if (!parsed) continue;
       const full = `${parsed.owner}/${parsed.repo}`.toLowerCase();
       if (full !== repoFull) continue;
+      matched++;
       const targetBranch = String(p.branch || 'main');
-      if (branch && targetBranch !== branch) continue;
-      triggerProjectDeploy(p, branch || targetBranch).catch(()=>{});
-      queued++;
+      if (branch && targetBranch !== branch) {
+        skipped.push({ project: p.name, reason: 'branch_mismatch', expected: targetBranch, got: branch });
+        continue;
+      }
+      try {
+        await triggerProjectDeploy(p, branch || targetBranch);
+        queued++;
+      } catch (e) {
+        skipped.push({ project: p.name, reason: String(e?.message || 'deploy_trigger_failed') });
+      }
     }
-    res.json({ ok:true, queued, repo: repoFull, branch: branch || null });
+    res.json({ ok:true, matched, queued, skipped, repo: repoFull, branch: branch || null });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1386,7 +1417,7 @@ app.post('/api/github/webhook/:projectId', async (req, res) => {
     if (event && event !== 'push') return res.json({ ok:true, ignored:true, reason:'event_not_push' });
     const ref = String(req.body?.ref || '');
     const branch = ref.startsWith('refs/heads/') ? ref.slice('refs/heads/'.length) : (project.branch || 'main');
-    triggerProjectDeploy(project, branch).catch(()=>{});
+    await triggerProjectDeploy(project, branch);
     res.json({ ok:true, queued:true, branch });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -1396,7 +1427,7 @@ app.get('/api/webhook/global-secret', requireAuth, async (req, res) => {
   res.json({
     ok:true,
     secret: GLOBAL_WEBHOOK_SECRET || '',
-    webhookUrl: `${req.protocol}://${req.get('host')}/api/github/webhook`,
+    webhookUrl: `${getPublicOrigin(req)}/api/github/webhook`,
     envConfigured: !!(process.env.GLOBAL_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET),
     note: 'Use this one GitHub webhook secret for every repository webhook. DeployBoard matches the pushed repository/branch to all enabled projects.'
   });
@@ -1404,7 +1435,7 @@ app.get('/api/webhook/global-secret', requireAuth, async (req, res) => {
 
 app.post('/api/webhook/global-secret/regenerate', requireAuth, async (req, res) => {
   GLOBAL_WEBHOOK_SECRET = crypto.randomBytes(24).toString('hex');
-  res.json({ ok:true, secret: GLOBAL_WEBHOOK_SECRET, webhookUrl: `${req.protocol}://${req.get('host')}/api/github/webhook`, envConfigured: false, note: 'Runtime value updated. Persist in .env as GLOBAL_WEBHOOK_SECRET after restart.' });
+  res.json({ ok:true, secret: GLOBAL_WEBHOOK_SECRET, webhookUrl: `${getPublicOrigin(req)}/api/github/webhook`, envConfigured: false, note: 'Runtime value updated. Persist in .env as GLOBAL_WEBHOOK_SECRET after restart.' });
 });
 
 // ── Dashboard static serving — MUST be after all API routes ──────────────────
@@ -1430,6 +1461,15 @@ function parseGitHubRepo(repoUrl = '') {
   const m = String(repoUrl).match(/github\.com\/([^/]+)\/([^/#?]+)/i);
   if (!m) return null;
   return { owner: m[1], repo: m[2].replace(/\.git$/i, '') };
+}
+
+function getPublicOrigin(req) {
+  const host = String(req.headers['x-forwarded-host'] || req.get('host') || '').trim();
+  const xfProtoRaw = String(req.headers['x-forwarded-proto'] || '').trim();
+  const xfProto = xfProtoRaw.split(',')[0].trim().toLowerCase();
+  const hostLooksPublic = host && !/^localhost(?::\d+)?$/i.test(host) && !/^127(?:\.\d{1,3}){3}(?::\d+)?$/.test(host);
+  const proto = xfProto || (req.secure ? 'https' : (hostLooksPublic ? 'https' : 'http'));
+  return `${proto}://${host}`;
 }
 
 
@@ -1459,12 +1499,9 @@ function verifyGitHubWebhookSecret(req, secret) {
 
 async function triggerProjectDeploy(p, branchOverride = null) {
   const ownerId = String(p.ownerUserId || '');
-  if (!ownerId) return;
+  if (!ownerId) throw new Error('missing_owner_user');
   const owner = await User.findById(ownerId).catch(()=>null);
-  if (!owner) return;
-  const token = createSessionToken();
-  const expiresAt = new Date(Date.now() + 10 * 60000);
-  await Session.create({ token, userId: owner._id, expiresAt }).catch(()=>null);
+  if (!owner) throw new Error('owner_not_found');
   const payload = {
     name: p.name, subdomain: p.subdomain, repoUrl: p.repoUrl, branch: branchOverride || p.branch || 'main',
     installCmd: p.installCmd || 'npm install', buildCmd: p.buildCmd || 'npm run build',
@@ -1472,7 +1509,20 @@ async function triggerProjectDeploy(p, branchOverride = null) {
     siteType: p.siteType || 'static', envVars: p.envVars || {}, isDockerfileDeploy: !!p.isDockerfileDeploy,
     isWorker: !!p.isWorker, dockerfilePath: p.dockerfilePath || 'Dockerfile', exposedPort: p.exposedPort || 3000
   };
-  await fetch(`http://127.0.0.1:${PORT}/api/deploy`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify(payload) }).catch(()=>{});
+  const deployResp = await fetch(`http://127.0.0.1:${PORT}/api/deploy`, {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-deployboard-internal-key': INTERNAL_DEPLOY_KEY,
+      'x-deployboard-owner-id': String(owner._id || ownerId)
+    },
+    body: JSON.stringify(payload)
+  }).catch(()=>null);
+  if (!deployResp || !deployResp.ok) {
+    const detail = deployResp ? await deployResp.text().catch(()=> '') : 'no_response';
+    throw new Error('deploy_trigger_failed:' + (detail || deployResp?.status || 'unknown'));
+  }
+  return true;
 }
 
 const memAutoDeploy = new Map();
@@ -1480,16 +1530,20 @@ const autoDeployState = new Map();
 async function checkAndAutoDeployProjects() {
 
   let allProjects = [];
-  try { allProjects = await Project.find().lean().maxTimeMS(7000); } catch { return; }
+  try { allProjects = await Project.find({ autoDeployEnabled: true }).lean().maxTimeMS(7000); } catch { return; }
   for (const p of allProjects) {
+    if (!p || !p.autoDeployEnabled) continue;
     const parsed = parseGitHubRepo(p.repoUrl);
     if (!parsed) continue;
     const key = String(p._id);
     if (autoDeployState.get(key)?.deploying) continue;
     try {
       const branch = p.branch || 'main';
+      const owner = await User.findById(p.ownerUserId).lean().catch(()=>null);
+      const token = String(owner?.githubAccessToken || '').trim();
+      if (!token) continue;
       const r = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/commits/${encodeURIComponent(branch)}`, {
-        headers: { 'Authorization': `Bearer ${(await User.findById(p.ownerUserId).lean().catch(()=>null))?.githubAccessToken || ''}`, 'User-Agent': 'DeployBoard AutoDeploy' }
+        headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'DeployBoard AutoDeploy' }
       });
       if (!r.ok) continue;
       const d = await r.json();
