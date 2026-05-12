@@ -649,7 +649,7 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 });
 
 function normalizeGitHubClientId(value) {
-  return String(value || '').trim().replace(/^Iv([0-9])\./, 'Iv$1.').replace(/^Iv(?![0-9]\.)/, 'Iv1.');
+  return String(value || '').trim();
 }
 
 app.get('/api/auth/github/url', (req, res) => {
