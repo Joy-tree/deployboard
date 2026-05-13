@@ -4182,12 +4182,12 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           </div>
           <div class="card">
             <div class="card-header">
-              <div class="card-title">Incoming GitHub Auto-Deploy Webhook</div>
-              <div class="card-subtitle">Admin-managed. Use this one URL and secret in every GitHub repository that should trigger DeployBoard.</div>
+              <div class="card-title">Optional Incoming GitHub Webhook</div>
+              <div class="card-subtitle">Fallback/manual setup only. OAuth polling auto-deploy does not require this.</div>
             </div>
             <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
               <div class="alert alert-info" style="margin:0;font-size:0.8rem;">
-                GitHub stores this as the webhook <strong>Secret</strong> and signs requests with <code style="font-family:var(--font-mono);">X-Hub-Signature-256</code>. DeployBoard verifies the signature, then deploys every enabled project whose repo and branch match the push.
+                Optional fallback: GitHub stores this as the webhook <strong>Secret</strong> and signs requests with <code style="font-family:var(--font-mono);">X-Hub-Signature-256</code>. The default auto-deploy pipeline now polls GitHub with your OAuth token, so you only need this webhook if you want instant push callbacks too.
               </div>
               <div class="field" style="margin-bottom:0;">
                 <label class="field-label">Payload URL</label>
@@ -7584,18 +7584,19 @@ function showProjectDetail(projectId) {
       '</div>' +
 
       '<div class="card">' +
-        '<div class="card-header"><div class="card-title">Auto Deploy (GitHub Push)</div><div class="card-subtitle">Per-project opt-in. One admin-managed GitHub webhook secret covers all enabled projects.</div></div>' +
+        '<div class="card-header"><div class="card-title">Auto Deploy Pipeline</div><div class="card-subtitle">OAuth-based polling. No GitHub App installation or repository webhook required.</div></div>' +
         '<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">' +
           '<label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--text-2);">' +
-            '<input type="checkbox" ' + (p.autoDeployEnabled ? 'checked' : '') + ' onchange="toggleProjectAutoDeploy(\'' + p.id + '\', this.checked)"> Enable this project when GitHub sends a push for its repo/branch' +
+            '<input type="checkbox" ' + (p.autoDeployEnabled ? 'checked' : '') + ' onchange="toggleProjectAutoDeploy(\'' + p.id + '\', this.checked)"> Watch this repo branch with my connected GitHub OAuth account' +
           '</label>' +
-          '<div class="alert alert-info" style="font-size:0.78rem;margin:0;">Use the global GitHub webhook URL and secret from <strong>Settings → GitHub</strong>. GitHub sends one push event; DeployBoard finds every enabled project with the same repository and branch.</div>' +
-          '<div style="font-size:0.76rem;color:var(--text-3);">Global Webhook URL</div>' +
-          '<div style="display:flex;gap:8px;align-items:center;">' +
-            '<input class="input input-mono" id="autoDeployUrl-' + p.id + '" value="' + escHtml((location.origin + '/api/github/webhook')) + '" readonly style="font-size:0.72rem;">' +
-            '<button class="btn btn-ghost btn-sm" onclick="copyFieldValue(\'autoDeployUrl-' + p.id + '\')">Copy</button>' +
+          '<div class="alert alert-info" style="font-size:0.78rem;margin:0;">DeployBoard checks the latest commit SHA for <strong>' + escHtml(p.branch || 'main') + '</strong> on a schedule. When GitHub has a newer SHA than the last checked SHA, this project is automatically redeployed using your OAuth token, so private repositories keep working without webhooks.</div>' +
+          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;">' +
+            '<div class="chip">Pipeline<strong>' + escHtml(p.autoDeployEnabled ? (p.autoDeployStatus || 'watching') : 'disabled') + '</strong></div>' +
+            '<div class="chip">Last check<strong>' + escHtml(p.autoDeployLastCheckedAt ? relTime(p.autoDeployLastCheckedAt) : '—') + '</strong></div>' +
+            '<div class="chip">Last deploy trigger<strong>' + escHtml(p.autoDeployLastTriggeredAt ? relTime(p.autoDeployLastTriggeredAt) : '—') + '</strong></div>' +
           '</div>' +
-          '<button class="btn btn-ghost btn-sm" onclick="showPage(\'settings\'); switchSettingsTab(\'github\')">Open global webhook secret</button>' +
+          (p.autoDeployLastError ? '<div class="alert alert-error" style="font-size:0.76rem;margin:0;">Pipeline warning: ' + escHtml(p.autoDeployLastError) + '</div>' : '') +
+          '<button class="btn btn-ghost btn-sm" onclick="renderProjects(); showProjectDetail(\'' + p.id + '\')">Refresh pipeline status</button>' +
         '</div>' +
       '</div>' +
 
@@ -7640,10 +7641,17 @@ async function toggleProjectAutoDeploy(projectId, enabled) {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Failed to update auto-deploy');
     const p = projects.find(x => x.id === projectId);
-    if (p) { p.autoDeployEnabled = !!d.enabled; save(); }
-    const url = document.getElementById('autoDeployUrl-' + projectId);
-    if (url && d.webhookUrl) url.value = d.webhookUrl;
-    toast('Auto deploy ' + (d.enabled ? 'enabled' : 'disabled'), 'success');
+    if (p) {
+      p.autoDeployEnabled = !!d.enabled;
+      p.autoDeployMode = d.mode || 'polling';
+      p.autoDeployStatus = d.enabled ? (d.warning ? 'watching-with-warning' : 'watching') : 'idle';
+      p.autoDeployLastError = d.warning || '';
+      if (d.lastSha) p.autoDeployLastSha = d.lastSha;
+      p.autoDeployLastCheckedAt = new Date().toISOString();
+      save();
+      showProjectDetail(projectId);
+    }
+    toast(d.warning || ('Auto deploy pipeline ' + (d.enabled ? 'enabled' : 'disabled')), d.warning ? 'info' : 'success', 6000);
   } catch (e) {
     toast(e.message || 'Failed to update auto deploy', 'error');
   }
@@ -8045,6 +8053,12 @@ function showDashboard() {
               local.lastStatus = sp.lastDeployStatus;
               changed = true;
             }
+            ['autoDeployEnabled','autoDeployMode','autoDeployStatus','autoDeployLastSha','autoDeployLastCheckedAt','autoDeployLastTriggeredAt','autoDeployLastError'].forEach(k => {
+              if (Object.prototype.hasOwnProperty.call(sp, k) && local[k] !== sp[k]) {
+                local[k] = sp[k];
+                changed = true;
+              }
+            });
           }
         });
         if (changed) { save(); renderDashboard(); renderProjects(); }
