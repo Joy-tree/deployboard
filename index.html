@@ -4182,12 +4182,12 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           </div>
           <div class="card">
             <div class="card-header">
-              <div class="card-title">Incoming GitHub Auto-Deploy Webhook</div>
-              <div class="card-subtitle">Admin-managed. Use this one URL and secret in every GitHub repository that should trigger DeployBoard.</div>
+              <div class="card-title">Optional Incoming GitHub Webhook</div>
+              <div class="card-subtitle">Fallback/manual setup only. OAuth polling auto-deploy does not require this.</div>
             </div>
             <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
               <div class="alert alert-info" style="margin:0;font-size:0.8rem;">
-                GitHub stores this as the webhook <strong>Secret</strong> and signs requests with <code style="font-family:var(--font-mono);">X-Hub-Signature-256</code>. DeployBoard verifies the signature, then deploys every enabled project whose repo and branch match the push.
+                Optional fallback: GitHub stores this as the webhook <strong>Secret</strong> and signs requests with <code style="font-family:var(--font-mono);">X-Hub-Signature-256</code>. The default auto-deploy pipeline now polls GitHub with your OAuth token, so you only need this webhook if you want instant push callbacks too.
               </div>
               <div class="field" style="margin-bottom:0;">
                 <label class="field-label">Payload URL</label>
@@ -5742,6 +5742,82 @@ const _save = save;
 save = function(){ _save(); queueWorkspaceSync(); };
 
 
+function normalizeServerProject(sp) {
+  const id = String(sp?.id || sp?._id || '');
+  if (!id) return null;
+  return Object.assign({}, sp, {
+    id,
+    _id: sp._id || id,
+    branch: sp.branch || 'main',
+    siteType: sp.siteType || 'static',
+    lastStatus: sp.lastDeployStatus || sp.lastStatus || '',
+    createdAt: sp.createdAt || new Date().toISOString()
+  });
+}
+
+function normalizeServerDeployment(sd) {
+  const id = String(sd?.id || sd?._id || '');
+  if (!id) return null;
+  return Object.assign({}, sd, {
+    id,
+    _id: sd._id || id,
+    projectId: String(sd.projectId || ''),
+    status: sd.status || 'pending',
+    startedAt: sd.startedAt || new Date().toISOString(),
+    logs: Array.isArray(sd.logs) ? sd.logs : []
+  });
+}
+
+async function syncServerStateFromApi({ persist = false, render = false } = {}) {
+  if (!hasAuthToken()) return false;
+  let changed = false;
+  try {
+    const [projectsRes, deploymentsRes] = await Promise.all([
+      apiFetch('/api/projects?mine=1', { signal: AbortSignal.timeout(5000) }),
+      apiFetch('/api/deployments?mine=1', { signal: AbortSignal.timeout(5000) })
+    ]);
+    const serverProjects = projectsRes.ok ? await projectsRes.json() : [];
+    const serverDeployments = deploymentsRes.ok ? await deploymentsRes.json() : [];
+
+    if (Array.isArray(serverProjects)) {
+      serverProjects.map(normalizeServerProject).filter(Boolean).forEach(sp => {
+        const local = projects.find(p => String(p.id || '') === sp.id || String(p._id || '') === sp.id || (sp.subdomain && p.subdomain === sp.subdomain));
+        if (local) {
+          const oldId = String(local.id || local._id || '');
+          Object.assign(local, sp);
+          if (oldId && oldId !== sp.id) {
+            deployments.forEach(d => { if (String(d.projectId || '') === oldId) d.projectId = sp.id; });
+            if (envStore[oldId] && !envStore[sp.id]) { envStore[sp.id] = envStore[oldId]; delete envStore[oldId]; }
+          }
+        } else {
+          projects.push(sp);
+        }
+        changed = true;
+      });
+    }
+
+    if (Array.isArray(serverDeployments)) {
+      serverDeployments.map(normalizeServerDeployment).filter(Boolean).forEach(sd => {
+        const local = deployments.find(d => String(d.id || '') === sd.id || String(d._id || '') === sd.id);
+        if (local) Object.assign(local, sd);
+        else deployments.push(sd);
+        changed = true;
+      });
+    }
+
+    if (changed) {
+      deployments.sort((a, b) => new Date(a.startedAt || 0).getTime() - new Date(b.startedAt || 0).getTime());
+      if (persist) save(); else _save();
+      if (render) { renderDashboard(); renderProjects(); }
+    }
+    return changed;
+  } catch (err) {
+    console.warn('[server-state-sync]', err?.message || err);
+    return false;
+  }
+}
+
+
 function setUserAvatar(el, user, fallback='JG') {
   if (!el) return;
   const src = String(user?.githubAvatarUrl || '').trim();
@@ -5790,6 +5866,7 @@ async function bootstrapSession(){
       settings = Object.assign({ baseDomain: 'joytreehostingserver.dpdns.org' }, wsD.settings || {});
       _save();
     }
+    await syncServerStateFromApi({ persist: true });
     return true;
   } catch(e){
     if (e && (e.status === 401 || e.status === 403)) {
@@ -6815,11 +6892,22 @@ async function startDeployment() {
       // but our local record uses genId() (e.g. "lf3k2a1xyz").
       // They must match or build:done can never find our local record → "building" forever.
       const oldLocalId = deployment.id;
+      const oldProjectId = project.id;
       deployment.id    = data.deployId;
       activeBuildId    = data.deployId;
+      if (data.projectId && data.projectId !== project.id) {
+        project.id = data.projectId;
+        project._id = data.projectId;
+        deployment.projectId = data.projectId;
+        deployments.forEach(x => { if (String(x.projectId || '') === String(oldProjectId)) x.projectId = data.projectId; });
+        if (envStore[oldProjectId] && !envStore[data.projectId]) { envStore[data.projectId] = envStore[oldProjectId]; delete envStore[oldProjectId]; }
+      }
       // Also update the deployments array in place
       const arrIdx = deployments.findIndex(x => x.id === oldLocalId);
-      if (arrIdx !== -1) deployments[arrIdx].id = data.deployId;
+      if (arrIdx !== -1) {
+        deployments[arrIdx].id = data.deployId;
+        if (data.projectId) deployments[arrIdx].projectId = data.projectId;
+      }
       save();
       // Update terminal title bar
       const titleEl = document.getElementById('termTitle');
@@ -7584,18 +7672,19 @@ function showProjectDetail(projectId) {
       '</div>' +
 
       '<div class="card">' +
-        '<div class="card-header"><div class="card-title">Auto Deploy (GitHub Push)</div><div class="card-subtitle">Per-project opt-in. One admin-managed GitHub webhook secret covers all enabled projects.</div></div>' +
+        '<div class="card-header"><div class="card-title">Auto Deploy Pipeline</div><div class="card-subtitle">OAuth-based polling. No GitHub App installation or repository webhook required.</div></div>' +
         '<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">' +
           '<label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--text-2);">' +
-            '<input type="checkbox" ' + (p.autoDeployEnabled ? 'checked' : '') + ' onchange="toggleProjectAutoDeploy(\'' + p.id + '\', this.checked)"> Enable this project when GitHub sends a push for its repo/branch' +
+            '<input type="checkbox" ' + (p.autoDeployEnabled ? 'checked' : '') + ' onchange="toggleProjectAutoDeploy(\'' + p.id + '\', this.checked)"> Watch this repo branch with my connected GitHub OAuth account' +
           '</label>' +
-          '<div class="alert alert-info" style="font-size:0.78rem;margin:0;">Use the global GitHub webhook URL and secret from <strong>Settings → GitHub</strong>. GitHub sends one push event; DeployBoard finds every enabled project with the same repository and branch.</div>' +
-          '<div style="font-size:0.76rem;color:var(--text-3);">Global Webhook URL</div>' +
-          '<div style="display:flex;gap:8px;align-items:center;">' +
-            '<input class="input input-mono" id="autoDeployUrl-' + p.id + '" value="' + escHtml((location.origin + '/api/github/webhook')) + '" readonly style="font-size:0.72rem;">' +
-            '<button class="btn btn-ghost btn-sm" onclick="copyFieldValue(\'autoDeployUrl-' + p.id + '\')">Copy</button>' +
+          '<div class="alert alert-info" style="font-size:0.78rem;margin:0;">DeployBoard checks the latest commit SHA for <strong>' + escHtml(p.branch || 'main') + '</strong> on a schedule. When GitHub has a newer SHA than the last checked SHA, this project is automatically redeployed using your OAuth token, so private repositories keep working without webhooks.</div>' +
+          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;">' +
+            '<div class="chip">Pipeline<strong>' + escHtml(p.autoDeployEnabled ? (p.autoDeployStatus || 'watching') : 'disabled') + '</strong></div>' +
+            '<div class="chip">Last check<strong>' + escHtml(p.autoDeployLastCheckedAt ? relTime(p.autoDeployLastCheckedAt) : '—') + '</strong></div>' +
+            '<div class="chip">Last deploy trigger<strong>' + escHtml(p.autoDeployLastTriggeredAt ? relTime(p.autoDeployLastTriggeredAt) : '—') + '</strong></div>' +
           '</div>' +
-          '<button class="btn btn-ghost btn-sm" onclick="showPage(\'settings\'); switchSettingsTab(\'github\')">Open global webhook secret</button>' +
+          (p.autoDeployLastError ? '<div class="alert alert-error" style="font-size:0.76rem;margin:0;">Pipeline warning: ' + escHtml(p.autoDeployLastError) + '</div>' : '') +
+          '<button class="btn btn-primary btn-sm" onclick="checkProjectAutoDeployNow(\'' + p.id + '\')">Check GitHub now</button>' +
         '</div>' +
       '</div>' +
 
@@ -7640,12 +7729,45 @@ async function toggleProjectAutoDeploy(projectId, enabled) {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Failed to update auto-deploy');
     const p = projects.find(x => x.id === projectId);
-    if (p) { p.autoDeployEnabled = !!d.enabled; save(); }
-    const url = document.getElementById('autoDeployUrl-' + projectId);
-    if (url && d.webhookUrl) url.value = d.webhookUrl;
-    toast('Auto deploy ' + (d.enabled ? 'enabled' : 'disabled'), 'success');
+    if (p) {
+      p.autoDeployEnabled = !!d.enabled;
+      p.autoDeployMode = d.mode || 'polling';
+      p.autoDeployStatus = d.enabled ? (d.warning ? 'watching-with-warning' : 'watching') : 'idle';
+      p.autoDeployLastError = d.warning || '';
+      if (d.lastSha) p.autoDeployLastSha = d.lastSha;
+      p.autoDeployLastCheckedAt = new Date().toISOString();
+      save();
+      showProjectDetail(projectId);
+    }
+    toast(d.warning || ('Auto deploy pipeline ' + (d.enabled ? 'enabled' : 'disabled')), d.warning ? 'info' : 'success', 6000);
   } catch (e) {
     toast(e.message || 'Failed to update auto deploy', 'error');
+  }
+}
+
+async function checkProjectAutoDeployNow(projectId) {
+  try {
+    toast('Checking GitHub for new commits…', 'info');
+    const currentProject = projects.find(x => x.id === projectId || x._id === projectId);
+    const r = await apiFetch('/api/projects/' + encodeURIComponent(projectId) + '/autodeploy/check', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ project: currentProject || null })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Pipeline check failed');
+    const p = projects.find(x => x.id === projectId || x._id === projectId || (d.project && x.subdomain === d.project.subdomain));
+    if (p && d.project) {
+      Object.assign(p, normalizeServerProject(d.project));
+      save();
+    }
+    await syncServerStateFromApi({ persist: true, render: false });
+    showProjectDetail((d.project && (d.project.id || d.project._id)) || projectId);
+    if (d.triggered) toast('New GitHub commit found — deployment queued.', 'success', 6000);
+    else if (d.changed) toast(d.reason === 'active_deployment_running' ? 'New commit found, but a deployment is already running.' : 'New commit found, but deployment was not queued: ' + (d.error || d.reason), d.error ? 'error' : 'info', 7000);
+    else toast(d.reason === 'baseline_created' ? 'Pipeline baseline saved. The next new commit will deploy automatically.' : 'No new commit found on GitHub yet.', 'info', 6000);
+  } catch (e) {
+    toast(e.message || 'Pipeline check failed', 'error', 7000);
   }
 }
 function copyFieldValue(id){
@@ -8025,31 +8147,8 @@ function showDashboard() {
     renderDashboard();
     renderProjects();
 
-    // ── Sync real project statuses from server (fixes VPS vs localStorage mismatch) ──
-    fetch(API + '/api/projects', { signal: AbortSignal.timeout(4000) })
-      .then(r => r.ok ? r.json() : null)
-      .then(serverProjects => {
-        if (!serverProjects || !Array.isArray(serverProjects)) return;
-        let changed = false;
-        serverProjects.forEach(sp => {
-          const local = projects.find(p => p.subdomain === sp.subdomain || p.id === sp._id);
-          if (local) {
-            // Sync liveUrl from server (server sets this after successful deploy)
-            if (sp.liveUrl && !local.liveUrl) {
-              local.liveUrl = sp.liveUrl;
-              changed = true;
-            }
-            // Sync status
-            if (sp.lastDeployStatus && sp.lastDeployStatus !== 'building'
-                && (local.lastStatus === 'building' || !local.lastStatus)) {
-              local.lastStatus = sp.lastDeployStatus;
-              changed = true;
-            }
-          }
-        });
-        if (changed) { save(); renderDashboard(); renderProjects(); }
-      })
-      .catch(() => {}); // silent — server may not support this endpoint
+    // ── Sync real projects/deployments from server so reloads do not lose deployments
+    syncServerStateFromApi({ persist: true, render: true });
   }
 }
 

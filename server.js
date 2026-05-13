@@ -37,6 +37,8 @@ let GLOBAL_WEBHOOK_SECRET = process.env.GLOBAL_WEBHOOK_SECRET || process.env.WEB
 if (!GLOBAL_WEBHOOK_SECRET) GLOBAL_WEBHOOK_SECRET = crypto.randomBytes(24).toString('hex');
 const INTERNAL_DEPLOY_KEY = process.env.INTERNAL_DEPLOY_KEY || crypto.randomBytes(24).toString('hex');
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 30);
+const AUTO_DEPLOY_POLL_INTERVAL_MS = Math.max(15000, Number(process.env.AUTO_DEPLOY_POLL_INTERVAL_MS || 30000));
+const AUTO_DEPLOY_INITIAL_DELAY_MS = Math.max(1000, Number(process.env.AUTO_DEPLOY_INITIAL_DELAY_MS || 12000));
 
 function normalizeBaseDomain(value) {
   return String(value || 'localhost')
@@ -406,7 +408,13 @@ const projectSchema = new mongoose.Schema({
   updatedAt:  { type: Date,   default: Date.now },
   ownerUserId: { type: String, default: '', index: true },
   autoDeployEnabled: { type: Boolean, default: false },
-  autoDeploySecret: { type: String, default: '' }
+  autoDeploySecret: { type: String, default: '' },
+  autoDeployMode: { type: String, default: 'polling' },
+  autoDeployLastSha: { type: String, default: '' },
+  autoDeployLastCheckedAt: { type: Date, default: null },
+  autoDeployLastTriggeredAt: { type: Date, default: null },
+  autoDeployLastError: { type: String, default: '' },
+  autoDeployStatus: { type: String, default: 'idle' }
 });
 
 const deploymentSchema = new mongoose.Schema({
@@ -512,7 +520,9 @@ async function requireAuth(req, res, next) {
     if (internalKey && timingSafeEqualString(internalKey, INTERNAL_DEPLOY_KEY)) {
       const ownerId = String(req.headers['x-deployboard-owner-id'] || '').trim();
       if (!ownerId) return res.status(401).json({ error: 'Unauthorized' });
-      const owner = await User.findById(ownerId).catch(()=>null);
+      const owner = isDbReady()
+        ? await User.findById(ownerId).catch(()=>null)
+        : localAuth.users.find(u => String(u.id) === ownerId || String(u._id || '') === ownerId);
       if (!owner) return res.status(401).json({ error: 'Unauthorized' });
       req.user = owner;
       return next();
@@ -899,12 +909,16 @@ app.get('/debug/host', (req, res) => {
   });
 });
 
-app.get('/api/projects', async (req, res) => {
+app.get('/api/projects', attachAuthIfPresent, async (req, res) => {
   try {
-    const projects  = await Project.find().sort({ createdAt: -1 });
+    const mineOnly = String(req.query.mine || '') === '1';
+    if (mineOnly && !req.user) return res.status(401).json({ error: 'Unauthorized' });
+    const filter = mineOnly ? { ownerUserId: String(req.user._id || req.user.id || '') } : {};
+    const projects  = await Project.find(filter).sort({ createdAt: -1 });
     const enriched  = await Promise.all(projects.map(async p => {
       const last = await Deployment.findOne({ projectId: p._id }).sort({ startedAt: -1 }).select('status duration endedAt');
       const obj  = p.toObject();
+      obj.id = String(p._id);
       obj.lastDeployStatus   = last?.status   || null;
       obj.lastDeployDuration = last?.duration || null;
       return obj;
@@ -944,10 +958,17 @@ app.delete('/api/projects/:id', async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/deployments', async (req, res) => {
+app.get('/api/deployments', attachAuthIfPresent, async (req, res) => {
   try {
+    const mineOnly = String(req.query.mine || '') === '1';
+    if (mineOnly && !req.user) return res.status(401).json({ error: 'Unauthorized' });
     const filter = req.query.projectId ? { projectId: req.query.projectId } : {};
-    res.json(await Deployment.find(filter).sort({ startedAt: -1 }).limit(100));
+    if (mineOnly) {
+      const owned = await Project.find({ ownerUserId: String(req.user._id || req.user.id || '') }).select('_id').lean().maxTimeMS(5000);
+      filter.projectId = { $in: owned.map(p => p._id) };
+    }
+    const rows = await Deployment.find(filter).sort({ startedAt: -1 }).limit(100).lean();
+    res.json(rows.map(d => ({ ...d, id: String(d._id), projectId: String(d.projectId || '') })));
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1218,6 +1239,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
         isWorker:           !!isWorker,
         dockerfilePath:     dockerfilePath      || 'Dockerfile',
         exposedPort:        exposedPort         || 3000,
+        ownerUserId: String(req.user?._id || req.user?.id || ''),
         updatedAt:  new Date() },
       { upsert: true, new: true }
     );
@@ -1260,7 +1282,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   }
 
   const deployId = deployment._id.toString();
-  res.json({ ok: true, deployId, message: 'Build started',
+  res.json({ ok: true, deployId, projectId: String(project._id), message: 'Build started',
              liveUrl: `https://${cleanSub}.${BASE_DOMAIN}` });
 
   // Async build
@@ -1359,16 +1381,82 @@ app.post('/api/projects/:id/autodeploy', requireAuth, async (req, res) => {
     const id = String(req.params.id || '');
     const enabled = !!req.body.enabled;
     if (!isDbReady()) {
-      memAutoDeploy.set(id, { enabled: !!enabled, updatedAt: Date.now() });
-      return res.json({ ok:true, enabled: !!enabled, webhookUrl: `${getPublicOrigin(req)}/api/github/webhook`, secret: GLOBAL_WEBHOOK_SECRET, mode: 'global-memory' });
+      memAutoDeploy.set(id, { enabled: !!enabled, mode: 'polling-memory', updatedAt: Date.now() });
+      return res.json({
+        ok: true,
+        enabled: !!enabled,
+        mode: 'polling-memory',
+        pollIntervalMs: AUTO_DEPLOY_POLL_INTERVAL_MS,
+        note: 'Database is offline, so this auto-deploy setting is only stored in memory for this server process.'
+      });
     }
     const project = await findProjectByAnyId(id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
-    if (String(project.ownerUserId || '') !== String(req.user._id || req.user.id || '')) return res.status(403).json({ error: 'Forbidden' });
-    if (!project.autoDeploySecret) project.autoDeploySecret = crypto.randomBytes(24).toString('hex');
+    const requestOwnerId = String(req.user._id || req.user.id || '');
+    if (project.ownerUserId && String(project.ownerUserId) !== requestOwnerId) return res.status(403).json({ error: 'Forbidden' });
+    if (!project.ownerUserId) project.ownerUserId = requestOwnerId;
+
     project.autoDeployEnabled = enabled;
+    project.autoDeployMode = 'polling';
+    project.autoDeployStatus = enabled ? 'watching' : 'idle';
+    project.autoDeployLastError = '';
+    project.autoDeployLastCheckedAt = new Date();
+
+    let headSha = '';
+    let baselineWarning = '';
+    if (enabled) {
+      try {
+        headSha = await getProjectHeadSha(project, req.user.githubAccessToken);
+        project.autoDeployLastSha = headSha || project.autoDeployLastSha || '';
+      } catch (e) {
+        baselineWarning = e.message || 'Could not read the current GitHub commit yet';
+        project.autoDeployLastError = baselineWarning;
+        project.autoDeployStatus = 'watching-with-warning';
+      }
+    }
+
     await project.save();
-    res.json({ ok:true, enabled: project.autoDeployEnabled, webhookUrl: `${getPublicOrigin(req)}/api/github/webhook`, secret: GLOBAL_WEBHOOK_SECRET || project.autoDeploySecret, mode: GLOBAL_WEBHOOK_SECRET ? 'global' : 'project' });
+    res.json({
+      ok: true,
+      enabled: project.autoDeployEnabled,
+      mode: 'polling',
+      pollIntervalMs: AUTO_DEPLOY_POLL_INTERVAL_MS,
+      lastSha: project.autoDeployLastSha || headSha || '',
+      warning: baselineWarning,
+      note: enabled
+        ? 'DeployBoard will poll GitHub with this user OAuth token and trigger a deploy when the configured branch SHA changes. No repository webhook is required.'
+        : 'Polling auto-deploy disabled for this project.'
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+
+
+app.post('/api/projects/:id/autodeploy/check', requireAuth, async (req, res) => {
+  try {
+    if (!isDbReady()) {
+      const project = normalizeWorkspaceAutoDeployProject(req.body?.project || {}, req.params.id);
+      if (!project) return res.status(400).json({ error: 'Project details are required while MongoDB is offline. Refresh the page and try again.' });
+      if (!project.autoDeployEnabled) return res.status(400).json({ error: 'Auto deploy is not enabled for this project' });
+      const result = await checkWorkspaceProjectAutoDeploy(req.user, project, {
+        manual: true,
+        authorization: req.headers.authorization || ''
+      });
+      return res.json({ ok: true, ...result, project });
+    }
+
+    const project = await findProjectByAnyId(String(req.params.id || ''));
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    const requestOwnerId = String(req.user._id || req.user.id || '');
+    if (project.ownerUserId && String(project.ownerUserId) !== requestOwnerId) return res.status(403).json({ error: 'Forbidden' });
+    if (!project.ownerUserId) {
+      project.ownerUserId = requestOwnerId;
+      await project.save();
+    }
+    if (!project.autoDeployEnabled) return res.status(400).json({ error: 'Auto deploy is not enabled for this project' });
+    const result = await checkProjectAutoDeploy(project, { manual: true });
+    const latest = await Project.findById(project._id).lean().catch(() => null);
+    res.json({ ok: true, ...result, project: latest || null });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1497,10 +1585,32 @@ function verifyGitHubWebhookSecret(req, secret) {
 }
 
 
+
+async function getProjectHeadSha(project, githubToken) {
+  const parsed = parseGitHubRepo(project.repoUrl || '');
+  if (!parsed) throw new Error('project_repo_is_not_github');
+  const token = String(githubToken || '').trim();
+  if (!token) throw new Error('missing_github_oauth_token');
+  const branch = String(project.branch || 'main');
+  const r = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/commits/${encodeURIComponent(branch)}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'User-Agent': 'DeployBoard AutoDeploy',
+      'Accept': 'application/vnd.github+json'
+    }
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d?.message || `GitHub commit lookup failed (${r.status})`);
+  if (!d?.sha) throw new Error('GitHub commit lookup did not return a SHA');
+  return d.sha;
+}
+
 async function triggerProjectDeploy(p, branchOverride = null) {
   const ownerId = String(p.ownerUserId || '');
   if (!ownerId) throw new Error('missing_owner_user');
-  const owner = await User.findById(ownerId).catch(()=>null);
+  const owner = isDbReady()
+    ? await User.findById(ownerId).catch(()=>null)
+    : localAuth.users.find(u => String(u.id) === ownerId || String(u._id || '') === ownerId);
   if (!owner) throw new Error('owner_not_found');
   const payload = {
     name: p.name, subdomain: p.subdomain, repoUrl: p.repoUrl, branch: branchOverride || p.branch || 'main',
@@ -1525,43 +1635,208 @@ async function triggerProjectDeploy(p, branchOverride = null) {
   return true;
 }
 
-const memAutoDeploy = new Map();
-const autoDeployState = new Map();
-async function checkAndAutoDeployProjects() {
 
-  let allProjects = [];
-  try { allProjects = await Project.find({ autoDeployEnabled: true }).lean().maxTimeMS(7000); } catch { return; }
-  for (const p of allProjects) {
-    if (!p || !p.autoDeployEnabled) continue;
-    const parsed = parseGitHubRepo(p.repoUrl);
-    if (!parsed) continue;
-    const key = String(p._id);
-    if (autoDeployState.get(key)?.deploying) continue;
+function normalizeWorkspaceAutoDeployProject(project, fallbackId = '') {
+  const id = String(project?.id || project?._id || fallbackId || '').trim();
+  const repoUrl = String(project?.repoUrl || '').trim();
+  const subdomain = String(project?.subdomain || '').trim();
+  const name = String(project?.name || subdomain || 'Project').trim();
+  if (!id || !repoUrl || !subdomain) return null;
+  return {
+    ...project,
+    id,
+    _id: project?._id || id,
+    name,
+    subdomain,
+    repoUrl,
+    branch: project?.branch || 'main',
+    installCmd: project?.installCmd || 'npm install',
+    buildCmd: project?.buildCmd || 'npm run build',
+    startCmd: project?.startCmd || '',
+    outputDir: project?.outputDir || 'dist',
+    nodeVer: project?.nodeVer || '20',
+    siteType: project?.siteType || 'static',
+    envVars: project?.envVars || {},
+    isDockerfileDeploy: !!project?.isDockerfileDeploy,
+    isWorker: !!project?.isWorker,
+    dockerfilePath: project?.dockerfilePath || 'Dockerfile',
+    exposedPort: project?.exposedPort || 3000,
+    autoDeployEnabled: !!project?.autoDeployEnabled,
+    autoDeployLastSha: String(project?.autoDeployLastSha || ''),
+    autoDeployLastError: String(project?.autoDeployLastError || ''),
+    autoDeployStatus: project?.autoDeployStatus || 'watching'
+  };
+}
+
+function updateLocalWorkspaceProject(user, projectId, patch = {}) {
+  if (!user || !projectId) return;
+  user.workspace = user.workspace || {};
+  user.workspace.projects = Array.isArray(user.workspace.projects) ? user.workspace.projects : [];
+  const p = user.workspace.projects.find(x => String(x.id || x._id || '') === String(projectId) || (patch.subdomain && x.subdomain === patch.subdomain));
+  if (p) Object.assign(p, patch);
+  saveLocalAuth();
+}
+
+async function triggerWorkspaceProjectDeploy(user, project, authorization = '') {
+  const payload = {
+    name: project.name, subdomain: project.subdomain, repoUrl: project.repoUrl, branch: project.branch || 'main',
+    installCmd: project.installCmd || 'npm install', buildCmd: project.buildCmd || 'npm run build',
+    startCmd: project.startCmd || '', outputDir: project.outputDir || 'dist', nodeVer: project.nodeVer || '20',
+    siteType: project.siteType || 'static', envVars: project.envVars || {}, isDockerfileDeploy: !!project.isDockerfileDeploy,
+    isWorker: !!project.isWorker, dockerfilePath: project.dockerfilePath || 'Dockerfile', exposedPort: project.exposedPort || 3000
+  };
+  const headers = { 'Content-Type': 'application/json' };
+  if (authorization) headers.Authorization = authorization;
+  else {
+    headers['x-deployboard-internal-key'] = INTERNAL_DEPLOY_KEY;
+    headers['x-deployboard-owner-id'] = String(user._id || user.id || '');
+  }
+  const deployResp = await fetch(`http://127.0.0.1:${PORT}/api/deploy`, {
+    method: 'POST', headers, body: JSON.stringify(payload)
+  }).catch(() => null);
+  if (!deployResp || !deployResp.ok) {
+    const detail = deployResp ? await deployResp.text().catch(()=> '') : 'no_response';
+    throw new Error('deploy_trigger_failed:' + (detail || deployResp?.status || 'unknown'));
+  }
+  return deployResp.json().catch(() => ({}));
+}
+
+async function checkWorkspaceProjectAutoDeploy(user, project, { manual = false, authorization = '' } = {}) {
+  const id = String(project.id || project._id || project.subdomain || '');
+  const state = autoDeployState.get(id) || {};
+  if (state.deploying) return { checked: false, triggered: false, reason: 'already_deploying' };
+  const branch = project.branch || 'main';
+  const nowIso = new Date().toISOString();
+  try {
+    updateLocalWorkspaceProject(user, id, { subdomain: project.subdomain, autoDeployStatus: 'checking', autoDeployLastCheckedAt: nowIso, autoDeployLastError: '' });
+    const token = String(user?.githubAccessToken || '').trim();
+    if (!token) throw new Error('missing_github_oauth_token');
+    const sha = await getProjectHeadSha(project, token);
+    const previousSha = String(project.autoDeployLastSha || '');
+
+    if (!previousSha) {
+      Object.assign(project, { autoDeployLastSha: sha, autoDeployStatus: 'watching', autoDeployLastCheckedAt: nowIso, autoDeployLastError: '' });
+      updateLocalWorkspaceProject(user, id, project);
+      autoDeployState.set(id, { sha, deploying: false });
+      return { checked: true, triggered: false, changed: false, reason: 'baseline_created', previousSha: '', sha, branch };
+    }
+
+    if (previousSha === sha) {
+      Object.assign(project, { autoDeployStatus: 'watching', autoDeployLastCheckedAt: nowIso, autoDeployLastError: '' });
+      updateLocalWorkspaceProject(user, id, project);
+      autoDeployState.set(id, { sha, deploying: false });
+      return { checked: true, triggered: false, changed: false, reason: 'no_change', previousSha, sha, branch };
+    }
+
+    autoDeployState.set(id, { sha: previousSha, pendingSha: sha, deploying: true });
+    Object.assign(project, { autoDeployStatus: 'deploying', autoDeployLastCheckedAt: nowIso, autoDeployLastError: '' });
+    updateLocalWorkspaceProject(user, id, project);
+    addActivity('deploy', `↻ OAuth workspace polling queued ${project.name} (${branch}) after GitHub SHA changed${manual ? ' (manual check)' : ''}`);
+
     try {
-      const branch = p.branch || 'main';
-      const owner = await User.findById(p.ownerUserId).lean().catch(()=>null);
-      const token = String(owner?.githubAccessToken || '').trim();
-      if (!token) continue;
-      const r = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/commits/${encodeURIComponent(branch)}`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'DeployBoard AutoDeploy' }
-      });
-      if (!r.ok) continue;
-      const d = await r.json();
-      const sha = d?.sha;
-      if (!sha) continue;
-      const prev = autoDeployState.get(key)?.sha;
-      autoDeployState.set(key, { sha, deploying: false });
-      if (!prev || prev === sha) continue;
-
-      const active = await Deployment.findOne({ projectId: p._id, status: { $in: ['pending','building'] } }).lean().maxTimeMS(3000).catch(()=>null);
-      if (active) continue;
-
-      autoDeployState.set(key, { sha, deploying: true });
-      addActivity('deploy', `↻ Auto deploy queued for ${p.name} (${branch})`);
-      triggerProjectDeploy(p, branch)
-        .finally(()=> autoDeployState.set(key, { sha, deploying: false }));
-    } catch {}
+      await triggerWorkspaceProjectDeploy(user, project, authorization);
+      const patch = { ...project, autoDeployLastSha: sha, autoDeployLastTriggeredAt: nowIso, autoDeployStatus: 'watching', autoDeployLastError: '' };
+      Object.assign(project, patch);
+      updateLocalWorkspaceProject(user, id, patch);
+      autoDeployState.set(id, { sha, deploying: false });
+      return { checked: true, triggered: true, changed: true, reason: 'deploy_queued', previousSha, sha, branch };
+    } catch (e) {
+      const message = String(e?.message || 'deploy_trigger_failed').slice(0, 240);
+      Object.assign(project, { autoDeployStatus: 'error', autoDeployLastError: message, autoDeployLastCheckedAt: new Date().toISOString() });
+      updateLocalWorkspaceProject(user, id, project);
+      autoDeployState.set(id, { sha: previousSha, deploying: false });
+      return { checked: true, triggered: false, changed: true, reason: 'deploy_trigger_failed', error: message, previousSha, sha, branch };
+    }
+  } catch (e) {
+    const message = String(e?.message || 'auto_deploy_check_failed').slice(0, 240);
+    Object.assign(project, { autoDeployStatus: 'error', autoDeployLastCheckedAt: new Date().toISOString(), autoDeployLastError: message });
+    updateLocalWorkspaceProject(user, id, project);
+    autoDeployState.set(id, { sha: String(project.autoDeployLastSha || ''), deploying: false });
+    return { checked: false, triggered: false, reason: 'check_failed', error: message, branch };
   }
 }
-setInterval(checkAndAutoDeployProjects, 90000);
-setTimeout(checkAndAutoDeployProjects, 12000);
+
+const memAutoDeploy = new Map();
+const autoDeployState = new Map();
+
+async function checkProjectAutoDeploy(projectLike, { manual = false } = {}) {
+  const id = String(projectLike?._id || projectLike?.id || projectLike || '');
+  if (!id) throw new Error('missing_project_id');
+  const state = autoDeployState.get(id) || {};
+  if (state.deploying) return { checked: false, triggered: false, reason: 'already_deploying' };
+
+  const project = projectLike?.save ? projectLike : await Project.findById(id);
+  if (!project || !project.autoDeployEnabled) return { checked: false, triggered: false, reason: 'not_enabled' };
+  const branch = project.branch || 'main';
+  const now = new Date();
+
+  try {
+    await Project.updateOne({ _id: project._id }, { $set: { autoDeployStatus: 'checking', autoDeployLastCheckedAt: now, autoDeployLastError: '' } }).catch(()=>{});
+    const owner = await User.findById(project.ownerUserId).lean().catch(()=>null);
+    const token = String(owner?.githubAccessToken || '').trim();
+    if (!token) throw new Error('missing_github_oauth_token');
+
+    const sha = await getProjectHeadSha(project, token);
+    const previousSha = String(project.autoDeployLastSha || '');
+
+    if (!previousSha) {
+      autoDeployState.set(id, { sha, deploying: false });
+      await Project.updateOne({ _id: project._id }, { $set: { autoDeployLastSha: sha, autoDeployStatus: 'watching', autoDeployLastCheckedAt: now, autoDeployLastError: '' } }).catch(()=>{});
+      return { checked: true, triggered: false, changed: false, reason: 'baseline_created', previousSha: '', sha, branch };
+    }
+
+    if (previousSha === sha) {
+      autoDeployState.set(id, { sha, deploying: false });
+      await Project.updateOne({ _id: project._id }, { $set: { autoDeployStatus: 'watching', autoDeployLastCheckedAt: now, autoDeployLastError: '' } }).catch(()=>{});
+      return { checked: true, triggered: false, changed: false, reason: 'no_change', previousSha, sha, branch };
+    }
+
+    const active = await Deployment.findOne({ projectId: project._id, status: { $in: ['pending','building'] } }).lean().maxTimeMS(3000).catch(()=>null);
+    if (active) {
+      await Project.updateOne({ _id: project._id }, { $set: { autoDeployStatus: 'waiting-for-active-build', autoDeployLastCheckedAt: now, autoDeployLastError: '' } }).catch(()=>{});
+      return { checked: true, triggered: false, changed: true, reason: 'active_deployment_running', previousSha, sha, branch };
+    }
+
+    autoDeployState.set(id, { sha: previousSha, pendingSha: sha, deploying: true });
+    await Project.updateOne({ _id: project._id }, { $set: { autoDeployStatus: 'deploying', autoDeployLastCheckedAt: now, autoDeployLastError: '' } }).catch(()=>{});
+    addActivity('deploy', `↻ OAuth polling pipeline queued ${project.name} (${branch}) after GitHub SHA changed${manual ? ' (manual check)' : ''}`);
+
+    try {
+      await triggerProjectDeploy(project, branch);
+      await Project.updateOne({ _id: project._id }, { $set: { autoDeployLastSha: sha, autoDeployLastTriggeredAt: now, autoDeployStatus: 'watching', autoDeployLastError: '' } }).catch(()=>{});
+      autoDeployState.set(id, { sha, deploying: false });
+      return { checked: true, triggered: true, changed: true, reason: 'deploy_queued', previousSha, sha, branch };
+    } catch (e) {
+      const message = String(e?.message || 'deploy_trigger_failed').slice(0, 240);
+      await Project.updateOne({ _id: project._id }, { $set: { autoDeployStatus: 'error', autoDeployLastError: message, autoDeployLastCheckedAt: new Date() } }).catch(()=>{});
+      autoDeployState.set(id, { sha: previousSha, deploying: false });
+      return { checked: true, triggered: false, changed: true, reason: 'deploy_trigger_failed', error: message, previousSha, sha, branch };
+    }
+  } catch (e) {
+    const message = String(e?.message || 'auto_deploy_check_failed').slice(0, 240);
+    await Project.updateOne({ _id: project._id }, { $set: { autoDeployStatus: 'error', autoDeployLastCheckedAt: new Date(), autoDeployLastError: message } }).catch(()=>{});
+    autoDeployState.set(id, { sha: String(project.autoDeployLastSha || ''), deploying: false });
+    return { checked: false, triggered: false, reason: 'check_failed', error: message, branch };
+  }
+}
+
+async function checkAndAutoDeployProjects() {
+  if (!isDbReady()) {
+    for (const user of localAuth.users || []) {
+      const workspaceProjects = Array.isArray(user?.workspace?.projects) ? user.workspace.projects : [];
+      for (const raw of workspaceProjects) {
+        const project = normalizeWorkspaceAutoDeployProject(raw, raw?.id || raw?._id || raw?.subdomain);
+        if (!project || !project.autoDeployEnabled) continue;
+        try { await checkWorkspaceProjectAutoDeploy(user, project); } catch (_) {}
+      }
+    }
+    return;
+  }
+  let allProjects = [];
+  try { allProjects = await Project.find({ autoDeployEnabled: true }).maxTimeMS(7000); } catch { return; }
+  for (const p of allProjects) {
+    try { await checkProjectAutoDeploy(p); } catch (_) {}
+  }
+}
+setInterval(checkAndAutoDeployProjects, AUTO_DEPLOY_POLL_INTERVAL_MS);
+setTimeout(checkAndAutoDeployProjects, AUTO_DEPLOY_INITIAL_DELAY_MS);
