@@ -37,7 +37,7 @@ let GLOBAL_WEBHOOK_SECRET = process.env.GLOBAL_WEBHOOK_SECRET || process.env.WEB
 if (!GLOBAL_WEBHOOK_SECRET) GLOBAL_WEBHOOK_SECRET = crypto.randomBytes(24).toString('hex');
 const INTERNAL_DEPLOY_KEY = process.env.INTERNAL_DEPLOY_KEY || crypto.randomBytes(24).toString('hex');
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 30);
-const AUTO_DEPLOY_POLL_INTERVAL_MS = Math.max(15000, Number(process.env.AUTO_DEPLOY_POLL_INTERVAL_MS || 30000));
+const AUTO_DEPLOY_POLL_INTERVAL_MS = Math.max(1000, Number(process.env.AUTO_DEPLOY_POLL_INTERVAL_MS || 1000));
 const AUTO_DEPLOY_INITIAL_DELAY_MS = Math.max(1000, Number(process.env.AUTO_DEPLOY_INITIAL_DELAY_MS || 12000));
 
 function normalizeBaseDomain(value) {
