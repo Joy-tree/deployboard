@@ -5817,6 +5817,25 @@ async function syncServerStateFromApi({ persist = false, render = false } = {}) 
   }
 }
 
+let _projectAutoSyncTimer = null;
+let _projectAutoSyncBusy = false;
+function ensureProjectAutoSync() {
+  if (_projectAutoSyncTimer) return;
+  _projectAutoSyncTimer = setInterval(async () => {
+    if (_projectAutoSyncBusy) return;
+    if (!hasAuthToken()) return;
+    if (!['projects','dashboard','project-detail'].includes(currentPage)) return;
+    _projectAutoSyncBusy = true;
+    try {
+      await syncServerStateFromApi({ persist: true, render: true });
+    } catch (_) {
+      // silent background sync
+    } finally {
+      _projectAutoSyncBusy = false;
+    }
+  }, 1000);
+}
+
 
 function setUserAvatar(el, user, fallback='JG') {
   if (!el) return;
@@ -5925,6 +5944,7 @@ const PAGE_LABELS = {
   faq:'FAQ', support:'Support'
 };
 function showPage(id, navEl) {
+  ensureProjectAutoSync();
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.getElementById('page-' + id);
   if (page) page.classList.add('active');
