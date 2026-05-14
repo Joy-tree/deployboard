@@ -7304,6 +7304,21 @@ document.head.appendChild(spinStyle);
 // ══════════════════════════════════════════════════════════════════
 // SOCKET.IO  —  starts immediately on page load (not waiting for logs tab)
 // ══════════════════════════════════════════════════════════════════
+
+let _incomingBuildSyncAt = 0;
+async function ensureIncomingBuildVisible(deployId) {
+  if (!deployId) return null;
+  let dep = deployments.find(x => x.id === deployId);
+  if (dep) return dep;
+  const now = Date.now();
+  if (now - _incomingBuildSyncAt < 1200) return null;
+  _incomingBuildSyncAt = now;
+  try {
+    await syncServerStateFromApi({ persist: true, render: true });
+  } catch (_) {}
+  return deployments.find(x => x.id === deployId) || null;
+}
+
 function initSocket() {
   if (socket) return;
   if (typeof io === 'undefined') {
@@ -7349,7 +7364,7 @@ function initSocket() {
     });
 
     // ── Build log line received ──────────────────────────────────
-    socket.on('build:log', ({ deployId, line }) => {
+    socket.on('build:log', async ({ deployId, line }) => {
       // Keep the matrix stream independent from high-volume log events. Rebuilding
       // the rain DOM for every line competes with terminal rendering and causes jank.
       // Fire deployment.started webhook on first log line
@@ -7363,14 +7378,15 @@ function initSocket() {
       logBuffer.push(line);
       renderStructuredLogs();
 
-      // Save to in-memory deployment record
-      const d = deployments.find(x => x.id === deployId);
-      if (d) { d.logs = d.logs || []; d.logs.push(line); }
+      // Save to in-memory deployment record. Auto-deploy runs can start on the
+      // server before this tab has synced, so we opportunistically pull workspace
+      // state to make the active "redeploying" badge appear on the project card.
+      let d = deployments.find(x => x.id === deployId);
+      if (!d) d = await ensureIncomingBuildVisible(deployId);
+      if (d) { d.logs = d.logs || []; d.logs.push(line); save(); }
 
-      // If we're not already on logs page, auto-navigate there
-      if (currentPage !== 'logs') {
-        showPage('logs');
-      }
+      // Do not force navigation to logs for background/auto deployments.
+      // Project cards already surface in-progress state with a direct "View logs" action.
 
       // Update the title bar with active deploy info
       const titleEl = document.getElementById('termTitle');
