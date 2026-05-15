@@ -5817,6 +5817,25 @@ async function syncServerStateFromApi({ persist = false, render = false } = {}) 
   }
 }
 
+let _projectAutoSyncTimer = null;
+let _projectAutoSyncBusy = false;
+function ensureProjectAutoSync() {
+  if (_projectAutoSyncTimer) return;
+  _projectAutoSyncTimer = setInterval(async () => {
+    if (_projectAutoSyncBusy) return;
+    if (!hasAuthToken()) return;
+    if (!['projects','dashboard','project-detail'].includes(currentPage)) return;
+    _projectAutoSyncBusy = true;
+    try {
+      await syncServerStateFromApi({ persist: true, render: true });
+    } catch (_) {
+      // silent background sync
+    } finally {
+      _projectAutoSyncBusy = false;
+    }
+  }, 1000);
+}
+
 
 function setUserAvatar(el, user, fallback='JG') {
   if (!el) return;
@@ -5925,6 +5944,7 @@ const PAGE_LABELS = {
   faq:'FAQ', support:'Support'
 };
 function showPage(id, navEl) {
+  ensureProjectAutoSync();
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.getElementById('page-' + id);
   if (page) page.classList.add('active');
@@ -6321,6 +6341,25 @@ function statusDot(status) {
 // PROJECTS
 // ══════════════════════════════════════════════════════════════════
 function renderProjects() {
+  // Heal stale auto-deploy active statuses so banners don't stick forever.
+  let _autoDeployStateFixed = false;
+  projects.forEach((p) => {
+    const st = String(p.autoDeployStatus || '').toLowerCase();
+    if (!['deploying','checking','waiting-for-active-build','queued'].includes(st)) return;
+    const depsForProject = deployments
+      .filter(d => String(d.projectId || '') === String(p.id || p._id || ''))
+      .sort((a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0));
+    const active = depsForProject.find(d => ['pending','building'].includes(String(d.status || '').toLowerCase()));
+    if (active) return;
+    const last = depsForProject[0];
+    if (last && ['success','failed','error','canceled','cancelled'].includes(String(last.status || '').toLowerCase())) {
+      p.autoDeployStatus = String(last.status || '').toLowerCase() === 'success' ? 'watching' : 'error';
+      p.autoDeployLastCompletedAt = new Date().toISOString();
+      _autoDeployStateFixed = true;
+    }
+  });
+  if (_autoDeployStateFixed) save();
+
   updateCoreHeroMetrics();
   const g = document.getElementById('projectsGrid');
   if (!projects.length) {
@@ -6383,8 +6422,17 @@ function renderProjects() {
           </div>
           ${displayStatus ? statusBadge(displayStatus) : '<span class="badge badge-idle"><span class="badge-dot"></span>Not deployed</span>'}
         </div>
-        ${(lastDeploy && ['pending','building'].includes(lastDeploy.status)) ? '<div style="margin:8px 0 4px;display:flex;align-items:center;gap:8px;color:var(--green);font-size:0.78rem;font-weight:700;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:14px;height:14px;animation:dpSpin 0.8s linear infinite;"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>Auto redeploying from GitHub push… <button class="btn btn-ghost btn-sm" style="margin-left:auto;min-height:28px;padding:5px 9px;" onclick="event.stopPropagation();viewDeployLogs(\'' + lastDeploy.id + '\')">View logs</button></div>' : ''}
+        ${(((lastDeploy && ['pending','building'].includes(lastDeploy.status)) || ['deploying','checking','waiting-for-active-build','queued'].includes(String(p.autoDeployStatus || '').toLowerCase())))
+          ? '<div style="margin:8px 0 4px;display:flex;align-items:center;gap:8px;color:var(--green);font-size:0.78rem;font-weight:700;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:14px;height:14px;animation:dpSpin 0.8s linear infinite;"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>Auto redeploying from GitHub push… ' + ((lastDeploy && lastDeploy.id) ? '<button class="btn btn-ghost btn-sm" style="margin-left:auto;min-height:28px;padding:5px 9px;" onclick="event.stopPropagation();viewDeployLogs(\'' + lastDeploy.id + '\')">View logs</button>' : '<button class="btn btn-ghost btn-sm" style="margin-left:auto;min-height:28px;padding:5px 9px;" onclick="event.stopPropagation();showProjectDetail(\'' + p.id + '\')">Open</button>') + '</div>'
+          : ''}
+        ${((p.autoDeployEnabled && p.autoDeployLastCompletedAt && (Date.now() - new Date(p.autoDeployLastCompletedAt).getTime()) < 45000))
+          ? '<div style="margin:6px 0 2px;display:flex;align-items:center;gap:8px;color:#7dd3fc;font-size:0.76rem;font-weight:700;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke=\"currentColor\" stroke-width=\"2.2\" style=\"width:14px;height:14px;\"><path d=\"M20 6 9 17l-5-5\"/></svg>Auto redeployment complete</div>'
+          : ''}
         <div class="project-meta">
+          ${p.autoDeployEnabled ? `<div class="project-meta-item" style="color:${['deploying','checking','waiting-for-active-build','queued'].includes(String(p.autoDeployStatus || '').toLowerCase()) ? 'var(--green)' : 'var(--text-3)'};">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>
+            Auto Deploy: ${escHtml((p.autoDeployStatus || 'watching').replace(/-/g,' '))}
+          </div>` : ''}
           <div class="project-meta-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
             ${escHtml(p.repoUrl ? p.repoUrl.replace('https://github.com/','') : '—')}
@@ -7304,6 +7352,21 @@ document.head.appendChild(spinStyle);
 // ══════════════════════════════════════════════════════════════════
 // SOCKET.IO  —  starts immediately on page load (not waiting for logs tab)
 // ══════════════════════════════════════════════════════════════════
+
+let _incomingBuildSyncAt = 0;
+async function ensureIncomingBuildVisible(deployId) {
+  if (!deployId) return null;
+  let dep = deployments.find(x => x.id === deployId);
+  if (dep) return dep;
+  const now = Date.now();
+  if (now - _incomingBuildSyncAt < 1200) return null;
+  _incomingBuildSyncAt = now;
+  try {
+    await syncServerStateFromApi({ persist: true, render: true });
+  } catch (_) {}
+  return deployments.find(x => x.id === deployId) || null;
+}
+
 function initSocket() {
   if (socket) return;
   if (typeof io === 'undefined') {
@@ -7348,8 +7411,27 @@ function initSocket() {
       }
     });
 
+    socket.on('autodeploy:status', ({ projectId, status, at }) => {
+      if (!projectId || !status) return;
+      const p = projects.find(x => String(x.id || x._id || '') === String(projectId));
+      if (!p) return;
+      p.autoDeployStatus = String(status);
+      p.autoDeployLastCheckedAt = at || new Date().toISOString();
+      if (status === 'deploying' || status === 'checking' || status === 'waiting-for-active-build' || status === 'queued') {
+        p.lastStatus = 'building';
+      }
+      if (status === 'watching' && p.lastStatus === 'building') {
+        p.lastStatus = p.liveUrl ? 'success' : p.lastStatus;
+      }
+      save();
+      if (['projects','dashboard','project-detail'].includes(currentPage)) {
+        renderProjects();
+        renderDashboard();
+      }
+    });
+
     // ── Build log line received ──────────────────────────────────
-    socket.on('build:log', ({ deployId, line }) => {
+    socket.on('build:log', async ({ deployId, line }) => {
       // Keep the matrix stream independent from high-volume log events. Rebuilding
       // the rain DOM for every line competes with terminal rendering and causes jank.
       // Fire deployment.started webhook on first log line
@@ -7363,14 +7445,15 @@ function initSocket() {
       logBuffer.push(line);
       renderStructuredLogs();
 
-      // Save to in-memory deployment record
-      const d = deployments.find(x => x.id === deployId);
-      if (d) { d.logs = d.logs || []; d.logs.push(line); }
+      // Save to in-memory deployment record. Auto-deploy runs can start on the
+      // server before this tab has synced, so we opportunistically pull workspace
+      // state to make the active "redeploying" badge appear on the project card.
+      let d = deployments.find(x => x.id === deployId);
+      if (!d) d = await ensureIncomingBuildVisible(deployId);
+      if (d) { d.logs = d.logs || []; d.logs.push(line); save(); }
 
-      // If we're not already on logs page, auto-navigate there
-      if (currentPage !== 'logs') {
-        showPage('logs');
-      }
+      // Do not force navigation to logs for background/auto deployments.
+      // Project cards already surface in-progress state with a direct "View logs" action.
 
       // Update the title bar with active deploy info
       const titleEl = document.getElementById('termTitle');
@@ -7438,8 +7521,13 @@ function initSocket() {
       const proj = d ? projects.find(p => p.id === d.projectId) : null;
       if (proj) {
         proj.lastStatus = status;
+        const wasAutoDeployActive = ['deploying','checking','waiting-for-active-build','queued'].includes(String(proj.autoDeployStatus || '').toLowerCase());
         // Set liveUrl on the PROJECT so renderProjects can use it as proof of success
         if (liveUrl && status === 'success') proj.liveUrl = liveUrl;
+        if (wasAutoDeployActive) {
+          proj.autoDeployStatus = status === 'success' ? 'watching' : 'error';
+          proj.autoDeployLastCompletedAt = new Date().toISOString();
+        }
         // Clear ALL stale "building" states for this project on every build:done
         deployments.forEach(dep => {
           if (dep.projectId === d.projectId && dep.status === 'building') {
