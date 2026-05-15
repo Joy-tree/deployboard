@@ -6341,6 +6341,25 @@ function statusDot(status) {
 // PROJECTS
 // ══════════════════════════════════════════════════════════════════
 function renderProjects() {
+  // Heal stale auto-deploy active statuses so banners don't stick forever.
+  let _autoDeployStateFixed = false;
+  projects.forEach((p) => {
+    const st = String(p.autoDeployStatus || '').toLowerCase();
+    if (!['deploying','checking','waiting-for-active-build','queued'].includes(st)) return;
+    const depsForProject = deployments
+      .filter(d => String(d.projectId || '') === String(p.id || p._id || ''))
+      .sort((a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0));
+    const active = depsForProject.find(d => ['pending','building'].includes(String(d.status || '').toLowerCase()));
+    if (active) return;
+    const last = depsForProject[0];
+    if (last && ['success','failed','error','canceled','cancelled'].includes(String(last.status || '').toLowerCase())) {
+      p.autoDeployStatus = String(last.status || '').toLowerCase() === 'success' ? 'watching' : 'error';
+      p.autoDeployLastCompletedAt = new Date().toISOString();
+      _autoDeployStateFixed = true;
+    }
+  });
+  if (_autoDeployStateFixed) save();
+
   updateCoreHeroMetrics();
   const g = document.getElementById('projectsGrid');
   if (!projects.length) {
