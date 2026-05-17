@@ -2323,7 +2323,18 @@ textarea.input { resize: vertical; min-height: 80px; }
 }
 
 /* ── Toast ─────────────────────────────────────────────────────────────── */
-#toast-wrap { position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+#toast-wrap {
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:18px;
+  pointer-events:none;
+}
 #auth-view{display:none;min-height:100vh;padding:24px 16px;background:radial-gradient(circle at 15% 10%,rgba(16,185,129,.18),transparent 35%),radial-gradient(circle at 85% 15%,rgba(37,99,235,.18),transparent 35%),#030712;align-items:center;justify-content:center}
 #auth-view.active{display:flex}
 .auth-card{width:min(94vw,560px);background:linear-gradient(180deg,#0a1220,#090f1c);border:1px solid rgba(99,179,237,.24);border-radius:20px;box-shadow:0 24px 90px rgba(0,0,0,.6);padding:26px}
@@ -2354,26 +2365,41 @@ textarea.input { resize: vertical; min-height: 80px; }
 .metric-usage-head{padding:10px 12px;background:rgba(148,163,184,.12);font-weight:700}
 .metric-usage-row{display:flex;justify-content:space-between;padding:9px 12px;border-top:1px solid var(--border);font-size:.85rem;color:var(--text-2)}
 .toast {
-  display:flex; align-items:center; gap:10px;
-  padding:11px 16px;
-  background:var(--bg-card);
-  border:1px solid var(--border-hi);
-  border-radius:10px;
-  font-size:0.82rem;
-  font-weight:500;
+  position:relative;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:14px;
+  width:min(92vw,430px);
+  min-height:92px;
+  padding:18px 18px 18px 20px;
+  background:linear-gradient(145deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96));
+  border:1px solid rgba(148,163,184,0.22);
+  border-radius:18px;
+  font-size:0.92rem;
+  font-weight:650;
+  line-height:1.45;
   color:var(--text);
-  box-shadow:0 8px 24px rgba(0,0,0,0.5);
-  animation:toastIn 0.25s ease;
-  max-width:340px;
+  box-shadow:0 28px 90px rgba(0,0,0,0.58),0 0 0 1px rgba(255,255,255,0.035) inset,0 0 44px rgba(16,185,129,0.08);
+  animation:toastPopIn 0.28s cubic-bezier(.2,.9,.22,1.18);
+  pointer-events:auto;
+  overflow:hidden;
 }
-.toast svg { width:15px; height:15px; flex-shrink:0; }
-.toast.success { border-color:rgba(16,185,129,0.3); }
-.toast.success svg { color:var(--green); }
-.toast.error { border-color:rgba(239,68,68,0.3); }
-.toast.error svg { color:var(--red); }
-.toast.info svg { color:var(--primary); }
-@keyframes toastIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:none} }
-@keyframes fadeOut { to{opacity:0;transform:translateX(16px)} }
+.toast::before{content:'';position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--primary),var(--cyan),var(--purple));opacity:.9;}
+.toast-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.16);box-shadow:inset 0 0 20px rgba(255,255,255,.025);}
+.toast-icon svg { width:22px; height:22px; }
+.toast-message{min-width:0;padding-right:2px;}
+.toast-close{width:34px;height:34px;border:1px solid rgba(148,163,184,.18);border-radius:11px;background:rgba(15,23,42,.72);color:var(--text-2);display:grid;place-items:center;cursor:pointer;transition:background .15s,border-color .15s,color .15s,transform .15s;}
+.toast-close:hover{background:rgba(30,41,59,.9);border-color:rgba(148,163,184,.32);color:var(--text);transform:translateY(-1px);}
+.toast-close svg{width:16px;height:16px;}
+.toast.success { border-color:rgba(16,185,129,0.42); box-shadow:0 28px 90px rgba(0,0,0,0.58),0 0 55px rgba(16,185,129,0.16); }
+.toast.success .toast-icon { color:var(--green); background:rgba(16,185,129,.12); border-color:rgba(16,185,129,.24); }
+.toast.error { border-color:rgba(239,68,68,0.45); box-shadow:0 28px 90px rgba(0,0,0,0.58),0 0 55px rgba(239,68,68,0.14); }
+.toast.error .toast-icon { color:var(--red); background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.24); }
+.toast.info .toast-icon { color:var(--primary); background:rgba(37,99,235,.13); border-color:rgba(37,99,235,.24); }
+@keyframes toastPopIn { from{opacity:0;transform:translateY(18px) scale(.94);filter:blur(5px)} to{opacity:1;transform:none;filter:none} }
+@keyframes fadeOut { to{opacity:0;transform:translateY(16px) scale(.96);filter:blur(4px)} }
+@media (max-width: 520px) { .toast{width:min(94vw,390px);min-height:86px;padding:16px;grid-template-columns:auto 1fr auto}.toast-icon{width:40px;height:40px;border-radius:13px}.toast-message{font-size:.86rem} }
 
 
 /* Mobile fixes: logs + GitHub settings */
@@ -5763,6 +5789,8 @@ function normalizeServerDeployment(sd) {
     _id: sd._id || id,
     projectId: String(sd.projectId || ''),
     status: sd.status || 'pending',
+    source: sd.source || 'manual',
+    triggerSha: sd.triggerSha || '',
     startedAt: sd.startedAt || new Date().toISOString(),
     logs: Array.isArray(sd.logs) ? sd.logs : []
   });
@@ -6035,14 +6063,32 @@ function toast(msg, type='info', duration=3500) {
     error:  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
     info:   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
   };
+  const wrap = document.getElementById('toast-wrap');
+  if (!wrap) return;
+  const safeType = ['success','error','info'].includes(type) ? type : 'info';
   const t = document.createElement('div');
-  t.className = 'toast ' + type;
-  t.innerHTML = (icons[type]||icons.info) + '<span>' + msg + '</span>';
-  document.getElementById('toast-wrap').appendChild(t);
-  setTimeout(() => {
-    t.style.animation = 'fadeOut 0.3s ease forwards';
-    setTimeout(() => t.remove(), 300);
-  }, duration);
+  t.className = 'toast ' + safeType;
+  t.setAttribute('role', safeType === 'error' ? 'alert' : 'status');
+  const icon = document.createElement('div');
+  icon.className = 'toast-icon';
+  icon.innerHTML = icons[safeType] || icons.info;
+  const text = document.createElement('div');
+  text.className = 'toast-message';
+  text.textContent = msg;
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'toast-close';
+  close.setAttribute('aria-label', 'Close notification');
+  close.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+  t.append(icon, text, close);
+  const dismiss = () => {
+    if (!t.isConnected) return;
+    t.style.animation = 'fadeOut 0.24s ease forwards';
+    setTimeout(() => t.remove(), 240);
+  };
+  close.addEventListener('click', dismiss);
+  wrap.appendChild(t);
+  setTimeout(dismiss, duration);
 }
 
 
@@ -6345,7 +6391,7 @@ function renderProjects() {
   let _autoDeployStateFixed = false;
   projects.forEach((p) => {
     const st = String(p.autoDeployStatus || '').toLowerCase();
-    if (!['deploying','checking','waiting-for-active-build','queued'].includes(st)) return;
+    if (!['deploying','waiting-for-active-build','queued'].includes(st)) return;
     const depsForProject = deployments
       .filter(d => String(d.projectId || '') === String(p.id || p._id || ''))
       .sort((a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0));
@@ -6422,14 +6468,14 @@ function renderProjects() {
           </div>
           ${displayStatus ? statusBadge(displayStatus) : '<span class="badge badge-idle"><span class="badge-dot"></span>Not deployed</span>'}
         </div>
-        ${(((lastDeploy && ['pending','building'].includes(lastDeploy.status)) || ['deploying','checking','waiting-for-active-build','queued'].includes(String(p.autoDeployStatus || '').toLowerCase())))
+        ${(((lastDeploy && ['pending','building'].includes(lastDeploy.status)) || ['deploying','waiting-for-active-build','queued'].includes(String(p.autoDeployStatus || '').toLowerCase())))
           ? '<div style="margin:8px 0 4px;display:flex;align-items:center;gap:8px;color:var(--green);font-size:0.78rem;font-weight:700;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:14px;height:14px;animation:dpSpin 0.8s linear infinite;"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>Auto redeploying from GitHub push… ' + ((lastDeploy && lastDeploy.id) ? '<button class="btn btn-ghost btn-sm" style="margin-left:auto;min-height:28px;padding:5px 9px;" onclick="event.stopPropagation();viewDeployLogs(\'' + lastDeploy.id + '\')">View logs</button>' : '<button class="btn btn-ghost btn-sm" style="margin-left:auto;min-height:28px;padding:5px 9px;" onclick="event.stopPropagation();showProjectDetail(\'' + p.id + '\')">Open</button>') + '</div>'
           : ''}
-        ${((p.autoDeployEnabled && p.autoDeployLastCompletedAt && (Date.now() - new Date(p.autoDeployLastCompletedAt).getTime()) < 45000))
+        ${((p.autoDeployEnabled && p.autoDeployLastCompletedAt && !['checking','deploying','waiting-for-active-build','queued'].includes(String(p.autoDeployStatus || '').toLowerCase()) && !(lastDeploy && ['pending','building'].includes(String(lastDeploy.status || '').toLowerCase())) && (Date.now() - new Date(p.autoDeployLastCompletedAt).getTime()) < 45000))
           ? '<div style="margin:6px 0 2px;display:flex;align-items:center;gap:8px;color:#7dd3fc;font-size:0.76rem;font-weight:700;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke=\"currentColor\" stroke-width=\"2.2\" style=\"width:14px;height:14px;\"><path d=\"M20 6 9 17l-5-5\"/></svg>Auto redeployment complete</div>'
           : ''}
         <div class="project-meta">
-          ${p.autoDeployEnabled ? `<div class="project-meta-item" style="color:${['deploying','checking','waiting-for-active-build','queued'].includes(String(p.autoDeployStatus || '').toLowerCase()) ? 'var(--green)' : 'var(--text-3)'};">
+          ${p.autoDeployEnabled ? `<div class="project-meta-item" style="color:${['deploying','waiting-for-active-build','queued'].includes(String(p.autoDeployStatus || '').toLowerCase()) ? 'var(--green)' : 'var(--text-3)'};">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>
             Auto Deploy: ${escHtml((p.autoDeployStatus || 'watching').replace(/-/g,' '))}
           </div>` : ''}
@@ -7411,14 +7457,33 @@ function initSocket() {
       }
     });
 
-    socket.on('autodeploy:status', ({ projectId, status, at }) => {
+    socket.on('autodeploy:status', ({ projectId, status, at, completed, result, sha, deployId, subdomain, projectName }) => {
       if (!projectId || !status) return;
-      const p = projects.find(x => String(x.id || x._id || '') === String(projectId));
+      const p = projects.find(x => String(x.id || x._id || '') === String(projectId) || (subdomain && x.subdomain === subdomain));
       if (!p) return;
+      if (deployId && (status === 'deploying' || status === 'waiting-for-active-build' || status === 'queued')) {
+        let dep = deployments.find(d => String(d.id || d._id || '') === String(deployId));
+        if (!dep) {
+          dep = { id: String(deployId), _id: String(deployId), projectId: String(p.id || p._id || projectId), projectName: projectName || p.name || 'Project', status: 'building', source: 'auto', triggerSha: sha || '', logs: [], startedAt: at || new Date().toISOString() };
+          deployments.push(dep);
+        } else {
+          dep.projectId = String(p.id || p._id || dep.projectId || projectId);
+          dep.source = dep.source || 'auto';
+          dep.triggerSha = dep.triggerSha || sha || '';
+          if (dep.status === 'pending') dep.status = 'building';
+        }
+      }
       p.autoDeployStatus = String(status);
       p.autoDeployLastCheckedAt = at || new Date().toISOString();
-      if (status === 'deploying' || status === 'checking' || status === 'waiting-for-active-build' || status === 'queued') {
+      if (sha) p.autoDeployLastSha = sha;
+      if (status === 'deploying' || status === 'waiting-for-active-build' || status === 'queued') {
         p.lastStatus = 'building';
+        p.autoDeployLastCompletedAt = '';
+      }
+      if (completed) {
+        p.autoDeployLastCompletedAt = at || new Date().toISOString();
+        if (result === 'success') p.lastStatus = 'success';
+        if (result === 'failed') p.lastStatus = 'failed';
       }
       if (status === 'watching' && p.lastStatus === 'building') {
         p.lastStatus = p.liveUrl ? 'success' : p.lastStatus;
@@ -7431,7 +7496,7 @@ function initSocket() {
     });
 
     // ── Build log line received ──────────────────────────────────
-    socket.on('build:log', async ({ deployId, line }) => {
+    socket.on('build:log', async ({ deployId, projectId, source, triggerSha, line }) => {
       // Keep the matrix stream independent from high-volume log events. Rebuilding
       // the rain DOM for every line competes with terminal rendering and causes jank.
       // Fire deployment.started webhook on first log line
@@ -7448,9 +7513,26 @@ function initSocket() {
       // Save to in-memory deployment record. Auto-deploy runs can start on the
       // server before this tab has synced, so we opportunistically pull workspace
       // state to make the active "redeploying" badge appear on the project card.
+      let incomingBuildMadeVisible = false;
       let d = deployments.find(x => x.id === deployId);
+      if (!d && projectId) {
+        const projForIncoming = projects.find(p => String(p.id || p._id || '') === String(projectId));
+        d = { id: deployId, _id: deployId, projectId: String(projectId), projectName: projForIncoming?.name || 'Project', status: 'building', source: source || 'auto', triggerSha: triggerSha || '', logs: [], startedAt: new Date().toISOString() };
+        deployments.push(d);
+        if (projForIncoming && (source === 'auto')) {
+          projForIncoming.autoDeployStatus = 'deploying';
+          projForIncoming.lastStatus = 'building';
+          projForIncoming.autoDeployLastCheckedAt = new Date().toISOString();
+          projForIncoming.autoDeployLastCompletedAt = '';
+        }
+        incomingBuildMadeVisible = true;
+      }
       if (!d) d = await ensureIncomingBuildVisible(deployId);
       if (d) { d.logs = d.logs || []; d.logs.push(line); save(); }
+      if (incomingBuildMadeVisible && ['projects','dashboard','project-detail'].includes(currentPage)) {
+        renderProjects();
+        renderDashboard();
+      }
 
       // Do not force navigation to logs for background/auto deployments.
       // Project cards already surface in-progress state with a direct "View logs" action.
@@ -7503,7 +7585,7 @@ function initSocket() {
     });
 
     // ── Build finished ───────────────────────────────────────────
-    socket.on('build:done', ({ deployId, status, duration, liveUrl }) => {
+    socket.on('build:done', ({ deployId, projectId, status, duration, liveUrl, source }) => {
       // Log to activity feed
       const _dep = deployments.find(x => x.id === deployId);
       logActivity('deploy', (_dep ? _dep.projectName : 'Project') + ' deployment ' + status + (duration ? ' in ' + duration + 's' : ''));
@@ -7512,16 +7594,23 @@ function initSocket() {
       const whPayload = { deployId, status, duration, liveUrl, projectName: dep ? dep.projectName : '' };
       if (status === 'success') fireWebhooks('deployment.success', whPayload);
       if (status === 'failed')  fireWebhooks('deployment.failed',  whPayload);
-      const d = deployments.find(x => x.id === deployId);
+      let incomingBuildMadeVisible = false;
+      let d = deployments.find(x => x.id === deployId);
+      if (!d && projectId) {
+        const projForIncoming = projects.find(p => String(p.id || p._id || '') === String(projectId));
+        d = { id: deployId, _id: deployId, projectId: String(projectId), projectName: projForIncoming?.name || 'Project', status: 'building', source: source || 'auto', logs: [], startedAt: new Date().toISOString() };
+        deployments.push(d);
+      }
       if (d) {
         d.status   = status;
         d.duration = duration;
         d.endedAt  = new Date().toISOString();
+        d.source   = source || d.source || 'manual';
       }
-      const proj = d ? projects.find(p => p.id === d.projectId) : null;
+      const proj = d ? projects.find(p => String(p.id || p._id || '') === String(d.projectId)) : null;
       if (proj) {
         proj.lastStatus = status;
-        const wasAutoDeployActive = ['deploying','checking','waiting-for-active-build','queued'].includes(String(proj.autoDeployStatus || '').toLowerCase());
+        const wasAutoDeployActive = ['deploying','waiting-for-active-build','queued'].includes(String(proj.autoDeployStatus || '').toLowerCase());
         // Set liveUrl on the PROJECT so renderProjects can use it as proof of success
         if (liveUrl && status === 'success') proj.liveUrl = liveUrl;
         if (wasAutoDeployActive) {
@@ -7556,9 +7645,10 @@ function initSocket() {
 
       hideMatrixTerminal(1800);
 
+      const isAutoDeployDone = (source === 'auto') || (d && d.source === 'auto');
       if (status === 'success') {
-        toast('Build succeeded in ' + duration + 's!', 'success');
-        if (liveUrl) {
+        toast((isAutoDeployDone ? 'Automatic deployment completed in ' : 'Build succeeded in ') + duration + 's!', 'success');
+        if (liveUrl && !isAutoDeployDone) {
           writeTerm('');
           writeTerm('\x1b[32m┌─────────────────────────────────────────┐\x1b[0m');
           writeTerm('\x1b[32m│  ✓  Site is live!                       │\x1b[0m');
@@ -7571,7 +7661,7 @@ function initSocket() {
           }, 1200);
         }
       } else {
-        toast('Build failed after ' + duration + 's — check the logs for details', 'error', 6000);
+        toast((isAutoDeployDone ? 'Automatic deployment failed after ' : 'Build failed after ') + duration + 's — check the logs for details', 'error', 6000);
       }
 
       renderDashboard();
