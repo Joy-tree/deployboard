@@ -6920,10 +6920,6 @@ async function startDeployment() {
     toast('Use a production start command (e.g. npm start). npm run dev is not suitable for deployment.', 'error');
     return;
   }
-  if (siteType === 'server' && isSkipBuildCmd(buildCmd)) {
-    toast('Build command cannot be "echo skip" for server deployments.', 'error');
-    return;
-  }
 
   if (!name)      { toast('Project name is required', 'error'); return; }
   if (!subdomain) { toast('Subdomain is required', 'error'); return; }
