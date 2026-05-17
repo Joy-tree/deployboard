@@ -358,6 +358,14 @@ body.landing-drawer-open { overflow: hidden; }
 .onboard-item{font-size:.86rem;color:#cbd5e1;font-weight:500;}
 .onboard-item b{color:#22d3ee;}
 @keyframes marq{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+.hero-top-marquee{max-width:1160px;margin:10px auto 14px;border:1px solid rgba(56,189,248,.28);border-radius:16px;overflow:hidden;background:linear-gradient(145deg,rgba(8,16,32,.85),rgba(4,10,22,.95));position:relative}
+.hero-top-track{display:flex;gap:12px;padding:10px;min-width:max-content;animation:heroCardsMove 22s linear infinite}
+.hero-top-card{min-width:320px;max-width:320px;padding:12px 14px;border-radius:12px;border:1px solid rgba(148,163,184,.25);background:linear-gradient(160deg,rgba(15,23,42,.9),rgba(2,6,23,.96));box-shadow:0 10px 28px rgba(0,0,0,.25)}
+.hero-top-card b{display:block;font-size:.72rem;letter-spacing:.11em;text-transform:uppercase;color:#67e8f9}
+.hero-top-card span{display:block;margin-top:7px;font-size:.84rem;line-height:1.45;color:#dbeafe}
+@keyframes heroCardsMove{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@media(max-width:760px){.hero-top-card{min-width:260px;max-width:260px}}
 .home-product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:1040px;margin:14px auto 0}
 .home-product-card{position:relative;border:1px solid rgba(16,185,129,.16);border-radius:16px;padding:16px;background:linear-gradient(145deg,rgba(15,23,42,.95),rgba(8,13,24,.98));display:flex;flex-direction:column;gap:10px;min-height:188px;transition:.18s transform,.18s border-color,.18s box-shadow}
 .home-product-card:hover{transform:translateY(-3px);border-color:rgba(16,185,129,.38);box-shadow:0 18px 44px rgba(0,0,0,.25)}
@@ -2675,6 +2683,18 @@ textarea.input { resize: vertical; min-height: 80px; }
     <span class="onboard-item">Real-time build logs with clean deployment stages.</span>
     <span class="onboard-item">Static + Server apps with automatic routing and subdomains.</span>
     <span class="onboard-item">Rollback-ready container releases and deployment history.</span>
+  </div>
+</div>
+
+
+<div class="hero-top-marquee neon-beam-border" aria-label="Realtime moving inscription cards">
+  <div class="hero-top-track">
+    <div class="hero-top-card"><b>Realtime Build Stream</b><span>Live logs, step timings, and deployment transitions update instantly as releases progress.</span></div>
+    <div class="hero-top-card"><b>Operational Guardrails</b><span>Safer pipelines with rollback-ready workflows and clear runtime signals for every ship.</span></div>
+    <div class="hero-top-card"><b>Edge Delivery Matrix</b><span>Routing, SSL, and domain controls integrated into one premium command surface.</span></div>
+    <div class="hero-top-card"><b>Realtime Build Stream</b><span>Live logs, step timings, and deployment transitions update instantly as releases progress.</span></div>
+    <div class="hero-top-card"><b>Operational Guardrails</b><span>Safer pipelines with rollback-ready workflows and clear runtime signals for every ship.</span></div>
+    <div class="hero-top-card"><b>Edge Delivery Matrix</b><span>Routing, SSL, and domain controls integrated into one premium command surface.</span></div>
   </div>
 </div>
 
