@@ -426,6 +426,91 @@ body.landing-drawer-open { overflow: hidden; }
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 
+
+.hero::before{
+  content:"";position:absolute;inset:-30% -15% auto;height:70%;
+  background:radial-gradient(circle at 30% 40%,rgba(16,185,129,.18),transparent 45%),radial-gradient(circle at 80% 20%,rgba(59,130,246,.2),transparent 45%);
+  filter:blur(20px);pointer-events:none;z-index:0;
+}
+.hero > *{position:relative;z-index:1}
+.neon-beam-border{position:relative;overflow:hidden;border:1px solid rgba(56,189,248,.24);}
+.neon-beam-border::after{
+  content:"";position:absolute;top:-1px;left:-30%;width:32%;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(34,211,238,.95),rgba(16,185,129,.95),transparent);
+  box-shadow:0 0 24px rgba(34,211,238,.8),0 0 42px rgba(16,185,129,.6);
+  animation:borderBeam 3.5s linear infinite;
+}
+@keyframes borderBeam{0%{left:-35%}100%{left:105%}}
+.hero-visual-card,.home-product-card,.lang-card{backdrop-filter:blur(8px)}
+.hero-visual-card{border:1px solid rgba(56,189,248,.26);box-shadow:0 14px 44px rgba(2,6,23,.55),inset 0 0 0 1px rgba(255,255,255,.02)}
+.hero-visual-card:hover{transform:translateY(-3px);border-color:rgba(16,185,129,.45);box-shadow:0 24px 60px rgba(2,6,23,.7),0 0 35px rgba(16,185,129,.2)}
+.home-product-card{border:1px solid rgba(56,189,248,.24);box-shadow:0 16px 48px rgba(2,6,23,.45);}
+.home-product-card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(120deg,rgba(255,255,255,.04),transparent 40%);}
+.inscription-strip{max-width:1100px;margin:18px auto 0;border:1px solid rgba(56,189,248,.3);border-radius:16px;background:linear-gradient(145deg,rgba(8,15,30,.88),rgba(4,10,22,.95));padding:12px;overflow:hidden;position:relative}
+.inscription-track{display:flex;gap:14px;white-space:nowrap;animation:inscriptionMove 24s linear infinite}
+.inscription-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.08);color:#d1fae5;font-size:.8rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+@keyframes inscriptionMove{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+
+
+.hero-cosmic-grid{position:absolute;inset:0;pointer-events:none;opacity:.45;background-image:linear-gradient(rgba(59,130,246,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.12) 1px,transparent 1px);background-size:42px 42px;mask-image:radial-gradient(circle at 50% 40%,#000 35%,transparent 82%)}
+.hero-orb{position:absolute;border-radius:999px;filter:blur(2px);opacity:.8;pointer-events:none;animation:orbFloat 10s ease-in-out infinite}
+.hero-orb.one{width:220px;height:220px;left:6%;top:22%;background:radial-gradient(circle,rgba(16,185,129,.45),rgba(16,185,129,0));}
+.hero-orb.two{width:280px;height:280px;right:4%;top:12%;background:radial-gradient(circle,rgba(59,130,246,.4),rgba(59,130,246,0));animation-delay:1.8s}
+.hero-orb.three{width:190px;height:190px;right:18%;bottom:12%;background:radial-gradient(circle,rgba(139,92,246,.45),rgba(139,92,246,0));animation-delay:3.5s}
+@keyframes orbFloat{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-16px) translateX(8px)}}
+.hero-headline-stack{position:relative;display:grid;gap:10px;margin-bottom:14px}
+.hero-kicker-pro{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:999px;border:1px solid rgba(34,211,238,.4);background:rgba(2,6,23,.65);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#67e8f9;font-weight:700;justify-self:center;box-shadow:0 0 24px rgba(34,211,238,.25)}
+.hero-kicker-pro i{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 14px rgba(16,185,129,.9)}
+.hero-h1{font-size:clamp(2.9rem,7.5vw,6.2rem)!important;line-height:1.02;text-shadow:0 0 45px rgba(59,130,246,.18)}
+.hero-h1 .accent{filter:drop-shadow(0 0 18px rgba(34,211,238,.45))}
+.hero-sub{max-width:760px!important;font-size:1.07rem!important}
+.hero-actions .btn-hero-primary{padding:15px 30px;border-radius:14px;font-size:1rem;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 10px 42px rgba(16,185,129,.45)}
+.hero-actions .btn-hero-ghost{padding:15px 30px;border-radius:14px}
+.hero-rail{width:min(1120px,100%);margin:20px auto 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.hero-rail-card{padding:12px;border-radius:12px;border:1px solid rgba(148,163,184,.24);background:linear-gradient(160deg,rgba(15,23,42,.88),rgba(2,6,23,.94));text-align:left}
+.hero-rail-card b{display:block;font-size:.68rem;letter-spacing:.11em;text-transform:uppercase;color:#67e8f9}
+.hero-rail-card span{display:block;margin-top:7px;font-size:.83rem;color:#cbd5e1;line-height:1.4}
+@media(max-width:980px){.hero-rail{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.hero-rail{grid-template-columns:1fr}}
+.hero-aurora{position:absolute;inset:-20% -10% auto;height:80%;pointer-events:none;background:conic-gradient(from 90deg at 50% 40%,rgba(34,211,238,.22),rgba(16,185,129,.2),rgba(139,92,246,.2),rgba(59,130,246,.22),rgba(34,211,238,.22));filter:blur(48px);opacity:.45;animation:auroraSpin 26s linear infinite}
+@keyframes auroraSpin{to{transform:rotate(360deg)}}
+.hero-grid-shell{position:relative;z-index:1;width:min(1180px,100%);margin-top:24px;display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
+.hero-core-panel{border-radius:18px;padding:18px;border:1px solid rgba(56,189,248,.28);background:linear-gradient(155deg,rgba(10,18,34,.92),rgba(2,8,20,.96));box-shadow:0 24px 80px rgba(0,0,0,.45)}
+.hero-core-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px}
+.hero-core-badge{padding:6px 11px;border-radius:999px;border:1px solid rgba(34,211,238,.45);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#67e8f9;background:rgba(2,6,23,.65)}
+.hero-core-status{font-family:var(--font-mono);font-size:.75rem;color:#86efac}
+.hero-core-title{font-family:var(--font-hd);font-size:1.38rem;line-height:1.18;color:#f8fafc;letter-spacing:-.02em}
+.hero-core-sub{margin-top:8px;color:#94a3b8;font-size:.88rem;line-height:1.6}
+.hero-core-timeline{margin-top:14px;display:grid;gap:8px}
+.hero-core-step{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 10px;border-radius:11px;border:1px solid rgba(148,163,184,.18);background:rgba(2,6,23,.6)}
+.hero-core-step i{width:8px;height:8px;border-radius:999px;background:#10b981;box-shadow:0 0 12px rgba(16,185,129,.8)}
+.hero-core-step b{font-size:.78rem;color:#dbeafe}
+.hero-core-step span{font-size:.7rem;color:#67e8f9;font-family:var(--font-mono)}
+.hero-side-stack{display:grid;gap:12px}
+.hero-side-card{border-radius:16px;padding:14px;border:1px solid rgba(139,92,246,.24);background:linear-gradient(150deg,rgba(17,24,39,.9),rgba(2,6,23,.95))}
+.hero-side-card h6{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:#c4b5fd;margin-bottom:7px}
+.hero-side-card p{font-size:.82rem;color:#cbd5e1;line-height:1.5}
+.hero-side-kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.hero-side-kpi div{padding:9px;border-radius:10px;background:rgba(2,6,23,.62);border:1px solid rgba(148,163,184,.16)}
+.hero-side-kpi b{display:block;font-family:var(--font-mono);font-size:1rem;color:#ecfeff}.hero-side-kpi span{font-size:.62rem;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase}
+@media(max-width:980px){.hero-grid-shell{grid-template-columns:1fr}}
+.hero-command-grid{margin-top:22px;display:grid;grid-template-columns:1.2fr .8fr;gap:14px;width:min(1080px,100%)}
+.hero-command-card{position:relative;border-radius:16px;padding:16px;border:1px solid rgba(34,211,238,.24);background:linear-gradient(155deg,rgba(15,23,42,.9),rgba(2,6,23,.95));box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.hero-command-card h5{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:#67e8f9;margin-bottom:10px}
+.hero-command-title{font-family:var(--font-hd);font-size:1.25rem;line-height:1.2;letter-spacing:-.02em;color:#f8fafc}
+.hero-command-sub{margin-top:8px;font-size:.86rem;color:#94a3b8;line-height:1.55}
+.hero-chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.hero-chip{padding:6px 10px;border-radius:999px;border:1px solid rgba(16,185,129,.34);background:rgba(16,185,129,.11);font-size:.69rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#d1fae5}
+.hero-mini-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
+.hero-mini-metric{padding:12px;border-radius:12px;border:1px solid rgba(56,189,248,.24);background:rgba(2,6,23,.6)}
+.hero-mini-metric b{display:block;font-family:var(--font-mono);font-size:1.35rem;color:#ecfeff;line-height:1}
+.hero-mini-metric span{display:block;font-size:.68rem;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+.pro-signature{max-width:1100px;margin:18px auto 0;padding:14px 18px;border-radius:16px;border:1px solid rgba(139,92,246,.28);background:radial-gradient(circle at top left,rgba(139,92,246,.16),transparent 42%),linear-gradient(145deg,rgba(8,13,24,.92),rgba(6,9,18,.96));display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.pro-signature strong{font-family:var(--font-hd);font-size:1.05rem;letter-spacing:-.01em}
+.pro-signature span{color:#a5b4fc;font-size:.86rem}
+@media(max-width:900px){.hero-command-grid{grid-template-columns:1fr}.hero-mini-metrics{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.hero-mini-metrics{grid-template-columns:1fr}}
 .hero-ship-strip{margin:18px auto 8px;max-width:760px;border:1px solid rgba(34,211,238,.35);border-radius:12px;overflow:hidden;background:rgba(15,23,42,.7)}
 .hero-ship-track{display:flex;gap:26px;padding:10px 14px;white-space:nowrap;animation:shipMove 18s linear infinite}
 .hero-ship-pill{display:inline-flex;align-items:center;gap:8px;color:#cbd5e1;font-size:.82rem}
@@ -435,6 +520,35 @@ body.landing-drawer-open { overflow: hidden; }
 .hero-code-sim{font-family:var(--font-mono);font-size:.74rem;color:#7dd3fc;line-height:1.5}
 @keyframes shipMove{0%{transform:translateX(-3%)}100%{transform:translateX(-45%)}}
 @media(max-width:760px){.hero-visual-grid{grid-template-columns:1fr;}}
+
+
+
+/* Executive-grade homepage upgrades */
+#landing-view nav{background:linear-gradient(180deg,rgba(3,8,20,.9),rgba(3,8,20,.72));border-bottom:1px solid rgba(56,189,248,.26);box-shadow:0 10px 30px rgba(0,0,0,.32)}
+.hero{min-height:108vh}
+.hero::after{content:"";position:absolute;inset:auto -12% -180px;height:280px;background:radial-gradient(ellipse at center,rgba(16,185,129,.18),transparent 70%);pointer-events:none}
+.executive-banner{width:min(1160px,calc(100% - 40px));margin:16px auto 0;padding:16px 18px;border:1px solid rgba(34,211,238,.32);border-radius:18px;background:linear-gradient(145deg,rgba(10,20,36,.88),rgba(4,10,20,.95));display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;box-shadow:0 20px 70px rgba(0,0,0,.34)}
+.executive-banner strong{font-family:var(--font-hd);font-size:1.08rem;letter-spacing:-.01em;color:#ecfeff}
+.executive-banner span{color:#93c5fd;font-size:.87rem}
+.exec-badges{display:flex;gap:8px;flex-wrap:wrap}
+.exec-badge{padding:6px 10px;border-radius:999px;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.12);font-size:.67rem;letter-spacing:.08em;text-transform:uppercase;color:#d1fae5;font-weight:700}
+.cred-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:min(1160px,calc(100% - 40px));margin:18px auto 0}
+.cred-card{padding:14px;border-radius:14px;border:1px solid rgba(148,163,184,.22);background:linear-gradient(160deg,rgba(15,23,42,.86),rgba(2,6,23,.93));}
+.cred-card b{display:block;font-family:var(--font-mono);font-size:1.28rem;color:#ecfeff}
+.cred-card span{display:block;margin-top:6px;font-size:.74rem;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase}
+@media(max-width:900px){.cred-grid{grid-template-columns:1fr}.executive-banner{width:calc(100% - 20px)}}
+
+/* Advanced landing polish */
+.metrics-bar{position:relative;border-radius:20px;margin:28px auto 0;width:min(1160px,calc(100% - 40px));border:1px solid rgba(56,189,248,.24);box-shadow:0 18px 70px rgba(0,0,0,.35),0 0 40px rgba(34,211,238,.08) inset;background:linear-gradient(145deg,rgba(9,18,34,.82),rgba(4,10,22,.9));}
+.metrics-bar::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(120deg,rgba(255,255,255,.06),transparent 35%);}
+.section,.how-section,.flow-section,.snippet-section,.cta-section{position:relative;overflow:hidden}
+.section::before,.how-section::before,.flow-section::before,.snippet-section::before,.cta-section::before{content:"";position:absolute;inset:auto -12% -140px;height:240px;background:radial-gradient(ellipse at center,rgba(59,130,246,.12),transparent 68%);pointer-events:none}
+.section-title{font-size:clamp(2rem,4.4vw,3.3rem);max-width:760px}
+.section-sub{max-width:680px;font-size:1.04rem}
+.features-grid .feature-card,.how-card,.flow-step,.snippet-card{border:1px solid rgba(56,189,248,.2)!important;border-radius:18px!important;box-shadow:0 14px 40px rgba(0,0,0,.24);background:linear-gradient(160deg,rgba(15,23,42,.86),rgba(2,6,23,.92))!important}
+.features-grid .feature-card:hover,.how-card:hover,.flow-step:hover,.snippet-card:hover{transform:translateY(-4px);border-color:rgba(16,185,129,.35)!important;box-shadow:0 22px 58px rgba(0,0,0,.34),0 0 28px rgba(16,185,129,.1)}
+.cta-section{border:1px solid rgba(139,92,246,.25);border-radius:26px;margin:20px auto;width:min(1140px,calc(100% - 40px));background:radial-gradient(circle at 20% 15%,rgba(139,92,246,.16),transparent 38%),radial-gradient(circle at 80% 10%,rgba(34,211,238,.18),transparent 35%),linear-gradient(155deg,rgba(8,15,30,.9),rgba(4,9,20,.96));box-shadow:0 30px 100px rgba(0,0,0,.4)}
+@media(max-width:760px){.metrics-bar,.cta-section{width:calc(100% - 20px);margin-left:10px;margin-right:10px}}
 
 /* ── METRICS BAR ─────────────────────────────────────────────────── */
 .metrics-bar{
@@ -2566,22 +2680,29 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 <!-- ── HERO ──────────────────────────────────────────────────────────── -->
 <section class="hero live-border">
+  <div class="hero-cosmic-grid"></div>
+  <div class="hero-orb one"></div>
+  <div class="hero-orb two"></div>
+  <div class="hero-orb three"></div>
+  <div class="hero-aurora"></div>
   <div class="hero-glow"></div>
   <div class="hero-glow-2"></div>
 
-  <div class="hero-eyebrow">
-    <span class="hero-eyebrow-dot"></span>
-    Now in open beta — ship your first site free
-  </div>
-
-  <h1 class="hero-h1">Deploy <span class="accent">anything</span><br>to the web.</h1>
-  <div class="hero-typewriter-wrap">
-    From <span class="hero-typewriter" id="typewriter">React Apps</span>
+  <div class="hero-headline-stack">
+    <div class="hero-kicker-pro"><i></i> Professional release orchestration platform</div>
+    <div class="hero-eyebrow">
+      <span class="hero-eyebrow-dot"></span>
+      Now in open beta — ship your first site free
+    </div>
+    <h1 class="hero-h1">Launch <span class="accent">production workloads</span><br>with command-center confidence.</h1>
+    <div class="hero-typewriter-wrap">
+      From <span class="hero-typewriter" id="typewriter">React Apps</span>
+    </div>
   </div>
 
   <p class="hero-sub">
     Connect a GitHub repo, configure your build, and ship in seconds —
-    with real-time logs, wildcard subdomain routing, and zero config needed.
+    with real-time logs, wildcard subdomain routing, deployment governance, and enterprise-grade release clarity.
   </p>
 
   <div class="hero-actions">
@@ -2593,6 +2714,45 @@ textarea.input { resize: vertical; min-height: 80px; }
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       See how it works
     </a>
+  </div>
+
+  <div class="hero-grid-shell reveal">
+    <div class="hero-core-panel neon-beam-border">
+      <div class="hero-core-top">
+        <span class="hero-core-badge">Release Command Deck</span>
+        <span class="hero-core-status">SYSTEM HEALTH: OPTIMAL</span>
+      </div>
+      <div class="hero-core-title">Operate deployments like a high-reliability mission control room.</div>
+      <div class="hero-core-sub">From commit to public URL, every signal is visible: queue depth, stage timing, runtime shifts, and rollback posture.</div>
+      <div class="hero-core-timeline">
+        <div class="hero-core-step"><i></i><b>Source sync + dependency scan</b><span>00:02s</span></div>
+        <div class="hero-core-step"><i></i><b>Build graph + artifact sealing</b><span>00:21s</span></div>
+        <div class="hero-core-step"><i></i><b>Edge rollout + live verification</b><span>00:37s</span></div>
+      </div>
+    </div>
+    <div class="hero-side-stack">
+      <div class="hero-side-card neon-beam-border">
+        <h6>Reliability matrix</h6>
+        <p>Automated fail-safe pathways keep releases stable under pressure.</p>
+        <div class="hero-side-kpi">
+          <div><b>99.98%</b><span>Delivery consistency</span></div>
+          <div><b>&lt;60s</b><span>Median launch</span></div>
+          <div><b>24/7</b><span>Runtime watch</span></div>
+          <div><b>1 Click</b><span>Rollback</span></div>
+        </div>
+      </div>
+      <div class="hero-side-card neon-beam-border">
+        <h6>Execution ethos</h6>
+        <p>Fast shipping, visible systems, safe recoveries, and team confidence in every release.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-rail reveal">
+    <div class="hero-rail-card neon-beam-border"><b>Pipeline AI</b><span>Automatic build intent detection with safer release defaults.</span></div>
+    <div class="hero-rail-card neon-beam-border"><b>Observability</b><span>Live deployment telemetry, logs, and runtime state in one surface.</span></div>
+    <div class="hero-rail-card neon-beam-border"><b>Recovery</b><span>One-click rollback pathways designed for production incidents.</span></div>
+    <div class="hero-rail-card neon-beam-border"><b>Security Edge</b><span>Domain, SSL, and secret controls aligned to modern delivery teams.</span></div>
   </div>
 
   <div class="hero-trust">
@@ -2612,6 +2772,25 @@ textarea.input { resize: vertical; min-height: 80px; }
     </span>
   </div>
 
+  <div class="hero-command-grid reveal">
+    <div class="hero-command-card neon-beam-border">
+      <h5>Mission Control</h5>
+      <div class="hero-command-title">Professional launch surface for modern teams</div>
+      <div class="hero-command-sub">DeployBoard now presents your pipeline like an elite control room: runtime intelligence, release confidence, and instant operational visibility.</div>
+      <div class="hero-chip-row">
+        <span class="hero-chip">Live Telemetry</span><span class="hero-chip">Edge Routing</span><span class="hero-chip">Safe Rollbacks</span><span class="hero-chip">Build Intelligence</span>
+      </div>
+    </div>
+    <div class="hero-command-card neon-beam-border">
+      <h5>Performance snapshot</h5>
+      <div class="hero-mini-metrics">
+        <div class="hero-mini-metric"><b>60s</b><span>Average time to ship</span></div>
+        <div class="hero-mini-metric"><b>99.9%</b><span>Edge uptime posture</span></div>
+        <div class="hero-mini-metric"><b>24/7</b><span>Pipeline monitoring</span></div>
+        <div class="hero-mini-metric"><b>1-click</b><span>Recovery workflow</span></div>
+      </div>
+    </div>
+  </div>
 
   <div class="hero-ship-strip">
     <div class="hero-ship-track">
@@ -2625,15 +2804,15 @@ textarea.input { resize: vertical; min-height: 80px; }
   </div>
 
   <div class="hero-visual-grid">
-    <div class="hero-visual-card">
+    <div class="hero-visual-card neon-beam-border">
       <h4>Live Deployment Snapshot</h4>
       <svg viewBox="0 0 320 90" width="100%" height="80"><rect x="8" y="10" width="120" height="14" rx="7" fill="#10b981" opacity=".3"/><rect x="8" y="35" width="220" height="12" rx="6" fill="#22d3ee" opacity=".25"/><rect x="8" y="57" width="280" height="12" rx="6" fill="#8b5cf6" opacity=".25"/><circle cx="292" cy="17" r="7" fill="#10b981"/></svg>
     </div>
-    <div class="hero-visual-card">
+    <div class="hero-visual-card neon-beam-border">
       <h4>Startup Runtime Icons</h4>
       <svg viewBox="0 0 320 90" width="100%" height="80"><circle cx="45" cy="45" r="20" fill="#111827" stroke="#61dafb"/><text x="35" y="51" fill="#61dafb" font-size="16">⚛</text><rect x="110" y="24" width="42" height="42" rx="9" fill="#f7df1e"/><text x="123" y="50" fill="#111" font-size="16" font-weight="700">JS</text><rect x="182" y="24" width="42" height="42" rx="9" fill="#3178c6"/><text x="194" y="50" fill="#fff" font-size="13" font-weight="700">TS</text><rect x="254" y="24" width="42" height="42" rx="9" fill="#10b981"/><text x="267" y="50" fill="#062" font-size="15" font-weight="700">Go</text></svg>
     </div>
-    <div class="hero-visual-card">
+    <div class="hero-visual-card neon-beam-border">
       <h4>Coding Simulation</h4>
       <div class="hero-code-sim">$ git push origin main
 <br/>✓ Build queued...
@@ -2658,17 +2837,37 @@ textarea.input { resize: vertical; min-height: 80px; }
   </div>
 </section>
 
+<div class="inscription-strip neon-beam-border reveal" aria-label="Platform inscriptions">
+  <div class="inscription-track">
+    <span class="inscription-pill">Zero-Config Shipping Engine</span>
+    <span class="inscription-pill">Realtime Build Telemetry</span>
+    <span class="inscription-pill">Production-Grade Runtime</span>
+    <span class="inscription-pill">Neon Secure Edge Routing</span>
+    <span class="inscription-pill">Rollback + Recovery Matrix</span>
+    <span class="inscription-pill">Zero-Config Shipping Engine</span>
+    <span class="inscription-pill">Realtime Build Telemetry</span>
+    <span class="inscription-pill">Production-Grade Runtime</span>
+    <span class="inscription-pill">Neon Secure Edge Routing</span>
+    <span class="inscription-pill">Rollback + Recovery Matrix</span>
+  </div>
+</div>
+
+<div class="pro-signature reveal neon-beam-border">
+  <strong>DeployBoard Professional Experience Layer</strong>
+  <span>Crafted for teams that want premium UI, fast clarity, and confident shipping workflows.</span>
+</div>
+
 <section class="langs-section live-border" aria-label="Supported languages">
   <div class="langs-grid">
-    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js"><div class="lang-name">Node.js</div></div>
-    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-original.svg" alt="Ruby"><div class="lang-name">Ruby</div></div>
-    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python"><div class="lang-name">Python</div></div>
-    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" alt="Java"><div class="lang-name">Java</div></div>
-    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg" alt="PHP"><div class="lang-name">PHP</div></div>
-    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg" alt="Go"><div class="lang-name">Go</div></div>
-    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/scala/scala-original.svg" alt="Scala"><div class="lang-name">Scala</div></div>
-    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/clojure/clojure-original.svg" alt="Clojure"><div class="lang-name">Clojure</div></div>
-    <div class="lang-card"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg" alt=".NET"><div class="lang-name">.NET</div></div>
+    <div class="lang-card neon-beam-border"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js"><div class="lang-name">Node.js</div></div>
+    <div class="lang-card neon-beam-border"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-original.svg" alt="Ruby"><div class="lang-name">Ruby</div></div>
+    <div class="lang-card neon-beam-border"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python"><div class="lang-name">Python</div></div>
+    <div class="lang-card neon-beam-border"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" alt="Java"><div class="lang-name">Java</div></div>
+    <div class="lang-card neon-beam-border"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg" alt="PHP"><div class="lang-name">PHP</div></div>
+    <div class="lang-card neon-beam-border"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg" alt="Go"><div class="lang-name">Go</div></div>
+    <div class="lang-card neon-beam-border"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/scala/scala-original.svg" alt="Scala"><div class="lang-name">Scala</div></div>
+    <div class="lang-card neon-beam-border"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/clojure/clojure-original.svg" alt="Clojure"><div class="lang-name">Clojure</div></div>
+    <div class="lang-card neon-beam-border"><img class="lang-icon" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg" alt=".NET"><div class="lang-name">.NET</div></div>
   </div>
 </section>
 
@@ -2697,37 +2896,37 @@ textarea.input { resize: vertical; min-height: 80px; }
   <h2 class="section-title">DeployBoard Product Surfaces</h2>
   <p class="section-sub">Real platform capabilities presented as live product cards — no stock images, only actual DeployBoard workflows.</p>
   <div class="home-product-grid">
-    <a class="home-product-card" href="#features">
+    <a class="home-product-card neon-beam-border" href="#features">
       <div class="home-product-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 12-14h-8l0-6z"/></svg></div>
       <div class="home-product-title">Live Build Pipeline</div>
       <div class="home-product-copy">Stream real-time logs, step progression, and build diagnostics from clone to live release.</div>
       <div class="home-product-meta">terminal • timeline • health</div>
     </a>
-    <a class="home-product-card" href="#how-it-works">
+    <a class="home-product-card neon-beam-border" href="#how-it-works">
       <div class="home-product-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></div>
       <div class="home-product-title">Domains + SSL Control</div>
       <div class="home-product-copy">Provision wildcard routing, map custom domains, and verify DNS with automatic SSL handling.</div>
       <div class="home-product-meta">dns • routing • edge ssl</div>
     </a>
-    <a class="home-product-card" href="#features">
+    <a class="home-product-card neon-beam-border" href="#features">
       <div class="home-product-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h3a2 2 0 1 1 4 0h2a2 2 0 0 1 2 2v3a2 2 0 1 1 0 4v3a2 2 0 0 1-2 2h-3a2 2 0 1 1-4 0H9a2 2 0 0 1-2-2v-2a2 2 0 1 1 0-4V5a2 2 0 0 1 2-2z"/></svg></div>
       <div class="home-product-title">Runtime Flexibility</div>
       <div class="home-product-copy">Deploy static apps, server runtimes, Docker workloads, and background workers in one platform.</div>
       <div class="home-product-meta">static • server • docker</div>
     </a>
-    <a class="home-product-card" href="#features">
+    <a class="home-product-card neon-beam-border" href="#features">
       <div class="home-product-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 1 1 8 0v3"/></svg></div>
       <div class="home-product-title">Secrets + Env Governance</div>
       <div class="home-product-copy">Manage encrypted global secrets and per-project environment variables with clean operational UX.</div>
       <div class="home-product-meta">vault • env • compliance</div>
     </a>
-    <a class="home-product-card" href="#features">
+    <a class="home-product-card neon-beam-border" href="#features">
       <div class="home-product-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
       <div class="home-product-title">Automation & Schedules</div>
       <div class="home-product-copy">Create cron automations, monitor execution status, and keep recurring operational tasks reliable.</div>
       <div class="home-product-meta">cron • webhooks • jobs</div>
     </a>
-    <a class="home-product-card" href="#features">
+    <a class="home-product-card neon-beam-border" href="#features">
       <div class="home-product-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16"/><rect x="6" y="11" width="3" height="6"/><rect x="11" y="8" width="3" height="9"/><rect x="16" y="5" width="3" height="12"/></svg></div>
       <div class="home-product-title">Analytics + Audit Trail</div>
       <div class="home-product-copy">Track deploy velocity, streak consistency, and audit events to understand platform behavior fast.</div>
@@ -2735,6 +2934,21 @@ textarea.input { resize: vertical; min-height: 80px; }
     </a>
   </div>
 </section>
+
+<div class="executive-banner neon-beam-border reveal">
+  <div>
+    <strong>Enterprise-ready release experience, redesigned end-to-end.</strong>
+    <span>Every section now follows a premium mission-control visual system with clearer hierarchy and stronger trust signaling.</span>
+  </div>
+  <div class="exec-badges">
+    <span class="exec-badge">Production Grade UI</span><span class="exec-badge">Command-Center Flow</span><span class="exec-badge">High Trust Visuals</span>
+  </div>
+</div>
+<div class="cred-grid reveal">
+  <div class="cred-card neon-beam-border"><b>99.98%</b><span>Release reliability posture</span></div>
+  <div class="cred-card neon-beam-border"><b>&lt; 60s</b><span>Median deployment pipeline</span></div>
+  <div class="cred-card neon-beam-border"><b>24/7</b><span>Operational visibility</span></div>
+</div>
 
 <!-- ── METRICS BAR ─────────────────────────────────────────────────── -->
 <div class="metrics-bar reveal">
@@ -2757,7 +2971,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 </div>
 
 <!-- ── FEATURES ──────────────────────────────────────────────────────── -->
-<section class="section" id="features">
+<section class="section neon-beam-border" id="features">
   <div class="reveal">
     <div class="section-label">Platform capabilities</div>
     <h2 class="section-title">Everything you need to ship, nothing you don't.</h2>
@@ -2846,7 +3060,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 </section>
 
 <!-- ── HOW IT WORKS ────────────────────────────────────────────────── -->
-<section class="how-section" id="how-it-works">
+<section class="how-section neon-beam-border" id="how-it-works">
   <div class="reveal text-center" style="max-width:600px;margin:0 auto 56px;">
     <div class="section-label" style="justify-content:center;">Deploy flow</div>
     <h2 class="section-title" style="max-width:none;">From push to live in three steps.</h2>
@@ -2940,7 +3154,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 </section>
 
 <!-- ── DEPLOY FLOW DIAGRAM ─────────────────────────────────────────── -->
-<section class="flow-section">
+<section class="flow-section neon-beam-border">
   <div class="reveal text-center" style="max-width:600px;margin:0 auto;">
     <div class="section-label" style="justify-content:center;">Under the hood</div>
     <h2 class="section-title" style="max-width:none;">The full deployment pipeline.</h2>
@@ -3006,7 +3220,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 </section>
 
 <!-- ── CODE SNIPPETS ──────────────────────────────────────────────── -->
-<section class="snippet-section" id="snippets">
+<section class="snippet-section neon-beam-border" id="snippets">
   <div class="reveal">
     <div class="section-label">Ready to use</div>
     <h2 class="section-title">Copy, deploy, ship.</h2>
@@ -3119,7 +3333,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 </section>
 
 <!-- ── CTA ────────────────────────────────────────────────────────── -->
-<section class="cta-section">
+<section class="cta-section neon-beam-border">
   <div class="cta-glow"></div>
   <div class="reveal">
     <h2 class="cta-title">Ready to ship your first project?</h2>
