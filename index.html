@@ -147,7 +147,9 @@ body::before{
 @media(max-width:768px){
   #landing-view .nav-links{display:none;}
   #landing-view .btn-nav:not(.btn-nav-primary){display:none;}
-  .hero{ padding:90px 18px 50px; }
+  .hero{ min-height:auto; padding:74px 14px 40px; }
+  .hero-top-marquee{margin:6px 10px 10px;max-width:none}
+  .hero-orb,.hero-aurora{display:none;}
   .hero-terminal{ max-width:100%; }
   .terminal-body{ min-height:160px; font-size:0.7rem; }
   .how-grid{ grid-template-columns:1fr; gap:32px; }
@@ -416,7 +418,8 @@ body.landing-drawer-open { overflow: hidden; }
 .terminal-body{
   padding:18px 20px;
   font-family:var(--font-mono);font-size:0.78rem;
-  line-height:1.9;min-height:240px;
+  line-height:1.7;min-height:220px;max-height:220px;overflow:auto;
+  background:linear-gradient(180deg,rgba(2,6,23,.46),rgba(2,6,23,.2));
 }
 .tl{display:block;}
 .tl-prompt{color:var(--green);}
@@ -3415,53 +3418,66 @@ function typeLoop() {
 }
 setTimeout(typeLoop, 800);
 
-// ── Terminal simulation ────────────────────────────────────────────
-const lines = [
-  { cls:'tl-out', text:'Enumerating objects: 12, done.' },
-  { cls:'tl-out', text:'Counting objects: 100% (12/12), done.' },
-  { cls:'tl-out', text:'To github.com/user/my-react-app.git' },
-  { cls:'tl-out', text:'   a1b2c3d..e4f5g6h  main -> main' },
-  { cls:'', text:'' },
-  { cls:'tl-step', text:'[DeployBoard] Starting local build for my-react-app' },
-  { cls:'tl-out', text:'Repo: https://github.com/user/my-react-app  Branch: main' },
-  { cls:'', text:'' },
-  { cls:'tl-step', text:'[Step 1/5] Cloning repository...' },
-  { cls:'tl-out', text:'$ git clone --depth=1 --branch=main ... /tmp/build-x7k' },
-  { cls:'tl-step', text:'[Step 2/5] Installing dependencies...' },
-  { cls:'tl-out', text:'added 312 packages in 8.4s' },
-  { cls:'tl-step', text:'[Step 3/5] Building project...' },
-  { cls:'tl-out', text:'vite v5.2.0 building for production...' },
-  { cls:'tl-out', text:'✓ 142 modules transformed.' },
-  { cls:'tl-out', text:'dist/index.html    0.52 kB' },
-  { cls:'tl-out', text:'dist/assets/index-BpT9TrxZ.js  184.23 kB' },
-  { cls:'tl-step', text:'[Step 4/5] Copying output to hosting...' },
-  { cls:'tl-step', text:'[Step 5/5] Cleaning up temporary files...' },
-  { cls:'', text:'' },
-  { cls:'tl-success', text:'✓ Deployment complete! Your site is live.' },
-  { cls:'tl-url',    text:'→ https://my-react-app.deployboard.app' },
+// ── Terminal simulation (optimized + advanced) ─────────────────────────
+const streamFrames = [
+  { cls:'tl-step', text:'[Signal] ingesting commit + runtime metadata…' },
+  { cls:'tl-out', text:'graph: deps=312 · cache-hit=88% · branch=main' },
+  { cls:'tl-step', text:'[Compute] building artifact lattice for edge rollout…' },
+  { cls:'tl-out', text:'chunks: app=184kb · css=22kb · wasm=ready' },
+  { cls:'tl-step', text:'[Guard] verifying health gates + rollback checkpoints…' },
+  { cls:'tl-out', text:'checks: unit ✓ · smoke ✓ · startup-latency 148ms' },
+  { cls:'tl-step', text:'[Edge] propagating release to global routing plane…' },
+  { cls:'tl-success', text:'✓ release active — telemetry stable, zero errors' },
+  { cls:'tl-url', text:'→ live endpoint: https://my-react-app.deployboard.app' }
 ];
 
 const tb = document.getElementById('terminalBody');
-let li = 0;
-function addLine() {
-  if (li >= lines.length) {
-    setTimeout(() => {
-      tb.innerHTML = '';
-      li = 0;
-      addLine();
-    }, 1800);
-    return;
-  }
-  const { cls, text } = lines[li++];
+let streamIdx = 0;
+let streamTimer = null;
+const maxTerminalLines = 9;
+
+function pushTerminalLine(entry){
+  if (!tb) return;
   const span = document.createElement('span');
-  span.className = 'tl ' + cls;
-  span.textContent = text;
+  span.className = 'tl ' + (entry.cls || 'tl-out');
+  span.textContent = entry.text;
   tb.appendChild(span);
+  while (tb.children.length > maxTerminalLines) tb.removeChild(tb.firstElementChild);
   tb.scrollTop = tb.scrollHeight;
-  const delay = text === '' ? 100 : Math.random() * 120 + 60;
-  setTimeout(addLine, delay);
 }
-setTimeout(addLine, 1200);
+
+function tickTerminal(){
+  pushTerminalLine(streamFrames[streamIdx]);
+  streamIdx = (streamIdx + 1) % streamFrames.length;
+}
+
+function startTerminalStream(){
+  if (streamTimer || !tb) return;
+  tb.innerHTML = '';
+  for (let i=0;i<4;i++) tickTerminal();
+  streamTimer = setInterval(tickTerminal, 820);
+}
+
+function stopTerminalStream(){
+  if (!streamTimer) return;
+  clearInterval(streamTimer);
+  streamTimer = null;
+}
+
+if (tb) {
+  const motionReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (motionReduced) {
+    tb.innerHTML = '';
+    streamFrames.slice(0,5).forEach(pushTerminalLine);
+  } else if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => entry.isIntersecting ? startTerminalStream() : stopTerminalStream());
+    }, { threshold: 0.15 });
+    obs.observe(tb);
+  } else {
+    startTerminalStream();
+  }
+}
 
 // ── How it works tabs ──────────────────────────────────────────────
 function selectStep(el, idx) {
