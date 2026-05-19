@@ -8666,9 +8666,9 @@ function updateTerminalEmptyState() {
 
   const now = Date.now();
   const keepVisibleWindowActive = now < _terminalKeepVisibleUntil;
-  const hasAnyLogs = logBuffer.length > 0 || _hasWrittenBuildLogs;
-  const isIdleTooLong = !_lastTerminalActivityAt || (now - _lastTerminalActivityAt) >= TERMINAL_IDLE_COVER_DELAY_MS;
-  const shouldShowEmptyCover = !activeDeploy && !hasAnyLogs && !keepVisibleWindowActive && isIdleTooLong;
+  // Cover visibility is based on real deployment state, not random socket/system logs.
+  // If nothing is actively building, show idle cover (except brief post-build grace window).
+  const shouldShowEmptyCover = !activeDeploy && !keepVisibleWindowActive;
   el.classList.toggle('hide', !shouldShowEmptyCover);
 }
 
