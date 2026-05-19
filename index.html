@@ -4449,6 +4449,29 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         </div>
       </div>
 
+      <div class="stats-grid" style="margin-bottom:22px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+        <div class="stat-card" style="--accent-color:#f59e0b;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="width:36px;height:36px;border-radius:9px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);display:flex;align-items:center;justify-content:center;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" width="16" height="16"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <span id="planNameBadge" style="font-size:.68rem;font-weight:700;color:#fbbf24;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.22);border-radius:999px;padding:2px 8px;">FREE</span>
+          </div>
+          <div id="dashProjectsQuota" style="font-size:2rem;font-weight:800;color:var(--text);font-family:var(--font-mono);line-height:1;">0 / 5</div>
+          <div style="font-size:.78rem;color:var(--text-2);font-weight:500;">Projects quota</div>
+        </div>
+        <div class="stat-card" style="--accent-color:#22d3ee;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="width:36px;height:36px;border-radius:9px;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.25);display:flex;align-items:center;justify-content:center;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <span style="font-size:.68rem;font-weight:700;color:#67e8f9;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.22);border-radius:999px;padding:2px 8px;">MONTHLY</span>
+          </div>
+          <div id="dashBuildQuota" style="font-size:2rem;font-weight:800;color:var(--text);font-family:var(--font-mono);line-height:1;">0s / 500s</div>
+          <div style="font-size:.78rem;color:var(--text-2);font-weight:500;">Build-time quota</div>
+        </div>
+      </div>
+
       <!-- ── Main content ── -->
       <div class="two-col" style="align-items:start;margin-bottom:20px;">
 
