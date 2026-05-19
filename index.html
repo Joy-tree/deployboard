@@ -1314,6 +1314,18 @@ ul { list-style:none; }
   width:6px; height:6px; background:var(--primary);
   border-radius:50%; border:1.5px solid var(--bg-card);
 }
+.notif-dot.no-unread::after { display:none; }
+.notif-badge {
+  position:absolute; top:-5px; right:-4px; min-width:16px; height:16px; padding:0 4px;
+  border-radius:999px; background:var(--primary); color:#fff; font-size:0.62rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center; border:1.5px solid var(--bg-card);
+}
+.notif-panel {
+  position:absolute; top:44px; right:0; width:min(92vw,360px); max-height:420px; overflow:auto;
+  background:var(--bg-card); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow);
+  display:none; z-index:120;
+}
+.notif-panel.open { display:block; }
 
 /* ── Content area ──────────────────────────────────────────────────────── */
 #content-area { flex:1; overflow:hidden; position:relative; }
@@ -4248,7 +4260,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10a8 8 0 0 1 16 0v7a2 2 0 0 1-2 2h-3"/><rect x="2" y="10" width="4" height="8" rx="2"/><rect x="18" y="10" width="4" height="8" rx="2"/><path d="M12 19v2"/></svg>
       Support
     </div>
-    <div class="nav-item logout-item" onclick="logoutUser()">
+    <div class="nav-item logout-item" onclick="openLogoutModal()">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       Logout
     </div>
@@ -4281,15 +4293,17 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       <span class="crumb-active" id="topbarPage">Dashboard</span>
     </div>
-    <div class="topbar-right">
+    <div class="topbar-right" style="position:relative;">
       <button class="topbar-btn" onclick="showPage('new-deploy')">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span class="topbar-btn-label">New Deploy</span>
       </button>
-      <button class="topbar-icon-btn notif-dot" title="Notifications">
+      <button class="topbar-icon-btn notif-dot" id="notifBellBtn" title="Notifications" onclick="toggleNotificationsPanel(event)">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
       </button>
       <div class="user-avatar" style="width:32px;height:32px;font-size:0.78rem;cursor:pointer;" id="topbarAvatar" onclick="showPage('settings')">JG</div>
+      <div class="notif-panel" id="notifPanel"></div>
     </div>
   </div>
 
@@ -4626,6 +4640,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <label class="field-label">Project Name</label>
                 <input class="input" id="deployProjectName" placeholder="my-awesome-app" autocomplete="off">
                 <div class="field-hint">Used as part of your subdomain. Lowercase letters, numbers and hyphens only.</div>
+                <div class="field-hint" id="projectNameAvailability">Status: enter a project name</div>
               </div>
               <div class="field">
                 <label class="field-label">Subdomain</label>
@@ -4634,6 +4649,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                   <span style="display:flex;align-items:center;padding:0 12px;background:rgba(99,179,237,0.05);border:1.5px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-family:var(--font-mono);font-size:0.8rem;color:var(--text-3);white-space:nowrap;" id="domainSuffix">.joytreehostingserver.dpdns.org</span>
                 </div>
                 <div class="field-hint">Preview: <span class="td-mono" id="subdomainPreview">—</span></div>
+                <div class="field-hint" id="subdomainAvailability">Status: enter a subdomain</div>
               </div>
               <div class="field">
                 <label class="field-label">GitHub Repository URL</label>
@@ -5140,7 +5156,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <input class="input" id="settingsEmail" type="email" placeholder="you@example.com">
               </div>
               <button class="btn btn-primary" onclick="saveAccountSettings()">Save Account</button>
-              <button class="btn btn-ghost" onclick="logoutUser()" style="margin-top:10px;">Logout</button>
+              <button class="btn btn-ghost" onclick="openLogoutModal()" style="margin-top:10px;">Logout</button>
             </div>
           </div>
           <div class="card">
@@ -6521,6 +6537,33 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
   </div>
 </div>
 
+<!-- ── Logout confirm modal ──────────────────────────────────────────────── -->
+<div class="modal-backdrop" id="logoutModal">
+  <div class="modal" style="width:min(96vw,460px);border:1px solid rgba(248,113,113,.35);box-shadow:0 30px 80px rgba(239,68,68,.22),0 0 0 1px rgba(255,255,255,.04) inset;">
+    <div class="modal-header" style="background:radial-gradient(120% 120% at 0% 0%, rgba(239,68,68,.2) 0%, rgba(15,23,42,.95) 55%, rgba(2,6,23,.98) 100%);border-bottom:1px solid rgba(248,113,113,.2);">
+      <div class="modal-icon" style="background:rgba(239,68,68,0.18);border:1px solid rgba(248,113,113,.26);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </div>
+      <div>
+        <div class="modal-title">Confirm Logout</div>
+        <div class="modal-subtitle">You’re about to sign out of DeployBoard. Any unsaved form edits may be lost.</div>
+      </div>
+      <button class="modal-close" onclick="closeLogoutModal()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:0.86rem;color:var(--text-2);line-height:1.6;">If you're on a shared device, signing out helps protect your account.</div>
+      <div style="padding:10px 12px;border-radius:10px;background:rgba(239,68,68,.08);border:1px solid rgba(248,113,113,.2);font-size:0.78rem;color:#fecaca;">Session will be cleared from this browser immediately.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeLogoutModal()">Stay logged in</button>
+      <button class="btn btn-danger" onclick="confirmLogout()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Yes, log me out
+      </button>
+    </div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
@@ -7531,12 +7574,15 @@ function initDeployForm() {
       sub.value = this.value.toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
       updateSubdomainPreview();
       updateSummary();
+      scheduleAvailabilityCheck();
     }
+    scheduleAvailabilityCheck();
   });
   document.getElementById('deploySubdomain')?.addEventListener('input', function() {
     this.dataset.manuallyEdited = '1';
     updateSubdomainPreview();
     updateSummary();
+    scheduleAvailabilityCheck();
   });
 }
 function resetDeployForm() {
@@ -7571,6 +7617,50 @@ function updateSummary() {
   document.getElementById('summaryUrl').textContent    = sub !== '—' ? sub + '.' + base : '—';
   document.getElementById('summaryBranch').textContent = branch;
   document.getElementById('summaryNode').textContent   = 'Node ' + node;
+}
+
+let availabilityCheckTimer = null;
+let availabilityCheckSeq = 0;
+
+function setAvailabilityText(elId, text, ok) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = ok === true ? 'var(--green)' : ok === false ? 'var(--red)' : 'var(--text-3)';
+}
+
+function scheduleAvailabilityCheck() {
+  if (availabilityCheckTimer) clearTimeout(availabilityCheckTimer);
+  availabilityCheckTimer = setTimeout(checkProjectAvailability, 350);
+}
+
+async function checkProjectAvailability() {
+  const name = (document.getElementById('deployProjectName')?.value || '').trim();
+  const subdomainRaw = (document.getElementById('deploySubdomain')?.value || '').trim();
+  const subdomain = subdomainRaw.toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
+
+  if (!name) setAvailabilityText('projectNameAvailability', 'Status: enter a project name', null);
+  else setAvailabilityText('projectNameAvailability', 'Checking availability…', null);
+  if (!subdomainRaw) setAvailabilityText('subdomainAvailability', 'Status: enter a subdomain', null);
+  else setAvailabilityText('subdomainAvailability', 'Checking availability…', null);
+  if (!name && !subdomain) return;
+
+  const seq = ++availabilityCheckSeq;
+  try {
+    const q = new URLSearchParams();
+    if (name) q.set('name', name);
+    if (subdomain) q.set('subdomain', subdomain);
+    const r = await apiFetch('/api/projects/check-availability?' + q.toString());
+    const d = await r.json();
+    if (seq !== availabilityCheckSeq) return;
+
+    if (name) setAvailabilityText('projectNameAvailability', d.nameAvailable ? 'Status: available' : 'Status: unavailable', !!d.nameAvailable);
+    if (subdomainRaw) setAvailabilityText('subdomainAvailability', d.subdomainAvailable ? 'Status: available' : 'Status: unavailable', !!d.subdomainAvailable);
+  } catch (_) {
+    if (seq !== availabilityCheckSeq) return;
+    if (name) setAvailabilityText('projectNameAvailability', 'Status: could not verify right now', null);
+    if (subdomainRaw) setAvailabilityText('subdomainAvailability', 'Status: could not verify right now', null);
+  }
 }
 
 // Env vars in deploy form
@@ -7791,6 +7881,13 @@ async function startDeployment() {
   if (!/^https?:\/\/(www\.)?github\.com\/.+\/.+/.test(repoUrl)) {
     toast('Please enter a valid GitHub repository URL', 'error'); return;
   }
+  try {
+    const q = new URLSearchParams({ name, subdomain });
+    const ar = await apiFetch('/api/projects/check-availability?' + q.toString());
+    const ad = await ar.json();
+    if (ad.nameAvailable === false) { toast('Project name is unavailable. Please choose another name.', 'error'); return; }
+    if (ad.subdomainAvailable === false) { toast('Subdomain is unavailable. Please choose another subdomain.', 'error'); return; }
+  } catch (_) {}
 
   // Create or update project
   let project = projects.find(p => p.subdomain === subdomain);
@@ -9152,6 +9249,16 @@ function showAuthPage() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function logoutUser() {
+  openLogoutModal();
+}
+function openLogoutModal() {
+  document.getElementById('logoutModal')?.classList.add('open');
+}
+function closeLogoutModal() {
+  document.getElementById('logoutModal')?.classList.remove('open');
+}
+function confirmLogout() {
+  closeLogoutModal();
   authToken = '';
   localStorage.removeItem('db_auth_token');
   resetWorkspaceState();
@@ -9770,11 +9877,74 @@ async function renderUsage() {
 // ACTIVITY LOG
 // ══════════════════════════════════════════════════════════════════
 let activityLog = JSON.parse(localStorage.getItem('db_activity') || '[]');
+let notifLastSeenAt = Number(localStorage.getItem('db_notif_seen_at') || '0');
 
 function logActivity(type, message) {
   activityLog.unshift({ type, message, time: new Date().toISOString() });
   if (activityLog.length > 200) activityLog.pop();
   localStorage.setItem('db_activity', JSON.stringify(activityLog));
+  updateNotificationsBell();
+}
+
+function getMergedActivityFeed() {
+  const feed = [...activityLog];
+  (deployments || []).forEach(d => {
+    const icon = d.status === 'success' ? '✓' : d.status === 'failed' ? '✗' : '⏳';
+    feed.push({
+      type: 'deploy',
+      message: icon + ' ' + (d.projectName || 'Unknown') + ' — ' + d.status + (d.duration ? ' in ' + d.duration + 's' : ''),
+      time: d.startedAt || d.createdAt || new Date().toISOString()
+    });
+  });
+  feed.sort((a,b) => new Date(b.time||0) - new Date(a.time||0));
+  return feed;
+}
+
+function updateNotificationsBell() {
+  const btn = document.getElementById('notifBellBtn');
+  const badge = document.getElementById('notifBadge');
+  if (!btn || !badge) return;
+  const unread = getMergedActivityFeed().filter(x => new Date(x.time || 0).getTime() > notifLastSeenAt).length;
+  if (unread > 0) {
+    btn.classList.remove('no-unread');
+    badge.style.display = 'flex';
+    badge.textContent = unread > 99 ? '99+' : String(unread);
+  } else {
+    btn.classList.add('no-unread');
+    badge.style.display = 'none';
+  }
+}
+
+function toggleNotificationsPanel(e) {
+  if (e) e.stopPropagation();
+  const panel = document.getElementById('notifPanel');
+  if (!panel) return;
+  const willOpen = !panel.classList.contains('open');
+  if (willOpen) {
+    renderNotificationsPanel();
+    panel.classList.add('open');
+    notifLastSeenAt = Date.now();
+    localStorage.setItem('db_notif_seen_at', String(notifLastSeenAt));
+    updateNotificationsBell();
+  } else {
+    panel.classList.remove('open');
+  }
+}
+
+function renderNotificationsPanel() {
+  const panel = document.getElementById('notifPanel');
+  if (!panel) return;
+  const rows = getMergedActivityFeed().slice(0, 20);
+  if (!rows.length) {
+    panel.innerHTML = '<div style="padding:18px;color:var(--text-3);font-size:0.8rem;text-align:center;">No notifications yet.</div>';
+    return;
+  }
+  panel.innerHTML = '<div style="padding:12px 14px;border-bottom:1px solid var(--border);font-weight:700;font-size:0.82rem;">Notifications</div>' +
+    rows.map(r => '<div style="padding:10px 14px;border-bottom:1px solid var(--border);">' +
+      '<div style="font-size:0.8rem;color:var(--text);line-height:1.4;">' + escHtml(r.message || 'Activity update') + '</div>' +
+      '<div style="font-size:0.72rem;color:var(--text-3);margin-top:4px;">' + escHtml(relTime(r.time)) + '</div>' +
+    '</div>').join('') +
+    '<button class="btn btn-ghost" style="width:calc(100% - 16px);margin:8px;" onclick="showPage(\'activity\');document.getElementById(\'notifPanel\').classList.remove(\'open\');">View all activity</button>';
 }
 
 async function renderActivity() {
@@ -11006,6 +11176,16 @@ async function loadRepoBranches(repoUrl, preferred='main') {
   }
 }
 
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('notifPanel');
+  const btn = document.getElementById('notifBellBtn');
+  if (!panel || !btn) return;
+  if (!panel.classList.contains('open')) return;
+  if (panel.contains(e.target) || btn.contains(e.target)) return;
+  panel.classList.remove('open');
+});
+
+updateNotificationsBell();
 initCustomSelects();
 </script>
 </body>

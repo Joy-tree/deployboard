@@ -930,6 +930,34 @@ app.get('/api/projects', attachAuthIfPresent, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/api/projects/check-availability', async (req, res) => {
+  try {
+    const rawName = String(req.query.name || '').trim();
+    const rawSubdomain = String(req.query.subdomain || '').trim();
+    const cleanSubdomain = rawSubdomain.toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+
+    if (!rawName && !cleanSubdomain) {
+      return res.status(400).json({ error: 'name or subdomain query is required' });
+    }
+
+    const query = [];
+    if (rawName) query.push({ name: rawName });
+    if (cleanSubdomain) query.push({ subdomain: cleanSubdomain });
+
+    const existing = await Project.findOne({ $or: query }).select('name subdomain').lean().maxTimeMS(5000);
+    res.json({
+      name: rawName,
+      subdomain: cleanSubdomain,
+      nameAvailable: rawName ? !(existing && existing.name === rawName) : null,
+      subdomainAvailable: cleanSubdomain ? !(existing && existing.subdomain === cleanSubdomain) : null,
+      existing: existing || null
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/projects/:id', async (req, res) => {
   try {
     const p = await Project.findById(req.params.id);
