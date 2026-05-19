@@ -786,8 +786,8 @@ function normalizeMemoryLimit(value) {
   const num = Number(m[1]);
   const unit = m[2];
   const mb = unit === 'g' ? num * 1024 : num;
-  // Keep large apps from restart loops caused by very low default memory.
-  if (mb < 1024) return '1g';
+  // Allow smaller paid/free profiles (e.g. 870m for free tier) while preventing unusable limits.
+  if (mb < 256) return '256m';
   return unit === 'g' ? `${num}g` : `${num}m`;
 }
 

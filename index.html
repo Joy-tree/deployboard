@@ -3256,6 +3256,14 @@ textarea.input { resize: vertical; min-height: 80px; }
       <span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span>
     </a>
 
+    <a class="ld-link ld-animate" href="#" onclick="showDashboard();showPage('pricing');closeLandingDrawer();return false;">
+      <div class="ld-link-icon" style="color:#f59e0b">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <span>Pricing Plans</span>
+      <span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+    </a>
+
     <!-- Language kickstarts -->
     <div class="ld-section-label ld-animate">Language Kickstarts</div>
 
@@ -4441,6 +4449,29 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         </div>
       </div>
 
+      <div class="stats-grid" style="margin-bottom:22px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+        <div class="stat-card" style="--accent-color:#f59e0b;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="width:36px;height:36px;border-radius:9px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);display:flex;align-items:center;justify-content:center;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" width="16" height="16"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <span id="planNameBadge" style="font-size:.68rem;font-weight:700;color:#fbbf24;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.22);border-radius:999px;padding:2px 8px;">FREE</span>
+          </div>
+          <div id="dashProjectsQuota" style="font-size:2rem;font-weight:800;color:var(--text);font-family:var(--font-mono);line-height:1;">0 / 5</div>
+          <div style="font-size:.78rem;color:var(--text-2);font-weight:500;">Projects quota</div>
+        </div>
+        <div class="stat-card" style="--accent-color:#22d3ee;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="width:36px;height:36px;border-radius:9px;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.25);display:flex;align-items:center;justify-content:center;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <span style="font-size:.68rem;font-weight:700;color:#67e8f9;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.22);border-radius:999px;padding:2px 8px;">MONTHLY</span>
+          </div>
+          <div id="dashBuildQuota" style="font-size:2rem;font-weight:800;color:var(--text);font-family:var(--font-mono);line-height:1;">0s / 500s</div>
+          <div style="font-size:.78rem;color:var(--text-2);font-weight:500;">Build-time quota</div>
+        </div>
+      </div>
+
       <!-- ── Main content ── -->
       <div class="two-col" style="align-items:start;margin-bottom:20px;">
 
@@ -4564,7 +4595,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <div class="page" id="page-projects">
       <div class="app-hero">
         <div>
-          <div class="app-hero-kicker">Project fleet</div>
+          <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button><div class="app-hero-kicker">Project fleet</div>
           <div class="app-hero-title">Projects</div>
           <div class="app-hero-subtitle">All hosted apps, live URLs, screenshots, repository signals, and redeploy controls in one polished command surface.</div>
         </div>
@@ -5038,12 +5069,28 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
     <div class="page" id="page-ai-analysis">
       <div class="app-hero">
-        <div><div class="app-hero-kicker">Tree AI diagnostics</div><div class="app-hero-title">AI Analysis</div><div class="app-hero-subtitle">Deep error interpretation with suggested fixes and one-click action.</div></div>
+        <div><button class="page-back" onclick="showPage('logs')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Logs</button><div class="app-hero-kicker">Tree AI diagnostics</div><div class="app-hero-title">AI Analysis</div><div class="app-hero-subtitle">Deep error interpretation with suggested fixes and one-click action.</div></div>
       </div>
       <div class="card" id="aiAnalysisCard">
         <div class="card-body" id="aiAnalysisBody" style="padding:26px;">
           <div class="empty-state"><div class="empty-title">No analysis yet</div><div class="empty-desc">Trigger a failed build with AI logs analysis enabled to generate insights.</div></div>
         </div>
+      </div>
+    </div>
+
+
+    <div class="page" id="page-pricing">
+      <div class="app-hero">
+        <div>
+          <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+          <div class="app-hero-kicker">Flexible cloud plans</div><div class="app-hero-title">Pricing</div><div class="app-hero-subtitle">Economical Node.js hosting plans with clear RAM, CPU, bandwidth and project limits.</div>
+        </div>
+      </div>
+      <div class="projects-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));">
+        <div class="card"><div class="card-header"><div class="card-title">Free Trial</div><div class="badge">₵0</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>0.85 GB RAM</li><li>Shared vCPU (fair-use)</li><li>10 GB SSD build storage</li><li>100 GB monthly bandwidth</li><li>Up to 5 projects</li><li>500s average build time / month</li><li>Community support</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('free')">Start Free Trial</button></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Starter</div><div class="badge" style="background:rgba(16,185,129,.18);color:#86efac;">₵20/mo</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>1 GB RAM</li><li>1 vCPU</li><li>20 GB SSD storage</li><li>250 GB monthly bandwidth</li><li>Up to 10 projects</li><li>3,000s average build time / month</li><li>Priority build queue</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('starter')">Subscribe Starter</button></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Growth</div><div class="badge" style="background:rgba(56,189,248,.2);color:#7dd3fc;">₵60/mo</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>5 GB RAM</li><li>2 vCPU</li><li>60 GB SSD storage</li><li>1 TB monthly bandwidth</li><li>Up to 35 projects</li><li>12,000s average build time / month</li><li>Custom domains + SSL</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('growth')">Subscribe Growth</button></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Scale Max</div><div class="badge" style="background:rgba(168,85,247,.2);color:#c4b5fd;">₵180/mo</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>16 GB RAM</li><li>8 vCPU</li><li>Unlimited storage*</li><li>Unlimited bandwidth*</li><li>Unlimited projects</li><li>Unlimited average build time</li><li>Premium support + team access</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('scale')">Subscribe Scale Max</button><div style="font-size:.75rem;color:var(--text-3);margin-top:10px;">*subject to fair platform abuse protections.</div></div></div>
       </div>
     </div>
 
@@ -6668,6 +6715,57 @@ let settings = Object.assign({
 }, _storedSettings);
 // Migrate old deployboard.app default quietly
 if (settings.baseDomain === 'deployboard.app') settings.baseDomain = 'joytreehostingserver.dpdns.org';
+
+
+const PLAN_LIMITS = {
+  free:    { maxProjects: 5,   monthlyBuildSeconds: 500 },
+  starter: { maxProjects: 10,  monthlyBuildSeconds: 3000 },
+  growth:  { maxProjects: 35,  monthlyBuildSeconds: 12000 },
+  scale:   { maxProjects: Infinity, monthlyBuildSeconds: Infinity }
+};
+function getCurrentPlanKey() {
+  const key = String(settings.billingPlan || 'free').toLowerCase();
+  return PLAN_LIMITS[key] ? key : 'free';
+}
+function getCurrentPlanLimits() {
+  return PLAN_LIMITS[getCurrentPlanKey()];
+}
+function getMonthlyBuildSecondsUsed(now = new Date()) {
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth();
+  return (deployments || []).reduce((sum, d) => {
+    if (!d || !d.endedAt || !Number.isFinite(Number(d.duration))) return sum;
+    const dt = new Date(d.endedAt);
+    if (Number.isNaN(dt.getTime())) return sum;
+    if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m) return sum;
+    return sum + Math.max(0, Number(d.duration));
+  }, 0);
+}
+
+function formatPlanQuota(v, unit='') {
+  if (!Number.isFinite(v)) return 'Unlimited';
+  return `${v}${unit}`;
+}
+function choosePlan(planKey) {
+  const key = String(planKey || '').toLowerCase();
+  if (!PLAN_LIMITS[key]) return;
+  if (key === 'free') {
+    settings.billingPlan = 'free';
+    save();
+    renderDashboard();
+    toast('Free Trial activated instantly.', 'success');
+    return;
+  }
+  toast(`Hook this button to Paystack checkout. After successful payment, call applyPaidPlan('${key}') in your payment callback.`, 'info', 7000);
+}
+function applyPaidPlan(planKey) {
+  const key = String(planKey || '').toLowerCase();
+  if (!PLAN_LIMITS[key]) return false;
+  settings.billingPlan = key;
+  save();
+  renderDashboard();
+  return true;
+}
 let envRows      = []; // current deploy form env rows
 let currentPage  = 'dashboard';
 let socket       = null;
@@ -6971,7 +7069,7 @@ const PAGE_LABELS = {
   team:'Team', usage:'Usage & Limits', activity:'Activity Log', secrets:'Secrets',
   'new-resource':'New Resource', cronjobs:'Cron Jobs', workers:'Background Workers', streaks:'Deploy Streaks',
   'dockerfile-deploy':'Dockerfile Deploy', 'cron-create':'Create Cron Job', 'worker-create':'New Worker', 'ai-analysis':'AI Analysis',
-  faq:'FAQ', support:'Support'
+  faq:'FAQ', support:'Support', pricing:'Pricing'
 };
 function showPage(id, navEl) {
   ensureProjectAutoSync();
@@ -7143,6 +7241,36 @@ function openAiAnalysisFromError(errorText = '') {
   renderAiAnalysisPage();
   showPage('ai-analysis');
 }
+function openRedeployFormFromAi() {
+  const deployment = activeBuildId ? deployments.find(x => x.id === activeBuildId) : null;
+  let project = null;
+  if (deployment?.projectId) project = projects.find(x => String(x.id || x._id || '') === String(deployment.projectId));
+  if (!project && deployment?.projectName) project = projects.find(x => String(x.name || '') === String(deployment.projectName));
+  if (!project) {
+    toast('Could not find the project config to prefill. Opening deploy form.', 'info');
+    showPage('new-deploy');
+    return;
+  }
+
+  document.getElementById('deployProjectName').value = project.name || '';
+  document.getElementById('deploySubdomain').value   = project.subdomain || '';
+  document.getElementById('deployRepoUrl').value     = project.repoUrl || '';
+  document.getElementById('deployBranch').value      = project.branch || 'main';
+  document.getElementById('deployInstallCmd').value  = project.installCmd || 'npm install';
+  document.getElementById('deployBuildCmd').value    = project.buildCmd || 'npm run build';
+  document.getElementById('deployOutputDir').value   = project.outputDir || 'dist';
+  document.getElementById('deployNodeVersion').value = project.nodeVer || '18';
+  document.getElementById('deployWorkingDir').value  = project.workingDir || '';
+  if (document.getElementById('deploySiteType')) {
+    csSetValue('deploySiteType', project.siteType || 'static');
+    onSiteTypeChange();
+  }
+  if (document.getElementById('deployStartCmd')) document.getElementById('deployStartCmd').value = project.startCmd || '';
+  deployFormPrefillMode = true;
+  showPage('new-deploy');
+  toast('Project settings loaded. Adjust config and redeploy.', 'success');
+}
+
 function renderAiAnalysisPage() {
   const el = document.getElementById('aiAnalysisBody');
   if (!el) return;
@@ -7155,7 +7283,7 @@ function renderAiAnalysisPage() {
     <div class="alert alert-error" style="margin:0;"><div><strong>Detected Error</strong><div style="margin-top:6px;">${escHtml(latestAiAnalysis.error)}</div></div></div>
     <div class="alert alert-info" style="margin:0;"><div><strong>Suggested Fix</strong><div style="margin-top:6px;">${escHtml(latestAiAnalysis.fix)}</div></div></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="showPage('new-deploy')">Apply fix & redeploy</button>
+      <button class="btn btn-primary" onclick="openRedeployFormFromAi()">Apply fix & redeploy</button>
       <button class="btn btn-ghost" onclick="showPage('logs')">Back to logs</button>
     </div>
   </div>`;
@@ -7339,6 +7467,15 @@ function renderDashboard() {
   document.getElementById('statAvgTime').textContent    = avgTime ? avgTime + 's' : '—';
   document.getElementById('projectsCount').textContent  = total;
   document.getElementById('deploymentsCount').textContent = deployments.length;
+  const currentPlan = getCurrentPlanKey();
+  const limit = getCurrentPlanLimits();
+  const usedBuild = getMonthlyBuildSecondsUsed();
+  const qp = document.getElementById('dashProjectsQuota');
+  const qb = document.getElementById('dashBuildQuota');
+  const pn = document.getElementById('planNameBadge');
+  if (qp) qp.textContent = `${total} / ${formatPlanQuota(limit.maxProjects)}`;
+  if (qb) qb.textContent = `${usedBuild}s / ${formatPlanQuota(limit.monthlyBuildSeconds, 's')}`;
+  if (pn) pn.textContent = currentPlan.toUpperCase();
 
   // Greeting
   const hour = new Date().getHours();
@@ -8098,6 +8235,18 @@ async function startDeployment() {
   }
   const existingProject = projects.find(p => String(p.subdomain || '') === String(subdomain || ''));
   const isRedeploy = !!existingProject;
+  const limits = getCurrentPlanLimits();
+  if (!isRedeploy && Number.isFinite(limits.maxProjects) && projects.length >= limits.maxProjects) {
+    toast(`Project limit reached for ${getCurrentPlanKey()} plan (${limits.maxProjects} max). Upgrade to add more projects.`, 'error', 6000);
+    showPage('pricing');
+    return;
+  }
+  const usedSeconds = getMonthlyBuildSecondsUsed();
+  if (Number.isFinite(limits.monthlyBuildSeconds) && usedSeconds >= limits.monthlyBuildSeconds) {
+    toast(`Monthly build-time quota reached (${usedSeconds}s / ${limits.monthlyBuildSeconds}s). Resets next month.`, 'error', 7000);
+    showPage('pricing');
+    return;
+  }
   try {
     if (!isRedeploy) {
       const q = new URLSearchParams({ name, subdomain });
@@ -8177,7 +8326,7 @@ async function startDeployment() {
     const res = await apiFetch(API + '/api/deploy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId: project.id, name, subdomain, repoUrl, branch, installCmd: runInstallCmd, buildCmd: runBuildCmd, startCmd: runStartCmd, outputDir, nodeVer, siteType, envVars, workingDir: workingDir || undefined, customPort: customPort || undefined })
+      body: JSON.stringify({ projectId: project.id, name, subdomain, repoUrl, branch, installCmd: runInstallCmd, buildCmd: runBuildCmd, startCmd: runStartCmd, outputDir, nodeVer, siteType, envVars, billingPlan: getCurrentPlanKey(), workingDir: workingDir || undefined, customPort: customPort || undefined })
     });
     const data = await res.json();
     if (!res.ok) {
@@ -10768,7 +10917,7 @@ async function deployWorker() {
   try {
     const r = await apiFetch('/api/deploy', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, subdomain, repoUrl: repo, branch, installCmd: applyWorkingDir(install, workingDir), buildCmd: applyWorkingDir(build, workingDir), startCmd: applyWorkingDir(start, workingDir), outputDir: '.', siteType: 'server', nodeVersion: 'node:18-alpine', envVars: envObj, workingDir: workingDir || undefined, isWorker: true })
+      body: JSON.stringify({ name, subdomain, repoUrl: repo, branch, installCmd: applyWorkingDir(install, workingDir), buildCmd: applyWorkingDir(build, workingDir), startCmd: applyWorkingDir(start, workingDir), outputDir: '.', siteType: 'server', nodeVersion: 'node:18-alpine', envVars: envObj, billingPlan: getCurrentPlanKey(), workingDir: workingDir || undefined, isWorker: true })
     });
     const d = await r.json();
     if (!r.ok) { toast(d.error || 'Deploy failed', 'error'); return; }
