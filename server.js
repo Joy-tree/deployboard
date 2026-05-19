@@ -1246,6 +1246,19 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   const hasStartCmd = !!String(startCmd || '').trim();
   const isServerApp = explicitType === 'server' || (!explicitType && hasStartCmd);
 
+  // Ensure project name/subdomain are available before creating/updating.
+  // Allow redeploy updates for the same existing subdomain record.
+  const existingBySub = await Project.findOne({ subdomain: cleanSub }).select('_id name subdomain').lean().maxTimeMS(5000).catch(() => null);
+  const existingByName = await Project.findOne({ name }).select('_id name subdomain').lean().maxTimeMS(5000).catch(() => null);
+  const existingBySubId = existingBySub?._id ? String(existingBySub._id) : '';
+  const existingByNameId = existingByName?._id ? String(existingByName._id) : '';
+  if (existingByName && existingBySubId && existingByNameId !== existingBySubId) {
+    return res.status(409).json({ error: 'Project name is unavailable. Please choose another name.' });
+  }
+  if (existingBySub && existingByName && existingBySubId !== existingByNameId) {
+    return res.status(409).json({ error: 'Subdomain is unavailable. Please choose another subdomain.' });
+  }
+
   // Assign port for server apps
   let appPort = 0;
   if (isServerApp) {
