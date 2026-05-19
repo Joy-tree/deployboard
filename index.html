@@ -107,7 +107,7 @@ body::before{
   background:linear-gradient(135deg,var(--primary),var(--cyan));
   border-radius:8px;display:flex;align-items:center;justify-content:center;
 }
-#landing-view .nav-logo-mark svg{width:18px;height:18px;color:#fff;}
+#landing-view .nav-logo-mark img{width:100%;height:100%;object-fit:cover;border-radius:10px;}
 #landing-view .nav-logo-name{font-family:var(--font-hd);font-weight:800;font-size:1.05rem;letter-spacing:-0.02em;}
 #landing-view .nav-badge{
   font-size:0.5rem;font-weight:700;letter-spacing:0.1em;
@@ -171,6 +171,18 @@ body::before{
   .code-tabs{ overflow-x:auto; }
   .code-tab{ white-space:nowrap; }
 }
+
+
+.home-logo-showcase{
+  margin:10px auto 14px;
+  display:flex;align-items:center;justify-content:center;gap:14px;
+  padding:10px 18px;border-radius:18px;
+  background:linear-gradient(140deg,rgba(6,20,36,.88),rgba(4,14,28,.92));
+  border:1px solid rgba(56,189,248,.18);
+  box-shadow:0 12px 34px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.02);
+}
+.home-logo-showcase img{width:64px;height:64px;border-radius:16px;box-shadow:0 0 24px rgba(74,222,128,.35);}
+.home-logo-showcase .home-logo-name{font-family:var(--font-hd);font-size:clamp(1.5rem,4.5vw,2.2rem);font-weight:800;letter-spacing:-.03em;color:#f1f5f9;text-shadow:0 0 26px rgba(34,211,238,.22);}
 
 /* ── HERO ────────────────────────────────────────────────────────── */
 .hero{
@@ -373,7 +385,7 @@ body.landing-drawer-open { overflow:hidden; }
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 0 18px rgba(16,185,129,.45);
 }
-.ld-brand-mark svg { width:15px;height:15px;color:#fff; }
+.ld-brand-mark img { width:100%;height:100%;object-fit:cover;border-radius:8px; }
 .ld-brand-name { font-family:var(--font-hd);font-weight:800;font-size:.92rem;letter-spacing:-.01em;color:#f1f5f9; }
 .ld-brand-tag { font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#10b981;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:4px;padding:2px 5px;margin-left:2px; }
 .ld-close {
@@ -1161,7 +1173,7 @@ ul { list-style:none; }
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.sidebar-logo-mark svg { width:18px; height:18px; color:#fff; }
+.sidebar-logo-mark img { width:100%; height:100%; object-fit:cover; border-radius:8px; }
 .sidebar-logo-name {
   font-family: var(--font-head);
   font-weight: 800;
@@ -2732,7 +2744,7 @@ textarea.input { resize: vertical; min-height: 80px; }
   box-shadow:0 0 24px rgba(16,185,129,.4);
   flex-shrink:0;
 }
-.auth-brand-mark svg { width:18px;height:18px;color:#fff; }
+.auth-brand-mark img { width:100%;height:100%;object-fit:cover;border-radius:10px; }
 
 /* Heading */
 .auth-title {
@@ -3040,12 +3052,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 
       <!-- Brand -->
       <div class="auth-brand">
-        <div class="auth-brand-mark">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>
-            <polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
-          </svg>
-        </div>
+        <div class="auth-brand-mark"><img src="assets/joytree-logo.svg" alt="joytree logo"></div>
         <span style="font-family:var(--font-hd);font-weight:800;font-size:1rem;color:#f1f5f9;letter-spacing:-.01em;">joytree</span>
       </div>
 
@@ -3175,12 +3182,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 <!-- ── NAV ──────────────────────────────────────────────────────────── -->
 <nav>
   <div class="nav-logo">
-    <div class="nav-logo-mark">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>
-        <polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
-      </svg>
-    </div>
+    <div class="nav-logo-mark"><img src="assets/joytree-logo.svg" alt="joytree logo"></div>
     <span class="nav-logo-name">joytree</span>
     <!-- beta badge removed -->
   </div>
@@ -3202,12 +3204,7 @@ textarea.input { resize: vertical; min-height: 80px; }
   <!-- Sticky header -->
   <div class="ld-header">
     <div class="ld-brand">
-      <div class="ld-brand-mark">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>
-          <polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
-        </svg>
-      </div>
+      <div class="ld-brand-mark"><img src="assets/joytree-logo.svg" alt="joytree logo"></div>
       <span class="ld-brand-name">joytree</span>
       <span class="ld-brand-tag">Beta</span>
     </div>
@@ -4044,11 +4041,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 <!-- ── FOOTER ─────────────────────────────────────────────────────── -->
 <footer>
   <div class="footer-logo">
-    <div class="nav-logo-mark" style="width:28px;height:28px;">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;color:#fff;">
-        <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>
-      </svg>
-    </div>
+    <div class="nav-logo-mark" style="width:28px;height:28px;"><img src="assets/joytree-logo.svg" alt="joytree logo"></div>
     <span style="font-family:var(--font-hd);font-weight:700;font-size:0.9rem;">DeployBoard</span>
   </div>
   <div class="footer-links">
@@ -4197,9 +4190,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
 <aside id="sidebar">
   <div class="sidebar-logo">
-    <div class="sidebar-logo-mark">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
-    </div>
+    <div class="sidebar-logo-mark"><img src="assets/joytree-logo.svg" alt="joytree logo"></div>
     <span class="sidebar-logo-name">joytree</span>
     <!-- beta badge removed -->
   </div>
