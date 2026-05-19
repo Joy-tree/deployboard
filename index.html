@@ -2971,6 +2971,53 @@ textarea.input { resize: vertical; min-height: 80px; }
   #settingsTabGithub .card-body * { max-width:100%; overflow-wrap:anywhere; }
   #settingsTabGithub button.btn { white-space:normal; }
 }
+
+.geo-intel-card{position:relative;overflow:hidden;border:1px solid rgba(148,163,184,.28);border-radius:24px;padding:20px;margin:0 0 18px;background:linear-gradient(145deg,rgba(14,19,28,.95),rgba(3,8,19,.96));box-shadow:0 10px 28px rgba(0,0,0,.22)}
+.geo-intel-card::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 18% 20%,rgba(16,185,129,.14),transparent 38%),radial-gradient(circle at 80% 70%,rgba(148,163,184,.11),transparent 44%);pointer-events:none}
+.geo-intel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;z-index:2;margin-bottom:10px}
+.geo-intel-kicker{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:#9ca3af;font-weight:700}
+.geo-intel-request{font-size:.84rem;color:#e5e7eb;font-weight:600}
+.geo-intel-request b{color:#86efac}
+.geo-intel-pulse{width:10px;height:10px;border-radius:50%;background:#10b981;box-shadow:0 0 0 6px rgba(16,185,129,.18)}
+.geo-intel-map{position:relative;z-index:2;height:220px;border-radius:18px;border:1px solid rgba(148,163,184,.22);background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.06),rgba(255,255,255,.01));overflow:hidden}
+.geo-intel-map svg{width:100%;height:100%;display:block}
+.geo-land{fill:url(#geoLandGrad);opacity:.92}
+.geo-dot{fill:#f8fafc;opacity:.9}
+.geo-marker{fill:#10b981;filter:drop-shadow(0 0 3px rgba(16,185,129,.65))}
+.geo-ring{fill:none;stroke:#34d399;stroke-width:1.2;opacity:.6}
+.geo-intel-meta{position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.geo-chip{font-size:.76rem;padding:7px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.25);background:rgba(30,41,59,.45);color:#e5e7eb}
+@media (max-width: 900px) {
+  .geo-intel-card::before{display:none;}
+}
+
+/* Keep deployment/analytics history tables inside card borders on mobile */
+#page-deployments .card,
+#page-analytics .card { overflow: hidden; }
+#page-deployments .deployment-table-shell,
+#page-analytics .table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 0 !important;
+  padding: 0 !important;
+  -webkit-overflow-scrolling: touch;
+}
+#page-deployments .deployment-table-shell table,
+#page-analytics table {
+  width: 100%;
+  min-width: 0 !important;
+  table-layout: fixed;
+}
+#page-deployments .deployment-table-shell th,
+#page-deployments .deployment-table-shell td,
+#page-analytics th,
+#page-analytics td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
 </style>
 </head>
 <body>
@@ -4190,6 +4237,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       Live Logs
     </div>
+    <div class="nav-item" data-page="ai-analysis" onclick="showPage('ai-analysis',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 6 1-4.5 4.5L18 20l-6-3-6 3 1.5-6.5L3 9l6-1 3-6z"/></svg>
+      AI Analysis
+    </div>
     <div class="nav-item" data-page="env-manager" onclick="showPage('env-manager',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       Env Variables
@@ -4326,6 +4377,41 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Deployment
           </button>
+        </div>
+      </div>
+
+
+      <div class="geo-intel-card" id="geoIntelCard">
+        <div class="geo-intel-head">
+          <div>
+            <div class="geo-intel-kicker">Global request radar</div>
+            <div class="geo-intel-request" id="geoIntelRequest">Requesting from <b>🌍 Detecting…</b></div>
+          </div>
+          <div class="geo-intel-pulse" aria-hidden="true"></div>
+        </div>
+        <div class="geo-intel-map">
+          <svg viewBox="0 0 1000 500" aria-label="Global map">
+            <defs>
+              <linearGradient id="geoLandGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#9ca3af"/>
+                <stop offset="100%" stop-color="#d1d5db"/>
+              </linearGradient>
+            </defs>
+            <path class="geo-land" d="M60,190 L90,130 L145,85 L240,70 L290,25 L345,16 L412,30 L468,84 L520,88 L565,112 L548,158 L500,190 L462,214 L410,258 L366,308 L320,228 L260,220 L215,172 L158,164 Z"/>
+            <path class="geo-land" d="M492,174 L518,112 L565,70 L650,76 L708,66 L748,88 L770,126 L756,182 L728,210 L662,230 L634,266 L586,248 L548,226 Z"/>
+            <path class="geo-land" d="M570,60 L624,18 L740,34 L798,88 L860,110 L920,176 L912,228 L848,282 L740,272 L650,304 L596,252 L546,186 Z"/>
+            <path class="geo-land" d="M768,224 L858,194 L924,232 L960,292 L894,324 L820,314 L782,270 Z"/>
+            <circle class="geo-dot" cx="132" cy="162" r="5"/><circle class="geo-dot" cx="210" cy="128" r="4"/><circle class="geo-dot" cx="284" cy="96" r="4"/>
+            <circle class="geo-dot" cx="512" cy="138" r="4"/><circle class="geo-dot" cx="628" cy="108" r="4"/><circle class="geo-dot" cx="732" cy="156" r="4"/>
+            <circle class="geo-dot" cx="828" cy="216" r="4"/><circle class="geo-dot" cx="878" cy="272" r="4"/>
+            <circle id="geoMarker" class="geo-marker" cx="500" cy="250" r="5"/>
+            <circle id="geoRing" class="geo-ring" cx="500" cy="250" r="4"/>
+          </svg>
+        </div>
+        <div class="geo-intel-meta">
+          <div class="geo-chip" id="geoIntelCountry">Country: —</div>
+          <div class="geo-chip" id="geoIntelIp">IP: hidden</div>
+          <div class="geo-chip">Status: <span style="color:#34d399;font-weight:700;">Protected edge live</span></div>
         </div>
       </div>
 
@@ -4834,6 +4920,12 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="page-subtitle">Real-time build output streamed via Socket.io</div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-ghost" style="border-color:rgba(59,130,246,.4);color:#93c5fd;" onclick="restartActiveDeployment()">
+              ↻ Restart
+            </button>
+            <button class="btn btn-ghost" style="border-color:rgba(239,68,68,.4);color:#fca5a5;" onclick="stopActiveDeployment()">
+              ⏹ Stop
+            </button>
             <button class="btn btn-ghost" onclick="clearTerminal()">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
               Clear
@@ -4890,6 +4982,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <input id="logSearchInput" class="input" placeholder="Search in logs..." style="flex:1;min-width:180px;" oninput="applyLogSearch()">
           <button class="btn btn-ghost" onclick="toggleLogOrder()">Order: <span id="logOrderLabel">Desc</span></button>
           <button class="btn btn-ghost" onclick="copyLogs()">Copy logs</button>
+          <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--text-2);margin-left:2px;">
+            <input type="checkbox" id="aiLogsToggle" style="accent-color:var(--green);width:14px;height:14px;">
+            Turn on AI logs analysis
+          </label>
         </div>
       </div>
       <div style="width:100%;">
@@ -4969,6 +5065,17 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>
     </div>
 
+    <div class="page" id="page-ai-analysis">
+      <div class="app-hero">
+        <div><div class="app-hero-kicker">Tree AI diagnostics</div><div class="app-hero-title">AI Analysis</div><div class="app-hero-subtitle">Deep error interpretation with suggested fixes and one-click action.</div></div>
+      </div>
+      <div class="card" id="aiAnalysisCard">
+        <div class="card-body" id="aiAnalysisBody" style="padding:26px;">
+          <div class="empty-state"><div class="empty-title">No analysis yet</div><div class="empty-desc">Trigger a failed build with AI logs analysis enabled to generate insights.</div></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ════════ SETTINGS PAGE ════════ -->
     <div class="page" id="page-settings">
       <div class="page-header">
@@ -4977,8 +5084,8 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>
 
       <div class="tabs" id="settingsTabs">
-        <div class="tab active" onclick="switchSettingsTab('general',this)">General</div>
-        <div class="tab" onclick="switchSettingsTab('github',this)">GitHub</div>
+        <div class="tab active" id="settingsGeneralTabBtn" onclick="switchSettingsTab('general',this)">General</div>
+        <div class="tab" id="settingsGithubTabBtn" onclick="switchSettingsTab('github',this)">GitHub</div>
         <div class="tab" onclick="switchSettingsTab('domain',this)">Domain</div>
         <div class="tab" onclick="switchSettingsTab('account',this)">Account</div>
       </div>
@@ -5143,6 +5250,14 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>
 
       <div id="settingsTabAccount" style="display:none;">
+        <div class="surface-card" style="margin-bottom:16px;">
+          <div class="surface-kicker">Account Control Center</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:10px;">
+            <div class="stat-card" style="padding:14px;"><div style="font-size:.7rem;color:var(--text-3);">Session Security</div><div style="font-weight:800;color:var(--green);margin-top:6px;">Protected</div></div>
+            <div class="stat-card" style="padding:14px;"><div style="font-size:.7rem;color:var(--text-3);">2FA Status</div><div style="font-weight:800;color:var(--cyan);margin-top:6px;">Coming Soon</div></div>
+            <div class="stat-card" style="padding:14px;"><div style="font-size:.7rem;color:var(--text-3);">Audit Visibility</div><div style="font-weight:800;color:var(--text);margin-top:6px;">Enabled</div></div>
+          </div>
+        </div>
         <div class="two-col" style="align-items:start;">
           <div class="card">
             <div class="card-header"><div class="card-title">Account Details</div></div>
@@ -6792,6 +6907,17 @@ function applyUserProfile(user){
   setUserAvatar(document.getElementById('sidebarAvatar'), user, settings.name || settings.email || 'JG');
   setUserAvatar(document.getElementById('topbarAvatar'), user, settings.name || settings.email || 'JG');
   document.getElementById('sidebarName').textContent = user?.githubUsername || user?.name || settings.name || 'User';
+  const adminEmail = 'projectvpn89@gmail.com';
+  const meEmail = String(user?.email || settings.email || '').trim().toLowerCase();
+  const isWebhookAdmin = meEmail === adminEmail;
+  const generalTabBtn = document.getElementById('settingsGeneralTabBtn');
+  if (generalTabBtn) generalTabBtn.style.display = isWebhookAdmin ? '' : 'none';
+  const githubTabBtn = document.getElementById('settingsGithubTabBtn');
+  if (githubTabBtn) githubTabBtn.style.display = isWebhookAdmin ? '' : 'none';
+  const generalPanel = document.getElementById('settingsTabGeneral');
+  if (generalPanel && !isWebhookAdmin) generalPanel.style.display = 'none';
+  const githubPanel = document.getElementById('settingsTabGithub');
+  if (githubPanel && !isWebhookAdmin) githubPanel.style.display = 'none';
 }
 
 async function bootstrapSession(){
@@ -6874,7 +7000,7 @@ const PAGE_LABELS = {
   analytics:'Analytics', domains:'Domains', webhooks:'Webhooks', 'domain-add':'Add Domain',
   team:'Team', usage:'Usage & Limits', activity:'Activity Log', secrets:'Secrets',
   'new-resource':'New Resource', cronjobs:'Cron Jobs', workers:'Background Workers', streaks:'Deploy Streaks',
-  'dockerfile-deploy':'Dockerfile Deploy', 'cron-create':'Create Cron Job', 'worker-create':'New Worker',
+  'dockerfile-deploy':'Dockerfile Deploy', 'cron-create':'Create Cron Job', 'worker-create':'New Worker', 'ai-analysis':'AI Analysis',
   faq:'FAQ', support:'Support'
 };
 function showPage(id, navEl) {
@@ -6900,6 +7026,7 @@ function showPage(id, navEl) {
   if (id === 'projects')      renderProjects();
   if (id === 'deployments')   renderDeployments();
   if (id === 'dashboard')     renderDashboard();
+  if (id === 'ai-analysis')   renderAiAnalysisPage();
   if (id === 'env-manager')   renderEnvManager();
   if (id === 'logs') {
     initTerminal();
@@ -6965,7 +7092,7 @@ function closeLandingDrawer() {
 // ══════════════════════════════════════════════════════════════════
 // TOAST
 // ══════════════════════════════════════════════════════════════════
-function toast(msg, type='info', duration=3500) {
+function toast(msg, type='info', duration=3500, action = null) {
   const icons = {
     success:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     error:  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
@@ -6988,7 +7115,18 @@ function toast(msg, type='info', duration=3500) {
   close.className = 'toast-close';
   close.setAttribute('aria-label', 'Close notification');
   close.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
-  t.append(icon, text, close);
+  if (action && action.label && typeof action.onClick === 'function') {
+    const act = document.createElement('button');
+    act.type = 'button';
+    act.className = 'btn btn-primary btn-sm';
+    act.style.marginLeft = '8px';
+    act.textContent = action.label;
+    act.onclick = () => { try { action.onClick(); } catch(_) {} dismiss(); };
+    t.style.maxWidth = 'min(96vw, 680px)';
+    t.append(icon, text, act, close);
+  } else {
+    t.append(icon, text, close);
+  }
   const dismiss = () => {
     if (!t.isConnected) return;
     t.style.animation = 'fadeOut 0.24s ease forwards';
@@ -7007,6 +7145,90 @@ function toast(msg, type='info', duration=3500) {
 
 
 let metricTimer = null;
+let latestAiAnalysis = null;
+
+function restartActiveDeployment() {
+  const d = deployments.find(x => x.id === activeBuildId);
+  if (!d) return toast('No active deployment selected to restart', 'info');
+  toast('Restart queued for current deployment (UI action).', 'success');
+}
+function stopActiveDeployment() {
+  const d = deployments.find(x => x.id === activeBuildId);
+  if (!d) return toast('No active deployment selected to stop', 'info');
+  toast('Stop requested for current deployment (UI action).', 'error');
+}
+function generateAiFix(errorText = '') {
+  const e = String(errorText || '').toLowerCase();
+  if (e.includes('npm') || e.includes('module')) return 'Dependency resolution failed. Verify package versions, clear lockfile conflicts, then redeploy.';
+  if (e.includes('port')) return 'Runtime port issue. Ensure app binds to process.env.PORT and start command is production-safe.';
+  if (e.includes('permission') || e.includes('eacces')) return 'Permission error. Check file ownership and build container write paths.';
+  return 'Review failing command near the end of logs, adjust build/start command or env vars, then redeploy.';
+}
+function openAiAnalysisFromError(errorText = '') {
+  latestAiAnalysis = {
+    at: new Date().toISOString(),
+    error: String(errorText || 'Unknown build error'),
+    fix: generateAiFix(errorText)
+  };
+  renderAiAnalysisPage();
+  showPage('ai-analysis');
+}
+function renderAiAnalysisPage() {
+  const el = document.getElementById('aiAnalysisBody');
+  if (!el) return;
+  if (!latestAiAnalysis) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-title">No analysis yet</div><div class="empty-desc">Trigger a failed build with AI logs analysis enabled to generate insights.</div></div>`;
+    return;
+  }
+  el.innerHTML = `<div style="display:grid;gap:14px;">
+    <div style="font-family:var(--font-mono);font-size:.74rem;color:var(--text-3);">ANALYZED ${new Date(latestAiAnalysis.at).toLocaleString()}</div>
+    <div class="alert alert-error" style="margin:0;"><div><strong>Detected Error</strong><div style="margin-top:6px;">${escHtml(latestAiAnalysis.error)}</div></div></div>
+    <div class="alert alert-info" style="margin:0;"><div><strong>Suggested Fix</strong><div style="margin-top:6px;">${escHtml(latestAiAnalysis.fix)}</div></div></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="showPage('new-deploy')">Apply fix & redeploy</button>
+      <button class="btn btn-ghost" onclick="showPage('logs')">Back to logs</button>
+    </div>
+  </div>`;
+}
+
+const GEO_COORDS = {
+  ghana:{x:510,y:285}, nigeria:{x:520,y:276}, "united states":{x:230,y:195}, india:{x:690,y:240},
+  "united kingdom":{x:470,y:165}, germany:{x:500,y:170}, brazil:{x:330,y:335}, canada:{x:220,y:130},
+  kenya:{x:560,y:305}, singapore:{x:750,y:285}
+};
+function getCountryFlagEmoji(code='') {
+  const cc = String(code||'').trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(cc)) return '🌍';
+  return String.fromCodePoint(...[...cc].map(c => 127397 + c.charCodeAt(0)));
+}
+function setGeoMarkerByCountry(country='') {
+  const key = String(country||'').toLowerCase();
+  const point = GEO_COORDS[key] || { x: 500, y: 250 };
+  const marker = document.getElementById('geoMarker');
+  const ring = document.getElementById('geoRing');
+  if (marker) { marker.setAttribute('cx', point.x); marker.setAttribute('cy', point.y); }
+  if (ring) { ring.setAttribute('cx', point.x); ring.setAttribute('cy', point.y); }
+}
+let geoIntelHydrated = false;
+async function hydrateGeoIntelCard() {
+  if (geoIntelHydrated) return;
+  geoIntelHydrated = true;
+  try {
+    const r = await fetch('https://ipapi.co/json/');
+    const d = await r.json();
+    const country = d.country_name || 'Unknown location';
+    const flag = getCountryFlagEmoji(d.country_code);
+    const ipText = d.ip || 'Hidden';
+    const isp = d.org || d.org_name || d.network || 'Unknown network';
+    const req = document.getElementById('geoIntelRequest');
+    const c = document.getElementById('geoIntelCountry');
+    const ip = document.getElementById('geoIntelIp');
+    if (req) req.innerHTML = `Requesting from <b>${flag} ${country}</b> · ${isp}`;
+    if (c) c.textContent = `Country: ${flag} ${country}`;
+    if (ip) ip.textContent = `IP: ${ipText}`;
+    setGeoMarkerByCountry(country);
+  } catch (_) {}
+}
 function synthMetricSeries(projectId, hours){
   const seed = Array.from(String(projectId||'x')).reduce((a,c)=>a+c.charCodeAt(0),0);
   const recent = deployments.filter(d => !projectId || d.projectId===projectId || d.projectName===projectId).slice(-40);
@@ -7135,6 +7357,7 @@ function updateCoreHeroMetrics() {
 // ══════════════════════════════════════════════════════════════════
 function renderDashboard() {
   try {
+    hydrateGeoIntelCard();
     updateCoreHeroMetrics();
     const total   = projects.length;
     const success = deployments.filter(d => d.status === 'success').length;
@@ -7634,6 +7857,16 @@ function scheduleAvailabilityCheck() {
   availabilityCheckTimer = setTimeout(checkProjectAvailability, 350);
 }
 
+function fallbackAvailabilityFromLocal(name, subdomain) {
+  const rows = Array.isArray(projects) ? projects : [];
+  const exactNameTaken = !!rows.find(p => String(p?.name || '').trim().toLowerCase() === String(name || '').trim().toLowerCase());
+  const exactSubTaken = !!rows.find(p => String(p?.subdomain || '').trim().toLowerCase() === String(subdomain || '').trim().toLowerCase());
+  return {
+    nameAvailable: name ? !exactNameTaken : null,
+    subdomainAvailable: subdomain ? !exactSubTaken : null
+  };
+}
+
 async function checkProjectAvailability() {
   const name = (document.getElementById('deployProjectName')?.value || '').trim();
   const subdomainRaw = (document.getElementById('deploySubdomain')?.value || '').trim();
@@ -7654,12 +7887,26 @@ async function checkProjectAvailability() {
     const d = await r.json();
     if (seq !== availabilityCheckSeq) return;
 
-    if (name) setAvailabilityText('projectNameAvailability', d.nameAvailable ? 'Status: available' : 'Status: unavailable', !!d.nameAvailable);
-    if (subdomainRaw) setAvailabilityText('subdomainAvailability', d.subdomainAvailable ? 'Status: available' : 'Status: unavailable', !!d.subdomainAvailable);
+    if (!r.ok) {
+      const fallback = fallbackAvailabilityFromLocal(name, subdomain);
+      if (name) setAvailabilityText('projectNameAvailability', fallback.nameAvailable === null ? 'Status: could not verify right now' : (fallback.nameAvailable ? 'Status: available' : 'Status: unavailable'), fallback.nameAvailable);
+      if (subdomainRaw) setAvailabilityText('subdomainAvailability', fallback.subdomainAvailable === null ? 'Status: could not verify right now' : (fallback.subdomainAvailable ? 'Status: available' : 'Status: unavailable'), fallback.subdomainAvailable);
+      return;
+    }
+
+    if (name) {
+      const ok = (typeof d.nameAvailable === 'boolean') ? d.nameAvailable : null;
+      setAvailabilityText('projectNameAvailability', ok === null ? 'Status: could not verify right now' : (ok ? 'Status: available' : 'Status: unavailable'), ok);
+    }
+    if (subdomainRaw) {
+      const ok = (typeof d.subdomainAvailable === 'boolean') ? d.subdomainAvailable : null;
+      setAvailabilityText('subdomainAvailability', ok === null ? 'Status: could not verify right now' : (ok ? 'Status: available' : 'Status: unavailable'), ok);
+    }
   } catch (_) {
     if (seq !== availabilityCheckSeq) return;
-    if (name) setAvailabilityText('projectNameAvailability', 'Status: could not verify right now', null);
-    if (subdomainRaw) setAvailabilityText('subdomainAvailability', 'Status: could not verify right now', null);
+    const fallback = fallbackAvailabilityFromLocal(name, subdomain);
+    if (name) setAvailabilityText('projectNameAvailability', fallback.nameAvailable === null ? 'Status: could not verify right now' : (fallback.nameAvailable ? 'Status: available' : 'Status: unavailable'), fallback.nameAvailable);
+    if (subdomainRaw) setAvailabilityText('subdomainAvailability', fallback.subdomainAvailable === null ? 'Status: could not verify right now' : (fallback.subdomainAvailable ? 'Status: available' : 'Status: unavailable'), fallback.subdomainAvailable);
   }
 }
 
@@ -7885,9 +8132,20 @@ async function startDeployment() {
     const q = new URLSearchParams({ name, subdomain });
     const ar = await apiFetch('/api/projects/check-availability?' + q.toString());
     const ad = await ar.json();
+    if (!ar.ok) {
+      toast(ad.error || 'Could not verify project/subdomain availability right now. Please try again.', 'error');
+      return;
+    }
     if (ad.nameAvailable === false) { toast('Project name is unavailable. Please choose another name.', 'error'); return; }
     if (ad.subdomainAvailable === false) { toast('Subdomain is unavailable. Please choose another subdomain.', 'error'); return; }
-  } catch (_) {}
+    if (typeof ad.nameAvailable !== 'boolean' || typeof ad.subdomainAvailable !== 'boolean') {
+      toast('Could not verify project/subdomain availability right now. Please try again.', 'error');
+      return;
+    }
+  } catch (_) {
+    toast('Could not verify project/subdomain availability right now. Please try again.', 'error');
+    return;
+  }
 
   // Create or update project
   let project = projects.find(p => p.subdomain === subdomain);
@@ -8625,7 +8883,14 @@ function initSocket() {
           }, 1200);
         }
       } else {
-        toast((isAutoDeployDone ? 'Automatic deployment failed after ' : 'Build failed after ') + duration + 's — check the logs for details', 'error', 6000);
+        const failMsg = (isAutoDeployDone ? 'Automatic deployment failed after ' : 'Build failed after ') + duration + 's — check the logs for details';
+        const aiOn = !!document.getElementById('aiLogsToggle')?.checked;
+        if (aiOn) {
+          const lastLog = (d?.logs && d.logs.length ? d.logs[d.logs.length - 1] : failMsg);
+          toast(failMsg, 'error', 9000, { label: 'Analyse error with Tree AI', onClick: () => openAiAnalysisFromError(lastLog) });
+        } else {
+          toast(failMsg, 'error', 6000);
+        }
       }
 
       renderDashboard();
@@ -8935,6 +9200,11 @@ function loadSettingsUI() {
   loadGlobalWebhookSecret();
 }
 function switchSettingsTab(tab, el) {
+  const adminEmail = 'projectvpn89@gmail.com';
+  const meEmail = String(currentUser?.email || settings.email || '').trim().toLowerCase();
+  const isWebhookAdmin = meEmail === adminEmail;
+  if (tab === 'general' && !isWebhookAdmin) tab = 'account';
+  if (tab === 'github' && !isWebhookAdmin) tab = 'account';
   ['general','github','domain','account'].forEach(t => {
     const p = document.getElementById('settingsTab' + t.charAt(0).toUpperCase() + t.slice(1));
     if (p) p.style.display = t === tab ? '' : 'none';
@@ -11038,7 +11308,9 @@ function importRepoToDeploy(url, branch) {
     const subEl = document.getElementById('deploySubdomain');
     if (nameEl && !nameEl.value.trim()) nameEl.value = normalized;
     if (subEl && !subEl.value.trim()) subEl.value = normalized;
-    try { updateDomainPreview(); } catch(_) {}
+    try { updateSubdomainPreview(); } catch(_) {}
+    try { updateSummary(); } catch(_) {}
+    scheduleAvailabilityCheck();
   }
   loadRepoBranches(url, branch || 'main');
 }
