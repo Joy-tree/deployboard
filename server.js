@@ -934,6 +934,7 @@ app.get('/api/projects/check-availability', async (req, res) => {
   try {
     const rawName = String(req.query.name || '').trim();
     const rawSubdomain = String(req.query.subdomain || '').trim();
+    const rawProjectId = String(req.query.projectId || '').trim();
     const cleanSubdomain = rawSubdomain.toLowerCase()
       .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 
@@ -945,12 +946,13 @@ app.get('/api/projects/check-availability', async (req, res) => {
     if (rawName) query.push({ name: rawName });
     if (cleanSubdomain) query.push({ subdomain: cleanSubdomain });
 
-    const existing = await Project.findOne({ $or: query }).select('name subdomain').lean().maxTimeMS(5000);
+    const existing = await Project.findOne({ $or: query }).select('_id name subdomain').lean().maxTimeMS(5000);
+    const sameProject = !!(existing && rawProjectId && String(existing._id) === rawProjectId);
     res.json({
       name: rawName,
       subdomain: cleanSubdomain,
-      nameAvailable: rawName ? !(existing && existing.name === rawName) : null,
-      subdomainAvailable: cleanSubdomain ? !(existing && existing.subdomain === cleanSubdomain) : null,
+      nameAvailable: rawName ? (sameProject ? true : !(existing && existing.name === rawName)) : null,
+      subdomainAvailable: cleanSubdomain ? (sameProject ? true : !(existing && existing.subdomain === cleanSubdomain)) : null,
       existing: existing || null
     });
   } catch (e) {
@@ -1245,6 +1247,19 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   const explicitType = String(siteType || '').trim().toLowerCase();
   const hasStartCmd = !!String(startCmd || '').trim();
   const isServerApp = explicitType === 'server' || (!explicitType && hasStartCmd);
+
+  // Ensure project name/subdomain are available before creating/updating.
+  // Allow redeploy updates for the same existing subdomain record.
+  const existingBySub = await Project.findOne({ subdomain: cleanSub }).select('_id name subdomain').lean().maxTimeMS(5000).catch(() => null);
+  const existingByName = await Project.findOne({ name }).select('_id name subdomain').lean().maxTimeMS(5000).catch(() => null);
+  const existingBySubId = existingBySub?._id ? String(existingBySub._id) : '';
+  const existingByNameId = existingByName?._id ? String(existingByName._id) : '';
+  if (existingByName && existingBySubId && existingByNameId !== existingBySubId) {
+    return res.status(409).json({ error: 'Project name is unavailable. Please choose another name.' });
+  }
+  if (existingBySub && existingByName && existingBySubId !== existingByNameId) {
+    return res.status(409).json({ error: 'Subdomain is unavailable. Please choose another subdomain.' });
+  }
 
   // Assign port for server apps
   let appPort = 0;
