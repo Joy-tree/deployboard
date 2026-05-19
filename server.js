@@ -1227,11 +1227,23 @@ app.get('/api/activity', async (req, res) => {
   }
 });
 
+
+const PLAN_RUNTIME_PROFILES = {
+  free:    { memoryLimit: '870m', cpuShares: 512, memorySwap: '1g' },
+  starter: { memoryLimit: '1g',   cpuShares: 768, memorySwap: '2g' },
+  growth:  { memoryLimit: '5g',   cpuShares: 1536, memorySwap: '6g' },
+  scale:   { memoryLimit: '16g',  cpuShares: 2048, memorySwap: '18g' }
+};
+function getRuntimeProfileForPlan(planKey='free') {
+  const key = String(planKey || 'free').toLowerCase();
+  return PLAN_RUNTIME_PROFILES[key] || PLAN_RUNTIME_PROFILES.free;
+}
+
 // ── Deploy endpoint ───────────────────────────────────────────────────────────
 app.post('/api/deploy', requireAuth, async (req, res) => {
   const { name, subdomain, repoUrl, branch, installCmd, buildCmd,
           startCmd, outputDir, nodeVer, siteType, envVars,
-          isDockerfileDeploy, isWorker, dockerfilePath, exposedPort } = req.body;
+          isDockerfileDeploy, isWorker, dockerfilePath, exposedPort, billingPlan } = req.body;
   const deploySource = (req.body?.source === 'auto' || req.body?.autoDeploy === true || req.headers['x-deployboard-deploy-source'] === 'auto') ? 'auto' : 'manual';
   const triggerSha = String(req.body?.triggerSha || req.headers['x-deployboard-trigger-sha'] || '').trim();
 
@@ -1268,6 +1280,9 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     catch(e) { return res.status(500).json({ error: e.message }); }
   }
 
+  const planKey = String(billingPlan || 'free').toLowerCase();
+  const runtimeProfile = getRuntimeProfileForPlan(planKey);
+
   // Upsert project
   let project;
   try {
@@ -1282,6 +1297,10 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
         nodeVer:    nodeVer    || '20',
         siteType:   siteType   || 'static',
         appPort,
+        billingPlan: planKey,
+        memoryLimit: runtimeProfile.memoryLimit,
+        cpuShares: runtimeProfile.cpuShares,
+        memorySwap: runtimeProfile.memorySwap,
         envVars:            envVars             || {},
         isDockerfileDeploy: !!isDockerfileDeploy,
         isWorker:           !!isWorker,
@@ -1297,7 +1316,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       branch: branch||'main', installCmd: installCmd||'npm install',
       buildCmd: buildCmd||'npm run build', startCmd: startCmd||'',
       outputDir: outputDir||'dist', nodeVer: nodeVer||'20',
-      siteType: siteType||'static', appPort, envVars: envVars||{},
+      siteType: siteType||'static', appPort, billingPlan: planKey, memoryLimit: runtimeProfile.memoryLimit, cpuShares: runtimeProfile.cpuShares, memorySwap: runtimeProfile.memorySwap, envVars: envVars||{},
       save: async () => {}
     };
   }
