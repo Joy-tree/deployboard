@@ -7143,6 +7143,36 @@ function openAiAnalysisFromError(errorText = '') {
   renderAiAnalysisPage();
   showPage('ai-analysis');
 }
+function openRedeployFormFromAi() {
+  const deployment = activeBuildId ? deployments.find(x => x.id === activeBuildId) : null;
+  let project = null;
+  if (deployment?.projectId) project = projects.find(x => String(x.id || x._id || '') === String(deployment.projectId));
+  if (!project && deployment?.projectName) project = projects.find(x => String(x.name || '') === String(deployment.projectName));
+  if (!project) {
+    toast('Could not find the project config to prefill. Opening deploy form.', 'info');
+    showPage('new-deploy');
+    return;
+  }
+
+  document.getElementById('deployProjectName').value = project.name || '';
+  document.getElementById('deploySubdomain').value   = project.subdomain || '';
+  document.getElementById('deployRepoUrl').value     = project.repoUrl || '';
+  document.getElementById('deployBranch').value      = project.branch || 'main';
+  document.getElementById('deployInstallCmd').value  = project.installCmd || 'npm install';
+  document.getElementById('deployBuildCmd').value    = project.buildCmd || 'npm run build';
+  document.getElementById('deployOutputDir').value   = project.outputDir || 'dist';
+  document.getElementById('deployNodeVersion').value = project.nodeVer || '18';
+  document.getElementById('deployWorkingDir').value  = project.workingDir || '';
+  if (document.getElementById('deploySiteType')) {
+    csSetValue('deploySiteType', project.siteType || 'static');
+    onSiteTypeChange();
+  }
+  if (document.getElementById('deployStartCmd')) document.getElementById('deployStartCmd').value = project.startCmd || '';
+  deployFormPrefillMode = true;
+  showPage('new-deploy');
+  toast('Project settings loaded. Adjust config and redeploy.', 'success');
+}
+
 function renderAiAnalysisPage() {
   const el = document.getElementById('aiAnalysisBody');
   if (!el) return;
@@ -7155,7 +7185,7 @@ function renderAiAnalysisPage() {
     <div class="alert alert-error" style="margin:0;"><div><strong>Detected Error</strong><div style="margin-top:6px;">${escHtml(latestAiAnalysis.error)}</div></div></div>
     <div class="alert alert-info" style="margin:0;"><div><strong>Suggested Fix</strong><div style="margin-top:6px;">${escHtml(latestAiAnalysis.fix)}</div></div></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="showPage('new-deploy')">Apply fix & redeploy</button>
+      <button class="btn btn-primary" onclick="openRedeployFormFromAi()">Apply fix & redeploy</button>
       <button class="btn btn-ghost" onclick="showPage('logs')">Back to logs</button>
     </div>
   </div>`;
