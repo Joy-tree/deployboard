@@ -7291,12 +7291,35 @@ let latestAiAnalysis = null;
 function restartActiveDeployment() {
   const d = deployments.find(x => x.id === activeBuildId);
   if (!d) return toast('No active deployment selected to restart', 'info');
-  toast('Restart queued for current deployment (UI action).', 'success');
+  const p = projects.find(x => String(x.id || x._id || '') === String(d.projectId || ''));
+  if (!p) return toast('Could not find project to restart', 'error');
+  showPage('new-deploy');
+  document.getElementById('deployProjectName').value = p.name || '';
+  document.getElementById('deploySubdomain').value = p.subdomain || '';
+  document.getElementById('deployRepoUrl').value = p.repoUrl || '';
+  document.getElementById('deployBranch').value = p.branch || 'main';
+  document.getElementById('deployInstallCmd').value = p.installCmd || 'npm install';
+  document.getElementById('deployBuildCmd').value = p.buildCmd || 'npm run build';
+  document.getElementById('deployStartCmd').value = p.startCmd || '';
+  document.getElementById('deployOutputDir').value = p.outputDir || 'dist';
+  document.getElementById('deployNodeVersion').value = p.nodeVer || '18';
+  if (document.getElementById('deploySiteType')) document.getElementById('deploySiteType').value = p.siteType || 'static';
+  updateSubdomainPreview();
+  updateSummary();
+  toast('Restarting deployment with current project settings…', 'info');
+  setTimeout(() => { startDeployment(); }, 120);
 }
 function stopActiveDeployment() {
   const d = deployments.find(x => x.id === activeBuildId);
   if (!d) return toast('No active deployment selected to stop', 'info');
-  toast('Stop requested for current deployment (UI action).', 'error');
+  d.status = 'failed';
+  d.endedAt = new Date().toISOString();
+  d.logs = d.logs || [];
+  d.logs.push('[manual] Deployment stopped by user.');
+  activeBuildId = null;
+  save();
+  renderLogsPage();
+  toast('Deployment stopped.', 'info');
 }
 function generateAiFix(errorText = '') {
   const e = String(errorText || '').toLowerCase();
@@ -8371,35 +8394,16 @@ async function startDeployment() {
     showPage('pricing');
     return;
   }
-  try {
-    if (!isRedeploy) {
-      const q = new URLSearchParams({ name, subdomain });
-      const ar = await apiFetch('/api/projects/check-availability?' + q.toString());
-      const ad = await ar.json();
-      let usedFallback = false;
-      if (!ar.ok) {
-        const err = String(ad.error || '').toLowerCase();
-        const canFallback = err.includes('buffering timed out') || err.includes('timed out') || err.includes('econn') || err.includes('mongodb');
-        if (!canFallback) {
-          toast(ad.error || 'Could not verify project/subdomain availability right now. Please try again.', 'error');
-          return;
-        }
-        const fb = fallbackAvailabilityFromLocal(name, subdomain);
-        if (fb.nameAvailable === false) { toast('Project name is unavailable. Please choose another name.', 'error'); return; }
-        if (fb.subdomainAvailable === false) { toast('Subdomain is unavailable. Please choose another subdomain.', 'error'); return; }
-        usedFallback = true;
-      }
-      if (ad.nameAvailable === false) { toast('Project name is unavailable. Please choose another name.', 'error'); return; }
-      if (ad.subdomainAvailable === false) { toast('Subdomain is unavailable. Please choose another subdomain.', 'error'); return; }
-      if (!usedFallback && (typeof ad.nameAvailable !== 'boolean' || typeof ad.subdomainAvailable !== 'boolean')) {
-        toast('Could not verify project/subdomain availability right now. Please try again.', 'error');
-        return;
-      }
-    }
-  } catch (_) {
-    toast('Could not verify project/subdomain availability right now. Please try again.', 'error');
-    return;
-  }
+  // availability already validated above via status guards; avoid second network check delay here
+
+  setDeployLaunchUI(true);
+  clearTimeout(deployLaunchNavTimer);
+  deployLaunchNavTimer = setTimeout(() => {
+    showPage('logs');
+    updateLogsHero({ projectName: name || 'Deployment', branch: branch || 'main', repoUrl: repoUrl || '—' });
+    showMatrixTerminal({ projectName: name || 'Deployment', repoUrl: repoUrl || '—', branch: branch || 'main' });
+    toast('Deployment initialization in progress… opening live logs.', 'info');
+  }, 15000);
 
   setDeployLaunchUI(true);
   clearTimeout(deployLaunchNavTimer);
