@@ -3507,7 +3507,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 <br/>✓ npm ci
 <br/>✓ npm run build
 <br/>✓ Shipping artifact to edge
-<br/>✓ Live: https://my-app.joytreehostingserver.dpdns.org</div>
+<br/>✓ Live: https://my-app.joytree.site</div>
     </div>
   </div>
 
@@ -4738,7 +4738,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <label class="field-label">Subdomain</label>
                 <div class="input-group">
                   <input class="input input-mono" id="deploySubdomain" placeholder="my-app" autocomplete="off" oninput="updateSubdomainPreview()">
-                  <span style="display:flex;align-items:center;padding:0 12px;background:rgba(99,179,237,0.05);border:1.5px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-family:var(--font-mono);font-size:0.8rem;color:var(--text-3);white-space:nowrap;" id="domainSuffix">.joytreehostingserver.dpdns.org</span>
+                  <span style="display:flex;align-items:center;padding:0 12px;background:rgba(99,179,237,0.05);border:1.5px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-family:var(--font-mono);font-size:0.8rem;color:var(--text-3);white-space:nowrap;" id="domainSuffix">.joytree.site</span>
                 </div>
                 <div class="field-hint">Preview: <span class="td-mono" id="subdomainPreview">—</span></div>
                 <div class="field-hint" id="subdomainAvailability">Status: enter a subdomain</div>
@@ -5248,12 +5248,12 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="card-body">
               <div class="field admin-only">
                 <label class="field-label">Base Domain</label>
-                <input class="input input-mono" id="settingsBaseDomain" value="joytreehostingserver.dpdns.org" placeholder="yourdomain.com">
+                <input class="input input-mono" id="settingsBaseDomain" value="joytree.site" placeholder="yourdomain.com">
                 <div class="field-hint">All user sites will be hosted at <code style="font-family:var(--font-mono);">[subdomain].yourdomain.com</code></div>
               </div>
               <div style="padding:16px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:8px;margin-bottom:12px;">
                 <div style="font-size:0.72rem;color:var(--text-3);margin-bottom:4px;">YOUR PLATFORM DOMAIN</div>
-                <div style="font-family:var(--font-mono);font-size:0.88rem;color:var(--green);">*.joytreehostingserver.dpdns.org</div>
+                <div style="font-family:var(--font-mono);font-size:0.88rem;color:var(--green);">*.joytree.site</div>
                 <div style="font-size:0.72rem;color:var(--text-2);margin-top:4px;">Wildcard SSL active via Cloudflare Tunnel</div>
               </div>
               <button class="btn btn-primary admin-only" onclick="saveDomainSettings()">Save Domain Settings</button>
@@ -5327,7 +5327,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               </div>
               <div>
                 <div style="font-weight:700;font-size:0.85rem;color:var(--text);margin-bottom:6px;">4. Your Site Goes Live</div>
-                On success, your site is immediately accessible at <code style="font-family:var(--font-mono);background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">subdomain.joytreehostingserver.dpdns.org</code>
+                On success, your site is immediately accessible at <code style="font-family:var(--font-mono);background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">subdomain.joytree.site</code>
               </div>
             </div>
           </div>
@@ -5642,7 +5642,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;" id="domainQuickStats">
-        <div class="card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">Wildcard</div><div style="margin-top:6px;font-family:var(--font-mono);font-size:.82rem;color:var(--green);" id="domainWildcardMini">*.joytreehostingserver.dpdns.org</div></div>
+        <div class="card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">Wildcard</div><div style="margin-top:6px;font-family:var(--font-mono);font-size:.82rem;color:var(--green);" id="domainWildcardMini">*.joytree.site</div></div>
         <div class="card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">SSL Status</div><div style="margin-top:6px;font-size:.9rem;font-weight:700;color:#d1fae5;">Auto-managed via Cloudflare</div></div>
       </div>
 
@@ -5656,7 +5656,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.18);border-radius:8px;flex-wrap:wrap;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" width="20" height="20" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
             <div style="flex:1;min-width:0;">
-              <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text);word-break:break-all;" id="domainWildcardDisplay">*.joytreehostingserver.dpdns.org</div>
+              <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text);word-break:break-all;" id="domainWildcardDisplay">*.joytree.site</div>
               <div style="font-size:0.72rem;color:var(--text-2);margin-top:3px;">Wildcard SSL • Cloudflare Tunnel • Always active</div>
             </div>
             <span class="badge badge-success" style="flex-shrink:0;"><span class="badge-dot"></span>Active</span>
@@ -6313,7 +6313,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <label class="field-label">Subdomain</label>
                 <div style="display:flex;">
                   <input class="input input-mono" id="dfSubdomain" placeholder="my-docker-app" style="border-radius:8px 0 0 8px;">
-                  <span style="display:flex;align-items:center;padding:0 10px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-size:0.75rem;color:var(--text-3);white-space:nowrap;">.joytreehostingserver.dpdns.org</span>
+                  <span style="display:flex;align-items:center;padding:0 10px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-size:0.75rem;color:var(--text-3);white-space:nowrap;">.joytree.site</span>
                 </div>
               </div>
               <div class="field">
@@ -6435,7 +6435,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <div class="field">
                 <label class="field-label">URL to call</label>
                 <div style="display:flex;gap:8px;">
-                  <input class="input input-mono" id="cronUrl" placeholder="https://myapp.joytreehostingserver.dpdns.org/health" style="flex:1;">
+                  <input class="input input-mono" id="cronUrl" placeholder="https://myapp.joytree.site/health" style="flex:1;">
                   <button class="btn btn-ghost btn-sm" onclick="testCronUrl()" style="flex-shrink:0;">Test</button>
                 </div>
                 <div class="field-hint">GET request will be sent to this URL on the schedule below.</div>
@@ -6707,10 +6707,10 @@ let envStore     = JSON.parse(localStorage.getItem('db_envstore')     || '{}');
 // even for users who never opened the Settings page
 const _storedSettings = JSON.parse(localStorage.getItem('db_settings') || '{}');
 let settings = Object.assign({
-  baseDomain: 'joytreehostingserver.dpdns.org'
+  baseDomain: 'joytree.site'
 }, _storedSettings);
 // Migrate old joytree.app default quietly
-if (settings.baseDomain === 'joytree.app') settings.baseDomain = 'joytreehostingserver.dpdns.org';
+if (settings.baseDomain === 'joytree.app') settings.baseDomain = 'joytree.site';
 
 
 const PLAN_LIMITS = {
@@ -6825,7 +6825,7 @@ async function apiFetch(url, opts={}) {
 // ══════════════════════════════════════════════════════════════════
 function resetWorkspaceState() {
   projects = []; deployments = []; envStore = {};
-  settings = { ...settings, baseDomain: settings.baseDomain || 'joytreehostingserver.dpdns.org' };
+  settings = { ...settings, baseDomain: settings.baseDomain || 'joytree.site' };
   ['db_projects','db_deployments','db_envstore','db_settings','db_activity','db_webhooks','db_cronjobs','db_cron_execs'].forEach(k => localStorage.removeItem(k));
 }
 
@@ -7006,7 +7006,7 @@ async function bootstrapSession(){
       projects = Array.isArray(wsD.projects) ? wsD.projects : [];
       deployments = Array.isArray(wsD.deployments) ? wsD.deployments : [];
       envStore = wsD.envStore && typeof wsD.envStore === 'object' ? wsD.envStore : {};
-      settings = Object.assign({ baseDomain: 'joytreehostingserver.dpdns.org' }, wsD.settings || {});
+      settings = Object.assign({ baseDomain: 'joytree.site' }, wsD.settings || {});
       _save();
     }
     await syncServerStateFromApi({ persist: true });
@@ -7586,7 +7586,7 @@ function renderDashboard() {
   }
   rc.innerHTML = recent.map(d => {
     const proj = projects.find(p => p.id === d.projectId);
-    const domainBase = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+    const domainBase = settings.baseDomain || 'joytree.site';
     const liveUrl = proj ? (proj.liveUrl || ('https://' + proj.subdomain + '.' + domainBase)) : '#';
     // Use liveUrl as proof of success — same logic as renderProjects
     let depStatus = d.status;
@@ -7676,7 +7676,7 @@ function renderProjects() {
     const iconBg = ['rgba(16,185,129,0.1)','rgba(16,185,129,0.1)','rgba(139,92,246,0.1)','rgba(245,158,11,0.1)','rgba(6,182,212,0.1)'];
     const iconColor = ['var(--primary)','var(--green)','var(--purple)','var(--amber)','var(--cyan)'];
     const idx = p.id.charCodeAt(0) % 5;
-    const domainBase = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+    const domainBase = settings.baseDomain || 'joytree.site';
     const liveUrl = p.liveUrl || ('https://' + p.subdomain + '.' + domainBase);
     // A project is "deployed" if: it has a stored screenshot, a liveUrl from server,
     // OR its resolved status is success. liveUrl is the most reliable signal since
@@ -7928,7 +7928,7 @@ function resetDeployForm() {
 }
 function updateSubdomainPreview() {
   const sub  = (document.getElementById('deploySubdomain')?.value||'').trim();
-  const base = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+  const base = settings.baseDomain || 'joytree.site';
   document.getElementById('subdomainPreview').textContent = sub ? sub + '.' + base : '—';
 }
 function updateSummary() {
@@ -7936,7 +7936,7 @@ function updateSummary() {
   const sub    = document.getElementById('deploySubdomain')?.value   || '—';
   const branch = document.getElementById('deployBranch')?.value      || 'main';
   const node   = document.getElementById('deployNodeVersion')?.value || '18';
-  const base   = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+  const base   = settings.baseDomain || 'joytree.site';
   document.getElementById('summaryName').textContent   = name;
   document.getElementById('summaryUrl').textContent    = sub !== '—' ? sub + '.' + base : '—';
   document.getElementById('summaryBranch').textContent = branch;
@@ -9149,7 +9149,7 @@ function showProjectDetail(projectId) {
   const p = projects.find(x => x.id === projectId);
   if (!p) return;
   const deploys = deployments.filter(d => d.projectId === projectId).reverse().slice(0, 10);
-  const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytreehostingserver.dpdns.org';
+  const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytree.site';
   const liveUrl = 'https://' + p.subdomain + '.' + baseDomain;
   const lastDeploy = deploys[0];
   const lastStatus = lastDeploy ? lastDeploy.status : null;
@@ -9388,7 +9388,7 @@ async function regenerateGlobalWebhookSecret(){
 }
 
 function saveDomainSettings() {
-  settings.baseDomain = document.getElementById('settingsBaseDomain').value.trim() || 'joytreehostingserver.dpdns.org';
+  settings.baseDomain = document.getElementById('settingsBaseDomain').value.trim() || 'joytree.site';
   save(); toast('Domain settings saved', 'success');
   // Update the domain suffix shown next to the subdomain input on the deploy form
   const sfx = document.getElementById('domainSuffix');
@@ -9405,7 +9405,7 @@ function saveAccountSettings() {
   toast('Account updated', 'success');
 }
 function updateNginxConfig() {
-  const base = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+  const base = settings.baseDomain || 'joytree.site';
   const el   = document.getElementById('nginxConfigPreview');
   if (el) el.innerHTML = `<span class="ck">server</span> {
   <span class="ck">listen</span> <span class="cn">80</span>;
@@ -9508,7 +9508,7 @@ function statusBadge(status) {
     const params = new URLSearchParams(window.location.search);
     const ghCode = params.get('code');
     const ghState = params.get('state');
-    const stateOk = !ghState || ghState === 'joytree_github_auth';
+    const stateOk = !ghState || ghState === 'deployboard_github_auth' || ghState === 'joytree_github_auth';
   if (ghCode && stateOk) {
     try {
       const r = await fetch('/api/auth/github/exchange', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ code: ghCode }) });
@@ -9877,7 +9877,7 @@ async function renderAnalytics() {
 // DOMAINS
 // ══════════════════════════════════════════════════════════════════
 async function renderDomains() {
-  const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytreehostingserver.dpdns.org';
+  const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytree.site';
   const mini = document.getElementById('domainWildcardMini'); if (mini) mini.textContent = '*.' + baseDomain;
   const wild = document.getElementById('domainWildcardDisplay'); if (wild) wild.textContent = '*.' + baseDomain;
   const heroProj = document.getElementById('domainHeroProjects'); if (heroProj) heroProj.textContent = projects.length;
