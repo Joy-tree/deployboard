@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://joytree.site/sitemap.xml
