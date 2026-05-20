@@ -3,7 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>joytree — Ship Anything. Instantly.</title>
+  <title>JOYTREE — Ship Anything. Instantly.</title>
+  <meta name="description" content="JOYTREE helps you ship from GitHub to live URL in minutes with real-time deployment visibility.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="JOYTREE — Ship Anything. Instantly.">
+  <meta property="og:description" content="Professional release orchestration platform with live logs, edge routing, and one-click redeploys.">
+  <meta property="og:url" content="https://joytree.site/">
+  <meta property="og:site_name" content="JOYTREE">
+  <meta property="og:image" content="https://i.postimg.cc/j229DVHf/133615.png">
+  <meta property="og:image:url" content="https://i.postimg.cc/j229DVHf/133615.png">
+  <meta property="og:image:secure_url" content="https://i.postimg.cc/j229DVHf/133615.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1024">
+  <meta property="og:image:height" content="1024">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="JOYTREE — Ship Anything. Instantly.">
+  <meta name="twitter:description" content="Professional release orchestration platform with live logs, edge routing, and one-click redeploys.">
+  <meta name="twitter:image" content="https://i.postimg.cc/j229DVHf/133615.png">
+  <meta name="twitter:image:src" content="https://i.postimg.cc/j229DVHf/133615.png">
+  <link rel="image_src" href="https://i.postimg.cc/j229DVHf/133615.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- Socket.io -->
@@ -2994,8 +3012,10 @@ textarea.input { resize: vertical; min-height: 80px; }
 .geo-intel-map{position:relative;z-index:2;height:220px;border-radius:18px;border:1px solid rgba(148,163,184,.22);background:radial-gradient(circle at 50% 50%,rgba(16,185,129,.08),rgba(6,182,212,.05));overflow:hidden}
 .geo-real-map{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.05) contrast(1.06) brightness(.9)}
 .geo-map-vignette{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,transparent 45%,rgba(2,6,23,.6) 100%);pointer-events:none}
-.geo-marker-pin{position:absolute;width:12px;height:12px;border-radius:50%;background:#10b981;box-shadow:0 0 0 8px rgba(16,185,129,.15),0 0 20px rgba(16,185,129,.5);transform:translate(-50%,-50%);animation:pinPulse 2.8s ease-in-out infinite}
-@keyframes pinPulse{0%,100%{box-shadow:0 0 0 8px rgba(16,185,129,.15),0 0 20px rgba(16,185,129,.5)}50%{box-shadow:0 0 0 14px rgba(16,185,129,.08),0 0 28px rgba(6,182,212,.5)}}
+.geo-marker-glow{position:absolute;width:52px;height:52px;border-radius:50%;background:radial-gradient(circle,rgba(34,197,94,.35) 0%,rgba(16,185,129,.16) 45%,rgba(16,185,129,0) 75%);transform:translate(-50%,-50%);pointer-events:none;will-change:transform,opacity;animation:geoGlowPulse 3.2s ease-out infinite}
+.geo-marker-pin{position:absolute;width:10px;height:10px;border-radius:50%;background:#22c55e;transform:translate(-50%,-50%);box-shadow:0 0 0 1px rgba(6,95,70,.6);will-change:transform,opacity;animation:geoPinBlink 2.4s steps(2,end) infinite}
+@keyframes geoGlowPulse{0%,100%{transform:translate(-50%,-50%) scale(.9);opacity:.72}50%{transform:translate(-50%,-50%) scale(1.06);opacity:.38}}
+@keyframes geoPinBlink{0%,45%{opacity:1}55%,100%{opacity:.68}}
 .geo-intel-meta{position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
 .geo-chip{font-size:.76rem;padding:7px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.25);background:rgba(30,41,59,.45);color:#e5e7eb}
 @media (max-width: 900px) {
@@ -3053,7 +3073,7 @@ textarea.input { resize: vertical; min-height: 80px; }
       <!-- Brand -->
       <div class="auth-brand">
         <div class="auth-brand-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
-        <span style="font-family:var(--font-hd);font-weight:800;font-size:1rem;color:#f1f5f9;letter-spacing:-.01em;">joytree</span>
+        <span style="font-family:var(--font-hd);font-weight:800;font-size:1rem;color:#f1f5f9;letter-spacing:-.01em;">JOYTREE</span>
       </div>
 
       <!-- Heading -->
@@ -3183,7 +3203,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 <nav>
   <div class="nav-logo">
     <div class="nav-logo-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
-    <span class="nav-logo-name">joytree</span>
+    <!-- brand text removed on header for cleaner mobile identity -->
     <!-- beta badge removed -->
   </div>
   <div class="nav-links">
@@ -3205,7 +3225,7 @@ textarea.input { resize: vertical; min-height: 80px; }
   <div class="ld-header">
     <div class="ld-brand">
       <div class="ld-brand-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
-      <span class="ld-brand-name">joytree</span>
+      <span class="ld-brand-name">JOYTREE</span>
       <span class="ld-brand-tag">Beta</span>
     </div>
     <button class="ld-close" onclick="closeLandingDrawer()" aria-label="Close menu">
@@ -3325,7 +3345,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 <!-- ── HERO ──────────────────────────────────────────────────────────── -->
 <div class="home-logo-showcase">
   <img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo">
-  <span class="home-logo-name">joytree</span>
+  <span class="home-logo-name">JOYTREE</span>
 </div>
 
 <section class="hero live-border">
@@ -3364,15 +3384,15 @@ textarea.input { resize: vertical; min-height: 80px; }
   <div class="hero-shift-zone neon-beam-border" aria-label="Shifting inscription cards">
     <article class="hero-shift-card active" data-shift-card>
       <div class="hero-shift-kicker">Release Intelligence</div>
-      <div class="hero-shift-text">Production signals are summarized continuously so teams can act fast with confidence.</div>
+      <div class="hero-shift-text">Consolidated release signals help teams make faster, evidence-based deployment decisions.</div>
     </article>
     <article class="hero-shift-card" data-shift-card>
       <div class="hero-shift-kicker">Runtime Stability</div>
-      <div class="hero-shift-text">Guardrails, health checks, and rollback posture are visible in one command surface.</div>
+      <div class="hero-shift-text">Health checks, guardrails, and rollback readiness are presented in one clear operational view.</div>
     </article>
     <article class="hero-shift-card" data-shift-card>
       <div class="hero-shift-kicker">Deployment Flow</div>
-      <div class="hero-shift-text">From commit to edge rollout, each stage is tracked with live operator-grade clarity.</div>
+      <div class="hero-shift-text">From commit to rollout, every stage is tracked with concise, operator-grade visibility.</div>
     </article>
   </div>
 
@@ -3380,17 +3400,16 @@ textarea.input { resize: vertical; min-height: 80px; }
     <div class="hero-kicker-pro"><i></i> Professional release orchestration platform</div>
     <div class="hero-eyebrow">
       <span class="hero-eyebrow-dot"></span>
-      Now in open beta — ship your first site free
+      Built for teams that ship with precision
     </div>
-    <h1 class="hero-h1">Launch <span class="accent">production workloads</span><br>with command-center confidence.</h1>
+    <h1 class="hero-h1">Ship <span class="accent">production applications</span><br>with operational clarity.</h1>
     <div class="hero-typewriter-wrap">
-      From <span class="hero-typewriter" id="typewriter">React Apps</span>
+      Designed for <span class="hero-typewriter" id="typewriter">Modern Web Teams</span>
     </div>
   </div>
 
   <p class="hero-sub">
-    Connect a GitHub repo, configure your build, and ship in seconds —
-    with real-time logs, wildcard subdomain routing, deployment governance, and enterprise-grade release clarity.
+    Connect your repository, configure your pipeline, and deploy with confidence — with live logs, reliable routing, and clear release controls.
   </p>
 
   <div class="hero-actions">
@@ -3507,7 +3526,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 <br/>✓ npm ci
 <br/>✓ npm run build
 <br/>✓ Shipping artifact to edge
-<br/>✓ Live: https://my-app.joytreehostingserver.dpdns.org</div>
+<br/>✓ Live: https://my-app.joytree.site</div>
     </div>
   </div>
 
@@ -3517,7 +3536,7 @@ textarea.input { resize: vertical; min-height: 80px; }
       <span class="term-dot r"></span>
       <span class="term-dot y"></span>
       <span class="term-dot g"></span>
-      <span class="terminal-title">joytree — build terminal</span>
+      <span class="terminal-title">JOYTREE — build terminal</span>
     </div>
     <div class="terminal-body" id="terminalBody">
       <span class="tl tl-prompt">$ <span class="tl-cmd">git push origin main</span></span>
@@ -4047,7 +4066,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 <footer>
   <div class="footer-logo">
     <div class="nav-logo-mark" style="width:28px;height:28px;"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
-    <span style="font-family:var(--font-hd);font-weight:700;font-size:0.9rem;">joytree</span>
+    <span style="font-family:var(--font-hd);font-weight:700;font-size:0.9rem;">JOYTREE</span>
   </div>
   <div class="footer-links">
     <a href="#features" class="footer-link">Features</a>
@@ -4060,7 +4079,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 <script>
 // ── Typewriter ─────────────────────────────────────────────────────
-const words = ['React Apps','Next.js Builds','Vite Projects','Static Sites','Vue.js Apps','Svelte Sites'];
+const words = ['Modern Web Teams','Product Engineering Orgs','Frontend Platforms','Backend Services','Release Managers','Scaling Startups'];
 let wi = 0, ci = 0, deleting = false;
 const tw = document.getElementById('typewriter');
 
@@ -4196,7 +4215,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 <aside id="sidebar">
   <div class="sidebar-logo">
     <div class="sidebar-logo-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
-    <span class="sidebar-logo-name">joytree</span>
+    <span class="sidebar-logo-name">JOYTREE</span>
     <!-- beta badge removed -->
   </div>
 
@@ -4337,7 +4356,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <div class="topbar-breadcrumb" id="topbarBreadcrumb">
-      <span>joytree</span>
+      <span>JOYTREE</span>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       <span class="crumb-active" id="topbarPage">Dashboard</span>
     </div>
@@ -4389,11 +4408,12 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         <div class="geo-intel-map">
           <img class="geo-real-map" src="https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg" alt="World map">
           <div class="geo-map-vignette"></div>
+          <div id="geoMarkerGlow" class="geo-marker-glow" style="left:50%;top:50%;"></div>
           <div id="geoMarkerPin" class="geo-marker-pin" style="left:50%;top:50%;"></div>
         </div>
         <div class="geo-intel-meta">
           <div class="geo-chip" id="geoIntelCountry">Country: —</div>
-          <div class="geo-chip" id="geoIntelIp">IP: hidden</div>
+          
           <div class="geo-chip">Status: <span style="color:#34d399;font-weight:700;">Protected edge live</span></div>
         </div>
       </div>
@@ -4738,7 +4758,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <label class="field-label">Subdomain</label>
                 <div class="input-group">
                   <input class="input input-mono" id="deploySubdomain" placeholder="my-app" autocomplete="off" oninput="updateSubdomainPreview()">
-                  <span style="display:flex;align-items:center;padding:0 12px;background:rgba(99,179,237,0.05);border:1.5px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-family:var(--font-mono);font-size:0.8rem;color:var(--text-3);white-space:nowrap;" id="domainSuffix">.joytreehostingserver.dpdns.org</span>
+                  <span style="display:flex;align-items:center;padding:0 12px;background:rgba(99,179,237,0.05);border:1.5px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-family:var(--font-mono);font-size:0.8rem;color:var(--text-3);white-space:nowrap;" id="domainSuffix">.joytree.site</span>
                 </div>
                 <div class="field-hint">Preview: <span class="td-mono" id="subdomainPreview">—</span></div>
                 <div class="field-hint" id="subdomainAvailability">Status: enter a subdomain</div>
@@ -4993,7 +5013,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <div class="term-dot yellow"></div>
               <div class="term-dot green"></div>
             </div>
-            <span class="term-title" id="termTitle">joytree — build terminal</span>
+            <span class="term-title" id="termTitle">JOYTREE — build terminal</span>
             <span class="term-tag">LIVE</span>
             <div class="term-status" id="termStatus">
               <span class="badge badge-idle"><span class="badge-dot"></span>Idle</span>
@@ -5111,7 +5131,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="card-body">
               <div class="field">
                 <label class="field-label">Platform Name</label>
-                <input class="input" id="settingsPlatformName" value="joytree">
+                <input class="input" id="settingsPlatformName" value="JOYTREE">
               </div>
               <div class="field admin-only">
                 <label class="field-label">Build Runner Mode</label>
@@ -5248,12 +5268,12 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="card-body">
               <div class="field admin-only">
                 <label class="field-label">Base Domain</label>
-                <input class="input input-mono" id="settingsBaseDomain" value="joytreehostingserver.dpdns.org" placeholder="yourdomain.com">
+                <input class="input input-mono" id="settingsBaseDomain" value="joytree.site" placeholder="yourdomain.com">
                 <div class="field-hint">All user sites will be hosted at <code style="font-family:var(--font-mono);">[subdomain].yourdomain.com</code></div>
               </div>
               <div style="padding:16px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:8px;margin-bottom:12px;">
                 <div style="font-size:0.72rem;color:var(--text-3);margin-bottom:4px;">YOUR PLATFORM DOMAIN</div>
-                <div style="font-family:var(--font-mono);font-size:0.88rem;color:var(--green);">*.joytreehostingserver.dpdns.org</div>
+                <div style="font-family:var(--font-mono);font-size:0.88rem;color:var(--green);">*.joytree.site</div>
                 <div style="font-size:0.72rem;color:var(--text-2);margin-top:4px;">Wildcard SSL active via Cloudflare Tunnel</div>
               </div>
               <button class="btn btn-primary admin-only" onclick="saveDomainSettings()">Save Domain Settings</button>
@@ -5327,7 +5347,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               </div>
               <div>
                 <div style="font-weight:700;font-size:0.85rem;color:var(--text);margin-bottom:6px;">4. Your Site Goes Live</div>
-                On success, your site is immediately accessible at <code style="font-family:var(--font-mono);background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">subdomain.joytreehostingserver.dpdns.org</code>
+                On success, your site is immediately accessible at <code style="font-family:var(--font-mono);background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">subdomain.joytree.site</code>
               </div>
             </div>
           </div>
@@ -5642,7 +5662,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;" id="domainQuickStats">
-        <div class="card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">Wildcard</div><div style="margin-top:6px;font-family:var(--font-mono);font-size:.82rem;color:var(--green);" id="domainWildcardMini">*.joytreehostingserver.dpdns.org</div></div>
+        <div class="card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">Wildcard</div><div style="margin-top:6px;font-family:var(--font-mono);font-size:.82rem;color:var(--green);" id="domainWildcardMini">*.joytree.site</div></div>
         <div class="card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">SSL Status</div><div style="margin-top:6px;font-size:.9rem;font-weight:700;color:#d1fae5;">Auto-managed via Cloudflare</div></div>
       </div>
 
@@ -5656,7 +5676,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.18);border-radius:8px;flex-wrap:wrap;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" width="20" height="20" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
             <div style="flex:1;min-width:0;">
-              <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text);word-break:break-all;" id="domainWildcardDisplay">*.joytreehostingserver.dpdns.org</div>
+              <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text);word-break:break-all;" id="domainWildcardDisplay">*.joytree.site</div>
               <div style="font-size:0.72rem;color:var(--text-2);margin-top:3px;">Wildcard SSL • Cloudflare Tunnel • Always active</div>
             </div>
             <span class="badge badge-success" style="flex-shrink:0;"><span class="badge-dot"></span>Active</span>
@@ -6313,7 +6333,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <label class="field-label">Subdomain</label>
                 <div style="display:flex;">
                   <input class="input input-mono" id="dfSubdomain" placeholder="my-docker-app" style="border-radius:8px 0 0 8px;">
-                  <span style="display:flex;align-items:center;padding:0 10px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-size:0.75rem;color:var(--text-3);white-space:nowrap;">.joytreehostingserver.dpdns.org</span>
+                  <span style="display:flex;align-items:center;padding:0 10px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-size:0.75rem;color:var(--text-3);white-space:nowrap;">.joytree.site</span>
                 </div>
               </div>
               <div class="field">
@@ -6435,7 +6455,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <div class="field">
                 <label class="field-label">URL to call</label>
                 <div style="display:flex;gap:8px;">
-                  <input class="input input-mono" id="cronUrl" placeholder="https://myapp.joytreehostingserver.dpdns.org/health" style="flex:1;">
+                  <input class="input input-mono" id="cronUrl" placeholder="https://myapp.joytree.site/health" style="flex:1;">
                   <button class="btn btn-ghost btn-sm" onclick="testCronUrl()" style="flex-shrink:0;">Test</button>
                 </div>
                 <div class="field-hint">GET request will be sent to this URL on the schedule below.</div>
@@ -6707,10 +6727,10 @@ let envStore     = JSON.parse(localStorage.getItem('db_envstore')     || '{}');
 // even for users who never opened the Settings page
 const _storedSettings = JSON.parse(localStorage.getItem('db_settings') || '{}');
 let settings = Object.assign({
-  baseDomain: 'joytreehostingserver.dpdns.org'
+  baseDomain: 'joytree.site'
 }, _storedSettings);
 // Migrate old joytree.app default quietly
-if (settings.baseDomain === 'joytree.app') settings.baseDomain = 'joytreehostingserver.dpdns.org';
+if (settings.baseDomain === 'joytree.app') settings.baseDomain = 'joytree.site';
 
 
 const PLAN_LIMITS = {
@@ -6825,7 +6845,7 @@ async function apiFetch(url, opts={}) {
 // ══════════════════════════════════════════════════════════════════
 function resetWorkspaceState() {
   projects = []; deployments = []; envStore = {};
-  settings = { ...settings, baseDomain: settings.baseDomain || 'joytreehostingserver.dpdns.org' };
+  settings = { ...settings, baseDomain: settings.baseDomain || 'joytree.site' };
   ['db_projects','db_deployments','db_envstore','db_settings','db_activity','db_webhooks','db_cronjobs','db_cron_execs'].forEach(k => localStorage.removeItem(k));
 }
 
@@ -7006,7 +7026,7 @@ async function bootstrapSession(){
       projects = Array.isArray(wsD.projects) ? wsD.projects : [];
       deployments = Array.isArray(wsD.deployments) ? wsD.deployments : [];
       envStore = wsD.envStore && typeof wsD.envStore === 'object' ? wsD.envStore : {};
-      settings = Object.assign({ baseDomain: 'joytreehostingserver.dpdns.org' }, wsD.settings || {});
+      settings = Object.assign({ baseDomain: 'joytree.site' }, wsD.settings || {});
       _save();
     }
     await syncServerStateFromApi({ persist: true });
@@ -7299,7 +7319,20 @@ function setGeoMarkerByCountry(country='') {
   const key = String(country||'').toLowerCase();
   const point = GEO_COORDS[key] || { x: 50, y: 50 };
   const marker = document.getElementById('geoMarkerPin');
+  const glow = document.getElementById('geoMarkerGlow');
   if (marker) { marker.style.left = point.x + '%'; marker.style.top = point.y + '%'; }
+  if (glow) { glow.style.left = point.x + '%'; glow.style.top = point.y + '%'; }
+}
+function setGeoMarkerByLatLon(lat, lon) {
+  const latNum = Number(lat), lonNum = Number(lon);
+  if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) return false;
+  const x = Math.max(3, Math.min(97, ((lonNum + 180) / 360) * 100));
+  const y = Math.max(4, Math.min(96, ((90 - latNum) / 180) * 100));
+  const marker = document.getElementById('geoMarkerPin');
+  const glow = document.getElementById('geoMarkerGlow');
+  if (marker) { marker.style.left = x + '%'; marker.style.top = y + '%'; }
+  if (glow) { glow.style.left = x + '%'; glow.style.top = y + '%'; }
+  return true;
 }
 let geoIntelHydrated = false;
 async function hydrateGeoIntelCard() {
@@ -7310,15 +7343,12 @@ async function hydrateGeoIntelCard() {
     const d = await r.json();
     const country = d.country_name || 'Unknown location';
     const flag = getCountryFlagEmoji(d.country_code);
-    const ipText = d.ip || 'Hidden';
-    const isp = d.org || d.org_name || d.network || 'Unknown network';
     const req = document.getElementById('geoIntelRequest');
     const c = document.getElementById('geoIntelCountry');
-    const ip = document.getElementById('geoIntelIp');
-    if (req) req.innerHTML = `Requesting from <b>${flag} ${country}</b> · ${isp}`;
+    if (req) req.innerHTML = `Requesting from <b>${flag} ${country}</b>`;
     if (c) c.textContent = `Country: ${flag} ${country}`;
-    if (ip) ip.textContent = `IP: ${ipText}`;
-    setGeoMarkerByCountry(country);
+    const usedLatLon = setGeoMarkerByLatLon(d.latitude, d.longitude);
+    if (!usedLatLon) setGeoMarkerByCountry(country);
   } catch (_) {}
 }
 function synthMetricSeries(projectId, hours){
@@ -7586,7 +7616,7 @@ function renderDashboard() {
   }
   rc.innerHTML = recent.map(d => {
     const proj = projects.find(p => p.id === d.projectId);
-    const domainBase = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+    const domainBase = settings.baseDomain || 'joytree.site';
     const liveUrl = proj ? (proj.liveUrl || ('https://' + proj.subdomain + '.' + domainBase)) : '#';
     // Use liveUrl as proof of success — same logic as renderProjects
     let depStatus = d.status;
@@ -7676,7 +7706,7 @@ function renderProjects() {
     const iconBg = ['rgba(16,185,129,0.1)','rgba(16,185,129,0.1)','rgba(139,92,246,0.1)','rgba(245,158,11,0.1)','rgba(6,182,212,0.1)'];
     const iconColor = ['var(--primary)','var(--green)','var(--purple)','var(--amber)','var(--cyan)'];
     const idx = p.id.charCodeAt(0) % 5;
-    const domainBase = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+    const domainBase = settings.baseDomain || 'joytree.site';
     const liveUrl = p.liveUrl || ('https://' + p.subdomain + '.' + domainBase);
     // A project is "deployed" if: it has a stored screenshot, a liveUrl from server,
     // OR its resolved status is success. liveUrl is the most reliable signal since
@@ -7928,7 +7958,7 @@ function resetDeployForm() {
 }
 function updateSubdomainPreview() {
   const sub  = (document.getElementById('deploySubdomain')?.value||'').trim();
-  const base = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+  const base = settings.baseDomain || 'joytree.site';
   document.getElementById('subdomainPreview').textContent = sub ? sub + '.' + base : '—';
 }
 function updateSummary() {
@@ -7936,7 +7966,7 @@ function updateSummary() {
   const sub    = document.getElementById('deploySubdomain')?.value   || '—';
   const branch = document.getElementById('deployBranch')?.value      || 'main';
   const node   = document.getElementById('deployNodeVersion')?.value || '18';
-  const base   = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+  const base   = settings.baseDomain || 'joytree.site';
   document.getElementById('summaryName').textContent   = name;
   document.getElementById('summaryUrl').textContent    = sub !== '—' ? sub + '.' + base : '—';
   document.getElementById('summaryBranch').textContent = branch;
@@ -8989,7 +9019,7 @@ function initSocket() {
         const name = dep ? dep.projectName : '';
         titleEl.textContent = name
           ? name + ' — ' + (status === 'success' ? '✓ deployed' : '✗ failed')
-          : 'joytree — build terminal';
+          : 'JOYTREE — build terminal';
       }
 
       hideMatrixTerminal(1800);
@@ -9149,7 +9179,7 @@ function showProjectDetail(projectId) {
   const p = projects.find(x => x.id === projectId);
   if (!p) return;
   const deploys = deployments.filter(d => d.projectId === projectId).reverse().slice(0, 10);
-  const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytreehostingserver.dpdns.org';
+  const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytree.site';
   const liveUrl = 'https://' + p.subdomain + '.' + baseDomain;
   const lastDeploy = deploys[0];
   const lastStatus = lastDeploy ? lastDeploy.status : null;
@@ -9388,7 +9418,7 @@ async function regenerateGlobalWebhookSecret(){
 }
 
 function saveDomainSettings() {
-  settings.baseDomain = document.getElementById('settingsBaseDomain').value.trim() || 'joytreehostingserver.dpdns.org';
+  settings.baseDomain = document.getElementById('settingsBaseDomain').value.trim() || 'joytree.site';
   save(); toast('Domain settings saved', 'success');
   // Update the domain suffix shown next to the subdomain input on the deploy form
   const sfx = document.getElementById('domainSuffix');
@@ -9405,7 +9435,7 @@ function saveAccountSettings() {
   toast('Account updated', 'success');
 }
 function updateNginxConfig() {
-  const base = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+  const base = settings.baseDomain || 'joytree.site';
   const el   = document.getElementById('nginxConfigPreview');
   if (el) el.innerHTML = `<span class="ck">server</span> {
   <span class="ck">listen</span> <span class="cn">80</span>;
@@ -9508,7 +9538,7 @@ function statusBadge(status) {
     const params = new URLSearchParams(window.location.search);
     const ghCode = params.get('code');
     const ghState = params.get('state');
-    const stateOk = !ghState || ghState === 'joytree_github_auth';
+    const stateOk = !ghState || ghState === 'deployboard_github_auth' || ghState === 'joytree_github_auth';
   if (ghCode && stateOk) {
     try {
       const r = await fetch('/api/auth/github/exchange', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ code: ghCode }) });
@@ -9877,7 +9907,7 @@ async function renderAnalytics() {
 // DOMAINS
 // ══════════════════════════════════════════════════════════════════
 async function renderDomains() {
-  const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytreehostingserver.dpdns.org';
+  const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytree.site';
   const mini = document.getElementById('domainWildcardMini'); if (mini) mini.textContent = '*.' + baseDomain;
   const wild = document.getElementById('domainWildcardDisplay'); if (wild) wild.textContent = '*.' + baseDomain;
   const heroProj = document.getElementById('domainHeroProjects'); if (heroProj) heroProj.textContent = projects.length;
