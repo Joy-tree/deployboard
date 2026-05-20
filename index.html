@@ -32,6 +32,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
   <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 
 <style>
 
@@ -3118,6 +3119,10 @@ textarea.input { resize: vertical; min-height: 80px; }
         </div>
       </div>
 
+      <div class="auth-field" id="turnstileWrap" style="display:none;">
+        <div id="turnstileWidget" style="display:flex;justify-content:center;"></div>
+      </div>
+
       <!-- Submit -->
       <button class="auth-submit" onclick="submitAuth()" id="authSubmitBtn">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
@@ -4098,6 +4103,7 @@ function typeLoop() {
   }
 }
 setTimeout(typeLoop, 800);
+setTimeout(initTurnstile, 200);
 
 const shiftCards = Array.from(document.querySelectorAll('[data-shift-card]'));
 let shiftIdx = 0;
@@ -6799,6 +6805,10 @@ let currentUser = null;
 let githubRepos = [];
 let githubReposLoaded = false;
 let authMode = 'signup';
+let turnstileEnabled = false;
+let turnstileSiteKey = '';
+let turnstileToken = '';
+let turnstileWidgetId = null;
 const GITHUB_CLIENT_ID = 'Iv23liRapw6lMrW4QArz';
 const FIREBASE_CONFIG = { apiKey:'AIzaSyD5TiRv7ZXeEPnoGE7seo1_AwoEZZiKAiY', authDomain:'authenticator-fc68d.firebaseapp.com', databaseURL:'https://authenticator-fc68d-default-rtdb.firebaseio.com', projectId:'authenticator-fc68d', storageBucket:'authenticator-fc68d.firebasestorage.app', messagingSenderId:'967078565161', appId:'1:967078565161:web:5545a869798726f4889338', measurementId:'G-BQLGGN83MM' };
 let fbApp = null; let fbDb = null;
@@ -6824,7 +6834,7 @@ async function ensureBackendSessionFromFirebase() {
     if (!fbUser) return false;
     const idToken = await fbUser.getIdToken();
     const r = await fetch('/api/auth/firebase', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idToken })
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idToken, turnstileToken })
     });
     const d = await r.json();
     if (!r.ok || !d.token) return false;
@@ -8138,7 +8148,8 @@ function applyPresetToForm(preset, type = 'deploy') {
     if (output && (!output.value.trim() || output.value.trim() === 'dist')) output.value = preset.output;
     if (siteType && preset.siteType && siteType.value !== preset.siteType) {
       siteType.value = preset.siteType;
-      try { onSiteTypeChange(siteType.value); } catch (_) {}
+      try {
+    onSiteTypeChange(siteType.value); } catch (_) {}
     }
     toast(`Detected ${preset.label}. Suggested production commands applied.`, 'success');
     return;
@@ -8223,6 +8234,7 @@ async function suggestWorkingDirs(repoInputId, branchInputId, workingDirInputId,
     }
     input.focus();
     toast(dirs.length ? `Found ${dirs.length} directories` : 'No subdirectories found; you can still type manually', dirs.length ? 'success' : 'info');
+    resetTurnstileToken();
   } catch (e) {
     toast('Could not load folders; you can still type it manually', 'error');
   } finally {
@@ -9306,6 +9318,7 @@ async function toggleProjectAutoDeploy(projectId, enabled) {
       showProjectDetail(projectId);
     }
     toast(d.warning || ('Auto deploy pipeline ' + (d.enabled ? 'enabled' : 'disabled')), d.warning ? 'info' : 'success', 6000);
+    resetTurnstileToken();
   } catch (e) {
     toast(e.message || 'Failed to update auto deploy', 'error');
   }
@@ -9332,6 +9345,7 @@ async function checkProjectAutoDeployNow(projectId) {
     if (d.triggered) toast('New GitHub commit found — deployment queued.', 'success', 6000);
     else if (d.changed) toast(d.reason === 'active_deployment_running' ? 'New commit found, but a deployment is already running.' : 'New commit found, but deployment was not queued: ' + (d.error || d.reason), d.error ? 'error' : 'info', 7000);
     else toast(d.reason === 'baseline_created' ? 'Pipeline baseline saved. The next new commit will deploy automatically.' : 'No new commit found on GitHub yet.', 'info', 6000);
+    resetTurnstileToken();
   } catch (e) {
     toast(e.message || 'Pipeline check failed', 'error', 7000);
   }
@@ -9546,7 +9560,8 @@ function statusBadge(status) {
       const r = await fetch('/api/auth/github/exchange', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ code: ghCode }) });
       const raw = await r.text();
       let d = null;
-      try { d = JSON.parse(raw); } catch (_) {}
+      try {
+    d = JSON.parse(raw); } catch (_) {}
       if (!d) throw new Error('GitHub exchange returned non-JSON response');
       if (d.token) {
         authToken = d.token;
@@ -9593,6 +9608,34 @@ function statusBadge(status) {
     hideBootLoader(120);
   }
 })();
+
+async function initTurnstile() {
+  try {
+    const r = await fetch('/api/auth/turnstile/config');
+    const d = await r.json();
+    turnstileEnabled = !!d.enabled;
+    turnstileSiteKey = d.siteKey || '';
+    const wrap = document.getElementById('turnstileWrap');
+    if (!turnstileEnabled || !turnstileSiteKey || !window.turnstile) { if (wrap) wrap.style.display='none'; return; }
+    if (wrap) wrap.style.display='block';
+    const mount = document.getElementById('turnstileWidget');
+    if (!mount) return;
+    mount.innerHTML = '';
+    turnstileToken = '';
+    turnstileWidgetId = window.turnstile.render('#turnstileWidget', {
+      sitekey: turnstileSiteKey,
+      theme: 'dark',
+      callback: (token) => { turnstileToken = token || ''; },
+      'expired-callback': () => { turnstileToken = ''; },
+      'error-callback': () => { turnstileToken = ''; }
+    });
+  } catch (_) {}
+}
+function resetTurnstileToken() {
+  turnstileToken = '';
+  if (turnstileEnabled && window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
+}
+
 function switchAuthMode(mode){
   authMode = mode;
   document.getElementById('tabSignup').classList.toggle('active', mode==='signup');
@@ -9610,6 +9653,7 @@ async function submitAuth(){
   const password = document.getElementById('authPassword').value;
   const name = document.getElementById('authName').value.trim();
   try {
+    if (turnstileEnabled && !turnstileToken) throw new Error('Please complete Cloudflare verification first.');
     if (!window.firebase || !firebase.auth) throw new Error('Firebase auth not loaded');
     await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     let cred;
@@ -9620,7 +9664,7 @@ async function submitAuth(){
       cred = await firebase.auth().signInWithEmailAndPassword(email, password);
     }
     const idToken = await cred.user.getIdToken();
-    const r = await fetch('/api/auth/firebase', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idToken }) });
+    const r = await fetch('/api/auth/firebase', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idToken, turnstileToken }) });
     const d = await r.json();
     if (!r.ok || !d.token) throw new Error(d.error || 'Authentication failed');
     authToken = d.token;
@@ -9628,6 +9672,7 @@ async function submitAuth(){
     applyUserProfile(d.user || null);
     toast('Welcome! Account ready.', 'success');
     showDashboard();
+    resetTurnstileToken();
   } catch (e) {
     toast(e.message || 'Authentication failed', 'error');
   }
@@ -9650,7 +9695,8 @@ function continueWithGitHub() {
     .then(async (r) => {
       const raw = await r.text();
       let d = null;
-      try { d = JSON.parse(raw); } catch (_) {}
+      try {
+    d = JSON.parse(raw); } catch (_) {}
       if (!r.ok) {
         const msg = d?.error || `GitHub auth endpoint failed (${r.status})`;
         throw new Error(msg);
@@ -11077,7 +11123,8 @@ function renderStreakCalendar(dayMap) {
 
 // Resume cron jobs on startup
 (function() {
-  try { resumeAllCronJobs(); } catch(e) {}
+  try {
+    resumeAllCronJobs(); } catch(e) {}
 })();
 
 function showLanding() {
@@ -11448,6 +11495,7 @@ async function renderReposPage(force = false) {
     if (select) {
       select.innerHTML = '<option value="">Or choose from connected GitHub repositories…</option>' + githubRepos.map(rp => `<option value="${escHtml(rp.html_url)}" data-branch="${escHtml(rp.default_branch || 'main')}">${escHtml(rp.full_name)}</option>`).join('');
     }
+    resetTurnstileToken();
   } catch (e) {
     wrap.innerHTML = `<div class="repo-empty" style="grid-column:1/-1;"><strong>${escHtml(e.message || 'Failed to load repositories')}</strong><span>Reconnect GitHub or tap refresh to try again.</span></div>`;
   }
@@ -11467,8 +11515,10 @@ function importRepoToDeploy(url, branch) {
     const subEl = document.getElementById('deploySubdomain');
     if (nameEl && !nameEl.value.trim()) nameEl.value = normalized;
     if (subEl && !subEl.value.trim()) subEl.value = normalized;
-    try { updateSubdomainPreview(); } catch(_) {}
-    try { updateSummary(); } catch(_) {}
+    try {
+    updateSubdomainPreview(); } catch(_) {}
+    try {
+    updateSummary(); } catch(_) {}
     scheduleAvailabilityCheck();
   }
   loadRepoBranches(url, branch || 'main');
