@@ -3,7 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>joytree — Ship Anything. Instantly.</title>
+  <title>JOYTREE — Ship Anything. Instantly.</title>
+  <meta name="description" content="JOYTREE helps you ship from GitHub to live URL in minutes with real-time deployment visibility.">
+  <meta property="og:type" content="website">
+  <link rel="canonical" href="https://joytree.site/">
+  <meta property="og:title" content="JOYTREE — Ship Anything. Instantly.">
+  <meta property="og:description" content="Professional release orchestration platform with live logs, edge routing, and one-click redeploys.">
+  <meta property="og:url" content="https://joytree.site/">
+  <meta property="og:site_name" content="JOYTREE">
+  <meta property="og:image" content="https://i.postimg.cc/j229DVHf/133615.png?v=2">
+  <meta property="og:image:url" content="https://i.postimg.cc/j229DVHf/133615.png?v=2">
+  <meta property="og:image:secure_url" content="https://i.postimg.cc/j229DVHf/133615.png?v=2">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1024">
+  <meta property="og:image:height" content="1024">
+  <meta property="og:image:alt" content="JOYTREE platform preview">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="JOYTREE — Ship Anything. Instantly.">
+  <meta name="twitter:description" content="Professional release orchestration platform with live logs, edge routing, and one-click redeploys.">
+  <meta name="twitter:image" content="https://i.postimg.cc/j229DVHf/133615.png?v=2">
+  <meta name="twitter:image:src" content="https://i.postimg.cc/j229DVHf/133615.png?v=2">
+  <link rel="image_src" href="https://i.postimg.cc/j229DVHf/133615.png?v=2">
+  <link rel="icon" type="image/png" href="https://i.postimg.cc/j229DVHf/133615.png?v=2">
+  <link rel="shortcut icon" href="https://i.postimg.cc/j229DVHf/133615.png?v=2" type="image/png">
+  <link rel="apple-touch-icon" href="https://i.postimg.cc/j229DVHf/133615.png?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- Socket.io -->
@@ -12,6 +35,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
   <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileReady" async defer></script>
 
 <style>
 
@@ -158,7 +182,7 @@ body::before{
   .hero-actions .btn-hero-primary,
   .hero-actions .btn-hero-ghost{ justify-content:center; }
   .hero-h1{ font-size:clamp(1.8rem,8vw,2.4rem); }
-  .hero-typewriter-wrap{ font-size:clamp(1.5rem,7vw,2rem); }
+  .hero-typewriter-wrap{ font-size:clamp(1rem,4.2vw,1.2rem); }
   .section{ padding:60px 18px; }
   .how-section{ padding:60px 18px; }
   .features-grid{ grid-template-columns:1fr; }
@@ -220,7 +244,7 @@ body::before{
 .hero-eyebrow-dot{width:6px;height:6px;background:#10b981;border-radius:50%;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 .hero-h1{
-  font-family:var(--font-hd);
+  font-family:var(--font-ui);
   font-size:clamp(2.4rem,6vw,5rem);
   font-weight:800;
   letter-spacing:-0.04em;
@@ -235,7 +259,7 @@ body::before{
   background-clip:text;
 }
 .hero-typewriter-wrap{
-  font-family:var(--font-hd);
+  font-family:var(--font-ui);
   font-size:clamp(2rem,5vw,4.2rem);
   font-weight:800;
   letter-spacing:-0.04em;
@@ -637,9 +661,9 @@ body.landing-drawer-open { overflow:hidden; }
 .hero-headline-stack{position:relative;display:grid;gap:10px;margin-bottom:14px}
 .hero-kicker-pro{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:999px;border:1px solid rgba(52,211,153,.55);background:rgba(3,14,10,.7);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#86efac;font-weight:700;justify-self:center;box-shadow:0 0 24px rgba(34,197,94,.28)}
 .hero-kicker-pro i{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 14px rgba(16,185,129,.9)}
-.hero-h1{font-size:clamp(2.9rem,7.5vw,6.2rem)!important;line-height:1.02;text-shadow:0 0 45px rgba(34,197,94,.24)}
-.hero-h1 .accent{filter:drop-shadow(0 0 18px rgba(52,211,153,.52))}
-.hero-sub{max-width:760px!important;font-size:1.07rem!important}
+.hero-h1{font-size:clamp(2rem,5.8vw,3.6rem)!important;line-height:1.12;font-weight:700;letter-spacing:-.01em;text-shadow:none}
+.hero-h1 .accent{filter:none}
+.hero-sub{max-width:700px!important;font-size:.96rem!important;line-height:1.7}
 .hero-actions .btn-hero-primary{padding:15px 30px;border-radius:14px;font-size:1rem;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 10px 42px rgba(16,185,129,.45)}
 .hero-actions .btn-hero-ghost{padding:15px 30px;border-radius:14px}
 .hero-rail{width:min(1120px,100%);margin:20px auto 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
@@ -996,7 +1020,7 @@ footer{
 .footer-copy{font-size:0.78rem;color:var(--text-3);}
 
 /* ── Utility ─────────────────────────────────────────────────────── */
-.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.6s ease,transform 0.6s ease;}
+.reveal{opacity:1;transform:none;transition:opacity 0.6s ease,transform 0.6s ease;}
 .reveal.visible{opacity:1;transform:none;}
 .text-center{text-align:center;}
 
@@ -2994,12 +3018,15 @@ textarea.input { resize: vertical; min-height: 80px; }
 .geo-intel-map{position:relative;z-index:2;height:220px;border-radius:18px;border:1px solid rgba(148,163,184,.22);background:radial-gradient(circle at 50% 50%,rgba(16,185,129,.08),rgba(6,182,212,.05));overflow:hidden}
 .geo-real-map{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.05) contrast(1.06) brightness(.9)}
 .geo-map-vignette{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,transparent 45%,rgba(2,6,23,.6) 100%);pointer-events:none}
-.geo-marker-pin{position:absolute;width:12px;height:12px;border-radius:50%;background:#10b981;box-shadow:0 0 0 8px rgba(16,185,129,.15),0 0 20px rgba(16,185,129,.5);transform:translate(-50%,-50%);animation:pinPulse 2.8s ease-in-out infinite}
-@keyframes pinPulse{0%,100%{box-shadow:0 0 0 8px rgba(16,185,129,.15),0 0 20px rgba(16,185,129,.5)}50%{box-shadow:0 0 0 14px rgba(16,185,129,.08),0 0 28px rgba(6,182,212,.5)}}
+.geo-marker-glow{position:absolute;width:52px;height:52px;border-radius:50%;background:radial-gradient(circle,rgba(34,197,94,.35) 0%,rgba(16,185,129,.16) 45%,rgba(16,185,129,0) 75%);transform:translate(-50%,-50%);pointer-events:none;will-change:transform,opacity;animation:geoGlowPulse 3.2s ease-out infinite}
+.geo-marker-pin{position:absolute;width:10px;height:10px;border-radius:50%;background:#22c55e;transform:translate(-50%,-50%);box-shadow:0 0 0 1px rgba(6,95,70,.6);will-change:transform,opacity;animation:geoPinBlink 2.4s steps(2,end) infinite}
+@keyframes geoGlowPulse{0%,100%{transform:translate(-50%,-50%) scale(.9);opacity:.72}50%{transform:translate(-50%,-50%) scale(1.06);opacity:.38}}
+@keyframes geoPinBlink{0%,45%{opacity:1}55%,100%{opacity:.68}}
 .geo-intel-meta{position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
 .geo-chip{font-size:.76rem;padding:7px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.25);background:rgba(30,41,59,.45);color:#e5e7eb}
 @media (max-width: 900px) {
   .geo-intel-card::before{display:none;}
+  .reveal{opacity:1!important;transform:none!important;}
 }
 
 /* Keep deployment/analytics history tables inside card borders on mobile */
@@ -3052,8 +3079,8 @@ textarea.input { resize: vertical; min-height: 80px; }
 
       <!-- Brand -->
       <div class="auth-brand">
-        <div class="auth-brand-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
-        <span style="font-family:var(--font-hd);font-weight:800;font-size:1rem;color:#f1f5f9;letter-spacing:-.01em;">joytree</span>
+        <div class="auth-brand-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png?v=2" alt="joytree logo"></div>
+        <span style="font-family:var(--font-hd);font-weight:800;font-size:1rem;color:#f1f5f9;letter-spacing:-.01em;">JOYTREE</span>
       </div>
 
       <!-- Heading -->
@@ -3094,6 +3121,11 @@ textarea.input { resize: vertical; min-height: 80px; }
           <span class="auth-input-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
           <input class="auth-input" type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password">
         </div>
+      </div>
+
+      <div class="auth-field" id="turnstileWrap" style="display:none;">
+        <div id="turnstileWidget" style="display:flex;justify-content:center;"></div>
+        <div id="turnstileStatus" style="margin-top:8px;text-align:center;font-size:.78rem;color:var(--text-2);"></div>
       </div>
 
       <!-- Submit -->
@@ -3182,8 +3214,8 @@ textarea.input { resize: vertical; min-height: 80px; }
 <!-- ── NAV ──────────────────────────────────────────────────────────── -->
 <nav>
   <div class="nav-logo">
-    <div class="nav-logo-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
-    <span class="nav-logo-name">joytree</span>
+    <div class="nav-logo-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png?v=2" alt="joytree logo"></div>
+    <!-- brand text removed on header for cleaner mobile identity -->
     <!-- beta badge removed -->
   </div>
   <div class="nav-links">
@@ -3204,8 +3236,8 @@ textarea.input { resize: vertical; min-height: 80px; }
   <!-- Sticky header -->
   <div class="ld-header">
     <div class="ld-brand">
-      <div class="ld-brand-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
-      <span class="ld-brand-name">joytree</span>
+      <div class="ld-brand-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png?v=2" alt="joytree logo"></div>
+      <span class="ld-brand-name">JOYTREE</span>
       <span class="ld-brand-tag">Beta</span>
     </div>
     <button class="ld-close" onclick="closeLandingDrawer()" aria-label="Close menu">
@@ -3324,8 +3356,8 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 <!-- ── HERO ──────────────────────────────────────────────────────────── -->
 <div class="home-logo-showcase">
-  <img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo">
-  <span class="home-logo-name">joytree</span>
+  <img src="https://i.postimg.cc/j229DVHf/133615.png?v=2" alt="joytree logo">
+  <span class="home-logo-name">JOYTREE</span>
 </div>
 
 <section class="hero live-border">
@@ -3364,15 +3396,15 @@ textarea.input { resize: vertical; min-height: 80px; }
   <div class="hero-shift-zone neon-beam-border" aria-label="Shifting inscription cards">
     <article class="hero-shift-card active" data-shift-card>
       <div class="hero-shift-kicker">Release Intelligence</div>
-      <div class="hero-shift-text">Production signals are summarized continuously so teams can act fast with confidence.</div>
+      <div class="hero-shift-text">Consolidated release signals help teams make faster, evidence-based deployment decisions.</div>
     </article>
     <article class="hero-shift-card" data-shift-card>
       <div class="hero-shift-kicker">Runtime Stability</div>
-      <div class="hero-shift-text">Guardrails, health checks, and rollback posture are visible in one command surface.</div>
+      <div class="hero-shift-text">Health checks, guardrails, and rollback readiness are presented in one clear operational view.</div>
     </article>
     <article class="hero-shift-card" data-shift-card>
       <div class="hero-shift-kicker">Deployment Flow</div>
-      <div class="hero-shift-text">From commit to edge rollout, each stage is tracked with live operator-grade clarity.</div>
+      <div class="hero-shift-text">From commit to rollout, every stage is tracked with concise, operator-grade visibility.</div>
     </article>
   </div>
 
@@ -3380,17 +3412,16 @@ textarea.input { resize: vertical; min-height: 80px; }
     <div class="hero-kicker-pro"><i></i> Professional release orchestration platform</div>
     <div class="hero-eyebrow">
       <span class="hero-eyebrow-dot"></span>
-      Now in open beta — ship your first site free
+      Built for teams that ship with precision
     </div>
-    <h1 class="hero-h1">Launch <span class="accent">production workloads</span><br>with command-center confidence.</h1>
+    <h1 class="hero-h1">Ship <span class="accent">production applications</span><br>with operational clarity.</h1>
     <div class="hero-typewriter-wrap">
-      From <span class="hero-typewriter" id="typewriter">React Apps</span>
+      Designed for <span class="hero-typewriter" id="typewriter">Modern Web Teams</span>
     </div>
   </div>
 
   <p class="hero-sub">
-    Connect a GitHub repo, configure your build, and ship in seconds —
-    with real-time logs, wildcard subdomain routing, deployment governance, and enterprise-grade release clarity.
+    Connect your repository, configure your pipeline, and deploy with confidence — with live logs, reliable routing, and clear release controls.
   </p>
 
   <div class="hero-actions">
@@ -3507,7 +3538,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 <br/>✓ npm ci
 <br/>✓ npm run build
 <br/>✓ Shipping artifact to edge
-<br/>✓ Live: https://my-app.joytreehostingserver.dpdns.org</div>
+<br/>✓ Live: https://my-app.joytree.site</div>
     </div>
   </div>
 
@@ -3517,7 +3548,7 @@ textarea.input { resize: vertical; min-height: 80px; }
       <span class="term-dot r"></span>
       <span class="term-dot y"></span>
       <span class="term-dot g"></span>
-      <span class="terminal-title">joytree — build terminal</span>
+      <span class="terminal-title">JOYTREE — build terminal</span>
     </div>
     <div class="terminal-body" id="terminalBody">
       <span class="tl tl-prompt">$ <span class="tl-cmd">git push origin main</span></span>
@@ -3541,7 +3572,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 </div>
 
 <div class="pro-signature reveal neon-beam-border">
-  <strong>joytree Professional Experience Layer</strong>
+  <strong>JOYTREE Professional Experience Layer</strong>
   <span>Crafted for teams that want premium UI, fast clarity, and confident shipping workflows.</span>
 </div>
 
@@ -4046,8 +4077,8 @@ textarea.input { resize: vertical; min-height: 80px; }
 <!-- ── FOOTER ─────────────────────────────────────────────────────── -->
 <footer>
   <div class="footer-logo">
-    <div class="nav-logo-mark" style="width:28px;height:28px;"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
-    <span style="font-family:var(--font-hd);font-weight:700;font-size:0.9rem;">joytree</span>
+    <div class="nav-logo-mark" style="width:28px;height:28px;"><img src="https://i.postimg.cc/j229DVHf/133615.png?v=2" alt="joytree logo"></div>
+    <span style="font-family:var(--font-hd);font-weight:700;font-size:0.9rem;">JOYTREE</span>
   </div>
   <div class="footer-links">
     <a href="#features" class="footer-link">Features</a>
@@ -4060,7 +4091,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 <script>
 // ── Typewriter ─────────────────────────────────────────────────────
-const words = ['React Apps','Next.js Builds','Vite Projects','Static Sites','Vue.js Apps','Svelte Sites'];
+const words = ['Modern Web Teams','Product Engineering Orgs','Frontend Platforms','Backend Services','Release Managers','Scaling Startups'];
 let wi = 0, ci = 0, deleting = false;
 const tw = document.getElementById('typewriter');
 
@@ -4077,6 +4108,7 @@ function typeLoop() {
   }
 }
 setTimeout(typeLoop, 800);
+setTimeout(initTurnstile, 200);
 
 const shiftCards = Array.from(document.querySelectorAll('[data-shift-card]'));
 let shiftIdx = 0;
@@ -4147,6 +4179,7 @@ if (tb) {
   } else {
     startTerminalStream();
   }
+  setTimeout(() => { if (!streamTimer) startTerminalStream(); }, 1200);
 }
 
 // ── How it works tabs ──────────────────────────────────────────────
@@ -4195,8 +4228,8 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
 <aside id="sidebar">
   <div class="sidebar-logo">
-    <div class="sidebar-logo-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
-    <span class="sidebar-logo-name">joytree</span>
+    <div class="sidebar-logo-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png?v=2" alt="joytree logo"></div>
+    <span class="sidebar-logo-name">JOYTREE</span>
     <!-- beta badge removed -->
   </div>
 
@@ -4337,7 +4370,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <div class="topbar-breadcrumb" id="topbarBreadcrumb">
-      <span>joytree</span>
+      <span>JOYTREE</span>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       <span class="crumb-active" id="topbarPage">Dashboard</span>
     </div>
@@ -4389,11 +4422,12 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         <div class="geo-intel-map">
           <img class="geo-real-map" src="https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg" alt="World map">
           <div class="geo-map-vignette"></div>
+          <div id="geoMarkerGlow" class="geo-marker-glow" style="left:50%;top:50%;"></div>
           <div id="geoMarkerPin" class="geo-marker-pin" style="left:50%;top:50%;"></div>
         </div>
         <div class="geo-intel-meta">
           <div class="geo-chip" id="geoIntelCountry">Country: —</div>
-          <div class="geo-chip" id="geoIntelIp">IP: hidden</div>
+          
           <div class="geo-chip">Status: <span style="color:#34d399;font-weight:700;">Protected edge live</span></div>
         </div>
       </div>
@@ -4530,6 +4564,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                 Analytics
               </button>
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+                <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
+                Starting deployment pipeline…
+              </div>
             </div>
           </div>
 
@@ -4738,7 +4776,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <label class="field-label">Subdomain</label>
                 <div class="input-group">
                   <input class="input input-mono" id="deploySubdomain" placeholder="my-app" autocomplete="off" oninput="updateSubdomainPreview()">
-                  <span style="display:flex;align-items:center;padding:0 12px;background:rgba(99,179,237,0.05);border:1.5px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-family:var(--font-mono);font-size:0.8rem;color:var(--text-3);white-space:nowrap;" id="domainSuffix">.joytreehostingserver.dpdns.org</span>
+                  <span style="display:flex;align-items:center;padding:0 12px;background:rgba(99,179,237,0.05);border:1.5px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-family:var(--font-mono);font-size:0.8rem;color:var(--text-3);white-space:nowrap;" id="domainSuffix">.joytree.site</span>
                 </div>
                 <div class="field-hint">Preview: <span class="td-mono" id="subdomainPreview">—</span></div>
                 <div class="field-hint" id="subdomainAvailability">Status: enter a subdomain</div>
@@ -4895,6 +4933,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
                 Deploy Now
               </button>
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+                <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
+                Starting deployment pipeline…
+              </div>
               <div style="font-size:0.72rem;color:var(--text-3);text-align:center;line-height:1.4;">
                 Deployment will start immediately. Build logs will stream in real-time.
               </div>
@@ -4993,7 +5035,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <div class="term-dot yellow"></div>
               <div class="term-dot green"></div>
             </div>
-            <span class="term-title" id="termTitle">joytree — build terminal</span>
+            <span class="term-title" id="termTitle">JOYTREE — build terminal</span>
             <span class="term-tag">LIVE</span>
             <div class="term-status" id="termStatus">
               <span class="badge badge-idle"><span class="badge-dot"></span>Idle</span>
@@ -5111,7 +5153,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="card-body">
               <div class="field">
                 <label class="field-label">Platform Name</label>
-                <input class="input" id="settingsPlatformName" value="joytree">
+                <input class="input" id="settingsPlatformName" value="JOYTREE">
               </div>
               <div class="field admin-only">
                 <label class="field-label">Build Runner Mode</label>
@@ -5141,6 +5183,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 Save Settings
               </button>
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+                <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
+                Starting deployment pipeline…
+              </div>
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:16px;">
@@ -5193,6 +5239,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 Save GitHub Settings
               </button>
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+                <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
+                Starting deployment pipeline…
+              </div>
             </div>
           </div>
           <div class="card">
@@ -5248,15 +5298,19 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="card-body">
               <div class="field admin-only">
                 <label class="field-label">Base Domain</label>
-                <input class="input input-mono" id="settingsBaseDomain" value="joytreehostingserver.dpdns.org" placeholder="yourdomain.com">
+                <input class="input input-mono" id="settingsBaseDomain" value="joytree.site" placeholder="yourdomain.com">
                 <div class="field-hint">All user sites will be hosted at <code style="font-family:var(--font-mono);">[subdomain].yourdomain.com</code></div>
               </div>
               <div style="padding:16px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:8px;margin-bottom:12px;">
                 <div style="font-size:0.72rem;color:var(--text-3);margin-bottom:4px;">YOUR PLATFORM DOMAIN</div>
-                <div style="font-family:var(--font-mono);font-size:0.88rem;color:var(--green);">*.joytreehostingserver.dpdns.org</div>
+                <div style="font-family:var(--font-mono);font-size:0.88rem;color:var(--green);">*.joytree.site</div>
                 <div style="font-size:0.72rem;color:var(--text-2);margin-top:4px;">Wildcard SSL active via Cloudflare Tunnel</div>
               </div>
               <button class="btn btn-primary admin-only" onclick="saveDomainSettings()">Save Domain Settings</button>
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+                <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
+                Starting deployment pipeline…
+              </div>
             </div>
           </div>
         </div>
@@ -5285,6 +5339,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               </div>
               <button class="btn btn-primary" onclick="saveAccountSettings()">Save Account</button>
               <button class="btn btn-ghost" onclick="openLogoutModal()" style="margin-top:10px;">Logout</button>
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+                <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
+                Starting deployment pipeline…
+              </div>
             </div>
           </div>
           <div class="card">
@@ -5295,6 +5353,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 Delete All Projects & Deployments
               </button>
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+                <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
+                Starting deployment pipeline…
+              </div>
             </div>
           </div>
         </div>
@@ -5327,7 +5389,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               </div>
               <div>
                 <div style="font-weight:700;font-size:0.85rem;color:var(--text);margin-bottom:6px;">4. Your Site Goes Live</div>
-                On success, your site is immediately accessible at <code style="font-family:var(--font-mono);background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">subdomain.joytreehostingserver.dpdns.org</code>
+                On success, your site is immediately accessible at <code style="font-family:var(--font-mono);background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">subdomain.joytree.site</code>
               </div>
             </div>
           </div>
@@ -5438,6 +5500,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button class="btn btn-primary" onclick="saveEnvVar()">Save Variable</button>
               <button class="btn btn-ghost" onclick="loadEnvForProject()">Refresh List</button>
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+                <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
+                Starting deployment pipeline…
+              </div>
             </div>
           </div>
         </div>
@@ -5642,7 +5708,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;" id="domainQuickStats">
-        <div class="card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">Wildcard</div><div style="margin-top:6px;font-family:var(--font-mono);font-size:.82rem;color:var(--green);" id="domainWildcardMini">*.joytreehostingserver.dpdns.org</div></div>
+        <div class="card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">Wildcard</div><div style="margin-top:6px;font-family:var(--font-mono);font-size:.82rem;color:var(--green);" id="domainWildcardMini">*.joytree.site</div></div>
         <div class="card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">SSL Status</div><div style="margin-top:6px;font-size:.9rem;font-weight:700;color:#d1fae5;">Auto-managed via Cloudflare</div></div>
       </div>
 
@@ -5656,7 +5722,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.18);border-radius:8px;flex-wrap:wrap;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" width="20" height="20" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
             <div style="flex:1;min-width:0;">
-              <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text);word-break:break-all;" id="domainWildcardDisplay">*.joytreehostingserver.dpdns.org</div>
+              <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text);word-break:break-all;" id="domainWildcardDisplay">*.joytree.site</div>
               <div style="font-size:0.72rem;color:var(--text-2);margin-top:3px;">Wildcard SSL • Cloudflare Tunnel • Always active</div>
             </div>
             <span class="badge badge-success" style="flex-shrink:0;"><span class="badge-dot"></span>Active</span>
@@ -6225,6 +6291,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <button onclick="toggleSecretVisibility()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px;">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+                <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
+                Starting deployment pipeline…
+              </div>
             </div>
           </div>
         </div>
@@ -6313,7 +6383,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <label class="field-label">Subdomain</label>
                 <div style="display:flex;">
                   <input class="input input-mono" id="dfSubdomain" placeholder="my-docker-app" style="border-radius:8px 0 0 8px;">
-                  <span style="display:flex;align-items:center;padding:0 10px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-size:0.75rem;color:var(--text-3);white-space:nowrap;">.joytreehostingserver.dpdns.org</span>
+                  <span style="display:flex;align-items:center;padding:0 10px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-size:0.75rem;color:var(--text-3);white-space:nowrap;">.joytree.site</span>
                 </div>
               </div>
               <div class="field">
@@ -6435,7 +6505,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <div class="field">
                 <label class="field-label">URL to call</label>
                 <div style="display:flex;gap:8px;">
-                  <input class="input input-mono" id="cronUrl" placeholder="https://myapp.joytreehostingserver.dpdns.org/health" style="flex:1;">
+                  <input class="input input-mono" id="cronUrl" placeholder="https://myapp.joytree.site/health" style="flex:1;">
                   <button class="btn btn-ghost btn-sm" onclick="testCronUrl()" style="flex-shrink:0;">Test</button>
                 </div>
                 <div class="field-hint">GET request will be sent to this URL on the schedule below.</div>
@@ -6707,10 +6777,10 @@ let envStore     = JSON.parse(localStorage.getItem('db_envstore')     || '{}');
 // even for users who never opened the Settings page
 const _storedSettings = JSON.parse(localStorage.getItem('db_settings') || '{}');
 let settings = Object.assign({
-  baseDomain: 'joytreehostingserver.dpdns.org'
+  baseDomain: 'joytree.site'
 }, _storedSettings);
 // Migrate old joytree.app default quietly
-if (settings.baseDomain === 'joytree.app') settings.baseDomain = 'joytreehostingserver.dpdns.org';
+if (settings.baseDomain === 'joytree.app') settings.baseDomain = 'joytree.site';
 
 
 const PLAN_LIMITS = {
@@ -6770,6 +6840,7 @@ let fitAddon     = null;
 let logBuffer    = [];
 let pendingDelete= null;
 let activeBuildId= null;
+let deployLaunchNavTimer = null;
 let deployFormInitialized = false;
 let deployFormPrefillMode = false;
 let authToken = localStorage.getItem('db_auth_token') || '';
@@ -6777,6 +6848,12 @@ let currentUser = null;
 let githubRepos = [];
 let githubReposLoaded = false;
 let authMode = 'signup';
+let turnstileEnabled = false;
+let turnstileSiteKey = '';
+let turnstileToken = '';
+let turnstileWidgetId = null;
+let turnstileInitAttempts = 0;
+window.onTurnstileReady = function(){ initTurnstile(true); };
 const GITHUB_CLIENT_ID = 'Iv23liRapw6lMrW4QArz';
 const FIREBASE_CONFIG = { apiKey:'AIzaSyD5TiRv7ZXeEPnoGE7seo1_AwoEZZiKAiY', authDomain:'authenticator-fc68d.firebaseapp.com', databaseURL:'https://authenticator-fc68d-default-rtdb.firebaseio.com', projectId:'authenticator-fc68d', storageBucket:'authenticator-fc68d.firebasestorage.app', messagingSenderId:'967078565161', appId:'1:967078565161:web:5545a869798726f4889338', measurementId:'G-BQLGGN83MM' };
 let fbApp = null; let fbDb = null;
@@ -6802,7 +6879,7 @@ async function ensureBackendSessionFromFirebase() {
     if (!fbUser) return false;
     const idToken = await fbUser.getIdToken();
     const r = await fetch('/api/auth/firebase', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idToken })
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idToken, turnstileToken })
     });
     const d = await r.json();
     if (!r.ok || !d.token) return false;
@@ -6825,7 +6902,7 @@ async function apiFetch(url, opts={}) {
 // ══════════════════════════════════════════════════════════════════
 function resetWorkspaceState() {
   projects = []; deployments = []; envStore = {};
-  settings = { ...settings, baseDomain: settings.baseDomain || 'joytreehostingserver.dpdns.org' };
+  settings = { ...settings, baseDomain: settings.baseDomain || 'joytree.site' };
   ['db_projects','db_deployments','db_envstore','db_settings','db_activity','db_webhooks','db_cronjobs','db_cron_execs'].forEach(k => localStorage.removeItem(k));
 }
 
@@ -7006,7 +7083,7 @@ async function bootstrapSession(){
       projects = Array.isArray(wsD.projects) ? wsD.projects : [];
       deployments = Array.isArray(wsD.deployments) ? wsD.deployments : [];
       envStore = wsD.envStore && typeof wsD.envStore === 'object' ? wsD.envStore : {};
-      settings = Object.assign({ baseDomain: 'joytreehostingserver.dpdns.org' }, wsD.settings || {});
+      settings = Object.assign({ baseDomain: 'joytree.site' }, wsD.settings || {});
       _save();
     }
     await syncServerStateFromApi({ persist: true });
@@ -7299,7 +7376,20 @@ function setGeoMarkerByCountry(country='') {
   const key = String(country||'').toLowerCase();
   const point = GEO_COORDS[key] || { x: 50, y: 50 };
   const marker = document.getElementById('geoMarkerPin');
+  const glow = document.getElementById('geoMarkerGlow');
   if (marker) { marker.style.left = point.x + '%'; marker.style.top = point.y + '%'; }
+  if (glow) { glow.style.left = point.x + '%'; glow.style.top = point.y + '%'; }
+}
+function setGeoMarkerByLatLon(lat, lon) {
+  const latNum = Number(lat), lonNum = Number(lon);
+  if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) return false;
+  const x = Math.max(3, Math.min(97, ((lonNum + 180) / 360) * 100));
+  const y = Math.max(4, Math.min(96, ((90 - latNum) / 180) * 100));
+  const marker = document.getElementById('geoMarkerPin');
+  const glow = document.getElementById('geoMarkerGlow');
+  if (marker) { marker.style.left = x + '%'; marker.style.top = y + '%'; }
+  if (glow) { glow.style.left = x + '%'; glow.style.top = y + '%'; }
+  return true;
 }
 let geoIntelHydrated = false;
 async function hydrateGeoIntelCard() {
@@ -7310,15 +7400,12 @@ async function hydrateGeoIntelCard() {
     const d = await r.json();
     const country = d.country_name || 'Unknown location';
     const flag = getCountryFlagEmoji(d.country_code);
-    const ipText = d.ip || 'Hidden';
-    const isp = d.org || d.org_name || d.network || 'Unknown network';
     const req = document.getElementById('geoIntelRequest');
     const c = document.getElementById('geoIntelCountry');
-    const ip = document.getElementById('geoIntelIp');
-    if (req) req.innerHTML = `Requesting from <b>${flag} ${country}</b> · ${isp}`;
+    if (req) req.innerHTML = `Requesting from <b>${flag} ${country}</b>`;
     if (c) c.textContent = `Country: ${flag} ${country}`;
-    if (ip) ip.textContent = `IP: ${ipText}`;
-    setGeoMarkerByCountry(country);
+    const usedLatLon = setGeoMarkerByLatLon(d.latitude, d.longitude);
+    if (!usedLatLon) setGeoMarkerByCountry(country);
   } catch (_) {}
 }
 function synthMetricSeries(projectId, hours){
@@ -7586,7 +7673,7 @@ function renderDashboard() {
   }
   rc.innerHTML = recent.map(d => {
     const proj = projects.find(p => p.id === d.projectId);
-    const domainBase = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+    const domainBase = settings.baseDomain || 'joytree.site';
     const liveUrl = proj ? (proj.liveUrl || ('https://' + proj.subdomain + '.' + domainBase)) : '#';
     // Use liveUrl as proof of success — same logic as renderProjects
     let depStatus = d.status;
@@ -7676,7 +7763,7 @@ function renderProjects() {
     const iconBg = ['rgba(16,185,129,0.1)','rgba(16,185,129,0.1)','rgba(139,92,246,0.1)','rgba(245,158,11,0.1)','rgba(6,182,212,0.1)'];
     const iconColor = ['var(--primary)','var(--green)','var(--purple)','var(--amber)','var(--cyan)'];
     const idx = p.id.charCodeAt(0) % 5;
-    const domainBase = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+    const domainBase = settings.baseDomain || 'joytree.site';
     const liveUrl = p.liveUrl || ('https://' + p.subdomain + '.' + domainBase);
     // A project is "deployed" if: it has a stored screenshot, a liveUrl from server,
     // OR its resolved status is success. liveUrl is the most reliable signal since
@@ -7928,7 +8015,7 @@ function resetDeployForm() {
 }
 function updateSubdomainPreview() {
   const sub  = (document.getElementById('deploySubdomain')?.value||'').trim();
-  const base = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+  const base = settings.baseDomain || 'joytree.site';
   document.getElementById('subdomainPreview').textContent = sub ? sub + '.' + base : '—';
 }
 function updateSummary() {
@@ -7936,7 +8023,7 @@ function updateSummary() {
   const sub    = document.getElementById('deploySubdomain')?.value   || '—';
   const branch = document.getElementById('deployBranch')?.value      || 'main';
   const node   = document.getElementById('deployNodeVersion')?.value || '18';
-  const base   = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+  const base   = settings.baseDomain || 'joytree.site';
   document.getElementById('summaryName').textContent   = name;
   document.getElementById('summaryUrl').textContent    = sub !== '—' ? sub + '.' + base : '—';
   document.getElementById('summaryBranch').textContent = branch;
@@ -7945,6 +8032,7 @@ function updateSummary() {
 
 let availabilityCheckTimer = null;
 let availabilityCheckSeq = 0;
+let availabilityCheckInFlight = false;
 
 function setAvailabilityText(elId, text, ok) {
   const el = document.getElementById(elId);
@@ -7980,6 +8068,7 @@ async function checkProjectAvailability() {
   if (!name && !subdomain) return;
 
   const seq = ++availabilityCheckSeq;
+  availabilityCheckInFlight = true;
   try {
     const q = new URLSearchParams();
     if (name) q.set('name', name);
@@ -7992,6 +8081,7 @@ async function checkProjectAvailability() {
       const fallback = fallbackAvailabilityFromLocal(name, subdomain);
       if (name) setAvailabilityText('projectNameAvailability', fallback.nameAvailable === null ? 'Status: could not verify right now' : (fallback.nameAvailable ? 'Status: available' : 'Status: unavailable'), fallback.nameAvailable);
       if (subdomainRaw) setAvailabilityText('subdomainAvailability', fallback.subdomainAvailable === null ? 'Status: could not verify right now' : (fallback.subdomainAvailable ? 'Status: available' : 'Status: unavailable'), fallback.subdomainAvailable);
+      availabilityCheckInFlight = false;
       return;
     }
 
@@ -8008,6 +8098,8 @@ async function checkProjectAvailability() {
     const fallback = fallbackAvailabilityFromLocal(name, subdomain);
     if (name) setAvailabilityText('projectNameAvailability', fallback.nameAvailable === null ? 'Status: could not verify right now' : (fallback.nameAvailable ? 'Status: available' : 'Status: unavailable'), fallback.nameAvailable);
     if (subdomainRaw) setAvailabilityText('subdomainAvailability', fallback.subdomainAvailable === null ? 'Status: could not verify right now' : (fallback.subdomainAvailable ? 'Status: available' : 'Status: unavailable'), fallback.subdomainAvailable);
+  } finally {
+    availabilityCheckInFlight = false;
   }
 }
 
@@ -8106,7 +8198,8 @@ function applyPresetToForm(preset, type = 'deploy') {
     if (output && (!output.value.trim() || output.value.trim() === 'dist')) output.value = preset.output;
     if (siteType && preset.siteType && siteType.value !== preset.siteType) {
       siteType.value = preset.siteType;
-      try { onSiteTypeChange(siteType.value); } catch (_) {}
+      try {
+    onSiteTypeChange(siteType.value); } catch (_) {}
     }
     toast(`Detected ${preset.label}. Suggested production commands applied.`, 'success');
     return;
@@ -8191,10 +8284,26 @@ async function suggestWorkingDirs(repoInputId, branchInputId, workingDirInputId,
     }
     input.focus();
     toast(dirs.length ? `Found ${dirs.length} directories` : 'No subdirectories found; you can still type manually', dirs.length ? 'success' : 'info');
+    resetTurnstileToken();
   } catch (e) {
     toast('Could not load folders; you can still type it manually', 'error');
   } finally {
     input.removeAttribute('aria-busy');
+  }
+}
+
+function setDeployLaunchUI(active=true) {
+  const btn = document.getElementById('deployBtn');
+  const launchStatus = document.getElementById('deployLaunchStatus');
+  if (!btn) return;
+  if (active) {
+    btn.disabled = true;
+    btn.innerHTML = '<svg style="width:14px;height:14px;animation:dpSpin 0.7s linear infinite;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Starting deployment…';
+    if (launchStatus) launchStatus.style.display = 'flex';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg> Deploy Now';
+    if (launchStatus) launchStatus.style.display = 'none';
   }
 }
 
@@ -8213,23 +8322,41 @@ async function startDeployment() {
   const nodeVer   = document.getElementById('deployNodeVersion').value       || '18';
   const siteType  = document.getElementById('deploySiteType')?.value        || 'static';
   const customPort= (document.getElementById('deployCustomPort')?.value || '').trim();
-  const envVars   = getEnvVars();
+  const existingProject = projects.find(p => String(p.subdomain || '') === String(subdomain || ''));
+  const formEnvVars = getEnvVars();
+  const existingEnvVars = existingProject && existingProject.envVars && typeof existingProject.envVars === 'object' ? existingProject.envVars : {};
+  const storedEnvVars = (existingProject && (envStore[existingProject.id] || envStore[existingProject._id])) || {};
+  const envVars = Object.assign({}, existingEnvVars, storedEnvVars, formEnvVars);
   const workingDir= normalizeWorkingDir(document.getElementById('deployWorkingDir')?.value || '');
   const runInstallCmd = applyWorkingDir(installCmd, workingDir);
   const runBuildCmd   = applyWorkingDir(buildCmd, workingDir);
   const runStartCmd   = startCmd ? applyWorkingDir(startCmd, workingDir) : '';
+
   if (siteType === 'server' && looksLikeDevServerCmd(startCmd)) {
     toast('Use a production start command (e.g. npm start). npm run dev is not suitable for deployment.', 'error');
     return;
   }
 
-  if (!name)      { toast('Project name is required', 'error'); return; }
-  if (!subdomain) { toast('Subdomain is required', 'error'); return; }
-  if (!repoUrl)   { toast('GitHub repository URL is required', 'error'); return; }
+  if (!name)      { toast('Project name is required', 'error'); clearTimeout(deployLaunchNavTimer); setDeployLaunchUI(false); return; }
+  if (!subdomain) { toast('Subdomain is required', 'error'); clearTimeout(deployLaunchNavTimer); setDeployLaunchUI(false); return; }
+  if (!repoUrl)   { toast('GitHub repository URL is required', 'error'); clearTimeout(deployLaunchNavTimer); setDeployLaunchUI(false); return; }
   if (!/^https?:\/\/(www\.)?github\.com\/.+\/.+/.test(repoUrl)) {
-    toast('Please enter a valid GitHub repository URL', 'error'); return;
+    toast('Please enter a valid GitHub repository URL', 'error'); clearTimeout(deployLaunchNavTimer); setDeployLaunchUI(false); return;
   }
-  const existingProject = projects.find(p => String(p.subdomain || '') === String(subdomain || ''));
+  if (availabilityCheckInFlight || availabilityCheckTimer) {
+    toast('Please wait — still checking project name/subdomain availability.', 'info');
+    return;
+  }
+  const nameStatus = (document.getElementById('projectNameAvailability')?.textContent || '').toLowerCase();
+  const subStatus = (document.getElementById('subdomainAvailability')?.textContent || '').toLowerCase();
+  if (nameStatus.includes('unavailable') || subStatus.includes('unavailable')) {
+    toast('Project name or subdomain is unavailable. Please choose available values.', 'error');
+    return;
+  }
+  if (!nameStatus.includes('available') || !subStatus.includes('available')) {
+    toast('Please complete availability check first before deploying.', 'info');
+    return;
+  }
   const isRedeploy = !!existingProject;
   const limits = getCurrentPlanLimits();
   if (!isRedeploy && Number.isFinite(limits.maxProjects) && projects.length >= limits.maxProjects) {
@@ -8273,6 +8400,15 @@ async function startDeployment() {
     return;
   }
 
+  setDeployLaunchUI(true);
+  clearTimeout(deployLaunchNavTimer);
+  deployLaunchNavTimer = setTimeout(() => {
+    showPage('logs');
+    updateLogsHero({ projectName: name || 'Deployment', branch: branch || 'main', repoUrl: repoUrl || '—' });
+    showMatrixTerminal({ projectName: name || 'Deployment', repoUrl: repoUrl || '—', branch: branch || 'main' });
+    toast('Deployment initialization in progress… opening live logs.', 'info');
+  }, 30000);
+
   // Create or update project
   let project = projects.find(p => p.subdomain === subdomain);
   if (!project) {
@@ -8299,9 +8435,6 @@ async function startDeployment() {
   document.getElementById('projectsCount').textContent  = projects.length;
   document.getElementById('deploymentsCount').textContent = deployments.length;
 
-  const btn = document.getElementById('deployBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<svg style="width:14px;height:14px;animation:dpSpin 0.7s linear infinite;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Deploying…';
 
   // Reset build step states for new build
   ['step-clone','step-install','step-build','step-copy','step-start','step-cleanup'].forEach(id => {
@@ -8310,12 +8443,6 @@ async function startDeployment() {
   });
   const startRow = document.getElementById('step-start-row');
   if (startRow) startRow.style.display = siteType === 'server' && startCmd ? '' : 'none';
-
-  // Navigate to logs and open the deployment matrix stream above the terminal
-  showPage('logs');
-  updateLogsHero({ projectName: name, branch: branch || 'main', repoUrl });
-  showMatrixTerminal({ projectName: name, repoUrl, branch });
-  toast('Build started for ' + name, 'info');
 
   // Call API
   try {
@@ -8354,14 +8481,19 @@ async function startDeployment() {
       // Update terminal title bar
       const titleEl = document.getElementById('termTitle');
       if (titleEl) titleEl.textContent = name + ' — build #' + data.deployId.slice(-6);
+      // Navigate to logs only after server confirms deployment start
+      showPage('logs');
+      updateLogsHero({ projectName: name, branch: branch || 'main', repoUrl });
+      showMatrixTerminal({ projectName: name, repoUrl, branch });
+      toast('Build started for ' + name, 'info');
     }
   } catch(err) {
+    clearTimeout(deployLaunchNavTimer);
     markDeployFailed(deployment.id, 'Build API unreachable');
     toast('Could not reach deploy server. Deployment was not started.', 'error', 6000);
   }
 
-  btn.disabled = false;
-  btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg> Deploy Now';
+  setDeployLaunchUI(false);
 }
 
 function markDeployFailed(deployId, reason) {
@@ -8989,7 +9121,7 @@ function initSocket() {
         const name = dep ? dep.projectName : '';
         titleEl.textContent = name
           ? name + ' — ' + (status === 'success' ? '✓ deployed' : '✗ failed')
-          : 'joytree — build terminal';
+          : 'JOYTREE — build terminal';
       }
 
       hideMatrixTerminal(1800);
@@ -9076,7 +9208,7 @@ async function loadEnvForProject() {
   // Load from API (real persistent storage)
   let vars = {};
   try {
-    const r = await fetch('/api/projects/' + projectId + '/env');
+    const r = await apiFetch('/api/projects/' + projectId + '/env');
     if (r.ok) vars = await r.json();
   } catch(e) {}
 
@@ -9114,7 +9246,7 @@ async function saveEnvVar() {
 
   // Save to API
   try {
-    const r = await fetch('/api/projects/' + projectId + '/env', {
+    const r = await apiFetch('/api/projects/' + projectId + '/env', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key: k, value: v })
     });
@@ -9135,7 +9267,7 @@ async function saveEnvVar() {
 
 async function deleteEnvVar(projectId, key) {
   try {
-    await fetch('/api/projects/' + projectId + '/env/' + encodeURIComponent(key), { method: 'DELETE' });
+    await apiFetch('/api/projects/' + projectId + '/env/' + encodeURIComponent(key), { method: 'DELETE' });
   } catch(e) {}
   if (envStore[projectId]) { delete envStore[projectId][key]; save(); }
   toast('Variable removed', 'info');
@@ -9149,7 +9281,7 @@ function showProjectDetail(projectId) {
   const p = projects.find(x => x.id === projectId);
   if (!p) return;
   const deploys = deployments.filter(d => d.projectId === projectId).reverse().slice(0, 10);
-  const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytreehostingserver.dpdns.org';
+  const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytree.site';
   const liveUrl = 'https://' + p.subdomain + '.' + baseDomain;
   const lastDeploy = deploys[0];
   const lastStatus = lastDeploy ? lastDeploy.status : null;
@@ -9274,6 +9406,7 @@ async function toggleProjectAutoDeploy(projectId, enabled) {
       showProjectDetail(projectId);
     }
     toast(d.warning || ('Auto deploy pipeline ' + (d.enabled ? 'enabled' : 'disabled')), d.warning ? 'info' : 'success', 6000);
+    resetTurnstileToken();
   } catch (e) {
     toast(e.message || 'Failed to update auto deploy', 'error');
   }
@@ -9300,6 +9433,7 @@ async function checkProjectAutoDeployNow(projectId) {
     if (d.triggered) toast('New GitHub commit found — deployment queued.', 'success', 6000);
     else if (d.changed) toast(d.reason === 'active_deployment_running' ? 'New commit found, but a deployment is already running.' : 'New commit found, but deployment was not queued: ' + (d.error || d.reason), d.error ? 'error' : 'info', 7000);
     else toast(d.reason === 'baseline_created' ? 'Pipeline baseline saved. The next new commit will deploy automatically.' : 'No new commit found on GitHub yet.', 'info', 6000);
+    resetTurnstileToken();
   } catch (e) {
     toast(e.message || 'Pipeline check failed', 'error', 7000);
   }
@@ -9388,7 +9522,7 @@ async function regenerateGlobalWebhookSecret(){
 }
 
 function saveDomainSettings() {
-  settings.baseDomain = document.getElementById('settingsBaseDomain').value.trim() || 'joytreehostingserver.dpdns.org';
+  settings.baseDomain = document.getElementById('settingsBaseDomain').value.trim() || 'joytree.site';
   save(); toast('Domain settings saved', 'success');
   // Update the domain suffix shown next to the subdomain input on the deploy form
   const sfx = document.getElementById('domainSuffix');
@@ -9405,7 +9539,7 @@ function saveAccountSettings() {
   toast('Account updated', 'success');
 }
 function updateNginxConfig() {
-  const base = settings.baseDomain || 'joytreehostingserver.dpdns.org';
+  const base = settings.baseDomain || 'joytree.site';
   const el   = document.getElementById('nginxConfigPreview');
   if (el) el.innerHTML = `<span class="ck">server</span> {
   <span class="ck">listen</span> <span class="cn">80</span>;
@@ -9508,13 +9642,14 @@ function statusBadge(status) {
     const params = new URLSearchParams(window.location.search);
     const ghCode = params.get('code');
     const ghState = params.get('state');
-    const stateOk = !ghState || ghState === 'joytree_github_auth';
+    const stateOk = !ghState || ghState === 'deployboard_github_auth' || ghState === 'joytree_github_auth';
   if (ghCode && stateOk) {
     try {
       const r = await fetch('/api/auth/github/exchange', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ code: ghCode }) });
       const raw = await r.text();
       let d = null;
-      try { d = JSON.parse(raw); } catch (_) {}
+      try {
+    d = JSON.parse(raw); } catch (_) {}
       if (!d) throw new Error('GitHub exchange returned non-JSON response');
       if (d.token) {
         authToken = d.token;
@@ -9561,6 +9696,45 @@ function statusBadge(status) {
     hideBootLoader(120);
   }
 })();
+
+async function initTurnstile(force=false) {
+  try {
+    const r = await fetch('/api/auth/turnstile/config');
+    const d = await r.json();
+    turnstileEnabled = !!d.enabled;
+    turnstileSiteKey = d.siteKey || '';
+    const wrap = document.getElementById('turnstileWrap');
+    const mount = document.getElementById('turnstileWidget');
+    const status = document.getElementById('turnstileStatus');
+    if (!turnstileEnabled || !turnstileSiteKey) { if (wrap) wrap.style.display='none'; return; }
+    if (wrap) wrap.style.display='block';
+    if (!mount) return;
+    if (!window.turnstile) {
+      if (status) status.textContent = 'Loading Cloudflare verification…';
+      if (!force && turnstileInitAttempts < 12) {
+        turnstileInitAttempts += 1;
+        setTimeout(() => initTurnstile(false), 500);
+      }
+      return;
+    }
+    mount.innerHTML = '';
+    turnstileToken = '';
+    turnstileWidgetId = window.turnstile.render('#turnstileWidget', {
+      sitekey: turnstileSiteKey,
+      theme: 'dark',
+      callback: (token) => { turnstileToken = token || ''; if (status) status.textContent = ''; },
+      'expired-callback': () => { turnstileToken = ''; if (status) status.textContent = 'Verification expired. Please verify again.'; },
+      'error-callback': () => { turnstileToken = ''; if (status) status.textContent = 'Verification failed to load. Refresh page or check Turnstile domain settings.'; }
+    });
+  } catch (_) {}
+}
+function resetTurnstileToken() {
+  turnstileToken = '';
+  const status = document.getElementById('turnstileStatus');
+  if (status) status.textContent = '';
+  if (turnstileEnabled && window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
+}
+
 function switchAuthMode(mode){
   authMode = mode;
   document.getElementById('tabSignup').classList.toggle('active', mode==='signup');
@@ -9578,6 +9752,7 @@ async function submitAuth(){
   const password = document.getElementById('authPassword').value;
   const name = document.getElementById('authName').value.trim();
   try {
+    if (turnstileEnabled && !turnstileToken) throw new Error('Please complete Cloudflare verification first.');
     if (!window.firebase || !firebase.auth) throw new Error('Firebase auth not loaded');
     await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     let cred;
@@ -9588,7 +9763,7 @@ async function submitAuth(){
       cred = await firebase.auth().signInWithEmailAndPassword(email, password);
     }
     const idToken = await cred.user.getIdToken();
-    const r = await fetch('/api/auth/firebase', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idToken }) });
+    const r = await fetch('/api/auth/firebase', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idToken, turnstileToken }) });
     const d = await r.json();
     if (!r.ok || !d.token) throw new Error(d.error || 'Authentication failed');
     authToken = d.token;
@@ -9596,6 +9771,7 @@ async function submitAuth(){
     applyUserProfile(d.user || null);
     toast('Welcome! Account ready.', 'success');
     showDashboard();
+    resetTurnstileToken();
   } catch (e) {
     toast(e.message || 'Authentication failed', 'error');
   }
@@ -9618,7 +9794,8 @@ function continueWithGitHub() {
     .then(async (r) => {
       const raw = await r.text();
       let d = null;
-      try { d = JSON.parse(raw); } catch (_) {}
+      try {
+    d = JSON.parse(raw); } catch (_) {}
       if (!r.ok) {
         const msg = d?.error || `GitHub auth endpoint failed (${r.status})`;
         throw new Error(msg);
@@ -9877,7 +10054,7 @@ async function renderAnalytics() {
 // DOMAINS
 // ══════════════════════════════════════════════════════════════════
 async function renderDomains() {
-  const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytreehostingserver.dpdns.org';
+  const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytree.site';
   const mini = document.getElementById('domainWildcardMini'); if (mini) mini.textContent = '*.' + baseDomain;
   const wild = document.getElementById('domainWildcardDisplay'); if (wild) wild.textContent = '*.' + baseDomain;
   const heroProj = document.getElementById('domainHeroProjects'); if (heroProj) heroProj.textContent = projects.length;
@@ -11045,7 +11222,8 @@ function renderStreakCalendar(dayMap) {
 
 // Resume cron jobs on startup
 (function() {
-  try { resumeAllCronJobs(); } catch(e) {}
+  try {
+    resumeAllCronJobs(); } catch(e) {}
 })();
 
 function showLanding() {
@@ -11416,6 +11594,7 @@ async function renderReposPage(force = false) {
     if (select) {
       select.innerHTML = '<option value="">Or choose from connected GitHub repositories…</option>' + githubRepos.map(rp => `<option value="${escHtml(rp.html_url)}" data-branch="${escHtml(rp.default_branch || 'main')}">${escHtml(rp.full_name)}</option>`).join('');
     }
+    resetTurnstileToken();
   } catch (e) {
     wrap.innerHTML = `<div class="repo-empty" style="grid-column:1/-1;"><strong>${escHtml(e.message || 'Failed to load repositories')}</strong><span>Reconnect GitHub or tap refresh to try again.</span></div>`;
   }
@@ -11435,8 +11614,10 @@ function importRepoToDeploy(url, branch) {
     const subEl = document.getElementById('deploySubdomain');
     if (nameEl && !nameEl.value.trim()) nameEl.value = normalized;
     if (subEl && !subEl.value.trim()) subEl.value = normalized;
-    try { updateSubdomainPreview(); } catch(_) {}
-    try { updateSummary(); } catch(_) {}
+    try {
+    updateSubdomainPreview(); } catch(_) {}
+    try {
+    updateSummary(); } catch(_) {}
     scheduleAvailabilityCheck();
   }
   loadRepoBranches(url, branch || 'main');
