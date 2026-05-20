@@ -33,6 +33,8 @@ const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || '';
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || process.env.GITHUB_OAUTH_CLIENT_ID || process.env.GH_CLIENT_ID || '';
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || process.env.GITHUB_OAUTH_CLIENT_SECRET || process.env.GH_CLIENT_SECRET || '';
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || '';
+const TURNSTILE_SITE_KEY = process.env.TURNSTILE_SITE_KEY || '';
+const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || '';
 let GLOBAL_WEBHOOK_SECRET = process.env.GLOBAL_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET || '';
 if (!GLOBAL_WEBHOOK_SECRET) GLOBAL_WEBHOOK_SECRET = crypto.randomBytes(24).toString('hex');
 const INTERNAL_DEPLOY_KEY = process.env.INTERNAL_DEPLOY_KEY || crypto.randomBytes(24).toString('hex');
@@ -573,6 +575,20 @@ connectMongo();
 const { runBuild } = require('./buildRunner');
 
 // ── API routes ────────────────────────────────────────────────────────────────
+
+async function verifyTurnstileToken(token, remoteIp='') {
+  if (!TURNSTILE_SECRET_KEY) return { enforced: false, success: true, skipped: true };
+  const t = String(token || '').trim();
+  if (!t) return { enforced: true, success: false, error: 'missing_turnstile_token' };
+  const body = new URLSearchParams();
+  body.set('secret', TURNSTILE_SECRET_KEY);
+  body.set('response', t);
+  if (remoteIp) body.set('remoteip', remoteIp);
+  const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method:'POST', body });
+  const d = await r.json().catch(() => ({}));
+  return { enforced: true, success: !!d.success, details: d };
+}
+
 app.get('/api/health', async (req, res) => {
   let runningContainers = '—';
   let diskUsed = '—';
@@ -593,9 +609,16 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
+app.get('/api/auth/turnstile/config', (req, res) => {
+  res.json({ enabled: !!TURNSTILE_SITE_KEY, siteKey: TURNSTILE_SITE_KEY || '' });
+});
+
 app.post('/api/auth/firebase', async (req, res) => {
   try {
     const idToken = String(req.body.idToken || '');
+    const turnstileToken = String(req.body.turnstileToken || '');
+    const verify = await verifyTurnstileToken(turnstileToken, req.ip || '');
+    if (verify.enforced && !verify.success) return res.status(400).json({ error: 'Turnstile verification failed' });
     if (!idToken) return res.status(400).json({ error: 'Missing Firebase idToken' });
     const fbUser = await verifyFirebaseIdToken(idToken);
     const email = String(fbUser.email || '').trim().toLowerCase();
