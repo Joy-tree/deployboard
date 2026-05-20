@@ -6,22 +6,24 @@
   <title>JOYTREE — Ship Anything. Instantly.</title>
   <meta name="description" content="JOYTREE helps you ship from GitHub to live URL in minutes with real-time deployment visibility.">
   <meta property="og:type" content="website">
+  <link rel="canonical" href="https://joytree.site/">
   <meta property="og:title" content="JOYTREE — Ship Anything. Instantly.">
   <meta property="og:description" content="Professional release orchestration platform with live logs, edge routing, and one-click redeploys.">
   <meta property="og:url" content="https://joytree.site/">
   <meta property="og:site_name" content="JOYTREE">
-  <meta property="og:image" content="https://i.postimg.cc/j229DVHf/133615.png">
-  <meta property="og:image:url" content="https://i.postimg.cc/j229DVHf/133615.png">
-  <meta property="og:image:secure_url" content="https://i.postimg.cc/j229DVHf/133615.png">
+  <meta property="og:image" content="https://i.postimg.cc/j229DVHf/133615.png?v=2">
+  <meta property="og:image:url" content="https://i.postimg.cc/j229DVHf/133615.png?v=2">
+  <meta property="og:image:secure_url" content="https://i.postimg.cc/j229DVHf/133615.png?v=2">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1024">
   <meta property="og:image:height" content="1024">
+  <meta property="og:image:alt" content="JOYTREE platform preview">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="JOYTREE — Ship Anything. Instantly.">
   <meta name="twitter:description" content="Professional release orchestration platform with live logs, edge routing, and one-click redeploys.">
-  <meta name="twitter:image" content="https://i.postimg.cc/j229DVHf/133615.png">
-  <meta name="twitter:image:src" content="https://i.postimg.cc/j229DVHf/133615.png">
-  <link rel="image_src" href="https://i.postimg.cc/j229DVHf/133615.png">
+  <meta name="twitter:image" content="https://i.postimg.cc/j229DVHf/133615.png?v=2">
+  <meta name="twitter:image:src" content="https://i.postimg.cc/j229DVHf/133615.png?v=2">
+  <link rel="image_src" href="https://i.postimg.cc/j229DVHf/133615.png?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- Socket.io -->
@@ -176,7 +178,7 @@ body::before{
   .hero-actions .btn-hero-primary,
   .hero-actions .btn-hero-ghost{ justify-content:center; }
   .hero-h1{ font-size:clamp(1.8rem,8vw,2.4rem); }
-  .hero-typewriter-wrap{ font-size:clamp(1.5rem,7vw,2rem); }
+  .hero-typewriter-wrap{ font-size:clamp(1rem,4.2vw,1.2rem); }
   .section{ padding:60px 18px; }
   .how-section{ padding:60px 18px; }
   .features-grid{ grid-template-columns:1fr; }
@@ -238,7 +240,7 @@ body::before{
 .hero-eyebrow-dot{width:6px;height:6px;background:#10b981;border-radius:50%;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 .hero-h1{
-  font-family:var(--font-hd);
+  font-family:var(--font-ui);
   font-size:clamp(2.4rem,6vw,5rem);
   font-weight:800;
   letter-spacing:-0.04em;
@@ -253,7 +255,7 @@ body::before{
   background-clip:text;
 }
 .hero-typewriter-wrap{
-  font-family:var(--font-hd);
+  font-family:var(--font-ui);
   font-size:clamp(2rem,5vw,4.2rem);
   font-weight:800;
   letter-spacing:-0.04em;
@@ -655,9 +657,9 @@ body.landing-drawer-open { overflow:hidden; }
 .hero-headline-stack{position:relative;display:grid;gap:10px;margin-bottom:14px}
 .hero-kicker-pro{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:999px;border:1px solid rgba(52,211,153,.55);background:rgba(3,14,10,.7);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#86efac;font-weight:700;justify-self:center;box-shadow:0 0 24px rgba(34,197,94,.28)}
 .hero-kicker-pro i{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 14px rgba(16,185,129,.9)}
-.hero-h1{font-size:clamp(2.9rem,7.5vw,6.2rem)!important;line-height:1.02;text-shadow:0 0 45px rgba(34,197,94,.24)}
-.hero-h1 .accent{filter:drop-shadow(0 0 18px rgba(52,211,153,.52))}
-.hero-sub{max-width:760px!important;font-size:1.07rem!important}
+.hero-h1{font-size:clamp(2rem,5.8vw,3.6rem)!important;line-height:1.12;font-weight:700;letter-spacing:-.01em;text-shadow:none}
+.hero-h1 .accent{filter:none}
+.hero-sub{max-width:700px!important;font-size:.96rem!important;line-height:1.7}
 .hero-actions .btn-hero-primary{padding:15px 30px;border-radius:14px;font-size:1rem;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 10px 42px rgba(16,185,129,.45)}
 .hero-actions .btn-hero-ghost{padding:15px 30px;border-radius:14px}
 .hero-rail{width:min(1120px,100%);margin:20px auto 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
@@ -3072,7 +3074,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 
       <!-- Brand -->
       <div class="auth-brand">
-        <div class="auth-brand-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
+        <div class="auth-brand-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png?v=2" alt="joytree logo"></div>
         <span style="font-family:var(--font-hd);font-weight:800;font-size:1rem;color:#f1f5f9;letter-spacing:-.01em;">JOYTREE</span>
       </div>
 
@@ -3202,7 +3204,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 <!-- ── NAV ──────────────────────────────────────────────────────────── -->
 <nav>
   <div class="nav-logo">
-    <div class="nav-logo-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
+    <div class="nav-logo-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png?v=2" alt="joytree logo"></div>
     <!-- brand text removed on header for cleaner mobile identity -->
     <!-- beta badge removed -->
   </div>
@@ -3224,7 +3226,7 @@ textarea.input { resize: vertical; min-height: 80px; }
   <!-- Sticky header -->
   <div class="ld-header">
     <div class="ld-brand">
-      <div class="ld-brand-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
+      <div class="ld-brand-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png?v=2" alt="joytree logo"></div>
       <span class="ld-brand-name">JOYTREE</span>
       <span class="ld-brand-tag">Beta</span>
     </div>
@@ -3344,7 +3346,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 <!-- ── HERO ──────────────────────────────────────────────────────────── -->
 <div class="home-logo-showcase">
-  <img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo">
+  <img src="https://i.postimg.cc/j229DVHf/133615.png?v=2" alt="joytree logo">
   <span class="home-logo-name">JOYTREE</span>
 </div>
 
@@ -4065,7 +4067,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 <!-- ── FOOTER ─────────────────────────────────────────────────────── -->
 <footer>
   <div class="footer-logo">
-    <div class="nav-logo-mark" style="width:28px;height:28px;"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
+    <div class="nav-logo-mark" style="width:28px;height:28px;"><img src="https://i.postimg.cc/j229DVHf/133615.png?v=2" alt="joytree logo"></div>
     <span style="font-family:var(--font-hd);font-weight:700;font-size:0.9rem;">JOYTREE</span>
   </div>
   <div class="footer-links">
@@ -4214,7 +4216,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
 <aside id="sidebar">
   <div class="sidebar-logo">
-    <div class="sidebar-logo-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png" alt="joytree logo"></div>
+    <div class="sidebar-logo-mark"><img src="https://i.postimg.cc/j229DVHf/133615.png?v=2" alt="joytree logo"></div>
     <span class="sidebar-logo-name">JOYTREE</span>
     <!-- beta badge removed -->
   </div>
