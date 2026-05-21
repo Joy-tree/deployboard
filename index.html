@@ -18,11 +18,14 @@
   <meta property="og:image:width" content="1024">
   <meta property="og:image:height" content="1024">
   <meta property="og:image:alt" content="JOYTREE platform preview">
+  <meta property="og:logo" content="https://i.postimg.cc/j229DVHf/133615.png?v=2">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="JOYTREE — Ship Anything. Instantly.">
   <meta name="twitter:description" content="Professional release orchestration platform with live logs, edge routing, and one-click redeploys.">
   <meta name="twitter:image" content="https://i.postimg.cc/j229DVHf/133615.png?v=2">
   <meta name="twitter:image:src" content="https://i.postimg.cc/j229DVHf/133615.png?v=2">
+  <meta name="theme-color" content="#0a231b">
+  <meta name="apple-mobile-web-app-title" content="JOYTREE">
   <link rel="image_src" href="https://i.postimg.cc/j229DVHf/133615.png?v=2">
   <link rel="icon" type="image/png" href="https://i.postimg.cc/j229DVHf/133615.png?v=2">
   <link rel="shortcut icon" href="https://i.postimg.cc/j229DVHf/133615.png?v=2" type="image/png">
@@ -2988,6 +2991,34 @@ textarea.input { resize: vertical; min-height: 80px; }
 @keyframes toastPopIn { from{opacity:0;transform:translateY(22px) scale(.92);filter:blur(6px)} to{opacity:1;transform:none;filter:none} }
 @keyframes fadeOut { to{opacity:0;transform:translateY(14px) scale(.97);filter:blur(4px)} }
 @media (max-width: 520px) { .toast{width:min(95vw,450px);min-height:94px;padding:16px;grid-template-columns:auto 1fr auto;font-size:.9rem}.toast-icon{width:44px;height:44px;border-radius:14px}.toast-message{font-size:.9rem} }
+
+/* Floating contact button (like circled quick-message icon) */
+.floating-contact-btn{
+  position:fixed;right:18px;bottom:88px;width:66px;height:66px;border-radius:50%;
+  display:grid;place-items:center;color:#fff;
+  background:radial-gradient(circle at 28% 24%,#34d399,#10b981 60%,#059669 100%);
+  border:1px solid rgba(167,243,208,.52);
+  box-shadow:0 12px 30px rgba(16,185,129,.38),0 0 0 6px rgba(16,185,129,.12);
+  z-index:1200;transition:transform .18s ease, box-shadow .18s ease;
+}
+.floating-contact-btn:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(16,185,129,.45),0 0 0 7px rgba(16,185,129,.14);}
+.floating-contact-btn svg{width:29px;height:29px}
+@media (min-width: 1024px){.floating-contact-btn{bottom:28px;right:24px;}}
+.floating-contact-btn::before{content:'';position:absolute;inset:-7px;border-radius:50%;border:1px solid rgba(110,231,183,.45);animation:contactPulse 1.6s ease-out infinite}
+@keyframes contactPulse{0%{transform:scale(.9);opacity:.85}100%{transform:scale(1.22);opacity:0}}
+
+.support-chat-overlay{position:fixed;inset:0;background:rgba(2,6,23,.72);backdrop-filter:blur(4px);z-index:1600;display:none}
+.support-chat-overlay.open{display:block}
+.support-chat-modal{position:absolute;right:0;left:0;bottom:0;max-height:86vh;overflow:auto;border-radius:24px 24px 0 0;background:linear-gradient(180deg,#111827,#0b1220);border:1px solid rgba(16,185,129,.24);box-shadow:0 -20px 60px rgba(0,0,0,.45);padding:18px}
+.support-chat-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.support-chat-title{font-size:1.1rem;font-weight:800;color:#d1fae5}
+.support-chat-close{width:36px;height:36px;border-radius:10px;border:1px solid rgba(148,163,184,.24);background:rgba(15,23,42,.72);color:#cbd5e1}
+.support-chat-bubble{max-width:80%;padding:12px 14px;border-radius:16px;margin-bottom:10px}
+.support-chat-bubble.bot{background:rgba(148,163,184,.16);color:#e2e8f0}
+.support-chat-bubble.user{margin-left:auto;background:rgba(16,185,129,.22);color:#d1fae5;border:1px solid rgba(16,185,129,.35)}
+.support-chat-form{display:grid;gap:10px;margin-top:12px}
+.support-chat-form .input,.support-chat-form textarea{background:rgba(2,6,23,.7)}
+.support-chat-note{font-size:.82rem;color:#94a3b8}
 
 
 /* Mobile fixes: logs + GitHub settings */
@@ -6843,6 +6874,7 @@ let activeBuildId= null;
 let deployLaunchNavTimer = null;
 let deployFormInitialized = false;
 let deployFormPrefillMode = false;
+let deployFormContext = 'new';
 let authToken = localStorage.getItem('db_auth_token') || '';
 let currentUser = null;
 let githubRepos = [];
@@ -7344,6 +7376,7 @@ function openRedeployFormFromAi() {
   if (!project && deployment?.projectName) project = projects.find(x => String(x.name || '') === String(deployment.projectName));
   if (!project) {
     toast('Could not find the project config to prefill. Opening deploy form.', 'info');
+    deployFormContext = 'new';
     showPage('new-deploy');
     return;
   }
@@ -7363,6 +7396,7 @@ function openRedeployFormFromAi() {
   }
   if (document.getElementById('deployStartCmd')) document.getElementById('deployStartCmd').value = project.startCmd || '';
   deployFormPrefillMode = true;
+  deployFormContext = 'redeploy';
   showPage('new-deploy');
   toast('Project settings loaded. Adjust config and redeploy.', 'success');
 }
@@ -7992,6 +8026,7 @@ function onSiteTypeChange() {
 
 function initDeployForm() {
   if (!deployFormPrefillMode) resetDeployForm();
+  if (!deployFormPrefillMode) deployFormContext = 'new';
   deployFormPrefillMode = false;
   updateSubdomainPreview();
   updateSummary();
@@ -8081,6 +8116,11 @@ function fallbackAvailabilityFromLocal(name, subdomain) {
 }
 
 async function checkProjectAvailability() {
+  if (deployFormContext !== 'new') {
+    setAvailabilityText('projectNameAvailability', 'Status: existing project (availability check skipped)', true);
+    setAvailabilityText('subdomainAvailability', 'Status: existing project (availability check skipped)', true);
+    return;
+  }
   availabilityCheckTimer = null;
   const name = (document.getElementById('deployProjectName')?.value || '').trim();
   const subdomainRaw = (document.getElementById('deploySubdomain')?.value || '').trim();
@@ -8372,15 +8412,17 @@ async function startDeployment() {
     toast('Please wait — still checking project name/subdomain availability.', 'info');
     return;
   }
-  const nameStatus = (document.getElementById('projectNameAvailability')?.textContent || '').toLowerCase();
-  const subStatus = (document.getElementById('subdomainAvailability')?.textContent || '').toLowerCase();
-  if (nameStatus.includes('unavailable') || subStatus.includes('unavailable')) {
-    toast('Project name or subdomain is unavailable. Please choose available values.', 'error');
-    return;
-  }
-  if (!nameStatus.includes('available') || !subStatus.includes('available')) {
-    toast('Please complete availability check first before deploying.', 'info');
-    return;
+  if (deployFormContext === 'new') {
+    const nameStatus = (document.getElementById('projectNameAvailability')?.textContent || '').toLowerCase();
+    const subStatus = (document.getElementById('subdomainAvailability')?.textContent || '').toLowerCase();
+    if (nameStatus.includes('unavailable') || subStatus.includes('unavailable')) {
+      toast('Project name or subdomain is unavailable. Please choose available values.', 'error');
+      return;
+    }
+    if (!nameStatus.includes('available') || !subStatus.includes('available')) {
+      toast('Please complete availability check first before deploying.', 'info');
+      return;
+    }
   }
   const isRedeploy = !!existingProject;
   const limits = getCurrentPlanLimits();
@@ -8565,6 +8607,7 @@ async function redeploy(projectId) {
   if (document.getElementById('deployStartCmd'))
     document.getElementById('deployStartCmd').value  = p.startCmd   || '';
   deployFormPrefillMode = true;
+  deployFormContext = 'redeploy';
   showPage('new-deploy');
   toast('Starting redeployment using latest branch state…', 'info');
   setTimeout(() => { startDeployment(); }, 120);
@@ -11763,8 +11806,71 @@ document.addEventListener('click', (e) => {
   panel.classList.remove('open');
 });
 
+function openSupportChat(e){
+  if (e) e.preventDefault();
+  document.getElementById('supportChatOverlay')?.classList.add('open');
+}
+function closeSupportChat(e){
+  if (e && e.target && e.currentTarget && e.target !== e.currentTarget) return;
+  document.getElementById('supportChatOverlay')?.classList.remove('open');
+}
+async function submitSupportMessage(e){
+  e.preventDefault();
+  const name = (document.getElementById('supportName')?.value || '').trim();
+  const email = (document.getElementById('supportEmail')?.value || '').trim();
+  const message = (document.getElementById('supportMessage')?.value || '').trim();
+  if (!name || !email || !message) { toast('Please complete all fields', 'error'); return; }
+  const btn = document.getElementById('supportSendBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  try {
+    const r = await apiFetch('/api/support/message', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ name, email, message, page: window.location.href })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Could not send message');
+    toast('Message sent successfully', 'success');
+    document.getElementById('supportMessage').value = '';
+    closeSupportChat();
+  } catch(err) {
+    toast(err.message || 'Failed to send message', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Send Message'; }
+  }
+}
+
 updateNotificationsBell();
 initCustomSelects();
 </script>
+<a
+  class="floating-contact-btn"
+  href="#"
+  onclick="openSupportChat(event)"
+  aria-label="Open support chat"
+  title="Open support chat"
+>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/>
+    <path d="m22 8-8.97 5.7a2 2 0 0 1-2.06 0L2 8"/>
+  </svg>
+</a>
+<div class="support-chat-overlay" id="supportChatOverlay" onclick="closeSupportChat(event)">
+  <div class="support-chat-modal">
+    <div class="support-chat-head">
+      <div class="support-chat-title">Send us a message</div>
+      <button class="support-chat-close" type="button" onclick="closeSupportChat(event)">✕</button>
+    </div>
+    <div class="support-chat-bubble bot">Hi 👋 Have questions? Ask away and we’ll send this directly to our support inbox.</div>
+    <div class="support-chat-bubble user">Your message will be delivered silently to JOYTREE support.</div>
+    <form class="support-chat-form" onsubmit="submitSupportMessage(event)">
+      <input class="input" id="supportName" placeholder="Your name" required>
+      <input class="input" id="supportEmail" type="email" placeholder="Your email" required>
+      <textarea class="input" id="supportMessage" rows="4" placeholder="Type your message..." required></textarea>
+      <button class="btn btn-primary" id="supportSendBtn" type="submit">Send Message</button>
+      <div class="support-chat-note">Messages are sent to projectvpn89@gmail.com.</div>
+    </form>
+  </div>
+</div>
 </body>
 </html>

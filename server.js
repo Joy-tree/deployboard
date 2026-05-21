@@ -609,6 +609,49 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
+app.post('/api/support/message', async (req, res) => {
+  try {
+    const name = String(req.body?.name || '').trim();
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const message = String(req.body?.message || '').trim();
+    const page = String(req.body?.page || '').trim();
+    if (!name || !email || !message) return res.status(400).json({ error: 'name, email, and message are required' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'invalid email' });
+
+    const toEmail = process.env.SUPPORT_TO_EMAIL || 'projectvpn89@gmail.com';
+    const smtpHost = String(process.env.SMTP_HOST || '').trim();
+    const smtpUser = String(process.env.SMTP_USER || '').trim();
+    const smtpPass = String(process.env.SMTP_PASS || '').trim();
+    const smtpPort = Number(process.env.SMTP_PORT || 587);
+    const smtpSecure = String(process.env.SMTP_SECURE || '').toLowerCase() === 'true' || smtpPort === 465;
+
+    if (!smtpHost || !smtpUser || !smtpPass) {
+      return res.status(500).json({ error: 'support messaging not configured on server (missing SMTP env vars)' });
+    }
+    let nodemailer;
+    try { nodemailer = require('nodemailer'); }
+    catch (_) { return res.status(500).json({ error: 'support messaging unavailable: nodemailer not installed' }); }
+
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
+      auth: { user: smtpUser, pass: smtpPass }
+    });
+
+    await transporter.sendMail({
+      from: process.env.SUPPORT_FROM_EMAIL || smtpUser,
+      to: toEmail,
+      replyTo: email,
+      subject: `[JOYTREE] New support message from ${name}`,
+      text: `From: ${name} <${email}>\nPage: ${page || 'unknown'}\nIP: ${req.ip || 'unknown'}\n\nMessage:\n${message}`
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not send message' });
+  }
+});
+
 app.get('/api/auth/turnstile/config', (req, res) => {
   res.json({ enabled: !!TURNSTILE_SITE_KEY, siteKey: TURNSTILE_SITE_KEY || '' });
 });
