@@ -609,6 +609,49 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
+app.post('/api/support/message', async (req, res) => {
+  try {
+    const name = String(req.body?.name || '').trim();
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const message = String(req.body?.message || '').trim();
+    const page = String(req.body?.page || '').trim();
+    if (!name || !email || !message) return res.status(400).json({ error: 'name, email, and message are required' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'invalid email' });
+
+    const toEmail = process.env.SUPPORT_TO_EMAIL || 'projectvpn89@gmail.com';
+    const smtpHost = String(process.env.SMTP_HOST || '').trim();
+    const smtpUser = String(process.env.SMTP_USER || '').trim();
+    const smtpPass = String(process.env.SMTP_PASS || '').trim();
+    const smtpPort = Number(process.env.SMTP_PORT || 587);
+    const smtpSecure = String(process.env.SMTP_SECURE || '').toLowerCase() === 'true' || smtpPort === 465;
+
+    if (!smtpHost || !smtpUser || !smtpPass) {
+      return res.status(500).json({ error: 'support messaging not configured on server (missing SMTP env vars)' });
+    }
+    let nodemailer;
+    try { nodemailer = require('nodemailer'); }
+    catch (_) { return res.status(500).json({ error: 'support messaging unavailable: nodemailer not installed' }); }
+
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
+      auth: { user: smtpUser, pass: smtpPass }
+    });
+
+    await transporter.sendMail({
+      from: process.env.SUPPORT_FROM_EMAIL || smtpUser,
+      to: toEmail,
+      replyTo: email,
+      subject: `[JOYTREE] New support message from ${name}`,
+      text: `From: ${name} <${email}>\nPage: ${page || 'unknown'}\nIP: ${req.ip || 'unknown'}\n\nMessage:\n${message}`
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not send message' });
+  }
+});
+
 app.get('/api/auth/turnstile/config', (req, res) => {
   res.json({ enabled: !!TURNSTILE_SITE_KEY, siteKey: TURNSTILE_SITE_KEY || '' });
 });
@@ -897,6 +940,35 @@ app.get('/api/github/branches', requireAuth, async (req, res) => {
     res.json({ branches });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+function parseGitHubRepoSlug(repoUrl='') {
+  const m = String(repoUrl || '').match(/github\.com\/([^/]+)\/([^/#?]+)/i);
+  if (!m) return '';
+  const owner = String(m[1] || '').trim();
+  const repo = String(m[2] || '').trim().replace(/\.git$/i, '');
+  return (owner && repo) ? `${owner}/${repo}` : '';
+}
+
+async function syncRepoHomepageToLiveUrl(repoUrl='', liveUrl='', githubToken='') {
+  const slug = parseGitHubRepoSlug(repoUrl);
+  if (!slug || !liveUrl || !githubToken) return { ok:false, skipped:true };
+  try {
+    const r = await fetch(`https://api.github.com/repos/${slug}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${githubToken}`,
+        'User-Agent': 'deployboard',
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ homepage: liveUrl })
+    });
+    if (!r.ok) return { ok:false, skipped:false, status:r.status };
+    return { ok:true, slug, homepage: liveUrl };
+  } catch (_) {
+    return { ok:false, skipped:false };
+  }
+}
 
 
 app.get('/debug/host', (req, res) => {
@@ -1457,6 +1529,12 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     if (cf.ok) {
       emit('build:log', { line: `\x1b[32m[CF]\x1b[0m Live at: \x1b[1m${cf.url}\x1b[0m` });
       try { await Project.findByIdAndUpdate(project._id, { liveUrl: cf.url }); } catch(e) {}
+      const ghHomepageSync = await syncRepoHomepageToLiveUrl(repoUrl, cf.url, deployGithubToken);
+      if (ghHomepageSync.ok) {
+        emit('build:log', { line: `\x1b[32m[GitHub]\x1b[0m Repo homepage synced: \x1b[1m${cf.url}\x1b[0m` });
+      } else if (!ghHomepageSync.skipped) {
+        emit('build:log', { line: `\x1b[33m[GitHub]\x1b[0m Could not sync repository homepage automatically.` });
+      }
     }
     if (!isServerApp) {
       const live = cf?.url || `https://${cleanSub}.${BASE_DOMAIN}`;
