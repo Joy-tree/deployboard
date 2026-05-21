@@ -3094,6 +3094,35 @@ textarea.input { resize: vertical; min-height: 80px; }
 #page-analytics td { white-space: nowrap; }
 
 
+
+/* === Flat board redesign override === */
+:root{
+  --bg:#09090b;
+  --bg-2:#0f0f12;
+  --bg-3:#141419;
+  --text:#f4f4f5;
+  --text-2:#a1a1aa;
+  --text-3:#71717a;
+  --border:rgba(255,255,255,.10);
+  --border-h:rgba(255,255,255,.18);
+  --primary:#22c55e;
+  --primary-d:#16a34a;
+}
+html,body,#landing-view,#app,#app-shell,.app-layout,[id^="page-"]{background:#09090b!important;}
+body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.inscription-strip::before,.inscription-strip::after,.section::before,.how-section::before,.flow-section::before,.snippet-section::before,.cta-section::before{display:none!important;content:none!important;}
+*{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;text-shadow:none!important;}
+#landing-view nav,.topbar,.app-sidebar,.app-header,.modal,.drawer{background:#09090b!important;border-color:var(--border)!important;}
+.section,.how-section,.flow-section,.snippet-section,.cta-section,.home-product-card,.hero-visual-card,.feature-card,.how-card,.flow-step,.snippet-card,.card,.project-card,.stat-card,.surface-hero,.app-hero,.wizard-hero,.quantum-build,.streak-command-hero,.terminal-empty-card.empty-logs-polished,.webhook-event-card,.streak-metric-card,.streak-intel-card,.streak-timeline-row,.streak-modules div,.geo-intel-card,.geo-intel-map,.terminal-wrap,.terminal-body,.hero-terminal{
+  background:#111114!important;
+  background-image:none!important;
+  border:1px solid var(--border)!important;
+  box-shadow:none!important;
+}
+.hero::after,.streak-command-hero:after,.quantum-build:before,.project-card::after,.geo-intel-card::before,.terminal-wrap.active-deploy::before{display:none!important;content:none!important;}
+.btn,.btn-nav,.btn-hero-ghost,.btn-nav-menu{background:#111114!important;border:1px solid var(--border)!important;color:var(--text)!important;box-shadow:none!important;}
+.btn-primary,.btn-nav-primary,.btn-hero-primary{background:var(--primary)!important;border-color:var(--primary)!important;color:#052e16!important;}
+.table-shell tbody tr,.deployment-table-shell tbody tr{background:#111114!important;box-shadow:none!important;}
+
 </style>
   <script type="application/ld+json">
   {
