@@ -3094,6 +3094,78 @@ textarea.input { resize: vertical; min-height: 80px; }
 #page-analytics td { white-space: nowrap; }
 
 
+
+/* === Flat board redesign override === */
+:root{
+  --bg:#09090b;
+  --bg-2:#0f0f12;
+  --bg-3:#141419;
+  --text:#f4f4f5;
+  --text-2:#a1a1aa;
+  --text-3:#71717a;
+  --border:rgba(255,255,255,.10);
+  --border-h:rgba(255,255,255,.18);
+  --primary:#22c55e;
+  --primary-d:#16a34a;
+}
+html,body,#landing-view,#app,#app-shell,.app-layout,[id^="page-"]{background:#09090b!important;}
+body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.inscription-strip::before,.inscription-strip::after,.section::before,.how-section::before,.flow-section::before,.snippet-section::before,.cta-section::before{display:none!important;content:none!important;}
+*{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;text-shadow:none!important;}
+#landing-view nav,.topbar,.app-sidebar,.app-header,.modal,.drawer{background:#09090b!important;border-color:var(--border)!important;}
+.section,.how-section,.flow-section,.snippet-section,.cta-section,.home-product-card,.hero-visual-card,.feature-card,.how-card,.flow-step,.snippet-card,.card,.project-card,.stat-card,.surface-hero,.app-hero,.wizard-hero,.quantum-build,.streak-command-hero,.terminal-empty-card.empty-logs-polished,.webhook-event-card,.streak-metric-card,.streak-intel-card,.streak-timeline-row,.streak-modules div,.geo-intel-card,.geo-intel-map,.terminal-wrap,.terminal-body,.hero-terminal{
+  background:#111114!important;
+  background-image:none!important;
+  border:1px solid var(--border)!important;
+  box-shadow:none!important;
+}
+.hero::after,.streak-command-hero:after,.quantum-build:before,.project-card::after,.geo-intel-card::before,.terminal-wrap.active-deploy::before{display:none!important;content:none!important;}
+.btn,.btn-nav,.btn-hero-ghost,.btn-nav-menu{background:#111114!important;border:1px solid var(--border)!important;color:var(--text)!important;box-shadow:none!important;}
+.btn-primary,.btn-nav-primary,.btn-hero-primary{background:var(--primary)!important;border-color:var(--primary)!important;color:#052e16!important;}
+.table-shell tbody tr,.deployment-table-shell tbody tr{background:#111114!important;box-shadow:none!important;}
+
+/* header + sidebar + hamburger normalization */
+#sidebar,.landing-drawer,.sidebar-logo,.sidebar-bottom,#topbar,.topbar-right,.topbar-breadcrumb,.app-toolbar,.app-header{
+  background:#09090b!important;
+  background-image:none!important;
+  border-color:var(--border)!important;
+  box-shadow:none!important;
+}
+.sidebar-logo-mark,.user-avatar,.topbar-avatar,.profile-avatar,.repo-avatar,.nav-logo-mark,
+#landing-view .nav-logo-mark img,.sidebar-logo-mark img{
+  border-radius:10px!important;
+  box-shadow:none!important;
+  filter:none!important;
+}
+.sidebar-nav a,.sidebar-nav button,.sidebar-section a,.sidebar-section button,.nav-link,.ld-link,.ld-action,
+.topbar-btn,.topbar-icon-btn,.btn-nav-menu,.hbg span,.mobile-menu-btn,.hamburger{
+  background:#111114!important;
+  background-image:none!important;
+  border:1px solid var(--border)!important;
+  color:var(--text)!important;
+  box-shadow:none!important;
+}
+.sidebar-nav a.active,.sidebar-nav button.active,.sidebar-nav .is-active,.nav-link.active,.ld-link.active{
+  background:#18181b!important;
+  border-color:var(--border-h)!important;
+  color:#e4e4e7!important;
+}
+#landing-view .btn-nav-menu,.topbar-icon-btn,.topbar-btn{border-radius:10px!important;}
+.hbg span{height:2px!important;border:0!important;background:#e4e4e7!important;}
+.sidebar-section-title,.sidebar-heading,.ld-section-title{color:#71717a!important;letter-spacing:.08em!important;}
+.sidebar-nav .badge,.count-pill,.notif-badge,.nav-badge{background:#052e16!important;border:1px solid #166534!important;color:#86efac!important;box-shadow:none!important;}
+
+/* loading page also flat board style */
+#pageLoader{background:#09090b!important;}
+.page-loader-badge{display:none!important;}
+.page-loader-gears{filter:none!important;opacity:.92;}
+.loader-panel{gap:12px!important;}
+.loader-percent{border:1px solid var(--border)!important;background:#111114!important;box-shadow:none!important;color:#86efac!important;}
+.loader-progress{border:1px solid var(--border)!important;background:#111114!important;box-shadow:none!important;}
+.loader-progress:before{display:none!important;}
+.loader-track{fill:#0b0b0e!important;stroke:rgba(255,255,255,.12)!important;}
+.loader-fill{fill:#22c55e!important;filter:none!important;}
+.page-loader-text{color:#d4d4d8!important;letter-spacing:.14em!important;}
+
 </style>
   <script type="application/ld+json">
   {
@@ -3228,8 +3300,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 <!-- ── PAGE LOADING SPINNER ─────────────────────────────────────── -->
 <div id="pageLoader">
-  <div class="page-loader-badge" aria-hidden="true">SYSTEM BOOT SEQUENCE</div>
-  <div class="page-loader-gears" aria-hidden="true">
+    <div class="page-loader-gears" aria-hidden="true">
     <svg class="gear-svg" viewBox="0 0 265 190" aria-hidden="true">
       <g class="gear--big">
         <circle class="gear-body" cx="130" cy="95" r="48" stroke-dasharray="8 14"/>
@@ -3423,51 +3494,8 @@ textarea.input { resize: vertical; min-height: 80px; }
   <div class="hero-glow"></div>
   <div class="hero-glow-2"></div>
 
-  <div class="onboard-ticker">
-    <div class="onboard-track">
-      <span class="onboard-item">Ship from GitHub to live URL in under <b>60 seconds</b>.</span>
-      <span class="onboard-item">Real-time build logs. Zero config required.</span>
-      <span class="onboard-item">Automatic subdomains, SSL, and edge routing.</span>
-      <span class="onboard-item">One-click rollback on every deployment.</span>
-      <span class="onboard-item">Ship from GitHub to live URL in under <b>60 seconds</b>.</span>
-      <span class="onboard-item">Real-time build logs. Zero config required.</span>
-      <span class="onboard-item">Automatic subdomains, SSL, and edge routing.</span>
-      <span class="onboard-item">One-click rollback on every deployment.</span>
-    </div>
-  </div>
-
-  <div class="hero-top-marquee neon-beam-border" aria-label="Realtime moving inscription cards">
-    <div class="hero-top-track">
-      <div class="hero-top-card"><b>Live Build Logs</b><span>Every line of your build streams in real time — no polling, no waiting.</span></div>
-      <div class="hero-top-card"><b>Instant Rollback</b><span>One click restores your last stable release, no commands needed.</span></div>
-      <div class="hero-top-card"><b>Edge Routing + SSL</b><span>Automatic subdomains and HTTPS provisioned the moment you deploy.</span></div>
-      <div class="hero-top-card"><b>Live Build Logs</b><span>Every line of your build streams in real time — no polling, no waiting.</span></div>
-      <div class="hero-top-card"><b>Instant Rollback</b><span>One click restores your last stable release, no commands needed.</span></div>
-      <div class="hero-top-card"><b>Edge Routing + SSL</b><span>Automatic subdomains and HTTPS provisioned the moment you deploy.</span></div>
-    </div>
-  </div>
-
-  <div class="hero-shift-zone neon-beam-border" aria-label="Shifting inscription cards">
-    <article class="hero-shift-card active" data-shift-card>
-      <div class="hero-shift-kicker">Zero config deploys</div>
-      <div class="hero-shift-text">Push to GitHub. Joytree handles the build, routing, and SSL automatically.</div>
-    </article>
-    <article class="hero-shift-card" data-shift-card>
-      <div class="hero-shift-kicker">Full visibility</div>
-      <div class="hero-shift-text">Watch every build step live. Know exactly what shipped and when.</div>
-    </article>
-    <article class="hero-shift-card" data-shift-card>
-      <div class="hero-shift-kicker">Safe by default</div>
-      <div class="hero-shift-text">Every deployment is rollback-ready. Recovery takes one click.</div>
-    </article>
-  </div>
-
   <div class="hero-headline-stack">
-    <div class="hero-eyebrow">
-      <span class="hero-eyebrow-dot"></span>
-      Deploy faster. Ship with confidence.
-    </div>
-    <h1 class="hero-h1">Ship <span class="accent">production applications</span><br>with operational clarity.</h1>
+      <h1 class="hero-h1">Ship <span class="accent">production applications</span><br>with operational clarity.</h1>
     <div class="hero-typewriter-wrap">
       Built for <span class="hero-typewriter" id="typewriter">Modern Web Teams</span>
     </div>
@@ -3628,20 +3656,6 @@ textarea.input { resize: vertical; min-height: 80px; }
   </div>
 </section>
 
-<div class="inscription-strip neon-beam-border reveal" aria-label="Platform inscriptions">
-  <div class="inscription-track">
-    <span class="inscription-pill">GitHub to Live URL</span>
-    <span class="inscription-pill">Real-time Build Logs</span>
-    <span class="inscription-pill">Automatic SSL</span>
-    <span class="inscription-pill">Wildcard Subdomains</span>
-    <span class="inscription-pill">One-click Rollback</span>
-    <span class="inscription-pill">GitHub to Live URL</span>
-    <span class="inscription-pill">Real-time Build Logs</span>
-    <span class="inscription-pill">Automatic SSL</span>
-    <span class="inscription-pill">Wildcard Subdomains</span>
-    <span class="inscription-pill">One-click Rollback</span>
-  </div>
-</div>
 
 <section class="langs-section live-border" aria-label="Supported languages">
   <div class="langs-grid">
