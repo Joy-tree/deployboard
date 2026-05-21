@@ -286,24 +286,29 @@ img{max-width:100%;}
 }
 .hero-typewriter-wrap{
   font-family:var(--font-ui);
-  font-size:clamp(2rem,5vw,4.2rem);
+  font-size:clamp(2.1rem,5vw,4.2rem);
   font-weight:800;
   letter-spacing:-0.04em;
   line-height:1.1;
   margin-bottom:32px;
-  height:1.15em;
+  min-height:1.2em;
   animation:fadeUp 0.6s 0.15s ease both;
 }
 .hero-typewriter{
   color:transparent;
-  background:linear-gradient(135deg,var(--cyan),var(--green));
-  -webkit-background-clip:text;background-clip:text;
-  border-right:3px solid var(--cyan);
-  white-space:nowrap;overflow:hidden;
+  background:linear-gradient(96deg,#10b981 0%,#06b6d4 45%,#22d3ee 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  white-space:nowrap;
   display:inline-block;
-  animation:blink 0.85s step-end infinite;
+  transform-origin:left center;
+  animation:typewriterPulse 1300ms ease-in-out infinite;
 }
-@keyframes blink{0%,100%{border-color:var(--cyan)}50%{border-color:transparent}}
+.hero-typewriter.is-switching{animation:typewriterSlideIn .55s cubic-bezier(.16,.84,.44,1) both;}
+.hero-typewriter .char{display:inline-block;opacity:0;transform:translateY(24px) rotateX(-90deg) scale(.92);filter:blur(2px);animation:charDrop .6s cubic-bezier(.2,.85,.25,1) forwards;animation-delay:calc(var(--char-index) * 42ms);}
+@keyframes charDrop{0%{opacity:0;transform:translateY(24px) rotateX(-90deg) scale(.92);filter:blur(2px);}68%{opacity:1;transform:translateY(-2px) rotateX(0) scale(1.02);filter:blur(0);}100%{opacity:1;transform:translateY(0) rotateX(0) scale(1);filter:blur(0);}}
+@keyframes typewriterSlideIn{0%{opacity:.12;transform:translateY(22px) scale(.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes typewriterPulse{0%,100%{text-shadow:0 0 0 rgba(34,211,238,0)}50%{text-shadow:0 0 22px rgba(34,211,238,.28)}}
 .hero-sub{
   max-width:580px;
   font-size:clamp(1rem,2vw,1.15rem);
@@ -398,13 +403,14 @@ img{max-width:100%;}
 /* ══ DRAWER PANEL ══ */
 body.landing-drawer-open { overflow:hidden; }
 .landing-drawer {
-  position:fixed;top:0;right:0;height:100dvh;width:min(360px,100vw);z-index:960;
+  position:fixed;top:72px;right:0;height:calc(100dvh - 72px);width:100vw;z-index:960;
   background:
     radial-gradient(ellipse at 20% 0%, rgba(16,185,129,.16) 0%, transparent 50%),
     radial-gradient(ellipse at 90% 80%, rgba(59,130,246,.13) 0%, transparent 50%),
     linear-gradient(160deg,#030810 0%,#060f1e 60%,#040b17 100%);
-  border-left:1px solid rgba(56,189,248,.12);
-  box-shadow:-24px 0 80px rgba(0,0,0,.6), -1px 0 0 rgba(16,185,129,.08);
+  border-left:none;
+  border-top:1px solid rgba(148,163,184,.14);
+  box-shadow:0 24px 80px rgba(0,0,0,.58);
   color:#e2e8f0;
   transform:translateX(100%);
   transition:transform .42s cubic-bezier(.77,0,.175,1);
@@ -415,18 +421,18 @@ body.landing-drawer-open { overflow:hidden; }
 .landing-drawer.open { transform:translateX(0); }
 
 /* Drawer inner scroll area */
-.ld-scroll { flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 20px 32px; }
+.ld-scroll { flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:18px 24px 34px;display:flex;flex-direction:column; }
 .ld-scroll::-webkit-scrollbar { width:3px; }
 .ld-scroll::-webkit-scrollbar-thumb { background:rgba(16,185,129,.2);border-radius:99px; }
 
 /* Header */
 .ld-header {
-  display:flex;align-items:center;justify-content:space-between;
-  padding:16px 20px 14px;
-  border-bottom:1px solid rgba(56,189,248,.1);
+  display:flex;align-items:center;justify-content:flex-end;
+  padding:14px 24px 6px;
+  border-bottom:none;
   flex-shrink:0;
-  background:rgba(3,8,16,.5);
-  backdrop-filter:blur(10px);
+  background:transparent;
+  backdrop-filter:none;
 }
 .ld-brand { display:flex;align-items:center;gap:10px; }
 .ld-brand-mark {
@@ -533,6 +539,20 @@ body.landing-drawer-open { overflow:hidden; }
 }
 .ld-stat-val { font-family:var(--font-mono);font-size:.8rem;font-weight:700;color:#d1fae5; }
 .ld-stat-lbl { font-size:.58rem;letter-spacing:.07em;text-transform:uppercase;color:#475569; }
+.ld-menu-list{display:grid;gap:4px;}
+.ld-menu-link{display:flex;align-items:center;justify-content:space-between;padding:14px 0;color:#d1d5db;text-decoration:none;font-size:2.15rem;font-weight:700;letter-spacing:-.02em;border-bottom:1px solid transparent;transition:color .2s ease,transform .2s ease;}
+.ld-menu-link:hover{color:#f8fafc;transform:translateX(4px);}
+.ld-divider{height:1px;background:rgba(148,163,184,.16);margin:14px 0 16px;}
+.ld-tools-title{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;font-weight:800;margin-bottom:10px;}
+.ld-tools-list{display:grid;gap:4px;}
+.ld-tool-link{display:flex;align-items:center;justify-content:space-between;padding:10px 0;color:#cbd5e1;text-decoration:none;font-size:1.05rem;font-weight:600;transition:color .2s ease,transform .2s ease;}
+.ld-tool-link:hover{color:#f8fafc;transform:translateX(4px);}
+.ld-footer-cta{margin-top:auto;padding-top:18px;display:grid;gap:12px;}
+.ld-footer-btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:68px;border-radius:999px;text-decoration:none;font-weight:800;font-size:1.05rem;letter-spacing:-.01em;transition:transform .2s ease,filter .2s ease;}
+.ld-footer-btn.dark{background:#060f1f;border:1px solid rgba(148,163,184,.16);color:#e5e7eb;}
+.ld-footer-btn.purple{background:linear-gradient(135deg,#94359b,#8b3ba6);border:1px solid rgba(216,180,254,.32);color:#f8fafc;}
+.ld-footer-btn:hover{transform:translateY(-1px);filter:brightness(1.06);}
+@media(max-width:560px){.landing-drawer{top:66px;height:calc(100dvh - 66px)}.ld-menu-link{font-size:1.8rem}.ld-scroll{padding:14px 18px 26px}.ld-footer-btn{min-height:62px;font-size:1rem}}
 
 /* Staggered entrance animations for drawer items */
 .landing-drawer.open .ld-animate {
@@ -684,14 +704,14 @@ body.landing-drawer-open { overflow:hidden; }
 .hero-orb.two{width:280px;height:280px;right:4%;top:12%;background:radial-gradient(circle,rgba(34,197,94,.35),rgba(59,130,246,0));animation-delay:1.8s}
 .hero-orb.three{width:190px;height:190px;right:18%;bottom:12%;background:radial-gradient(circle,rgba(74,222,128,.28),rgba(139,92,246,0));animation-delay:3.5s}
 @keyframes orbFloat{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-16px) translateX(8px)}}
-.hero-headline-stack{position:relative;display:grid;gap:10px;margin-bottom:14px}
+.hero-headline-stack{position:relative;display:grid;gap:16px;margin-bottom:22px;max-width:1080px}
 .hero-kicker-pro{display:none;}
 .hero-kicker-pro i{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 14px rgba(16,185,129,.9)}
-.hero-h1{font-size:clamp(2rem,5.8vw,3.6rem)!important;line-height:1.12;font-weight:700;letter-spacing:-.01em;text-shadow:none}
+.hero-h1{font-size:clamp(2.55rem,8.3vw,6.05rem)!important;line-height:1.03;font-weight:800;letter-spacing:-.03em;text-shadow:none;max-width:14ch}
 .hero-h1 .accent{filter:none}
-.hero-sub{max-width:700px!important;font-size:.96rem!important;line-height:1.7}
-.hero-actions .btn-hero-primary{padding:15px 30px;border-radius:14px;font-size:1rem;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 10px 42px rgba(16,185,129,.45)}
-.hero-actions .btn-hero-ghost{padding:15px 30px;border-radius:14px}
+.hero-sub{max-width:830px!important;font-size:clamp(1.2rem,2.15vw,1.95rem)!important;line-height:1.55;color:#9ca3af}
+.hero-actions .btn-hero-primary{padding:22px 42px;border-radius:22px;font-size:clamp(1.15rem,2vw,1.55rem);font-weight:800;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 10px 42px rgba(16,185,129,.45)}
+.hero-actions .btn-hero-ghost{padding:22px 42px;border-radius:22px;font-size:clamp(1.05rem,1.85vw,1.3rem)}
 .hero-rail{width:min(1120px,100%);margin:20px auto 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .hero-rail-card{padding:12px;border-radius:12px;border:1px solid rgba(148,163,184,.24);background:linear-gradient(160deg,rgba(15,23,42,.88),rgba(2,6,23,.94));text-align:left}
 .hero-rail-card b{display:block;font-size:.68rem;letter-spacing:.11em;text-transform:uppercase;color:#86efac}
@@ -3383,11 +3403,6 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 
   <!-- Sticky header -->
   <div class="ld-header">
-    <div class="ld-brand">
-      <div class="ld-brand-mark"><img src="https://raw.githubusercontent.com/joygood123/Url/refs/heads/main/favicon_256.png" alt="joytree logo"></div>
-      <span class="ld-brand-name">JOYTREE</span>
-      <span class="ld-brand-tag">Beta</span>
-    </div>
     <button class="ld-close" onclick="closeLandingDrawer()" aria-label="Close menu">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
@@ -3395,110 +3410,26 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 
   <!-- Scrollable body -->
   <div class="ld-scroll">
-
-    <!-- CTA buttons -->
-    <div class="ld-actions ld-animate">
-      <a class="ld-action-btn primary" href="#" onclick="showDashboard();closeLandingDrawer();return false;">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        Launch App
-      </a>
-      <a class="ld-action-btn ghost" href="#how-it-works" onclick="closeLandingDrawer()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Quick Tour
-      </a>
+    <div class="ld-menu-list">
+      <a class="ld-menu-link ld-animate" href="#features" onclick="closeLandingDrawer()">Domain</a>
+      <a class="ld-menu-link ld-animate" href="#" onclick="showDashboard();showPage('pricing');closeLandingDrawer();return false;">Pricing</a>
+      <a class="ld-menu-link ld-animate" href="#community" onclick="closeLandingDrawer()">Blog</a>
     </div>
 
-    <!-- Main nav -->
-    <div class="ld-section-label ld-animate">Platform</div>
+    <div class="ld-divider ld-animate"></div>
 
-    <a class="ld-link ld-animate" href="#features" onclick="closeLandingDrawer()">
-      <div class="ld-link-icon" style="color:#10b981">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      </div>
-      <span>Platform Features</span>
-      <span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span>
-    </a>
-    <a class="ld-link ld-animate" href="#how-it-works" onclick="closeLandingDrawer()">
-      <div class="ld-link-icon" style="color:#06b6d4">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-      </div>
-      <span>How It Works</span>
-      <span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span>
-    </a>
-    <a class="ld-link ld-animate" href="#snippets" onclick="closeLandingDrawer()">
-      <div class="ld-link-icon" style="color:#8b5cf6">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-      </div>
-      <span>Docs &amp; Snippets</span>
-      <span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span>
-    </a>
+    <div class="ld-tools-title ld-animate">Tools</div>
+    <div class="ld-tools-list">
+      <a class="ld-tool-link ld-animate" href="#" onclick="showDashboard();showPage('domains');closeLandingDrawer();return false;">DNS Lookup</a>
+      <a class="ld-tool-link ld-animate" href="#" onclick="showDashboard();showPage('logs');closeLandingDrawer();return false;">Check Status</a>
+    </div>
 
-    <a class="ld-link ld-animate" href="#" onclick="showDashboard();showPage('pricing');closeLandingDrawer();return false;">
-      <div class="ld-link-icon" style="color:#f59e0b">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      </div>
-      <span>Pricing Plans</span>
-      <span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span>
-    </a>
-
-    <!-- Language kickstarts -->
-    <div class="ld-section-label ld-animate">Language Kickstarts</div>
-
-    <a class="ld-link lang ld-animate" href="#lang-nodejs" onclick="closeLandingDrawer()">
-      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js">
-      <div class="ld-lang-info"><span class="ld-lang-name">Node.js</span><span class="ld-lang-sub">Express · Fastify · NestJS</span></div>
-      <span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span>
-    </a>
-    <a class="ld-link lang ld-animate" href="#lang-python" onclick="closeLandingDrawer()">
-      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python">
-      <div class="ld-lang-info"><span class="ld-lang-name">Python</span><span class="ld-lang-sub">Django · FastAPI · Flask</span></div>
-      <span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span>
-    </a>
-    <a class="ld-link lang ld-animate" href="#lang-java" onclick="closeLandingDrawer()">
-      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" alt="Java">
-      <div class="ld-lang-info"><span class="ld-lang-name">Java</span><span class="ld-lang-sub">Spring Boot · Quarkus</span></div>
-      <span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span>
-    </a>
-    <a class="ld-link lang ld-animate" href="#lang-go" onclick="closeLandingDrawer()">
-      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg" alt="Go">
-      <div class="ld-lang-info"><span class="ld-lang-name">Go</span><span class="ld-lang-sub">Gin · Echo · Fiber</span></div>
-      <span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span>
-    </a>
-    <a class="ld-link lang ld-animate" href="#lang-dotnet" onclick="closeLandingDrawer()">
-      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg" alt=".NET">
-      <div class="ld-lang-info"><span class="ld-lang-name">.NET</span><span class="ld-lang-sub">ASP.NET Core · Blazor</span></div>
-      <span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span>
-    </a>
-
-    <!-- Frameworks -->
-    <div class="ld-section-label ld-animate">Frontend Frameworks</div>
-    <div class="ld-chips ld-animate">
-      <span class="ld-chip">React</span>
-      <span class="ld-chip">Next.js</span>
-      <span class="ld-chip">Vue</span>
-      <span class="ld-chip">Nuxt</span>
-      <span class="ld-chip">Svelte</span>
-      <span class="ld-chip">Astro</span>
-      <span class="ld-chip">Remix</span>
+    <div class="ld-footer-cta">
+      <a class="ld-footer-btn dark ld-animate" href="#" onclick="showDashboard();closeLandingDrawer();return false;">Dashboard</a>
+      <a class="ld-footer-btn purple ld-animate" href="#" onclick="showDashboard();showPage('pricing');closeLandingDrawer();return false;">Sign Up</a>
     </div>
 
   </div><!-- /ld-scroll -->
-
-  <!-- Live stats footer -->
-  <div class="ld-status-bar">
-    <div class="ld-stat">
-      <span class="ld-stat-val">&lt;60s</span>
-      <span class="ld-stat-lbl">Deploy time</span>
-    </div>
-    <div class="ld-stat">
-      <span class="ld-stat-val">99.9%</span>
-      <span class="ld-stat-lbl">Uptime</span>
-    </div>
-    <div class="ld-stat">
-      <span class="ld-stat-val">Free</span>
-      <span class="ld-stat-lbl">To start</span>
-    </div>
-  </div>
 
 </aside>
 
@@ -4187,24 +4118,29 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 </footer>
 
 <script>
-// ── Typewriter ─────────────────────────────────────────────────────
+// ── Hero word animation (powerpoint-style reveal) ─────────────────────────
 const words = ['Modern Web Teams','Product Engineering Orgs','Frontend Platforms','Backend Services','Release Managers','Scaling Startups'];
-let wi = 0, ci = 0, deleting = false;
+let wi = 0;
 const tw = document.getElementById('typewriter');
 
-function typeLoop() {
-  const word = words[wi];
-  if (!deleting) {
-    tw.textContent = word.slice(0, ++ci);
-    if (ci === word.length) { deleting = true; setTimeout(typeLoop, 1800); return; }
-    setTimeout(typeLoop, 80);
-  } else {
-    tw.textContent = word.slice(0, --ci);
-    if (ci === 0) { deleting = false; wi = (wi + 1) % words.length; setTimeout(typeLoop, 200); return; }
-    setTimeout(typeLoop, 45);
-  }
+function renderAnimatedWord(word){
+  tw.classList.remove('is-switching');
+  tw.innerHTML = word.split('').map((char, idx) => {
+    const safe = char === ' ' ? '&nbsp;' : char;
+    return `<span class="char" style="--char-index:${idx}">${safe}</span>`;
+  }).join('');
+  void tw.offsetWidth;
+  tw.classList.add('is-switching');
 }
-setTimeout(typeLoop, 800);
+
+function loopAnimatedWords(){
+  renderAnimatedWord(words[wi]);
+  const holdTime = 2700 + (words[wi].length * 32);
+  wi = (wi + 1) % words.length;
+  setTimeout(loopAnimatedWords, holdTime);
+}
+
+setTimeout(loopAnimatedWords, 700);
 setTimeout(initTurnstile, 200);
 
 const shiftCards = Array.from(document.querySelectorAll('[data-shift-card]'));
