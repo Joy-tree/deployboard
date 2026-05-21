@@ -12457,6 +12457,60 @@ initCustomSelects();
 .jt-success h4{color:#f1f5f9;font-size:1rem;margin:0;}
 .jt-success p{color:#94a3b8;font-size:.8rem;margin:0;line-height:1.5;}
 html.app-mode #jtContactBtn,html.app-mode #jtContactModal,html.app-mode #jtContactTooltip{display:none!important;}
+
+/* ── 2026 UI Refresh: professional foam-board style landing theme ── */
+#landing-view{
+  --foam-bg:#050813;
+  --foam-surface:#0c1324;
+  --foam-surface-2:#10192e;
+  --foam-border:rgba(255,255,255,.08);
+  --foam-text:#f1f5ff;
+  --foam-muted:#9aa8c7;
+  --foam-accent:#7c8dff;
+  --foam-shadow:0 20px 55px rgba(0,0,0,.45);
+}
+body{background:radial-gradient(1200px 700px at 80% -10%,rgba(110,82,255,.16),transparent 55%),radial-gradient(1000px 650px at -20% 25%,rgba(76,138,255,.14),transparent 55%),linear-gradient(180deg,#050813 0%,#060b18 45%,#050813 100%);} 
+body::before{opacity:.45;background-image:linear-gradient(rgba(146,163,209,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(146,163,209,.08) 1px,transparent 1px);background-size:60px 60px;}
+
+#landing-view nav{
+  background:rgba(9,14,28,.84);
+  border-bottom:1px solid rgba(180,197,255,.14);
+  box-shadow:0 8px 30px rgba(0,0,0,.4);
+}
+#landing-view .btn-nav-primary,
+.hero-actions .btn-hero-primary,
+.cta-section .btn-hero-primary,
+.jt-send-btn{
+  background:linear-gradient(135deg,#6178ff 0%,#7c8dff 55%,#93a0ff 100%)!important;
+  border-color:#6e80ff!important;
+  color:#fff!important;
+  box-shadow:0 14px 36px rgba(111,129,255,.35);
+}
+#landing-view .btn-nav,
+.hero-actions .btn-hero-ghost{border-color:rgba(188,204,255,.22)!important;color:#d8e2ff!important;background:rgba(255,255,255,.02)!important;}
+
+.hero,.section,.how-section,.cta-section{position:relative;}
+.hero::before,.section::before,.how-section::before,.cta-section::before{
+  content:'';position:absolute;inset:8px;border-radius:20px;
+  background:linear-gradient(155deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
+  border:1px solid var(--foam-border);
+  box-shadow:var(--foam-shadow);
+  pointer-events:none;
+}
+.hero>*,.section>*,.how-section>*,.cta-section>*{position:relative;z-index:1;}
+
+.feature-card,.how-card,.metric-item,.snippet-card,.showcase-deploy-card,.showcase-log-card,.showcase-metric-card,.terminal-shell,.hero-terminal,#jtContactCard{
+  background:linear-gradient(165deg,rgba(20,30,56,.88),rgba(10,16,34,.9))!important;
+  border:1px solid rgba(188,204,255,.2)!important;
+  box-shadow:0 16px 46px rgba(0,0,0,.42)!important;
+  backdrop-filter:blur(3px);
+}
+.section-title,.hero-h1,.showcase-project-name{color:var(--foam-text)!important;letter-spacing:-.02em;}
+.section-subtitle,.hero-sub,.metric-label,.feature-copy,.how-copy,p,.slog-dim{color:var(--foam-muted)!important;}
+.slog-ok,.showcase-stage.active .ss-time,.showcase-live-dot{color:#73f0cf!important;background-color:#73f0cf;box-shadow:0 0 14px rgba(115,240,207,.8)!important;}
+@media (max-width:768px){
+  .hero::before,.section::before,.how-section::before,.cta-section::before{inset:4px;border-radius:14px;}
+}
 </style>
 
 <div id="jtContactTooltip"><strong>Hey!</strong> Got a question? Message us 👋</div>
