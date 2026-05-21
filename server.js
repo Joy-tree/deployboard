@@ -941,6 +941,35 @@ app.get('/api/github/branches', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+function parseGitHubRepoSlug(repoUrl='') {
+  const m = String(repoUrl || '').match(/github\.com\/([^/]+)\/([^/#?]+)/i);
+  if (!m) return '';
+  const owner = String(m[1] || '').trim();
+  const repo = String(m[2] || '').trim().replace(/\.git$/i, '');
+  return (owner && repo) ? `${owner}/${repo}` : '';
+}
+
+async function syncRepoHomepageToLiveUrl(repoUrl='', liveUrl='', githubToken='') {
+  const slug = parseGitHubRepoSlug(repoUrl);
+  if (!slug || !liveUrl || !githubToken) return { ok:false, skipped:true };
+  try {
+    const r = await fetch(`https://api.github.com/repos/${slug}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${githubToken}`,
+        'User-Agent': 'deployboard',
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ homepage: liveUrl })
+    });
+    if (!r.ok) return { ok:false, skipped:false, status:r.status };
+    return { ok:true, slug, homepage: liveUrl };
+  } catch (_) {
+    return { ok:false, skipped:false };
+  }
+}
+
 
 app.get('/debug/host', (req, res) => {
   const token = (req.query.token || req.headers['x-debug-token'] || '').toString();
@@ -1500,6 +1529,12 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     if (cf.ok) {
       emit('build:log', { line: `\x1b[32m[CF]\x1b[0m Live at: \x1b[1m${cf.url}\x1b[0m` });
       try { await Project.findByIdAndUpdate(project._id, { liveUrl: cf.url }); } catch(e) {}
+      const ghHomepageSync = await syncRepoHomepageToLiveUrl(repoUrl, cf.url, deployGithubToken);
+      if (ghHomepageSync.ok) {
+        emit('build:log', { line: `\x1b[32m[GitHub]\x1b[0m Repo homepage synced: \x1b[1m${cf.url}\x1b[0m` });
+      } else if (!ghHomepageSync.skipped) {
+        emit('build:log', { line: `\x1b[33m[GitHub]\x1b[0m Could not sync repository homepage automatically.` });
+      }
     }
     if (!isServerApp) {
       const live = cf?.url || `https://${cleanSub}.${BASE_DOMAIN}`;
