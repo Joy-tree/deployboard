@@ -33,6 +33,8 @@ const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || '';
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || process.env.GITHUB_OAUTH_CLIENT_ID || process.env.GH_CLIENT_ID || '';
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || process.env.GITHUB_OAUTH_CLIENT_SECRET || process.env.GH_CLIENT_SECRET || '';
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || '';
+const FIREBASE_RTDB_URL = (process.env.FIREBASE_RTDB_URL || process.env.FIREBASE_DATABASE_URL || '').replace(/\/+$/, '');
+const FIREBASE_RTDB_SECRET = process.env.FIREBASE_RTDB_SECRET || process.env.FIREBASE_DATABASE_SECRET || '';
 const TURNSTILE_SITE_KEY = process.env.TURNSTILE_SITE_KEY || '';
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || '';
 let GLOBAL_WEBHOOK_SECRET = process.env.GLOBAL_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET || '';
@@ -471,6 +473,35 @@ try {
 } catch {}
 function saveLocalAuth() { try { fs.writeFileSync(LOCAL_AUTH_FILE, JSON.stringify(localAuth, null, 2)); } catch {} }
 function isDbReady() { return mongoose.connection.readyState === 1; }
+function firebaseWorkspaceKey(user = {}) {
+  const raw = String(user.firebaseUid || user.email || user.id || user._id || '').trim().toLowerCase();
+  return raw ? raw.replace(/[^a-z0-9_-]/g, '_') : '';
+}
+function firebaseWorkspaceUrl(user) {
+  const key = firebaseWorkspaceKey(user);
+  if (!FIREBASE_RTDB_URL || !key) return '';
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  return `${FIREBASE_RTDB_URL}/deployboard_workspaces/${key}.json${authQuery}`;
+}
+async function readWorkspaceFromFirebase(user) {
+  try {
+    const url = firebaseWorkspaceUrl(user);
+    if (!url) return null;
+    const r = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return (data && typeof data === 'object') ? data : null;
+  } catch { return null; }
+}
+async function writeWorkspaceToFirebase(user, workspace) {
+  try {
+    const url = firebaseWorkspaceUrl(user);
+    if (!url) return false;
+    const payload = workspace && typeof workspace === 'object' ? workspace : {};
+    const r = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    return r.ok;
+  } catch { return false; }
+}
 function createPasswordHash(password, salt = crypto.randomBytes(16).toString('hex')) {
   const hash = crypto.pbkdf2Sync(password, salt, 120000, 64, 'sha512').toString('hex');
   return { salt, hash };
@@ -820,7 +851,11 @@ app.post('/api/auth/github/exchange', async (req, res) => {
 
 
 app.get('/api/workspace', requireAuth, async (req, res) => {
-  const ws = req.user.workspace || {};
+  let ws = req.user.workspace || {};
+  if (!isDbReady()) {
+    const fbWs = await readWorkspaceFromFirebase(req.user);
+    if (fbWs && typeof fbWs === 'object') ws = fbWs;
+  }
   res.json({
     projects: Array.isArray(ws.projects) ? ws.projects : [],
     deployments: Array.isArray(ws.deployments) ? ws.deployments : [],
@@ -844,6 +879,7 @@ app.post('/api/workspace', requireAuth, async (req, res) => {
       const user = localAuth.users.find(u => String(u.id) === String(req.user.id));
       if (user) user.workspace = workspace;
       saveLocalAuth();
+      await writeWorkspaceToFirebase(req.user, workspace);
     }
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -1261,39 +1297,60 @@ app.post('/api/proxy-test', async (req, res) => {
 });
 
 // ── Env Variables API ────────────────────────────────────────────────────────
-app.get('/api/projects/:id/env', async (req, res) => {
+async function resolveEnvProject(req) {
+  const projectId = String(req.params.id || '').trim();
+  if (!projectId) return { project: null, source: null };
+  if (mongoose.Types.ObjectId.isValid(projectId)) {
+    const project = await Project.findById(projectId);
+    if (project) return { project, source: 'db' };
+  }
+  const workspaceProjects = Array.isArray(req.user?.workspace?.projects) ? req.user.workspace.projects : [];
+  const project = workspaceProjects.find(p => String(p.id || p._id || '') === projectId);
+  if (project) return { project, source: 'workspace' };
+  return { project: null, source: null };
+}
+
+app.get('/api/projects/:id/env', attachAuthIfPresent, async (req, res) => {
   try {
-    const p = await Project.findById(req.params.id);
+    const { project: p } = await resolveEnvProject(req);
     if (!p) return res.status(404).json({ error: 'Project not found' });
     const vars = p.envVars instanceof Map ? Object.fromEntries(p.envVars) : (p.envVars || {});
     res.json(vars);
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/projects/:id/env', async (req, res) => {
+app.post('/api/projects/:id/env', requireAuth, async (req, res) => {
   try {
     const { key, value } = req.body;
     if (!key) return res.status(400).json({ error: 'key required' });
-    const p = await Project.findById(req.params.id);
+    const { project: p, source } = await resolveEnvProject(req);
     if (!p) return res.status(404).json({ error: 'Project not found' });
     if (!p.envVars) p.envVars = {};
     p.envVars[key] = value || '';
-    p.markModified('envVars');
-    p.updatedAt = new Date();
-    await p.save();
+    if (source === 'db') {
+      p.markModified('envVars');
+      p.updatedAt = new Date();
+      await p.save();
+    } else {
+      updateLocalWorkspaceProject(req.user, String(p.id || p._id || req.params.id), { envVars: p.envVars });
+    }
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.delete('/api/projects/:id/env/:key', async (req, res) => {
+app.delete('/api/projects/:id/env/:key', requireAuth, async (req, res) => {
   try {
-    const p = await Project.findById(req.params.id);
+    const { project: p, source } = await resolveEnvProject(req);
     if (!p) return res.status(404).json({ error: 'Project not found' });
     if (p.envVars) {
       delete p.envVars[req.params.key];
-      p.markModified('envVars');
-      p.updatedAt = new Date();
-      await p.save();
+      if (source === 'db') {
+        p.markModified('envVars');
+        p.updatedAt = new Date();
+        await p.save();
+      } else {
+        updateLocalWorkspaceProject(req.user, String(p.id || p._id || req.params.id), { envVars: p.envVars });
+      }
     }
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -1303,13 +1360,17 @@ app.delete('/api/projects/:id/env/:key', async (req, res) => {
 app.put('/api/projects/:id/env', requireAuth, async (req, res) => {
   try {
     const vars = req.body && typeof req.body === 'object' ? req.body : {};
-    const p = await Project.findById(req.params.id);
+    const { project: p, source } = await resolveEnvProject(req);
     if (!p) return res.status(404).json({ error: 'Project not found' });
     // Replace entire envVars map
     p.envVars = vars;
-    p.markModified('envVars');
-    p.updatedAt = new Date();
-    await p.save();
+    if (source === 'db') {
+      p.markModified('envVars');
+      p.updatedAt = new Date();
+      await p.save();
+    } else {
+      updateLocalWorkspaceProject(req.user, String(p.id || p._id || req.params.id), { envVars: p.envVars });
+    }
     res.json({ ok: true, count: Object.keys(vars).length });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -2027,6 +2088,7 @@ function updateLocalWorkspaceProject(user, projectId, patch = {}) {
   const p = user.workspace.projects.find(x => String(x.id || x._id || '') === String(projectId) || (patch.subdomain && x.subdomain === patch.subdomain));
   if (p) Object.assign(p, patch);
   saveLocalAuth();
+  void writeWorkspaceToFirebase(user, user.workspace || {});
 }
 
 async function triggerWorkspaceProjectDeploy(user, project, authorization = '', options = {}) {
