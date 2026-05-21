@@ -2211,6 +2211,55 @@ textarea.input { resize: vertical; min-height: 80px; }
 #page-new-deploy .settings-collapse{border:1px solid rgba(16,185,129,.13);border-radius:22px;background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(8,13,24,.96));box-shadow:0 16px 46px rgba(0,0,0,.18);overflow:visible}#page-new-deploy .settings-collapse-summary{min-height:72px;padding:0 24px;display:flex;align-items:center;gap:14px;list-style:none;cursor:pointer;color:var(--text);user-select:none}#page-new-deploy .settings-collapse-summary::-webkit-details-marker{display:none}#page-new-deploy .settings-collapse-chevron{width:30px;height:30px;display:grid;place-items:center;color:#94a3b8;transition:transform .18s ease,color .18s ease;flex-shrink:0}#page-new-deploy .settings-collapse-chevron svg{width:26px;height:26px}#page-new-deploy .settings-collapse-title{font-size:1.02rem;font-weight:800;letter-spacing:.01em}#page-new-deploy .settings-collapse[open] .settings-collapse-chevron{transform:rotate(90deg);color:var(--green)}#page-new-deploy .settings-collapse[open] .settings-collapse-summary{border-bottom:1px solid rgba(16,185,129,.09);background:linear-gradient(90deg,rgba(16,185,129,.08),transparent);border-radius:22px 22px 0 0}#page-new-deploy .settings-collapse-body{padding:24px}#page-new-deploy .env-settings-panel{margin-top:8px;padding-top:22px;border-top:1px solid rgba(16,185,129,.12)}#page-new-deploy .env-settings-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}#page-new-deploy .env-settings-title{font-size:1.02rem;font-weight:800;color:var(--text)}#page-new-deploy .env-settings-subtitle{font-size:.86rem;color:var(--text-2);margin-top:4px}@media(max-width:640px){#page-new-deploy .settings-collapse-summary{min-height:72px;padding:0 18px}#page-new-deploy .settings-collapse-body{padding:20px}#page-new-deploy .env-settings-header{align-items:flex-start;flex-direction:column}#page-new-deploy .env-settings-header .btn{width:100%}}
 
 /* Deployments table responsive containment */
+/* New deploy visual parity with dashboard/projects hero + dark form controls */
+#page-new-deploy .deploy-hero{
+  border-color:rgba(16,185,129,.18);
+  background:
+    radial-gradient(circle at 8% 20%,rgba(16,185,129,.2),transparent 34%),
+    radial-gradient(circle at 92% 0%,rgba(6,182,212,.10),transparent 30%),
+    linear-gradient(135deg,rgba(15,23,42,.92),rgba(3,7,18,.96));
+  box-shadow:0 22px 70px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.04);
+}
+#page-new-deploy .deploy-hero-kicker{color:#86efac;}
+#page-new-deploy .deploy-hero-title{color:#f8fafc;}
+#page-new-deploy .deploy-hero-sub{color:#94a3b8;}
+#page-new-deploy .deploy-stepper-item{
+  border:1px solid rgba(16,185,129,.14);
+  background:rgba(2,6,23,.52);
+  color:#94a3b8;
+}
+#page-new-deploy .deploy-stepper-badge{
+  background:rgba(16,185,129,.16);
+  color:#d1fae5;
+}
+#page-new-deploy .custom-select-trigger{
+  min-height:54px;
+  border-radius:15px;
+  border:1px solid rgba(16,185,129,.2);
+  background:linear-gradient(145deg,rgba(15,23,42,.95),rgba(8,13,24,.96));
+  color:#e2e8f0;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
+}
+#page-new-deploy .custom-select-trigger.open,
+#page-new-deploy .custom-select-trigger:hover{border-color:rgba(16,185,129,.4);}
+#page-new-deploy .custom-select-dropdown{
+  border:1px solid rgba(16,185,129,.24);
+  border-radius:14px;
+  background:#03121b;
+  box-shadow:0 18px 54px rgba(0,0,0,.48);
+}
+#page-new-deploy .cs-option{color:#cbd5e1;}
+#page-new-deploy .cs-option:hover,
+#page-new-deploy .cs-option.selected{background:rgba(16,185,129,.14);color:#d1fae5;}
+#page-new-deploy select.input{
+  background-color:rgba(2,6,23,.78);
+}
+#page-new-deploy .btn-ghost.btn-sm{
+  border-color:rgba(16,185,129,.2);
+  background:rgba(2,6,23,.72);
+  color:#cbd5e1;
+}
+#page-new-deploy .btn-ghost.btn-sm:hover{background:rgba(16,185,129,.1);color:#e2e8f0;}
 #page-deployments .deployment-table-shell{overflow-x:auto;padding-bottom:6px}
 #page-deployments .deployment-table-shell table{min-width:760px}
 @media(max-width:760px){
