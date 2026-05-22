@@ -3594,6 +3594,63 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   .install-prompt-actions #installPromptInstall{grid-column:1 / -1}
 }
 
+
+
+/* Professional landing refresh: reduce AI-like visual effects */
+#landing-view{
+  --bg:#f8fafc;
+  --bg-2:#ffffff;
+  --bg-3:#f1f5f9;
+  --text:#0f172a;
+  --text-2:#475569;
+  --border:rgba(15,23,42,.08);
+  --border-h:rgba(15,23,42,.16);
+  --primary:#111827;
+  --primary-d:#0f172a;
+}
+#landing-view, #landing-view body{background:var(--bg);color:var(--text);}
+#landing-view nav{background:rgba(255,255,255,.92);backdrop-filter:saturate(140%) blur(8px);border-bottom:1px solid var(--border);} 
+#landing-view .hero,
+#landing-view .section,
+#landing-view .how-section,
+#landing-view .cta-section,
+#landing-view .metrics-bar,
+#landing-view .hero-top-marquee,
+#landing-view .inscription-strip,
+#landing-view .home-product-card,
+#landing-view .hero-visual-card,
+#landing-view .terminal-wrap,
+#landing-view .lang-card{background:#fff !important;border-color:var(--border) !important;box-shadow:0 10px 30px rgba(15,23,42,.06) !important;}
+#landing-view .hero,
+#landing-view .section,
+#landing-view .how-section,
+#landing-view .cta-section{position:relative;overflow:hidden;}
+#landing-view .hero::before,
+#landing-view .section::before,
+#landing-view .how-section::before,
+#landing-view .cta-section::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(248,250,252,.95),rgba(248,250,252,.95));pointer-events:none;z-index:0;}
+#landing-view .hero > *,#landing-view .section > *,#landing-view .how-section > *,#landing-view .cta-section > *{position:relative;z-index:1;}
+#landing-view .hero-cosmic-grid,
+#landing-view .hero-orb,
+#landing-view .hero-aurora,
+#landing-view .hero-glow,
+#landing-view .hero-glow-2,
+#landing-view .hero-shift-cards,
+#landing-view .hero-top-marquee,
+#landing-view .inscription-strip{display:none !important;}
+#landing-view .hero-typewriter,
+#landing-view .onboard-track,
+#landing-view .hero-top-track,
+#landing-view .inscription-track,
+#landing-view .hero-eyebrow-dot,
+#landing-view .terminal-cursor{animation:none !important;}
+#landing-view .btn-hero-primary,
+#landing-view .btn-nav-primary{background:#111827 !important;border-color:#111827 !important;box-shadow:none !important;}
+#landing-view .btn-hero-primary:hover,
+#landing-view .btn-nav-primary:hover{background:#0f172a !important;border-color:#0f172a !important;transform:none !important;}
+#landing-view .home-logo-showcase .home-logo-name,
+#landing-view .hero-typewriter{background:none !important;-webkit-text-fill-color:currentColor !important;color:#0f172a !important;}
+
 </style>
   <script type="application/ld+json">
   {
