@@ -1175,14 +1175,16 @@ ul { list-style:none; }
   font-family:var(--font-mono);font-size:1.18rem;font-weight:700;color:#86efac;letter-spacing:.2em;text-transform:uppercase;
 }
 .page-loader-dots::after { content:'...'; animation:dots 1.5s steps(3,end) infinite; }
-.page-loader-gears{width:min(78vw,320px);height:auto;filter:drop-shadow(0 0 20px rgba(52,211,153,.26));}
+.page-loader-gears{width:min(80vw,330px);height:auto;filter:drop-shadow(0 0 22px rgba(34,197,94,.32));}
 .gear-svg{width:100%;height:auto;overflow:visible}
-.gear-body{fill:none;stroke:#86efac;stroke-width:8.2;stroke-linecap:round;opacity:.98}
-.gear-hub{fill:#86efac;opacity:.95}
-.gear-spoke{stroke:#86efac;stroke-width:7;stroke-linecap:round;opacity:.9}
-.gear--big{transform-origin:130px 95px;animation:gearSpinPhysics 7.2s cubic-bezier(.55,.1,.34,1) infinite}
-.gear--left{transform-origin:68px 148px;animation:gearSpinRevPhysics 5.1s cubic-bezier(.5,.15,.38,1) infinite}
-.gear--right{transform-origin:198px 70px;animation:gearSpinRevPhysics 5.8s cubic-bezier(.6,.12,.4,1) infinite;animation-delay:.2s}
+.gear-body{fill:none;stroke:#4ade80;stroke-width:7.6;stroke-linecap:round;opacity:.98;filter:drop-shadow(0 0 8px rgba(34,197,94,.35))}
+.gear-hub{fill:#86efac;opacity:.96}
+.gear-spoke{stroke:#86efac;stroke-width:5.6;stroke-linecap:round;opacity:.92}
+.gear-ring-faint{fill:none;stroke:rgba(22,163,74,.22);stroke-width:3;stroke-linecap:round}
+.gear--big{transform-origin:130px 95px;animation:gearSpinPhysics 4.6s linear infinite}
+.gear--left{transform-origin:68px 148px;animation:gearSpinRevPhysics 3.4s linear infinite}
+.gear--right{transform-origin:198px 70px;animation:gearSpinRevPhysics 3.9s linear infinite;animation-delay:.16s}
+.gear-orbit{fill:none;stroke:rgba(74,222,128,.45);stroke-width:5.2;stroke-linecap:round;stroke-dasharray:18 16;animation:orbitPulse 2.4s ease-in-out infinite}
 .loader-panel{display:flex;align-items:center;gap:16px;margin-top:4px}
 .loader-percent{width:74px;height:74px;border-radius:50%;border:2px solid rgba(16,185,129,.4);display:grid;place-items:center;color:#86efac;font-family:var(--font-mono);font-weight:800;font-size:1.12rem;box-shadow:none;background:#111;}
 .loader-progress{position:relative;width:min(66vw,390px);height:66px;padding:10px 14px;border-radius:12px;border:1px solid rgba(16,185,129,.35);background:#111;box-shadow:none}
@@ -1204,6 +1206,10 @@ ul { list-style:none; }
   46%{transform:rotate(-168deg)}
   74%{transform:rotate(-268deg)}
   100%{transform:rotate(-360deg)}
+}
+@keyframes orbitPulse {
+  0%,100%{opacity:.45;stroke-dashoffset:0}
+  50%{opacity:1;stroke-dashoffset:26}
 }
 
 /* ── Mobile viewport height fix (address bar issues) ──────────────────── */
@@ -3732,19 +3738,24 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 <div id="pageLoader">
     <div class="page-loader-gears" aria-hidden="true">
     <svg class="gear-svg" viewBox="0 0 265 190" aria-hidden="true">
+      <path class="gear-orbit" d="M26 154 C66 182, 156 186, 235 92" />
+      <path class="gear-orbit" d="M46 136 C96 156, 164 146, 216 80" style="animation-delay:.34s;" />
       <g class="gear--big">
-        <circle class="gear-body" cx="130" cy="95" r="48" stroke-dasharray="8 14"/>
-        <circle class="gear-body" cx="130" cy="95" r="34"/>
+        <circle class="gear-ring-faint" cx="130" cy="95" r="53" stroke-dasharray="9 15"/>
+        <circle class="gear-body" cx="130" cy="95" r="48" stroke-dasharray="9 13"/>
+        <circle class="gear-body" cx="130" cy="95" r="34" stroke-dasharray="44 26"/>
         <line class="gear-spoke" x1="130" y1="95" x2="162" y2="95"/><line class="gear-spoke" x1="130" y1="95" x2="113" y2="124"/><line class="gear-spoke" x1="130" y1="95" x2="116" y2="66"/>
         <circle class="gear-hub" cx="130" cy="95" r="12"/><circle cx="130" cy="95" r="4" fill="#041522"/>
       </g>
       <g class="gear--left">
-        <circle class="gear-body" cx="68" cy="148" r="26" stroke-dasharray="7 12"/><circle class="gear-body" cx="68" cy="148" r="18"/>
+        <circle class="gear-ring-faint" cx="68" cy="148" r="30" stroke-dasharray="8 12"/>
+        <circle class="gear-body" cx="68" cy="148" r="26" stroke-dasharray="8 11"/><circle class="gear-body" cx="68" cy="148" r="18" stroke-dasharray="26 18"/>
         <line class="gear-spoke" x1="68" y1="148" x2="85" y2="148"/><line class="gear-spoke" x1="68" y1="148" x2="59" y2="163"/><line class="gear-spoke" x1="68" y1="148" x2="59" y2="132"/>
         <circle class="gear-hub" cx="68" cy="148" r="8"/><circle cx="68" cy="148" r="3" fill="#041522"/>
       </g>
       <g class="gear--right">
-        <circle class="gear-body" cx="198" cy="70" r="34" stroke-dasharray="7 12"/><circle class="gear-body" cx="198" cy="70" r="23"/>
+        <circle class="gear-ring-faint" cx="198" cy="70" r="39" stroke-dasharray="8 12"/>
+        <circle class="gear-body" cx="198" cy="70" r="34" stroke-dasharray="8 12"/><circle class="gear-body" cx="198" cy="70" r="23" stroke-dasharray="30 20"/>
         <line class="gear-spoke" x1="198" y1="70" x2="218" y2="70"/><line class="gear-spoke" x1="198" y1="70" x2="189" y2="88"/><line class="gear-spoke" x1="198" y1="70" x2="189" y2="52"/>
         <circle class="gear-hub" cx="198" cy="70" r="9"/><circle cx="198" cy="70" r="3.2" fill="#041522"/>
       </g>
