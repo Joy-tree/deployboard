@@ -5784,25 +5784,41 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <div class="card-subtitle">Notification and display preferences</div>
               </div>
               <div class="card-body" style="display:flex;flex-direction:column;gap:0;">
-                ${[
-                  ['Deploy Success Notifications', 'Get notified when a deployment completes successfully.', 'prefNotifySuccess', true],
-                  ['Deploy Failure Alerts', 'Immediate alerts when a build or deploy fails.', 'prefNotifyFail', true],
-                  ['Cron Job Alerts', 'Notify when a cron job fails or misses its schedule.', 'prefNotifyCron', false],
-                  ['Compact Log View', 'Reduce terminal font size for more lines per screen.', 'prefCompactLog', false],
-                  ['Auto-scroll Terminal', 'Terminal auto-scrolls to latest output during builds.', 'prefAutoScroll', true],
-                ].map(([label, hint, id, def]) => `
-                  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
-                    <div style="flex:1;min-width:0;">
-                      <div style="font-size:.86rem;font-weight:600;color:var(--text);">${label}</div>
-                      <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">${hint}</div>
-                    </div>
-                    <label style="position:relative;display:inline-flex;flex-shrink:0;cursor:pointer;">
-                      <input type="checkbox" id="${id}" ${def ? 'checked' : ''} style="opacity:0;width:0;height:0;position:absolute;">
-                      <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked;this.style.background=this.previousElementSibling.checked?'#10b981':'rgba(255,255,255,.1)';" style="width:42px;height:24px;border-radius:12px;background:${def?'#10b981':'rgba(255,255,255,.1)'};transition:background .2s;position:relative;display:block;border:1px solid rgba(255,255,255,.08);">
-                        <span style="position:absolute;top:3px;left:${def?'19':'3'}px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3);"></span>
-                      </span>
-                    </label>
-                  </div>`).join('')}
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Deploy Success Notifications</div>
+                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Get notified when a deployment completes successfully.</div>
+                  </div>
+                  <input type="checkbox" id="prefNotifySuccess" checked style="width:42px;height:24px;accent-color:#10b981;">
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Deploy Failure Alerts</div>
+                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Immediate alerts when a build or deploy fails.</div>
+                  </div>
+                  <input type="checkbox" id="prefNotifyFail" checked style="width:42px;height:24px;accent-color:#10b981;">
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Cron Job Alerts</div>
+                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Notify when a cron job fails or misses its schedule.</div>
+                  </div>
+                  <input type="checkbox" id="prefNotifyCron" style="width:42px;height:24px;accent-color:#10b981;">
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Compact Log View</div>
+                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Reduce terminal font size for more lines per screen.</div>
+                  </div>
+                  <input type="checkbox" id="prefCompactLog" style="width:42px;height:24px;accent-color:#10b981;">
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Auto-scroll Terminal</div>
+                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Terminal auto-scrolls to latest output during builds.</div>
+                  </div>
+                  <input type="checkbox" id="prefAutoScroll" checked style="width:42px;height:24px;accent-color:#10b981;">
+                </div>
                 <div style="padding-top:14px;">
                   <button class="btn btn-ghost" onclick="toast('Preferences saved','success')" style="width:100%;border-color:rgba(16,185,129,.2);min-height:42px;">Save Preferences</button>
                 </div>
@@ -5878,15 +5894,18 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                   </div>
                   <button class="btn btn-primary" style="min-height:36px;padding:0 14px;font-size:.78rem;" onclick="showPage('pricing')">Upgrade</button>
                 </div>
-                ${[
-                  ['Projects', '5 / 5', 100],
-                  ['Build Time', '120s / 500s', 24],
-                  ['Bandwidth', '8 GB / 100 GB', 8],
-                ].map(([label, val, pct]) => `
-                  <div>
-                    <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">${label}</span><span style="font-family:var(--font-mono);color:#94a3b8;">${val}</span></div>
-                    <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div style="height:100%;width:${pct}%;border-radius:999px;background:${pct>80?'#f87171':'#10b981'};"></div></div>
-                  </div>`).join('')}
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">Projects</span><span style="font-family:var(--font-mono);color:#94a3b8;">5 / 5</span></div>
+                  <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div style="height:100%;width:100%;border-radius:999px;background:#f87171;"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">Build Time</span><span style="font-family:var(--font-mono);color:#94a3b8;">120s / 500s</span></div>
+                  <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div style="height:100%;width:24%;border-radius:999px;background:#10b981;"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">Bandwidth</span><span style="font-family:var(--font-mono);color:#94a3b8;">8 GB / 100 GB</span></div>
+                  <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div style="height:100%;width:8%;border-radius:999px;background:#10b981;"></div></div>
+                </div>
                 <button class="btn btn-ghost" onclick="showPage('pricing')" style="min-height:42px;border-color:rgba(16,185,129,.2);font-size:.84rem;">View All Plans</button>
               </div>
             </div>
