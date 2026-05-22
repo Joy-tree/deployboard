@@ -43,6 +43,11 @@ const INTERNAL_DEPLOY_KEY = process.env.INTERNAL_DEPLOY_KEY || crypto.randomByte
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 30);
 const AUTO_DEPLOY_POLL_INTERVAL_MS = Math.max(250, Number(process.env.AUTO_DEPLOY_POLL_INTERVAL_MS || 750) || 750);
 const AUTO_DEPLOY_INITIAL_DELAY_MS = Math.max(250, Number(process.env.AUTO_DEPLOY_INITIAL_DELAY_MS || AUTO_DEPLOY_POLL_INTERVAL_MS) || AUTO_DEPLOY_POLL_INTERVAL_MS);
+const RESEND_API_KEY = String(process.env.RESEND_API_KEY || '').trim();
+const RESEND_FROM_EMAIL = String(process.env.RESEND_FROM_EMAIL || '').trim();
+const RESEND_AUDIENCE_EMAIL = String(process.env.RESEND_AUDIENCE_EMAIL || '').trim();
+const RESEND_REPLY_TO_EMAIL = String(process.env.RESEND_REPLY_TO_EMAIL || '').trim();
+const RESEND_LOGO_URL = String(process.env.RESEND_LOGO_URL || '').trim();
 
 function normalizeBaseDomain(value) {
   return String(value || 'localhost')
@@ -63,6 +68,99 @@ function normalizeHostHeader(value) {
     .split('/')[0]
     .replace(/:[0-9]+$/, '')
     .replace(/^\.+|\.+$/g, '');
+}
+
+async function sendDeploymentStatusEmail({
+  userEmail = '',
+  projectName = '',
+  subdomain = '',
+  branch = 'main',
+  status = 'success',
+  duration = 0,
+  source = 'manual',
+  liveUrl = '',
+  sha = '',
+  errorMessage = ''
+} = {}) {
+  if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return { ok: false, skipped: true, reason: 'resend_not_configured' };
+  const recipient = RESEND_AUDIENCE_EMAIL || String(userEmail || '').trim();
+  if (!recipient) return { ok: false, skipped: true, reason: 'missing_recipient' };
+  const statusLabel = status === 'success' ? 'Successful' : 'Failed';
+  const shortSha = String(sha || '').trim().slice(0, 7);
+  const sourceLabel = source === 'auto' ? 'Automatic (GitHub push)' : 'Manual (Redeploy click)';
+  const safeError = String(errorMessage || '').trim().slice(0, 500);
+  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
+  const lines = [
+    `JOYTREE deployment report`,
+    `Project: ${projectName || subdomain}`,
+    `Status: ${statusLabel}`,
+    `Source: ${sourceLabel}`,
+    `Branch: ${branch || 'main'}`,
+    shortSha ? `Commit: ${shortSha}` : '',
+    duration > 0 ? `Duration: ${duration}s` : '',
+    liveUrl ? `Live URL: ${liveUrl}` : '',
+    safeError ? `Error: ${safeError}` : '',
+    '',
+    'Sent by JOYTREE.'
+  ].filter(Boolean);
+  const statusColor = status === 'success' ? '#0f766e' : '#b91c1c';
+  const statusBg = status === 'success' ? '#ecfeff' : '#fef2f2';
+  const html = `<!doctype html>
+<html><body style="margin:0;padding:0;background:#f5f8fb;font-family:Inter,Segoe UI,Arial,sans-serif;color:#0f172a;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
+        <tr>
+          <td style="padding:22px 26px;background:linear-gradient(120deg,#0f172a,#14532d);color:#fff;">
+            <table role="presentation" width="100%"><tr>
+              <td style="width:54px;vertical-align:middle;">
+                <img src="${logoUrl}" alt="JOYTREE" width="44" height="44" style="width:44px;height:44px;border-radius:10px;display:block;background:#fff;object-fit:cover;">
+              </td>
+              <td style="vertical-align:middle;">
+                <div style="font-size:12px;letter-spacing:.12em;opacity:.82;">DEPLOYMENT INTELLIGENCE</div>
+                <div style="font-size:24px;font-weight:800;line-height:1.2;">JOYTREE</div>
+              </td>
+            </tr></table>
+          </td>
+        </tr>
+        <tr><td style="padding:24px 26px;">
+          <div style="display:inline-block;padding:8px 12px;border-radius:999px;background:${statusBg};color:${statusColor};font-size:12px;font-weight:700;letter-spacing:.03em;">
+            ${statusLabel.toUpperCase()} DEPLOYMENT
+          </div>
+          <h2 style="margin:14px 0 8px;font-size:22px;line-height:1.3;">${projectName || subdomain} is now ${status === 'success' ? 'live' : 'reporting an issue'}.</h2>
+          <p style="margin:0 0 16px;color:#334155;font-size:14px;">Here’s your professional deployment report from JOYTREE.</p>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+            <tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Project:</strong> ${projectName || subdomain}</td></tr>
+            <tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Source:</strong> ${sourceLabel}</td></tr>
+            <tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Branch:</strong> ${branch || 'main'}${shortSha ? ` <span style="color:#64748b;">(${shortSha})</span>` : ''}</td></tr>
+            ${duration > 0 ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Duration:</strong> ${duration}s</td></tr>` : ''}
+            ${liveUrl ? `<tr><td style="padding:14px 16px;border-bottom:${safeError ? '1px solid #e2e8f0' : '0'};font-size:14px;"><strong>Live URL:</strong> <a href="${liveUrl}" style="color:#0ea5e9;text-decoration:none;">${liveUrl}</a></td></tr>` : ''}
+            ${safeError ? `<tr><td style="padding:14px 16px;font-size:14px;color:#991b1b;"><strong>Error:</strong> ${safeError}</td></tr>` : ''}
+          </table>
+          <p style="margin:16px 0 0;color:#64748b;font-size:12px;">This message was sent by JOYTREE deployment notifications.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+  const payload = {
+    from: RESEND_FROM_EMAIL,
+    to: [recipient],
+    subject: `JOYTREE • ${statusLabel} deployment — ${projectName || subdomain}`,
+    text: lines.join('\n'),
+    html
+  };
+  if (RESEND_REPLY_TO_EMAIL) payload.reply_to = RESEND_REPLY_TO_EMAIL;
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!r.ok) {
+    const detail = await r.text().catch(() => '');
+    return { ok: false, skipped: false, reason: `resend_http_${r.status}`, detail: detail.slice(0, 300) };
+  }
+  return { ok: true };
 }
 
 // ── Ensure directories ────────────────────────────────────────────────────────
@@ -1665,6 +1763,25 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     const duration = Math.round((Date.now() - buildStart) / 1000);
     deployment.status = 'success'; deployment.duration = duration; deployment.endedAt = new Date();
     try { await deployment.save(); } catch(e) {}
+    const ownerUser = project?.ownerUserId
+      ? await User.findById(project.ownerUserId).select('email').lean().catch(() => null)
+      : null;
+    const notifyEmail = ownerUser?.email || req.user?.email || '';
+    const liveUrl = cf?.url || `https://${cleanSub}.${BASE_DOMAIN}`;
+    const notifySuccess = await sendDeploymentStatusEmail({
+      userEmail: notifyEmail,
+      projectName: name,
+      subdomain: cleanSub,
+      branch: branch || 'main',
+      status: 'success',
+      duration,
+      source: deploySource,
+      liveUrl,
+      sha: triggerSha
+    }).catch(() => ({ ok: false, skipped: false, reason: 'email_send_exception' }));
+    if (!notifySuccess.ok && !notifySuccess.skipped) {
+      emit('build:log', { line: `\x1b[33m[Resend]\x1b[0m Deployment email could not be sent (${notifySuccess.reason || 'unknown'}).` });
+    }
     if (deploySource === 'auto') {
       try {
         await Project.findByIdAndUpdate(project._id, {
@@ -1700,6 +1817,25 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     const buildDir = path.join(TMP_DIR, deployId);
     try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
     const safeErr = sanitizeSecrets(buildErr.message);
+    const ownerUser = project?.ownerUserId
+      ? await User.findById(project.ownerUserId).select('email').lean().catch(() => null)
+      : null;
+    const notifyEmail = ownerUser?.email || req.user?.email || '';
+    const notifyFailure = await sendDeploymentStatusEmail({
+      userEmail: notifyEmail,
+      projectName: name,
+      subdomain: cleanSub,
+      branch: branch || 'main',
+      status: 'failed',
+      duration,
+      source: deploySource,
+      liveUrl: `https://${cleanSub}.${BASE_DOMAIN}`,
+      sha: triggerSha,
+      errorMessage: safeErr
+    }).catch(() => ({ ok: false, skipped: false, reason: 'email_send_exception' }));
+    if (!notifyFailure.ok && !notifyFailure.skipped) {
+      emit('build:log', { line: `\x1b[33m[Resend]\x1b[0m Deployment email could not be sent (${notifyFailure.reason || 'unknown'}).` });
+    }
     emit('build:log', { line: `\x1b[31m[DeployBoard]\x1b[0m Build failed: ${safeErr}` });
     emit('build:done', { status: 'failed', duration });
     console.error(`[Deploy] FAILED ${name}:`, sanitizeSecrets(buildErr.message));
