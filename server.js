@@ -43,6 +43,10 @@ const INTERNAL_DEPLOY_KEY = process.env.INTERNAL_DEPLOY_KEY || crypto.randomByte
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 30);
 const AUTO_DEPLOY_POLL_INTERVAL_MS = Math.max(250, Number(process.env.AUTO_DEPLOY_POLL_INTERVAL_MS || 750) || 750);
 const AUTO_DEPLOY_INITIAL_DELAY_MS = Math.max(250, Number(process.env.AUTO_DEPLOY_INITIAL_DELAY_MS || AUTO_DEPLOY_POLL_INTERVAL_MS) || AUTO_DEPLOY_POLL_INTERVAL_MS);
+const RESEND_API_KEY = String(process.env.RESEND_API_KEY || '').trim();
+const RESEND_FROM_EMAIL = String(process.env.RESEND_FROM_EMAIL || '').trim();
+const RESEND_AUDIENCE_EMAIL = String(process.env.RESEND_AUDIENCE_EMAIL || '').trim();
+const RESEND_REPLY_TO_EMAIL = String(process.env.RESEND_REPLY_TO_EMAIL || '').trim();
 
 function normalizeBaseDomain(value) {
   return String(value || 'localhost')
@@ -63,6 +67,56 @@ function normalizeHostHeader(value) {
     .split('/')[0]
     .replace(/:[0-9]+$/, '')
     .replace(/^\.+|\.+$/g, '');
+}
+
+async function sendDeploymentStatusEmail({
+  userEmail = '',
+  projectName = '',
+  subdomain = '',
+  branch = 'main',
+  status = 'success',
+  duration = 0,
+  source = 'manual',
+  liveUrl = '',
+  sha = '',
+  errorMessage = ''
+} = {}) {
+  if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return { ok: false, skipped: true, reason: 'resend_not_configured' };
+  const recipient = RESEND_AUDIENCE_EMAIL || String(userEmail || '').trim();
+  if (!recipient) return { ok: false, skipped: true, reason: 'missing_recipient' };
+  const statusLabel = status === 'success' ? 'Successful' : 'Failed';
+  const shortSha = String(sha || '').trim().slice(0, 7);
+  const sourceLabel = source === 'auto' ? 'Automatic (GitHub push)' : 'Manual (Redeploy click)';
+  const safeError = String(errorMessage || '').trim().slice(0, 500);
+  const lines = [
+    `Project: ${projectName || subdomain}`,
+    `Status: ${statusLabel}`,
+    `Source: ${sourceLabel}`,
+    `Branch: ${branch || 'main'}`,
+    shortSha ? `Commit: ${shortSha}` : '',
+    duration > 0 ? `Duration: ${duration}s` : '',
+    liveUrl ? `Live URL: ${liveUrl}` : '',
+    safeError ? `Error: ${safeError}` : '',
+    '',
+    'Sent by DeployBoard.'
+  ].filter(Boolean);
+  const payload = {
+    from: RESEND_FROM_EMAIL,
+    to: [recipient],
+    subject: `[DeployBoard] ${statusLabel} deployment — ${projectName || subdomain}`,
+    text: lines.join('\n')
+  };
+  if (RESEND_REPLY_TO_EMAIL) payload.reply_to = RESEND_REPLY_TO_EMAIL;
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!r.ok) {
+    const detail = await r.text().catch(() => '');
+    return { ok: false, skipped: false, reason: `resend_http_${r.status}`, detail: detail.slice(0, 300) };
+  }
+  return { ok: true };
 }
 
 // ── Ensure directories ────────────────────────────────────────────────────────
@@ -1665,6 +1719,25 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     const duration = Math.round((Date.now() - buildStart) / 1000);
     deployment.status = 'success'; deployment.duration = duration; deployment.endedAt = new Date();
     try { await deployment.save(); } catch(e) {}
+    const ownerUser = project?.ownerUserId
+      ? await User.findById(project.ownerUserId).select('email').lean().catch(() => null)
+      : null;
+    const notifyEmail = ownerUser?.email || req.user?.email || '';
+    const liveUrl = cf?.url || `https://${cleanSub}.${BASE_DOMAIN}`;
+    const notifySuccess = await sendDeploymentStatusEmail({
+      userEmail: notifyEmail,
+      projectName: name,
+      subdomain: cleanSub,
+      branch: branch || 'main',
+      status: 'success',
+      duration,
+      source: deploySource,
+      liveUrl,
+      sha: triggerSha
+    }).catch(() => ({ ok: false, skipped: false, reason: 'email_send_exception' }));
+    if (!notifySuccess.ok && !notifySuccess.skipped) {
+      emit('build:log', { line: `\x1b[33m[Resend]\x1b[0m Deployment email could not be sent (${notifySuccess.reason || 'unknown'}).` });
+    }
     if (deploySource === 'auto') {
       try {
         await Project.findByIdAndUpdate(project._id, {
@@ -1700,6 +1773,25 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     const buildDir = path.join(TMP_DIR, deployId);
     try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
     const safeErr = sanitizeSecrets(buildErr.message);
+    const ownerUser = project?.ownerUserId
+      ? await User.findById(project.ownerUserId).select('email').lean().catch(() => null)
+      : null;
+    const notifyEmail = ownerUser?.email || req.user?.email || '';
+    const notifyFailure = await sendDeploymentStatusEmail({
+      userEmail: notifyEmail,
+      projectName: name,
+      subdomain: cleanSub,
+      branch: branch || 'main',
+      status: 'failed',
+      duration,
+      source: deploySource,
+      liveUrl: `https://${cleanSub}.${BASE_DOMAIN}`,
+      sha: triggerSha,
+      errorMessage: safeErr
+    }).catch(() => ({ ok: false, skipped: false, reason: 'email_send_exception' }));
+    if (!notifyFailure.ok && !notifyFailure.skipped) {
+      emit('build:log', { line: `\x1b[33m[Resend]\x1b[0m Deployment email could not be sent (${notifyFailure.reason || 'unknown'}).` });
+    }
     emit('build:log', { line: `\x1b[31m[DeployBoard]\x1b[0m Build failed: ${safeErr}` });
     emit('build:done', { status: 'failed', duration });
     console.error(`[Deploy] FAILED ${name}:`, sanitizeSecrets(buildErr.message));
