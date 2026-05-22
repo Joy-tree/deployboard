@@ -337,6 +337,14 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
     throw new Error(`Output dir "${project.outputDir||'dist'}" not found. Available: ${dirs.join(', ')}`);
   }
 
+  const indexCandidates = [path.join(finalSrcDir, 'index.html'), path.join(finalSrcDir, '200.html')];
+  const hasStaticEntry = indexCandidates.some(fp => fs.existsSync(fp));
+  if (!hasStaticEntry) {
+    log(`\x1b[31m[error] No static entry file found in output directory\x1b[0m`);
+    log(`\x1b[33m[hint] Missing index.html. Check your branch/outputDir or build config.\x1b[0m`);
+    throw new Error('Static deploy validation failed: missing index.html in output directory');
+  }
+
   if (fs.existsSync(destDir)) fs.rmSync(destDir, { recursive: true, force: true });
   fs.mkdirSync(destDir, { recursive: true });
   copyDir(finalSrcDir, destDir);
