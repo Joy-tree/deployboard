@@ -436,12 +436,21 @@ app.use((req, res, next) => {
 // ── HTML helpers ─────────────────────────────────────────────────────────────
 function errorPage(title, msg) {
   return `<!DOCTYPE html><html><head><title>${title}</title>
-    <style>body{font-family:sans-serif;background:#060b14;color:#e2e8f0;display:flex;
-    align-items:center;justify-content:center;height:100vh;margin:0}
-    .b{text-align:center;padding:2rem}a{color:#10b981}
-    code{background:#1e293b;padding:3px 8px;border-radius:4px}</style></head>
-    <body><div class="b"><h1>${title}</h1><p>${msg}</p>
-    <p><a href="https://${BASE_DOMAIN}">Back to DeployBoard</a></p>
+    <style>
+    body{font-family:Inter,Segoe UI,sans-serif;background:radial-gradient(circle at 20% 0%,rgba(16,185,129,.18),transparent 35%),#05070d;color:#e2e8f0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    .b{max-width:660px;margin:20px;text-align:center;padding:2rem;border:1px solid rgba(16,185,129,.24);border-radius:20px;background:linear-gradient(180deg,#0b1220,#070b14)}
+    .badge{display:inline-block;padding:7px 14px;border-radius:999px;background:rgba(16,185,129,.14);color:#86efac;font-size:.78rem;letter-spacing:.08em;font-weight:800;margin-bottom:10px}
+    h1{font-size:2rem;margin:.2rem 0 1rem}
+    p{color:#9fb1c9;line-height:1.6}
+    a{color:#34d399;text-decoration:none;font-weight:700}
+    a:hover{text-decoration:underline}
+    code{background:#1e293b;padding:3px 8px;border-radius:4px}
+    </style></head>
+    <body><div class="b">
+    <div class="badge">JOYTREE EDGE STATUS</div>
+    <h1>${title}</h1><p>${msg}</p>
+    <p>This subdomain is reserved but no live release has been published yet.</p>
+    <p><a href="https://${BASE_DOMAIN}">Back to JOYTREE</a></p>
     </div></body></html>`;
 }
 
