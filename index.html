@@ -5762,15 +5762,22 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 </div>
                 <div class="field" style="margin:0;">
                   <label class="field-label">Timezone</label>
-                  <select class="input" id="settingsTimezone">
-                    <option value="UTC">UTC</option>
-                    <option value="Africa/Accra">Africa/Accra (GMT+0)</option>
-                    <option value="America/New_York">America/New York (EST)</option>
-                    <option value="America/Los_Angeles">America/Los Angeles (PST)</option>
-                    <option value="Europe/London">Europe/London (GMT)</option>
-                    <option value="Europe/Berlin">Europe/Berlin (CET)</option>
-                    <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
-                  </select>
+                  <div class="custom-select" id="cs_settingsTimezone">
+                    <div class="custom-select-trigger" onclick="csToggle(this)">
+                      <span class="cs-value">UTC</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="custom-select-dropdown">
+                      <div class="cs-option selected" data-value="UTC" onclick="csSelect(this)">UTC</div>
+                      <div class="cs-option" data-value="Africa/Accra" onclick="csSelect(this)">Africa/Accra (GMT+0)</div>
+                      <div class="cs-option" data-value="America/New_York" onclick="csSelect(this)">America/New York (EST)</div>
+                      <div class="cs-option" data-value="America/Los_Angeles" onclick="csSelect(this)">America/Los Angeles (PST)</div>
+                      <div class="cs-option" data-value="Europe/London" onclick="csSelect(this)">Europe/London (GMT)</div>
+                      <div class="cs-option" data-value="Europe/Berlin" onclick="csSelect(this)">Europe/Berlin (CET)</div>
+                      <div class="cs-option" data-value="Asia/Tokyo" onclick="csSelect(this)">Asia/Tokyo (JST)</div>
+                    </div>
+                    <input type="hidden" id="settingsTimezone" value="UTC">
+                  </div>
                   <div style="font-size:.75rem;color:#475569;margin-top:6px;">Affects timestamps in logs, activity feed, and cron jobs.</div>
                 </div>
                 <button class="btn btn-primary" onclick="saveAccountSettings()" style="min-height:46px;font-weight:800;">Save Profile</button>
@@ -5784,25 +5791,41 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <div class="card-subtitle">Notification and display preferences</div>
               </div>
               <div class="card-body" style="display:flex;flex-direction:column;gap:0;">
-                ${[
-                  ['Deploy Success Notifications', 'Get notified when a deployment completes successfully.', 'prefNotifySuccess', true],
-                  ['Deploy Failure Alerts', 'Immediate alerts when a build or deploy fails.', 'prefNotifyFail', true],
-                  ['Cron Job Alerts', 'Notify when a cron job fails or misses its schedule.', 'prefNotifyCron', false],
-                  ['Compact Log View', 'Reduce terminal font size for more lines per screen.', 'prefCompactLog', false],
-                  ['Auto-scroll Terminal', 'Terminal auto-scrolls to latest output during builds.', 'prefAutoScroll', true],
-                ].map(([label, hint, id, def]) => `
-                  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
-                    <div style="flex:1;min-width:0;">
-                      <div style="font-size:.86rem;font-weight:600;color:var(--text);">${label}</div>
-                      <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">${hint}</div>
-                    </div>
-                    <label style="position:relative;display:inline-flex;flex-shrink:0;cursor:pointer;">
-                      <input type="checkbox" id="${id}" ${def ? 'checked' : ''} style="opacity:0;width:0;height:0;position:absolute;">
-                      <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked;this.style.background=this.previousElementSibling.checked?'#10b981':'rgba(255,255,255,.1)';" style="width:42px;height:24px;border-radius:12px;background:${def?'#10b981':'rgba(255,255,255,.1)'};transition:background .2s;position:relative;display:block;border:1px solid rgba(255,255,255,.08);">
-                        <span style="position:absolute;top:3px;left:${def?'19':'3'}px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3);"></span>
-                      </span>
-                    </label>
-                  </div>`).join('')}
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Deploy Success Notifications</div>
+                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Get notified when a deployment completes successfully.</div>
+                  </div>
+                  <input type="checkbox" id="prefNotifySuccess" checked style="width:42px;height:24px;accent-color:#10b981;">
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Deploy Failure Alerts</div>
+                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Immediate alerts when a build or deploy fails.</div>
+                  </div>
+                  <input type="checkbox" id="prefNotifyFail" checked style="width:42px;height:24px;accent-color:#10b981;">
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Cron Job Alerts</div>
+                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Notify when a cron job fails or misses its schedule.</div>
+                  </div>
+                  <input type="checkbox" id="prefNotifyCron" style="width:42px;height:24px;accent-color:#10b981;">
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Compact Log View</div>
+                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Reduce terminal font size for more lines per screen.</div>
+                  </div>
+                  <input type="checkbox" id="prefCompactLog" style="width:42px;height:24px;accent-color:#10b981;">
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Auto-scroll Terminal</div>
+                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Terminal auto-scrolls to latest output during builds.</div>
+                  </div>
+                  <input type="checkbox" id="prefAutoScroll" checked style="width:42px;height:24px;accent-color:#10b981;">
+                </div>
                 <div style="padding-top:14px;">
                   <button class="btn btn-ghost" onclick="toast('Preferences saved','success')" style="width:100%;border-color:rgba(16,185,129,.2);min-height:42px;">Save Preferences</button>
                 </div>
@@ -5873,20 +5896,23 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.15);border-radius:12px;">
                   <div>
-                    <div style="font-size:.84rem;font-weight:800;color:#d1fae5;">Free Trial</div>
-                    <div style="font-size:.73rem;color:#64748b;margin-top:2px;">0.85 GB RAM · Shared vCPU · 5 projects</div>
+                    <div style="font-size:.84rem;font-weight:800;color:#d1fae5;" id="settingsPlanLabel">Free Trial</div>
+                    <div style="font-size:.73rem;color:#64748b;margin-top:2px;" id="settingsPlanSub">0.85 GB RAM · Shared vCPU · 5 projects</div>
                   </div>
                   <button class="btn btn-primary" style="min-height:36px;padding:0 14px;font-size:.78rem;" onclick="showPage('pricing')">Upgrade</button>
                 </div>
-                ${[
-                  ['Projects', '5 / 5', 100],
-                  ['Build Time', '120s / 500s', 24],
-                  ['Bandwidth', '8 GB / 100 GB', 8],
-                ].map(([label, val, pct]) => `
-                  <div>
-                    <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">${label}</span><span style="font-family:var(--font-mono);color:#94a3b8;">${val}</span></div>
-                    <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div style="height:100%;width:${pct}%;border-radius:999px;background:${pct>80?'#f87171':'#10b981'};"></div></div>
-                  </div>`).join('')}
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">Projects</span><span style="font-family:var(--font-mono);color:#94a3b8;" id="settingsUsageProjects">0 / 0</span></div>
+                  <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div id="settingsUsageProjectsBar" style="height:100%;width:0%;border-radius:999px;background:#10b981;"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">Build Time</span><span style="font-family:var(--font-mono);color:#94a3b8;" id="settingsUsageBuild">0s / 0s</span></div>
+                  <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div id="settingsUsageBuildBar" style="height:100%;width:0%;border-radius:999px;background:#10b981;"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">Bandwidth</span><span style="font-family:var(--font-mono);color:#94a3b8;">8 GB / 100 GB</span></div>
+                  <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div style="height:100%;width:8%;border-radius:999px;background:#10b981;"></div></div>
+                </div>
                 <button class="btn btn-ghost" onclick="showPage('pricing')" style="min-height:42px;border-color:rgba(16,185,129,.2);font-size:.84rem;">View All Plans</button>
               </div>
             </div>
@@ -7019,15 +7045,15 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
       <div class="page-header">
         <div class="page-title">Usage & Limits</div>
-        <div class="page-subtitle">Monitor your platform resource usage in real time.</div>
+        <div class="page-subtitle">Monitor your plan usage and limits in real time.</div>
       </div>
 
       <!-- Plan banner -->
       <div style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(6,95,70,0.08));border:1px solid rgba(16,185,129,0.2);border-radius:12px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
         <div>
           <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;color:var(--green);margin-bottom:4px;">CURRENT PLAN</div>
-          <div style="font-size:1.3rem;font-weight:800;color:var(--text);">Free Plan</div>
-          <div style="font-size:0.78rem;color:var(--text-2);margin-top:2px;">All features included during open beta</div>
+          <div style="font-size:1.3rem;font-weight:800;color:var(--text);" id="usagePlanName">Free Plan</div>
+          <div style="font-size:0.78rem;color:var(--text-2);margin-top:2px;"><span id="usagePlanDescription">All features included during open beta</span></div>
         </div>
         <span class="badge badge-success" style="font-size:0.78rem;padding:6px 14px;"><span class="badge-dot"></span>Active</span>
       </div>
@@ -7038,7 +7064,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <div class="card-body">
             <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
               <span style="font-size:0.82rem;color:var(--text-2);">Used</span>
-              <span style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text);" id="usageProjects">0 / unlimited</span>
+              <span style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text);" id="usageProjects">0 / 5</span>
             </div>
             <div style="height:6px;background:rgba(16,185,129,0.1);border-radius:3px;">
               <div id="usageProjectsBar" style="height:100%;width:0%;background:var(--green);border-radius:3px;transition:width 0.5s;"></div>
@@ -7050,7 +7076,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <div class="card-body">
             <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
               <span style="font-size:0.82rem;color:var(--text-2);">Used</span>
-              <span style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text);" id="usageDeploys">0 / unlimited</span>
+              <span style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text);" id="usageDeploys">0 / 25</span>
             </div>
             <div style="height:6px;background:rgba(16,185,129,0.1);border-radius:3px;">
               <div id="usageDeploysBar" style="height:100%;width:0%;background:var(--green);border-radius:3px;transition:width 0.5s;"></div>
@@ -7061,7 +7087,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
       <!-- Resource usage -->
       <div class="card" style="margin-bottom:20px;">
-        <div class="card-header"><div class="card-title">Server Resources</div><div class="card-subtitle">Live usage from your VPS</div></div>
+        <div class="card-header"><div class="card-title">Server Resources</div><div class="card-subtitle">Usage from your current plan</div></div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:16px;">
           <div>
             <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
@@ -7096,14 +7122,14 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         <div class="card-body" style="padding:0;">
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Feature</th><th>Free Plan</th></tr></thead>
+              <thead><tr><th>Feature</th><th id="usagePlanHeader">Free Plan</th></tr></thead>
               <tbody>
-                <tr><td>Projects</td><td style="color:var(--green);font-weight:600;">Unlimited</td></tr>
-                <tr><td>Deployments / month</td><td style="color:var(--green);font-weight:600;">Unlimited</td></tr>
-                <tr><td>Custom Domains</td><td style="color:var(--green);font-weight:600;">Unlimited</td></tr>
-                <tr><td>Build Minutes</td><td style="color:var(--green);font-weight:600;">Unlimited</td></tr>
-                <tr><td>Team Members</td><td style="color:var(--green);font-weight:600;">Unlimited</td></tr>
-                <tr><td>Webhooks</td><td style="color:var(--green);font-weight:600;">Unlimited</td></tr>
+                <tr><td>RAM</td><td style="color:var(--green);font-weight:600;" id="usageLimitRam">0.85 GB</td></tr>
+                <tr><td>Projects</td><td style="color:var(--green);font-weight:600;" id="usageLimitProjects">Up to 5</td></tr>
+                <tr><td>Deployments / month</td><td style="color:var(--green);font-weight:600;" id="usageLimitDeployments">Up to 25</td></tr>
+                <tr><td>Custom Domains</td><td style="color:var(--green);font-weight:600;" id="usageLimitDomains">Up to 1</td></tr>
+                <tr><td>Build Time / month</td><td style="color:var(--green);font-weight:600;" id="usageLimitBuild">500s</td></tr>
+                <tr><td>Bandwidth / month</td><td style="color:var(--green);font-weight:600;" id="usageLimitBandwidth">100 GB</td></tr>
                 <tr><td>SSL Certificates</td><td style="color:var(--green);font-weight:600;">Automatic via Cloudflare</td></tr>
               </tbody>
             </table>
@@ -7698,10 +7724,10 @@ if (settings.baseDomain === 'joytree.app') settings.baseDomain = 'joytree.site';
 
 
 const PLAN_LIMITS = {
-  free:    { maxProjects: 5,   monthlyBuildSeconds: 500 },
-  starter: { maxProjects: 10,  monthlyBuildSeconds: 3000 },
-  growth:  { maxProjects: 35,  monthlyBuildSeconds: 12000 },
-  scale:   { maxProjects: Infinity, monthlyBuildSeconds: Infinity }
+  free:    { label:'Free Plan', ramGb:0.85, maxProjects:5, monthlyDeployments:25, maxCustomDomains:1, monthlyBuildSeconds:500, monthlyBandwidthGb:100, description:'0.85 GB RAM with limited resources for small projects.' },
+  starter: { label:'Starter', ramGb:1, maxProjects:10, monthlyDeployments:120, maxCustomDomains:5, monthlyBuildSeconds:3000, monthlyBandwidthGb:250, description:'1 GB RAM with more deploys and build capacity.' },
+  growth:  { label:'Growth', ramGb:5, maxProjects:35, monthlyDeployments:500, maxCustomDomains:30, monthlyBuildSeconds:12000, monthlyBandwidthGb:1024, description:'5 GB RAM for growing production workloads.' },
+  scale:   { label:'Scale Max', ramGb:16, maxProjects:120, monthlyDeployments:2000, maxCustomDomains:120, monthlyBuildSeconds:60000, monthlyBandwidthGb:8192, description:'High-capacity plan for large teams and heavy traffic.' }
 };
 function getCurrentPlanKey() {
   const key = String(settings.billingPlan || 'free').toLowerCase();
@@ -8248,6 +8274,8 @@ function restartActiveDeployment() {
   if (!d) return toast('No active deployment selected to restart', 'info');
   const p = projects.find(x => String(x.id || x._id || '') === String(d.projectId || ''));
   if (!p) return toast('Could not find project to restart', 'error');
+  deployFormPrefillMode = true;
+  deployFormContext = 'redeploy';
   showPage('new-deploy');
   document.getElementById('deployProjectName').value = p.name || '';
   document.getElementById('deploySubdomain').value = p.subdomain || '';
@@ -8539,6 +8567,20 @@ function renderDashboard() {
   if (qp) qp.textContent = `${total} / ${formatPlanQuota(limit.maxProjects)}`;
   if (qb) qb.textContent = `${usedBuild}s / ${formatPlanQuota(limit.monthlyBuildSeconds, 's')}`;
   if (pn) pn.textContent = currentPlan.toUpperCase();
+
+  const pct = (used, cap) => !Number.isFinite(cap) || cap <= 0 ? 0 : Math.max(0, Math.min(100, Math.round((used / cap) * 100)));
+  const sp = document.getElementById('settingsUsageProjects');
+  const spb = document.getElementById('settingsUsageProjectsBar');
+  const sb = document.getElementById('settingsUsageBuild');
+  const sbb = document.getElementById('settingsUsageBuildBar');
+  const spl = document.getElementById('settingsPlanLabel');
+  const sps = document.getElementById('settingsPlanSub');
+  if (spl) spl.textContent = limit.label || currentPlan.toUpperCase();
+  if (sps) sps.textContent = `${limit.ramGb} GB RAM · Shared vCPU · ${formatPlanQuota(limit.maxProjects)} projects`;
+  if (sp) sp.textContent = `${total} / ${formatPlanQuota(limit.maxProjects)}`;
+  if (spb) { const v = pct(total, limit.maxProjects); spb.style.width = `${v}%`; spb.style.background = v > 80 ? '#f87171' : '#10b981'; }
+  if (sb) sb.textContent = `${usedBuild}s / ${formatPlanQuota(limit.monthlyBuildSeconds, 's')}`;
+  if (sbb) { const v = pct(usedBuild, limit.monthlyBuildSeconds); sbb.style.width = `${v}%`; sbb.style.background = v > 80 ? '#f87171' : '#10b981'; }
 
   // Greeting
   const hour = new Date().getHours();
@@ -9331,7 +9373,7 @@ async function startDeployment() {
   if (!/^https?:\/\/(www\.)?github\.com\/.+\/.+/.test(repoUrl)) {
     toast('Please enter a valid GitHub repository URL', 'error'); clearTimeout(deployLaunchNavTimer); setDeployLaunchUI(false); return;
   }
-  if (availabilityCheckInFlight) {
+  if (deployFormContext === 'new' && availabilityCheckInFlight) {
     toast('Please wait — still checking project name/subdomain availability.', 'info');
     return;
   }
@@ -10546,6 +10588,7 @@ function loadSettingsUI() {
   if (settings.ghUser)        document.getElementById('settingsGhUser').value        = settings.ghUser;
   if (settings.name)          document.getElementById('settingsName').value          = settings.name;
   if (settings.email)         document.getElementById('settingsEmail').value         = settings.email;
+  if (settings.timezone)      csSetValue('settingsTimezone', settings.timezone);
   checkSystemStatus();
   loadGlobalWebhookSecret();
   // Always land on Account tab (non-admin users only see Domain + Account anyway)
@@ -10623,6 +10666,7 @@ function saveDomainSettings() {
 function saveAccountSettings() {
   settings.name  = document.getElementById('settingsName').value;
   settings.email = document.getElementById('settingsEmail').value;
+  settings.timezone = document.getElementById('settingsTimezone')?.value || 'UTC';
   save();
   setUserAvatar(document.getElementById('sidebarAvatar'), currentUser, settings.name || settings.email || 'JG');
   setUserAvatar(document.getElementById('topbarAvatar'), currentUser, settings.name || settings.email || 'JG');
@@ -11516,9 +11560,25 @@ async function renderUsage() {
     return s.getMonth() === now.getMonth() && s.getFullYear() === now.getFullYear();
   }).length;
 
-  if (el('usageProjects'))    el('usageProjects').textContent    = projCount + ' / unlimited';
-  if (el('usageDeploys'))     el('usageDeploys').textContent     = deployCount + ' this month';
+    const plan = getCurrentPlanLimits();
+  const pct = (used, limit) => !Number.isFinite(limit) || limit <= 0 ? 0 : Math.min(100, Math.round((used / limit) * 100));
+    if (el('usagePlanName')) el('usagePlanName').textContent = plan.label;
+  if (el('usagePlanDescription')) el('usagePlanDescription').textContent = plan.description;
+  if (el('usagePlanHeader')) el('usagePlanHeader').textContent = plan.label;
+
+  if (el('usageProjects'))    el('usageProjects').textContent    = `${projCount} / ${plan.maxProjects}`;
+  if (el('usageDeploys'))     el('usageDeploys').textContent     = `${deployCount} / ${plan.monthlyDeployments}`;
   if (el('usageTotalBuilds')) el('usageTotalBuilds').textContent = (deployments || []).length;
+
+  if (el('usageProjectsBar')) el('usageProjectsBar').style.width = `${pct(projCount, plan.maxProjects)}%`;
+  if (el('usageDeploysBar')) el('usageDeploysBar').style.width = `${pct(deployCount, plan.monthlyDeployments)}%`;
+
+  if (el('usageLimitRam')) el('usageLimitRam').textContent = `${plan.ramGb} GB`;
+  if (el('usageLimitProjects')) el('usageLimitProjects').textContent = `Up to ${plan.maxProjects}`;
+  if (el('usageLimitDeployments')) el('usageLimitDeployments').textContent = `Up to ${plan.monthlyDeployments}`;
+  if (el('usageLimitDomains')) el('usageLimitDomains').textContent = `Up to ${plan.maxCustomDomains}`;
+  if (el('usageLimitBuild')) el('usageLimitBuild').textContent = `${plan.monthlyBuildSeconds}s`;
+  if (el('usageLimitBandwidth')) el('usageLimitBandwidth').textContent = `${plan.monthlyBandwidthGb >= 1024 ? (plan.monthlyBandwidthGb/1024)+' TB' : plan.monthlyBandwidthGb+' GB'}`;
 
   // Fetch live VPS stats
   try {
