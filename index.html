@@ -1175,35 +1175,27 @@ ul { list-style:none; }
   font-family:var(--font-mono);font-size:1.18rem;font-weight:700;color:#86efac;letter-spacing:.2em;text-transform:uppercase;
 }
 .page-loader-dots::after { content:'...'; animation:dots 1.5s steps(3,end) infinite; }
-.page-loader-gears{width:min(78vw,320px);height:auto;filter:drop-shadow(0 0 20px rgba(52,211,153,.26));}
-.gear-svg{width:100%;height:auto;overflow:visible}
-.gear-body{fill:none;stroke:#86efac;stroke-width:8.2;stroke-linecap:round;opacity:.98}
-.gear-hub{fill:#86efac;opacity:.95}
-.gear-spoke{stroke:#86efac;stroke-width:7;stroke-linecap:round;opacity:.9}
-.gear--big{transform-origin:130px 95px;animation:gearSpinPhysics 7.2s cubic-bezier(.55,.1,.34,1) infinite}
-.gear--left{transform-origin:68px 148px;animation:gearSpinRevPhysics 5.1s cubic-bezier(.5,.15,.38,1) infinite}
-.gear--right{transform-origin:198px 70px;animation:gearSpinRevPhysics 5.8s cubic-bezier(.6,.12,.4,1) infinite;animation-delay:.2s}
-.loader-panel{display:flex;align-items:center;gap:16px;margin-top:4px}
-.loader-percent{width:74px;height:74px;border-radius:50%;border:2px solid rgba(16,185,129,.4);display:grid;place-items:center;color:#86efac;font-family:var(--font-mono);font-weight:800;font-size:1.12rem;box-shadow:none;background:#111;}
-.loader-progress{position:relative;width:min(66vw,390px);height:66px;padding:10px 14px;border-radius:12px;border:1px solid rgba(16,185,129,.35);background:#111;box-shadow:none}
-.loader-progress:before{display:none}
-.loader-progress svg{width:100%;height:100%}
+.page-loader-gears{width:160px;height:160px;display:grid;place-items:center;filter:drop-shadow(0 0 18px rgba(16,185,129,.25));}
+.transcribe-spinner{position:relative;width:130px;height:130px}
+.spin-ring{position:absolute;inset:0;border-radius:50%;border:4px solid transparent;animation:spinRing 2.8s linear infinite}
+.spin-ring.r1{border-top-color:#06b6d4;border-right-color:#14b8a6;clip-path:inset(0 40% 42% 0 round 999px)}
+.spin-ring.r2{inset:12px;border-top-color:#22c55e;border-left-color:#14b8a6;animation-direction:reverse;animation-duration:2.2s;clip-path:inset(48% 0 0 38% round 999px)}
+.spin-ring.r3{inset:24px;border-top-color:#34d399;border-right-color:#22c55e;animation-duration:1.9s;clip-path:inset(0 0 52% 44% round 999px)}
+.spin-core{position:absolute;left:50%;top:50%;width:18px;height:18px;background:#86efac;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 8px rgba(34,197,94,.12),0 0 18px rgba(34,197,94,.6);animation:corePulse 1.35s ease-in-out infinite}
+.spin-orbit{position:absolute;left:50%;top:50%;width:92px;height:92px;transform:translate(-50%,-50%);transform-origin:center center;border-radius:50%;border:1px dashed rgba(52,211,153,.35);animation:spinOrbit 4.8s linear infinite}
 .loader-track{fill:#1a1a1a;stroke:rgba(16,185,129,.3);stroke-width:1.2}
 .loader-fill{fill:url(#loaderGrad);transition:width .45s linear;filter:none;}
 .loader-segment{fill:rgba(16,185,129,.2)}
-@keyframes gearSpinPhysics {
-  0%{transform:rotate(0deg)}
-  22%{transform:rotate(82deg)}
-  48%{transform:rotate(175deg)}
-  72%{transform:rotate(265deg)}
-  100%{transform:rotate(360deg)}
+@keyframes spinRing {
+  to { transform: rotate(360deg); }
 }
-@keyframes gearSpinRevPhysics {
-  0%{transform:rotate(0deg)}
-  20%{transform:rotate(-70deg)}
-  46%{transform:rotate(-168deg)}
-  74%{transform:rotate(-268deg)}
-  100%{transform:rotate(-360deg)}
+@keyframes spinOrbit {
+  from { transform: translate(-50%,-50%) rotate(0deg); }
+  to { transform: translate(-50%,-50%) rotate(360deg); }
+}
+@keyframes corePulse {
+  0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.92}
+  50%{transform:translate(-50%,-50%) scale(1.24);opacity:1}
 }
 
 /* ── Mobile viewport height fix (address bar issues) ──────────────────── */
@@ -3578,10 +3570,6 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 #pageLoader{background:#09090b!important;}
 .page-loader-badge{display:none!important;}
 .page-loader-gears{filter:none!important;opacity:.92;}
-.loader-panel{gap:12px!important;}
-.loader-percent{border:1px solid var(--border)!important;background:#111114!important;box-shadow:none!important;color:#86efac!important;}
-.loader-progress{border:1px solid var(--border)!important;background:#111114!important;box-shadow:none!important;}
-.loader-progress:before{display:none!important;}
 .loader-track{fill:#0b0b0e!important;stroke:rgba(255,255,255,.12)!important;}
 .loader-fill{fill:#22c55e!important;filter:none!important;}
 .page-loader-text{color:#d4d4d8!important;letter-spacing:.14em!important;}
@@ -3730,34 +3718,13 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 
 <!-- ── PAGE LOADING SPINNER ─────────────────────────────────────── -->
 <div id="pageLoader">
-    <div class="page-loader-gears" aria-hidden="true">
-    <svg class="gear-svg" viewBox="0 0 265 190" aria-hidden="true">
-      <g class="gear--big">
-        <circle class="gear-body" cx="130" cy="95" r="48" stroke-dasharray="8 14"/>
-        <circle class="gear-body" cx="130" cy="95" r="34"/>
-        <line class="gear-spoke" x1="130" y1="95" x2="162" y2="95"/><line class="gear-spoke" x1="130" y1="95" x2="113" y2="124"/><line class="gear-spoke" x1="130" y1="95" x2="116" y2="66"/>
-        <circle class="gear-hub" cx="130" cy="95" r="12"/><circle cx="130" cy="95" r="4" fill="#041522"/>
-      </g>
-      <g class="gear--left">
-        <circle class="gear-body" cx="68" cy="148" r="26" stroke-dasharray="7 12"/><circle class="gear-body" cx="68" cy="148" r="18"/>
-        <line class="gear-spoke" x1="68" y1="148" x2="85" y2="148"/><line class="gear-spoke" x1="68" y1="148" x2="59" y2="163"/><line class="gear-spoke" x1="68" y1="148" x2="59" y2="132"/>
-        <circle class="gear-hub" cx="68" cy="148" r="8"/><circle cx="68" cy="148" r="3" fill="#041522"/>
-      </g>
-      <g class="gear--right">
-        <circle class="gear-body" cx="198" cy="70" r="34" stroke-dasharray="7 12"/><circle class="gear-body" cx="198" cy="70" r="23"/>
-        <line class="gear-spoke" x1="198" y1="70" x2="218" y2="70"/><line class="gear-spoke" x1="198" y1="70" x2="189" y2="88"/><line class="gear-spoke" x1="198" y1="70" x2="189" y2="52"/>
-        <circle class="gear-hub" cx="198" cy="70" r="9"/><circle cx="198" cy="70" r="3.2" fill="#041522"/>
-      </g>
-    </svg>
-  </div>
-  <div class="loader-panel">
-    <div class="loader-percent" id="loaderPercent">0%</div>
-    <div class="loader-progress">
-      <svg viewBox="0 0 360 38" preserveAspectRatio="none">
-        <defs><linearGradient id="loaderGrad" x1="0" x2="1"><stop offset="0%" stop-color="#86efac"/><stop offset="100%" stop-color="#22d3ee"/></linearGradient></defs>
-        <rect class="loader-track" x="0.5" y="0.5" width="359" height="37" rx="8"/>
-        <rect id="loaderFillBar" class="loader-fill" x="2" y="3" width="0" height="32" rx="6"/>
-      </svg>
+  <div class="page-loader-gears" aria-hidden="true">
+    <div class="transcribe-spinner">
+      <span class="spin-ring r1"></span>
+      <span class="spin-ring r2"></span>
+      <span class="spin-ring r3"></span>
+      <span class="spin-orbit"></span>
+      <span class="spin-core"></span>
     </div>
   </div>
   <div class="page-loader-text">
@@ -8077,28 +8044,14 @@ function showBootLoader(message = 'Loading') {
   if (!loader) return;
   const txt = loader.querySelector('.page-loader-text');
   if (txt) txt.innerHTML = `${message}<span class="page-loader-dots"></span>`;
-  const pct = loader.querySelector('#loaderPercent');
-  const bar = loader.querySelector('#loaderFillBar');
-  if (bootLoaderTimer) clearInterval(bootLoaderTimer);
-  let p = 0;
-  if (pct) pct.textContent = '0%';
-  if (bar) bar.setAttribute('width', '0');
-  bootLoaderTimer = setInterval(() => {
-    p = Math.min(94, p + (p < 55 ? 4 : (p < 80 ? 2 : 1)));
-    if (pct) pct.textContent = `${p}%`;
-    if (bar) bar.setAttribute('width', String((356 * p) / 100));
-  }, 260);
+  if (bootLoaderTimer) { clearTimeout(bootLoaderTimer); bootLoaderTimer = null; }
   loader.style.display = 'flex';
   loader.classList.remove('hidden');
 }
 function hideBootLoader(delay = 200) {
   const loader = document.getElementById('pageLoader');
   if (!loader) return;
-  const pct = loader.querySelector('#loaderPercent');
-  const bar = loader.querySelector('#loaderFillBar');
-  if (bootLoaderTimer) { clearInterval(bootLoaderTimer); bootLoaderTimer = null; }
-  if (pct) pct.textContent = '100%';
-  if (bar) bar.setAttribute('width', '356');
+  if (bootLoaderTimer) { clearTimeout(bootLoaderTimer); bootLoaderTimer = null; }
   setTimeout(() => {
     loader.classList.add('hidden');
     setTimeout(() => loader.style.display = 'none', 450);
