@@ -43,6 +43,18 @@ const INTERNAL_DEPLOY_KEY = process.env.INTERNAL_DEPLOY_KEY || crypto.randomByte
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 30);
 const AUTO_DEPLOY_POLL_INTERVAL_MS = Math.max(250, Number(process.env.AUTO_DEPLOY_POLL_INTERVAL_MS || 750) || 750);
 const AUTO_DEPLOY_INITIAL_DELAY_MS = Math.max(250, Number(process.env.AUTO_DEPLOY_INITIAL_DELAY_MS || AUTO_DEPLOY_POLL_INTERVAL_MS) || AUTO_DEPLOY_POLL_INTERVAL_MS);
+const RESEND_API_KEY = String(process.env.RESEND_API_KEY || '').trim();
+const RESEND_FROM_EMAIL = String(process.env.RESEND_FROM_EMAIL || '').trim();
+const RESEND_AUDIENCE_EMAIL = String(process.env.RESEND_AUDIENCE_EMAIL || '').trim();
+const RESEND_REPLY_TO_EMAIL = String(process.env.RESEND_REPLY_TO_EMAIL || '').trim();
+const RESEND_LOGO_URL = String(process.env.RESEND_LOGO_URL || '').trim();
+const RESEND_HERO_IMAGE_URL = String(process.env.RESEND_HERO_IMAGE_URL || '').trim();
+const RESEND_HERO_IMAGE_STARTED_URL = String(process.env.RESEND_HERO_IMAGE_STARTED_URL || '').trim();
+const RESEND_HERO_IMAGE_SUCCESS_URL = String(process.env.RESEND_HERO_IMAGE_SUCCESS_URL || '').trim();
+const RESEND_HERO_IMAGE_FAILED_URL = String(process.env.RESEND_HERO_IMAGE_FAILED_URL || '').trim();
+const authOtpStore = new Map();
+const deployStopRequests = new Set();
+const activeDeployMeta = new Map();
 
 function normalizeBaseDomain(value) {
   return String(value || 'localhost')
@@ -63,6 +75,125 @@ function normalizeHostHeader(value) {
     .split('/')[0]
     .replace(/:[0-9]+$/, '')
     .replace(/^\.+|\.+$/g, '');
+}
+
+async function sendDeploymentStatusEmail({
+  userEmail = '',
+  projectName = '',
+  subdomain = '',
+  branch = 'main',
+  status = 'success',
+  duration = 0,
+  source = 'manual',
+  liveUrl = '',
+  sha = '',
+  errorMessage = '',
+  repoUrl = '',
+  buildStatus = '',
+  deployStatus = '',
+  memoryLimit = '',
+  cpuShares = '',
+  totalDeployments = 0,
+  deployedAt = null,
+  phase = 'completed'
+} = {}) {
+  if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return { ok: false, skipped: true, reason: 'resend_not_configured' };
+  const recipient = RESEND_AUDIENCE_EMAIL || String(userEmail || '').trim();
+  if (!recipient) return { ok: false, skipped: true, reason: 'missing_recipient' };
+  const isStartedPhase = phase === 'started';
+  const statusLabel = isStartedPhase ? 'Started' : (status === 'success' ? 'Successful' : 'Failed');
+  const shortSha = String(sha || '').trim().slice(0, 7);
+  const sourceLabel = source === 'auto' ? 'Automatic (GitHub push)' : 'Manual (Redeploy click)';
+  const safeError = String(errorMessage || '').trim().slice(0, 500);
+  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
+  const heroImageUrl = (
+    isStartedPhase
+      ? (RESEND_HERO_IMAGE_STARTED_URL || RESEND_HERO_IMAGE_URL)
+      : (status === 'success' ? (RESEND_HERO_IMAGE_SUCCESS_URL || RESEND_HERO_IMAGE_URL) : (RESEND_HERO_IMAGE_FAILED_URL || RESEND_HERO_IMAGE_URL))
+  ) || '';
+  const deployedAtText = deployedAt ? new Date(deployedAt).toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'medium', timeStyle: 'short' }) + ' UTC' : '';
+  const dashboardUrl = `https://${BASE_DOMAIN}`;
+  const lines = [
+    `JOYTREE deployment report`,
+    `Project: ${projectName || subdomain}`,
+    `Status: ${statusLabel}`,
+    `Source: ${sourceLabel}`,
+    `Branch: ${branch || 'main'}`,
+    shortSha ? `Commit: ${shortSha}` : '',
+    duration > 0 ? `Duration: ${duration}s` : '',
+    liveUrl ? `Live URL: ${liveUrl}` : '',
+    safeError ? `Error: ${safeError}` : '',
+    '',
+    'Sent by JOYTREE.'
+  ].filter(Boolean);
+  const statusColor = isStartedPhase ? '#1d4ed8' : (status === 'success' ? '#0f766e' : '#b91c1c');
+  const statusBg = isStartedPhase ? '#eff6ff' : (status === 'success' ? '#ecfeff' : '#fef2f2');
+  const html = `<!doctype html>
+<html><body style="margin:0;padding:0;background:#f5f8fb;font-family:Inter,Segoe UI,Arial,sans-serif;color:#0f172a;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
+        <tr>
+          <td style="padding:22px 26px;background:linear-gradient(120deg,#0f172a,#14532d);color:#fff;">
+            <table role="presentation" width="100%"><tr>
+              <td style="width:54px;vertical-align:middle;">
+                <img src="${logoUrl}" alt="JOYTREE" width="44" height="44" style="width:44px;height:44px;border-radius:10px;display:block;background:#fff;object-fit:cover;">
+              </td>
+              <td style="vertical-align:middle;">
+                <div style="font-size:12px;letter-spacing:.12em;opacity:.82;">DEPLOYMENT INTELLIGENCE</div>
+                <div style="font-size:24px;font-weight:800;line-height:1.2;">JOYTREE</div>
+              </td>
+            </tr></table>
+          </td>
+        </tr>
+        ${heroImageUrl ? `<tr><td><img src="${heroImageUrl}" alt="JOYTREE Deployment Banner" style="display:block;width:100%;max-height:280px;object-fit:cover;"></td></tr>` : ''}
+        <tr><td style="padding:24px 26px;">
+          <div style="display:inline-block;padding:8px 12px;border-radius:999px;background:${statusBg};color:${statusColor};font-size:12px;font-weight:700;letter-spacing:.03em;">
+            ${statusLabel.toUpperCase()} DEPLOYMENT
+          </div>
+          <h2 style="margin:14px 0 8px;font-size:22px;line-height:1.3;">${projectName || subdomain} is now ${isStartedPhase ? 'being deployed' : (status === 'success' ? 'live' : 'reporting an issue')}.</h2>
+          <p style="margin:0 0 16px;color:#334155;font-size:14px;">Here’s your professional deployment report from JOYTREE.</p>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+            <tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Project:</strong> ${projectName || subdomain}</td></tr>
+            <tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Source:</strong> ${sourceLabel}</td></tr>
+            ${repoUrl ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Repository:</strong> <a href="${repoUrl}" style="color:#0ea5e9;text-decoration:none;">${repoUrl}</a></td></tr>` : ''}
+            <tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Branch:</strong> ${branch || 'main'}${shortSha ? ` <span style="color:#64748b;">(${shortSha})</span>` : ''}</td></tr>
+            ${duration > 0 ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Duration:</strong> ${duration}s</td></tr>` : ''}
+            ${buildStatus ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Build Status:</strong> ${buildStatus}</td></tr>` : ''}
+            ${deployStatus ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Deployment Status:</strong> ${deployStatus}</td></tr>` : ''}
+            ${memoryLimit || cpuShares ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Resources:</strong> RAM ${memoryLimit || '—'} • CPU ${cpuShares ? `${cpuShares} shares` : '—'}</td></tr>` : ''}
+            ${deployedAtText ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Deployed At:</strong> ${deployedAtText}</td></tr>` : ''}
+            ${totalDeployments > 0 ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Total Deployments:</strong> ${totalDeployments}</td></tr>` : ''}
+            ${liveUrl ? `<tr><td style="padding:14px 16px;border-bottom:${safeError ? '1px solid #e2e8f0' : '0'};font-size:14px;"><strong>Live URL:</strong> <a href="${liveUrl}" style="color:#0ea5e9;text-decoration:none;">${liveUrl}</a></td></tr>` : ''}
+            ${safeError ? `<tr><td style="padding:14px 16px;font-size:14px;color:#991b1b;"><strong>Error:</strong> ${safeError}</td></tr>` : ''}
+          </table>
+          <div style="margin-top:18px;">
+            <a href="${liveUrl || dashboardUrl}" style="display:inline-block;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:700;">View Deployment</a>
+          </div>
+          <p style="margin:16px 0 0;color:#64748b;font-size:12px;">This message was sent by JOYTREE deployment notifications.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+  const payload = {
+    from: RESEND_FROM_EMAIL,
+    to: [recipient],
+    subject: `JOYTREE • ${statusLabel} deployment — ${projectName || subdomain}`,
+    text: lines.join('\n'),
+    html
+  };
+  if (RESEND_REPLY_TO_EMAIL) payload.reply_to = RESEND_REPLY_TO_EMAIL;
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!r.ok) {
+    const detail = await r.text().catch(() => '');
+    return { ok: false, skipped: false, reason: `resend_http_${r.status}`, detail: detail.slice(0, 300) };
+  }
+  return { ok: true };
 }
 
 // ── Ensure directories ────────────────────────────────────────────────────────
@@ -306,12 +437,21 @@ app.use((req, res, next) => {
 // ── HTML helpers ─────────────────────────────────────────────────────────────
 function errorPage(title, msg) {
   return `<!DOCTYPE html><html><head><title>${title}</title>
-    <style>body{font-family:sans-serif;background:#060b14;color:#e2e8f0;display:flex;
-    align-items:center;justify-content:center;height:100vh;margin:0}
-    .b{text-align:center;padding:2rem}a{color:#10b981}
-    code{background:#1e293b;padding:3px 8px;border-radius:4px}</style></head>
-    <body><div class="b"><h1>${title}</h1><p>${msg}</p>
-    <p><a href="https://${BASE_DOMAIN}">Back to DeployBoard</a></p>
+    <style>
+    body{font-family:Inter,Segoe UI,sans-serif;background:radial-gradient(circle at 20% 0%,rgba(16,185,129,.18),transparent 35%),#05070d;color:#e2e8f0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    .b{max-width:660px;margin:20px;text-align:center;padding:2rem;border:1px solid rgba(16,185,129,.24);border-radius:20px;background:linear-gradient(180deg,#0b1220,#070b14)}
+    .badge{display:inline-block;padding:7px 14px;border-radius:999px;background:rgba(16,185,129,.14);color:#86efac;font-size:.78rem;letter-spacing:.08em;font-weight:800;margin-bottom:10px}
+    h1{font-size:2rem;margin:.2rem 0 1rem}
+    p{color:#9fb1c9;line-height:1.6}
+    a{color:#34d399;text-decoration:none;font-weight:700}
+    a:hover{text-decoration:underline}
+    code{background:#1e293b;padding:3px 8px;border-radius:4px}
+    </style></head>
+    <body><div class="b">
+    <div class="badge">JOYTREE EDGE STATUS</div>
+    <h1>${title}</h1><p>${msg}</p>
+    <p>This subdomain is reserved but no live release has been published yet.</p>
+    <p><a href="https://${BASE_DOMAIN}">Back to JOYTREE</a></p>
     </div></body></html>`;
 }
 
@@ -508,6 +648,47 @@ function createPasswordHash(password, salt = crypto.randomBytes(16).toString('he
 }
 function createSessionToken() {
   return crypto.randomBytes(36).toString('hex');
+}
+function generateOtpCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+async function sendVerificationCodeEmail(email = '', code = '') {
+  if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return;
+  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
+  const tips = [
+    'Never share this code with anyone, including support.',
+    'JOYTREE will never ask for your verification code by chat or phone.',
+    'If this was not you, reset your password and review your GitHub account security.'
+  ];
+  const html = `<div style="font-family:Inter,Arial,sans-serif;background:#060b16;padding:24px;color:#e2e8f0">
+  <div style="max-width:620px;margin:auto;background:#0b1220;border:1px solid #1f2937;border-radius:16px;overflow:hidden">
+    <div style="padding:18px 22px;background:linear-gradient(120deg,#052e1a,#0b1220)">
+      <img src="${logoUrl}" alt="JOYTREE" style="width:48px;height:48px;border-radius:12px;vertical-align:middle"> 
+      <span style="font-size:28px;font-weight:800;vertical-align:middle;margin-left:10px">JOYTREE</span>
+    </div>
+    <div style="padding:20px 22px">
+      <h2 style="margin:0 0 8px">Secure Email Verification</h2>
+      <p style="margin:0 0 16px;color:#94a3b8">Use this one-time code to access your JOYTREE workspace.</p>
+      <div style="font-size:34px;letter-spacing:.18em;font-weight:900;color:#86efac;background:#07131f;border:1px solid #134e4a;padding:12px 14px;border-radius:12px;text-align:center">${code}</div>
+      <p style="margin-top:12px;color:#94a3b8;font-size:13px">Code expires in 10 minutes.</p>
+      <div style="margin-top:16px;padding:12px;border:1px solid #1f2937;border-radius:10px;background:#0a1628">
+        <strong>Security tips</strong>
+        <ul style="margin:8px 0 0;padding-left:16px;color:#94a3b8">${tips.map(t=>`<li>${t}</li>`).join('')}</ul>
+      </div>
+    </div>
+  </div></div>`;
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: RESEND_FROM_EMAIL, to: [email], subject: 'JOYTREE verification code', html, text: `Your JOYTREE verification code is ${code}. Expires in 10 minutes.` })
+  }).catch(()=>{});
+}
+async function issueEmailVerification(user) {
+  const pendingToken = createSessionToken();
+  const code = generateOtpCode();
+  authOtpStore.set(pendingToken, { userId: String(user._id || user.id), code, email: String(user.email || '').toLowerCase(), expiresAt: Date.now() + 10 * 60 * 1000 });
+  await sendVerificationCodeEmail(String(user.email || '').toLowerCase(), code);
+  return pendingToken;
 }
 async function getAuthUser(req) {
   const auth = (req.headers.authorization || '').trim();
@@ -726,11 +907,8 @@ app.post('/api/auth/firebase', async (req, res) => {
     user.firebaseUid = fbUser.localId || user.firebaseUid || '';
     user.name = user.name || fbUser.displayName || '';
     if (isDbReady()) await user.save(); else saveLocalAuth();
-    const token = createSessionToken();
-    const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
-    if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt });
-    else { localAuth.sessions.push({ token, userId: user.id, expiresAt }); saveLocalAuth(); }
-    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, githubAvatarUrl: user.githubAvatarUrl || '', firebaseUid: user.firebaseUid } });
+    const pendingToken = await issueEmailVerification(user);
+    res.json({ requiresVerification: true, pendingToken, user: { id: user._id || user.id, email: user.email, name: user.name } });
   } catch (e) { res.status(401).json({ error: e.message }); }
 });
 
@@ -751,11 +929,8 @@ app.post('/api/auth/signup', async (req, res) => {
       user = { id: 'u_' + Date.now(), email, name, passwordSalt: salt, passwordHash: hash, githubUsername: '', githubAccessToken: '' };
       localAuth.users.push(user); saveLocalAuth();
     }
-    const token = createSessionToken();
-    const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
-    if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt });
-    else { localAuth.sessions.push({ token, userId: user.id, expiresAt }); saveLocalAuth(); }
-    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, githubAvatarUrl: user.githubAvatarUrl || '', firebaseUid: user.firebaseUid || '' } });
+    const pendingToken = await issueEmailVerification(user);
+    res.json({ requiresVerification: true, pendingToken, user: { id: user._id || user.id, email: user.email, name: user.name } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -767,11 +942,8 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user || !user.passwordSalt || !user.passwordHash) return res.status(401).json({ error: 'Invalid credentials' });
     const { hash } = createPasswordHash(password, user.passwordSalt);
     if (hash !== user.passwordHash) return res.status(401).json({ error: 'Invalid credentials' });
-    const token = createSessionToken();
-    const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
-    if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt });
-    else { localAuth.sessions.push({ token, userId: user.id, expiresAt }); saveLocalAuth(); }
-    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, githubAvatarUrl: user.githubAvatarUrl || '', firebaseUid: user.firebaseUid || '' } });
+    const pendingToken = await issueEmailVerification(user);
+    res.json({ requiresVerification: true, pendingToken, user: { id: user._id || user.id, email: user.email, name: user.name } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -863,10 +1035,35 @@ app.post('/api/auth/github/exchange', async (req, res) => {
       user.firebaseUid = fbGh?.localId || user.firebaseUid || '';
       saveLocalAuth();
     }
+    const pendingToken = await issueEmailVerification(user);
+    res.json({ requiresVerification: true, pendingToken, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, githubAvatarUrl: user.githubAvatarUrl || '' }, firebaseLinked });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/auth/verify-email', async (req, res) => {
+  try {
+    const pendingToken = String(req.body.pendingToken || '');
+    const code = String(req.body.code || '').trim();
+    const rec = authOtpStore.get(pendingToken);
+    if (!rec || rec.expiresAt < Date.now()) return res.status(400).json({ error: 'Verification expired. Request a new code.' });
+    if (rec.code !== code) return res.status(400).json({ error: 'Invalid verification code' });
+    authOtpStore.delete(pendingToken);
     const token = createSessionToken();
-    if (isDbReady()) await Session.create({ token, userId: user._id, expiresAt: new Date(Date.now() + SESSION_TTL_DAYS * 86400000) });
-    else { localAuth.sessions.push({ token, userId: user.id, expiresAt: new Date(Date.now() + SESSION_TTL_DAYS * 86400000) }); saveLocalAuth(); }
-    res.json({ token, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, githubAvatarUrl: user.githubAvatarUrl || '', firebaseUid: user.firebaseUid || '' }, firebaseLinked });
+    const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86400000);
+    if (isDbReady()) await Session.create({ token, userId: rec.userId, expiresAt });
+    else { localAuth.sessions.push({ token, userId: rec.userId, expiresAt }); saveLocalAuth(); }
+    const user = isDbReady() ? await User.findById(rec.userId) : localAuth.users.find(u => u.id === rec.userId);
+    res.json({
+      token,
+      user: {
+        id: user?._id || user?.id,
+        email: user?.email || rec.email,
+        name: user?.name || '',
+        githubUsername: user?.githubUsername || '',
+        githubAvatarUrl: user?.githubAvatarUrl || '',
+        firebaseUid: user?.firebaseUid || ''
+      }
+    });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1576,6 +1773,8 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   }
 
   const deployId = deployment._id.toString();
+  deployStopRequests.delete(deployId);
+  activeDeployMeta.set(deployId, { projectId: String(project._id || ''), ownerUserId: String(project.ownerUserId || req.user?._id || req.user?.id || '') });
   if (deploySource === 'auto') {
     emitAutoDeployStatus(project._id, 'deploying', {
       branch: branch || 'main',
@@ -1596,6 +1795,35 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   const emit = (event, data) => io.emit(event, { deployId, projectId: String(project._id), source: deploySource, triggerSha, ...data });
 
   try {
+    if (deployStopRequests.has(deployId)) throw new Error('Deployment stopped by user');
+    const ownerUser = project?.ownerUserId
+      ? await User.findById(project.ownerUserId).select('email').lean().catch(() => null)
+      : null;
+    const notifyEmail = ownerUser?.email || req.user?.email || '';
+    const totalDeploymentsAtStart = await Deployment.countDocuments({ projectId: project._id }).catch(() => 0);
+    const notifyStart = await sendDeploymentStatusEmail({
+      userEmail: notifyEmail,
+      projectName: name,
+      subdomain: cleanSub,
+      branch: branch || 'main',
+      status: 'success',
+      duration: 0,
+      source: deploySource,
+      liveUrl: `https://${cleanSub}.${BASE_DOMAIN}`,
+      sha: triggerSha,
+      repoUrl,
+      buildStatus: 'building',
+      deployStatus: 'in_progress',
+      memoryLimit: String(project?.memoryLimit || ''),
+      cpuShares: String(project?.cpuShares || ''),
+      totalDeployments: totalDeploymentsAtStart,
+      deployedAt: deployment.startedAt || new Date(),
+      phase: 'started'
+    }).catch(() => ({ ok: false, skipped: false, reason: 'email_send_exception' }));
+    if (!notifyStart.ok && !notifyStart.skipped) {
+      emit('build:log', { line: `\x1b[33m[Resend]\x1b[0m Deployment start email could not be sent (${notifyStart.reason || 'unknown'}).` });
+    }
+
     emit('build:log', { line: `\x1b[36m[DeployBoard]\x1b[0m Building \x1b[1m${name}\x1b[0m` });
     emit('build:log', { line: `\x1b[90mRepo: ${repoUrl}  Branch: ${branch||'main'}\x1b[0m` });
     emit('build:log', { line: `\x1b[90mTarget: https://${cleanSub}.${BASE_DOMAIN}\x1b[0m` });
@@ -1633,6 +1861,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       isDockerfileDeploy: !!isDockerfileDeploy,
       isWorker:           !!isWorker,
       onLog: (line) => {
+        if (deployStopRequests.has(deployId)) throw new Error('Deployment stopped by user');
         deployment.logs = deployment.logs || [];
         deployment.logs.push(line);
         if (!saveTimer) {
@@ -1642,6 +1871,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     });
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
     await flushLogs();
+    if (deployStopRequests.has(deployId)) throw new Error('Deployment stopped by user');
 
     // Register CF subdomain
     emit('build:log', { line: `\x1b[36m[DeployBoard]\x1b[0m Registering subdomain…` });
@@ -1665,6 +1895,33 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     const duration = Math.round((Date.now() - buildStart) / 1000);
     deployment.status = 'success'; deployment.duration = duration; deployment.endedAt = new Date();
     try { await deployment.save(); } catch(e) {}
+    const ownerUserSuccess = project?.ownerUserId
+      ? await User.findById(project.ownerUserId).select('email').lean().catch(() => null)
+      : null;
+    const totalDeployments = await Deployment.countDocuments({ projectId: project._id }).catch(() => 0);
+    const notifyEmailSuccess = ownerUserSuccess?.email || req.user?.email || '';
+    const liveUrl = cf?.url || `https://${cleanSub}.${BASE_DOMAIN}`;
+    const notifySuccess = await sendDeploymentStatusEmail({
+      userEmail: notifyEmailSuccess,
+      projectName: name,
+      subdomain: cleanSub,
+      branch: branch || 'main',
+      status: 'success',
+      duration,
+      source: deploySource,
+      liveUrl,
+      sha: triggerSha,
+      repoUrl,
+      buildStatus: 'building',
+      deployStatus: 'success',
+      memoryLimit: String(project?.memoryLimit || ''),
+      cpuShares: String(project?.cpuShares || ''),
+      totalDeployments,
+      deployedAt: deployment.endedAt
+    }).catch(() => ({ ok: false, skipped: false, reason: 'email_send_exception' }));
+    if (!notifySuccess.ok && !notifySuccess.skipped) {
+      emit('build:log', { line: `\x1b[33m[Resend]\x1b[0m Deployment email could not be sent (${notifySuccess.reason || 'unknown'}).` });
+    }
     if (deploySource === 'auto') {
       try {
         await Project.findByIdAndUpdate(project._id, {
@@ -1679,6 +1936,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     addActivity('deploy', (deploySource === 'auto' ? '✓ Automatic deployment succeeded: ' : '✓ Deployment succeeded: ') + name + ' in ' + duration + 's');
     emit('build:log', { line: `\n\x1b[32m✓ Deployed in ${duration}s\x1b[0m` });
     emit('build:done', { status: 'success', duration, liveUrl: cf?.url || null });
+    activeDeployMeta.delete(deployId);
 
   } catch(buildErr) {
     const duration = Math.round((Date.now() - buildStart) / 1000);
@@ -1696,14 +1954,71 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       } catch (_) {}
       emitAutoDeployStatus(project._id, 'error', { branch: branch || 'main', sha: triggerSha, completed: true, result: 'failed', error: safeAutoErr });
     }
-    addActivity('deploy', (deploySource === 'auto' ? '✗ Automatic deployment failed: ' : '✗ Deployment failed: ') + name + ' — ' + buildErr.message.slice(0,80));
+    const wasStopped = /stopped by user/i.test(String(buildErr.message || ''));
+    addActivity('deploy', (wasStopped ? '⏹ Deployment stopped: ' : (deploySource === 'auto' ? '✗ Automatic deployment failed: ' : '✗ Deployment failed: ')) + name + ' — ' + buildErr.message.slice(0,80));
     const buildDir = path.join(TMP_DIR, deployId);
     try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
     const safeErr = sanitizeSecrets(buildErr.message);
+    const ownerUserFailure = project?.ownerUserId
+      ? await User.findById(project.ownerUserId).select('email').lean().catch(() => null)
+      : null;
+    const totalDeployments = await Deployment.countDocuments({ projectId: project._id }).catch(() => 0);
+    const notifyEmailFailure = ownerUserFailure?.email || req.user?.email || '';
+    const notifyFailure = await sendDeploymentStatusEmail({
+      userEmail: notifyEmailFailure,
+      projectName: name,
+      subdomain: cleanSub,
+      branch: branch || 'main',
+      status: 'failed',
+      duration,
+      source: deploySource,
+      liveUrl: `https://${cleanSub}.${BASE_DOMAIN}`,
+      sha: triggerSha,
+      errorMessage: safeErr,
+      repoUrl,
+      buildStatus: 'failed',
+      deployStatus: 'failed',
+      memoryLimit: String(project?.memoryLimit || ''),
+      cpuShares: String(project?.cpuShares || ''),
+      totalDeployments,
+      deployedAt: deployment.endedAt
+    }).catch(() => ({ ok: false, skipped: false, reason: 'email_send_exception' }));
+    if (!notifyFailure.ok && !notifyFailure.skipped) {
+      emit('build:log', { line: `\x1b[33m[Resend]\x1b[0m Deployment email could not be sent (${notifyFailure.reason || 'unknown'}).` });
+    }
     emit('build:log', { line: `\x1b[31m[DeployBoard]\x1b[0m Build failed: ${safeErr}` });
-    emit('build:done', { status: 'failed', duration });
+    emit('build:done', { status: wasStopped ? 'canceled' : 'failed', duration });
     console.error(`[Deploy] FAILED ${name}:`, sanitizeSecrets(buildErr.message));
+    deployStopRequests.delete(deployId);
+    activeDeployMeta.delete(deployId);
   }
+});
+
+app.post('/api/deploy/:deployId/stop', requireAuth, async (req, res) => {
+  try {
+    const deployId = String(req.params.deployId || '').trim();
+    if (!deployId) return res.status(400).json({ error: 'deployId required' });
+    let dep = null;
+    if (mongoose.Types.ObjectId.isValid(deployId)) {
+      dep = await Deployment.findById(deployId);
+    }
+    const meta = activeDeployMeta.get(deployId);
+    if (!dep && !meta) return res.status(404).json({ error: 'Deployment not found' });
+    const ownerRef = String(dep?.ownerUserId || meta?.ownerUserId || '');
+    if (ownerRef && ownerRef !== String(req.user?._id || req.user?.id || '')) return res.status(403).json({ error: 'Forbidden' });
+    deployStopRequests.add(deployId);
+    if (dep) {
+      dep.status = 'failed';
+      dep.endedAt = new Date();
+      dep.logs = dep.logs || [];
+      dep.logs.push('[manual] Deployment stop requested by user.');
+      await dep.save().catch(()=>{});
+    }
+    const projectId = String(dep?.projectId || meta?.projectId || '');
+    io.emit('build:log', { deployId, projectId, line: '\x1b[33m[DeployBoard]\x1b[0m Stop requested by user. Attempting to halt build…' });
+    io.emit('build:done', { deployId, projectId, status: 'canceled' });
+    res.json({ ok: true, message: 'Stop requested' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ── Socket.io ─────────────────────────────────────────────────────────────────
