@@ -5558,7 +5558,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>
       <div class="projects-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));">
         <div class="card"><div class="card-header"><div class="card-title">Free Trial</div><div class="badge">₵0</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>0.85 GB RAM</li><li>Shared vCPU (fair-use)</li><li>10 GB SSD build storage</li><li>100 GB monthly bandwidth</li><li>Up to 5 projects</li><li>500s average build time / month</li><li>Community support</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('free')">Start Free Trial</button></div></div>
-        <div class="card"><div class="card-header"><div class="card-title">Starter</div><div class="badge" style="background:rgba(16,185,129,.18);color:#86efac;">₵20/mo</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>1 GB RAM</li><li>1 vCPU</li><li>20 GB SSD storage</li><li>250 GB monthly bandwidth</li><li>Up to 10 projects</li><li>3,000s average build time / month</li><li>Priority build queue</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('starter')">Subscribe Starter</button></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Starter</div><div class="badge" style="background:rgba(16,185,129,.18);color:#86efac;">₵1/mo</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>1 GB RAM</li><li>1 vCPU</li><li>20 GB SSD storage</li><li>250 GB monthly bandwidth</li><li>Up to 10 projects</li><li>3,000s average build time / month</li><li>Priority build queue</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('starter')">Subscribe Starter</button></div></div>
         <div class="card"><div class="card-header"><div class="card-title">Growth</div><div class="badge" style="background:rgba(56,189,248,.2);color:#7dd3fc;">₵60/mo</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>5 GB RAM</li><li>2 vCPU</li><li>60 GB SSD storage</li><li>1 TB monthly bandwidth</li><li>Up to 35 projects</li><li>12,000s average build time / month</li><li>Custom domains + SSL</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('growth')">Subscribe Growth</button></div></div>
         <div class="card"><div class="card-header"><div class="card-title">Scale Max</div><div class="badge" style="background:rgba(168,85,247,.2);color:#c4b5fd;">₵180/mo</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>16 GB RAM</li><li>8 vCPU</li><li>Unlimited storage*</li><li>Unlimited bandwidth*</li><li>Unlimited projects</li><li>Unlimited average build time</li><li>Premium support + team access</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('scale')">Subscribe Scale Max</button><div style="font-size:.75rem;color:var(--text-3);margin-top:10px;">*subject to fair platform abuse protections.</div></div></div>
       </div>
@@ -5578,7 +5578,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="field"><label class="field-label">Phone (MoMo)</label><input class="input" id="checkoutPhone" type="tel" placeholder="+233..."></div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
-            <button class="btn btn-primary" onclick="startPaystackCheckout()">Pay & Activate</button>
+            <button class="btn btn-primary" id="paystackCheckoutBtn" onclick="startPaystackCheckout()">Pay & Activate</button>
             <button class="btn btn-ghost" onclick="showPage('pricing')">Back to plans</button>
           </div>
           <div class="field-hint" style="margin-top:10px;">After successful payment, your resources and profile plan are updated instantly in real time.</div>
@@ -7820,9 +7820,24 @@ const PLAN_LIMITS = {
   growth:  { label:'Growth', ramGb:5, maxProjects:35, monthlyDeployments:500, maxCustomDomains:30, monthlyBuildSeconds:12000, monthlyBandwidthGb:1024, description:'5 GB RAM for growing production workloads.' },
   scale:   { label:'Scale Max', ramGb:16, maxProjects:120, monthlyDeployments:2000, maxCustomDomains:120, monthlyBuildSeconds:60000, monthlyBandwidthGb:8192, description:'High-capacity plan for large teams and heavy traffic.' }
 };
-const PLAN_PRICES_GHS = { free: 0, starter: 20, growth: 60, scale: 180 };
-const PAYSTACK_PUBLIC_KEY = 'pk_test_04b3c3e08d7a8c1ca50aeb024382b1ba0402e722';
+const PLAN_PRICES_GHS = { free: 0, starter: 1, growth: 60, scale: 180 };
+let PAYSTACK_PUBLIC_KEY = '';
 let pendingCheckoutPlan = 'starter';
+let _paystackConfigLoaded = false;
+async function ensurePaystackConfig(){
+  if (_paystackConfigLoaded && PAYSTACK_PUBLIC_KEY) return true;
+  try {
+    const r = await apiFetch(API + '/api/billing/paystack/config');
+    const d = await r.json();
+    if (!r.ok || !d?.publicKey) throw new Error(d?.error || 'Paystack public key is not configured');
+    PAYSTACK_PUBLIC_KEY = String(d.publicKey || '').trim();
+    _paystackConfigLoaded = true;
+    return !!PAYSTACK_PUBLIC_KEY;
+  } catch (e) {
+    toast('Billing is not configured yet. Add PAYSTACK_PUBLIC_KEY and PAYSTACK_SECRET_KEY on the server.', 'error', 7000);
+    return false;
+  }
+}
 function getCurrentPlanKey() {
   const key = String(settings.billingPlan || 'free').toLowerCase();
   return PLAN_LIMITS[key] ? key : 'free';
@@ -7874,31 +7889,73 @@ function applyPaidPlan(planKey) {
   renderDashboard();
   return true;
 }
-function startPaystackCheckout(){
+async function handlePaystackSuccess(response, planKey, amountKobo) {
+  const reference = String(response?.reference || '').trim();
+  try {
+    const vr = await apiFetch(API + '/api/billing/paystack/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reference })
+    });
+    const vd = await vr.json();
+    if (!vr.ok || !vd?.ok) throw new Error(vd?.error || 'Payment verification failed');
+    const verifiedPlan = String(vd.plan || planKey).toLowerCase();
+    const finalPlan = PLAN_LIMITS[verifiedPlan] ? verifiedPlan : planKey;
+    applyPaidPlan(finalPlan);
+    settings.subscriptionReference = reference;
+    settings.subscriptionVerifiedAt = new Date().toISOString();
+    settings.subscriptionPaidAmountKobo = Number(vd.amountKobo || amountKobo);
+    save();
+    toast(`${PLAN_LIMITS[finalPlan].label} activated successfully. Reference: ${reference}`, 'success', 7000);
+    showPage('usage');
+    renderSettings();
+  } catch (e) {
+    toast('Payment received but verification failed: ' + (e.message || 'unknown error'), 'error', 9000);
+  }
+}
+
+async function startPaystackCheckout(){
   const key = String(pendingCheckoutPlan || '').toLowerCase();
   if (!PLAN_LIMITS[key] || !PLAN_PRICES_GHS[key]) return toast('Choose a paid plan first.', 'error');
   const email = String(document.getElementById('checkoutEmail')?.value || currentUser?.email || '').trim();
   const phone = String(document.getElementById('checkoutPhone')?.value || '').trim();
   if (!email) return toast('Email is required for payment.', 'error');
   if (!window.PaystackPop) return toast('Paystack script not loaded. Refresh and try again.', 'error');
-  const amountKobo = Math.round(Number(PLAN_PRICES_GHS[key]) * 100);
-  const handler = window.PaystackPop.setup({
-    key: PAYSTACK_PUBLIC_KEY,
-    email,
-    amount: amountKobo,
-    currency: 'GHS',
-    metadata: { custom_fields: [{ display_name: 'Plan', variable_name: 'plan', value: key }, { display_name: 'Phone', variable_name: 'phone', value: phone }] },
-    callback: function(response){
-      applyPaidPlan(key);
-      settings.subscriptionReference = response.reference || '';
-      save();
-      toast(`${PLAN_LIMITS[key].label} activated successfully. Reference: ${response.reference}`, 'success', 7000);
-      showPage('usage');
-      renderSettings();
-    },
-    onClose: function(){ toast('Payment window closed. You can continue later.', 'info'); }
-  });
-  handler.openIframe();
+
+  const payBtn = document.getElementById('paystackCheckoutBtn');
+  if (payBtn) { payBtn.disabled = true; payBtn.textContent = 'Opening checkout…'; }
+
+  try {
+    if (!(await ensurePaystackConfig())) return;
+    const amountKobo = Math.round(Number(PLAN_PRICES_GHS[key]) * 100);
+
+    const initRes = await apiFetch(API + '/api/billing/paystack/initialize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, phone, plan: key, amountKobo })
+    });
+    const initData = await initRes.json().catch(() => ({}));
+    if (!initRes.ok || !initData?.reference) throw new Error(initData?.error || 'Could not initialize payment');
+
+    const handler = window.PaystackPop.setup({
+      key: PAYSTACK_PUBLIC_KEY,
+      email,
+      amount: amountKobo,
+      currency: 'GHS',
+      ref: String(initData.reference || ''),
+      metadata: { plan: key, custom_fields: [{ display_name: 'Plan', variable_name: 'plan', value: key }, { display_name: 'Phone', variable_name: 'phone', value: phone }] },
+      callback: function(response){
+        // Paystack expects a plain function callback.
+        Promise.resolve().then(() => handlePaystackSuccess(response, key, amountKobo));
+      },
+      onClose: function(){ toast('Payment window closed. If MoMo prompt did not arrive, confirm your Paystack account is Live-approved and retry.', 'info', 8000); }
+    });
+    handler.openIframe();
+  } catch (e) {
+    toast('Could not launch checkout: ' + (e.message || 'unknown error'), 'error', 8000);
+  } finally {
+    if (payBtn) { payBtn.disabled = false; payBtn.textContent = 'Pay & Activate'; }
+  }
 }
 let envRows      = []; // current deploy form env rows
 let currentPage  = 'dashboard';
@@ -9555,6 +9612,11 @@ async function startDeployment() {
   };
   deployments.push(deployment);
   activeBuildId = deployment.id;
+
+  // Start every new deployment with a clean live terminal view, while
+  // preserving historical logs on deployment records for Deployments → View logs.
+  clearTerminal();
+
   save();
 
   // Update UI counters
@@ -9937,6 +9999,7 @@ function clearTerminal() {
   if (term) term.clear();
   logBuffer = [];
   pendingTermLines = [];
+  _writeQueue = [];
   _hasWrittenBuildLogs = false;
   _lastTerminalActivityAt = 0;
   _terminalKeepVisibleUntil = 0;
