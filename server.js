@@ -52,6 +52,9 @@ const RESEND_HERO_IMAGE_URL = String(process.env.RESEND_HERO_IMAGE_URL || '').tr
 const RESEND_HERO_IMAGE_STARTED_URL = String(process.env.RESEND_HERO_IMAGE_STARTED_URL || '').trim();
 const RESEND_HERO_IMAGE_SUCCESS_URL = String(process.env.RESEND_HERO_IMAGE_SUCCESS_URL || '').trim();
 const RESEND_HERO_IMAGE_FAILED_URL = String(process.env.RESEND_HERO_IMAGE_FAILED_URL || '').trim();
+const PAYSTACK_PUBLIC_KEY = String(process.env.PAYSTACK_PUBLIC_KEY || '').trim();
+const PAYSTACK_SECRET_KEY = String(process.env.PAYSTACK_SECRET_KEY || '').trim();
+
 const authOtpStore = new Map();
 const deployStopRequests = new Set();
 
@@ -1425,10 +1428,15 @@ app.post('/api/auth/verify-email', async (req, res) => {
 
 
 app.get('/api/workspace', requireAuth, async (req, res) => {
-  let ws = req.user.workspace || {};
-  if (!isDbReady()) {
-    const fbWs = await readWorkspaceFromFirebase(req.user);
-    if (fbWs && typeof fbWs === 'object') ws = fbWs;
+  // Firebase is the canonical workspace store for dashboard data persistence
+  // across VPS/container restarts.
+  let ws = {};
+  const fbWs = await readWorkspaceFromFirebase(req.user);
+  if (fbWs && typeof fbWs === 'object') {
+    ws = fbWs;
+  } else {
+    // Fallback only when Firebase has no record yet.
+    ws = req.user.workspace || {};
   }
   res.json({
     projects: Array.isArray(ws.projects) ? ws.projects : [],
@@ -1447,13 +1455,20 @@ app.post('/api/workspace', requireAuth, async (req, res) => {
       envStore: payload.envStore && typeof payload.envStore === 'object' ? payload.envStore : {},
       settings: payload.settings && typeof payload.settings === 'object' ? payload.settings : {}
     };
+    // Always write workspace to Firebase so user data survives VPS restarts.
+    const fbSaved = await writeWorkspaceToFirebase(req.user, workspace);
+
+    // Keep existing secondary stores as best-effort mirrors.
     if (isDbReady()) {
       await User.updateOne({ _id: req.user._id }, { $set: { workspace, updatedAt: new Date() } });
     } else {
       const user = localAuth.users.find(u => String(u.id) === String(req.user.id));
       if (user) user.workspace = workspace;
       saveLocalAuth();
-      await writeWorkspaceToFirebase(req.user, workspace);
+    }
+
+    if (!fbSaved) {
+      return res.status(503).json({ error: 'Firebase workspace write failed' });
     }
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -2524,6 +2539,60 @@ app.post('/api/github/webhook/:projectId', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+
+
+app.get('/api/billing/paystack/config', requireAuth, async (_req, res) => {
+  res.json({
+    ok: true,
+    publicKey: PAYSTACK_PUBLIC_KEY,
+    configured: !!(PAYSTACK_PUBLIC_KEY && PAYSTACK_SECRET_KEY)
+  });
+});
+
+app.post('/api/billing/paystack/verify', requireAuth, async (req, res) => {
+  try {
+    if (!PAYSTACK_SECRET_KEY) return res.status(503).json({ error: 'Paystack secret key is not configured' });
+    const reference = String(req.body?.reference || '').trim();
+    if (!reference) return res.status(400).json({ error: 'reference is required' });
+
+    const r = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d?.status !== true) {
+      return res.status(400).json({ error: d?.message || 'Paystack verification failed' });
+    }
+
+    const tx = d?.data || {};
+    const amountKobo = Number(tx.amount || 0);
+    const currency = String(tx.currency || '').toUpperCase();
+    const paidAt = tx.paid_at || tx.paidAt || null;
+    const customerEmail = String(tx.customer?.email || '').trim().toLowerCase();
+    const requestEmail = String(req.user?.email || '').trim().toLowerCase();
+    const metadataPlan = String(tx.metadata?.custom_fields?.find?.(f => String(f?.variable_name || '').toLowerCase() === 'plan')?.value || tx.metadata?.plan || '').toLowerCase();
+
+    if (tx.status !== 'success') return res.status(400).json({ error: 'Payment not successful' });
+    if (currency && currency !== 'GHS') return res.status(400).json({ error: `Unexpected currency: ${currency}` });
+    if (requestEmail && customerEmail && customerEmail !== requestEmail) return res.status(403).json({ error: 'Payment email does not match signed-in user' });
+
+    return res.json({
+      ok: true,
+      reference,
+      amountKobo,
+      currency,
+      paidAt,
+      plan: metadataPlan || null,
+      customerEmail: customerEmail || null,
+      gatewayResponse: tx.gateway_response || ''
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 app.get('/api/webhook/global-secret', requireAuth, async (req, res) => {
   res.json({

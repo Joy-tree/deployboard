@@ -7821,8 +7821,23 @@ const PLAN_LIMITS = {
   scale:   { label:'Scale Max', ramGb:16, maxProjects:120, monthlyDeployments:2000, maxCustomDomains:120, monthlyBuildSeconds:60000, monthlyBandwidthGb:8192, description:'High-capacity plan for large teams and heavy traffic.' }
 };
 const PLAN_PRICES_GHS = { free: 0, starter: 20, growth: 60, scale: 180 };
-const PAYSTACK_PUBLIC_KEY = 'pk_test_04b3c3e08d7a8c1ca50aeb024382b1ba0402e722';
+let PAYSTACK_PUBLIC_KEY = '';
 let pendingCheckoutPlan = 'starter';
+let _paystackConfigLoaded = false;
+async function ensurePaystackConfig(){
+  if (_paystackConfigLoaded && PAYSTACK_PUBLIC_KEY) return true;
+  try {
+    const r = await apiFetch(API + '/api/billing/paystack/config');
+    const d = await r.json();
+    if (!r.ok || !d?.publicKey) throw new Error(d?.error || 'Paystack public key is not configured');
+    PAYSTACK_PUBLIC_KEY = String(d.publicKey || '').trim();
+    _paystackConfigLoaded = true;
+    return !!PAYSTACK_PUBLIC_KEY;
+  } catch (e) {
+    toast('Billing is not configured yet. Add PAYSTACK_PUBLIC_KEY and PAYSTACK_SECRET_KEY on the server.', 'error', 7000);
+    return false;
+  }
+}
 function getCurrentPlanKey() {
   const key = String(settings.billingPlan || 'free').toLowerCase();
   return PLAN_LIMITS[key] ? key : 'free';
@@ -7874,13 +7889,14 @@ function applyPaidPlan(planKey) {
   renderDashboard();
   return true;
 }
-function startPaystackCheckout(){
+async function startPaystackCheckout(){
   const key = String(pendingCheckoutPlan || '').toLowerCase();
   if (!PLAN_LIMITS[key] || !PLAN_PRICES_GHS[key]) return toast('Choose a paid plan first.', 'error');
   const email = String(document.getElementById('checkoutEmail')?.value || currentUser?.email || '').trim();
   const phone = String(document.getElementById('checkoutPhone')?.value || '').trim();
   if (!email) return toast('Email is required for payment.', 'error');
   if (!window.PaystackPop) return toast('Paystack script not loaded. Refresh and try again.', 'error');
+  if (!(await ensurePaystackConfig())) return;
   const amountKobo = Math.round(Number(PLAN_PRICES_GHS[key]) * 100);
   const handler = window.PaystackPop.setup({
     key: PAYSTACK_PUBLIC_KEY,
@@ -7888,13 +7904,28 @@ function startPaystackCheckout(){
     amount: amountKobo,
     currency: 'GHS',
     metadata: { custom_fields: [{ display_name: 'Plan', variable_name: 'plan', value: key }, { display_name: 'Phone', variable_name: 'phone', value: phone }] },
-    callback: function(response){
-      applyPaidPlan(key);
-      settings.subscriptionReference = response.reference || '';
-      save();
-      toast(`${PLAN_LIMITS[key].label} activated successfully. Reference: ${response.reference}`, 'success', 7000);
-      showPage('usage');
-      renderSettings();
+    callback: async function(response){
+      const reference = String(response?.reference || '').trim();
+      try {
+        const vr = await apiFetch(API + '/api/billing/paystack/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reference })
+        });
+        const vd = await vr.json();
+        if (!vr.ok || !vd?.ok) throw new Error(vd?.error || 'Payment verification failed');
+        const verifiedPlan = String(vd.plan || key).toLowerCase();
+        const finalPlan = PLAN_LIMITS[verifiedPlan] ? verifiedPlan : key;
+        applyPaidPlan(finalPlan);
+        settings.subscriptionReference = reference;
+        settings.subscriptionVerifiedAt = new Date().toISOString();
+        save();
+        toast(`${PLAN_LIMITS[finalPlan].label} activated successfully. Reference: ${reference}`, 'success', 7000);
+        showPage('usage');
+        renderSettings();
+      } catch (e) {
+        toast('Payment received but verification failed: ' + (e.message || 'unknown error'), 'error', 9000);
+      }
     },
     onClose: function(){ toast('Payment window closed. You can continue later.', 'info'); }
   });
