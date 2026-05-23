@@ -5558,30 +5558,35 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>
       <div class="projects-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));">
         <div class="card"><div class="card-header"><div class="card-title">Free Trial</div><div class="badge">₵0</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>0.85 GB RAM</li><li>Shared vCPU (fair-use)</li><li>10 GB SSD build storage</li><li>100 GB monthly bandwidth</li><li>Up to 5 projects</li><li>500s average build time / month</li><li>Community support</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('free')">Start Free Trial</button></div></div>
-        <div class="card"><div class="card-header"><div class="card-title">Starter</div><div class="badge" style="background:rgba(16,185,129,.18);color:#86efac;">₵20/mo</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>1 GB RAM</li><li>1 vCPU</li><li>20 GB SSD storage</li><li>250 GB monthly bandwidth</li><li>Up to 10 projects</li><li>3,000s average build time / month</li><li>Priority build queue</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('starter')">Subscribe Starter</button></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Starter</div><div class="badge" style="background:rgba(16,185,129,.18);color:#86efac;">₵1/mo</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>1 GB RAM</li><li>1 vCPU</li><li>20 GB SSD storage</li><li>250 GB monthly bandwidth</li><li>Up to 10 projects</li><li>3,000s average build time / month</li><li>Priority build queue</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('starter')">Subscribe Starter</button></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Pro</div><div class="badge" style="background:rgba(251,191,36,.16);color:#fde68a;">₵30/mo</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>2 GB RAM</li><li>2 vCPU</li><li>35 GB SSD storage</li><li>500 GB monthly bandwidth</li><li>Up to 20 projects</li><li>7,000s average build time / month</li><li>Faster queue + priority support</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('pro')">Subscribe Pro</button></div></div>
         <div class="card"><div class="card-header"><div class="card-title">Growth</div><div class="badge" style="background:rgba(56,189,248,.2);color:#7dd3fc;">₵60/mo</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>5 GB RAM</li><li>2 vCPU</li><li>60 GB SSD storage</li><li>1 TB monthly bandwidth</li><li>Up to 35 projects</li><li>12,000s average build time / month</li><li>Custom domains + SSL</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('growth')">Subscribe Growth</button></div></div>
         <div class="card"><div class="card-header"><div class="card-title">Scale Max</div><div class="badge" style="background:rgba(168,85,247,.2);color:#c4b5fd;">₵180/mo</div></div><div class="card-body"><ul style="margin:0;padding-left:18px;display:grid;gap:8px;"><li>16 GB RAM</li><li>8 vCPU</li><li>Unlimited storage*</li><li>Unlimited bandwidth*</li><li>Unlimited projects</li><li>Unlimited average build time</li><li>Premium support + team access</li></ul><button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="choosePlan('scale')">Subscribe Scale Max</button><div style="font-size:.75rem;color:var(--text-3);margin-top:10px;">*subject to fair platform abuse protections.</div></div></div>
       </div>
+      <div class="card" style="margin-top:14px;border:1px solid rgba(16,185,129,.2);"><div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;"><div style="padding:10px;border:1px solid var(--border);border-radius:12px;background:rgba(16,185,129,.06);"><div style="font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:#86efac;">Instant Activation</div><div style="margin-top:6px;color:var(--text-2);font-size:.85rem;">Plans activate immediately after verified payment.</div></div><div style="padding:10px;border:1px solid var(--border);border-radius:12px;background:rgba(34,211,238,.06);"><div style="font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:#67e8f9;">Secure Billing</div><div style="margin-top:6px;color:var(--text-2);font-size:.85rem;">Paystack MoMo checkout + server-side verification.</div></div><div style="padding:10px;border:1px solid var(--border);border-radius:12px;background:rgba(168,85,247,.08);"><div style="font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:#c4b5fd;">Transparent Limits</div><div style="margin-top:6px;color:var(--text-2);font-size:.85rem;">Clear RAM, deploy, domain and bandwidth allocations.</div></div></div></div>
     </div>
 
     <div class="page" id="page-checkout">
       <div class="page-header">
+        <button class="page-back" onclick="showPage('pricing')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to plans</button>
         <div class="page-title">Complete Subscription</div>
         <div class="page-subtitle">Secure Paystack checkout for JOYTREE plan activation.</div>
       </div>
-      <div class="card" style="max-width:760px;margin:0 auto;">
+      <div class="card" style="max-width:760px;margin:0 auto;background:linear-gradient(160deg,rgba(5,13,28,.96),rgba(6,26,38,.92));border:1px solid rgba(34,211,238,.22);box-shadow:0 18px 60px rgba(2,6,23,.48);">
         <div class="card-header"><div class="card-title">Pay with Mobile Money</div></div>
         <div class="card-body">
-          <div id="checkoutPlanSummary" style="padding:14px;border:1px solid rgba(16,185,129,.2);border-radius:12px;background:rgba(16,185,129,.06);margin-bottom:14px;"></div>
+          <div id="checkoutPlanSummary" style="padding:16px;border:1px solid rgba(16,185,129,.34);border-radius:16px;background:linear-gradient(145deg,rgba(16,185,129,.12),rgba(14,116,144,.10));margin-bottom:14px;"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="field"><label class="field-label">First name</label><input class="input" id="checkoutFirstName" type="text" placeholder="James"></div>
+            <div class="field"><label class="field-label">Last name</label><input class="input" id="checkoutLastName" type="text" placeholder="Doe"></div>
             <div class="field"><label class="field-label">Email</label><input class="input" id="checkoutEmail" type="email" placeholder="you@email.com"></div>
             <div class="field"><label class="field-label">Phone (MoMo)</label><input class="input" id="checkoutPhone" type="tel" placeholder="+233..."></div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
-            <button class="btn btn-primary" onclick="startPaystackCheckout()">Pay & Activate</button>
+            <button class="btn btn-primary" id="paystackCheckoutBtn" onclick="startPaystackCheckout()">Pay & Activate</button>
             <button class="btn btn-ghost" onclick="showPage('pricing')">Back to plans</button>
           </div>
-          <div class="field-hint" style="margin-top:10px;">After successful payment, your resources and profile plan are updated instantly in real time.</div>
+          <div class="field-hint" style="margin-top:10px;">After successful payment, your resources and profile plan are updated instantly in real time.</div><div style="margin-top:14px;display:grid;gap:10px;"><div style="padding:12px;border-radius:14px;border:1px solid rgba(16,185,129,.22);background:rgba(16,185,129,.08);"><div style="font-weight:800;color:#d1fae5;">⚡ Instant Activation</div><div style="color:var(--text-2);font-size:.86rem;margin-top:4px;">Your plan is applied after payment verification.</div></div><div style="padding:12px;border-radius:14px;border:1px solid rgba(34,211,238,.22);background:rgba(34,211,238,.08);"><div style="font-weight:800;color:#cffafe;">🔐 Secure Checkout</div><div style="color:var(--text-2);font-size:.86rem;margin-top:4px;">SSL-encrypted MoMo/Card processing by Paystack.</div></div><div style="padding:12px;border-radius:14px;border:1px solid rgba(168,85,247,.22);background:rgba(168,85,247,.08);"><div style="font-weight:800;color:#e9d5ff;">📊 Real Resource Delivery</div><div style="color:var(--text-2);font-size:.86rem;margin-top:4px;">Runtime limits update based on subscribed plan.</div></div></div>
         </div>
       </div>
     </div>
@@ -7817,12 +7822,28 @@ if (settings.baseDomain === 'joytree.app') settings.baseDomain = 'joytree.site';
 const PLAN_LIMITS = {
   free:    { label:'Free Plan', ramGb:0.85, maxProjects:5, monthlyDeployments:25, maxCustomDomains:1, monthlyBuildSeconds:500, monthlyBandwidthGb:100, description:'0.85 GB RAM with limited resources for small projects.' },
   starter: { label:'Starter', ramGb:1, maxProjects:10, monthlyDeployments:120, maxCustomDomains:5, monthlyBuildSeconds:3000, monthlyBandwidthGb:250, description:'1 GB RAM with more deploys and build capacity.' },
+  pro:     { label:'Pro', ramGb:2, maxProjects:20, monthlyDeployments:260, maxCustomDomains:12, monthlyBuildSeconds:7000, monthlyBandwidthGb:512, description:'2 GB RAM for stable production apps and teams scaling up.' },
   growth:  { label:'Growth', ramGb:5, maxProjects:35, monthlyDeployments:500, maxCustomDomains:30, monthlyBuildSeconds:12000, monthlyBandwidthGb:1024, description:'5 GB RAM for growing production workloads.' },
   scale:   { label:'Scale Max', ramGb:16, maxProjects:120, monthlyDeployments:2000, maxCustomDomains:120, monthlyBuildSeconds:60000, monthlyBandwidthGb:8192, description:'High-capacity plan for large teams and heavy traffic.' }
 };
-const PLAN_PRICES_GHS = { free: 0, starter: 20, growth: 60, scale: 180 };
-const PAYSTACK_PUBLIC_KEY = 'pk_test_04b3c3e08d7a8c1ca50aeb024382b1ba0402e722';
+const PLAN_PRICES_GHS = { free: 0, starter: 1, pro: 30, growth: 60, scale: 180 };
+let PAYSTACK_PUBLIC_KEY = '';
 let pendingCheckoutPlan = 'starter';
+let _paystackConfigLoaded = false;
+async function ensurePaystackConfig(){
+  if (_paystackConfigLoaded && PAYSTACK_PUBLIC_KEY) return true;
+  try {
+    const r = await apiFetch(API + '/api/billing/paystack/config');
+    const d = await r.json();
+    if (!r.ok || !d?.publicKey) throw new Error(d?.error || 'Paystack public key is not configured');
+    PAYSTACK_PUBLIC_KEY = String(d.publicKey || '').trim();
+    _paystackConfigLoaded = true;
+    return !!PAYSTACK_PUBLIC_KEY;
+  } catch (e) {
+    toast('Billing is not configured yet. Add PAYSTACK_PUBLIC_KEY and PAYSTACK_SECRET_KEY on the server.', 'error', 7000);
+    return false;
+  }
+}
 function getCurrentPlanKey() {
   const key = String(settings.billingPlan || 'free').toLowerCase();
   return PLAN_LIMITS[key] ? key : 'free';
@@ -7861,6 +7882,10 @@ function choosePlan(planKey) {
   const box = document.getElementById('checkoutPlanSummary');
   if (box) box.innerHTML = `<strong>${plan.label}</strong><div style="margin-top:6px;color:var(--text-2);">${plan.description}</div><div style="margin-top:8px;font-weight:800;color:#86efac;">Amount: ₵${PLAN_PRICES_GHS[key]}/month</div>`;
   const em = document.getElementById('checkoutEmail'); if (em) em.value = currentUser?.email || '';
+  const fullName = String(currentUser?.name || '').trim();
+  const parts = fullName ? fullName.split(/\s+/) : [];
+  const fn = document.getElementById('checkoutFirstName'); if (fn && !fn.value) fn.value = parts[0] || '';
+  const ln = document.getElementById('checkoutLastName'); if (ln && !ln.value) ln.value = parts.length > 1 ? parts.slice(1).join(' ') : '';
   showPage('checkout');
 }
 function applyPaidPlan(planKey) {
@@ -7874,31 +7899,77 @@ function applyPaidPlan(planKey) {
   renderDashboard();
   return true;
 }
-function startPaystackCheckout(){
+async function handlePaystackSuccess(response, planKey, amountKobo) {
+  const reference = String(response?.reference || '').trim();
+  try {
+    const vr = await apiFetch(API + '/api/billing/paystack/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reference })
+    });
+    const vd = await vr.json();
+    if (!vr.ok || !vd?.ok) throw new Error(vd?.error || 'Payment verification failed');
+    const verifiedPlan = String(vd.plan || planKey).toLowerCase();
+    const finalPlan = PLAN_LIMITS[verifiedPlan] ? verifiedPlan : planKey;
+    applyPaidPlan(finalPlan);
+    settings.subscriptionReference = reference;
+    settings.subscriptionVerifiedAt = new Date().toISOString();
+    settings.subscriptionPaidAmountKobo = Number(vd.amountKobo || amountKobo);
+    save();
+    toast(`${PLAN_LIMITS[finalPlan].label} activated successfully. Reference: ${reference}`, 'success', 7000);
+    showPage('usage');
+    if (typeof renderDashboard === 'function') renderDashboard();
+  } catch (e) {
+    toast('Payment received but verification failed: ' + (e.message || 'unknown error'), 'error', 9000);
+  }
+}
+
+async function startPaystackCheckout(){
   const key = String(pendingCheckoutPlan || '').toLowerCase();
   if (!PLAN_LIMITS[key] || !PLAN_PRICES_GHS[key]) return toast('Choose a paid plan first.', 'error');
+  const firstName = String(document.getElementById('checkoutFirstName')?.value || '').trim();
+  const lastName = String(document.getElementById('checkoutLastName')?.value || '').trim();
   const email = String(document.getElementById('checkoutEmail')?.value || currentUser?.email || '').trim();
   const phone = String(document.getElementById('checkoutPhone')?.value || '').trim();
+  if (!firstName) return toast('First name is required for payment.', 'error');
+  if (!lastName) return toast('Last name is required for payment.', 'error');
   if (!email) return toast('Email is required for payment.', 'error');
   if (!window.PaystackPop) return toast('Paystack script not loaded. Refresh and try again.', 'error');
-  const amountKobo = Math.round(Number(PLAN_PRICES_GHS[key]) * 100);
-  const handler = window.PaystackPop.setup({
-    key: PAYSTACK_PUBLIC_KEY,
-    email,
-    amount: amountKobo,
-    currency: 'GHS',
-    metadata: { custom_fields: [{ display_name: 'Plan', variable_name: 'plan', value: key }, { display_name: 'Phone', variable_name: 'phone', value: phone }] },
-    callback: function(response){
-      applyPaidPlan(key);
-      settings.subscriptionReference = response.reference || '';
-      save();
-      toast(`${PLAN_LIMITS[key].label} activated successfully. Reference: ${response.reference}`, 'success', 7000);
-      showPage('usage');
-      renderSettings();
-    },
-    onClose: function(){ toast('Payment window closed. You can continue later.', 'info'); }
-  });
-  handler.openIframe();
+
+  const payBtn = document.getElementById('paystackCheckoutBtn');
+  if (payBtn) { payBtn.disabled = true; payBtn.textContent = 'Opening checkout…'; }
+
+  try {
+    if (!(await ensurePaystackConfig())) return;
+    const amountKobo = Math.round(Number(PLAN_PRICES_GHS[key]) * 100);
+
+    const initRes = await apiFetch(API + '/api/billing/paystack/initialize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ firstName, lastName, email, phone, plan: key, amountKobo })
+    });
+    const initData = await initRes.json().catch(() => ({}));
+    if (!initRes.ok || !initData?.reference) throw new Error(initData?.error || 'Could not initialize payment');
+
+    const handler = window.PaystackPop.setup({
+      key: PAYSTACK_PUBLIC_KEY,
+      email,
+      amount: amountKobo,
+      currency: 'GHS',
+      ref: String(initData.reference || ''),
+      metadata: { plan: key, custom_fields: [{ display_name: 'Plan', variable_name: 'plan', value: key }, { display_name: 'Phone', variable_name: 'phone', value: phone }] },
+      callback: function(response){
+        // Paystack expects a plain function callback.
+        Promise.resolve().then(() => handlePaystackSuccess(response, key, amountKobo));
+      },
+      onClose: function(){ toast('Payment window closed. If MoMo prompt did not arrive, confirm your Paystack account is Live-approved and retry.', 'info', 8000); }
+    });
+    handler.openIframe();
+  } catch (e) {
+    toast('Could not launch checkout: ' + (e.message || 'unknown error'), 'error', 8000);
+  } finally {
+    if (payBtn) { payBtn.disabled = false; payBtn.textContent = 'Pay & Activate'; }
+  }
 }
 let envRows      = []; // current deploy form env rows
 let currentPage  = 'dashboard';
@@ -9555,6 +9626,11 @@ async function startDeployment() {
   };
   deployments.push(deployment);
   activeBuildId = deployment.id;
+
+  // Start every new deployment with a clean live terminal view, while
+  // preserving historical logs on deployment records for Deployments → View logs.
+  clearTerminal();
+
   save();
 
   // Update UI counters
@@ -9937,6 +10013,7 @@ function clearTerminal() {
   if (term) term.clear();
   logBuffer = [];
   pendingTermLines = [];
+  _writeQueue = [];
   _hasWrittenBuildLogs = false;
   _lastTerminalActivityAt = 0;
   _terminalKeepVisibleUntil = 0;
