@@ -52,6 +52,10 @@ const RESEND_HERO_IMAGE_URL = String(process.env.RESEND_HERO_IMAGE_URL || '').tr
 const RESEND_HERO_IMAGE_STARTED_URL = String(process.env.RESEND_HERO_IMAGE_STARTED_URL || '').trim();
 const RESEND_HERO_IMAGE_SUCCESS_URL = String(process.env.RESEND_HERO_IMAGE_SUCCESS_URL || '').trim();
 const RESEND_HERO_IMAGE_FAILED_URL = String(process.env.RESEND_HERO_IMAGE_FAILED_URL || '').trim();
+const PAYSTACK_PUBLIC_KEY = String(process.env.PAYSTACK_PUBLIC_KEY || '').trim();
+const PAYSTACK_SECRET_KEY = String(process.env.PAYSTACK_SECRET_KEY || '').trim();
+const PAYSTACK_WEBHOOK_SECRET = String(process.env.PAYSTACK_WEBHOOK_SECRET || process.env.PAYSTACK_SECRET_KEY || '').trim();
+
 const authOtpStore = new Map();
 const deployStopRequests = new Set();
 
@@ -349,7 +353,7 @@ app.use((req, res, next) => {
   const subdomain = match[1];
 
   // Reload port registry from disk on every request so newly-deployed apps
-  // are reachable immediately without restarting DeployBoard.
+  // are reachable immediately without restarting Joytree.
   try {
     if (fs.existsSync(PORTS_FILE)) {
       portRegistry = JSON.parse(fs.readFileSync(PORTS_FILE, 'utf8'));
@@ -1008,6 +1012,31 @@ function createSessionToken() {
 function generateOtpCode() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
+
+async function sendPaymentSuccessEmail({ userEmail = '', plan = '', amountKobo = 0, currency = 'GHS', reference = '', paidAt = null } = {}) {
+  if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return { ok: false, skipped: true, reason: 'resend_not_configured' };
+  const recipient = String(userEmail || '').trim().toLowerCase();
+  if (!recipient) return { ok: false, skipped: true, reason: 'missing_recipient' };
+  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
+  const planLabelMap = { free: 'Free Plan', starter: 'Starter', pro: 'Pro', growth: 'Growth', scale: 'Scale Max' };
+  const safePlan = String(plan || '').trim().toLowerCase();
+  const planLabel = planLabelMap[safePlan] || (safePlan ? safePlan.toUpperCase() : 'Paid Plan');
+  const amountMajor = Number(amountKobo || 0) / 100;
+  const paidText = paidAt ? new Date(paidAt).toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'medium', timeStyle: 'short' }) + ' UTC' : new Date().toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'medium', timeStyle: 'short' }) + ' UTC';
+  const subject = `JOYTREE Payment Confirmed · ${planLabel}`;
+  const html = `<!doctype html><html><body style="margin:0;background:#050910;padding:24px;font-family:Inter,Arial,sans-serif;color:#e2e8f0"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;background:#0b1220;border:1px solid #1f2937;border-radius:16px;overflow:hidden"><tr><td style="padding:20px 22px;background:linear-gradient(135deg,#052e1a,#0b1220)"><table role="presentation" width="100%"><tr><td style="display:flex;align-items:center;gap:10px"><img src="${logoUrl}" alt="JOYTREE" width="48" height="48" style="width:48px;height:48px;border-radius:12px;object-fit:cover"><div style="font-size:24px;font-weight:800;letter-spacing:.02em">JOYTREE</div></td></tr></table></td></tr><tr><td style="padding:22px"><div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#86efac;font-weight:700">Payment successful</div><h2 style="margin:10px 0 8px;font-size:30px;line-height:1.1;color:#f8fafc">Your ${planLabel} plan is now active ✅</h2><p style="margin:0 0 16px;color:#94a3b8">Thanks for your payment. Your resources and account limits were updated instantly.</p><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #1f2937;border-radius:12px;background:#07131f"><tr><td style="padding:14px"><div style="display:grid;gap:8px"><div><span style="color:#64748b">Plan:</span> <strong style="color:#e2e8f0">${planLabel}</strong></div><div><span style="color:#64748b">Amount:</span> <strong style="color:#86efac">${currency} ${amountMajor.toFixed(2)}</strong></div><div><span style="color:#64748b">Reference:</span> <code style="color:#cbd5e1">${reference || '-'}</code></div><div><span style="color:#64748b">Paid at:</span> <strong style="color:#cbd5e1">${paidText}</strong></div></div></td></tr></table><p style="margin:16px 0 0;color:#94a3b8">Need help? Reply to this email and our team will assist quickly.</p></td></tr></table></body></html>`;
+  const text = `JOYTREE payment confirmed
+Plan: ${planLabel}
+Amount: ${currency} ${amountMajor.toFixed(2)}
+Reference: ${reference || '-'}
+Paid at: ${paidText}`;
+  const payload = { from: RESEND_FROM_EMAIL, to: [recipient], subject, html, text };
+  if (RESEND_REPLY_TO_EMAIL) payload.reply_to = RESEND_REPLY_TO_EMAIL;
+  const r = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  if (!r.ok) return { ok: false, skipped: false, reason: await r.text().catch(()=>String(r.status)) };
+  return { ok: true };
+}
+
 async function sendVerificationCodeEmail(email = '', code = '') {
   if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return;
   const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
@@ -1425,10 +1454,15 @@ app.post('/api/auth/verify-email', async (req, res) => {
 
 
 app.get('/api/workspace', requireAuth, async (req, res) => {
-  let ws = req.user.workspace || {};
-  if (!isDbReady()) {
-    const fbWs = await readWorkspaceFromFirebase(req.user);
-    if (fbWs && typeof fbWs === 'object') ws = fbWs;
+  // Firebase is the canonical workspace store for dashboard data persistence
+  // across VPS/container restarts.
+  let ws = {};
+  const fbWs = await readWorkspaceFromFirebase(req.user);
+  if (fbWs && typeof fbWs === 'object') {
+    ws = fbWs;
+  } else {
+    // Fallback only when Firebase has no record yet.
+    ws = req.user.workspace || {};
   }
   res.json({
     projects: Array.isArray(ws.projects) ? ws.projects : [],
@@ -1447,13 +1481,20 @@ app.post('/api/workspace', requireAuth, async (req, res) => {
       envStore: payload.envStore && typeof payload.envStore === 'object' ? payload.envStore : {},
       settings: payload.settings && typeof payload.settings === 'object' ? payload.settings : {}
     };
+    // Always write workspace to Firebase so user data survives VPS restarts.
+    const fbSaved = await writeWorkspaceToFirebase(req.user, workspace);
+
+    // Keep existing secondary stores as best-effort mirrors.
     if (isDbReady()) {
       await User.updateOne({ _id: req.user._id }, { $set: { workspace, updatedAt: new Date() } });
     } else {
       const user = localAuth.users.find(u => String(u.id) === String(req.user.id));
       if (user) user.workspace = workspace;
       saveLocalAuth();
-      await writeWorkspaceToFirebase(req.user, workspace);
+    }
+
+    if (!fbSaved) {
+      return res.status(503).json({ error: 'Firebase workspace write failed' });
     }
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -1982,6 +2023,7 @@ app.get('/api/activity', async (req, res) => {
 const PLAN_RUNTIME_PROFILES = {
   free:    { memoryLimit: '870m', cpuShares: 512, memorySwap: '1g' },
   starter: { memoryLimit: '1g',   cpuShares: 768, memorySwap: '2g' },
+  pro:     { memoryLimit: '2g',   cpuShares: 1024, memorySwap: '3g' },
   growth:  { memoryLimit: '5g',   cpuShares: 1536, memorySwap: '6g' },
   scale:   { memoryLimit: '16g',  cpuShares: 2048, memorySwap: '18g' }
 };
@@ -2179,7 +2221,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       emit('build:log', { line: `\x1b[33m[Resend]\x1b[0m Deployment start email could not be sent (${notifyStart.reason || 'unknown'}).` });
     }
 
-    emit('build:log', { line: `\x1b[36m[DeployBoard]\x1b[0m Building \x1b[1m${name}\x1b[0m` });
+    emit('build:log', { line: `\x1b[36m[Joytree]\x1b[0m Building \x1b[1m${name}\x1b[0m` });
     emit('build:log', { line: `\x1b[90mRepo: ${repoUrl}  Branch: ${branch||'main'}\x1b[0m` });
     emit('build:log', { line: `\x1b[90mTarget: https://${cleanSub}.${BASE_DOMAIN}\x1b[0m` });
     emit('build:log', { line: '' });
@@ -2229,7 +2271,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     if (deployStopRequests.has(deployId)) throw new Error('Deployment stopped by user');
 
     // Register CF subdomain
-    emit('build:log', { line: `\x1b[36m[DeployBoard]\x1b[0m Registering subdomain…` });
+    emit('build:log', { line: `\x1b[36m[Joytree]\x1b[0m Registering subdomain…` });
     const cf = await registerSubdomain(cleanSub);
     if (cf.ok) {
       emit('build:log', { line: `\x1b[32m[CF]\x1b[0m Live at: \x1b[1m${cf.url}\x1b[0m` });
@@ -2340,7 +2382,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     if (!notifyFailure.ok && !notifyFailure.skipped) {
       emit('build:log', { line: `\x1b[33m[Resend]\x1b[0m Deployment email could not be sent (${notifyFailure.reason || 'unknown'}).` });
     }
-    emit('build:log', { line: `\x1b[31m[DeployBoard]\x1b[0m Build failed: ${safeErr}` });
+    emit('build:log', { line: `\x1b[31m[Joytree]\x1b[0m Build failed: ${safeErr}` });
     emit('build:done', { status: wasStopped ? 'canceled' : 'failed', duration });
     console.error(`[Deploy] FAILED ${name}:`, sanitizeSecrets(buildErr.message));
     deployStopRequests.delete(deployId);
@@ -2361,7 +2403,7 @@ app.post('/api/deploy/:deployId/stop', requireAuth, async (req, res) => {
     dep.logs = dep.logs || [];
     dep.logs.push('[manual] Deployment stop requested by user.');
     await dep.save().catch(()=>{});
-    io.emit('build:log', { deployId, projectId: String(dep.projectId || ''), line: '\x1b[33m[DeployBoard]\x1b[0m Stop requested by user. Attempting to halt build…' });
+    io.emit('build:log', { deployId, projectId: String(dep.projectId || ''), line: '\x1b[33m[Joytree]\x1b[0m Stop requested by user. Attempting to halt build…' });
     io.emit('build:done', { deployId, projectId: String(dep.projectId || ''), status: 'canceled' });
     res.json({ ok: true, message: 'Stop requested' });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -2434,7 +2476,7 @@ app.post('/api/projects/:id/autodeploy', requireAuth, async (req, res) => {
       lastSha: project.autoDeployLastSha || headSha || '',
       warning: baselineWarning,
       note: enabled
-        ? 'DeployBoard will poll GitHub with this user OAuth token and trigger a deploy when the configured branch SHA changes. No repository webhook is required.'
+        ? 'Joytree will poll GitHub with this user OAuth token and trigger a deploy when the configured branch SHA changes. No repository webhook is required.'
         : 'Polling auto-deploy disabled for this project.'
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -2525,13 +2567,212 @@ app.post('/api/github/webhook/:projectId', async (req, res) => {
 });
 
 
+
+
+function paystackSignatureValid(req) {
+  if (!PAYSTACK_WEBHOOK_SECRET) return false;
+  const sig = String(req.headers['x-paystack-signature'] || '').trim().toLowerCase();
+  if (!sig || !req.rawBody) return false;
+  const expected = crypto.createHmac('sha512', PAYSTACK_WEBHOOK_SECRET).update(req.rawBody).digest('hex').toLowerCase();
+  return timingSafeEqualString(sig, expected);
+}
+
+async function markPaystackReferenceProcessed(reference = '', payload = {}) {
+  const ref = String(reference || '').trim();
+  if (!ref || !FIREBASE_RTDB_URL) return { ok: false, duplicate: false };
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  const url = `${FIREBASE_RTDB_URL}/deployboard_paystack_events/${encodeURIComponent(ref)}.json${authQuery}`;
+  const existingRes = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } }).catch(() => null);
+  if (!existingRes || !existingRes.ok) return { ok: false, duplicate: false };
+  const existing = await existingRes.json().catch(() => null);
+  if (existing) return { ok: true, duplicate: true };
+  const wr = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => null);
+  return { ok: !!(wr && wr.ok), duplicate: false };
+}
+
+app.get('/api/billing/paystack/config', requireAuth, async (_req, res) => {
+  res.json({
+    ok: true,
+    publicKey: PAYSTACK_PUBLIC_KEY,
+    configured: !!(PAYSTACK_PUBLIC_KEY && PAYSTACK_SECRET_KEY)
+  });
+});
+
+
+app.post('/api/billing/paystack/initialize', requireAuth, async (req, res) => {
+  try {
+    if (!PAYSTACK_SECRET_KEY || !PAYSTACK_PUBLIC_KEY) return res.status(503).json({ error: 'Paystack is not configured on server' });
+    const firstName = String(req.body?.firstName || '').trim();
+    const lastName = String(req.body?.lastName || '').trim();
+    const email = String(req.body?.email || req.user?.email || '').trim();
+    const plan = String(req.body?.plan || '').trim().toLowerCase();
+    const amountKobo = Number(req.body?.amountKobo || 0);
+    const phone = String(req.body?.phone || '').trim();
+    if (!firstName) return res.status(400).json({ error: 'firstName is required' });
+    if (!lastName) return res.status(400).json({ error: 'lastName is required' });
+    if (!email) return res.status(400).json({ error: 'email is required' });
+    if (!Number.isFinite(amountKobo) || amountKobo < 100) return res.status(400).json({ error: 'amountKobo must be at least 100' });
+
+    const r = await fetch('https://api.paystack.co/transaction/initialize', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        amount: Math.round(amountKobo),
+        currency: 'GHS',
+        callback_url: `https://${BASE_DOMAIN}/dashboard/checkout`,
+        channels: ['mobile_money'],
+        metadata: {
+          plan,
+          custom_fields: [
+            { display_name: 'Plan', variable_name: 'plan', value: plan },
+            { display_name: 'Phone', variable_name: 'phone', value: phone },
+            { display_name: 'First name', variable_name: 'first_name', value: firstName },
+            { display_name: 'Last name', variable_name: 'last_name', value: lastName }
+          ]
+        }
+      })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d?.status !== true || !d?.data?.reference) {
+      return res.status(400).json({ error: d?.message || 'Failed to initialize Paystack transaction' });
+    }
+    return res.json({
+      ok: true,
+      reference: String(d.data.reference || ''),
+      accessCode: String(d.data.access_code || ''),
+      authorizationUrl: String(d.data.authorization_url || '')
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/billing/paystack/verify', requireAuth, async (req, res) => {
+  try {
+    if (!PAYSTACK_SECRET_KEY) return res.status(503).json({ error: 'Paystack secret key is not configured' });
+    const reference = String(req.body?.reference || '').trim();
+    if (!reference) return res.status(400).json({ error: 'reference is required' });
+
+    const r = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d?.status !== true) {
+      return res.status(400).json({ error: d?.message || 'Paystack verification failed' });
+    }
+
+    const tx = d?.data || {};
+    const amountKobo = Number(tx.amount || 0);
+    const currency = String(tx.currency || '').toUpperCase();
+    const paidAt = tx.paid_at || tx.paidAt || null;
+    const customerEmail = String(tx.customer?.email || '').trim().toLowerCase();
+    const requestEmail = String(req.user?.email || '').trim().toLowerCase();
+    const metadataPlan = String(tx.metadata?.custom_fields?.find?.(f => String(f?.variable_name || '').toLowerCase() === 'plan')?.value || tx.metadata?.plan || '').toLowerCase();
+
+    if (tx.status !== 'success') return res.status(400).json({ error: 'Payment not successful' });
+    if (currency && currency !== 'GHS') return res.status(400).json({ error: `Unexpected currency: ${currency}` });
+    if (requestEmail && customerEmail && customerEmail !== requestEmail) return res.status(403).json({ error: 'Payment email does not match signed-in user' });
+
+    // Persist subscription directly on verify path (webhook-safe, restart-safe)
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    ws.settings = ws.settings && typeof ws.settings === 'object' ? ws.settings : {};
+    if (metadataPlan) ws.settings.billingPlan = metadataPlan;
+    ws.settings.subscriptionStatus = 'active';
+    ws.settings.subscriptionReference = reference;
+    ws.settings.subscriptionVerifiedAt = new Date().toISOString();
+    ws.settings.subscriptionActivatedAt = new Date().toISOString();
+    ws.settings.subscriptionPaidAmountKobo = Number(amountKobo || 0);
+    ws.settings.subscriptionCurrency = String(currency || 'GHS').toUpperCase();
+    ws.settings.subscriptionEmail = customerEmail || requestEmail || '';
+    const wsSaved = await writeWorkspaceToFirebase(req.user, ws);
+    if (!wsSaved) return res.status(503).json({ error: 'Subscription saved in payment gateway but failed to persist in Firebase' });
+
+    const mailResult = await sendPaymentSuccessEmail({ userEmail: customerEmail || requestEmail, plan: metadataPlan || null, amountKobo, currency: currency || 'GHS', reference, paidAt }).catch((e) => ({ ok:false, reason:e.message || 'send_exception' }));
+    if (!mailResult?.ok) console.warn('[Billing] Payment success email not sent:', mailResult?.reason || 'unknown');
+
+    return res.json({
+      ok: true,
+      reference,
+      amountKobo,
+      currency,
+      paidAt,
+      plan: metadataPlan || null,
+      customerEmail: customerEmail || null,
+      gatewayResponse: tx.gateway_response || ''
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+app.post('/api/paystack/webhook', async (req, res) => {
+  try {
+    if (!PAYSTACK_WEBHOOK_SECRET) return res.status(503).json({ error: 'Paystack webhook signing key not configured' });
+    if (!paystackSignatureValid(req)) return res.status(401).json({ error: 'Invalid paystack signature' });
+
+    const event = String(req.body?.event || '').trim();
+    if (event !== 'charge.success') return res.json({ ok: true, ignored: true, event });
+
+    const data = req.body?.data || {};
+    const reference = String(data.reference || '').trim();
+    const email = String(data.customer?.email || '').trim().toLowerCase();
+    const plan = String(data.metadata?.plan || data.metadata?.custom_fields?.find?.(f => String(f?.variable_name || '').toLowerCase() === 'plan')?.value || '').toLowerCase();
+
+    if (!reference || !email) return res.status(400).json({ error: 'Missing reference or customer email' });
+
+    const idempotency = await markPaystackReferenceProcessed(reference, {
+      reference,
+      event,
+      email,
+      plan,
+      paidAt: data.paid_at || data.paidAt || new Date().toISOString(),
+      amount: Number(data.amount || 0),
+      currency: String(data.currency || '').toUpperCase(),
+      createdAt: new Date().toISOString()
+    });
+    if (idempotency.ok && idempotency.duplicate) return res.json({ ok: true, duplicate: true });
+
+    const userLike = { email };
+    const ws = (await readWorkspaceFromFirebase(userLike)) || {};
+    ws.settings = ws.settings && typeof ws.settings === 'object' ? ws.settings : {};
+    if (plan) ws.settings.billingPlan = plan;
+    ws.settings.subscriptionStatus = 'active';
+    ws.settings.subscriptionReference = reference;
+    ws.settings.subscriptionVerifiedAt = new Date().toISOString();
+    ws.settings.subscriptionActivatedAt = new Date().toISOString();
+    ws.settings.subscriptionPaidAmountKobo = Number(data.amount || 0);
+    ws.settings.subscriptionCurrency = String(data.currency || 'GHS').toUpperCase();
+    ws.settings.subscriptionEmail = email;
+
+    const saved = await writeWorkspaceToFirebase(userLike, ws);
+    if (!saved) return res.status(503).json({ error: 'Failed to persist subscription update in Firebase' });
+
+    await sendPaymentSuccessEmail({ userEmail: email, plan: plan || null, amountKobo: Number(data.amount || 0), currency: String(data.currency || 'GHS').toUpperCase(), reference, paidAt: data.paid_at || data.paidAt || new Date().toISOString() }).catch(() => ({}));
+
+    res.json({ ok: true, reference, plan: plan || null });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/webhook/global-secret', requireAuth, async (req, res) => {
   res.json({
     ok:true,
     secret: GLOBAL_WEBHOOK_SECRET || '',
     webhookUrl: `${getPublicOrigin(req)}/api/github/webhook`,
     envConfigured: !!(process.env.GLOBAL_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET),
-    note: 'Use this one GitHub webhook secret for every repository webhook. DeployBoard matches the pushed repository/branch to all enabled projects.'
+    note: 'Use this one GitHub webhook secret for every repository webhook. Joytree matches the pushed repository/branch to all enabled projects.'
   });
 });
 
@@ -2572,9 +2813,9 @@ app.get('*', (req, res) => res.sendFile(DASHBOARD_INDEX));
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 server.listen(PORT, () => {
-  console.log(`[DeployBoard] Running on http://localhost:${PORT}`);
-  console.log(`[DeployBoard] Base domain: ${BASE_DOMAIN}`);
-  console.log(`[DeployBoard] Sites dir:   ${SITES_DIR}`);
+  console.log(`[Joytree] Running on http://localhost:${PORT}`);
+  console.log(`[Joytree] Base domain: ${BASE_DOMAIN}`);
+  console.log(`[Joytree] Sites dir:   ${SITES_DIR}`);
 });
 
 function sanitizeSecrets(text = '') {
@@ -2611,7 +2852,7 @@ function verifyGitHubWebhookSecret(req, secret) {
   const expectedSecret = String(secret || '').trim();
   if (!expectedSecret) return false;
 
-  // Legacy/manual mode: useful for curl tests or older DeployBoard webhook docs.
+  // Legacy/manual mode: useful for curl tests or older Joytree webhook docs.
   const provided = String(req.headers['x-deployboard-secret'] || req.query.secret || '').trim();
   if (provided && timingSafeEqualString(provided, expectedSecret)) return true;
 
