@@ -9535,6 +9535,10 @@ async function startDeployment() {
   };
   deployments.push(deployment);
   activeBuildId = deployment.id;
+
+  // Start each deployment with a clean live terminal view while preserving
+  // historical logs on previous deployment records for View Logs.
+  clearTerminal();
   save();
 
   // Update UI counters
@@ -9917,6 +9921,7 @@ function clearTerminal() {
   if (term) term.clear();
   logBuffer = [];
   pendingTermLines = [];
+  _writeQueue = [];
   _hasWrittenBuildLogs = false;
   _lastTerminalActivityAt = 0;
   _terminalKeepVisibleUntil = 0;
