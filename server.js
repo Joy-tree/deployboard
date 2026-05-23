@@ -349,7 +349,7 @@ app.use((req, res, next) => {
   const subdomain = match[1];
 
   // Reload port registry from disk on every request so newly-deployed apps
-  // are reachable immediately without restarting DeployBoard.
+  // are reachable immediately without restarting Joytree.
   try {
     if (fs.existsSync(PORTS_FILE)) {
       portRegistry = JSON.parse(fs.readFileSync(PORTS_FILE, 'utf8'));
@@ -2179,7 +2179,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       emit('build:log', { line: `\x1b[33m[Resend]\x1b[0m Deployment start email could not be sent (${notifyStart.reason || 'unknown'}).` });
     }
 
-    emit('build:log', { line: `\x1b[36m[DeployBoard]\x1b[0m Building \x1b[1m${name}\x1b[0m` });
+    emit('build:log', { line: `\x1b[36m[Joytree]\x1b[0m Building \x1b[1m${name}\x1b[0m` });
     emit('build:log', { line: `\x1b[90mRepo: ${repoUrl}  Branch: ${branch||'main'}\x1b[0m` });
     emit('build:log', { line: `\x1b[90mTarget: https://${cleanSub}.${BASE_DOMAIN}\x1b[0m` });
     emit('build:log', { line: '' });
@@ -2229,7 +2229,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     if (deployStopRequests.has(deployId)) throw new Error('Deployment stopped by user');
 
     // Register CF subdomain
-    emit('build:log', { line: `\x1b[36m[DeployBoard]\x1b[0m Registering subdomain…` });
+    emit('build:log', { line: `\x1b[36m[Joytree]\x1b[0m Registering subdomain…` });
     const cf = await registerSubdomain(cleanSub);
     if (cf.ok) {
       emit('build:log', { line: `\x1b[32m[CF]\x1b[0m Live at: \x1b[1m${cf.url}\x1b[0m` });
@@ -2340,7 +2340,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     if (!notifyFailure.ok && !notifyFailure.skipped) {
       emit('build:log', { line: `\x1b[33m[Resend]\x1b[0m Deployment email could not be sent (${notifyFailure.reason || 'unknown'}).` });
     }
-    emit('build:log', { line: `\x1b[31m[DeployBoard]\x1b[0m Build failed: ${safeErr}` });
+    emit('build:log', { line: `\x1b[31m[Joytree]\x1b[0m Build failed: ${safeErr}` });
     emit('build:done', { status: wasStopped ? 'canceled' : 'failed', duration });
     console.error(`[Deploy] FAILED ${name}:`, sanitizeSecrets(buildErr.message));
     deployStopRequests.delete(deployId);
@@ -2361,7 +2361,7 @@ app.post('/api/deploy/:deployId/stop', requireAuth, async (req, res) => {
     dep.logs = dep.logs || [];
     dep.logs.push('[manual] Deployment stop requested by user.');
     await dep.save().catch(()=>{});
-    io.emit('build:log', { deployId, projectId: String(dep.projectId || ''), line: '\x1b[33m[DeployBoard]\x1b[0m Stop requested by user. Attempting to halt build…' });
+    io.emit('build:log', { deployId, projectId: String(dep.projectId || ''), line: '\x1b[33m[Joytree]\x1b[0m Stop requested by user. Attempting to halt build…' });
     io.emit('build:done', { deployId, projectId: String(dep.projectId || ''), status: 'canceled' });
     res.json({ ok: true, message: 'Stop requested' });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -2434,7 +2434,7 @@ app.post('/api/projects/:id/autodeploy', requireAuth, async (req, res) => {
       lastSha: project.autoDeployLastSha || headSha || '',
       warning: baselineWarning,
       note: enabled
-        ? 'DeployBoard will poll GitHub with this user OAuth token and trigger a deploy when the configured branch SHA changes. No repository webhook is required.'
+        ? 'Joytree will poll GitHub with this user OAuth token and trigger a deploy when the configured branch SHA changes. No repository webhook is required.'
         : 'Polling auto-deploy disabled for this project.'
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -2531,7 +2531,7 @@ app.get('/api/webhook/global-secret', requireAuth, async (req, res) => {
     secret: GLOBAL_WEBHOOK_SECRET || '',
     webhookUrl: `${getPublicOrigin(req)}/api/github/webhook`,
     envConfigured: !!(process.env.GLOBAL_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET),
-    note: 'Use this one GitHub webhook secret for every repository webhook. DeployBoard matches the pushed repository/branch to all enabled projects.'
+    note: 'Use this one GitHub webhook secret for every repository webhook. Joytree matches the pushed repository/branch to all enabled projects.'
   });
 });
 
@@ -2572,9 +2572,9 @@ app.get('*', (req, res) => res.sendFile(DASHBOARD_INDEX));
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 server.listen(PORT, () => {
-  console.log(`[DeployBoard] Running on http://localhost:${PORT}`);
-  console.log(`[DeployBoard] Base domain: ${BASE_DOMAIN}`);
-  console.log(`[DeployBoard] Sites dir:   ${SITES_DIR}`);
+  console.log(`[Joytree] Running on http://localhost:${PORT}`);
+  console.log(`[Joytree] Base domain: ${BASE_DOMAIN}`);
+  console.log(`[Joytree] Sites dir:   ${SITES_DIR}`);
 });
 
 function sanitizeSecrets(text = '') {
@@ -2611,7 +2611,7 @@ function verifyGitHubWebhookSecret(req, secret) {
   const expectedSecret = String(secret || '').trim();
   if (!expectedSecret) return false;
 
-  // Legacy/manual mode: useful for curl tests or older DeployBoard webhook docs.
+  // Legacy/manual mode: useful for curl tests or older Joytree webhook docs.
   const provided = String(req.headers['x-deployboard-secret'] || req.query.secret || '').trim();
   if (provided && timingSafeEqualString(provided, expectedSecret)) return true;
 
