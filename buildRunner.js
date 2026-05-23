@@ -1,6 +1,6 @@
 'use strict';
 
-// ===== DEPLOYBOARD UPDATE MARKER (VISIBLE) =====
+// ===== JOYTREE UPDATE MARKER (VISIBLE) =====
 // UPDATED BY AGENT: 2026-04-29T00:00:00Z
 // If you can read this block, you're running the latest deployment runner patch.
 // Key features in this version:
@@ -380,7 +380,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
 // ── SERVER BUILD ──────────────────────────────────────────────────────────────
 // Each server app runs in its OWN Docker container — fully isolated.
-// Port conflicts are impossible. Container survives DeployBoard restarts.
+// Port conflicts are impossible. Container survives Joytree restarts.
 async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog }) {
   const buildDir  = path.join(tmpDir, deployId);
   const appDir    = path.join(sitesDir, project.subdomain, 'app');
@@ -511,7 +511,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   // If usedBuildDir is still in /tmp (rename failed and copy also failed somehow),
   // we need a path Docker can reach — use the tmp path directly since it's mounted
   const dockerMountSrc = usedBuildDir.startsWith('/tmp')
-    ? usedBuildDir   // /tmp is directly accessible inside the DeployBoard container
+    ? usedBuildDir   // /tmp is directly accessible inside the Joytree container
     : hostAppDir;
 
   const dockerArgs = [
@@ -965,7 +965,7 @@ async function cloneRepo(project, buildDir, githubToken, log) {
         log(`\x1b[32m[clone] ✓ Cloned successfully with header auth\x1b[0m`);
         return;
       } catch (e2) {
-        log(`\x1b[31m[clone] Header auth retry failed. If this is an org repo with SSO, authorize DeployBoard token in GitHub SSO.\x1b[0m`);
+        log(`\x1b[31m[clone] Header auth retry failed. If this is an org repo with SSO, authorize Joytree token in GitHub SSO.\x1b[0m`);
         throw e2;
       }
     }
@@ -1125,7 +1125,7 @@ function assertDeployableServerApp(projectRoot, startCmd, log) {
 
   if (!hasStartScript && !hasServerEntry) {
     log(`\x1b[31m[deploy] This repository does not define a runnable web server start command.\x1b[0m`);
-    log(`\x1b[33m[deploy] Add a custom start command in DeployBoard (e.g. \"node server.js\") or use an app repository instead of a framework/library source repo.\x1b[0m`);
+    log(`\x1b[33m[deploy] Add a custom start command in Joytree (e.g. \"node server.js\") or use an app repository instead of a framework/library source repo.\x1b[0m`);
     throw new Error('No start script/server entry found. This repo looks like source code for a package/library, not a deployable web app.');
   }
 }
