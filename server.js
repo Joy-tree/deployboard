@@ -1078,8 +1078,15 @@ async function writeWorkspaceToFirebase(user, workspace) {
 // This is the PRIMARY store — MongoDB is not required.
 function firebaseDbBaseUrl(user) {
   const key = firebaseWorkspaceKey(user);
-  if (!FIREBASE_RTDB_URL || !key) return '';
-  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  if (!FIREBASE_RTDB_URL || !key) {
+    if (!FIREBASE_RTDB_URL) console.warn('[db/firebase] FIREBASE_RTDB_URL missing; skipping write');
+    else console.warn('[db/firebase] workspace key missing; skipping write', {
+      userId: String(user?._id || user?.id || ''),
+      hasEmail: !!String(user?.email || '').trim(),
+      hasFirebaseUid: !!String(user?.firebaseUid || '').trim()
+    });
+    return '';
+  }
   return `${FIREBASE_RTDB_URL}/deployboard_databases/${key}`;
 }
 async function readAllDbsFromFirebase(user) {
@@ -1120,6 +1127,7 @@ async function deleteDbFromFirebase(user, dbId) {
 }
 // Save db record to all available stores (Firebase + local file)
 async function persistDb(user, db) {
+  user = await enrichAuthUser(user);
   const rec = { ...db, id: String(db.id || db._id || '') };
   upsertLocalDb(rec);                        // always write local file
   await writeDbToFirebase(user, rec);        // write to Firebase RTDB
@@ -1128,12 +1136,30 @@ async function persistDb(user, db) {
   }
 }
 async function removeDb(user, dbId) {
+  user = await enrichAuthUser(user);
   removeLocalDb(dbId);
   await deleteDbFromFirebase(user, dbId);
   if (isDbReady()) Database.deleteOne({ _id: dbId }).catch(() => {});
 }
+
+async function enrichAuthUser(user) {
+  if (!user) return user;
+  if (String(user.email || '').trim()) return user;
+  const uid = String(user._id || user.id || '');
+  if (!uid) return user;
+  if (isDbReady()) {
+    try {
+      const found = await User.findById(uid).select('email').lean();
+      if (found?.email) return { ...user, email: String(found.email) };
+    } catch {}
+  }
+  const local = localAuth.users.find(u => String(u.id || u._id || '') === uid);
+  if (local?.email) return { ...user, email: String(local.email) };
+  return user;
+}
 // Load databases for a user — Firebase first, then local file, then Mongo
 async function loadUserDatabases(user) {
+  user = await enrichAuthUser(user);
   const userId = String(user._id || user.id);
   // 1. Try Firebase RTDB (primary)
   const fbDbs = await readAllDbsFromFirebase(user);
@@ -3933,10 +3959,10 @@ function buildDbConnStr(engine, user, pass, dbName, host, port) {
 app.get('/api/databases/:id', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id).lean();
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
     if (db.containerName) db.status = containerStatus(db.containerName);
     res.json({ ...db, id: String(db._id) });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -4023,10 +4049,10 @@ app.post('/api/databases/:id/delete', requireAuth, async (req, res) => {
 app.get('/api/databases/:id/logs', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id).lean();
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
     if (!db.containerName) return res.json({ logs: '' });
 
     const lines = Math.min(200, Number(req.query.lines || 100));
@@ -4040,10 +4066,10 @@ app.get('/api/databases/:id/logs', requireAuth, async (req, res) => {
 app.post('/api/databases/:id/link', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id);
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
 
     const { projectId } = req.body || {};
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
@@ -4052,8 +4078,9 @@ app.post('/api/databases/:id/link', requireAuth, async (req, res) => {
     if (!project) return res.status(404).json({ error: 'Project not found' });
     if (String(project.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
 
-    await injectConnStrIntoProject(projectId, db.engine, db.connStr);
-    db.linkProjectId = projectId; db.updatedAt = new Date(); await db.save();
+    await injectConnStrIntoProject(projectId, db.engine, db.connStr || db.connectionString || '');
+    db.linkProjectId = projectId; db.updatedAt = new Date().toISOString();
+    await persistDb(req.user, db);
     addActivity('database', `🔗 Database "${db.name}" linked to project "${project.name}"`);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -4065,10 +4092,10 @@ app.post('/api/databases/:id/link', requireAuth, async (req, res) => {
 app.post('/api/databases/:id/query', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id).lean();
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
     if (!db.containerName) return res.status(400).json({ error: 'Container not provisioned' });
 
     const liveStatus = containerStatus(db.containerName);
@@ -4133,10 +4160,10 @@ app.post('/api/databases/:id/query', requireAuth, async (req, res) => {
 app.get('/api/databases/:id/metrics', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id).lean();
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
     if (!db.containerName) return res.json({ status: 'no_container' });
 
     const status = containerStatus(db.containerName);
