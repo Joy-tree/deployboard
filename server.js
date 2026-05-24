@@ -3834,10 +3834,10 @@ app.post('/api/databases', requireAuth, async (req, res) => {
     const safeName = String(name).toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
     if (!safeName) return res.status(400).json({ error: 'Invalid database name' });
 
-    // Check for name collision
-    if (isDbReady()) {
-      const existing = await Database.findOne({ ownerUserId: userId, name: safeName });
-      if (existing) return res.status(409).json({ error: `A database named "${safeName}" already exists` });
+    // Check for name collision across Firebase/local/Mongo-backed view
+    const existingDbs = await loadUserDatabases(req.user);
+    if (existingDbs.some(d => String(d.name || '').toLowerCase() === safeName)) {
+      return res.status(409).json({ error: `A database named "${safeName}" already exists` });
     }
 
     // Create DB record first (provisioning state)
@@ -3964,7 +3964,7 @@ app.get('/api/databases/:id', requireAuth, async (req, res) => {
     if (!db) return res.status(404).json({ error: 'Not found' });
     if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
     if (db.containerName) db.status = containerStatus(db.containerName);
-    res.json({ ...db, id: String(db._id) });
+    res.json({ ...db, id: String(db.id || db._id || '') });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
