@@ -976,7 +976,7 @@ const Session = mongoose.model('Session', sessionSchema);
 // ── Database model ────────────────────────────────────────────────────────────
 const databaseSchema = new mongoose.Schema({
   name:          { type: String, required: true },
-  engine:        { type: String, enum: ['mongodb','postgres','postgresql','mysql','redis'], required: true },
+  engine:        { type: String, enum: ['mongodb','postgres','postgresql','mysql','mariadb','redis','firebase'], required: true },
   image:         { type: String, required: true },
   user:          { type: String, default: '' },
   pass:          { type: String, default: '' },
@@ -1078,8 +1078,15 @@ async function writeWorkspaceToFirebase(user, workspace) {
 // This is the PRIMARY store — MongoDB is not required.
 function firebaseDbBaseUrl(user) {
   const key = firebaseWorkspaceKey(user);
-  if (!FIREBASE_RTDB_URL || !key) return '';
-  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  if (!FIREBASE_RTDB_URL || !key) {
+    if (!FIREBASE_RTDB_URL) console.warn('[db/firebase] FIREBASE_RTDB_URL missing; skipping write');
+    else console.warn('[db/firebase] workspace key missing; skipping write', {
+      userId: String(user?._id || user?.id || ''),
+      hasEmail: !!String(user?.email || '').trim(),
+      hasFirebaseUid: !!String(user?.firebaseUid || '').trim()
+    });
+    return '';
+  }
   return `${FIREBASE_RTDB_URL}/deployboard_databases/${key}`;
 }
 async function readAllDbsFromFirebase(user) {
@@ -1120,6 +1127,7 @@ async function deleteDbFromFirebase(user, dbId) {
 }
 // Save db record to all available stores (Firebase + local file)
 async function persistDb(user, db) {
+  user = await enrichAuthUser(user);
   const rec = { ...db, id: String(db.id || db._id || '') };
   upsertLocalDb(rec);                        // always write local file
   await writeDbToFirebase(user, rec);        // write to Firebase RTDB
@@ -1128,12 +1136,30 @@ async function persistDb(user, db) {
   }
 }
 async function removeDb(user, dbId) {
+  user = await enrichAuthUser(user);
   removeLocalDb(dbId);
   await deleteDbFromFirebase(user, dbId);
   if (isDbReady()) Database.deleteOne({ _id: dbId }).catch(() => {});
 }
+
+async function enrichAuthUser(user) {
+  if (!user) return user;
+  if (String(user.email || '').trim()) return user;
+  const uid = String(user._id || user.id || '');
+  if (!uid) return user;
+  if (isDbReady()) {
+    try {
+      const found = await User.findById(uid).select('email').lean();
+      if (found?.email) return { ...user, email: String(found.email) };
+    } catch {}
+  }
+  const local = localAuth.users.find(u => String(u.id || u._id || '') === uid);
+  if (local?.email) return { ...user, email: String(local.email) };
+  return user;
+}
 // Load databases for a user — Firebase first, then local file, then Mongo
 async function loadUserDatabases(user) {
+  user = await enrichAuthUser(user);
   const userId = String(user._id || user.id);
   // 1. Try Firebase RTDB (primary)
   const fbDbs = await readAllDbsFromFirebase(user);
@@ -2475,6 +2501,11 @@ app.get('/api/projects', attachAuthIfPresent, async (req, res) => {
     const mongoUserId = String(req.user?._id || req.user?.id || '');
 
     let filter = mineOnly ? { ownerUserId: mongoUserId } : {};
+    if (!isDbReady()) {
+      const ws = (await readWorkspaceFromFirebase(req.user || {})) || {};
+      const projects = Array.isArray(ws.projects) ? ws.projects : [];
+      return res.json(projects.map(p => ({ ...p, id: String(p.id || p._id || '') })));
+    }
     let projects = await Project.find(filter).sort({ createdAt: -1 });
 
     // ORPHAN RECOVERY FIX: If the user has few or no projects in MongoDB under their current _id,
@@ -3255,6 +3286,7 @@ io.on('connection', socket => {
 
 
 async function findProjectByAnyId(id) {
+  if (!isDbReady()) return null;
   const sid = String(id || '').trim();
   if (!sid) return null;
   if (mongoose.Types.ObjectId.isValid(sid)) {
@@ -3637,7 +3669,9 @@ const DB_ENGINE_CONFIG = {
   mongodb:  { image: 'mongo:7',     defaultPort: 27017, envVars: (u,p,d) => [`MONGO_INITDB_ROOT_USERNAME=${u}`, `MONGO_INITDB_ROOT_PASSWORD=${p}`, `MONGO_INITDB_DATABASE=${d}`] },
   postgres: { image: 'postgres:16', defaultPort: 5432,  envVars: (u,p,d) => [`POSTGRES_USER=${u}`, `POSTGRES_PASSWORD=${p}`, `POSTGRES_DB=${d}`] },
   mysql:    { image: 'mysql:8',     defaultPort: 3306,  envVars: (u,p,d) => [`MYSQL_ROOT_PASSWORD=${p}`, `MYSQL_USER=${u}`, `MYSQL_PASSWORD=${p}`, `MYSQL_DATABASE=${d}`] },
-  redis:    { image: 'redis:7',     defaultPort: 6379,  envVars: (_u,p)  => p ? [`requirepass ${p}`] : [] }
+  mariadb:  { image: 'mariadb:11',  defaultPort: 3306,  envVars: (u,p,d) => [`MARIADB_ROOT_PASSWORD=${p}`, `MARIADB_USER=${u}`, `MARIADB_PASSWORD=${p}`, `MARIADB_DATABASE=${d}`] },
+  redis:    { image: 'redis:7',     defaultPort: 6379,  envVars: (_u,p)  => p ? [`requirepass ${p}`] : [] },
+  firebase: { image: '',            defaultPort: 443,   envVars: ()       => [] }
 };
 
 // Find a free port in range 14000–15000 avoiding already-used ones
@@ -3755,20 +3789,37 @@ async function provisionDbContainer(db) {
 }
 
 // Inject DATABASE_URL into a linked project's env vars
-async function injectConnStrIntoProject(projectId, engine, connStr) {
+async function injectConnStrIntoProject(projectId, engine, connStr, user = null) {
   if (!projectId || !connStr) return;
   const envKeyMap = {
     mongodb:  ['MONGODB_URI', 'DATABASE_URL'],
     postgres: ['DATABASE_URL', 'POSTGRES_URL'],
     mysql:    ['MYSQL_URL', 'DATABASE_URL'],
+    mariadb:  ['MARIADB_URL', 'DATABASE_URL'],
     redis:    ['REDIS_URL']
   };
   const keys = envKeyMap[engine] || ['DATABASE_URL'];
   try {
-    if (isDbReady()) {
+    // Primary: Mongo project doc (when available)
+    if (isDbReady() && mongoose.Types.ObjectId.isValid(String(projectId))) {
       const updates = {};
       keys.forEach(k => { updates[`envVars.${k}`] = connStr; });
       await Project.updateOne({ _id: projectId }, { $set: updates });
+      return;
+    }
+
+    // Fallback: Firebase workspace project list (Mongo-less mode)
+    if (user) {
+      const ws = (await readWorkspaceFromFirebase(user)) || {};
+      ws.projects = Array.isArray(ws.projects) ? ws.projects : [];
+      const idx = ws.projects.findIndex(p => String(p.id || p._id || '') === String(projectId));
+      if (idx >= 0) {
+        const p = ws.projects[idx] || {};
+        const envVars = (p.envVars && typeof p.envVars === 'object') ? { ...p.envVars } : {};
+        keys.forEach(k => { envVars[k] = connStr; });
+        ws.projects[idx] = { ...p, envVars, updatedAt: new Date().toISOString() };
+        await writeWorkspaceToFirebase(user, ws);
+      }
     }
   } catch (e) {
     console.warn('[DB] Failed to inject conn str into project:', e.message);
@@ -3808,10 +3859,24 @@ app.post('/api/databases', requireAuth, async (req, res) => {
     const safeName = String(name).toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
     if (!safeName) return res.status(400).json({ error: 'Invalid database name' });
 
-    // Check for name collision
-    if (isDbReady()) {
-      const existing = await Database.findOne({ ownerUserId: userId, name: safeName });
-      if (existing) return res.status(409).json({ error: `A database named "${safeName}" already exists` });
+    if (engine === 'firebase') {
+      const rec = {
+        id: `firebase_${Date.now()}`,
+        ownerUserId: userId,
+        name: safeName, engine, status: 'running',
+        containerName: '', internalPort: '443',
+        connStr: String(process.env.FIREBASE_DATABASE_URL || process.env.FIREBASE_RTDB_URL || ''),
+        connectionString: String(process.env.FIREBASE_DATABASE_URL || process.env.FIREBASE_RTDB_URL || ''),
+        image: 'firebase-realtime-database', memory: 'managed', createdAt: new Date().toISOString()
+      };
+      await persistDb(req.user, rec);
+      return res.json({ ok: true, id: rec.id, name: safeName, status: 'running' });
+    }
+
+    // Check for name collision across Firebase/local/Mongo-backed view
+    const existingDbs = await loadUserDatabases(req.user);
+    if (existingDbs.some(d => String(d.name || '').toLowerCase() === safeName)) {
+      return res.status(409).json({ error: `A database named "${safeName}" already exists` });
     }
 
     // Create DB record first (provisioning state)
@@ -3857,7 +3922,7 @@ app.post('/api/databases', requireAuth, async (req, res) => {
 
         // Inject conn str into linked project if set
         if (linkProjectId) {
-          await injectConnStrIntoProject(linkProjectId, engine, realConn);
+          await injectConnStrIntoProject(linkProjectId, engine, realConn, req.user);
         }
 
         addActivity('database', `✅ Database "${safeName}" (${engine}) provisioned on port ${hostPort}`);
@@ -3924,6 +3989,7 @@ function buildDbConnStr(engine, user, pass, dbName, host, port) {
     case 'mongodb':  return `mongodb://${enc(user||'root')}:${enc(pass)}@${host}:${port}/${dbName||'mydb'}`;
     case 'postgres': return `postgresql://${enc(user||'postgres')}:${enc(pass)}@${host}:${port}/${dbName||'mydb'}`;
     case 'mysql':    return `mysql://${enc(user||'root')}:${enc(pass)}@${host}:${port}/${dbName||'mydb'}`;
+    case 'mariadb':  return `mariadb://${enc(user||'root')}:${enc(pass)}@${host}:${port}/${dbName||'mydb'}`;
     case 'redis':    return pass ? `redis://:${enc(pass)}@${host}:${port}` : `redis://${host}:${port}`;
     default:         return '';
   }
@@ -3933,12 +3999,12 @@ function buildDbConnStr(engine, user, pass, dbName, host, port) {
 app.get('/api/databases/:id', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id).lean();
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
     if (db.containerName) db.status = containerStatus(db.containerName);
-    res.json({ ...db, id: String(db._id) });
+    res.json({ ...db, id: String(db.id || db._id || '') });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -4023,10 +4089,10 @@ app.post('/api/databases/:id/delete', requireAuth, async (req, res) => {
 app.get('/api/databases/:id/logs', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id).lean();
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
     if (!db.containerName) return res.json({ logs: '' });
 
     const lines = Math.min(200, Number(req.query.lines || 100));
@@ -4040,20 +4106,24 @@ app.get('/api/databases/:id/logs', requireAuth, async (req, res) => {
 app.post('/api/databases/:id/link', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id);
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
 
     const { projectId } = req.body || {};
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
 
-    const project = await Project.findById(projectId);
+    if (!isDbReady()) return res.status(503).json({ error: 'Projects are temporarily unavailable while Mongo reconnects' });
+    const project = await findProjectByAnyId(projectId);
     if (!project) return res.status(404).json({ error: 'Project not found' });
-    if (String(project.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    const projectOwnerId = String(project.ownerUserId || '');
+    if (projectOwnerId && projectOwnerId !== userId) return res.status(403).json({ error: 'Forbidden' });
 
-    await injectConnStrIntoProject(projectId, db.engine, db.connStr);
-    db.linkProjectId = projectId; db.updatedAt = new Date(); await db.save();
+    const canonicalProjectId = String(project._id || project.id || projectId);
+    await injectConnStrIntoProject(canonicalProjectId, db.engine, db.connStr || db.connectionString || '', req.user);
+    db.linkProjectId = canonicalProjectId; db.updatedAt = new Date().toISOString();
+    await persistDb(req.user, db);
     addActivity('database', `🔗 Database "${db.name}" linked to project "${project.name}"`);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -4065,10 +4135,10 @@ app.post('/api/databases/:id/link', requireAuth, async (req, res) => {
 app.post('/api/databases/:id/query', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id).lean();
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
     if (!db.containerName) return res.status(400).json({ error: 'Container not provisioned' });
 
     const liveStatus = containerStatus(db.containerName);
@@ -4092,7 +4162,8 @@ app.post('/api/databases/:id/query', requireAuth, async (req, res) => {
         cmd = `docker exec ${db.containerName} psql -U "${db.user||'postgres'}" -d "${db.dbName||'mydb'}" -t -A -F'|' -c '${safeQ}'`;
         break;
       }
-      case 'mysql': {
+      case 'mysql':
+      case 'mariadb': {
         const safeQ = query.replace(/'/g, "'\\''").replace(/\n/g, ' ');
         cmd = `docker exec ${db.containerName} mysql -u"${db.user||'root'}" -p"${db.pass}" "${db.dbName||'mydb'}" --batch --silent -e '${safeQ}'`;
         break;
@@ -4133,10 +4204,10 @@ app.post('/api/databases/:id/query', requireAuth, async (req, res) => {
 app.get('/api/databases/:id/metrics', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id).lean();
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
     if (!db.containerName) return res.json({ status: 'no_container' });
 
     const status = containerStatus(db.containerName);
