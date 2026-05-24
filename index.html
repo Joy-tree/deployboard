@@ -4929,9 +4929,17 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       Databases
       <span style="font-size:0.55rem;background:rgba(6,182,212,0.15);color:#22d3ee;border:1px solid rgba(6,182,212,0.25);border-radius:4px;padding:1px 5px;margin-left:auto;">LIVE</span>
     </div>
-    <div class="nav-item" data-page="db-editor" onclick="showPage('db-editor',this)">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-      DB Editor
+    <div class="nav-item" data-page="db-query" onclick="showPage('db-query',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      Data Query
+    </div>
+    <div class="nav-item" data-page="db-schema" onclick="showPage('db-schema',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg>
+      Schema Explorer
+    </div>
+    <div class="nav-item" data-page="db-sdk" onclick="showPage('db-sdk',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      SDK Generator
     </div>
 
     <div class="sidebar-section">Platform</div>
@@ -6872,9 +6880,9 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
             Refresh
           </button>
-          <button class="btn btn-ghost" onclick="showPage('db-editor')">
+          <button class="btn btn-ghost" onclick="showPage('db-query')">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-            DB Editor
+            Data Studio
           </button>
         </div>
       </div>
@@ -7027,7 +7035,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <div class="page" id="page-db-editor">
       <div style="margin-bottom:20px;">
         <div style="font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#22d3ee;margin-bottom:6px;">Visual Data Studio</div>
-        <div style="font-family:var(--font-hd);font-weight:800;font-size:clamp(1.4rem,3vw,1.9rem);color:var(--text);">DB Editor</div>
+        <div style="font-family:var(--font-hd);font-weight:800;font-size:clamp(1.4rem,3vw,1.9rem);color:var(--text);">Data Studio</div>
         <div style="color:var(--text-2);font-size:.86rem;margin-top:4px;">Browse tables, run queries, view schemas — all live from your running containers.</div>
       </div>
 
@@ -9193,7 +9201,7 @@ const PAGE_LABELS = {
   'new-resource':'New Resource', cronjobs:'Cron Jobs', workers:'Background Workers', streaks:'Deploy Streaks',
   'dockerfile-deploy':'Dockerfile Deploy', 'cron-create':'Create Cron Job', 'worker-create':'New Worker', 'ai-analysis':'AI Analysis',
   faq:'FAQ', support:'Support', pricing:'Pricing', checkout:'Checkout',
-  databases:'Databases', 'db-editor':'DB Editor', 'db-create':'Create Database', 'db-detail':'Database Detail'
+  databases:'Databases', 'db-editor':'Data Studio', 'db-create':'Create Database', 'db-detail':'Database Detail'
 };
 // ── URL Routing helpers ───────────────────────────────────────────────────
 const ROUTE_BASE = '/dashboard';
@@ -9202,7 +9210,7 @@ const VALID_PAGES = new Set([
   'logs','ai-analysis','env-manager','domains','analytics','webhooks',
   'cronjobs','workers','streaks','team','usage','activity','secrets',
   'settings','docs','faq','support','forum','domain-add','cron-create',
-  'dockerfile-deploy','pricing','checkout','databases','db-editor','db-create','db-detail'
+  'dockerfile-deploy','pricing','checkout','databases','db-query','db-schema','db-sdk','db-editor','db-create','db-detail'
 ]);
 
 function pageToPath(id) {
@@ -9294,6 +9302,9 @@ function showPage(id, navEl, _skipPush) {
   if (id === 'forum')         { /* static page, no render fn needed */ }
   if (id === 'databases')     renderDatabasesPage();
   if (id === 'db-editor')     renderDbEditorPage();
+  if (id === 'db-query')      { renderDbEditorPage(); switchEditorTab('query', document.querySelector('#dbEditorTabs [data-tab=\"query\"]')); return showPage('db-editor'); }
+  if (id === 'db-schema')     { renderDbEditorPage(); switchEditorTab('schema', document.querySelector('#dbEditorTabs [data-tab=\"schema\"]')); return showPage('db-editor'); }
+  if (id === 'db-sdk')        { renderDbEditorPage(); switchEditorTab('sdk', document.querySelector('#dbEditorTabs [data-tab=\"sdk\"]')); return showPage('db-editor'); }
   if (id === 'db-create')     renderDbCreatePage();
   if (id === 'db-detail')     { /* populated by openDbDetail() */ }
 
@@ -14915,7 +14926,7 @@ async function submitLinkDb(dbId) {
   }
 }
 
-// ── DB Editor ─────────────────────────────────────────────────────
+// ── Data Studio ─────────────────────────────────────────────────────
 function renderDbEditorPage() {
   renderDbEditorDbList();
   switchEditorTab(_editorTab, document.querySelector(`.db-sdk-tab[data-tab="${_editorTab}"]`) || document.querySelector('.db-sdk-tab'));
