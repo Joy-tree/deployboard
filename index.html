@@ -6851,6 +6851,29 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
   font-size:.7rem;color:var(--text-3);cursor:pointer;transition:all .15s;
 }
 .db-code-copy-btn:hover{background:rgba(255,255,255,.12);color:var(--text);}
+.db-studio-page{
+  display:flex;flex-direction:column;gap:14px;height:calc(100vh - 120px);
+}
+.db-studio-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:14px 16px;border:1px solid var(--border);border-radius:14px;
+  background:linear-gradient(140deg,rgba(2,6,23,.95),rgba(6,14,12,.9));
+}
+.db-studio-title{font-family:var(--font-hd);font-size:clamp(1.1rem,2.7vw,1.6rem);font-weight:800;}
+.db-studio-sub{font-size:.82rem;color:var(--text-2);}
+.db-back-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:transparent;color:var(--text-2);font-weight:600;font-size:.8rem}
+.db-back-btn:hover{color:#a7f3d0;border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.06);}
+.db-studio-shell{display:grid;grid-template-columns:290px 1fr;gap:14px;min-height:0;flex:1;}
+.db-studio-pane{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.db-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:12px;border-top:1px solid var(--border);}
+.db-metric{padding:10px;border:1px solid rgba(16,185,129,.16);border-radius:10px;background:rgba(5,15,11,.55);}
+.db-metric b{display:block;font-size:.95rem;color:#d1fae5}
+.db-metric span{font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em}
+@media(max-width:980px){
+ .db-studio-page{height:auto;}
+ .db-studio-shell{grid-template-columns:1fr;}
+ .db-metrics{grid-template-columns:1fr 1fr;}
+}
 @media(max-width:900px){
   .db-stats-row{grid-template-columns:repeat(2,1fr);}
   .db-editor-layout{grid-template-columns:1fr;height:auto;}
@@ -7152,16 +7175,16 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <div id="dbEditorTabQuery" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
             <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
               <div style="font-size:.72rem;color:var(--text-3);margin-bottom:6px;font-family:var(--font-mono);">SQL / Mongo Command</div>
-              <textarea class="db-editor-query-box" id="dbQueryInput" placeholder="-- SELECT * FROM users LIMIT 50;&#10;-- or for MongoDB:&#10;-- { &quot;find&quot;: &quot;users&quot;, &quot;limit&quot;: 50 }"></textarea>
+              <textarea class="db-editor-query-box" id="dbQueryInputLegacy" placeholder="-- SELECT * FROM users LIMIT 50;&#10;-- or for MongoDB:&#10;-- { &quot;find&quot;: &quot;users&quot;, &quot;limit&quot;: 50 }"></textarea>
             </div>
-            <div id="dbEditorResults" class="db-editor-results">
+            <div id="dbEditorResultsLegacy" class="db-editor-results">
               <div style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:.82rem;">Select a database and run a query to see results.</div>
             </div>
           </div>
 
           <!-- Schema Tab -->
           <div id="dbEditorTabSchema" style="display:none;flex:1;overflow:auto;padding:20px;">
-            <div id="dbSchemaContent">
+            <div id="dbSchemaContentLegacy">
               <div style="text-align:center;padding:40px;color:var(--text-3);font-size:.82rem;">Select a running database to inspect its schema.</div>
             </div>
           </div>
@@ -7170,9 +7193,62 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <div id="dbEditorTabSdk" style="display:none;flex:1;overflow:auto;padding:20px;">
             <div style="margin-bottom:12px;font-weight:700;font-size:.9rem;color:var(--text);">Generated SDK Snippets</div>
             <div style="font-size:.82rem;color:var(--text-2);margin-bottom:18px;">Copy-paste connection code for your project. Select a database on the left first.</div>
-            <div id="dbSdkContent">
+            <div id="dbSdkContentLegacy">
               <div style="text-align:center;padding:40px;color:var(--text-3);font-size:.82rem;">Select a database to see SDK snippets.</div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-db-query">
+      <div class="db-studio-page">
+        <div class="db-studio-head">
+          <div>
+            <div class="db-studio-title">Query</div>
+            <div class="db-studio-sub">Run full-screen SQL/Mongo queries with export, import, and responsive result grid.</div>
+          </div>
+          <button class="db-back-btn" onclick="showPage('databases')">← Back</button>
+        </div>
+        <div class="db-studio-shell">
+          <div class="db-studio-pane">
+            <div class="db-editor-sidebar-header">Database access</div>
+            <div class="db-editor-db-list" id="dbQueryDbList"></div>
+            <div class="db-metrics" id="dbQueryMetrics"></div>
+          </div>
+          <div class="db-studio-pane">
+            <div class="db-editor-toolbar">
+              <button class="btn btn-primary db-query-run" onclick="runEditorQuery()">Run Query</button>
+              <button class="btn btn-ghost" onclick="exportEditorResults('csv')">Export CSV</button>
+              <button class="btn btn-ghost" onclick="exportEditorResults('xlsx')">Export XLSX</button>
+              <button class="btn btn-ghost" onclick="document.getElementById('dbImportFile').click()">Import</button>
+            </div>
+            <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
+              <textarea class="db-editor-query-box" id="dbQueryInput" placeholder="Write your full query here..."></textarea>
+            </div>
+            <div id="dbEditorResults" class="db-editor-results"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-db-schema">
+      <div class="db-studio-page">
+        <div class="db-studio-head"><div><div class="db-studio-title">Schema</div><div class="db-studio-sub">Dedicated schema intelligence page with engine guidance and live structure details.</div></div><button class="db-back-btn" onclick="showPage('databases')">← Back</button></div>
+        <div class="db-studio-shell">
+          <div class="db-studio-pane"><div class="db-editor-sidebar-header">Select database</div><div class="db-editor-db-list" id="dbSchemaDbList"></div></div>
+          <div class="db-studio-pane" style="padding:18px;overflow:auto;"><div id="dbSchemaContent"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-db-sdk">
+      <div class="db-studio-page">
+        <div class="db-studio-head"><div><div class="db-studio-title">SDK</div><div class="db-studio-sub">Production-ready SDK snippets and connection playbooks per engine.</div></div><button class="db-back-btn" onclick="showPage('databases')">← Back</button></div>
+        <div class="db-studio-shell">
+          <div class="db-studio-pane"><div class="db-editor-sidebar-header">Select database</div><div class="db-editor-db-list" id="dbSdkDbList"></div></div>
+          <div class="db-studio-pane" style="padding:18px;overflow:auto;">
+            <div id="dbSdkContent"></div>
           </div>
         </div>
       </div>
@@ -9379,9 +9455,9 @@ function showPage(id, navEl, _skipPush) {
   if (id === 'forum')         { /* static page, no render fn needed */ }
   if (id === 'databases')     renderDatabasesPage();
   if (id === 'db-editor')     renderDbEditorPage();
-  if (id === 'db-query')      { renderDbEditorPage(); switchEditorTab('query', document.querySelector('#dbEditorTabs [data-tab=\"query\"]')); return showPage('db-editor'); }
-  if (id === 'db-schema')     { renderDbEditorPage(); switchEditorTab('schema', document.querySelector('#dbEditorTabs [data-tab=\"schema\"]')); return showPage('db-editor'); }
-  if (id === 'db-sdk')        { renderDbEditorPage(); switchEditorTab('sdk', document.querySelector('#dbEditorTabs [data-tab=\"sdk\"]')); return showPage('db-editor'); }
+  if (id === 'db-query')      { renderDbEditorDbList(); ensureEditorSelection(); }
+  if (id === 'db-schema')     { renderDbEditorDbList(); ensureEditorSelection(); updateEditorSchemaPanel(); }
+  if (id === 'db-sdk')        { renderDbEditorDbList(); ensureEditorSelection(); updateEditorSdkPanel(); }
   if (id === 'db-create')     renderDbCreatePage();
   if (id === 'db-detail')     { /* populated by openDbDetail() */ }
   if (id === 'realtime-api')  { loadLogiFlowLogs(); loadManagedApis(); }
@@ -15196,13 +15272,14 @@ function renderDbEditorPage() {
 }
 
 function renderDbEditorDbList() {
-  const list = document.getElementById('dbEditorDbList');
-  if (!list) return;
+  const ids = ['dbEditorDbList','dbQueryDbList','dbSchemaDbList','dbSdkDbList'];
+  const lists = ids.map(id=>document.getElementById(id)).filter(Boolean);
+  if (!lists.length) return;
   if (!_databases.length) {
-    list.innerHTML = `<div style="padding:20px 12px;text-align:center;color:var(--text-3);font-size:.8rem;">No databases.<br>Create one first.</div>`;
+    lists.forEach(list => list.innerHTML = `<div style="padding:20px 12px;text-align:center;color:var(--text-3);font-size:.8rem;">No databases.<br>Create one first.</div>`);
     return;
   }
-  list.innerHTML = _databases.map(db => {
+  const html = _databases.map(db => {
     const c = dbEngineColor(db.engine);
     const isActive = _editorSelectedDb && _editorSelectedDb.id === db.id;
     return `<div class="db-editor-db-item ${isActive?'active':''}" onclick="selectEditorDb('${db.id}')">
@@ -15213,6 +15290,13 @@ function renderDbEditorDbList() {
       </div>
     </div>`;
   }).join('');
+  lists.forEach(list => list.innerHTML = html);
+  const metrics = document.getElementById('dbQueryMetrics');
+  if (metrics) {
+    const running = _databases.filter(d=>d.status==='running').length;
+    const engines = new Set(_databases.map(d=>d.engine)).size;
+    metrics.innerHTML = `<div class="db-metric"><span>Instances</span><b>${_databases.length}</b></div><div class="db-metric"><span>Running</span><b>${running}</b></div><div class="db-metric"><span>Engines</span><b>${engines}</b></div>`;
+  }
 }
 
 function selectEditorDb(id) {
@@ -15230,6 +15314,13 @@ function selectEditorDb(id) {
     updateEditorSchemaPanel();
     updateEditorSdkPanel();
   }
+}
+
+function ensureEditorSelection(){
+  if (_editorSelectedDb) return;
+  const running = _databases.find(d=>d.status==='running');
+  if (running) selectEditorDb(running.id);
+  else if (_databases[0]) selectEditorDb(_databases[0].id);
 }
 
 function switchEditorTab(tab, btn) {
