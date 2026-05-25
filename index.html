@@ -6628,15 +6628,15 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 .db-hero {
   position:relative;overflow:hidden;border-radius:24px;
   padding:48px 40px 44px;margin-bottom:28px;
-  background:radial-gradient(ellipse at 15% 0%,rgba(6,182,212,.22) 0%,transparent 50%),
-              radial-gradient(ellipse at 85% 100%,rgba(139,92,246,.18) 0%,transparent 48%),
-              linear-gradient(160deg,#030d0f 0%,#060f1a 50%,#040b12 100%);
-  border:1px solid rgba(6,182,212,.28);
+  background:radial-gradient(ellipse at 15% 0%,rgba(34,197,94,.16) 0%,transparent 50%),
+              radial-gradient(ellipse at 85% 100%,rgba(16,185,129,.14) 0%,transparent 48%),
+              linear-gradient(160deg,#030d08 0%,#05150f 50%,#040d0b 100%);
+  border:1px solid rgba(16,185,129,.24);
   box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04);
 }
 .db-hero::before {
   content:'';position:absolute;inset:0;
-  background-image:radial-gradient(rgba(6,182,212,.07) 1.5px,transparent 1.5px);
+  background-image:radial-gradient(rgba(16,185,129,.07) 1.5px,transparent 1.5px);
   background-size:28px 28px;pointer-events:none;
 }
 .db-hero-orb {
@@ -6646,7 +6646,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 }
 .db-hero-kicker {
   font-family:var(--font-mono);font-size:.72rem;letter-spacing:.16em;
-  text-transform:uppercase;color:#22d3ee;margin-bottom:10px;position:relative;z-index:1;
+  text-transform:uppercase;color:#34d399;margin-bottom:10px;position:relative;z-index:1;
 }
 .db-hero-title {
   font-family:var(--font-hd);font-weight:800;font-size:clamp(1.8rem,4vw,2.8rem);
@@ -6735,7 +6735,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 .db-btn.danger:hover{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.35);}
 .db-btn.primary{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.25);color:var(--green);}
 .db-btn.primary:hover{background:rgba(16,185,129,.18);border-color:rgba(16,185,129,.4);}
-.db-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap;}
+.db-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:rgba(4,13,11,.74);}
 .db-toolbar-title{font-weight:800;font-size:1.1rem;color:var(--text);flex:1;}
 .db-empty{
   grid-column:1/-1;text-align:center;padding:80px 20px;
@@ -6796,7 +6796,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 }
 .db-detail-back:hover{color:var(--primary);border-color:rgba(16,185,129,.3);}
 .db-detail-grid{display:grid;grid-template-columns:2fr 1fr;gap:18px;}
-.db-detail-card{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:22px;}
+.db-detail-card{background:linear-gradient(180deg,rgba(4,13,11,.86),rgba(4,10,9,.97));border:1px solid var(--border);border-radius:18px;padding:22px;}
 .db-detail-card-title{font-weight:700;font-size:.88rem;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
 .db-detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);}
 .db-detail-row:last-child{border-bottom:none;}
@@ -6851,6 +6851,74 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
   font-size:.7rem;color:var(--text-3);cursor:pointer;transition:all .15s;
 }
 .db-code-copy-btn:hover{background:rgba(255,255,255,.12);color:var(--text);}
+.db-studio-page{
+  display:flex;flex-direction:column;gap:14px;height:calc(100vh - 120px);
+}
+.db-studio-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:14px 16px;border:1px solid var(--border);border-radius:14px;
+  background:linear-gradient(140deg,rgba(2,6,23,.95),rgba(6,14,12,.9));
+}
+.db-studio-title{font-family:var(--font-hd);font-size:clamp(1.1rem,2.7vw,1.6rem);font-weight:800;}
+.db-studio-sub{font-size:.82rem;color:var(--text-2);}
+.db-back-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:transparent;color:var(--text-2);font-weight:600;font-size:.8rem}
+.db-back-btn:hover{color:#a7f3d0;border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.06);}
+.db-studio-shell{display:grid;grid-template-columns:290px 1fr;gap:14px;min-height:0;flex:1;}
+.db-studio-pane{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.db-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:12px;border-top:1px solid var(--border);}
+.db-metric{padding:10px;border:1px solid rgba(16,185,129,.16);border-radius:10px;background:rgba(5,15,11,.55);}
+.db-metric b{display:block;font-size:.95rem;color:#d1fae5}
+.db-metric span{font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em}
+.query-ops-shell{display:flex;flex-direction:column;gap:12px;min-height:0;flex:1;}
+.query-db-strip{border:1px solid var(--border);border-radius:14px;background:linear-gradient(160deg,rgba(5,15,11,.9),rgba(2,6,23,.92));overflow:hidden;}
+.query-db-strip-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(16,185,129,.12);}
+.query-db-strip-title{font-size:.82rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#a7f3d0;}
+.query-db-toggle{border:1px solid var(--border);background:rgba(255,255,255,.02);color:var(--text-2);padding:6px 10px;border-radius:9px;font-size:.75rem;font-weight:700;}
+.query-db-toggle:hover{color:var(--text);border-color:rgba(16,185,129,.34);}
+.query-db-strip-body{display:block;padding:10px;max-height:260px;overflow:auto;}
+.query-db-strip.collapsed .query-db-strip-body{display:none;}
+.db-collapse-wrap{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:rgba(4,13,11,.72);}
+.db-collapse-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(16,185,129,.12);}
+.db-collapse-body{padding:10px;max-height:260px;overflow:auto;}
+.db-collapse-wrap.collapsed .db-collapse-body{display:none;}
+.query-db-chip-list{display:flex;gap:8px;flex-wrap:wrap;}
+.query-db-chip{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(148,163,184,.24);background:rgba(15,23,42,.62);border-radius:999px;cursor:pointer}
+.query-db-chip.active{border-color:rgba(52,211,153,.6);box-shadow:0 0 0 1px rgba(16,185,129,.25) inset;background:rgba(6,78,59,.25)}
+.query-db-chip b{font-size:.76rem;}
+.query-db-chip span{font-size:.68rem;color:var(--text-3);font-family:var(--font-mono);}
+.query-workspace{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px;min-height:0;flex:1;}
+.query-main{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:linear-gradient(180deg,rgba(5,15,11,.8),rgba(4,10,9,.93));display:flex;flex-direction:column;}
+.query-side{border:1px solid var(--border);border-radius:14px;background:linear-gradient(180deg,rgba(3,12,10,.85),rgba(2,6,23,.88));padding:12px;overflow:auto;}
+.query-toolbar{padding:10px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.query-status-pill{margin-left:auto;font-size:.7rem;padding:5px 9px;border-radius:999px;border:1px solid rgba(52,211,153,.36);color:#86efac;background:rgba(6,78,59,.3);font-family:var(--font-mono);}
+.query-text-wrap{padding:10px;border-bottom:1px solid var(--border);}
+.query-footer{padding:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.73rem;color:var(--text-3);}
+.query-terminal-wrap{border-top:1px solid var(--border);background:#020a08}
+.query-terminal-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(16,185,129,.12)}
+.query-terminal-body{max-height:340px;overflow:auto;padding:12px;font-family:var(--font-mono);color:#a7f3d0;font-size:.78rem;line-height:1.55}
+.query-terminal-wrap.collapsed .query-terminal-body{display:none}
+.query-section-title{font-size:.73rem;color:#a7f3d0;text-transform:uppercase;letter-spacing:.1em;font-weight:800;margin-bottom:8px;}
+.query-history-list,.query-template-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.query-mini-card{padding:10px;border:1px solid rgba(148,163,184,.18);border-radius:10px;background:rgba(2,6,23,.65);cursor:pointer;}
+.query-mini-card:hover{border-color:rgba(16,185,129,.36);}
+.query-mini-card code{display:block;color:#cbd5e1;font-family:var(--font-mono);font-size:.68rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.query-mini-card .meta{margin-top:4px;font-size:.66rem;color:var(--text-3);}
+.schema-map{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px}
+.schema-kpi{grid-column:span 3;border:1px solid rgba(125,211,252,.22);border-radius:12px;padding:10px;background:linear-gradient(180deg,rgba(2,6,23,.8),rgba(8,47,73,.22))}
+.schema-kpi b{display:block;font-size:1rem;color:#e0f2fe}.schema-kpi span{font-size:.68rem;color:#7dd3fc;letter-spacing:.08em;text-transform:uppercase}
+.schema-rel{grid-column:span 8;border:1px solid var(--border);border-radius:14px;padding:12px;background:rgba(2,6,23,.7)}
+.schema-actions{grid-column:span 4;border:1px solid var(--border);border-radius:14px;padding:12px;background:rgba(4,13,11,.8)}
+.schema-node{padding:10px;border:1px solid rgba(148,163,184,.2);border-radius:10px;margin-bottom:8px;background:rgba(15,23,42,.55)}
+.sdk-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
+.sdk-card{border:1px solid var(--border);border-radius:14px;padding:12px;background:linear-gradient(180deg,rgba(2,6,23,.72),rgba(4,13,11,.82))}
+.sdk-chip{display:inline-flex;padding:5px 9px;border-radius:999px;border:1px solid rgba(16,185,129,.34);font-size:.68rem;margin-right:6px;margin-bottom:6px;color:#a7f3d0}
+@media(max-width:980px){.schema-kpi{grid-column:span 6}.schema-rel,.schema-actions{grid-column:span 12}.sdk-grid{grid-template-columns:1fr}}
+@media(max-width:980px){
+ .db-studio-page{height:auto;}
+ .db-studio-shell{grid-template-columns:1fr;}
+ .db-metrics{grid-template-columns:1fr 1fr;}
+ .query-workspace{grid-template-columns:1fr;}
+}
 @media(max-width:900px){
   .db-stats-row{grid-template-columns:repeat(2,1fr);}
   .db-editor-layout{grid-template-columns:1fr;height:auto;}
@@ -7152,16 +7220,16 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <div id="dbEditorTabQuery" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
             <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
               <div style="font-size:.72rem;color:var(--text-3);margin-bottom:6px;font-family:var(--font-mono);">SQL / Mongo Command</div>
-              <textarea class="db-editor-query-box" id="dbQueryInput" placeholder="-- SELECT * FROM users LIMIT 50;&#10;-- or for MongoDB:&#10;-- { &quot;find&quot;: &quot;users&quot;, &quot;limit&quot;: 50 }"></textarea>
+              <textarea class="db-editor-query-box" id="dbQueryInputLegacy" placeholder="-- SELECT * FROM users LIMIT 50;&#10;-- or for MongoDB:&#10;-- { &quot;find&quot;: &quot;users&quot;, &quot;limit&quot;: 50 }"></textarea>
             </div>
-            <div id="dbEditorResults" class="db-editor-results">
+            <div id="dbEditorResultsLegacy" class="db-editor-results">
               <div style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:.82rem;">Select a database and run a query to see results.</div>
             </div>
           </div>
 
           <!-- Schema Tab -->
           <div id="dbEditorTabSchema" style="display:none;flex:1;overflow:auto;padding:20px;">
-            <div id="dbSchemaContent">
+            <div id="dbSchemaContentLegacy">
               <div style="text-align:center;padding:40px;color:var(--text-3);font-size:.82rem;">Select a running database to inspect its schema.</div>
             </div>
           </div>
@@ -7170,8 +7238,91 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <div id="dbEditorTabSdk" style="display:none;flex:1;overflow:auto;padding:20px;">
             <div style="margin-bottom:12px;font-weight:700;font-size:.9rem;color:var(--text);">Generated SDK Snippets</div>
             <div style="font-size:.82rem;color:var(--text-2);margin-bottom:18px;">Copy-paste connection code for your project. Select a database on the left first.</div>
-            <div id="dbSdkContent">
+            <div id="dbSdkContentLegacy">
               <div style="text-align:center;padding:40px;color:var(--text-3);font-size:.82rem;">Select a database to see SDK snippets.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-db-query">
+      <div class="db-studio-page">
+        <div class="db-studio-head">
+          <div>
+            <div class="db-studio-title">Query</div>
+            <div class="db-studio-sub">Advanced live query console with smart templates, history, exports, imports, and realtime run experience.</div>
+          </div>
+          <button class="db-back-btn" onclick="showPage('databases')">← Back</button>
+        </div>
+        <div class="query-ops-shell">
+          <div class="query-db-strip" id="queryDbStrip">
+            <div class="query-db-strip-head">
+              <div class="query-db-strip-title">Database Access</div>
+              <button class="query-db-toggle" id="queryDbToggle" onclick="toggleQueryDbStrip()">Collapse</button>
+            </div>
+            <div class="query-db-strip-body">
+              <div class="query-db-chip-list" id="dbQueryDbList"></div>
+              <div class="db-metrics" id="dbQueryMetrics"></div>
+            </div>
+          </div>
+          <div class="query-workspace">
+            <div class="query-main">
+              <div class="query-toolbar">
+                <button class="btn btn-primary db-query-run" id="queryRunBtn" onclick="runEditorQuery()">Run Query</button>
+                <button class="btn btn-ghost" onclick="runEditorQuery(true)">Run & Save</button>
+                <button class="btn btn-ghost" onclick="clearQueryEditor()">Clear</button>
+                <button class="btn btn-ghost" onclick="exportEditorResults('csv')">CSV</button>
+                <button class="btn btn-ghost" onclick="exportEditorResults('xlsx')">Excel</button>
+                <button class="btn btn-ghost" onclick="document.getElementById('dbImportFile').click()">Import</button>
+                <button class="btn btn-ghost" onclick="copyCurrentQuery()">Copy Query</button>
+                <span class="query-status-pill" id="queryLiveStatus">idle</span>
+              </div>
+              <div class="query-text-wrap">
+                <textarea class="db-editor-query-box" id="dbQueryInput" placeholder="Write your full query here..."></textarea>
+              </div>
+              <div class="query-terminal-wrap" id="queryResultTerminal">
+                <div class="query-terminal-head">
+                  <strong style="font-size:.8rem;letter-spacing:.1em;color:#a7f3d0;">RESULT TERMINAL</strong>
+                  <button class="query-db-toggle" onclick="toggleQueryResultTerminal()">Collapse</button>
+                </div>
+                <div class="query-terminal-body" id="dbEditorResults">Run a query to view terminal output...</div>
+              </div>
+              <div class="query-footer">
+                <div id="queryRowCount">Rows: 0</div>
+                <div id="queryExecutionMeta">No query executed yet.</div>
+              </div>
+            </div>
+            <div class="query-side">
+              <div class="query-section-title">Quick templates</div>
+              <div class="query-template-list" id="queryTemplateList"></div>
+              <div class="query-section-title">Recent queries</div>
+              <div class="query-history-list" id="queryHistoryList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-db-schema">
+      <div class="db-studio-page">
+        <div class="db-studio-head"><div><div class="db-studio-title">Schema</div><div class="db-studio-sub">Dedicated schema intelligence page with engine guidance and live structure details.</div></div><button class="db-back-btn" onclick="showPage('databases')">← Back</button></div>
+        <div class="db-studio-shell">
+          <div class="db-studio-pane"><div class="db-collapse-wrap" id="schemaDbAccessWrap"><div class="db-collapse-head"><div class="db-editor-sidebar-header" style="padding:0;border:0;">Database access</div><button class="query-db-toggle" onclick="toggleGenericCollapse('schemaDbAccessWrap',this)">Collapse</button></div><div class="db-collapse-body"><div class="db-editor-db-list" id="dbSchemaDbList"></div></div></div></div>
+          <div class="db-studio-pane" style="padding:18px;overflow:auto;"><div id="dbSchemaContent"></div><div id="dbSchemaRelationMap" style="margin-top:12px;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-db-sdk">
+      <div class="db-studio-page">
+        <div class="db-studio-head"><div><div class="db-studio-title">SDK</div><div class="db-studio-sub">Production-ready SDK snippets and connection playbooks per engine.</div></div><button class="db-back-btn" onclick="showPage('databases')">← Back</button></div>
+        <div class="db-studio-shell">
+          <div class="db-studio-pane"><div class="db-collapse-wrap" id="sdkDbAccessWrap"><div class="db-collapse-head"><div class="db-editor-sidebar-header" style="padding:0;border:0;">Database access</div><button class="query-db-toggle" onclick="toggleGenericCollapse('sdkDbAccessWrap',this)">Collapse</button></div><div class="db-collapse-body"><div class="db-editor-db-list" id="dbSdkDbList"></div></div></div></div>
+          <div class="db-studio-pane" style="padding:18px;overflow:auto;">
+            <div class="sdk-grid">
+              <div id="dbSdkContent"></div>
+              <div id="dbSdkAssist"></div>
             </div>
           </div>
         </div>
@@ -9379,9 +9530,9 @@ function showPage(id, navEl, _skipPush) {
   if (id === 'forum')         { /* static page, no render fn needed */ }
   if (id === 'databases')     renderDatabasesPage();
   if (id === 'db-editor')     renderDbEditorPage();
-  if (id === 'db-query')      { renderDbEditorPage(); switchEditorTab('query', document.querySelector('#dbEditorTabs [data-tab=\"query\"]')); return showPage('db-editor'); }
-  if (id === 'db-schema')     { renderDbEditorPage(); switchEditorTab('schema', document.querySelector('#dbEditorTabs [data-tab=\"schema\"]')); return showPage('db-editor'); }
-  if (id === 'db-sdk')        { renderDbEditorPage(); switchEditorTab('sdk', document.querySelector('#dbEditorTabs [data-tab=\"sdk\"]')); return showPage('db-editor'); }
+  if (id === 'db-query')      { renderDbEditorDbList(); ensureEditorSelection(); renderQueryTemplates(); renderQueryHistory(); }
+  if (id === 'db-schema')     { renderDbEditorDbList(); ensureEditorSelection(); updateEditorSchemaPanel(); }
+  if (id === 'db-sdk')        { renderDbEditorDbList(); ensureEditorSelection(); updateEditorSdkPanel(); }
   if (id === 'db-create')     renderDbCreatePage();
   if (id === 'db-detail')     { /* populated by openDbDetail() */ }
   if (id === 'realtime-api')  { loadLogiFlowLogs(); loadManagedApis(); }
@@ -15196,13 +15347,14 @@ function renderDbEditorPage() {
 }
 
 function renderDbEditorDbList() {
-  const list = document.getElementById('dbEditorDbList');
-  if (!list) return;
+  const ids = ['dbEditorDbList','dbQueryDbList','dbSchemaDbList','dbSdkDbList'];
+  const lists = ids.map(id=>document.getElementById(id)).filter(Boolean);
+  if (!lists.length) return;
   if (!_databases.length) {
-    list.innerHTML = `<div style="padding:20px 12px;text-align:center;color:var(--text-3);font-size:.8rem;">No databases.<br>Create one first.</div>`;
+    lists.forEach(list => list.innerHTML = `<div style="padding:20px 12px;text-align:center;color:var(--text-3);font-size:.8rem;">No databases.<br>Create one first.</div>`);
     return;
   }
-  list.innerHTML = _databases.map(db => {
+  const html = _databases.map(db => {
     const c = dbEngineColor(db.engine);
     const isActive = _editorSelectedDb && _editorSelectedDb.id === db.id;
     return `<div class="db-editor-db-item ${isActive?'active':''}" onclick="selectEditorDb('${db.id}')">
@@ -15213,23 +15365,65 @@ function renderDbEditorDbList() {
       </div>
     </div>`;
   }).join('');
+  lists.forEach(list => {
+    if (list.id === 'dbQueryDbList') {
+      list.innerHTML = _databases.map(db => {
+        const isActive = _editorSelectedDb && _editorSelectedDb.id === db.id;
+        return `<div class="query-db-chip ${isActive?'active':''}" onclick="selectEditorDb('${db.id}')"><b>${db.name}</b><span>${db.engine} · ${db.status}</span></div>`;
+      }).join('');
+    } else {
+      list.innerHTML = html;
+    }
+  });
+  const metrics = document.getElementById('dbQueryMetrics');
+  if (metrics) {
+    const running = _databases.filter(d=>d.status==='running').length;
+    const engines = new Set(_databases.map(d=>d.engine)).size;
+    metrics.innerHTML = `<div class="db-metric"><span>Instances</span><b>${_databases.length}</b></div><div class="db-metric"><span>Running</span><b>${running}</b></div><div class="db-metric"><span>Engines</span><b>${engines}</b></div>`;
+  }
 }
 
 function selectEditorDb(id) {
   _editorSelectedDb = _databases.find(d => d.id === id) || null;
   renderDbEditorDbList();
   if (_editorSelectedDb) {
-    // Set default query based on engine
+    // Always sync starter query to selected engine to avoid cross-engine failures
     const q = document.getElementById('dbQueryInput');
-    if (q && !q.value.trim()) {
-      const engine = _editorSelectedDb.engine;
-      q.value = engine === 'mongodb' ? `{ "find": "users", "limit": 50 }` :
-                engine === 'redis'   ? `KEYS *` :
-                `SELECT * FROM information_schema.tables WHERE table_schema = 'public' LIMIT 50;`;
-    }
+    if (q) q.value = getDefaultQueryForEngine(_editorSelectedDb.engine);
     updateEditorSchemaPanel();
     updateEditorSdkPanel();
   }
+}
+
+function getDefaultQueryForEngine(engine='postgres'){
+  if (engine === 'mongodb') return `{ "listCollections": 1 }`;
+  if (engine === 'redis') return `PING`;
+  if (engine === 'mysql' || engine === 'mariadb') return `SHOW TABLES;`;
+  if (engine === 'postgres') return `SELECT table_name FROM information_schema.tables WHERE table_schema='public' LIMIT 50;`;
+  return `SELECT 1;`;
+}
+
+function validateQueryForEngine(engine, q){
+  const query = (q||'').trim();
+  if (!query) return 'Enter a query';
+  if (engine === 'mongodb') {
+    if (!(query.startsWith('{') || query.startsWith('['))) return 'MongoDB query must be valid JSON command object';
+    try { JSON.parse(query); } catch { return 'Invalid JSON for MongoDB command'; }
+  }
+  if (engine === 'redis') {
+    if (query.includes(';')) return 'Redis command should not use SQL semicolons';
+  }
+  if (engine === 'postgres' || engine === 'mysql' || engine === 'mariadb') {
+    if (query.startsWith('{')) return 'SQL engines require SQL text, not JSON';
+  }
+  return '';
+}
+
+function ensureEditorSelection(){
+  if (_editorSelectedDb) return;
+  const running = _databases.find(d=>d.status==='running');
+  if (running) selectEditorDb(running.id);
+  else if (_databases[0]) selectEditorDb(_databases[0].id);
 }
 
 function switchEditorTab(tab, btn) {
@@ -15247,9 +15441,11 @@ function switchEditorTab(tab, btn) {
 
 function updateEditorSchemaPanel() {
   const panel = document.getElementById('dbSchemaContent');
+  const map = document.getElementById('dbSchemaRelationMap');
   if (!panel) return;
   if (!_editorSelectedDb) {
     panel.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-3);font-size:.82rem;">Select a running database to inspect its schema.</div>`;
+    if (map) map.innerHTML = '';
     return;
   }
   const db = _editorSelectedDb;
@@ -15279,13 +15475,36 @@ function updateEditorSchemaPanel() {
     <div class="db-detail-row"><span class="db-detail-key">Port</span><span class="db-detail-val">${db.internalPort||'—'}</span></div>
   </div>
 </div>`;
+  if (map) {
+    map.innerHTML = `
+      <div class="schema-map">
+        <div class="schema-kpi"><span>Engine</span><b>${DB_ENGINE_LABELS[engine]||engine}</b></div>
+        <div class="schema-kpi"><span>Status</span><b>${db.status||'unknown'}</b></div>
+        <div class="schema-kpi"><span>Port</span><b>${db.internalPort||'—'}</b></div>
+        <div class="schema-kpi"><span>Container</span><b>${(db.containerName||'n/a').slice(0,12)}</b></div>
+        <div class="schema-rel">
+          <div class="query-section-title">Structure map</div>
+          <div class="schema-node">Users → Orders (1:N)</div>
+          <div class="schema-node">Orders → Payments (1:1)</div>
+          <div class="schema-node">Products ↔ Categories (N:N)</div>
+        </div>
+        <div class="schema-actions">
+          <div class="query-section-title">Schema actions</div>
+          <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="showPage('db-query')">Run introspection query</button>
+          <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="copyCurrentSchemaTip()">Copy engine tip</button>
+          <button class="btn btn-ghost" style="width:100%;" onclick="renderDbEditorDbList()">Refresh map</button>
+        </div>
+      </div>`;
+  }
 }
 
 function updateEditorSdkPanel() {
   const panel = document.getElementById('dbSdkContent');
+  const assist = document.getElementById('dbSdkAssist');
   if (!panel) return;
   if (!_editorSelectedDb) {
     panel.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-3);font-size:.82rem;">Select a database to see SDK snippets.</div>`;
+    if (assist) assist.innerHTML = '';
     return;
   }
   panel.innerHTML = `
@@ -15294,6 +15513,31 @@ function updateEditorSdkPanel() {
       <button class="db-sdk-tab" onclick="switchEditorSdkLang('python',this)">Python</button>
     </div>
     <div id="editorSdkSnippetContent">${generateSdkSnippet(_editorSelectedDb,'js')}</div>`;
+  if (assist) {
+    assist.innerHTML = `<div class="sdk-card"><div class="query-section-title">SDK Kit</div>
+      <div style="margin-bottom:8px;">${['Connection Ready','Env Injected','Secure Defaults','Retry Strategy'].map(i=>`<span class="sdk-chip">${i}</span>`).join('')}</div>
+      <div style="font-size:.78rem;color:var(--text-2);line-height:1.6;margin-bottom:10px;">Use this panel to ship integrations faster. Copy environment keys, test the URI, and generate framework-ready setup blocks.</div>
+      <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="copySdkEnvKey()">Copy Env Key</button>
+      <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="copySdkConnString()">Copy Connection String</button>
+      <button class="btn btn-primary" style="width:100%;" onclick="switchEditorSdkLang('python',document.querySelector('#editorSdkTabsBar .db-sdk-tab:nth-child(2)'))">Generate Python Now</button>
+    </div>`;
+  }
+}
+
+function copyCurrentSchemaTip(){
+  if (!_editorSelectedDb) return;
+  const tips = {mongodb:'{ "listCollections": 1 }',postgres:"SELECT table_name FROM information_schema.tables WHERE table_schema='public';",mysql:'SHOW TABLES;',redis:'KEYS *'};
+  const t = tips[_editorSelectedDb.engine] || '';
+  navigator.clipboard.writeText(t).then(()=>toast('Schema tip copied','success')).catch(()=>toast('Copy failed','error'));
+}
+function copySdkEnvKey(){
+  if (!_editorSelectedDb) return;
+  const k = _editorSelectedDb.engine === 'redis' ? 'REDIS_URL' : _editorSelectedDb.engine === 'mongodb' ? 'MONGODB_URI' : 'DATABASE_URL';
+  navigator.clipboard.writeText(k).then(()=>toast('Env key copied','success')).catch(()=>toast('Copy failed','error'));
+}
+function copySdkConnString(){
+  if (!_editorSelectedDb) return;
+  navigator.clipboard.writeText(_editorSelectedDb.connectionString || '').then(()=>toast('Connection string copied','success')).catch(()=>toast('Copy failed','error'));
 }
 
 function switchEditorSdkLang(lang, btn) {
@@ -15304,17 +15548,84 @@ function switchEditorSdkLang(lang, btn) {
 }
 
 let _lastQueryRows = [];
+let _queryHistory = [];
+let _queryTemplates = [];
+let _queryLastStartedAt = 0;
 
 function renderQueryResultsTable(rows){
   const results = document.getElementById('dbEditorResults');
   if (!results) return;
-  if (!Array.isArray(rows) || rows.length===0){
-    results.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-3);font-size:.82rem;">Query executed successfully, but no rows returned.</div>`;
+  if (!Array.isArray(rows) || rows.length===0){ results.textContent = `No rows returned.`; return; }
+  results.textContent = rows.map((r,i)=>`[${i+1}] ${JSON.stringify(r)}`).join('\n');
+}
+
+function toggleQueryDbStrip(){
+  const strip = document.getElementById('queryDbStrip');
+  if (!strip) return;
+  strip.classList.toggle('collapsed');
+  const btn = document.getElementById('queryDbToggle');
+  if (btn) btn.textContent = strip.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+}
+
+
+function toggleGenericCollapse(id, btn){
+  const el = document.getElementById(id); if (!el) return;
+  el.classList.toggle('collapsed');
+  if (btn) btn.textContent = el.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+}
+function toggleQueryResultTerminal(){
+  const t = document.getElementById('queryResultTerminal');
+  if (!t) return;
+  t.classList.toggle('collapsed');
+}
+
+function clearQueryEditor(){
+  const q = document.getElementById('dbQueryInput');
+  if (q) q.value = '';
+}
+
+async function copyCurrentQuery(){
+  const q = (document.getElementById('dbQueryInput')||{}).value || '';
+  if (!q.trim()) return toast('No query to copy', 'error');
+  try { await navigator.clipboard.writeText(q); toast('Query copied', 'success'); } catch { toast('Copy failed', 'error'); }
+}
+
+function renderQueryTemplates(){
+  const wrap = document.getElementById('queryTemplateList');
+  if (!wrap) return;
+  const templates = _queryTemplates.length ? _queryTemplates : [
+    { name:'List tables', sql:`SELECT table_name FROM information_schema.tables WHERE table_schema='public' LIMIT 100;`, mongo:`{ "listCollections": 1 }`, redis:'KEYS *' },
+    { name:'Recent rows', sql:`SELECT * FROM your_table ORDER BY 1 DESC LIMIT 50;`, mongo:`{ "find": "your_collection", "limit": 50 }`, redis:'SCAN 0 COUNT 100' },
+    { name:'Count records', sql:`SELECT COUNT(*) AS total FROM your_table;`, mongo:`{ "aggregate": "your_collection", "pipeline":[{"$count":"total"}] }`, redis:'DBSIZE' }
+  ];
+  wrap.innerHTML = templates.map((t,i)=>`<div class="query-mini-card" onclick="applyQueryTemplate(${i})"><div style="font-weight:700;font-size:.76rem;">${t.name}</div><code>${(t.sql||'').replace(/</g,'&lt;')}</code></div>`).join('');
+  _queryTemplates = templates;
+}
+
+function applyQueryTemplate(idx){
+  const tpl = _queryTemplates[idx];
+  if (!tpl) return;
+  const engine = (_editorSelectedDb||{}).engine || 'postgres';
+  const text = engine === 'mongodb' ? (tpl.mongo || tpl.sql) : engine === 'redis' ? (tpl.redis || tpl.sql) : tpl.sql;
+  const q = document.getElementById('dbQueryInput');
+  if (q) q.value = text;
+}
+
+function renderQueryHistory(){
+  const wrap = document.getElementById('queryHistoryList');
+  if (!wrap) return;
+  if (!_queryHistory.length) {
+    wrap.innerHTML = `<div class="query-mini-card"><div style="font-size:.75rem;color:var(--text-3);">No recent queries yet.</div></div>`;
     return;
   }
-  const cols = Array.from(rows.reduce((set,row)=>{ Object.keys(row||{}).forEach(k=>set.add(k)); return set;}, new Set()));
-  const esc = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  results.innerHTML = `<table class="db-editor-results-table"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${esc(typeof r[c]==='object'?JSON.stringify(r[c]):r[c])}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  wrap.innerHTML = _queryHistory.slice(0,14).map((h,i)=>`<div class="query-mini-card" onclick="reuseQueryHistory(${i})"><code>${h.query.replace(/</g,'&lt;')}</code><div class="meta">${h.db} · ${h.rows} rows · ${h.ms}ms</div></div>`).join('');
+}
+
+function reuseQueryHistory(idx){
+  const item = _queryHistory[idx];
+  if (!item) return;
+  const q = document.getElementById('dbQueryInput');
+  if (q) q.value = item.query;
 }
 
 function exportEditorResults(kind='csv'){
@@ -15348,12 +15659,17 @@ async function importIntoDatabase(file){
   toast(`Imported ${dataRows.length} rows into ${table}`, 'success');
 }
 
-async function runEditorQuery() {
+async function runEditorQuery(saveHistory = false) {
   if (!_editorSelectedDb) { toast('Select a database first', 'error'); return; }
+  if ((_editorSelectedDb.status||'').toLowerCase() !== 'running') { toast(`Container is ${_editorSelectedDb.status||'not running'}`, 'error'); return; }
   const q = (document.getElementById('dbQueryInput')||{}).value?.trim();
-  if (!q) { toast('Enter a query', 'error'); return; }
+  const bad = validateQueryForEngine(_editorSelectedDb.engine, q);
+  if (bad) { toast(bad, 'error'); const results = document.getElementById('dbEditorResults'); if (results) results.textContent = `Error: ${bad}`; return; }
+  _queryLastStartedAt = Date.now();
   const results = document.getElementById('dbEditorResults');
-  if (results) results.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-3);font-size:.82rem;">Running query…</div>`;
+  const status = document.getElementById('queryLiveStatus');
+  if (status) status.textContent = 'running';
+  if (results) results.textContent = `Running query on ${_editorSelectedDb.name||_editorSelectedDb.id}...`;
   try {
     const r = await apiFetch(`/api/databases/${_editorSelectedDb.id}/query`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ query: q }) });
     const d = await r.json().catch(()=>({}));
@@ -15361,10 +15677,26 @@ async function runEditorQuery() {
     const rows = Array.isArray(d.rows) ? d.rows : Array.isArray(d.result) ? d.result : [];
     _lastQueryRows = rows;
     renderQueryResultsTable(rows);
+    const ms = Date.now() - _queryLastStartedAt;
+    document.getElementById('queryRowCount').textContent = `Rows: ${rows.length}`;
+    document.getElementById('queryExecutionMeta').textContent = `Completed in ${ms}ms · ${(_editorSelectedDb.name||'db')}`;
+    if (status) status.textContent = 'success';
+    if (saveHistory || q.length > 6) {
+      _queryHistory.unshift({ query:q, db:_editorSelectedDb.name||_editorSelectedDb.id, rows:rows.length, ms });
+      _queryHistory = _queryHistory.slice(0,30);
+      renderQueryHistory();
+    }
     toast('Query executed', 'success');
   } catch (e) {
-    if (results) results.innerHTML = `<div style="color:#fca5a5;padding:20px;">Error: ${String(e.message||e)}</div>`;
-    toast(e.message || 'Query failed', 'error');
+    const raw = String(e.message||e);
+    let hint = raw;
+    if (/NOAUTH|Authentication required/i.test(raw)) hint = 'Redis requires AUTH. Recreate/link Redis with password or use correct REDIS_URL credentials.';
+    if (/Invalid JSON for MongoDB command/i.test(raw)) hint = 'MongoDB command must be valid JSON. Example: { "listCollections": 1 }';
+    if (/role .* does not exist|FATAL/i.test(raw)) hint = 'Postgres credentials are invalid for this container. Open Database Details and verify user/password in connection string.';
+    if (/undefined|Access denied|using password/i.test(raw)) hint = 'MySQL/MariaDB credentials look invalid. Recreate DB with explicit username/password or restart container.';
+    if (results) results.textContent = `Error: ${hint}\nRaw: ${raw}`;
+    if (status) status.textContent = 'failed';
+    toast(hint || 'Query failed', 'error');
   }
 }
 
