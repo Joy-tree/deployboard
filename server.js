@@ -229,10 +229,26 @@ function savePortRegistry() {
 }
 
 function getOrAssignPort(subdomain) {
-  if (portRegistry[subdomain]) return portRegistry[subdomain];
-  const used = new Set(Object.values(portRegistry));
+  const isPortAvailable = (port) => {
+    try {
+      execSync(`sh -lc "ss -ltn '( sport = :${Number(port)} )' | tail -n +2 | grep -q . && exit 1 || exit 0"`, { stdio: 'pipe' });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const assigned = Number(portRegistry[subdomain] || 0);
+  if (assigned >= PORT_START && assigned <= PORT_END && isPortAvailable(assigned)) return assigned;
+
+  const used = new Set(
+    Object.values(portRegistry)
+      .map(v => Number(v))
+      .filter(v => Number.isFinite(v))
+  );
+  if (assigned) used.delete(assigned);
   for (let p = PORT_START; p <= PORT_END; p++) {
-    if (!used.has(p)) {
+    if (!used.has(p) && isPortAvailable(p)) {
       portRegistry[subdomain] = p;
       savePortRegistry();
       console.log(`[Ports] Assigned port ${p} to ${subdomain}`);
@@ -3181,7 +3197,9 @@ async function executeFlowRequest(req, res) {
 }
 
 app.all('/api/simulated/:flowId/*', executeFlowRequest);
+app.all('/api/simulated/:flowId', executeFlowRequest);
 app.all('/api/live/:flowId/*', executeFlowRequest);
+app.all('/api/live/:flowId', executeFlowRequest);
 
 app.get('/api/activity', async (req, res) => {
   try {
