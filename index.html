@@ -14684,7 +14684,9 @@ function openDbDetail(id) {
   if (!content) return;
   const c = dbEngineColor(db.engine);
   const connStr = db.connectionString || db.connStr || '';
+  const externalConnStr = db.externalConnectionString || '';
   const maskedConn = connStr ? connStr.replace(/:([^:@]+)@/, ':***@') : '';
+  const maskedExternalConn = externalConnStr ? externalConnStr.replace(/:([^:@]+)@/, ':***@') : '';
   const date = db.createdAt ? new Date(db.createdAt).toLocaleString('en-US', {month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
 
   content.innerHTML = `
@@ -14731,6 +14733,13 @@ function openDbDetail(id) {
             Reveal
           </button>
         </div>` : `<div style="color:var(--text-3);font-size:.82rem;">Not available yet — container still provisioning.</div>`}
+      ${externalConnStr ? `
+      <div style="margin-top:14px;color:var(--text-3);font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;">External Connection</div>
+      <div class="db-code-block" style="margin:8px 0 12px;word-break:break-all;font-size:.75rem;" id="dbDetailExternalConnBlock">${maskedExternalConn}</div>
+      <div style="display:flex;gap:10px;">
+        <button class="db-btn primary" onclick="navigator.clipboard.writeText(decodeURIComponent('${encodeURIComponent(externalConnStr)}')).then(()=>toast('External connection string copied!','success')).catch(()=>toast('Copy failed','error'))">Copy External String</button>
+        <button class="db-btn" onclick="toggleRevealExternalConnStr('${encodeURIComponent(externalConnStr)}')">Reveal</button>
+      </div>` : ''}
     </div>
   </div>
 
@@ -14763,6 +14772,13 @@ function openDbDetail(id) {
 
 function toggleRevealConnStr(id, encoded) {
   const block = document.getElementById('dbDetailConnBlock');
+  if (!block) return;
+  const full = decodeURIComponent(encoded);
+  const masked = full.replace(/:([^:@]+)@/, ':***@');
+  block.textContent = block.textContent === masked ? full : masked;
+}
+function toggleRevealExternalConnStr(encoded) {
+  const block = document.getElementById('dbDetailExternalConnBlock');
   if (!block) return;
   const full = decodeURIComponent(encoded);
   const masked = full.replace(/:([^:@]+)@/, ':***@');
