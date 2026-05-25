@@ -7037,7 +7037,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         <div style="font-size:1.2rem;font-weight:800;color:var(--text);">Realtime API Builder</div>
         <div style="color:var(--text-2);font-size:.86rem;">Type what API behavior you want, or upload textbook/quiz text. We'll deploy a live API endpoint instantly.</div>
         <textarea id="lfPrompt" class="input" style="min-height:110px;" placeholder="Example: Build a quiz API that stores attempts and returns random questions from uploaded textbook"></textarea>
-        <input type="file" id="lfUpload" accept=".txt,.md,.csv" class="input"/>
+        <input type="file" id="lfUpload" accept=".txt,.md,.csv,.json,.ppt,.pptx,.doc,.docx,.pdf" class="input"/>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn btn-primary" onclick="deployLogiFlowFromPrompt()">Deploy API from Prompt</button>
           <button class="btn btn-ghost" onclick="deployLogiFlowDockerized()">Dockerize Last Flow</button>
@@ -7048,6 +7048,11 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <div class="card" style="margin-top:12px;"><div class="card-body">
         <div style="font-weight:700;margin-bottom:8px;">Execution Logs</div>
         <pre id="lfLogs" style="max-height:320px;overflow:auto;background:#030712;border:1px solid var(--border);padding:12px;border-radius:12px;color:#93c5fd;font-size:.75rem;">No logs yet.</pre>
+      </div></div>
+      <div class="card" style="margin-top:12px;"><div class="card-body">
+        <div style="font-weight:800;font-size:1.05rem;margin-bottom:8px;">API Management</div>
+        <div style="color:var(--text-2);font-size:.82rem;margin-bottom:10px;">All generated APIs are saved and synced to Firebase RTDB under <b>deployboard_apis/&lt;your_user_key&gt;</b>.</div>
+        <div id="lfMgmtList" style="display:grid;gap:10px;"></div>
       </div></div>
     </div>
 
@@ -9340,7 +9345,7 @@ function showPage(id, navEl, _skipPush) {
   if (id === 'db-sdk')        { renderDbEditorPage(); switchEditorTab('sdk', document.querySelector('#dbEditorTabs [data-tab=\"sdk\"]')); return showPage('db-editor'); }
   if (id === 'db-create')     renderDbCreatePage();
   if (id === 'db-detail')     { /* populated by openDbDetail() */ }
-  if (id === 'realtime-api')  { loadLogiFlowLogs(); }
+  if (id === 'realtime-api')  { loadLogiFlowLogs(); loadManagedApis(); }
 
   closeSidebar();
 }
@@ -14684,7 +14689,9 @@ function openDbDetail(id) {
   if (!content) return;
   const c = dbEngineColor(db.engine);
   const connStr = db.connectionString || db.connStr || '';
+  const externalConnStr = db.externalConnectionString || '';
   const maskedConn = connStr ? connStr.replace(/:([^:@]+)@/, ':***@') : '';
+  const maskedExternalConn = externalConnStr ? externalConnStr.replace(/:([^:@]+)@/, ':***@') : '';
   const date = db.createdAt ? new Date(db.createdAt).toLocaleString('en-US', {month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
 
   content.innerHTML = `
@@ -14731,6 +14738,14 @@ function openDbDetail(id) {
             Reveal
           </button>
         </div>` : `<div style="color:var(--text-3);font-size:.82rem;">Not available yet — container still provisioning.</div>`}
+      ${externalConnStr ? `
+      <div style="margin-top:14px;color:var(--text-3);font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;">External Connection</div>
+      <div style="margin:6px 0 8px;color:var(--text-3);font-size:.72rem;">Use this in Redis/Postgres/MySQL client apps (not in a web browser URL bar).</div>
+      <div class="db-code-block" style="margin:8px 0 12px;word-break:break-all;font-size:.75rem;" id="dbDetailExternalConnBlock">${maskedExternalConn}</div>
+      <div style="display:flex;gap:10px;">
+        <button class="db-btn primary" onclick="navigator.clipboard.writeText(decodeURIComponent('${encodeURIComponent(externalConnStr)}')).then(()=>toast('External connection string copied!','success')).catch(()=>toast('Copy failed','error'))">Copy External String</button>
+        <button class="db-btn" onclick="toggleRevealExternalConnStr('${encodeURIComponent(externalConnStr)}')">Reveal</button>
+      </div>` : ''}
     </div>
   </div>
 
@@ -14763,6 +14778,13 @@ function openDbDetail(id) {
 
 function toggleRevealConnStr(id, encoded) {
   const block = document.getElementById('dbDetailConnBlock');
+  if (!block) return;
+  const full = decodeURIComponent(encoded);
+  const masked = full.replace(/:([^:@]+)@/, ':***@');
+  block.textContent = block.textContent === masked ? full : masked;
+}
+function toggleRevealExternalConnStr(encoded) {
+  const block = document.getElementById('dbDetailExternalConnBlock');
   if (!block) return;
   const full = decodeURIComponent(encoded);
   const masked = full.replace(/:([^:@]+)@/, ':***@');
@@ -15144,19 +15166,26 @@ async function runEditorQuery() {
 
 
 async function deployLogiFlowFromPrompt(){
-  const prompt = (document.getElementById('lfPrompt')||{}).value || '';
-  const file = (document.getElementById('lfUpload')||{}).files?.[0] || null;
-  let sourceText = '';
-  if (file) sourceText = await file.text().catch(()=> '');
-  if (!prompt && !sourceText) return toast('Enter prompt or upload text', 'error');
-  const r = await apiFetch('/api/developer/flows/from-text', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt, sourceText }) });
-  const d = await r.json().catch(()=>({}));
-  if (!r.ok) return toast(d.error || 'Deploy failed', 'error');
-  const full = window.location.origin + d.endpoint;
-  window._lastLogiFlowId = d.flowId;
-  document.getElementById('lfResult').innerText = `Flow: ${d.flowId}\nEndpoint: ${full}`;
-  toast('Flow deployed', 'success');
-  loadLogiFlowLogs();
+  try {
+    const btn = Array.from(document.querySelectorAll('#page-realtime-api button')).find(b=>b.textContent.includes('Deploy API from Prompt'));
+    if (btn) { btn.disabled = true; btn.textContent = 'Deploying…'; }
+    const prompt = (document.getElementById('lfPrompt')||{}).value || '';
+    const file = (document.getElementById('lfUpload')||{}).files?.[0] || null;
+    let sourceText = '';
+    if (file) sourceText = await file.text().catch(()=> '');
+    if (file && !sourceText) sourceText = `[Uploaded file: ${file.name}]`;
+    if (!prompt && !sourceText) { if (btn){btn.disabled=false;btn.textContent='Deploy API from Prompt';} return toast('Enter prompt or upload text', 'error'); }
+    const r = await apiFetch('/api/developer/flows/from-text', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt, sourceText }) });
+    const d = await r.json().catch(()=>({}));
+    if (!r.ok) throw new Error(d.error || 'Deploy failed');
+    const full = window.location.origin + d.endpoint;
+    window._lastLogiFlowId = d.flowId;
+    document.getElementById('lfResult').innerText = `Flow: ${d.flowId}\nEndpoint: ${full}`;
+    toast('Flow deployed', 'success');
+    await loadManagedApis();
+    loadLogiFlowLogs();
+    if (btn){btn.disabled=false;btn.textContent='Deploy API from Prompt';}
+  } catch (e) { toast(e.message || 'Deploy failed', 'error'); const btn = Array.from(document.querySelectorAll('#page-realtime-api button')).find(b=>b.textContent.includes('Deploying…')); if (btn){btn.disabled=false;btn.textContent='Deploy API from Prompt';} }
 }
 async function deployLogiFlowDockerized(){
   const flowId = window._lastLogiFlowId;
@@ -15172,6 +15201,47 @@ async function loadLogiFlowLogs(){
   const d = await r.json().catch(()=>({logs:[]}));
   const logs = Array.isArray(d.logs)?d.logs:[];
   document.getElementById('lfLogs').innerText = logs.slice(0,120).map(l=>JSON.stringify(l)).join('\n') || 'No logs yet.';
+}
+async function loadManagedApis(){
+  const wrap = document.getElementById('lfMgmtList'); if (!wrap) return;
+  const r = await apiFetch('/api/developer/apis'); const d = await r.json().catch(()=>({apis:[]}));
+  const apis = Array.isArray(d.apis) ? d.apis : [];
+  if (!apis.length) { wrap.innerHTML = `<div style="color:var(--text-3);font-size:.82rem;">No APIs created yet.</div>`; return; }
+  wrap.innerHTML = apis.map(a => `
+    <div style="border:1px solid var(--border);border-radius:14px;padding:12px;background:var(--bg-2);">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+        <div>
+          <div style="font-family:var(--font-mono);color:#34d399;font-size:.78rem;">${a.flowId}</div>
+          <div style="font-size:.82rem;color:var(--text-2);margin-top:4px;">${(a.prompt||'').slice(0,120) || 'No prompt'}</div>
+          <div style="font-size:.72rem;color:var(--text-3);margin-top:6px;">${window.location.origin}${a.endpoint||('/api/live/'+a.flowId)}</div>
+        </div>
+        <div style="font-size:.7rem;color:${a.dockerized?'#34d399':'#fbbf24'};">${a.dockerized?'Dockerized':'Flow only'}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+        <button class="btn btn-ghost" onclick="editManagedApiPrompt('${a.flowId}', ${JSON.stringify(a.prompt||'')})">Edit Prompt</button>
+        <button class="btn btn-ghost" onclick="regenerateManagedApi('${a.flowId}')">Regenerate</button>
+        <button class="btn btn-ghost" onclick="window._lastLogiFlowId='${a.flowId}';loadLogiFlowLogs();toast('Logs refreshed for '+ '${a.flowId}','success')">View Logs</button>
+      </div>
+    </div>`).join('');
+}
+async function editManagedApiPrompt(flowId, oldPrompt){
+  const prompt = window.prompt('Edit API prompt', oldPrompt || '');
+  if (prompt == null) return;
+  const r = await apiFetch(`/api/developer/apis/${encodeURIComponent(flowId)}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt }) });
+  const d = await r.json().catch(()=>({}));
+  if (!r.ok) return toast(d.error || 'Update failed', 'error');
+  toast('Prompt updated', 'success'); loadManagedApis();
+}
+async function regenerateManagedApi(flowId){
+  const r = await apiFetch('/api/developer/apis'); const d = await r.json().catch(()=>({apis:[]}));
+  const api = (Array.isArray(d.apis)?d.apis:[]).find(a => a.flowId === flowId);
+  if (!api) return toast('API not found', 'error');
+  const r2 = await apiFetch('/api/developer/flows/from-text', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt: api.prompt || '', sourceText: api.sourceText || '' }) });
+  const d2 = await r2.json().catch(()=>({}));
+  if (!r2.ok) return toast(d2.error || 'Regenerate failed', 'error');
+  window._lastLogiFlowId = d2.flowId;
+  document.getElementById('lfResult').innerText = `Flow: ${d2.flowId}\nEndpoint: ${window.location.origin + d2.endpoint}`;
+  toast('API regenerated', 'success'); loadManagedApis();
 }
 
 // ── Auto-poll running databases ───────────────────────────────────

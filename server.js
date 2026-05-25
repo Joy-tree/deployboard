@@ -62,6 +62,8 @@ const RESEND_WELCOME_HERO_IMAGE_URL = String(process.env.RESEND_WELCOME_HERO_IMA
 const PAYSTACK_PUBLIC_KEY = String(process.env.PAYSTACK_PUBLIC_KEY || '').trim();
 const PAYSTACK_SECRET_KEY = String(process.env.PAYSTACK_SECRET_KEY || '').trim();
 const PAYSTACK_WEBHOOK_SECRET = String(process.env.PAYSTACK_WEBHOOK_SECRET || process.env.PAYSTACK_SECRET_KEY || '').trim();
+const GEMINI_API_KEY = String(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').trim();
+const GEMINI_MODEL = String(process.env.GEMINI_MODEL || 'gemini-1.5-flash').trim();
 
 const authOtpStore = new Map();
 const deployStopRequests = new Set();
@@ -229,10 +231,26 @@ function savePortRegistry() {
 }
 
 function getOrAssignPort(subdomain) {
-  if (portRegistry[subdomain]) return portRegistry[subdomain];
-  const used = new Set(Object.values(portRegistry));
+  const isPortAvailable = (port) => {
+    try {
+      execSync(`sh -lc "ss -ltn '( sport = :${Number(port)} )' | tail -n +2 | grep -q . && exit 1 || exit 0"`, { stdio: 'pipe' });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const assigned = Number(portRegistry[subdomain] || 0);
+  if (assigned >= PORT_START && assigned <= PORT_END && isPortAvailable(assigned)) return assigned;
+
+  const used = new Set(
+    Object.values(portRegistry)
+      .map(v => Number(v))
+      .filter(v => Number.isFinite(v))
+  );
+  if (assigned) used.delete(assigned);
   for (let p = PORT_START; p <= PORT_END; p++) {
-    if (!used.has(p)) {
+    if (!used.has(p) && isPortAvailable(p)) {
       portRegistry[subdomain] = p;
       savePortRegistry();
       console.log(`[Ports] Assigned port ${p} to ${subdomain}`);
@@ -240,6 +258,13 @@ function getOrAssignPort(subdomain) {
     }
   }
   throw new Error('No free ports available (4000-4099 all in use)');
+}
+function clearAssignedPort(subdomain) {
+  if (!subdomain) return;
+  if (Object.prototype.hasOwnProperty.call(portRegistry, subdomain)) {
+    delete portRegistry[subdomain];
+    savePortRegistry();
+  }
 }
 
 // ── Middleware ────────────────────────────────────────────────────────────────
@@ -2915,6 +2940,33 @@ const flowRegistry = new Map();     // flowId -> flowDefinition
 const executionLogs = [];           // most-recent-first
 const rateLimiterState = new Map(); // key(flowId:ip) -> { count, windowStart }
 let virtualDatabase = {};           // { [flowId]: { [collection]: docs[] } }
+const APIS_FILE = path.join(__dirname, 'api_catalog.json');
+let apiCatalog = [];
+try { if (fs.existsSync(APIS_FILE)) apiCatalog = JSON.parse(fs.readFileSync(APIS_FILE, 'utf8')) || []; } catch {}
+function saveApiCatalog(){ try { fs.writeFileSync(APIS_FILE, JSON.stringify(apiCatalog, null, 2)); } catch {} }
+function firebaseApisBaseUrl(user){
+  const key = firebaseWorkspaceKey(user);
+  if (!FIREBASE_RTDB_URL || !key) return '';
+  return `${FIREBASE_RTDB_URL}/deployboard_apis/${key}`;
+}
+async function writeApiToFirebase(user, rec){
+  try {
+    const base = firebaseApisBaseUrl(user); if (!base) return false;
+    const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+    const r = await fetch(`${base}/${encodeURIComponent(String(rec.flowId||''))}.json${authQuery}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(rec) });
+    return r.ok;
+  } catch { return false; }
+}
+async function readApisFromFirebase(user){
+  try {
+    const base = firebaseApisBaseUrl(user); if (!base) return [];
+    const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+    const r = await fetch(`${base}.json${authQuery}`, { headers:{Accept:'application/json'} });
+    if (!r.ok) return [];
+    const d = await r.json();
+    return d && typeof d === 'object' ? Object.values(d).filter(Boolean) : [];
+  } catch { return []; }
+}
 try {
   if (fs.existsSync(FLOW_FILE)) {
     const raw = JSON.parse(fs.readFileSync(FLOW_FILE, 'utf8'));
@@ -2954,6 +3006,33 @@ function evalCond(actual, op, expected) {
     case '$contains': return String(actual || '').includes(String(expected || ''));
     default: return false;
   }
+}
+async function buildFlowWithGemini({ prompt = '', sourceText = '' } = {}) {
+  if (!GEMINI_API_KEY) return null;
+  const instruction = `You are generating a JSON API flow definition.
+Return strict JSON only with shape:
+{"routePath":"/quiz","method":"POST","responseTemplate":{"ok":true},"seedQuestions":[{"question":"...","answer":"..."}]}
+If prompt asks quiz/riddle, provide responseTemplate with riddle/answer fields.
+If sourceText contains quiz content, extract up to 50 QA pairs into seedQuestions.
+No markdown, no explanation.`;
+  const userInput = `PROMPT:\n${String(prompt || '').slice(0, 12000)}\n\nSOURCE_TEXT:\n${String(sourceText || '').slice(0, 12000)}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: `${instruction}\n\n${userInput}` }] }],
+      generationConfig: { temperature: 0.2, maxOutputTokens: 900 }
+    })
+  });
+  if (!r.ok) return null;
+  const data = await r.json().catch(() => ({}));
+  const text = data?.candidates?.[0]?.content?.parts?.map(p => p?.text || '').join('\n') || '';
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) return null;
+  const parsed = JSON.parse(text.slice(start, end + 1));
+  return parsed && typeof parsed === 'object' ? parsed : null;
 }
 function applyTransform(scope, cfg = {}) {
   const srcVal = deepGet(scope, cfg.source || 'req.body');
@@ -3022,26 +3101,52 @@ app.post('/api/developer/database/clear', requireAuth, (req, res) => {
 app.get('/api/developer/logs', requireAuth, (req, res) => res.json({ logs: executionLogs.slice(0, 500) }));
 
 app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
+  (async () => {
   const { prompt, routePath = '/quiz', method = 'POST', sourceText = '' } = req.body || {};
   const flowId = `flow_${Date.now()}`;
-  const isQuiz = /quiz|question|mcq|exam/i.test(String(prompt||'') + ' ' + String(sourceText||''));
+  const aiSpec = await buildFlowWithGemini({ prompt, sourceText }).catch(() => null);
+  const route = String(aiSpec?.routePath || routePath || '/quiz');
+  const httpMethod = String(aiSpec?.method || method || 'POST').toUpperCase();
+  const aiTemplate = aiSpec?.responseTemplate && typeof aiSpec.responseTemplate === 'object' ? aiSpec.responseTemplate : null;
+  const isQuiz = /quiz|question|mcq|exam|riddle/i.test(String(prompt||'') + ' ' + String(sourceText||''));
   const nodes = [
-    { id:'n1', type:'INCOMING_REQUEST', config:{ method, routePath }, next:'n2' },
+    { id:'n1', type:'INCOMING_REQUEST', config:{ method: httpMethod, routePath: route }, next:'n2' },
     { id:'n2', type:'DB_INSERT', config:{ collection: isQuiz ? 'quiz_submissions' : 'requests', source:'req.body' }, next:'n3' },
     { id:'n3', type:'DB_FIND', config:{ collection: isQuiz ? 'quiz_questions' : 'requests', filters: [] }, next:'n4' },
-    { id:'n4', type:'HTTP_RESPONSE', config:{ status:200, json: isQuiz ? { riddle:'{{db_result.0.question}}', answer:'{{db_result.0.answer}}' } : { ok:true, message:'API active', flowId } } }
+    { id:'n4', type:'HTTP_RESPONSE', config:{ status:200, json: aiTemplate || (isQuiz ? { riddle:'{{db_result.0.question}}', answer:'{{db_result.0.answer}}' } : { ok:true, message:'API active', flowId }) } }
   ];
   if (isQuiz) {
+    const aiQuestions = Array.isArray(aiSpec?.seedQuestions) ? aiSpec.seedQuestions : [];
+    if (aiQuestions.length > 0) {
+      const questions = aiQuestions.slice(0, 50).map((q, i) => ({ id:i+1, question:String(q?.question||'').trim(), answer:String(q?.answer||'').trim() })).filter(q => q.question);
+      if (questions.length) {
+        getCollection(flowId, 'quiz_questions').push(...questions);
+        saveVirtualDb();
+      }
+    }
     const questions = String(sourceText||'').split(/\r?\n/).filter(Boolean).slice(0,200).map((line,i) => {
       const parts = String(line).split('||');
       if (parts.length >= 2) return { id:i+1, question: parts[0].trim(), answer: parts.slice(1).join('||').trim() };
       return { id:i+1, question: line.trim(), answer: 'No answer supplied' };
     });
-    getCollection(flowId, 'quiz_questions').push(...questions);
-    saveVirtualDb();
+    if (questions.length) { getCollection(flowId, 'quiz_questions').push(...questions); saveVirtualDb(); }
   }
-  flowRegistry.set(flowId, { flowId, owner: String(req.user?._id || req.user?.id || ''), nodes, createdAt: new Date().toISOString(), prompt: String(prompt||'') });
-  res.json({ ok:true, flowId, endpoint:`/api/live/${flowId}`, nodesCount:nodes.length, quizSeeded:isQuiz });
+  const ownerUserId = String(req.user?._id || req.user?.id || '');
+  flowRegistry.set(flowId, { flowId, owner: ownerUserId, nodes, createdAt: new Date().toISOString(), prompt: String(prompt||'') });
+  const rec = {
+    flowId, ownerUserId, prompt: String(prompt||''), sourceText: String(sourceText||'').slice(0, 120000),
+    endpoint:`/api/live/${flowId}`, status:'active', createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(),
+    quizSeeded:isQuiz, dockerized:false
+  };
+  apiCatalog = [rec, ...apiCatalog.filter(a => !(a.flowId === flowId && a.ownerUserId === ownerUserId))];
+  saveApiCatalog();
+  void writeApiToFirebase(req.user, rec);
+  res.json({ ok:true, flowId, endpoint:`/api/live/${flowId}`, nodesCount:nodes.length, quizSeeded:isQuiz, aiUsed: !!aiSpec, aiModel: aiSpec ? GEMINI_MODEL : null });
+  })().catch(e => res.status(500).json({ error: e.message }));
+});
+
+app.get('/api/developer/ai/status', requireAuth, (req, res) => {
+  res.json({ ok: true, geminiConfigured: !!GEMINI_API_KEY, geminiModel: GEMINI_MODEL, aiAnalysisMode: 'heuristic-client-only' });
 });
 
 app.post('/api/developer/flows/:flowId/dockerize', requireAuth, async (req, res) => {
@@ -3053,7 +3158,6 @@ app.post('/api/developer/flows/:flowId/dockerize', requireAuth, async (req, res)
     if (flow.owner && String(flow.owner) !== owner) return res.status(403).json({ error: 'Forbidden' });
 
     const subdomain = `api-${flowId.slice(-8).toLowerCase()}`.replace(/[^a-z0-9-]/g, '-');
-    const port = getOrAssignPort(subdomain);
     const appDir = path.join(SITES_DIR, `logiflow-${flowId}`);
     fs.mkdirSync(appDir, { recursive: true });
 
@@ -3067,13 +3171,56 @@ app.post('/api/developer/flows/:flowId/dockerize', requireAuth, async (req, res)
     runDocker(`docker rm -f ${cname} 2>/dev/null || true`);
     const build = runDocker(`docker build -t ${image} "${appDir}"`, 120000);
     if (!build.ok) return res.status(500).json({ error: build.stderr || 'docker build failed' });
-    const run = runDocker(`docker run -d --name ${cname} --restart unless-stopped -p 127.0.0.1:${port}:3000 ${image}`);
-    if (!run.ok) return res.status(500).json({ error: run.stderr || 'docker run failed' });
+    let run = null;
+    let port = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      port = getOrAssignPort(subdomain);
+      run = runDocker(`docker run -d --name ${cname} --restart unless-stopped -p ${port}:3000 ${image}`);
+      if (run.ok) break;
+      const err = String(run.stderr || '').toLowerCase();
+      const portBusy = err.includes('port is already allocated') || err.includes('bind for');
+      if (!portBusy) break;
+      clearAssignedPort(subdomain);
+      runDocker(`docker rm -f ${cname} 2>/dev/null || true`);
+    }
+    if (!run || !run.ok) return res.status(500).json({ error: run?.stderr || 'docker run failed' });
     await registerSubdomain(subdomain).catch(() => null);
     portRegistry[subdomain] = port;
     savePortRegistry();
+    const ownerUserId = String(req.user?._id || req.user?.id || '');
+    const idx = apiCatalog.findIndex(a => a.flowId === flowId && a.ownerUserId === ownerUserId);
+    if (idx !== -1) {
+      apiCatalog[idx] = { ...apiCatalog[idx], dockerized:true, dockerUrl:`https://${subdomain}.${BASE_DOMAIN}`, dockerContainer:cname, dockerPort:port, updatedAt:new Date().toISOString() };
+      saveApiCatalog();
+      void writeApiToFirebase(req.user, apiCatalog[idx]);
+    }
     return res.json({ ok: true, subdomain: `${subdomain}.${BASE_DOMAIN}`, liveUrl: `https://${subdomain}.${BASE_DOMAIN}`, flowId, container: cname, port });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/developer/apis', requireAuth, async (req, res) => {
+  const ownerUserId = String(req.user?._id || req.user?.id || '');
+  const fb = await readApisFromFirebase(req.user);
+  const merged = [...fb, ...apiCatalog.filter(a => a.ownerUserId === ownerUserId)].reduce((m, a) => {
+    m.set(String(a.flowId), { ...a, ownerUserId }); return m;
+  }, new Map());
+  res.json({ apis: Array.from(merged.values()).sort((a,b)=>new Date(b.updatedAt||b.createdAt||0)-new Date(a.updatedAt||a.createdAt||0)) });
+});
+app.patch('/api/developer/apis/:flowId', requireAuth, async (req, res) => {
+  const flowId = String(req.params.flowId || '');
+  const ownerUserId = String(req.user?._id || req.user?.id || '');
+  const idx = apiCatalog.findIndex(a => a.flowId === flowId && a.ownerUserId === ownerUserId);
+  if (idx === -1) return res.status(404).json({ error:'API not found' });
+  const patch = req.body && typeof req.body === 'object' ? req.body : {};
+  apiCatalog[idx] = {
+    ...apiCatalog[idx],
+    prompt: String((patch.prompt ?? apiCatalog[idx].prompt) || ''),
+    status: String(patch.status || apiCatalog[idx].status || 'active'),
+    updatedAt: new Date().toISOString()
+  };
+  saveApiCatalog();
+  await writeApiToFirebase(req.user, apiCatalog[idx]);
+  res.json({ ok:true, api: apiCatalog[idx] });
 });
 
 
@@ -3181,7 +3328,9 @@ async function executeFlowRequest(req, res) {
 }
 
 app.all('/api/simulated/:flowId/*', executeFlowRequest);
+app.all('/api/simulated/:flowId', executeFlowRequest);
 app.all('/api/live/:flowId/*', executeFlowRequest);
+app.all('/api/live/:flowId', executeFlowRequest);
 
 app.get('/api/activity', async (req, res) => {
   try {
