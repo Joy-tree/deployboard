@@ -6812,7 +6812,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
   cursor:pointer;margin-bottom:2px;transition:background .15s;
 }
 .db-editor-db-item:hover{background:rgba(255,255,255,.04);}
-.db-editor-db-item.active{background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.15);}
+.db-editor-db-item.active{background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.28);}
 .db-editor-db-icon{font-size:.85rem;font-weight:800;font-family:var(--font-mono);
   width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .db-editor-main{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;}
@@ -6822,7 +6822,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
   background:var(--bg-2);border:1px solid var(--border);border-radius:10px;min-height:130px;
   resize:vertical;line-height:1.6;
 }
-.db-editor-query-box:focus{border-color:rgba(6,182,212,.4);outline:none;}
+.db-editor-query-box:focus{border-color:rgba(16,185,129,.45);outline:none;}
 .db-editor-results{flex:1;overflow:auto;padding:16px;}
 .db-editor-results-table{width:100%;border-collapse:collapse;font-size:.78rem;}
 .db-editor-results-table th{
@@ -7107,9 +7107,18 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <!-- ════════ DB EDITOR PAGE ════════ -->
     <div class="page" id="page-db-editor">
       <div style="margin-bottom:20px;">
+        <button class="db-detail-back" onclick="showPage('databases')" style="margin-bottom:14px;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
         <div style="font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#22d3ee;margin-bottom:6px;">Visual Data Studio</div>
-        <div style="font-family:var(--font-hd);font-weight:800;font-size:clamp(1.4rem,3vw,1.9rem);color:var(--text);">Data Studio</div>
-        <div style="color:var(--text-2);font-size:.86rem;margin-top:4px;">Browse tables, run queries, view schemas — all live from your running containers.</div>
+        <div id="dbEditorPageTitle" style="font-family:var(--font-hd);font-weight:800;font-size:clamp(1.4rem,3vw,1.9rem);color:var(--text);">Query</div>
+        <div id="dbEditorPageSub" style="color:var(--text-2);font-size:.86rem;margin-top:4px;">Run full queries against your selected database with a complete editor and results explorer.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">
+          <button class="btn btn-ghost" onclick="showPage('db-query')">Query</button>
+          <button class="btn btn-ghost" onclick="showPage('db-schema')">Schema</button>
+          <button class="btn btn-ghost" onclick="showPage('db-sdk')">SDK</button>
+        </div>
       </div>
 
       <div class="db-editor-layout" id="dbEditorLayout">
@@ -7133,12 +7142,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         <div class="db-editor-main">
           <!-- Top toolbar with tabs -->
           <div class="db-editor-toolbar">
-            <div id="dbEditorTabs" style="display:flex;gap:2px;background:var(--bg-2);border-radius:9px;padding:3px;flex:1;">
-              <button class="db-sdk-tab active" data-tab="query" onclick="switchEditorTab('query',this)">Query</button>
-              <button class="db-sdk-tab" data-tab="schema" onclick="switchEditorTab('schema',this)">Schema</button>
-              <button class="db-sdk-tab" data-tab="sdk" onclick="switchEditorTab('sdk',this)">SDK</button>
-            </div>
-            <button class="btn btn-primary db-query-run" id="dbRunQueryBtn" onclick="runEditorQuery()" style="background:linear-gradient(135deg,#0891b2,#0e7490);min-width:110px;">
+            <button class="btn btn-primary db-query-run" id="dbRunQueryBtn" onclick="runEditorQuery()" style="background:linear-gradient(135deg,#10b981,#059669);min-width:110px;">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               Run Query
             </button>
@@ -9378,10 +9382,10 @@ function showPage(id, navEl, _skipPush) {
   if (id === 'repos')         renderReposPage();
   if (id === 'forum')         { /* static page, no render fn needed */ }
   if (id === 'databases')     renderDatabasesPage();
-  if (id === 'db-editor')     renderDbEditorPage();
-  if (id === 'db-query')      { renderDbEditorPage(); switchEditorTab('query', document.querySelector('#dbEditorTabs [data-tab=\"query\"]')); return showPage('db-editor'); }
-  if (id === 'db-schema')     { renderDbEditorPage(); switchEditorTab('schema', document.querySelector('#dbEditorTabs [data-tab=\"schema\"]')); return showPage('db-editor'); }
-  if (id === 'db-sdk')        { renderDbEditorPage(); switchEditorTab('sdk', document.querySelector('#dbEditorTabs [data-tab=\"sdk\"]')); return showPage('db-editor'); }
+  if (id === 'db-editor')     { _editorPageMode = 'query'; renderDbEditorPage(); }
+  if (id === 'db-query')      { _editorPageMode = 'query'; return showPage('db-editor'); }
+  if (id === 'db-schema')     { _editorPageMode = 'schema'; return showPage('db-editor'); }
+  if (id === 'db-sdk')        { _editorPageMode = 'sdk'; return showPage('db-editor'); }
   if (id === 'db-create')     renderDbCreatePage();
   if (id === 'db-detail')     { /* populated by openDbDetail() */ }
   if (id === 'realtime-api')  { loadLogiFlowLogs(); loadManagedApis(); }
@@ -15192,7 +15196,7 @@ async function submitLinkDb(dbId) {
 // ── Data Studio ─────────────────────────────────────────────────────
 function renderDbEditorPage() {
   renderDbEditorDbList();
-  switchEditorTab(_editorTab, document.querySelector(`.db-sdk-tab[data-tab="${_editorTab}"]`) || document.querySelector('.db-sdk-tab'));
+  applyEditorPageMode(_editorPageMode || _editorTab || 'query');
 }
 
 function renderDbEditorDbList() {
@@ -15304,6 +15308,20 @@ function switchEditorSdkLang(lang, btn) {
 }
 
 let _lastQueryRows = [];
+let _editorPageMode = 'query';
+
+function applyEditorPageMode(mode){
+  _editorPageMode = mode || 'query';
+  switchEditorTab(_editorPageMode);
+  const title = document.getElementById('dbEditorPageTitle');
+  const sub = document.getElementById('dbEditorPageSub');
+  if (title) title.textContent = _editorPageMode === 'schema' ? 'Schema' : (_editorPageMode === 'sdk' ? 'SDK' : 'Query');
+  if (sub) sub.textContent = _editorPageMode === 'schema'
+    ? 'Inspect structure, engine hints, and schema guidance in a full-screen view.'
+    : (_editorPageMode === 'sdk'
+      ? 'Generate and copy SDK snippets in a focused full-page experience.'
+      : 'Run full queries against your selected database with a complete editor and results explorer.');
+}
 
 function renderQueryResultsTable(rows){
   const results = document.getElementById('dbEditorResults');
