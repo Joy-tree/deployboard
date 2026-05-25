@@ -976,7 +976,7 @@ const Session = mongoose.model('Session', sessionSchema);
 // ── Database model ────────────────────────────────────────────────────────────
 const databaseSchema = new mongoose.Schema({
   name:          { type: String, required: true },
-  engine:        { type: String, enum: ['mongodb','postgres','postgresql','mysql','redis'], required: true },
+  engine:        { type: String, enum: ['mongodb','postgres','postgresql','mysql','mariadb','redis'], required: true },
   image:         { type: String, required: true },
   user:          { type: String, default: '' },
   pass:          { type: String, default: '' },
@@ -1078,8 +1078,15 @@ async function writeWorkspaceToFirebase(user, workspace) {
 // This is the PRIMARY store — MongoDB is not required.
 function firebaseDbBaseUrl(user) {
   const key = firebaseWorkspaceKey(user);
-  if (!FIREBASE_RTDB_URL || !key) return '';
-  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  if (!FIREBASE_RTDB_URL || !key) {
+    if (!FIREBASE_RTDB_URL) console.warn('[db/firebase] FIREBASE_RTDB_URL missing; skipping write');
+    else console.warn('[db/firebase] workspace key missing; skipping write', {
+      userId: String(user?._id || user?.id || ''),
+      hasEmail: !!String(user?.email || '').trim(),
+      hasFirebaseUid: !!String(user?.firebaseUid || '').trim()
+    });
+    return '';
+  }
   return `${FIREBASE_RTDB_URL}/deployboard_databases/${key}`;
 }
 async function readAllDbsFromFirebase(user) {
@@ -1120,31 +1127,51 @@ async function deleteDbFromFirebase(user, dbId) {
 }
 // Save db record to all available stores (Firebase + local file)
 async function persistDb(user, db) {
-  const rec = { ...db, id: String(db.id || db._id || '') };
+  user = await enrichAuthUser(user);
+  const rec = { ...db, id: String(db.id || db._id || ''), externalConnectionString: externalDbConnStr(db) };
   upsertLocalDb(rec);                        // always write local file
   await writeDbToFirebase(user, rec);        // write to Firebase RTDB
   if (isDbReady()) {                         // also sync to Mongo if available
     Database.updateOne({ _id: rec.id }, { $set: { status: rec.status, updatedAt: new Date() } }).catch(() => {});
   }
+  writeDbGatewayConfig(localDatabases);
 }
 async function removeDb(user, dbId) {
+  user = await enrichAuthUser(user);
   removeLocalDb(dbId);
   await deleteDbFromFirebase(user, dbId);
   if (isDbReady()) Database.deleteOne({ _id: dbId }).catch(() => {});
 }
+
+async function enrichAuthUser(user) {
+  if (!user) return user;
+  if (String(user.email || '').trim()) return user;
+  const uid = String(user._id || user.id || '');
+  if (!uid) return user;
+  if (isDbReady()) {
+    try {
+      const found = await User.findById(uid).select('email').lean();
+      if (found?.email) return { ...user, email: String(found.email) };
+    } catch {}
+  }
+  const local = localAuth.users.find(u => String(u.id || u._id || '') === uid);
+  if (local?.email) return { ...user, email: String(local.email) };
+  return user;
+}
 // Load databases for a user — Firebase first, then local file, then Mongo
 async function loadUserDatabases(user) {
+  user = await enrichAuthUser(user);
   const userId = String(user._id || user.id);
   // 1. Try Firebase RTDB (primary)
   const fbDbs = await readAllDbsFromFirebase(user);
   if (fbDbs && fbDbs.length > 0) {
     // Sync to local file
     fbDbs.forEach(db => upsertLocalDb({ ...db, ownerUserId: userId }));
-    return fbDbs.map(db => ({ ...db, id: String(db.id || db._id || ''), ownerUserId: userId }));
+    return fbDbs.map(db => ({ ...db, id: String(db.id || db._id || ''), ownerUserId: userId, externalConnectionString: externalDbConnStr(db) }));
   }
   // 2. Fall back to local file cache
   const localDbs = localDatabases.filter(d => String(d.ownerUserId) === userId);
-  if (localDbs.length > 0) return localDbs;
+  if (localDbs.length > 0) return localDbs.map(d=>({ ...d, externalConnectionString: externalDbConnStr(d) }));
   // 3. Last resort: Mongo (if available)
   if (isDbReady()) {
     const mongoDbs = await Database.find({ ownerUserId: userId }).sort({ createdAt: -1 }).lean().catch(() => []);
@@ -1154,7 +1181,7 @@ async function loadUserDatabases(user) {
       await writeDbToFirebase(user, rec);
       upsertLocalDb(rec);
     }
-    return mongoDbs.map(d => ({ ...d, id: String(d._id), connectionString: d.connStr || d.connectionString || '' }));
+    return mongoDbs.map(d => ({ ...d, id: String(d._id), connectionString: d.connStr || d.connectionString || '', externalConnectionString: externalDbConnStr(d) }));
   }
   return [];
 }
@@ -2475,6 +2502,11 @@ app.get('/api/projects', attachAuthIfPresent, async (req, res) => {
     const mongoUserId = String(req.user?._id || req.user?.id || '');
 
     let filter = mineOnly ? { ownerUserId: mongoUserId } : {};
+    if (!isDbReady()) {
+      const ws = (await readWorkspaceFromFirebase(req.user || {})) || {};
+      const projects = Array.isArray(ws.projects) ? ws.projects : [];
+      return res.json(projects.map(p => ({ ...p, id: String(p.id || p._id || '') })));
+    }
     let projects = await Project.find(filter).sort({ createdAt: -1 });
 
     // ORPHAN RECOVERY FIX: If the user has few or no projects in MongoDB under their current _id,
@@ -2827,11 +2859,329 @@ app.put('/api/projects/:id/env', requireAuth, async (req, res) => {
 });
 
 // ── Activity API (server-side log) ────────────────────────────────────────────
+
+const DB_PUBLIC_BASE_DOMAIN = process.env.DB_PUBLIC_BASE_DOMAIN || process.env.BASE_DOMAIN || '';
+const DB_GATEWAY_CONFIG_PATH = process.env.DB_GATEWAY_CONFIG_PATH || '/etc/haproxy/deployboard-db-gateway.cfg';
+
+function publicDbHost(db){
+  const base = String(DB_PUBLIC_BASE_DOMAIN || '').trim();
+  if (!base) return '';
+  const id = String(db.id || db._id || '').slice(-12);
+  return `db-${id}.${base}`;
+}
+function externalDbConnStr(db){
+  const host = publicDbHost(db);
+  if (!host) return '';
+  const user = encodeURIComponent(String(db.user || (db.engine==='postgres'?'postgres':'root')));
+  const pass = encodeURIComponent(String(db.pass || ''));
+  const name = encodeURIComponent(String(db.dbName || 'mydb'));
+  switch (db.engine){
+    case 'postgres': return `postgresql://${user}:${pass}@${host}:5432/${name}`;
+    case 'mysql': return `mysql://${user}:${pass}@${host}:3306/${name}`;
+    case 'mariadb': return `mariadb://${user}:${pass}@${host}:3306/${name}`;
+    case 'mongodb': return `mongodb://${user}:${pass}@${host}:27017/${name}`;
+    case 'redis': return pass ? `redis://:${pass}@${host}:6379` : `redis://${host}:6379`;
+    default: return '';
+  }
+}
+function writeDbGatewayConfig(dbs = []){
+  try {
+    const lines = ['# Autogenerated by DeployBoard DB gateway'];
+    for (const db of dbs){
+      if (!db?.containerName || !db?.internalPort || !publicDbHost(db)) continue;
+      const bindPort = Number(db.engine==='postgres'?5432:db.engine==='mongodb'?27017:db.engine==='redis'?6379:3306);
+      const backendPort = Number(db.internalPort);
+      const name = String(db.id || db._id || '').replace(/[^a-zA-Z0-9_-]/g,'');
+      lines.push(`frontend ft_${name}`);
+      lines.push(`  bind *:${bindPort}`);
+      lines.push(`  mode tcp`);
+      lines.push(`  use_backend bk_${name} if { req.ssl_sni -i ${publicDbHost(db)} }`);
+      lines.push(`backend bk_${name}`);
+      lines.push(`  mode tcp`);
+      lines.push(`  server s1 127.0.0.1:${backendPort}`);
+    }
+    fs.writeFileSync(DB_GATEWAY_CONFIG_PATH, lines.join('\n') + '\n', 'utf8');
+  } catch (e){ console.warn('[DB Gateway] could not write config:', e.message); }
+}
 const activityLog = [];
 function addActivity(type, message) {
   activityLog.unshift({ type, message, time: new Date().toISOString() });
   if (activityLog.length > 500) activityLog.pop();
 }
+
+// ── LogiFlow: Visual Backend Simulator (developer prototype) ─────────────────
+const FLOW_FILE = path.join(__dirname, 'database_storage.json');
+const flowRegistry = new Map();     // flowId -> flowDefinition
+const executionLogs = [];           // most-recent-first
+const rateLimiterState = new Map(); // key(flowId:ip) -> { count, windowStart }
+let virtualDatabase = {};           // { [flowId]: { [collection]: docs[] } }
+try {
+  if (fs.existsSync(FLOW_FILE)) {
+    const raw = JSON.parse(fs.readFileSync(FLOW_FILE, 'utf8'));
+    if (raw && typeof raw === 'object') virtualDatabase = raw;
+  }
+} catch {}
+function saveVirtualDb() {
+  try { fs.writeFileSync(FLOW_FILE, JSON.stringify(virtualDatabase, null, 2)); } catch {}
+}
+function getFlowDb(flowId) {
+  if (!virtualDatabase[flowId]) virtualDatabase[flowId] = {};
+  return virtualDatabase[flowId];
+}
+function getCollection(flowId, name) {
+  const fdb = getFlowDb(flowId);
+  if (!fdb[name]) fdb[name] = [];
+  return fdb[name];
+}
+function logExec(entry) {
+  executionLogs.unshift({ timestamp: new Date().toISOString(), ...entry });
+  if (executionLogs.length > 2000) executionLogs.length = 2000;
+}
+function deepGet(obj, pathStr = '') {
+  return String(pathStr).split('.').reduce((acc, k) => (acc && typeof acc === 'object') ? acc[k] : undefined, obj);
+}
+function resolveTemplate(str, scope) {
+  return String(str || '').replace(/\{\{\s*([^}]+)\s*\}\}/g, (_, key) => {
+    const v = deepGet(scope, key.trim());
+    return v == null ? '' : String(v);
+  });
+}
+function evalCond(actual, op, expected) {
+  switch (op) {
+    case '$eq': return String(actual) === String(expected);
+    case '$gt': return Number(actual) > Number(expected);
+    case '$lt': return Number(actual) < Number(expected);
+    case '$contains': return String(actual || '').includes(String(expected || ''));
+    default: return false;
+  }
+}
+function applyTransform(scope, cfg = {}) {
+  const srcVal = deepGet(scope, cfg.source || 'req.body');
+  const target = String(cfg.target || 'vars.value');
+  let val = srcVal;
+  if (cfg.op === 'uppercase') val = String(srcVal || '').toUpperCase();
+  if (cfg.op === 'lowercase') val = String(srcVal || '').toLowerCase();
+  if (cfg.op === 'sha256') val = crypto.createHash('sha256').update(String(srcVal || '')).digest('hex');
+  if (cfg.op === 'calc_multiply') val = Number(deepGet(scope, cfg.left || 'req.body.price')) * Number(deepGet(scope, cfg.right || 'req.body.quantity'));
+  const parts = target.split('.');
+  let cur = scope;
+  while (parts.length > 1) {
+    const p = parts.shift();
+    if (!cur[p] || typeof cur[p] !== 'object') cur[p] = {};
+    cur = cur[p];
+  }
+  cur[parts[0]] = val;
+}
+function signToken(payload = {}) {
+  const secret = process.env.LOGIFLOW_JWT_SECRET || 'logiflow-dev-secret';
+  const body = { ...payload, exp: Date.now() + 3600_000 };
+  const data = Buffer.from(JSON.stringify(body)).toString('base64url');
+  const sig = crypto.createHmac('sha256', secret).update(data).digest('base64url');
+  return `${data}.${sig}`;
+}
+function verifyToken(token = '') {
+  const [data, sig] = String(token).split('.');
+  if (!data || !sig) return { ok: false };
+  const secret = process.env.LOGIFLOW_JWT_SECRET || 'logiflow-dev-secret';
+  const expected = crypto.createHmac('sha256', secret).update(data).digest('base64url');
+  if (sig !== expected) return { ok: false };
+  try {
+    const payload = JSON.parse(Buffer.from(data, 'base64url').toString('utf8'));
+    if (!payload.exp || Date.now() > payload.exp) return { ok: false };
+    return { ok: true, payload };
+  } catch { return { ok: false }; }
+}
+
+app.post('/api/developer/flows/deploy', requireAuth, (req, res) => {
+  const body = req.body || {};
+  const flowId = String(body.flowId || `flow_${Date.now()}`);
+  const nodes = Array.isArray(body.nodes) ? body.nodes : [];
+  if (!nodes.length) return res.status(400).json({ error: 'nodes required' });
+  flowRegistry.set(flowId, { flowId, owner: String(req.user?._id || req.user?.id || ''), nodes, createdAt: new Date().toISOString() });
+  if (!virtualDatabase[flowId]) virtualDatabase[flowId] = {};
+  saveVirtualDb();
+  res.json({ ok: true, flowId, endpoint: `/api/live/${flowId}` });
+});
+
+app.get('/api/developer/database/state', requireAuth, (req, res) => res.json({ virtualDatabase }));
+app.post('/api/developer/database/clear', requireAuth, (req, res) => {
+  const { flowId, collection, seed } = req.body || {};
+  if (!flowId) return res.status(400).json({ error: 'flowId required' });
+  if (!virtualDatabase[flowId]) virtualDatabase[flowId] = {};
+  if (collection) virtualDatabase[flowId][collection] = [];
+  else virtualDatabase[flowId] = {};
+  if (seed === 'students') {
+    virtualDatabase[flowId].students = [
+      { id: 1, name: 'Ava', grade: 'A', createdAt: new Date().toISOString() },
+      { id: 2, name: 'Liam', grade: 'B', createdAt: new Date().toISOString() }
+    ];
+  }
+  saveVirtualDb();
+  res.json({ ok: true });
+});
+app.get('/api/developer/logs', requireAuth, (req, res) => res.json({ logs: executionLogs.slice(0, 500) }));
+
+app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
+  const { prompt, routePath = '/quiz', method = 'POST', sourceText = '' } = req.body || {};
+  const flowId = `flow_${Date.now()}`;
+  const isQuiz = /quiz|question|mcq|exam/i.test(String(prompt||'') + ' ' + String(sourceText||''));
+  const nodes = [
+    { id:'n1', type:'INCOMING_REQUEST', config:{ method, routePath }, next:'n2' },
+    { id:'n2', type:'DB_INSERT', config:{ collection: isQuiz ? 'quiz_submissions' : 'requests', source:'req.body' }, next:'n3' },
+    { id:'n3', type:'DB_FIND', config:{ collection: isQuiz ? 'quiz_questions' : 'requests', filters: [] }, next:'n4' },
+    { id:'n4', type:'HTTP_RESPONSE', config:{ status:200, json: isQuiz ? { riddle:'{{db_result.0.question}}', answer:'{{db_result.0.answer}}' } : { ok:true, message:'API active', flowId } } }
+  ];
+  if (isQuiz) {
+    const questions = String(sourceText||'').split(/\r?\n/).filter(Boolean).slice(0,200).map((line,i) => {
+      const parts = String(line).split('||');
+      if (parts.length >= 2) return { id:i+1, question: parts[0].trim(), answer: parts.slice(1).join('||').trim() };
+      return { id:i+1, question: line.trim(), answer: 'No answer supplied' };
+    });
+    getCollection(flowId, 'quiz_questions').push(...questions);
+    saveVirtualDb();
+  }
+  flowRegistry.set(flowId, { flowId, owner: String(req.user?._id || req.user?.id || ''), nodes, createdAt: new Date().toISOString(), prompt: String(prompt||'') });
+  res.json({ ok:true, flowId, endpoint:`/api/live/${flowId}`, nodesCount:nodes.length, quizSeeded:isQuiz });
+});
+
+app.post('/api/developer/flows/:flowId/dockerize', requireAuth, async (req, res) => {
+  try {
+    const flowId = String(req.params.flowId || '');
+    const flow = flowRegistry.get(flowId);
+    if (!flow) return res.status(404).json({ error: 'Flow not found' });
+    const owner = String(req.user?._id || req.user?.id || '');
+    if (flow.owner && String(flow.owner) !== owner) return res.status(403).json({ error: 'Forbidden' });
+
+    const subdomain = `api-${flowId.slice(-8).toLowerCase()}`.replace(/[^a-z0-9-]/g, '-');
+    const port = getOrAssignPort(subdomain);
+    const appDir = path.join(SITES_DIR, `logiflow-${flowId}`);
+    fs.mkdirSync(appDir, { recursive: true });
+
+    const flowJson = JSON.stringify({ flowId, nodes: flow.nodes || [] });
+    const appJs = `const http=require('http');\nconst FLOW=${flowJson};\nfunction j(res,c,o){res.writeHead(c,{'content-type':'application/json'});res.end(JSON.stringify(o));}\nhttp.createServer((req,res)=>{ if(req.method==='GET'){ return j(res,200,{ok:true,flowId:FLOW.flowId,message:'Live API container',nodes:(FLOW.nodes||[]).length}); } let b=''; req.on('data',d=>b+=d); req.on('end',()=>{ let body={}; try{body=JSON.parse(b||'{}')}catch{}; const r=(body && body.riddle)||'Which bird does not belong in this group? Finch, gull, eagle, ostrich, or sparrow?'; const a=(body && body.answer)||'The Ostrich. It\\'s the only bird that doesn\\'t fly'; j(res,200,{riddle:r,answer:a,flowId:FLOW.flowId}); }); }).listen(3000,'0.0.0.0');`;
+    fs.writeFileSync(path.join(appDir, 'server.js'), appJs, 'utf8');
+    fs.writeFileSync(path.join(appDir, 'Dockerfile'), `FROM node:20-alpine\nWORKDIR /app\nCOPY server.js /app/server.js\nEXPOSE 3000\nCMD [\"node\",\"server.js\"]\n`, 'utf8');
+
+    const image = `logiflow-${flowId}`.toLowerCase();
+    const cname = `db-${subdomain}`;
+    runDocker(`docker rm -f ${cname} 2>/dev/null || true`);
+    const build = runDocker(`docker build -t ${image} "${appDir}"`, 120000);
+    if (!build.ok) return res.status(500).json({ error: build.stderr || 'docker build failed' });
+    const run = runDocker(`docker run -d --name ${cname} --restart unless-stopped -p 127.0.0.1:${port}:3000 ${image}`);
+    if (!run.ok) return res.status(500).json({ error: run.stderr || 'docker run failed' });
+    await registerSubdomain(subdomain).catch(() => null);
+    portRegistry[subdomain] = port;
+    savePortRegistry();
+    return res.json({ ok: true, subdomain: `${subdomain}.${BASE_DOMAIN}`, liveUrl: `https://${subdomain}.${BASE_DOMAIN}`, flowId, container: cname, port });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+
+async function executeFlowRequest(req, res) {
+  const flowId = String(req.params.flowId || '');
+  const flow = flowRegistry.get(flowId);
+  if (!flow) return res.status(404).json({ error: 'Flow not found' });
+  const nodesById = new Map(flow.nodes.map(n => [String(n.id), n]));
+  let currentId = String((flow.nodes.find(n => n.type === 'INCOMING_REQUEST') || flow.nodes[0]).id);
+  const scope = { req: { body: req.body || {}, query: req.query || {}, params: req.params || {}, method: req.method, headers: req.headers }, vars: {}, db_result: null };
+  const rollbackSnapshot = JSON.parse(JSON.stringify(getFlowDb(flowId)));
+  const visited = new Set();
+  try {
+    while (currentId) {
+      if (visited.has(currentId)) throw new Error('Flow loop detected');
+      visited.add(currentId);
+      const n = nodesById.get(currentId);
+      if (!n) throw new Error(`Node missing: ${currentId}`);
+      logExec({ flowId, nodeId: currentId, nodeType: n.type, payload: req.body || {}, vars: scope.vars });
+
+      if (n.type === 'RATE_LIMITER') {
+        const max = Number(n.config?.max || 60), winMs = Number(n.config?.windowMs || 60000);
+        const key = `${flowId}:${req.ip}`;
+        const now = Date.now();
+        const r = rateLimiterState.get(key) || { count: 0, windowStart: now };
+        if (now - r.windowStart > winMs) { r.count = 0; r.windowStart = now; }
+        r.count++; rateLimiterState.set(key, r);
+        if (r.count > max) {
+          res.setHeader('Retry-After', String(Math.ceil((winMs - (now - r.windowStart)) / 1000)));
+          return res.status(429).json({ error: 'Too Many Requests' });
+        }
+      } else if (n.type === 'AUTH_VERIFY_TOKEN') {
+        const auth = String(req.headers.authorization || '');
+        const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+        if (!verifyToken(token).ok) return res.status(401).json({ error: 'Unauthorized' });
+      } else if (n.type === 'AUTH_GENERATE_TOKEN') {
+        scope.vars.token = signToken({ uid: deepGet(scope, n.config?.source || 'req.body.userId') || 'user' });
+      } else if (n.type === 'TRANSFORM_DATA') {
+        applyTransform(scope, n.config || {});
+      } else if (n.type === 'DB_INSERT') {
+        const collection = String(n.config?.collection || 'default');
+        const doc = JSON.parse(JSON.stringify(deepGet(scope, n.config?.source || 'req.body') || {}));
+        const schema = Array.isArray(n.config?.schema) ? n.config.schema : [];
+        for (const f of schema) {
+          const v = doc[f.field];
+          if (f.required && (v === undefined || v === null || v === '')) return res.status(422).json({ error: `Field ${f.field} required` });
+          if (v != null && f.type === 'Number' && Number.isNaN(Number(v))) return res.status(422).json({ error: `Field ${f.field} must be Number` });
+          if (v != null && f.type === 'Boolean' && !(v === true || v === false || v === 'true' || v === 'false')) return res.status(422).json({ error: `Field ${f.field} must be Boolean` });
+        }
+        doc._ts = new Date().toISOString();
+        getCollection(flowId, collection).push(doc);
+        saveVirtualDb();
+      } else if (n.type === 'DB_FIND') {
+        const collection = String(n.config?.collection || 'default');
+        const filters = Array.isArray(n.config?.filters) ? n.config.filters : [];
+        let rows = getCollection(flowId, collection).slice();
+        for (const f of filters) {
+          const actualPath = String(f.field || '');
+          const expected = resolveTemplate(String(f.value || ''), scope);
+          rows = rows.filter(r => evalCond(deepGet(r, actualPath), f.op || '$eq', expected));
+        }
+        scope.db_result = rows;
+      } else if (n.type === 'EXT_API_CALL') {
+        const method = String(n.config?.method || 'GET').toUpperCase();
+        const timeoutMs = Math.min(5000, Number(n.config?.timeoutMs || 5000));
+        const controller = new AbortController();
+        const t = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const r = await fetch(resolveTemplate(n.config?.url || '', scope), {
+            method,
+            headers: n.config?.headers || {},
+            body: ['GET','HEAD'].includes(method) ? undefined : JSON.stringify(n.config?.body || scope.req.body),
+            signal: controller.signal
+          });
+          scope.vars.ext = { status: r.status, ok: r.ok, body: await r.text() };
+          clearTimeout(t);
+          currentId = r.ok ? String(n.onSuccess || n.next || '') : String(n.onFailure || n.next || '');
+          continue;
+        } catch {
+          clearTimeout(t);
+          currentId = String(n.onFailure || n.next || '');
+          continue;
+        }
+      } else if (n.type === 'CONDITION') {
+        const actual = deepGet(scope, n.config?.left || 'req.body.value');
+        const expected = resolveTemplate(String(n.config?.right || ''), scope);
+        currentId = evalCond(actual, n.config?.op || '$eq', expected) ? String(n.onTrue || '') : String(n.onFalse || '');
+        continue;
+      } else if (n.type === 'HTTP_RESPONSE') {
+        const status = Number(n.config?.status || 200);
+        const payload = n.config?.json && typeof n.config.json === 'object' ? JSON.parse(resolveTemplate(JSON.stringify(n.config.json), scope)) : { ok: true };
+        if (scope.vars.token) res.setHeader('x-logiflow-token', scope.vars.token);
+        logExec({ flowId, nodeId: currentId, finalResponse: { status, payload } });
+        return res.status(status).json(payload);
+      }
+      currentId = String(n.next || '');
+    }
+    return res.status(500).json({ error: 'Flow ended without HTTP_RESPONSE node' });
+  } catch (e) {
+    virtualDatabase[flowId] = rollbackSnapshot;
+    saveVirtualDb();
+    logExec({ flowId, error: e.message });
+    return res.status(500).json({ error: e.message });
+  }
+}
+
+app.all('/api/simulated/:flowId/*', executeFlowRequest);
+app.all('/api/live/:flowId/*', executeFlowRequest);
 
 app.get('/api/activity', async (req, res) => {
   try {
@@ -3255,6 +3605,7 @@ io.on('connection', socket => {
 
 
 async function findProjectByAnyId(id) {
+  if (!isDbReady()) return null;
   const sid = String(id || '').trim();
   if (!sid) return null;
   if (mongoose.Types.ObjectId.isValid(sid)) {
@@ -3637,6 +3988,7 @@ const DB_ENGINE_CONFIG = {
   mongodb:  { image: 'mongo:7',     defaultPort: 27017, envVars: (u,p,d) => [`MONGO_INITDB_ROOT_USERNAME=${u}`, `MONGO_INITDB_ROOT_PASSWORD=${p}`, `MONGO_INITDB_DATABASE=${d}`] },
   postgres: { image: 'postgres:16', defaultPort: 5432,  envVars: (u,p,d) => [`POSTGRES_USER=${u}`, `POSTGRES_PASSWORD=${p}`, `POSTGRES_DB=${d}`] },
   mysql:    { image: 'mysql:8',     defaultPort: 3306,  envVars: (u,p,d) => [`MYSQL_ROOT_PASSWORD=${p}`, `MYSQL_USER=${u}`, `MYSQL_PASSWORD=${p}`, `MYSQL_DATABASE=${d}`] },
+  mariadb:  { image: 'mariadb:11',  defaultPort: 3306,  envVars: (u,p,d) => [`MARIADB_ROOT_PASSWORD=${p}`, `MARIADB_USER=${u}`, `MARIADB_PASSWORD=${p}`, `MARIADB_DATABASE=${d}`] },
   redis:    { image: 'redis:7',     defaultPort: 6379,  envVars: (_u,p)  => p ? [`requirepass ${p}`] : [] }
 };
 
@@ -3755,20 +4107,37 @@ async function provisionDbContainer(db) {
 }
 
 // Inject DATABASE_URL into a linked project's env vars
-async function injectConnStrIntoProject(projectId, engine, connStr) {
+async function injectConnStrIntoProject(projectId, engine, connStr, user = null) {
   if (!projectId || !connStr) return;
   const envKeyMap = {
     mongodb:  ['MONGODB_URI', 'DATABASE_URL'],
     postgres: ['DATABASE_URL', 'POSTGRES_URL'],
     mysql:    ['MYSQL_URL', 'DATABASE_URL'],
+    mariadb:  ['MARIADB_URL', 'DATABASE_URL'],
     redis:    ['REDIS_URL']
   };
   const keys = envKeyMap[engine] || ['DATABASE_URL'];
   try {
-    if (isDbReady()) {
+    // Primary: Mongo project doc (when available)
+    if (isDbReady() && mongoose.Types.ObjectId.isValid(String(projectId))) {
       const updates = {};
       keys.forEach(k => { updates[`envVars.${k}`] = connStr; });
       await Project.updateOne({ _id: projectId }, { $set: updates });
+      return;
+    }
+
+    // Fallback: Firebase workspace project list (Mongo-less mode)
+    if (user) {
+      const ws = (await readWorkspaceFromFirebase(user)) || {};
+      ws.projects = Array.isArray(ws.projects) ? ws.projects : [];
+      const idx = ws.projects.findIndex(p => String(p.id || p._id || '') === String(projectId));
+      if (idx >= 0) {
+        const p = ws.projects[idx] || {};
+        const envVars = (p.envVars && typeof p.envVars === 'object') ? { ...p.envVars } : {};
+        keys.forEach(k => { envVars[k] = connStr; });
+        ws.projects[idx] = { ...p, envVars, updatedAt: new Date().toISOString() };
+        await writeWorkspaceToFirebase(user, ws);
+      }
     }
   } catch (e) {
     console.warn('[DB] Failed to inject conn str into project:', e.message);
@@ -3808,10 +4177,11 @@ app.post('/api/databases', requireAuth, async (req, res) => {
     const safeName = String(name).toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
     if (!safeName) return res.status(400).json({ error: 'Invalid database name' });
 
-    // Check for name collision
-    if (isDbReady()) {
-      const existing = await Database.findOne({ ownerUserId: userId, name: safeName });
-      if (existing) return res.status(409).json({ error: `A database named "${safeName}" already exists` });
+
+    // Check for name collision across Firebase/local/Mongo-backed view
+    const existingDbs = await loadUserDatabases(req.user);
+    if (existingDbs.some(d => String(d.name || '').toLowerCase() === safeName)) {
+      return res.status(409).json({ error: `A database named "${safeName}" already exists` });
     }
 
     // Create DB record first (provisioning state)
@@ -3857,7 +4227,7 @@ app.post('/api/databases', requireAuth, async (req, res) => {
 
         // Inject conn str into linked project if set
         if (linkProjectId) {
-          await injectConnStrIntoProject(linkProjectId, engine, realConn);
+          await injectConnStrIntoProject(linkProjectId, engine, realConn, req.user);
         }
 
         addActivity('database', `✅ Database "${safeName}" (${engine}) provisioned on port ${hostPort}`);
@@ -3924,6 +4294,7 @@ function buildDbConnStr(engine, user, pass, dbName, host, port) {
     case 'mongodb':  return `mongodb://${enc(user||'root')}:${enc(pass)}@${host}:${port}/${dbName||'mydb'}`;
     case 'postgres': return `postgresql://${enc(user||'postgres')}:${enc(pass)}@${host}:${port}/${dbName||'mydb'}`;
     case 'mysql':    return `mysql://${enc(user||'root')}:${enc(pass)}@${host}:${port}/${dbName||'mydb'}`;
+    case 'mariadb':  return `mariadb://${enc(user||'root')}:${enc(pass)}@${host}:${port}/${dbName||'mydb'}`;
     case 'redis':    return pass ? `redis://:${enc(pass)}@${host}:${port}` : `redis://${host}:${port}`;
     default:         return '';
   }
@@ -3933,12 +4304,12 @@ function buildDbConnStr(engine, user, pass, dbName, host, port) {
 app.get('/api/databases/:id', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id).lean();
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
     if (db.containerName) db.status = containerStatus(db.containerName);
-    res.json({ ...db, id: String(db._id) });
+    res.json({ ...db, id: String(db.id || db._id || '') });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -4023,10 +4394,10 @@ app.post('/api/databases/:id/delete', requireAuth, async (req, res) => {
 app.get('/api/databases/:id/logs', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id).lean();
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
     if (!db.containerName) return res.json({ logs: '' });
 
     const lines = Math.min(200, Number(req.query.lines || 100));
@@ -4040,20 +4411,33 @@ app.get('/api/databases/:id/logs', requireAuth, async (req, res) => {
 app.post('/api/databases/:id/link', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id);
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
 
     const { projectId } = req.body || {};
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
 
-    const project = await Project.findById(projectId);
+    let project = null;
+    if (isDbReady()) project = await findProjectByAnyId(projectId);
+    if (!project) {
+      const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+      const wsProjects = Array.isArray(ws.projects) ? ws.projects : [];
+      project = wsProjects.find(p =>
+        String(p.id || p._id || '') === String(projectId) ||
+        String(p.subdomain || '') === String(projectId) ||
+        String(p.name || '') === String(projectId)
+      ) || null;
+    }
     if (!project) return res.status(404).json({ error: 'Project not found' });
-    if (String(project.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    const projectOwnerId = String(project.ownerUserId || userId);
+    if (projectOwnerId !== userId) return res.status(403).json({ error: 'Forbidden' });
 
-    await injectConnStrIntoProject(projectId, db.engine, db.connStr);
-    db.linkProjectId = projectId; db.updatedAt = new Date(); await db.save();
+    const canonicalProjectId = String(project._id || project.id || projectId);
+    await injectConnStrIntoProject(canonicalProjectId, db.engine, db.connStr || db.connectionString || '', req.user);
+    db.linkProjectId = canonicalProjectId; db.updatedAt = new Date().toISOString();
+    await persistDb(req.user, db);
     addActivity('database', `🔗 Database "${db.name}" linked to project "${project.name}"`);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -4065,10 +4449,10 @@ app.post('/api/databases/:id/link', requireAuth, async (req, res) => {
 app.post('/api/databases/:id/query', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id).lean();
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
     if (!db.containerName) return res.status(400).json({ error: 'Container not provisioned' });
 
     const liveStatus = containerStatus(db.containerName);
@@ -4092,7 +4476,8 @@ app.post('/api/databases/:id/query', requireAuth, async (req, res) => {
         cmd = `docker exec ${db.containerName} psql -U "${db.user||'postgres'}" -d "${db.dbName||'mydb'}" -t -A -F'|' -c '${safeQ}'`;
         break;
       }
-      case 'mysql': {
+      case 'mysql':
+      case 'mariadb': {
         const safeQ = query.replace(/'/g, "'\\''").replace(/\n/g, ' ');
         cmd = `docker exec ${db.containerName} mysql -u"${db.user||'root'}" -p"${db.pass}" "${db.dbName||'mydb'}" --batch --silent -e '${safeQ}'`;
         break;
@@ -4133,10 +4518,10 @@ app.post('/api/databases/:id/query', requireAuth, async (req, res) => {
 app.get('/api/databases/:id/metrics', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
-    if (!isDbReady()) return res.status(503).json({ error: 'Database not ready' });
-    const db = await Database.findById(req.params.id).lean();
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => String(d.id || d._id || '') === req.params.id);
     if (!db) return res.status(404).json({ error: 'Not found' });
-    if (String(db.ownerUserId) !== userId) return res.status(403).json({ error: 'Forbidden' });
+    if (String(db.ownerUserId || userId) !== userId) return res.status(403).json({ error: 'Forbidden' });
     if (!db.containerName) return res.json({ status: 'no_container' });
 
     const status = containerStatus(db.containerName);
