@@ -4437,8 +4437,16 @@ const { execSync, exec: execAsync } = require('child_process');
 const DB_ENGINE_CONFIG = {
   mongodb:  { image: 'mongo:7',     defaultPort: 27017, envVars: (u,p,d) => [`MONGO_INITDB_ROOT_USERNAME=${u}`, `MONGO_INITDB_ROOT_PASSWORD=${p}`, `MONGO_INITDB_DATABASE=${d}`] },
   postgres: { image: 'postgres:16', defaultPort: 5432,  envVars: (u,p,d) => [`POSTGRES_USER=${u}`, `POSTGRES_PASSWORD=${p}`, `POSTGRES_DB=${d}`] },
-  mysql:    { image: 'mysql:8',     defaultPort: 3306,  envVars: (u,p,d) => [`MYSQL_ROOT_PASSWORD=${p}`, `MYSQL_USER=${u}`, `MYSQL_PASSWORD=${p}`, `MYSQL_DATABASE=${d}`] },
-  mariadb:  { image: 'mariadb:11',  defaultPort: 3306,  envVars: (u,p,d) => [`MARIADB_ROOT_PASSWORD=${p}`, `MARIADB_USER=${u}`, `MARIADB_PASSWORD=${p}`, `MARIADB_DATABASE=${d}`] },
+  mysql:    { image: 'mysql:8',     defaultPort: 3306,  envVars: (u,p,d) => {
+    const vars = [`MYSQL_ROOT_PASSWORD=${p}`, `MYSQL_DATABASE=${d}`];
+    if (u && u !== 'root') vars.push(`MYSQL_USER=${u}`, `MYSQL_PASSWORD=${p}`);
+    return vars;
+  } },
+  mariadb:  { image: 'mariadb:11',  defaultPort: 3306,  envVars: (u,p,d) => {
+    const vars = [`MARIADB_ROOT_PASSWORD=${p}`, `MARIADB_DATABASE=${d}`];
+    if (u && u !== 'root') vars.push(`MARIADB_USER=${u}`, `MARIADB_PASSWORD=${p}`);
+    return vars;
+  } },
   redis:    { image: 'redis:7',     defaultPort: 6379,  envVars: (_u,p)  => p ? [`requirepass ${p}`] : [] }
 };
 
@@ -4618,6 +4626,17 @@ app.get('/api/databases', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+function normalizeDbCredentials(engine, dbUser, pass, dbName) {
+  const safeUser = String(dbUser || '').trim();
+  const safePass = String(pass || '').trim();
+  const safeDbName = String(dbName || '').trim();
+  const defaultUser = engine === 'postgres' ? 'postgres' : engine === 'mongodb' ? 'root' : engine === 'mysql' || engine === 'mariadb' ? 'root' : '';
+  const user = safeUser || defaultUser;
+  const password = safePass || crypto.randomBytes(12).toString('base64url');
+  const databaseName = safeDbName || 'mydb';
+  return { user, password, databaseName };
+}
+
 // ── POST /api/databases — provision a new database ───────────────────────────
 app.post('/api/databases', requireAuth, async (req, res) => {
   try {
@@ -4639,15 +4658,18 @@ app.post('/api/databases', requireAuth, async (req, res) => {
       return res.status(409).json({ error: `A database named "${safeName}" already exists` });
     }
 
+    // Normalize credentials server-side so every created DB has valid auth details
+    const { user: normalizedUser, password: normalizedPass, databaseName: normalizedDbName } = normalizeDbCredentials(engine, dbUser, pass, dbName);
+
     // Create DB record first (provisioning state)
     let dbRecord;
     const cfg = DB_ENGINE_CONFIG[engine];
     const record = {
       name: safeName, engine,
       image: image || cfg.image,
-      user: dbUser || '',
-      pass: pass || '',
-      dbName: dbName || 'mydb',
+      user: normalizedUser,
+      pass: normalizedPass,
+      dbName: normalizedDbName,
       memory: memory || '512m',
       volume: volume || '',
       connStr: connStr || '',
@@ -4671,8 +4693,8 @@ app.post('/api/databases', requireAuth, async (req, res) => {
       try {
         const { containerName, hostPort } = await provisionDbContainer({ ...record, _id: dbRecord._id });
 
-        // Build the real connection string with localhost replaced by internal host
-        const realConn = buildDbConnStr(engine, dbUser, pass, dbName, 'localhost', hostPort);
+        // Build the real connection string with normalized credentials
+        const realConn = buildDbConnStr(engine, normalizedUser, normalizedPass, normalizedDbName, 'localhost', hostPort);
 
         if (isDbReady()) {
           await Database.updateOne({ _id: dbRecord._id }, {
@@ -4706,7 +4728,8 @@ app.post('/api/databases', requireAuth, async (req, res) => {
           name: safeName, engine, status: 'running',
           containerName, internalPort: String(hostPort),
           connStr: realConn, connectionString: realConn,
-          image: engine + ':latest', memory: dbRecord.memory || '512m',
+          image: image || cfg.image, memory: dbRecord.memory || '512m',
+          user: normalizedUser, pass: normalizedPass, dbName: normalizedDbName,
           createdAt: new Date().toISOString()
         };
         // req.user is captured in the setImmediate closure — use it directly
