@@ -2823,8 +2823,15 @@ async function resolveEnvProject(req) {
     const project = await Project.findById(projectId);
     if (project) return { project, source: 'db' };
   }
-  const workspaceProjects = Array.isArray(req.user?.workspace?.projects) ? req.user.workspace.projects : [];
-  const project = workspaceProjects.find(p => String(p.id || p._id || '') === projectId);
+
+  // Prefer live workspace from Firebase so env updates done by other endpoints are immediately visible
+  const liveWs = (await readWorkspaceFromFirebase(req.user)) || {};
+  const workspaceProjects = Array.isArray(liveWs.projects) ? liveWs.projects : (Array.isArray(req.user?.workspace?.projects) ? req.user.workspace.projects : []);
+  const project = workspaceProjects.find(p =>
+    String(p.id || p._id || '') === projectId ||
+    String(p.subdomain || '') === projectId ||
+    String(p.name || '') === projectId
+  );
   if (project) return { project, source: 'workspace' };
   return { project: null, source: null };
 }
@@ -3074,7 +3081,7 @@ async function buildFlowWithGroq({ prompt = '', sourceText = '', fileName = '' }
   const userInput = `PROMPT:\n${String(prompt || '').slice(0, 12000)}\n\nSOURCE_TEXT:\n${String(sourceText || '').slice(0, 8000)}\n\nFILE_NAME:\n${String(fileName || '').slice(0, 200)}`;
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), Number(process.env.GROQ_FLOW_TIMEOUT_MS || 45000));
     let r;
     try {
       r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -3088,7 +3095,7 @@ async function buildFlowWithGroq({ prompt = '', sourceText = '', fileName = '' }
             { role: 'user', content: userInput }
           ],
           temperature: 0.3,
-          max_completion_tokens: 1200,
+          max_completion_tokens: Number(process.env.GROQ_FLOW_MAX_TOKENS || 2600),
           top_p: 1,
           stream: false
         })
@@ -3109,7 +3116,7 @@ async function buildFlowWithGroq({ prompt = '', sourceText = '', fileName = '' }
     if (!parsed) throw new Error('Groq returned non-JSON output. Try rephrasing your prompt.');
     return parsed && typeof parsed === 'object' ? parsed : null;
   } catch (e) {
-    if (e.name === 'AbortError') throw new Error('Groq timed out after 30s. Try a shorter prompt.');
+    if (e.name === 'AbortError') throw new Error('Groq timed out while generating a large API payload. Try again or reduce requested output size.');
     console.error('[Joytree AI] buildFlowWithGroq error:', e.message);
     throw e;
   }
@@ -3215,6 +3222,13 @@ app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
   }, 55000);
   (async () => {
   const { prompt, routePath = '/quiz', method = 'POST', sourceText = '', fileBase64 = '', fileMime = '', fileName = '', aiProvider = 'auto' } = req.body || {};
+  const userPlanKey = await getUserPlanKey(req.user);
+  const planLimits = PLAN_DB_API_LIMITS[userPlanKey] || PLAN_DB_API_LIMITS.free;
+  const ownerUserId = String(req.user?._id || req.user?.id || '');
+  const fbApis = await readApisFromFirebase(req.user).catch(()=>[]);
+  const localApis = apiCatalog.filter(a => a.ownerUserId === ownerUserId);
+  const uniqueApiCount = new Set([...fbApis, ...localApis].map(a => String(a.flowId || ''))).size;
+  if (uniqueApiCount >= Number(planLimits.maxApis || 0)) return res.status(403).json({ error: `API builder limit reached for ${userPlanKey} plan (${planLimits.maxApis} max). Upgrade to create more APIs.` });
   const flowId = `flow_${Date.now()}`;
   // Gemini removed — Groq is the only AI provider
   if (!GROQ_API_KEY) return res.status(503).json({ error: 'Joytree AI is not configured. Add GROQ_API_KEY to your server .env file and restart.' });
@@ -3260,7 +3274,6 @@ app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
     getCollection(flowId, 'ai_data').push(...aiDataSeed.map((d, i) => ({ id: i + 1, ...d })));
     saveVirtualDb();
   }
-  const ownerUserId = String(req.user?._id || req.user?.id || '');
   flowRegistry.set(flowId, { flowId, owner: ownerUserId, nodes, createdAt: new Date().toISOString(), prompt: String(prompt||''), aiTemplate, aiDataSeed, isQuiz });
   const rec = {
     flowId, ownerUserId, prompt: String(prompt||''), sourceText: String(sourceText||'').slice(0, 120000),
@@ -3275,6 +3288,41 @@ app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
   res.json({ ok:true, flowId, endpoint:`/api/live/${flowId}`, nodesCount:nodes.length, quizSeeded:isQuiz, aiUsed: true, aiProvider: usedProvider, aiModel: usedModel });
   })().catch(e => { if (!res.headersSent) res.status(500).json({ error: e.message }); })
     .finally(() => clearTimeout(reqTimeout));
+});
+
+
+app.post('/api/ai/db-query', requireAuth, async (req, res) => {
+  const { prompt = '', engine = 'postgres' } = req.body || {};
+  if (!String(prompt || '').trim()) return res.status(400).json({ error: 'prompt is required' });
+  if (!GROQ_API_KEY) return res.status(503).json({ error: 'Joytree AI is not configured. Add GROQ_API_KEY to .env and restart.' });
+  const safeEngine = String(engine || 'postgres').toLowerCase();
+  const systemPrompt = `You are Joytree AI, a database query expert. Generate ONLY the ${safeEngine} query for the user's request. No explanation, no markdown, no code fences, only raw query text. For MongoDB return valid JSON command object. For Redis return a valid redis-cli command.`;
+  try {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Database engine: ${safeEngine}\n\nRequest: ${String(prompt).slice(0, 4000)}` }
+        ],
+        temperature: 0.2,
+        max_completion_tokens: 600
+      }),
+      signal: AbortSignal.timeout(25000)
+    });
+    if (!r.ok) {
+      const t = await r.text().catch(()=>'');
+      return res.status(502).json({ error: `Joytree AI request failed (${r.status}): ${t.slice(0,200)}` });
+    }
+    const d = await r.json().catch(()=>({}));
+    const query = String(d?.choices?.[0]?.message?.content || '').trim().replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim();
+    if (!query) return res.status(502).json({ error: 'Joytree AI returned an empty query' });
+    res.json({ ok: true, query, aiProvider: 'Joytree AI' });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Joytree AI query generation failed' });
+  }
 });
 
 app.get('/api/developer/ai/status', requireAuth, (req, res) => {
@@ -3448,13 +3496,30 @@ app.get('/api/developer/apis', requireAuth, async (req, res) => {
 app.get('/api/developer/apis/:flowId', requireAuth, async (req, res) => {
   const flowId = String(req.params.flowId || '');
   const ownerUserId = String(req.user?._id || req.user?.id || '');
-  const local = apiCatalog.find(a => a.flowId === flowId && a.ownerUserId === ownerUserId);
-  if (!local) return res.status(404).json({ error: 'API not found' });
+
+  let apiRec = apiCatalog.find(a => a.flowId === flowId && a.ownerUserId === ownerUserId) || null;
+
+  // Fallback to Firebase so API details still load after VPS restart
+  if (!apiRec) {
+    const fb = await readApisFromFirebase(req.user);
+    apiRec = fb.find(a => String(a.flowId || '') === flowId) || null;
+    if (apiRec) {
+      apiRec = { ...apiRec, ownerUserId };
+      const existsLocal = apiCatalog.some(a => a.flowId === apiRec.flowId && a.ownerUserId === ownerUserId);
+      if (!existsLocal) {
+        apiCatalog.push(apiRec);
+        saveApiCatalog();
+      }
+    }
+  }
+
+  if (!apiRec) return res.status(404).json({ error: 'API not found' });
+
   // Enrich with live data
-  const quizData = local.quizSeeded ? (getCollection(flowId, 'quiz_questions') || []) : [];
+  const quizData = apiRec.quizSeeded ? (getCollection(flowId, 'quiz_questions') || []) : [];
   const aiData = getCollection(flowId, 'ai_data') || [];
   const logs = executionLogs.filter(l => l.flowId === flowId).slice(0, 50);
-  res.json({ ok: true, api: { ...local, quizQuestions: quizData, aiData, recentLogs: logs } });
+  res.json({ ok: true, api: { ...apiRec, quizQuestions: quizData, aiData, recentLogs: logs } });
 });
 
 app.delete('/api/developer/apis/:flowId', requireAuth, async (req, res) => {
@@ -3498,6 +3563,61 @@ app.patch('/api/developer/apis/:flowId', requireAuth, async (req, res) => {
   await writeApiToFirebase(req.user, apiCatalog[idx]);
   res.json({ ok:true, api: apiCatalog[idx] });
 });
+
+app.post('/api/developer/apis/:flowId/followup', requireAuth, async (req, res) => {
+  try {
+    const flowId = String(req.params.flowId || '');
+    const followup = String(req.body?.followup || '').trim();
+    if (!flowId) return res.status(400).json({ error: 'flowId required' });
+    if (!followup) return res.status(400).json({ error: 'followup required' });
+
+    const ownerUserId = String(req.user?._id || req.user?.id || '');
+    const idx = apiCatalog.findIndex(a => a.flowId === flowId && a.ownerUserId === ownerUserId);
+    if (idx === -1) return res.status(404).json({ error: 'API not found' });
+    const current = apiCatalog[idx];
+
+    const combinedPrompt = `${String(current.prompt || '').trim()}
+
+Follow-up update request:
+${followup}`;
+    const aiSpec = await buildFlowWithAI({ prompt: combinedPrompt, sourceText: String(current.sourceText || '') });
+    if (!aiSpec || !aiSpec.responseTemplate || typeof aiSpec.responseTemplate !== 'object') {
+      return res.status(502).json({ error: 'AI returned invalid follow-up output' });
+    }
+
+    const route = String(aiSpec?.routePath || current.routePath || '/api');
+    const httpMethod = String(aiSpec?.method || current.httpMethod || 'GET').toUpperCase();
+    const aiTemplate = aiSpec.responseTemplate;
+    const isQuiz = /quiz|question|mcq|exam|riddle/i.test(combinedPrompt + ' ' + String(current.sourceText||''));
+
+    const nodes = [
+      { id:'n1', type:'INCOMING_REQUEST', config:{ method: httpMethod, routePath: route }, next:'n2' },
+      { id:'n2', type:'DB_INSERT', config:{ collection: isQuiz ? 'quiz_submissions' : 'requests', source:'req.body' }, next:'n3' },
+      { id:'n3', type:'DB_FIND', config:{ collection: isQuiz ? 'quiz_questions' : 'requests', filters: [] }, next:'n4' },
+      { id:'n4', type:'HTTP_RESPONSE', config:{ status:200, json: aiTemplate } }
+    ];
+
+    virtualDatabase[flowId] = virtualDatabase[flowId] || {};
+    if (isQuiz) {
+      const aiQuestions = Array.isArray(aiSpec?.seedQuestions) ? aiSpec.seedQuestions : [];
+      const questions = aiQuestions.slice(0, 50).map((q, i) => ({ id:i+1, question:String(q?.question||'').trim(), answer:String(q?.answer||'').trim() })).filter(q => q.question && q.answer);
+      if (questions.length) virtualDatabase[flowId].quiz_questions = questions;
+    }
+    const aiDataSeed = Array.isArray(aiSpec?.dataSeed) ? aiSpec.dataSeed.slice(0, 100) : [];
+    if (aiDataSeed.length) virtualDatabase[flowId].ai_data = aiDataSeed.map((d, i) => ({ id: i + 1, ...d }));
+    saveVirtualDb();
+
+    flowRegistry.set(flowId, { flowId, owner: ownerUserId, nodes, createdAt: current.createdAt || new Date().toISOString(), prompt: combinedPrompt, aiTemplate, aiDataSeed, isQuiz });
+    apiCatalog[idx] = { ...current, prompt: combinedPrompt, responseTemplate: aiTemplate, dataSeed: aiDataSeed, routePath: route, httpMethod, quizSeeded: isQuiz, updatedAt: new Date().toISOString() };
+    saveApiCatalog();
+    await writeApiToFirebase(req.user, apiCatalog[idx]);
+
+    res.json({ ok: true, flowId, endpoint: current.endpoint || `/api/live/${flowId}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Follow-up update failed' });
+  }
+});
+
 app.post('/api/developer/apis/:flowId/link-project', requireAuth, async (req, res) => {
   const flowId = String(req.params.flowId || '');
   const ownerUserId = String(req.user?._id || req.user?.id || '');
@@ -3666,6 +3786,56 @@ const PLAN_RUNTIME_PROFILES = {
 function getRuntimeProfileForPlan(planKey='free') {
   const key = String(planKey || 'free').toLowerCase();
   return PLAN_RUNTIME_PROFILES[key] || PLAN_RUNTIME_PROFILES.free;
+}
+
+
+const PLAN_DB_API_LIMITS = {
+  free:    { maxDatabases: 3,  maxDbMemoryBytes: 512 * 1024 * 1024, maxApis: 5 },
+  starter: { maxDatabases: 8,  maxDbMemoryBytes: 1 * 1024 * 1024 * 1024, maxApis: 20 },
+  pro:     { maxDatabases: 20, maxDbMemoryBytes: 2 * 1024 * 1024 * 1024, maxApis: 60 },
+  growth:  { maxDatabases: 50, maxDbMemoryBytes: 5 * 1024 * 1024 * 1024, maxApis: 150 },
+  scale:   { maxDatabases: 200,maxDbMemoryBytes: 16 * 1024 * 1024 * 1024, maxApis: 500 }
+};
+
+function parseMemToBytes(v = '') {
+  const s = String(v || '').trim().toLowerCase();
+  const m = s.match(/^(\d+(?:\.\d+)?)([mg])$/);
+  if (!m) return 0;
+  const n = Number(m[1]);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return m[2] === 'g' ? Math.round(n * 1024 * 1024 * 1024) : Math.round(n * 1024 * 1024);
+}
+function bytesToDockerMem(bytes = 0) {
+  const mb = Math.max(256, Math.floor(bytes / (1024 * 1024)));
+  if (mb % 1024 === 0) return `${mb / 1024}g`;
+  return `${mb}m`;
+}
+
+function getHostTotalMemoryBytes() {
+  try {
+    const m = fs.readFileSync('/proc/meminfo', 'utf8');
+    const match = m.match(/^MemTotal:\s+(\d+)\s+kB$/m);
+    if (match) return Number(match[1]) * 1024;
+  } catch {}
+  return 0;
+}
+function getDbMemoryBudgetBytes() {
+  const total = getHostTotalMemoryBytes();
+  const pct = Math.max(10, Math.min(90, Number(process.env.DB_MEMORY_BUDGET_PERCENT || 45) || 45));
+  if (!total) return 1024 * 1024 * 1024; // fallback 1GB safety budget
+  return Math.floor(total * (pct / 100));
+}
+function plannedDbMemoryBytes(db = {}) {
+  const b = parseMemToBytes(db.memory || '0');
+  return b > 0 ? b : (512 * 1024 * 1024);
+}
+
+async function getUserPlanKey(user) {
+  const fallback = String(user?.billingPlan || user?.workspace?.settings?.billingPlan || 'free').toLowerCase();
+  const ws = await readWorkspaceFromFirebase(user).catch(() => null);
+  const wsPlan = String(ws?.settings?.billingPlan || '').toLowerCase();
+  const key = wsPlan || fallback || 'free';
+  return PLAN_DB_API_LIMITS[key] ? key : 'free';
 }
 
 // ── Deploy endpoint ───────────────────────────────────────────────────────────
@@ -4437,8 +4607,16 @@ const { execSync, exec: execAsync } = require('child_process');
 const DB_ENGINE_CONFIG = {
   mongodb:  { image: 'mongo:7',     defaultPort: 27017, envVars: (u,p,d) => [`MONGO_INITDB_ROOT_USERNAME=${u}`, `MONGO_INITDB_ROOT_PASSWORD=${p}`, `MONGO_INITDB_DATABASE=${d}`] },
   postgres: { image: 'postgres:16', defaultPort: 5432,  envVars: (u,p,d) => [`POSTGRES_USER=${u}`, `POSTGRES_PASSWORD=${p}`, `POSTGRES_DB=${d}`] },
-  mysql:    { image: 'mysql:8',     defaultPort: 3306,  envVars: (u,p,d) => [`MYSQL_ROOT_PASSWORD=${p}`, `MYSQL_USER=${u}`, `MYSQL_PASSWORD=${p}`, `MYSQL_DATABASE=${d}`] },
-  mariadb:  { image: 'mariadb:11',  defaultPort: 3306,  envVars: (u,p,d) => [`MARIADB_ROOT_PASSWORD=${p}`, `MARIADB_USER=${u}`, `MARIADB_PASSWORD=${p}`, `MARIADB_DATABASE=${d}`] },
+  mysql:    { image: 'mysql:8',     defaultPort: 3306,  envVars: (u,p,d) => {
+    const vars = [`MYSQL_ROOT_PASSWORD=${p}`, `MYSQL_DATABASE=${d}`];
+    if (u && u !== 'root') vars.push(`MYSQL_USER=${u}`, `MYSQL_PASSWORD=${p}`);
+    return vars;
+  } },
+  mariadb:  { image: 'mariadb:11',  defaultPort: 3306,  envVars: (u,p,d) => {
+    const vars = [`MARIADB_ROOT_PASSWORD=${p}`, `MARIADB_DATABASE=${d}`];
+    if (u && u !== 'root') vars.push(`MARIADB_USER=${u}`, `MARIADB_PASSWORD=${p}`);
+    return vars;
+  } },
   redis:    { image: 'redis:7',     defaultPort: 6379,  envVars: (_u,p)  => p ? [`requirepass ${p}`] : [] }
 };
 
@@ -4544,6 +4722,9 @@ async function provisionDbContainer(db) {
     `-p 127.0.0.1:${hostPort}:${cfg.defaultPort}`,
     `-v "${volumePath}:${volumeMount}"`,
     `--memory="${db.memory || '512m'}"`,
+    `--memory-swap="${db.memory || '512m'}"`,
+    `--pids-limit=256`,
+    `--cpus="${process.env.DB_CONTAINER_CPUS || '0.75'}"`,
     envFlags,
     imageToUse,
     redisArgs
@@ -4585,7 +4766,11 @@ async function injectConnStrIntoProject(projectId, engine, connStr, user = null)
     if (user) {
       const ws = (await readWorkspaceFromFirebase(user)) || {};
       ws.projects = Array.isArray(ws.projects) ? ws.projects : [];
-      const idx = ws.projects.findIndex(p => String(p.id || p._id || '') === String(projectId));
+      const idx = ws.projects.findIndex(p =>
+        String(p.id || p._id || '') === String(projectId) ||
+        String(p.subdomain || '') === String(projectId) ||
+        String(p.name || '') === String(projectId)
+      );
       if (idx >= 0) {
         const p = ws.projects[idx] || {};
         const envVars = (p.envVars && typeof p.envVars === 'object') ? { ...p.envVars } : {};
@@ -4618,11 +4803,25 @@ app.get('/api/databases', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+function normalizeDbCredentials(engine, dbUser, pass, dbName) {
+  const safeUser = String(dbUser || '').trim();
+  const safePass = String(pass || '').trim();
+  const safeDbName = String(dbName || '').trim();
+  const defaultUser = engine === 'postgres' ? 'postgres' : engine === 'mongodb' ? 'root' : engine === 'mysql' || engine === 'mariadb' ? 'root' : '';
+  const user = safeUser || defaultUser;
+  const password = safePass || crypto.randomBytes(12).toString('base64url');
+  const databaseName = safeDbName || 'mydb';
+  return { user, password, databaseName };
+}
+
 // ── POST /api/databases — provision a new database ───────────────────────────
 app.post('/api/databases', requireAuth, async (req, res) => {
   try {
     const userId = String(req.user._id || req.user.id);
     const { name, engine, image, user: dbUser, pass, dbName, memory, volume, linkProjectId, connStr } = req.body || {};
+
+    const userPlanKey = await getUserPlanKey(req.user);
+    const planLimits = PLAN_DB_API_LIMITS[userPlanKey] || PLAN_DB_API_LIMITS.free;
 
     if (!name)   return res.status(400).json({ error: 'name is required' });
     if (!engine) return res.status(400).json({ error: 'engine is required' });
@@ -4635,9 +4834,26 @@ app.post('/api/databases', requireAuth, async (req, res) => {
 
     // Check for name collision across Firebase/local/Mongo-backed view
     const existingDbs = await loadUserDatabases(req.user);
+    if (existingDbs.length >= Number(planLimits.maxDatabases || 0)) {
+      return res.status(403).json({ error: `Database limit reached for ${userPlanKey} plan (${planLimits.maxDatabases} max). Upgrade to create more databases.` });
+    }
+
+    const requestedBytesRaw = parseMemToBytes(memory || '512m') || (512 * 1024 * 1024);
+    const requestedBytesCappedPlan = Math.min(requestedBytesRaw, Number(planLimits.maxDbMemoryBytes || requestedBytesRaw));
+    const hostBudgetBytes = getDbMemoryBudgetBytes();
+    const existingBudgetUse = existingDbs.reduce((sum, db) => sum + plannedDbMemoryBytes(db), 0);
+    if (existingBudgetUse + requestedBytesCappedPlan > hostBudgetBytes) {
+      const toMb = b => Math.round(b / (1024 * 1024));
+      return res.status(403).json({
+        error: `Host memory budget exceeded for databases. Requested ${toMb(requestedBytesCappedPlan)}MB, current allocated ${toMb(existingBudgetUse)}MB, budget ${toMb(hostBudgetBytes)}MB. Reduce DB memory or upgrade VPS.`
+      });
+    }
     if (existingDbs.some(d => String(d.name || '').toLowerCase() === safeName)) {
       return res.status(409).json({ error: `A database named "${safeName}" already exists` });
     }
+
+    // Normalize credentials server-side so every created DB has valid auth details
+    const { user: normalizedUser, password: normalizedPass, databaseName: normalizedDbName } = normalizeDbCredentials(engine, dbUser, pass, dbName);
 
     // Create DB record first (provisioning state)
     let dbRecord;
@@ -4645,10 +4861,10 @@ app.post('/api/databases', requireAuth, async (req, res) => {
     const record = {
       name: safeName, engine,
       image: image || cfg.image,
-      user: dbUser || '',
-      pass: pass || '',
-      dbName: dbName || 'mydb',
-      memory: memory || '512m',
+      user: normalizedUser,
+      pass: normalizedPass,
+      dbName: normalizedDbName,
+      memory: bytesToDockerMem(requestedBytesCappedPlan),
       volume: volume || '',
       connStr: connStr || '',
       status: 'provisioning',
@@ -4671,8 +4887,8 @@ app.post('/api/databases', requireAuth, async (req, res) => {
       try {
         const { containerName, hostPort } = await provisionDbContainer({ ...record, _id: dbRecord._id });
 
-        // Build the real connection string with localhost replaced by internal host
-        const realConn = buildDbConnStr(engine, dbUser, pass, dbName, 'localhost', hostPort);
+        // Build the real connection string with normalized credentials
+        const realConn = buildDbConnStr(engine, normalizedUser, normalizedPass, normalizedDbName, 'localhost', hostPort);
 
         if (isDbReady()) {
           await Database.updateOne({ _id: dbRecord._id }, {
@@ -4706,7 +4922,8 @@ app.post('/api/databases', requireAuth, async (req, res) => {
           name: safeName, engine, status: 'running',
           containerName, internalPort: String(hostPort),
           connStr: realConn, connectionString: realConn,
-          image: engine + ':latest', memory: dbRecord.memory || '512m',
+          image: image || cfg.image, memory: dbRecord.memory || '512m',
+          user: normalizedUser, pass: normalizedPass, dbName: normalizedDbName,
           createdAt: new Date().toISOString()
         };
         // req.user is captured in the setImmediate closure — use it directly
@@ -4727,6 +4944,19 @@ app.post('/api/databases', requireAuth, async (req, res) => {
         } catch (dbErr) {
           console.error('[DB] Could not persist error status:', dbErr.message);
         }
+
+        await persistDb(req.user, {
+          id: String(dbRecord._id),
+          ownerUserId: String(dbRecord.ownerUserId || userId),
+          name: safeName,
+          engine,
+          status: 'error',
+          errorMessage: errMsg,
+          user: normalizedUser,
+          pass: normalizedPass,
+          dbName: normalizedDbName,
+          updatedAt: new Date().toISOString()
+        });
 
         // ── Notify all connected clients of the failure ────────────────────────
         io.emit('db:status', {
@@ -4890,11 +5120,24 @@ app.post('/api/databases/:id/link', requireAuth, async (req, res) => {
     if (projectOwnerId !== userId) return res.status(403).json({ error: 'Forbidden' });
 
     const canonicalProjectId = String(project._id || project.id || projectId);
-    await injectConnStrIntoProject(canonicalProjectId, db.engine, db.connStr || db.connectionString || '', req.user);
+    const conn = db.connStr || db.connectionString || '';
+    await injectConnStrIntoProject(canonicalProjectId, db.engine, conn, req.user);
     db.linkProjectId = canonicalProjectId; db.updatedAt = new Date().toISOString();
     await persistDb(req.user, db);
+
+    const envKeyMap = {
+      mongodb:  ['MONGODB_URI', 'DATABASE_URL'],
+      postgres: ['DATABASE_URL', 'POSTGRES_URL'],
+      mysql:    ['MYSQL_URL', 'DATABASE_URL'],
+      mariadb:  ['MARIADB_URL', 'DATABASE_URL'],
+      redis:    ['REDIS_URL']
+    };
+    const keys = envKeyMap[db.engine] || ['DATABASE_URL'];
+    const injected = {};
+    keys.forEach(k => { injected[k] = conn; });
+
     addActivity('database', `🔗 Database "${db.name}" linked to project "${project.name}"`);
-    res.json({ ok: true });
+    res.json({ ok: true, projectId: canonicalProjectId, envVars: injected });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
