@@ -109,6 +109,9 @@ html, body { overflow-x: hidden; }
 html.app-mode body { overflow: hidden; }
 html.app-mode #landing-view { display: none !important; }
 html.app-mode #app { display: flex !important; }
+html.app-mode.public-page #sidebar,
+html.app-mode.public-page #topbar { display:none !important; }
+html.app-mode.public-page #main { width:100% !important; }
 
 /* When query page is active on mobile — unlock scroll entirely */
 @media (max-width: 700px) {
@@ -2474,6 +2477,8 @@ textarea.input { resize: vertical; min-height: 80px; }
 /* #0d0d0d base + single faint green bloom top-left + green-tinted border */
 #page-dashboard .app-hero,
 #page-deployments .app-hero,
+#page-docs .app-hero,
+#page-founders .app-hero,
 #page-webhooks .app-hero,
 #page-activity .app-hero,
 #page-secrets .app-hero,
@@ -2509,6 +2514,8 @@ textarea.input { resize: vertical; min-height: 80px; }
 /* ── Re-enable decorative glow circle on .app-hero pages ───────── */
 #page-dashboard .app-hero::after,
 #page-deployments .app-hero::after,
+#page-docs .app-hero::after,
+#page-founders .app-hero::after,
 #page-webhooks .app-hero::after,
 #page-activity .app-hero::after,
 #page-secrets .app-hero::after,
@@ -4711,7 +4718,8 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   <div class="nav-links">
     <a href="#features" class="nav-link">Features</a>
     <a href="#how-it-works" class="nav-link">How it works</a>
-    <a href="#snippets" class="nav-link">Docs</a>
+    <a href="#" class="nav-link" onclick="showPublicDocs();return false;">Docs</a>
+    <a href="#" class="nav-link" onclick="showPublicFounders();return false;">Founders</a>
   </div>
   <div class="nav-actions">
     <button class="btn-nav-menu" id="hamburgerBtn" onclick="openLandingDrawer()" aria-label="Open menu">
@@ -4739,7 +4747,8 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     <div class="ld-section-label ld-animate">Platform</div>
     <a class="ld-link ld-animate" href="#features" onclick="closeLandingDrawer()"><div class="ld-link-icon" style="color:#10b981"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div><span>Platform Features</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
     <a class="ld-link ld-animate" href="#how-it-works" onclick="closeLandingDrawer()"><div class="ld-link-icon" style="color:#06b6d4"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></div><span>How It Works</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
-    <a class="ld-link ld-animate" href="#snippets" onclick="closeLandingDrawer()"><div class="ld-link-icon" style="color:#8b5cf6"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><span>Docs &amp; Snippets</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
+    <a class="ld-link ld-animate" href="#" onclick="showPublicDocs();closeLandingDrawer();return false;"><div class="ld-link-icon" style="color:#8b5cf6"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><span>Docs &amp; Snippets</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
+    <a class="ld-link ld-animate" href="#" onclick="showPublicFounders();closeLandingDrawer();return false;"><div class="ld-link-icon" style="color:#34d399"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7z"/><circle cx="12" cy="10" r="2.2"/><path d="M8.5 16c1.2-1.6 2.5-2.4 3.5-2.4s2.3.8 3.5 2.4"/></svg></div><span>Founders</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
     <a class="ld-link ld-animate" href="#" onclick="showDashboard();showPage('pricing');closeLandingDrawer();return false;"><div class="ld-link-icon" style="color:#f59e0b"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><span>Pricing Plans</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
 
     <div class="ld-section-label ld-animate">Language Kickstarts</div>
@@ -5369,7 +5378,8 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     <a href="#features" class="footer-link">Features</a>
     <a href="#how-it-works" class="footer-link">How it works</a>
     <a href="#" onclick="showDashboard();return false;" class="footer-link">Dashboard</a>
-    <a href="#snippets" class="footer-link">Docs</a>
+    <a href="#" onclick="showPublicDocs();return false;" class="footer-link">Docs</a>
+    <a href="#" onclick="showPublicFounders();return false;" class="footer-link">Founders</a>
   </div>
   <div class="footer-copy">Built by developers, for developers.</div>
 </footer>
@@ -5573,6 +5583,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16.98h-5.99c-1.1 0-1.95.68-2.23 1.63l-.37 1.14A2.5 2.5 0 0 1 7.97 21H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h1.9a2.5 2.5 0 0 1 2.4 1.7l1.35 4.3c.3.9 1.15 1.5 2.1 1.5H21"/><polyline points="16 13 21 8 16 3"/></svg>
       Webhooks
     </div>
+    <div class="nav-item emails-admin-only" data-page="emails" onclick="showPage('emails',this)" style="display:none;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>
+      Emails
+    </div>
 
     <div class="nav-item" data-page="cronjobs" onclick="showPage('cronjobs',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -5639,6 +5653,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <div class="nav-item" data-page="docs" onclick="showPage('docs',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       Documentation
+    </div>
+    <div class="nav-item" data-page="founders" onclick="showPage('founders',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7z"/><circle cx="12" cy="10" r="2.2"/><path d="M8.5 16c1.2-1.6 2.5-2.4 3.5-2.4s2.3.8 3.5 2.4"/></svg>
+      Founders
     </div>
     <div class="nav-item" onclick="showLanding()">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
@@ -7116,9 +7134,17 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
     <!-- ════════ DOCS PAGE ════════ -->
     <div class="page" id="page-docs">
-      <div class="page-header">
-        <div class="page-title">Help & Guides</div>
-        <div class="page-subtitle">Quick reference for deployments, the new database system, and the new realtime API builder.</div>
+      <button class="page-back" onclick="goBackFromContentPage()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back</button>
+      <div class="app-hero">
+        <div>
+          <div class="app-hero-kicker">Knowledge center</div>
+          <div class="app-hero-title">Help & Guides</div>
+          <div class="app-hero-subtitle">Quick reference for deployments, the new database system, and the new realtime API builder.</div>
+        </div>
+        <div class="app-hero-actions">
+          <button class="btn btn-ghost" onclick="openDocsProtectedPage('realtime-api')">Open API Builder</button>
+          <button class="btn btn-primary" onclick="openDocsProtectedPage('db-sdk')">Open SDK Studio</button>
+        </div>
       </div>
 
       <div class="two-col docs-grid" style="align-items:start;">
@@ -7287,6 +7313,55 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <div class="two-col">
         <div class="card"><div class="card-header"><div class="card-title">Contact</div></div><div class="card-body"><div style="color:var(--text-2);font-size:.86rem;line-height:1.6;">Email: <strong style="color:var(--text);">support@joytree.app</strong><br/>Include project name and deployment id for fastest help.</div></div></div>
         <div class="card"><div class="card-header"><div class="card-title">Troubleshooting</div></div><div class="card-body"><div style="color:var(--text-2);font-size:.86rem;line-height:1.6;">Check Live Logs, verify repo permissions, confirm DNS records, and retry deployment.</div></div></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-founders">
+      <button class="page-back" onclick="goBackFromContentPage()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back</button>
+      <div class="app-hero">
+        <div>
+          <div class="app-hero-kicker">Built by developers</div>
+          <div class="app-hero-title">A Message From Our Founders</div>
+          <div class="app-hero-subtitle">Why JOYTREE exists, who is building it, and the vision driving the platform forward.</div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-body" style="font-size:.93rem;line-height:1.85;color:var(--text-2);display:flex;flex-direction:column;gap:14px;">
+          <p style="color:var(--text);font-weight:700;">At JOYTREE, our mission started with a simple question:</p>
+          <p>How can we build technology that truly profits and empowers the tech ecosystem across Ghana, Africa, and the global developer community?</p>
+          <p>As developers, we watched a new generation of brilliant creators rise every single day. We also saw them get bogged down, frustrated, and stressed by the massive hurdles of DevOps—spending hours configuring servers, managing keys, and setting up environments just to get a simple application running. We knew there had to be a better way.</p>
+          <p>That is why we built JOYTREE. We wanted to completely eliminate that friction.</p>
+          <p>Today, JOYTREE allows upcoming and seasoned developers alike to spin up a fully deployed, callable, Docker-backed API endpoint from scratch—just by typing a single prompt. We have combined this with an instant database system that lets you provision and ship databases in seconds, seamlessly integrating them with your projects along with instant API key management.</p>
+          <p>We handle the heavy lifting behind the scenes so you can focus entirely on writing code and building the future.</p>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header"><div class="card-title">Our Core Team</div><div class="card-subtitle">The people driving this vision forward.</div></div>
+        <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
+          <div style="border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;background:#0f0f0f;">
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7z"/><circle cx="12" cy="10" r="2.2"/></svg><strong style="color:var(--text);">Prince</strong></div>
+            <div style="font-size:.82rem;color:#94a3b8;">Chief Executive Officer (CEO) & Founder</div>
+          </div>
+          <div style="border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;background:#0f0f0f;">
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5 21c1.8-3.5 4.2-5 7-5s5.2 1.5 7 5"/></svg><strong style="color:var(--text);">Simon</strong></div>
+            <div style="font-size:.82rem;color:#94a3b8;">Co-Founder & Junior Developer</div>
+          </div>
+          <div style="border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;background:#0f0f0f;">
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M14 6h7"/><path d="M14 12h7"/><path d="M14 18h7"/><path d="M3 6h7v12H3z"/></svg><strong style="color:var(--text);">Kamara Yusif</strong></div>
+            <div style="font-size:.82rem;color:#94a3b8;">Co-Founder, Principal Hardware Engineer & Junior Developer</div>
+          </div>
+          <div style="border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;background:#0f0f0f;">
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M7 8h10l-1 9H8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><strong style="color:var(--text);">Gad</strong></div>
+            <div style="font-size:.82rem;color:#94a3b8;">Cofounder Engineer & Junior Developer</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Special Thanks</div></div>
+        <div class="card-body" style="font-size:.9rem;line-height:1.75;color:var(--text-2);">
+          To our dedicated beta testers, contributors, and the community members helping us refine our platform every day.
+          <div style="margin-top:10px;color:var(--text);font-weight:600;">We are just getting started. Thank you for choosing JOYTREE to power your next big idea. Let’s build the future together.</div>
+        </div>
       </div>
     </div>
 
@@ -12757,6 +12832,33 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <section class="streak-bottom-grid"><div class="card streak-timeline-card"><div class="card-header"><div class="card-title">Recent Launch Sequence</div><div class="card-subtitle">Newest deployment events become a tactical release timeline.</div></div><div class="card-body" id="streakTimeline"></div></div><div class="card streak-achievement-card"><div class="card-header"><div class="card-title">Operating System</div><div class="card-subtitle">Functional modules unlocked by consistent shipping.</div></div><div class="card-body streak-modules"><div><b>🔥 Streak Engine</b><span>Tracks daily release continuity.</span></div><div><b>🛰️ Cadence Radar</b><span>Surfaces active and quiet windows.</span></div><div><b>🧬 Density Genome</b><span>Maps yearly deployment behavior.</span></div><div><b>🛡️ Reliability Core</b><span>Audits successful deployment ratio.</span></div></div></div></section>
     </div>
 
+    <div class="page" id="page-emails">
+      <div class="app-hero">
+        <div>
+          <div class="app-hero-kicker">admin communication</div>
+          <div class="app-hero-title">Email all users</div>
+          <div class="app-hero-subtitle">Send a structured broadcast email to every signed-up user using your configured Resend account.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Compose broadcast</div><div class="card-subtitle">Includes JOYTREE logo and brand block by default.</div></div>
+        </div>
+        <div class="card-body">
+          <div class="field"><label class="field-label">Admin sender name</label><input id="emailSenderName" class="input" placeholder="e.g. Joytree Team"></div>
+          <div class="two-col">
+            <div class="field"><label class="field-label">Subject</label><input id="emailSubject" class="input" placeholder="Product update"></div>
+            <div class="field"><label class="field-label">Preheader (optional)</label><input id="emailPreheader" class="input" placeholder="Short inbox preview text"></div>
+          </div>
+          <div class="field"><label class="field-label">Intro line (optional)</label><input id="emailIntro" class="input" placeholder="Hey, it's Joytree."></div>
+          <div class="field"><label class="field-label">Message body</label><textarea id="emailMessage" class="input" rows="10" placeholder="Write your announcement here..."></textarea></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="sendAdminEmailBtn" onclick="sendAdminBroadcastEmail()">Send to all users</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content-area -->
 </div><!-- /main -->
 </div><!-- /app -->
@@ -13266,6 +13368,7 @@ function applyUserProfile(user){
   if (generalPanel && !isWebhookAdmin) generalPanel.style.display = 'none';
   const githubPanel = document.getElementById('settingsTabGithub');
   if (githubPanel && !isWebhookAdmin) githubPanel.style.display = 'none';
+  refreshAdminOnlyUi();
 }
 
 async function bootstrapSession(){
@@ -13336,7 +13439,7 @@ const PAGE_LABELS = {
   'new-resource':'New Resource', cronjobs:'Cron Jobs', workers:'Background Workers', streaks:'Deploy Streaks',
   'dockerfile-deploy':'Dockerfile Deploy', 'cron-create':'Create Cron Job', 'worker-create':'New Worker', 'ai-analysis':'AI Analysis',
   faq:'FAQ', support:'Support', pricing:'Pricing', checkout:'Checkout',
-  databases:'Databases', 'db-editor':'Data Studio', 'db-create':'Create Database', 'db-detail':'Database Detail', 'realtime-api':'Realtime API'
+  databases:'Databases', 'db-editor':'Data Studio', 'db-create':'Create Database', 'db-detail':'Database Detail', 'realtime-api':'Realtime API', emails:'Emails', founders:'Founders'
 };
 // ── URL Routing helpers ───────────────────────────────────────────────────
 const ROUTE_BASE = '/dashboard';
@@ -13346,6 +13449,7 @@ const VALID_PAGES = new Set([
   'cronjobs','workers','streaks','team','usage','activity','secrets',
   'settings','docs','faq','support','forum','domain-add','cron-create',
   'dockerfile-deploy','pricing','checkout','databases','db-query','db-schema','db-sdk','realtime-api','db-editor','db-create','db-detail'
+  ,'emails','founders'
 ]);
 
 function pageToPath(id) {
@@ -13358,6 +13462,7 @@ function pathToPage(pathname) {
   const clean = (pathname || '').replace(/\/$/, '');
   if (clean === ROUTE_BASE || clean === '') return 'dashboard';
   const seg = clean.replace(ROUTE_BASE + '/', '');
+  if (seg === 'e') return 'emails';
   return VALID_PAGES.has(seg) ? seg : 'dashboard';
 }
 
@@ -13377,6 +13482,10 @@ window.addEventListener('popstate', function(e) {
 });
 
 function showPage(id, navEl, _skipPush) {
+  if (id === 'emails' && !isAdminEmail()) {
+    toast('Only the project admin can access Emails.', 'error');
+    id = 'dashboard';
+  }
   ensureProjectAutoSync();
   // Toggle query-page scroll mode on html element (must be first)
   if (id === 'db-query') {
@@ -13392,6 +13501,9 @@ function showPage(id, navEl, _skipPush) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.getElementById('page-' + id);
   if (page) page.classList.add('active');
+  const publicStandalone = !hasAuthToken() && (id === 'docs' || id === 'founders');
+  document.documentElement.classList.toggle('public-page', publicStandalone);
+  document.querySelectorAll('.public-only-back').forEach(el => el.style.display = publicStandalone ? 'inline-flex' : 'none');
   currentPage = id;
 
   // Update URL
@@ -13454,8 +13566,71 @@ function showPage(id, navEl, _skipPush) {
   if (id === 'db-create')     renderDbCreatePage();
   if (id === 'db-detail')     { /* populated by openDbDetail() */ }
   if (id === 'realtime-api')  { loadLogiFlowLogs(); loadManagedApis(); }
+  if (id === 'emails')        { initEmailsPage(); }
+  if (id === 'founders')      { /* static page */ }
 
   closeSidebar();
+}
+
+function isAdminEmail() {
+  const adminEmail = 'projectvpn89@gmail.com';
+  const meEmail = String(currentUser?.email || settings.email || '').trim().toLowerCase();
+  return meEmail === adminEmail;
+}
+
+function refreshAdminOnlyUi() {
+  const isAdmin = isAdminEmail();
+  document.querySelectorAll('.emails-admin-only').forEach(el => {
+    if (isAdmin) {
+      el.style.display = '';
+      el.removeAttribute('hidden');
+      el.setAttribute('aria-hidden', 'false');
+    } else {
+      el.style.display = 'none';
+      el.setAttribute('hidden', 'hidden');
+      el.setAttribute('aria-hidden', 'true');
+      el.classList.remove('active');
+    }
+  });
+}
+
+function initEmailsPage() {
+  const senderEl = document.getElementById('emailSenderName');
+  if (senderEl && !senderEl.value.trim()) {
+    senderEl.value = String(currentUser?.name || currentUser?.githubUsername || settings.name || '').trim();
+  }
+}
+
+async function sendAdminBroadcastEmail() {
+  if (!isAdminEmail()) {
+    toast('Unauthorized: admin only.', 'error');
+    return;
+  }
+  const senderName = String(document.getElementById('emailSenderName')?.value || '').trim();
+  const subject = String(document.getElementById('emailSubject')?.value || '').trim();
+  const preheader = String(document.getElementById('emailPreheader')?.value || '').trim();
+  const intro = String(document.getElementById('emailIntro')?.value || '').trim();
+  const message = String(document.getElementById('emailMessage')?.value || '').trim();
+  if (!senderName || !subject || !message) {
+    toast('Sender name, subject, and message are required.', 'error');
+    return;
+  }
+  const btn = document.getElementById('sendAdminEmailBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+  try {
+    const r = await apiFetch('/api/admin/emails/broadcast', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senderName, subject, preheader, intro, message })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Could not send emails');
+    toast(`Broadcast queued. Sent: ${d.sent || 0}, failed: ${d.failed || 0}.`, 'success', 5500);
+  } catch (e) {
+    toast(e.message || 'Failed to send broadcast email.', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Send to all users'; }
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -16331,7 +16506,7 @@ function statusBadge(status) {
     showDashboard();
     toast('Signed in session restored. Sync will continue in background.', 'info');
   } else {
-    showLanding();
+    if (!routePublicDashboardPages()) showLanding();
   }
     // Kick off health check silently
     fetch(API + '/api/health', { signal: AbortSignal.timeout(2000) }).catch(()=>{});
@@ -16339,7 +16514,7 @@ function statusBadge(status) {
     console.warn('[boot] startup failed:', err?.message || err);
     try {
       if (hasAuthToken()) showDashboard();
-      else showLanding();
+      else if (!routePublicDashboardPages()) showLanding();
     } catch (fallbackErr) {
       console.warn('[boot] fallback view failed:', fallbackErr?.message || fallbackErr);
       document.documentElement.classList.remove('app-mode');
@@ -16382,6 +16557,13 @@ async function initTurnstile(force=false) {
     });
   } catch (_) {}
 }
+
+function routePublicDashboardPages() {
+  const initialPage = pathToPage(window.location.pathname);
+  if (initialPage === 'docs') { showPublicDocs(); return true; }
+  if (initialPage === 'founders') { showPublicFounders(); return true; }
+  return false;
+}
 function resetTurnstileToken() {
   turnstileToken = '';
   const status = document.getElementById('turnstileStatus');
@@ -16405,7 +16587,12 @@ async function submitAuth(){
   const email = document.getElementById('authEmail').value.trim();
   const password = document.getElementById('authPassword').value;
   const name = document.getElementById('authName').value.trim();
+  const submitBtn = document.getElementById('authSubmitBtn');
   try {
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;margin-right:8px;vertical-align:-2px;animation:dpSpin .7s linear infinite;"></span>' + (authMode === 'signup' ? 'Creating account…' : 'Signing in…');
+    }
     if (turnstileEnabled && !turnstileToken) throw new Error('Please complete Cloudflare verification first.');
     if (!window.firebase || !firebase.auth) throw new Error('Firebase auth not loaded');
     await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
@@ -16433,6 +16620,13 @@ async function submitAuth(){
     resetTurnstileToken();
   } catch (e) {
     toast(e.message || 'Authentication failed', 'error');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = authMode==='signup'
+        ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Create account'
+        : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Sign in';
+    }
   }
 }
 function openVerifyEmailPage(token, email){
@@ -16603,6 +16797,42 @@ function showDashboard(defaultPage = 'dashboard') {
     return;
   }
   if (defaultPage && defaultPage !== 'dashboard') showPage(defaultPage);
+}
+
+function showPublicDocs() {
+  const verify = document.getElementById('verifyEmailPage'); if (verify) verify.style.display = 'none';
+  document.getElementById('auth-view').classList.remove('active');
+  document.documentElement.classList.add('app-mode');
+  if (typeof io !== 'undefined' && (!socket || !socket.connected) && hasAuthToken()) initSocket();
+  if (!window._dashboardInited) {
+    window._dashboardInited = true;
+  }
+  window.history.pushState({view:'app', page:'docs'}, '', '/dashboard/docs');
+  showPage('docs', null, true);
+}
+function showPublicFounders() {
+  const verify = document.getElementById('verifyEmailPage'); if (verify) verify.style.display = 'none';
+  document.getElementById('auth-view').classList.remove('active');
+  document.documentElement.classList.add('app-mode');
+  if (typeof io !== 'undefined' && (!socket || !socket.connected) && hasAuthToken()) initSocket();
+  if (!window._dashboardInited) window._dashboardInited = true;
+  window.history.pushState({view:'app', page:'founders'}, '', '/dashboard/founders');
+  showPage('founders', null, true);
+}
+function goBackFromContentPage() {
+  if (hasAuthToken()) {
+    showPage('dashboard');
+    return;
+  }
+  showLanding();
+}
+function openDocsProtectedPage(targetPage) {
+  if (!hasAuthToken()) {
+    showAuthPage();
+    toast('Please sign in to open this tool.', 'info');
+    return;
+  }
+  showPage(targetPage);
 }
 
 
@@ -17984,7 +18214,7 @@ function renderStreakCalendar(dayMap) {
 })();
 
 function showLanding() {
-  document.documentElement.classList.remove('app-mode');
+  document.documentElement.classList.remove('app-mode', 'public-page');
   document.getElementById('auth-view').classList.remove('active');
   document.getElementById('landing-view').style.display = 'block';
   document.getElementById('app').style.display = 'none';
