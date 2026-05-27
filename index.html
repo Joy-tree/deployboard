@@ -5610,6 +5610,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       Team
       <span style="font-size:0.55rem;background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.2);border-radius:4px;padding:1px 5px;margin-left:auto;">NEW</span>
     </div>
+    <div class="nav-item" data-page="pricing" onclick="showPage('pricing',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Pricing
+    </div>
     <div class="nav-item" data-page="usage" onclick="showPage('usage',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       Usage & Limits
@@ -6482,7 +6486,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         <!-- Starter -->
         <div class="px-plan">
           <div class="px-plan-name">Starter</div>
-          <div class="px-plan-price"><sup>₵</sup>1<sub>/mo</sub></div>
+          <div class="px-plan-price"><sup>₵</sup>20<sub>/mo</sub></div>
           <div class="px-plan-desc">A dedicated environment for early-stage apps and experiments.</div>
           <ul class="px-features">
             <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>1 GB app RAM · 1GB DB memory cap</li>
@@ -12831,7 +12835,7 @@ const PLAN_LIMITS = {
   growth:  { label:'Growth', ramGb:5, maxProjects:35, maxDatabases:50, maxApis:150, dbMemoryGb:5, monthlyDeployments:500, maxCustomDomains:30, monthlyBuildSeconds:12000, monthlyBandwidthGb:1024, description:'5 GB app RAM · 5GB DB memory cap for growing production workloads.' },
   scale:   { label:'Scale Max', ramGb:16, maxProjects:120, maxDatabases:200, maxApis:500, dbMemoryGb:16, monthlyDeployments:2000, maxCustomDomains:120, monthlyBuildSeconds:60000, monthlyBandwidthGb:8192, description:'High-capacity plan for large teams and heavy traffic.' }
 };
-const PLAN_PRICES_GHS = { free: 0, starter: 1, pro: 30, growth: 60, scale: 180 };
+const PLAN_PRICES_GHS = { free: 0, starter: 20, pro: 30, growth: 60, scale: 180 };
 let PAYSTACK_PUBLIC_KEY = '';
 let pendingCheckoutPlan = 'starter';
 let _paystackConfigLoaded = false;
@@ -16244,6 +16248,7 @@ function statusBadge(status) {
 // ══════════════════════════════════════════════════════════════════
 (async function() {
   showBootLoader('Loading');
+  let preferPricingAfterAuth = false;
   try {
     const params = new URLSearchParams(window.location.search);
     const ghCode = params.get('code');
@@ -16273,6 +16278,7 @@ function statusBadge(status) {
         } else {
           toast('GitHub account connected successfully', 'success');
         }
+        preferPricingAfterAuth = true;
       } else {
         toast(d.error || 'GitHub sign-in failed. Please try again.', 'error');
       }
@@ -16282,7 +16288,7 @@ function statusBadge(status) {
   }
   const ok = await Promise.race([bootstrapSession(), new Promise(resolve => setTimeout(() => resolve(false), 7000))]);
   if (ok) {
-    showDashboard();
+    showDashboard(preferPricingAfterAuth ? 'pricing' : 'dashboard');
   } else if (hasAuthToken()) {
     // Fallback: keep signed-in users in app even if /api/auth/me is temporarily unreachable
     showDashboard();
@@ -16385,7 +16391,7 @@ async function submitAuth(){
       localStorage.setItem('db_auth_token', d.token);
       applyUserProfile(d.user || null);
       toast('Welcome! Account ready.', 'success');
-      showDashboard();
+      showDashboard('pricing');
     } else throw new Error('Authentication failed');
     resetTurnstileToken();
   } catch (e) {
@@ -16426,7 +16432,7 @@ async function submitEmailVerification(){
   const page = document.getElementById('verifyEmailPage');
   if (page) page.style.display = 'none';
   toast('Email verified. Welcome to JOYTREE.', 'success');
-  showDashboard();
+  showDashboard('pricing');
 }
 function normalizeGitHubAuthorizeUrl(rawUrl) {
   const input = String(rawUrl || '').trim();
@@ -16499,7 +16505,7 @@ function confirmLogout() {
 // ══════════════════════════════════════════════════════════════════
 // VIEW SWITCHING — landing ↔ dashboard
 // ══════════════════════════════════════════════════════════════════
-function showDashboard() {
+function showDashboard(defaultPage = 'dashboard') {
   if (!hasAuthToken()) {
     showAuthPage();
     return;
@@ -16536,15 +16542,18 @@ function showDashboard() {
 
     // ── Restore page from URL on first load ──────────────────────
     const initialPage = pathToPage(window.location.pathname);
-    if (initialPage && initialPage !== 'dashboard') {
-      showPage(initialPage, null, true /* skipPush - URL already correct */);
+    const targetPage = (initialPage && initialPage !== 'dashboard') ? initialPage : defaultPage;
+    if (targetPage && targetPage !== 'dashboard') {
+      showPage(targetPage, null, !!initialPage /* skipPush when URL already points to a page */);
     } else {
       window.history.replaceState({ page: 'dashboard' }, '', pageToPath('dashboard'));
     }
 
     // ── Sync real projects/deployments from server so reloads do not lose deployments
     syncServerStateFromApi({ persist: true, render: true });
+    return;
   }
+  if (defaultPage && defaultPage !== 'dashboard') showPage(defaultPage);
 }
 
 
