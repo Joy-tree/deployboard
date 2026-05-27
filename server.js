@@ -2127,6 +2127,99 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
   res.json({ user: { id: req.user._id || req.user.id, email: req.user.email, name: req.user.name, githubUsername: req.user.githubUsername, githubAvatarUrl: req.user.githubAvatarUrl || '', firebaseUid: req.user.firebaseUid || '' } });
 });
 
+function isRootEmailAdmin(user = {}) {
+  const email = String(user?.email || '').trim().toLowerCase();
+  return email === 'projectvpn89@gmail.com';
+}
+
+function collectEmailsDeep(input, out = new Set()) {
+  if (!input) return out;
+  if (typeof input === 'string') {
+    const v = input.trim().toLowerCase();
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) out.add(v);
+    return out;
+  }
+  if (Array.isArray(input)) {
+    for (const item of input) collectEmailsDeep(item, out);
+    return out;
+  }
+  if (typeof input === 'object') {
+    for (const [k, v] of Object.entries(input)) {
+      if (k.toLowerCase().includes('email') && typeof v === 'string') collectEmailsDeep(v, out);
+      else collectEmailsDeep(v, out);
+    }
+  }
+  return out;
+}
+
+async function collectFirebaseIndexedEmails() {
+  if (!FIREBASE_RTDB_URL) return [];
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  const paths = [
+    'deployboard_user_emails',
+    'deployboard_users',
+    'users',
+    'deployboard_workspaces'
+  ];
+  const found = new Set();
+  for (const p of paths) {
+    try {
+      const r = await fetch(`${FIREBASE_RTDB_URL}/${p}.json${authQuery}`, { headers: { Accept: 'application/json' } });
+      if (!r.ok) continue;
+      const d = await r.json().catch(() => null);
+      collectEmailsDeep(d, found);
+    } catch (_) {}
+  }
+  return Array.from(found);
+}
+
+app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return res.status(500).json({ error: 'Resend is not configured on server' });
+
+    const senderName = String(req.body?.senderName || '').trim();
+    const subject = String(req.body?.subject || '').trim();
+    const preheader = String(req.body?.preheader || '').trim();
+    const intro = String(req.body?.intro || '').trim();
+    const message = String(req.body?.message || '').trim();
+    if (!senderName || !subject || !message) return res.status(400).json({ error: 'senderName, subject and message are required' });
+
+    const records = isDbReady() ? await User.find({}).select('email').lean() : (localAuth.users || []);
+    const dbEmails = records.map(u => String(u?.email || '').trim().toLowerCase()).filter(Boolean);
+    const firebaseEmails = await collectFirebaseIndexedEmails();
+    const recipients = Array.from(new Set([...dbEmails, ...firebaseEmails]));
+    if (!recipients.length) return res.status(400).json({ error: 'No users found to receive email' });
+
+    const logoUrl = 'https://raw.githubusercontent.com/joygood123/Url/refs/heads/main/favicon_256.png';
+    const safeMessage = message.replace(/\n/g, '<br>');
+    const html = `<!doctype html><html><body style="margin:0;padding:0;background:#f8fafc;font-family:Inter,Arial,sans-serif;color:#0f172a;">
+<div style="max-width:640px;margin:24px auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
+<div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;background:#020617;color:#e2e8f0;">
+<img src="${logoUrl}" alt="JOYTREE" width="36" height="36" style="border-radius:8px;vertical-align:middle;margin-right:10px;"><strong style="font-size:16px;vertical-align:middle;">JOYTREE</strong>
+</div><div style="padding:24px;">
+${intro ? `<p style="margin:0 0 14px;font-size:16px;">${intro}</p>` : ''}
+<div style="font-size:15px;line-height:1.7;color:#1e293b;">${safeMessage}</div>
+<p style="margin:22px 0 0;font-size:14px;color:#475569;">— ${senderName}<br>JOYTREE Team</p>
+</div></div>
+<div style="max-width:640px;margin:0 auto 20px;padding:0 10px;color:#64748b;font-size:12px;text-align:center;">${preheader || 'You received this update because you are a JOYTREE user.'}</div>
+</body></html>`;
+
+    let sent = 0; let failed = 0;
+    for (const to of recipients) {
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: RESEND_FROM_EMAIL, to: [to], subject, html, text: `${intro ? intro + '\n\n' : ''}${message}\n\n— ${senderName}\nJOYTREE Team` })
+      });
+      if (r.ok) sent += 1; else failed += 1;
+    }
+    res.json({ ok: true, sent, failed, total: recipients.length });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not broadcast email' });
+  }
+});
+
 function normalizeGitHubClientId(value) {
   return String(value || '').trim();
 }
