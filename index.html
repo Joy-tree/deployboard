@@ -3584,6 +3584,11 @@ textarea.input { resize: vertical; min-height: 80px; }
 .auth-github-text strong { font-size:.95rem;font-weight:800; }
 .auth-github-text span { font-size:.65rem;color:#8b949e;font-weight:500;margin-top:2px;letter-spacing:.04em; }
 
+.auth-github.loading { opacity:.78; cursor:wait; pointer-events:none; }
+.auth-github-spinner { width:16px;height:16px;border:2px solid rgba(240,246,252,.35);border-top-color:#f0f6fc;border-radius:50%;animation:dpSpin .7s linear infinite;display:none;flex-shrink:0; }
+.auth-github.loading .auth-github-spinner { display:inline-block; }
+.auth-github.loading .auth-github-icon { display:none; }
+
 /* Trust badges */
 .auth-trust {
   display:flex;align-items:center;justify-content:center;gap:16px;
@@ -4378,7 +4383,8 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       <div class="auth-divider">or continue with</div>
 
       <!-- GitHub -->
-      <button class="auth-github" onclick="continueWithGitHub()">
+      <button class="auth-github" id="authGithubBtn" onclick="continueWithGitHub()">
+        <span class="auth-github-spinner" aria-hidden="true"></span>
         <svg class="auth-github-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.6-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.8 1.4 3.5 1.1.1-.8.4-1.4.8-1.8-2.7-.3-5.5-1.4-5.5-6a4.7 4.7 0 0 1 1.2-3.2 4.3 4.3 0 0 1 .1-3.1s1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.6 5.5 18.6 5.8 18.6 5.8a4.3 4.3 0 0 1 .1 3.1 4.7 4.7 0 0 1 1.2 3.2c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>
         <div class="auth-github-text">
           <strong>Continue with GitHub</strong>
@@ -5585,7 +5591,6 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <div class="nav-item" data-page="databases" onclick="showPage('databases',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
       Databases
-      <span style="font-size:0.55rem;background:rgba(6,182,212,0.15);color:#22d3ee;border:1px solid rgba(6,182,212,0.25);border-radius:4px;padding:1px 5px;margin-left:auto;">LIVE</span>
     </div>
     <div class="nav-item" data-page="db-query" onclick="showPage('db-query',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
@@ -5608,7 +5613,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <div class="nav-item" data-page="team" onclick="showPage('team',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Team
-      <span style="font-size:0.55rem;background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.2);border-radius:4px;padding:1px 5px;margin-left:auto;">NEW</span>
+    </div>
+    <div class="nav-item" data-page="pricing" onclick="showPage('pricing',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Pricing
     </div>
     <div class="nav-item" data-page="usage" onclick="showPage('usage',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -5647,7 +5655,6 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <div class="nav-item" data-page="forum" onclick="showPage('forum',this)" style="background:linear-gradient(90deg,rgba(34,197,94,0.08),transparent);border:1px solid rgba(34,197,94,0.18);color:#34d399;font-weight:600;">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Community
-      <span class="nav-badge green" style="font-size:0.55rem;padding:1px 5px;">NEW</span>
     </div>
     <div class="nav-item logout-item" onclick="openLogoutModal()">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -6482,7 +6489,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         <!-- Starter -->
         <div class="px-plan">
           <div class="px-plan-name">Starter</div>
-          <div class="px-plan-price"><sup>₵</sup>1<sub>/mo</sub></div>
+          <div class="px-plan-price"><sup>₵</sup>20<sub>/mo</sub></div>
           <div class="px-plan-desc">A dedicated environment for early-stage apps and experiments.</div>
           <ul class="px-features">
             <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>1 GB app RAM · 1GB DB memory cap</li>
@@ -7669,13 +7676,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
   white-space:pre-wrap;word-break:break-all;
 }
 /* Detail view */
-.db-detail-back{
-  display:inline-flex;align-items:center;gap:7px;color:var(--text-2);font-size:.82rem;
-  font-weight:600;cursor:pointer;margin-bottom:24px;padding:6px 12px;
-  border:1px solid rgba(255,255,255,.08);border-radius:8px;background:none;
-  transition:all .15s;
-}
-.db-detail-back:hover{color:var(--primary);border-color:rgba(16,185,129,.3);}
+
 .db-detail-grid{display:grid;grid-template-columns:2fr 1fr;gap:18px;}
 .db-detail-card{background:#111;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:20px;}
 .db-detail-card-title{font-weight:700;font-size:.82rem;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.06em;}
@@ -9699,7 +9700,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
     <!-- ════════ DB DETAIL PAGE ════════ -->
     <div class="page" id="page-db-detail">
-      <button class="db-detail-back" onclick="showPage('databases')">
+      <button class="page-back" onclick="showPage('databases')">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
         Back to Databases
       </button>
@@ -9708,6 +9709,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
     <!-- ════════ DB EDITOR PAGE ════════ -->
     <div class="page" id="page-db-editor">
+      <button class="page-back" onclick="showPage('databases')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Databases</button>
       <div style="margin-bottom:20px;">
         <div style="font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#22d3ee;margin-bottom:6px;">Visual Data Studio</div>
         <div style="font-family:var(--font-hd);font-weight:800;font-size:clamp(1.4rem,3vw,1.9rem);color:var(--text);">Data Studio</div>
@@ -9781,6 +9783,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     </div>
 
     <div class="page" id="page-db-query">
+      <button class="page-back" onclick="showPage('databases')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Databases</button>
       <div class="db-studio-page">
 
         <!-- Hero Header — site standard -->
@@ -9795,7 +9798,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
                 Create Table
               </button>
-              <button class="btn btn-ghost" onclick="showPage('databases')" style="gap:7px;font-size:.86rem;padding:9px 16px;">← Back</button>
+              
             </div>
           </div>
         </div>
@@ -10015,6 +10018,16 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               </div>
               <div id="ctColumnRows"></div>
             </div>
+            <div style="margin-bottom:12px;">
+              <div class="qstudio-ct-cols-head">
+                <div class="qstudio-ct-cols-title">Rows (optional seed data)</div>
+                <button class="qstudio-btn" onclick="addCreateTableRow()" style="font-size:.7rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add Row
+                </button>
+              </div>
+              <div id="ctRowRows"></div>
+            </div>
             <div class="qstudio-ct-field">
               <div class="qstudio-ct-label">SQL Preview</div>
               <div class="qstudio-ct-preview" id="ctSqlPreview">-- Define table name and columns above</div>
@@ -10087,6 +10100,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>
 
     <div class="page" id="page-db-schema">
+      <button class="page-back" onclick="showPage('databases')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Databases</button>
       <div class="schema-page-wrap">
 
         <!-- ── Hero Header — dashboard style ── -->
@@ -10098,10 +10112,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="hero-status-pill">Schema engine ready</div>
           </div>
           <div class="app-hero-actions">
-            <button class="btn btn-ghost" onclick="showPage('databases')" style="gap:7px;font-size:.84rem;padding:9px 16px;">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><polyline points="15 18 9 12 15 6"/></svg>
-              Back
-            </button>
+            
             <button class="btn btn-primary" onclick="showPage('db-query')" style="gap:7px;font-size:.84rem;padding:9px 16px;">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
               Query Studio
@@ -10180,6 +10191,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     </div>
 
     <div class="page" id="page-db-sdk">
+      <button class="page-back" onclick="showPage('databases')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Databases</button>
       <style>
       /* ═══════════════════════════════════════════════════════════
          SDK STUDIO — COMPLETE REDESIGN
@@ -10976,10 +10988,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="hero-status-pill">SDK generator ready</div>
           </div>
           <div class="app-hero-actions">
-            <button class="btn btn-ghost" onclick="showPage('databases')" style="font-size:.84rem;padding:9px 16px;gap:7px;">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><polyline points="15 18 9 12 15 6"/></svg>
-              Databases
-            </button>
+            
             <button class="btn btn-primary" onclick="sdkCopyAll()" style="font-size:.84rem;padding:9px 18px;gap:7px;">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
               Copy All
@@ -12831,7 +12840,45 @@ const PLAN_LIMITS = {
   growth:  { label:'Growth', ramGb:5, maxProjects:35, maxDatabases:50, maxApis:150, dbMemoryGb:5, monthlyDeployments:500, maxCustomDomains:30, monthlyBuildSeconds:12000, monthlyBandwidthGb:1024, description:'5 GB app RAM · 5GB DB memory cap for growing production workloads.' },
   scale:   { label:'Scale Max', ramGb:16, maxProjects:120, maxDatabases:200, maxApis:500, dbMemoryGb:16, monthlyDeployments:2000, maxCustomDomains:120, monthlyBuildSeconds:60000, monthlyBandwidthGb:8192, description:'High-capacity plan for large teams and heavy traffic.' }
 };
-const PLAN_PRICES_GHS = { free: 0, starter: 1, pro: 30, growth: 60, scale: 180 };
+const PLAN_PRICES_GHS = { free: 0, starter: 20, pro: 30, growth: 60, scale: 180 };
+const CHECKOUT_PLAN_FEATURES = {
+  starter: [
+    '1 GB app RAM · 1GB DB memory cap',
+    '1 vCPU',
+    '20 GB storage',
+    '250 GB bandwidth',
+    'Up to 10 projects · 8 databases · 20 APIs',
+    'Priority build queue',
+    'Joytree AI v2 — Dual-engine with auto-failover, ideal for large & complex API generation'
+  ],
+  pro: [
+    '2 GB app RAM · 2GB DB memory cap',
+    '2 vCPU',
+    '35 GB storage',
+    '500 GB bandwidth',
+    'Up to 20 projects · 20 databases · 60 APIs',
+    'Priority support',
+    'Joytree AI v2 — Dual-engine with auto-failover, ideal for large & complex API generation'
+  ],
+  growth: [
+    '5 GB app RAM · 5GB DB memory cap',
+    '4 vCPU',
+    '80 GB storage',
+    '1 TB bandwidth',
+    'Up to 35 projects · 50 databases · 150 APIs',
+    'Dedicated support channel',
+    'Joytree AI v2 — Dual-engine with auto-failover, ideal for large & complex API generation'
+  ],
+  scale: [
+    '16 GB app RAM · 16GB DB memory cap',
+    '8 vCPU',
+    '200 GB storage',
+    '8 TB bandwidth',
+    'Up to 120 projects · 200 databases · 500 APIs',
+    'Enterprise support + architecture guidance',
+    'Joytree AI v2 — Dual-engine with auto-failover, ideal for large & complex API generation'
+  ]
+};
 let PAYSTACK_PUBLIC_KEY = '';
 let pendingCheckoutPlan = 'starter';
 let _paystackConfigLoaded = false;
@@ -12897,12 +12944,10 @@ function choosePlan(planKey) {
   if (nameEl) nameEl.textContent = plan.label;
   if (priceEl) priceEl.textContent = `₵${price}/mo`;
   if (descEl) descEl.textContent = plan.description;
-  const feats = [
-    `${plan.ramGb} GB RAM`,
+  const feats = CHECKOUT_PLAN_FEATURES[key] || [
+    `${plan.ramGb} GB app RAM`,
     `Up to ${plan.maxProjects} projects`,
-    `${plan.monthlyBandwidthGb >= 1024 ? (plan.monthlyBandwidthGb/1024)+'TB' : plan.monthlyBandwidthGb+'GB'} bandwidth`,
-    `${plan.maxCustomDomains} custom domain${plan.maxCustomDomains>1?'s':''}`,
-    `${plan.monthlyDeployments} deploys/month`
+    `${plan.monthlyBandwidthGb >= 1024 ? (plan.monthlyBandwidthGb/1024)+'TB' : plan.monthlyBandwidthGb+'GB'} bandwidth`
   ];
   if (featEl) featEl.innerHTML = feats.map(f=>`<div class="co-sum-feat"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>${f}</div>`).join('');
   if (totalEl) totalEl.textContent = `₵${price}/month`;
@@ -13407,7 +13452,7 @@ function showPage(id, navEl, _skipPush) {
   if (id === 'forum')         { /* static page, no render fn needed */ }
   if (id === 'databases')     renderDatabasesPage();
   if (id === 'db-editor')     renderDbEditorPage();
-  if (id === 'db-query')      { renderDbEditorDbList(); ensureEditorSelection(); updateQStudioDbBar(); renderQueryTemplates(); renderQueryHistory(); renderQStudioSchemaQuick(); _ctColumns=[{name:'id',type:'SERIAL',notNull:true,pk:true},{name:'created_at',type:'TIMESTAMP',notNull:true,pk:false}]; setTimeout(initQueryTextareaAutoGrow,200); }
+  if (id === 'db-query')      { renderDbEditorDbList(); ensureEditorSelection(); updateQStudioDbBar(); renderQueryTemplates(); renderQueryHistory(); renderQStudioSchemaQuick(); _ctColumns=[{name:'id',type:'SERIAL',notNull:true,pk:true},{name:'created_at',type:'TIMESTAMP',notNull:true,pk:false}]; _ctRows=[]; setTimeout(initQueryTextareaAutoGrow,200); }
   if (id === 'db-schema')     { renderDbEditorDbList(); ensureEditorSelection(); updateEditorSchemaPanel(); }
   if (id === 'db-sdk')        { renderDbEditorDbList(); ensureEditorSelection(); updateEditorSdkPanel(); }
   if (id === 'db-create')     renderDbCreatePage();
@@ -16244,6 +16289,7 @@ function statusBadge(status) {
 // ══════════════════════════════════════════════════════════════════
 (async function() {
   showBootLoader('Loading');
+  let preferPricingAfterAuth = false;
   try {
     const params = new URLSearchParams(window.location.search);
     const ghCode = params.get('code');
@@ -16273,6 +16319,7 @@ function statusBadge(status) {
         } else {
           toast('GitHub account connected successfully', 'success');
         }
+        preferPricingAfterAuth = true;
       } else {
         toast(d.error || 'GitHub sign-in failed. Please try again.', 'error');
       }
@@ -16282,7 +16329,7 @@ function statusBadge(status) {
   }
   const ok = await Promise.race([bootstrapSession(), new Promise(resolve => setTimeout(() => resolve(false), 7000))]);
   if (ok) {
-    showDashboard();
+    showDashboard(preferPricingAfterAuth ? 'pricing' : 'dashboard');
   } else if (hasAuthToken()) {
     // Fallback: keep signed-in users in app even if /api/auth/me is temporarily unreachable
     showDashboard();
@@ -16385,7 +16432,7 @@ async function submitAuth(){
       localStorage.setItem('db_auth_token', d.token);
       applyUserProfile(d.user || null);
       toast('Welcome! Account ready.', 'success');
-      showDashboard();
+      showDashboard('pricing');
     } else throw new Error('Authentication failed');
     resetTurnstileToken();
   } catch (e) {
@@ -16426,7 +16473,7 @@ async function submitEmailVerification(){
   const page = document.getElementById('verifyEmailPage');
   if (page) page.style.display = 'none';
   toast('Email verified. Welcome to JOYTREE.', 'success');
-  showDashboard();
+  showDashboard('pricing');
 }
 function normalizeGitHubAuthorizeUrl(rawUrl) {
   const input = String(rawUrl || '').trim();
@@ -16442,6 +16489,12 @@ function normalizeGitHubAuthorizeUrl(rawUrl) {
 }
 
 function continueWithGitHub() {
+  const githubBtn = document.getElementById('authGithubBtn');
+  if (githubBtn?.disabled) return;
+  if (githubBtn) {
+    githubBtn.disabled = true;
+    githubBtn.classList.add('loading');
+  }
   fetch('/api/auth/github/url')
     .then(async (r) => {
       const raw = await r.text();
@@ -16465,7 +16518,13 @@ function continueWithGitHub() {
       }
       window.location.assign(authUrl);
     })
-    .catch((e) => toast(e.message || 'GitHub login failed', 'error'));
+    .catch((e) => {
+      if (githubBtn) {
+        githubBtn.disabled = false;
+        githubBtn.classList.remove('loading');
+      }
+      toast(e.message || 'GitHub login failed', 'error');
+    });
 }
 function showAuthPage() {
   document.documentElement.classList.remove('app-mode');
@@ -16499,7 +16558,7 @@ function confirmLogout() {
 // ══════════════════════════════════════════════════════════════════
 // VIEW SWITCHING — landing ↔ dashboard
 // ══════════════════════════════════════════════════════════════════
-function showDashboard() {
+function showDashboard(defaultPage = 'dashboard') {
   if (!hasAuthToken()) {
     showAuthPage();
     return;
@@ -16536,15 +16595,18 @@ function showDashboard() {
 
     // ── Restore page from URL on first load ──────────────────────
     const initialPage = pathToPage(window.location.pathname);
-    if (initialPage && initialPage !== 'dashboard') {
-      showPage(initialPage, null, true /* skipPush - URL already correct */);
+    const targetPage = (initialPage && initialPage !== 'dashboard') ? initialPage : defaultPage;
+    if (targetPage && targetPage !== 'dashboard') {
+      showPage(targetPage, null, !!initialPage /* skipPush when URL already points to a page */);
     } else {
       window.history.replaceState({ page: 'dashboard' }, '', pageToPath('dashboard'));
     }
 
     // ── Sync real projects/deployments from server so reloads do not lose deployments
     syncServerStateFromApi({ persist: true, render: true });
+    return;
   }
+  if (defaultPage && defaultPage !== 'dashboard') showPage(defaultPage);
 }
 
 
@@ -20391,6 +20453,7 @@ let _qstudioSavedQueries = JSON.parse(localStorage.getItem('jt_saved_queries') |
 let _ctColumns = [];
 let _aiQueryLastResult = '';
 let _aiQueryConversation = [];
+let _ctRows = [];
 
 // ── Dropdown: Database Access ─────────────────────────────────────
 function toggleQStudioDbDropdown(){
@@ -20773,8 +20836,10 @@ function openCreateTableModal(){
     { name:'id', type:'SERIAL', notNull:true, pk:true },
     { name:'created_at', type:'TIMESTAMP', notNull:true, pk:false },
   ];
+  _ctRows = [];
   document.getElementById('ctTableName').value = '';
   renderCtColumns();
+  renderCtRows();
   updateCreateTablePreview();
   document.getElementById('createTableModal').classList.add('open');
   document.documentElement.classList.add('modal-open');
@@ -20789,11 +20854,13 @@ function closeCreateTableModal(){
 function addCreateTableColumn(){
   _ctColumns.push({ name:'', type:'TEXT', notNull:false, pk:false });
   renderCtColumns();
+  renderCtRows();
   updateCreateTablePreview();
 }
 function removeCtColumn(i){
   _ctColumns.splice(i,1);
   renderCtColumns();
+  renderCtRows();
   updateCreateTablePreview();
 }
 function updateCtColumn(i, field, value){
@@ -20824,6 +20891,15 @@ function renderCtColumns(){
     </div>`).join('');
 }
 
+function renderCtRows(){
+  const wrap = document.getElementById('ctRowRows');
+  if (!wrap) return;
+  const cols = _ctColumns.map(c=>String(c.name||'').trim()).filter(Boolean);
+  if (!cols.length) { wrap.innerHTML = '<div style="font-size:.72rem;color:#64748b;padding:8px 2px;">Add at least one named column before adding rows.</div>'; return; }
+  if (!_ctRows.length) { wrap.innerHTML = '<div style="font-size:.72rem;color:#64748b;padding:8px 2px;">No rows added yet.</div>'; return; }
+  wrap.innerHTML = _ctRows.map((row,ri)=>`<div style="display:grid;grid-template-columns:1fr 30px;gap:6px;margin-bottom:8px;align-items:start;"><div style="display:grid;grid-template-columns:repeat(${cols.length},minmax(110px,1fr));gap:6px;">${cols.map(c=>`<input class="qstudio-ct-input" placeholder="${c}" value="${String(row[c]??'').replace(/"/g,'&quot;')}" oninput="updateCtRow(${ri},'${c.replace(/'/g,\"\'\")}',this.value)" style="padding:7px 10px;">`).join('')}</div><button class="qstudio-ct-col-del" onclick="removeCtRow(${ri})">✕</button></div>`).join('');
+}
+
 function buildCreateTableSql(){
   const tbl = (document.getElementById('ctTableName')||{}).value?.trim() || 'new_table';
   const colDefs = _ctColumns.filter(c=>c.name.trim()).map(c=>{
@@ -20833,7 +20909,14 @@ function buildCreateTableSql(){
     return def;
   });
   if (!colDefs.length) colDefs.push('  id SERIAL PRIMARY KEY');
-  return `CREATE TABLE IF NOT EXISTS ${tbl} (\n${colDefs.join(',\n')}\n);`;
+  const createSql = `CREATE TABLE IF NOT EXISTS ${tbl} (\n${colDefs.join(',\n')}\n);`;
+  const cols = _ctColumns.map(c=>String(c.name||'').trim()).filter(Boolean);
+  if (!cols.length || !_ctRows.length) return createSql;
+  const inserts = _ctRows.map(r => {
+    const values = cols.map(c => { const v = r[c]; if (v === '' || v === null || v === undefined) return 'NULL'; return `'${String(v).replace(/'/g, "''")}'`; });
+    return `INSERT INTO ${tbl} (${cols.join(', ')}) VALUES (${values.join(', ')});`;
+  });
+  return [createSql, ...inserts].join('\n');
 }
 
 function updateCreateTablePreview(){
@@ -20847,11 +20930,38 @@ async function copyCreateTableSql(){
 }
 
 async function executeCreateTable(){
-  const sql = buildCreateTableSql();
   if (!_editorSelectedDb) return toast('Select a database first','error');
-  const q = document.getElementById('dbQueryInput');
-  if (q) q.value = sql;
+  const tbl = (document.getElementById('ctTableName')||{}).value?.trim() || 'new_table';
+  const cols = _ctColumns.map(c=>String(c.name||'').trim()).filter(Boolean);
+  const createOnlySql = (() => {
+    const colDefs = _ctColumns.filter(c=>c.name.trim()).map(c=>{
+      let def = `  ${c.name} ${c.type}`;
+      if (c.pk) def += ' PRIMARY KEY';
+      else if (c.notNull) def += ' NOT NULL';
+      return def;
+    });
+    if (!colDefs.length) colDefs.push('  id SERIAL PRIMARY KEY');
+    return `CREATE TABLE IF NOT EXISTS ${tbl} (
+${colDefs.join(',
+')}
+);`;
+  })();
+  const createResp = await apiFetch(`/api/databases/${_editorSelectedDb.id}/query`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ query: createOnlySql })});
+  const createData = await createResp.json().catch(()=>({}));
+  if (!createResp.ok) return toast(createData.error || 'Create table failed','error');
+
+  let inserted = 0;
+  for (const r of _ctRows) {
+    if (!cols.length) break;
+    const values = cols.map(c => { const v=r[c]; if (v === '' || v === null || v === undefined) return 'NULL'; return `'${String(v).replace(/'/g, "''")}'`; });
+    const q = `INSERT INTO ${tbl} (${cols.join(', ')}) VALUES (${values.join(', ')});`;
+    const rr = await apiFetch(`/api/databases/${_editorSelectedDb.id}/query`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ query: q })});
+    if (rr.ok) inserted++;
+  }
   closeCreateTableModal();
+  toast(`Table created${inserted ? ` + ${inserted} row(s) inserted` : ''}.`, 'success');
+  const qBox = document.getElementById('dbQueryInput');
+  if (qBox) qBox.value = `SELECT * FROM ${tbl} LIMIT 50;`;
   await runEditorQuery(true);
 }
 
@@ -21267,8 +21377,14 @@ async function showApiDetail(flowId) {
   const fullEndpoint = window.location.origin + (a.endpoint || `/api/live/${a.flowId}`);
   const createdAt = a.createdAt ? new Date(a.createdAt).toLocaleString() : '—';
   const updatedAt = a.updatedAt ? new Date(a.updatedAt).toLocaleString() : '—';
-  const questions = Array.isArray(a.quizQuestions) ? a.quizQuestions : [];
   const aiData = Array.isArray(a.aiData) ? a.aiData : [];
+  const questions = (() => {
+    if (Array.isArray(a.quizQuestions) && a.quizQuestions.length) return a.quizQuestions;
+    if (Array.isArray(a.seededQuestions) && a.seededQuestions.length) return a.seededQuestions;
+    if (Array.isArray(a.seedQuestions) && a.seedQuestions.length) return a.seedQuestions;
+    const fromAiData = aiData.filter(item => item && (item.question || item.answer));
+    return fromAiData;
+  })();
   const logs = Array.isArray(a.recentLogs) ? a.recentLogs : [];
 
   wrap.innerHTML = `
