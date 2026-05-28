@@ -1,0 +1,105 @@
+# Joytree API v3 VPS setup commands
+# Status from screenshots:
+# - Model download worked: wget saved qwen2.5-3b-instruct-q4_k_m.gguf to /opt/joytree-ai/models.
+# - llama.cpp worked: docker ps showed joytree-llama Up/healthy and curl /v1/chat/completions returned OK.
+# - Joytree app rebuild worked: docker compose showed deployboard, deployboard-mongo, and deployboard-app running.
+# - SearXNG container downloaded/started, but the first curl test returned "connection reset by peer"; wait and retry the test.
+
+# 1) Go to the Joytree app folder
+cd ~/deployboard
+
+# 1b) Make sure the Docker Compose network exists.
+# The app container must reach joytree-llama by container name, not 127.0.0.1.
+docker compose up -d mongo app || true
+
+# 2) Create the model folder
+mkdir -p /opt/joytree-ai/models
+
+# 3) Install wget if needed
+apt update
+apt install -y wget
+
+# 4) Download the Qwen GGUF model
+wget -c -O /opt/joytree-ai/models/qwen2.5-3b-instruct-q4_k_m.gguf 'https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/resolve/main/qwen2.5-3b-instruct-q4_k_m.gguf?download=true'
+
+# 5) Confirm the model file exists
+ls -lh /opt/joytree-ai/models
+
+# 6) Remove any old llama.cpp container
+docker rm -f joytree-llama 2>/dev/null || true
+
+# 7) Start llama.cpp OpenAI-compatible server.
+# Important: attach it to deployboard's Docker network so the deployboard app
+# container can call http://joytree-llama:8080.
+docker run -d \
+  --name joytree-llama \
+  --restart unless-stopped \
+  --network deployboard_deployboard-net \
+  -p 127.0.0.1:8080:8080 \
+  -v /opt/joytree-ai/models:/models \
+  ghcr.io/ggml-org/llama.cpp:server \
+  -m /models/qwen2.5-3b-instruct-q4_k_m.gguf \
+  -c 8192 \
+  --host 0.0.0.0 \
+  --port 8080
+
+# 8) Verify llama.cpp is running
+docker ps | grep joytree-llama
+docker logs --tail=80 joytree-llama
+
+# 9) Test the local AI endpoint; expected response contains "OK"
+curl http://127.0.0.1:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"local-llama","messages":[{"role":"user","content":"Say only OK"}],"max_tokens":20}'
+
+# 10) Optional web-search helper: start SearXNG.
+# It also joins deployboard_deployboard-net so the app container can call
+# http://joytree-searxng:8080.
+docker rm -f joytree-searxng 2>/dev/null || true
+
+docker run -d \
+  --name joytree-searxng \
+  --restart unless-stopped \
+  --network deployboard_deployboard-net \
+  -p 127.0.0.1:8888:8080 \
+  searxng/searxng:latest
+
+# 11) Verify SearXNG. If you get "connection reset by peer", wait 30-60 seconds and run it again.
+docker ps | grep joytree-searxng
+docker logs --tail=80 joytree-searxng
+curl "http://127.0.0.1:8888/search?q=test&format=json"
+
+# 12) Add Joytree API v3 environment variables to .env if they are not already there
+cat <<'EOF_ENV' >> .env
+
+# Joytree API v3 local llama.cpp server
+JOYTREE_V3_ADMIN_EMAIL=projectvpn89@gmail.com
+LLAMA_CPP_BASE_URL=http://joytree-llama:8080
+LLAMA_CPP_MODEL=local-llama
+LLAMA_CPP_API_KEY=
+LLAMA_CPP_FLOW_MAX_TOKENS=8192
+LLAMA_CPP_CHUNK_MAX_TOKENS=4096
+LLAMA_CPP_FLOW_TIMEOUT_MS=600000
+LLAMA_CPP_CHUNK_TIMEOUT_MS=600000
+
+# Joytree API v3 optional local web search
+JOYTREE_WEB_SEARCH_ENABLED=true
+JOYTREE_WEB_SEARCH_URL=http://joytree-searxng:8080
+EOF_ENV
+
+# 13) Rebuild/restart Joytree with Docker Compose
+docker compose up -d --build
+
+# 14) Confirm Joytree containers are running
+docker compose ps
+
+# 15) Re-test the local AI from the VPS host; expected response contains "OK"
+curl http://127.0.0.1:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"local-llama","messages":[{"role":"user","content":"Say only OK"}],"max_tokens":20}'
+
+# 16) Re-test the local AI from inside the deployboard app container.
+# This is the test that proves Joytree API v3 can reach llama.cpp.
+docker exec deployboard curl -s http://joytree-llama:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"local-llama","messages":[{"role":"user","content":"Say only OK"}],"max_tokens":20}'
