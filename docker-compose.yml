@@ -30,6 +30,17 @@ services:
       - FIREBASE_MEASUREMENT_ID=${FIREBASE_MEASUREMENT_ID:-}
       - FIREBASE_RTDB_URL=${FIREBASE_RTDB_URL:-}
       - FIREBASE_RTDB_SECRET=${FIREBASE_RTDB_SECRET:-}
+      # Joytree API v3 local AI server settings
+      - JOYTREE_V3_ADMIN_EMAIL=${JOYTREE_V3_ADMIN_EMAIL:-projectvpn89@gmail.com}
+      - LLAMA_CPP_BASE_URL=${LLAMA_CPP_BASE_URL:-http://joytree-llama:8080}
+      - LLAMA_CPP_MODEL=${LLAMA_CPP_MODEL:-local-llama}
+      - LLAMA_CPP_API_KEY=${LLAMA_CPP_API_KEY:-}
+      - LLAMA_CPP_FLOW_MAX_TOKENS=${LLAMA_CPP_FLOW_MAX_TOKENS:-8192}
+      - LLAMA_CPP_CHUNK_MAX_TOKENS=${LLAMA_CPP_CHUNK_MAX_TOKENS:-4096}
+      - LLAMA_CPP_FLOW_TIMEOUT_MS=${LLAMA_CPP_FLOW_TIMEOUT_MS:-600000}
+      - LLAMA_CPP_CHUNK_TIMEOUT_MS=${LLAMA_CPP_CHUNK_TIMEOUT_MS:-600000}
+      - JOYTREE_WEB_SEARCH_ENABLED=${JOYTREE_WEB_SEARCH_ENABLED:-true}
+      - JOYTREE_WEB_SEARCH_URL=${JOYTREE_WEB_SEARCH_URL:-http://joytree-searxng:8080}
     volumes:
       - sites-data:/var/www/user-sites
       - /tmp/deployboard-builds:/tmp/deployboard-builds
