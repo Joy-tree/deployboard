@@ -69,6 +69,17 @@ const GROQ_MODEL = String(process.env.GROQ_MODEL || 'llama-3.3-70b-versatile').t
 // xAI (Grok) — secondary AI provider for fallback and Joy AI v2
 const XAI_API_KEY  = String(process.env.XAI_API_KEY  || process.env.XAI_API_KEY_1  || '').trim();
 const XAI_MODEL    = String(process.env.XAI_MODEL    || 'grok-3-mini').trim();
+// Joytree API v3 — private local llama.cpp/OpenAI-compatible server for admin-only high-volume generation
+const JOYTREE_V3_ADMIN_EMAIL = String(process.env.JOYTREE_V3_ADMIN_EMAIL || 'projectvpn89@gmail.com').trim().toLowerCase();
+const LLAMA_CPP_BASE_URL = String(process.env.LLAMA_CPP_BASE_URL || process.env.LOCAL_AI_BASE_URL || 'http://127.0.0.1:8080').trim().replace(/\/+$/, '');
+const LLAMA_CPP_API_KEY = String(process.env.LLAMA_CPP_API_KEY || process.env.LOCAL_AI_API_KEY || '').trim();
+const LLAMA_CPP_MODEL = String(process.env.LLAMA_CPP_MODEL || process.env.LOCAL_AI_MODEL || 'local-llama').trim();
+const LLAMA_CPP_FLOW_TIMEOUT_MS = Number(process.env.LLAMA_CPP_FLOW_TIMEOUT_MS || 600000);
+const LLAMA_CPP_CHUNK_TIMEOUT_MS = Number(process.env.LLAMA_CPP_CHUNK_TIMEOUT_MS || 600000);
+const LLAMA_CPP_FLOW_MAX_TOKENS = Number(process.env.LLAMA_CPP_FLOW_MAX_TOKENS || 8192);
+const LLAMA_CPP_CHUNK_MAX_TOKENS = Number(process.env.LLAMA_CPP_CHUNK_MAX_TOKENS || 4096);
+const JOYTREE_WEB_SEARCH_URL = String(process.env.JOYTREE_WEB_SEARCH_URL || '').trim().replace(/\/+$/, '');
+const JOYTREE_WEB_SEARCH_ENABLED = String(process.env.JOYTREE_WEB_SEARCH_ENABLED || 'true').toLowerCase() !== 'false';
 
 const authOtpStore = new Map();
 const deployStopRequests = new Set();
@@ -2129,7 +2140,7 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 
 function isRootEmailAdmin(user = {}) {
   const email = String(user?.email || '').trim().toLowerCase();
-  return email === 'projectvpn89@gmail.com';
+  return email === JOYTREE_V3_ADMIN_EMAIL;
 }
 
 function collectEmailsDeep(input, out = new Set()) {
@@ -3236,6 +3247,88 @@ function detectRequestedCount(prompt = '') {
   return m ? Math.min(Number(m[1]), 2000) : 0;
 }
 
+
+function wantsWebSearch(text = '') {
+  return /\b(web\s*search|search\s+the\s+web|google|latest|today|current|news|recent|202[5-9]|up\s*to\s*date)\b/i.test(String(text || ''));
+}
+
+async function fetchWebSearchContext(query = '') {
+  if (!JOYTREE_WEB_SEARCH_ENABLED) return '';
+  const q = String(query || '').replace(/https?:\/\/[^\s)]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500);
+  if (!q || !wantsWebSearch(q)) return '';
+  try {
+    if (JOYTREE_WEB_SEARCH_URL) {
+      const url = `${JOYTREE_WEB_SEARCH_URL}/search?q=${encodeURIComponent(q)}&format=json`;
+      const r = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': 'JoytreeAPI/3.0' }, signal: AbortSignal.timeout(12000) });
+      if (r.ok) {
+        const d = await r.json().catch(() => ({}));
+        const results = Array.isArray(d.results) ? d.results : [];
+        const lines = results.slice(0, 6).map((item, i) => {
+          const title = String(item.title || '').trim();
+          const url = String(item.url || item.pretty_url || '').trim();
+          const snippet = String(item.content || item.snippet || '').replace(/\s+/g, ' ').trim();
+          return `${i + 1}. ${title}${url ? ` (${url})` : ''}${snippet ? ` — ${snippet}` : ''}`;
+        }).filter(Boolean);
+        if (lines.length) return `WEB_SEARCH_RESULTS for "${q}":\n${lines.join('\n')}`;
+      }
+    }
+  } catch (e) {
+    console.warn('[Joytree Web Search] SearXNG search failed:', e.message);
+  }
+  try {
+    const r = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1&skip_disambig=1`, { headers: { Accept: 'application/json', 'User-Agent': 'JoytreeAPI/3.0' }, signal: AbortSignal.timeout(12000) });
+    if (!r.ok) return '';
+    const d = await r.json().catch(() => ({}));
+    const parts = [];
+    if (d.AbstractText) parts.push(`Summary: ${String(d.AbstractText).slice(0, 1200)}`);
+    if (Array.isArray(d.RelatedTopics)) {
+      for (const t of d.RelatedTopics.slice(0, 6)) {
+        if (t.Text) parts.push(`- ${String(t.Text).slice(0, 500)}${t.FirstURL ? ` (${t.FirstURL})` : ''}`);
+      }
+    }
+    return parts.length ? `WEB_SEARCH_RESULTS for "${q}":\n${parts.join('\n')}` : '';
+  } catch (e) {
+    console.warn('[Joytree Web Search] DuckDuckGo fallback failed:', e.message);
+    return '';
+  }
+}
+
+async function callOpenAICompatibleChat({ apiUrl, apiKey = '', model, messages, maxTokens = 1200, timeoutMs = 120000, temperature = 0.3, tokenField = 'max_tokens' } = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+    const body = { model, messages, temperature, top_p: 1, stream: false };
+    body[tokenField] = maxTokens;
+    const r = await fetch(apiUrl, { method: 'POST', signal: controller.signal, headers, body: JSON.stringify(body) });
+    if (!r.ok) {
+      const errText = await r.text().catch(() => '');
+      const errJson = (() => { try { return JSON.parse(errText); } catch { return null; } })();
+      const msg = errJson?.error?.message || errText.slice(0, 220) || `HTTP ${r.status}`;
+      throw new Error(`AI HTTP ${r.status}: ${msg}`);
+    }
+    const data = await r.json().catch(() => ({}));
+    return String(data?.choices?.[0]?.message?.content || data?.content || '');
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function callLlamaCppChat({ messages, maxTokens = LLAMA_CPP_FLOW_MAX_TOKENS, timeoutMs = LLAMA_CPP_FLOW_TIMEOUT_MS, temperature = 0.3 } = {}) {
+  if (!LLAMA_CPP_BASE_URL) throw new Error('LLAMA_CPP_BASE_URL is not configured.');
+  return callOpenAICompatibleChat({
+    apiUrl: `${LLAMA_CPP_BASE_URL}/v1/chat/completions`,
+    apiKey: LLAMA_CPP_API_KEY,
+    model: LLAMA_CPP_MODEL,
+    messages,
+    maxTokens,
+    timeoutMs,
+    temperature,
+    tokenField: 'max_tokens'
+  });
+}
+
 // Call AI to generate one chunk of questions and return the array
 async function generateQuestionChunk({ provider = 'groq', topic = '', count = 100, offset = 0, existing = [] } = {}) {
   const existingSample = existing.slice(-20).map(q => q.question).join('\n');
@@ -3276,6 +3369,21 @@ async function generateQuestionChunk({ provider = 'groq', topic = '', count = 10
     return JSON.parse(text.slice(s, e + 1));
   };
 
+  if (provider === 'local') {
+    const text = await callLlamaCppChat({
+      messages: [
+        { role: 'system', content: AI_CHUNK_INSTRUCTION },
+        { role: 'user', content: userMsg }
+      ],
+      temperature: 0.7,
+      maxTokens: LLAMA_CPP_CHUNK_MAX_TOKENS,
+      timeoutMs: LLAMA_CPP_CHUNK_TIMEOUT_MS
+    });
+    const s = text.indexOf('[');
+    const e = text.lastIndexOf(']');
+    if (s === -1 || e === -1 || e <= s) throw new Error('Local AI did not return a JSON array for this chunk.');
+    return JSON.parse(text.slice(s, e + 1));
+  }
   if (provider === 'xai' && XAI_API_KEY) {
     return callAI('https://api.x.ai/v1/chat/completions', XAI_API_KEY, XAI_MODEL, 2000, 120000);
   }
@@ -3317,7 +3425,7 @@ async function buildQuestionsInChunks({ prompt = '', total = 0, aiVersion = 'v1'
     let lastErr = null;
 
     // Determine provider: v2 tries Groq first, falls back to xAI per-chunk
-    const providers = aiVersion === 'v2' && XAI_API_KEY ? ['groq', 'xai'] : ['groq'];
+    const providers = aiVersion === 'v3' ? ['local'] : (aiVersion === 'v2' && XAI_API_KEY ? ['groq', 'xai'] : ['groq']);
 
     for (const provider of providers) {
       try {
@@ -3413,6 +3521,28 @@ async function buildFlowWithGroq({ prompt = '', sourceText = '', fileName = '' }
   }
 }
 
+async function buildFlowWithLlamaCpp({ prompt = '', sourceText = '', fileName = '' } = {}) {
+  const userInput = `PROMPT:\n${String(prompt || '').slice(0, 20000)}\n\nSOURCE_TEXT:\n${String(sourceText || '').slice(0, 20000)}\n\nFILE_NAME:\n${String(fileName || '').slice(0, 200)}`;
+  try {
+    const text = await callLlamaCppChat({
+      messages: [
+        { role: 'system', content: `${AI_FLOW_INSTRUCTION}\nJoytree API v3 runs on a private VPS local model. If WEB_SEARCH_RESULTS appear in SOURCE_TEXT, use them as current web context.` },
+        { role: 'user', content: userInput }
+      ],
+      temperature: 0.25,
+      maxTokens: LLAMA_CPP_FLOW_MAX_TOKENS,
+      timeoutMs: LLAMA_CPP_FLOW_TIMEOUT_MS
+    });
+    const parsed = extractJsonFromText(text);
+    if (!parsed) throw new Error('Local llama.cpp returned non-JSON output. Try rephrasing your prompt or use a stronger GGUF model.');
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('Local llama.cpp timed out. Increase LLAMA_CPP_FLOW_TIMEOUT_MS or reduce the prompt.');
+    console.error('[Joytree API v3] buildFlowWithLlamaCpp error:', e.message);
+    throw e;
+  }
+}
+
 async function buildFlowWithXAI({ prompt = '', sourceText = '', fileName = '' } = {}) {
   if (!XAI_API_KEY) throw new Error('xAI API key not configured. Add XAI_API_KEY to your server .env file.');
   const userInput = `PROMPT:\n${String(prompt || '').slice(0, 12000)}\n\nSOURCE_TEXT:\n${String(sourceText || '').slice(0, 8000)}\n\nFILE_NAME:\n${String(fileName || '').slice(0, 200)}`;
@@ -3454,6 +3584,12 @@ async function buildFlowWithXAI({ prompt = '', sourceText = '', fileName = '' } 
 }
 
 async function buildFlowWithAI({ prompt = '', sourceText = '', fileBase64 = '', fileMime = '', fileName = '', aiProvider = 'auto', aiVersion = 'v1' } = {}) {
+  // Joytree API v3 — private local llama.cpp/OpenAI-compatible server (admin only at route layer)
+  if (aiVersion === 'v3') {
+    const result = await buildFlowWithLlamaCpp({ prompt, sourceText, fileName });
+    if (result) return { ...result, _aiProvider: 'joytree_local', _aiModel: 'Joytree API v3' };
+    throw new Error('Joytree API v3 returned an empty response. Check your local llama.cpp server and model.');
+  }
   // Joy AI v1 — Groq only (fails if Groq fails)
   if (aiVersion === 'v1') {
     if (!GROQ_API_KEY) throw new Error('Joytree AI is not configured. Add GROQ_API_KEY to your server .env file and restart.');
@@ -3584,12 +3720,18 @@ app.post('/api/developer/database/clear', requireAuth, (req, res) => {
 app.get('/api/developer/logs', requireAuth, (req, res) => res.json({ logs: executionLogs.slice(0, 500) }));
 
 app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
-  // Hard 300s server-side timeout — chunked 500-question generation needs time
+  const initialAiVersion = String(req.body?.aiVersion || 'v1').toLowerCase();
+  const routeTimeoutMs = initialAiVersion === 'v3' ? LLAMA_CPP_FLOW_TIMEOUT_MS : 300000;
+  // v1/v2 get 300s; v3 can run longer on the private local llama.cpp server.
   const reqTimeout = setTimeout(() => {
-    if (!res.headersSent) res.status(504).json({ error: 'Request timed out after 300s. Try a shorter prompt or split into smaller batches.' });
-  }, 300000);
+    if (!res.headersSent) res.status(504).json({ error: `Request timed out after ${Math.round(routeTimeoutMs / 1000)}s. Try a shorter prompt or split into smaller batches.` });
+  }, routeTimeoutMs);
   (async () => {
   const { prompt, routePath = '/quiz', method = 'POST', sourceText = '', fileBase64 = '', fileMime = '', fileName = '', aiProvider = 'auto', aiVersion = 'v1', socketId = '' } = req.body || {};
+  const selectedAiVersion = String(aiVersion || 'v1').toLowerCase();
+  if (selectedAiVersion === 'v3' && !isRootEmailAdmin(req.user)) {
+    return res.status(403).json({ error: 'Joytree API v3 is reserved for the platform admin. Upgrade your plan to unlock high-volume AI API generation with longer local runs and web context.' });
+  }
   const userPlanKey = await getUserPlanKey(req.user);
   const planLimits = PLAN_DB_API_LIMITS[userPlanKey] || PLAN_DB_API_LIMITS.free;
   const ownerUserId = String(req.user?._id || req.user?.id || '');
@@ -3598,13 +3740,14 @@ app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
   const uniqueApiCount = new Set([...fbApis, ...localApis].map(a => String(a.flowId || ''))).size;
   if (uniqueApiCount >= Number(planLimits.maxApis || 0)) return res.status(403).json({ error: `API builder limit reached for ${userPlanKey} plan (${planLimits.maxApis} max). Upgrade to create more APIs.` });
   const flowId = `flow_${Date.now()}`;
-  if (!GROQ_API_KEY) return res.status(503).json({ error: 'Joytree AI is not configured. Add GROQ_API_KEY to your server .env file and restart.' });
+  if (selectedAiVersion !== 'v3' && !GROQ_API_KEY) return res.status(503).json({ error: 'Joytree AI is not configured. Add GROQ_API_KEY to your server .env file and restart.' });
   const providerRequested = 'auto';
   const fileContextNote = (fileName && fileMime && !String(fileMime).startsWith('text/') && fileMime !== 'application/json')
     ? `\n[Uploaded file: ${fileName} (${fileMime}) — use this file context to generate API content]`
     : '';
   const scrapedContext = await fetchUrlContext(`${prompt}\n${sourceText}`).catch(() => '');
-  const combinedSourceText = `${sourceText}${fileContextNote}\n${scrapedContext}`;
+  const webSearchContext = await fetchWebSearchContext(`${prompt}\n${sourceText}`).catch(() => '');
+  const combinedSourceText = `${sourceText}${fileContextNote}\n${scrapedContext}${webSearchContext ? `\n\n${webSearchContext}` : ''}`;
 
   // ── Detect if this is a large quiz/riddle request that needs chunking ──────
   const isQuiz = /quiz|question|mcq|exam|riddle/i.test(String(prompt||'') + ' ' + String(sourceText||''));
@@ -3622,7 +3765,7 @@ app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
       chunkedQuestions = await buildQuestionsInChunks({
         prompt: String(prompt||''),
         total: requestedCount,
-        aiVersion,
+        aiVersion: selectedAiVersion,
         socketId: String(socketId || '')
       });
     } catch (e) {
@@ -3646,7 +3789,7 @@ app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
   } else {
     // ── NORMAL PATH: single AI call ───────────────────────────────────────────
     try {
-      aiSpec = await buildFlowWithAI({ prompt, sourceText: combinedSourceText, fileBase64, fileMime, fileName, aiProvider: providerRequested, aiVersion });
+      aiSpec = await buildFlowWithAI({ prompt, sourceText: combinedSourceText, fileBase64, fileMime, fileName, aiProvider: providerRequested, aiVersion: selectedAiVersion });
     } catch (e) {
       aiError = e.message || String(e);
     }
@@ -3655,7 +3798,7 @@ app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
   }
 
   const usedProvider = aiSpec?._aiProvider || 'joytree';
-  const usedModel = aiSpec?._aiModel || (aiVersion === 'v2' ? 'Joy AI v2' : 'Joy AI v1');
+  const usedModel = aiSpec?._aiModel || (selectedAiVersion === 'v3' ? 'Joytree API v3' : (selectedAiVersion === 'v2' ? 'Joy AI v2' : 'Joy AI v1'));
   delete aiSpec._aiProvider; delete aiSpec._aiModel;
   const route = String(aiSpec?.routePath || routePath || '/api');
   const httpMethod = String(aiSpec?.method || method || 'GET').toUpperCase();
@@ -3759,7 +3902,14 @@ app.get('/api/developer/ai/status', requireAuth, (req, res) => {
     ok: true,
     aiProvider: 'Joytree AI',
     aiConfigured: !!GROQ_API_KEY,
-    aiAnalysisMode: 'server-side-ai'
+    aiAnalysisMode: 'server-side-ai',
+    v3: {
+      name: 'Joytree API v3',
+      adminOnly: true,
+      hasAccess: isRootEmailAdmin(req.user),
+      localEndpoint: LLAMA_CPP_BASE_URL,
+      webSearchEnabled: JOYTREE_WEB_SEARCH_ENABLED
+    }
   });
 });
 
