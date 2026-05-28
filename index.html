@@ -9631,13 +9631,13 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       <div class="app-hero" style="margin-bottom:22px;">
         <div>
           <div class="app-hero-kicker">AI-Powered Infrastructure</div>
-          <div class="app-hero-title">Realtime API Builder</div>
-          <div class="app-hero-subtitle">Describe what your API should do. Joytree AI will think through the behavior and deploy it live.</div>
+          <div class="app-hero-title">Joytree API v3</div>
+          <div class="app-hero-subtitle">Admin-grade local AI API builder for huge generations, longer runs, and optional web-search context. Upgrade users see what v3 can do, while full access is reserved for the platform admin.</div>
           <div style="display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;">
             <div class="hero-status-pill">Smart generation · live deploy</div>
             <div style="display:flex;align-items:center;gap:6px;background:rgba(2,6,23,.7);border:1px solid rgba(56,189,248,.2);border-radius:999px;padding:5px 12px;">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#67e8f9" stroke-width="2" width="11" height="11"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              <span style="font-size:.72rem;font-weight:700;color:#67e8f9;">Joytree AI</span>
+              <span style="font-size:.72rem;font-weight:700;color:#67e8f9;">Joytree API v3</span>
             </div>
           </div>
         </div>
@@ -9650,10 +9650,10 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           <div style="position:absolute;top:10px;right:12px;opacity:.5;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#67e8f9" stroke-width="1.5" width="18" height="18"><path d="M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3m3.343-5.657-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
           </div>
-          <textarea id="lfPrompt" class="input" style="min-height:120px;border:none;background:transparent;box-shadow:none;padding:10px;padding-right:36px;" placeholder="Think mode: e.g. Build an API that returns 5 random riddles with answers and difficulty tags"></textarea><div style="font-size:.75rem;color:var(--text-3);margin-top:8px;">Create API from scratch by typing your prompt here. After deploy, open it from API Management below and use follow-up prompts in API Details to update the same API in real time.</div>
+          <textarea id="lfPrompt" class="input" style="min-height:120px;border:none;background:transparent;box-shadow:none;padding:10px;padding-right:36px;" placeholder="Joytree API v3: e.g. Generate 1000 unique riddles with answers, difficulty tags, and optional web-search context"></textarea><div style="font-size:.75rem;color:var(--text-3);margin-top:8px;">Create API from scratch by typing your prompt here. v3 can run against your VPS llama.cpp server for big batched jobs; non-admin users are prompted to upgrade for high-volume AI API creation.</div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 6px 2px 6px;">
             <div style="font-size:.72rem;color:var(--text-3);font-family:var(--font-mono);">AI prompt canvas</div>
-            <div style="font-size:.72rem;color:#67e8f9;">⚡ Smart generation</div>
+            <div style="font-size:.72rem;color:#67e8f9;">⚡ v3 large-task mode</div>
           </div>
         </div>
 
@@ -9688,6 +9688,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           .jt-ai-option-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex-shrink:0;}
           .jt-ai-option-icon.v1{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.22);}
           .jt-ai-option-icon.v2{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);}
+          .jt-ai-option-icon.v3{background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.28);}
           .jt-ai-option-body{flex:1;min-width:0;}
           .jt-ai-option-name{font-size:.82rem;font-weight:800;color:var(--text);line-height:1.25;}
           .jt-ai-option-desc{font-size:.7rem;color:var(--text-3);margin-top:2px;line-height:1.4;}
@@ -9729,6 +9730,18 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                   <div class="jt-ai-option-desc">Dual-engine with automatic failover. Seamlessly switches models if one is unavailable — ideal for large generations.</div>
                 </div>
                 <div class="jt-ai-option-check" id="lfV2Check">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+              </div>
+              <div class="jt-ai-option" data-value="v3" id="lfAiV3Option" onclick="lfAiDropSelectV3(this)">
+                <div class="jt-ai-option-icon v3">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" width="16" height="16"><path d="M12 2v20"/><path d="M2 12h20"/><path d="M5 5l14 14"/><path d="M19 5L5 19"/></svg>
+                </div>
+                <div class="jt-ai-option-body">
+                  <div class="jt-ai-option-name" style="display:flex;align-items:center;gap:6px;">Joytree API v3 <span id="lfV3UpgradeBadge" style="font-size:.6rem;font-weight:800;color:#c084fc;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.35);border-radius:999px;padding:1px 7px;letter-spacing:.03em;cursor:pointer;">Admin · Upgrade</span></div>
+                  <div class="jt-ai-option-desc">Private VPS llama.cpp mode for marathon API generation, batched 1000-riddle jobs, longer output, and web-search context.</div>
+                </div>
+                <div class="jt-ai-option-check" id="lfV3Check" style="display:none;">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
               </div>
@@ -21493,9 +21506,10 @@ async function deployLogiFlowFromPrompt(){
     if (progMsg) progMsg.textContent = 'Sending request to Joy AI…';
     if (progPct) progPct.textContent = '';
     if (progBar) progBar.style.width = '0%';
-    // 130s client-side timeout (matches server 120s + buffer)
+    // v3 can run long local llama.cpp batches; v1/v2 keep shorter cloud timeout.
     const controller = new AbortController();
-    const tout = setTimeout(() => controller.abort(), 130000);
+    const clientTimeoutMs = aiVersion === 'v3' ? 600000 : 130000;
+    const tout = setTimeout(() => controller.abort(), clientTimeoutMs);
     let r;
     try {
       r = await apiFetch('/api/developer/flows/from-text', { method:'POST', signal: controller.signal, headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt, sourceText, fileBase64, fileMime, fileName, aiVersion, socketId }) });
@@ -21523,7 +21537,7 @@ async function deployLogiFlowFromPrompt(){
     loadLogiFlowLogs();
     if (btn){btn.disabled=false;btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg> Deploy API from Prompt';}
   } catch (e) {
-    const msg = e.name === 'AbortError' ? 'Request timed out. Try a shorter or simpler prompt.' : (e.message || 'Deploy failed');
+    const msg = e.name === 'AbortError' ? (aiVersion === 'v3' ? 'Joytree API v3 timed out locally. Increase llama.cpp timeout or split into smaller batches.' : 'Request timed out. Try a shorter or simpler prompt.') : (e.message || 'Deploy failed');
     toast(msg, 'error');
     const prog3 = document.getElementById('lfChunkProgress');
     if (prog3) prog3.style.display='none';
@@ -21573,6 +21587,11 @@ function lfHasV2Access() {
   const paidPlans = ['starter', 'pro', 'growth', 'scale max', 'scale'];
   return status === 'active' && paidPlans.some(p => plan.includes(p));
 }
+function lfHasV3Access() {
+  const ADMIN_EMAIL = 'projectvpn89@gmail.com';
+  const meEmail = String(currentUser?.email || settings?.email || '').trim().toLowerCase();
+  return meEmail === ADMIN_EMAIL;
+}
 // Called when user picks v2 from dropdown — checks access first
 function lfAiDropSelectV2(el) {
   if (!lfHasV2Access()) {
@@ -21585,17 +21604,42 @@ function lfAiDropSelectV2(el) {
   }
   lfAiDropSelect(el);
 }
-// Initialise v2 option UI based on access
+// Called when user picks v3 from dropdown — admin-only, upgrade CTA for everyone else
+function lfAiDropSelectV3(el) {
+  if (!lfHasV3Access()) {
+    const drop = document.getElementById('lfAiVersionDrop');
+    if (drop) drop.classList.remove('open');
+    showPage('pricing');
+    setTimeout(() => toast('Joytree API v3 is admin-only right now. Upgrade to unlock higher-volume AI API generation as soon as v3 opens to paid plans.', 'info'), 200);
+    return;
+  }
+  lfAiDropSelect(el);
+}
+// Initialise v2/v3 option UI based on access
 function lfInitV2Badge() {
   const badge = document.getElementById('lfV2UpgradeBadge');
   const check = document.getElementById('lfV2Check');
-  if (!badge) return;
-  if (lfHasV2Access()) {
-    badge.style.display = 'none';
-    if (check) check.style.display = '';
-  } else {
-    badge.style.display = '';
-    if (check) check.style.display = 'none';
+  const v3Badge = document.getElementById('lfV3UpgradeBadge');
+  const v3Check = document.getElementById('lfV3Check');
+  if (badge) {
+    if (lfHasV2Access()) {
+      badge.style.display = 'none';
+      if (check) check.style.display = '';
+    } else {
+      badge.style.display = '';
+      if (check) check.style.display = 'none';
+    }
+  }
+  if (v3Badge) {
+    if (lfHasV3Access()) {
+      v3Badge.textContent = 'Admin';
+      v3Badge.style.display = '';
+      if (v3Check) v3Check.style.display = '';
+    } else {
+      v3Badge.textContent = 'Admin · Upgrade';
+      v3Badge.style.display = '';
+      if (v3Check) v3Check.style.display = 'none';
+    }
   }
 }
 function lfAiDropSelect(el) {
@@ -21615,18 +21659,22 @@ function lfAiDropSelect(el) {
   const trigIcon = document.getElementById('lfAiTriggerIcon');
   const trigName = document.getElementById('lfAiTriggerName');
   const trigDesc = document.getElementById('lfAiTriggerDesc');
-  if (trigName) trigName.textContent = value === 'v2' ? 'Joytree AI v2' : 'Joytree AI v1';
+  if (trigName) trigName.textContent = value === 'v3' ? 'Joytree API v3' : (value === 'v2' ? 'Joytree AI v2' : 'Joytree AI v1');
   if (trigDesc) trigDesc.textContent = desc.length > 50 ? desc.slice(0, 50) + '…' : desc;
   if (trigIcon) {
     trigIcon.className = 'jt-ai-trigger-icon';
-    if (value === 'v2') { trigIcon.style.background='rgba(56,189,248,.1)'; trigIcon.style.borderColor='rgba(56,189,248,.2)'; }
+    if (value === 'v3') { trigIcon.style.background='rgba(168,85,247,.12)'; trigIcon.style.borderColor='rgba(168,85,247,.28)'; }
+    else if (value === 'v2') { trigIcon.style.background='rgba(56,189,248,.1)'; trigIcon.style.borderColor='rgba(56,189,248,.2)'; }
     else { trigIcon.style.background='rgba(16,185,129,.12)'; trigIcon.style.borderColor='rgba(16,185,129,.2)'; }
     trigIcon.innerHTML = iconHtml;
   }
   // Update badge
   const badge = document.getElementById('lfAiVersionBadge');
   if (badge) {
-    if (value === 'v2') {
+    if (value === 'v3') {
+      badge.style.background='rgba(168,85,247,.12)'; badge.style.borderColor='rgba(168,85,247,.28)'; badge.style.color='#c084fc';
+      badge.textContent='v3 · Local VPS';
+    } else if (value === 'v2') {
       badge.style.background='rgba(56,189,248,.1)'; badge.style.borderColor='rgba(56,189,248,.25)'; badge.style.color='#67e8f9';
       badge.textContent='v2 · Dual-engine';
     } else {
