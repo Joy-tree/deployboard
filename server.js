@@ -69,7 +69,7 @@ const XAI_API_KEY  = String(process.env.XAI_API_KEY  || process.env.XAI_API_KEY_
 const XAI_MODEL    = String(process.env.XAI_MODEL    || 'grok-3-mini').trim();
 // Joytree API v3 — Cerebras (ultra-fast 1000+ tok/s cloud AI, OpenAI-compatible)
 const JOYTREE_V3_ADMIN_EMAIL = String(process.env.JOYTREE_V3_ADMIN_EMAIL || 'projectvpn89@gmail.com').trim().toLowerCase();
-const CEREBRAS_API_KEY = String(process.env.CEREBRAS_API_KEY || 'csk-fcn8h843kj8h5rn44f883hy9wthymxfnv2e9jw5n5m83pwen').trim();
+const CEREBRAS_API_KEY = String(process.env.CEREBRAS_API_KEY || '').trim();
 const CEREBRAS_MODEL = String(process.env.CEREBRAS_MODEL || 'llama-3.3-70b').trim();
 const CEREBRAS_MODEL_FALLBACK = 'llama3.1-8b'; // fast fallback if 70b is unavailable
 const CEREBRAS_FLOW_TIMEOUT_MS = Number(process.env.CEREBRAS_FLOW_TIMEOUT_MS || 120000);
@@ -79,11 +79,7 @@ const CEREBRAS_CHUNK_MAX_TOKENS = Number(process.env.CEREBRAS_CHUNK_MAX_TOKENS |
 const JOYTREE_WEB_SEARCH_URL = String(process.env.JOYTREE_WEB_SEARCH_URL || '').trim().replace(/\/+$/, '');
 const JOYTREE_WEB_SEARCH_ENABLED = String(process.env.JOYTREE_WEB_SEARCH_ENABLED || 'false').toLowerCase() !== 'false';
 
-// Joytree API v4 — Multi-AI cascade (Gemini + DeepSeek) with silent failover
-const GEMINI_API_KEY   = String(process.env.GEMINI_API_KEY   || 'AQ.Ab8RN6L49B7WDCwjw06d907y3btfdJgCpFmNRALN0tDHBgDUSg').trim();
-const GEMINI_MODEL     = String(process.env.GEMINI_MODEL     || 'gemini-2.5-flash-preview-05-20').trim(); // gemini-2.5-flash or gemini-flash-latest
-const DEEPSEEK_API_KEY = String(process.env.DEEPSEEK_API_KEY || 'sk-b8d6b6102095481c972ecc34fa7d6fe9').trim();
-const DEEPSEEK_MODEL   = String(process.env.DEEPSEEK_MODEL   || 'deepseek-v4-0520').trim(); // deepseek-v4-0520 = deepseek-v4-pro stable alias
+// Joytree API v4 — Groq + xAI cascade with alternating chunk providers
 
 const authOtpStore = new Map();
 const deployStopRequests = new Set();
@@ -3483,7 +3479,7 @@ async function generateQuestionChunk({ provider = 'groq', topic = '', count = 25
   };
 
   if (provider === 'v4cascade') {
-    // v4: use the cascade pool (Gemini -> DeepSeek with silent failover)
+    // v4: use the Groq/xAI cascade pool with silent failover
     const result = await callV4Chunk([
       { role: 'system', content: AI_CHUNK_INSTRUCTION },
       { role: 'user', content: userMsg }
@@ -3617,7 +3613,7 @@ async function buildQuestionsInChunks({ prompt = '', total = 0, aiVersion = 'v1'
     const offset = chunk * chunkSize;
     const count = Math.min(chunkSize, total - offset);
 
-    // v4 = Gemini+DeepSeek cascade; v3 = Cerebras; v2 = Groq+xAI; v1 = Groq only
+    // v4 = Groq+xAI alternating cascade; v3 = Cerebras; v2 = Groq+xAI fallback; v1 = Groq only
     const providers = aiVersion === 'v4'
       ? ['v4cascade']
       : (aiVersion === 'v3'
@@ -3693,171 +3689,147 @@ async function buildQuestionsInChunks({ prompt = '', total = 0, aiVersion = 'v1'
 
 // ── Joytree API v4 helpers ────────────────────────────────────────────────────
 
-// Gemini uses a different REST API shape (not OpenAI-compatible)
-async function callGeminiChat({ messages, maxTokens = 4096, timeoutMs = 90000, temperature = 0.3, useGoogleSearch = false } = {}) {
-  if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not configured.');
-  // Convert OpenAI-style messages to Gemini contents format
-  // System message becomes first user turn context
-  const systemMsg = messages.find(function(m){ return m.role === 'system'; });
-  const userMsgs  = messages.filter(function(m){ return m.role !== 'system'; });
-  const contents  = userMsgs.map(function(m) {
-    return { role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: String(m.content || '') }] };
+function getConfiguredV4Providers() {
+  const providers = [];
+  if (GROQ_API_KEY) providers.push('groq');
+  if (XAI_API_KEY) providers.push('xai');
+  return providers;
+}
+
+async function callGroqChat({ messages, maxTokens = 4096, timeoutMs = 90000, temperature = 0.3 } = {}) {
+  if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY is not configured.');
+  return callOpenAICompatibleChat({
+    apiUrl: 'https://api.groq.com/openai/v1/chat/completions',
+    apiKey: GROQ_API_KEY,
+    model: GROQ_MODEL,
+    messages,
+    maxTokens,
+    timeoutMs,
+    temperature
   });
-  if (systemMsg && contents.length > 0) {
-    // Prepend system text to first user message
-    contents[0].parts[0].text = String(systemMsg.content) + '\n\n' + contents[0].parts[0].text;
-  }
-  const controller = new AbortController();
-  const tid = setTimeout(function(){ controller.abort(); }, timeoutMs);
-  try {
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent';
-    const geminiBody = {
-      contents: contents,
-      generationConfig: { maxOutputTokens: maxTokens, temperature: Math.min(2, Math.max(0, temperature)) }
-    };
-    // Enable Google Search grounding when requested (v4 web search)
-    if (useGoogleSearch) {
-      geminiBody.tools = [{ google_search: {} }];
-    }
-    const r = await fetch(url, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
-      body: JSON.stringify(geminiBody)
-    });
-    if (!r.ok) {
-      const t = await r.text().catch(function(){ return ''; });
-      const j = (function(){ try { return JSON.parse(t); } catch { return null; } })();
-      const msg = (j && j.error && j.error.message) || t.slice(0, 300) || ('HTTP ' + r.status);
-      console.error('[Gemini] API error', r.status, ':', msg);
-      throw new Error('Gemini HTTP ' + r.status + ': ' + msg);
-    }
-    const data = await r.json().catch(function(){ return {}; });
-    const text = String((data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text) || '');
-    if (!text) throw new Error('Gemini returned empty content.');
-    return text;
-  } catch(e) {
-    if (e.name === 'AbortError') throw new Error('Gemini timed out after ' + Math.round(timeoutMs / 1000) + 's.');
-    throw e;
-  } finally {
-    clearTimeout(tid);
-  }
 }
 
-// DeepSeek is OpenAI-compatible — simple fetch, no special SDK needed
-async function callDeepSeekChat({ messages, maxTokens = 4096, timeoutMs = 90000, temperature = 0.3 } = {}) {
-  if (!DEEPSEEK_API_KEY) throw new Error('DEEPSEEK_API_KEY is not configured.');
-  const controller = new AbortController();
-  const tid = setTimeout(function(){ controller.abort(); }, timeoutMs);
-  try {
-    const r = await fetch('https://api.deepseek.com/chat/completions', {
-      method: 'POST',
-      signal: controller.signal,
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DEEPSEEK_API_KEY },
-      body: JSON.stringify({
-        model: DEEPSEEK_MODEL,
-        messages: messages,
-        max_tokens: maxTokens,
-        temperature: Math.min(2, Math.max(0, temperature)),
-        thinking: { type: 'enabled' },
-        reasoning_effort: 'high',
-        stream: false
-      })
-    });
-    if (!r.ok) {
-      const t = await r.text().catch(function(){ return ''; });
-      const j = (function(){ try { return JSON.parse(t); } catch { return null; } })();
-      const msg = (j && j.error && j.error.message) || t.slice(0, 300) || ('HTTP ' + r.status);
-      console.error('[DeepSeek] API error', r.status, ':', msg);
-      throw new Error('DeepSeek HTTP ' + r.status + ': ' + msg);
-    }
-    const data = await r.json().catch(function(){ return {}; });
-    const text = String((data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '');
-    if (!text) throw new Error('DeepSeek returned empty content.');
-    return text;
-  } catch(e) {
-    if (e.name === 'AbortError') throw new Error('DeepSeek timed out after ' + Math.round(timeoutMs / 1000) + 's.');
-    throw e;
-  } finally {
-    clearTimeout(tid);
-  }
+async function callXAIChat({ messages, maxTokens = 4096, timeoutMs = 120000, temperature = 0.3 } = {}) {
+  if (!XAI_API_KEY) throw new Error('XAI_API_KEY is not configured.');
+  return callOpenAICompatibleChat({
+    apiUrl: 'https://api.x.ai/v1/chat/completions',
+    apiKey: XAI_API_KEY,
+    model: XAI_MODEL,
+    messages,
+    maxTokens,
+    timeoutMs,
+    temperature
+  });
 }
 
-// v4 single-shot flow builder — tries Gemini first then DeepSeek
+async function callV4ProviderChat(provider, options) {
+  if (provider === 'groq') return callGroqChat(options);
+  if (provider === 'xai') return callXAIChat(options);
+  throw new Error('Unsupported Joytree API v4 provider: ' + provider);
+}
+
+function isLikelyTransientAIError(err) {
+  const msg = String((err && err.message) || err || '').toLowerCase();
+  return msg.includes('429') || msg.includes('quota') || msg.includes('rate') ||
+    msg.includes('limit') || msg.includes('timeout') || msg.includes('timed out') ||
+    msg.includes('503') || msg.includes('502') || msg.includes('504');
+}
+
+// v4 single-shot flow builder — uses the same deployed Groq/xAI credentials as v1/v2.
+// Groq starts the flow, then xAI silently continues if Groq fails or returns non-JSON.
 async function buildFlowWithV4({ prompt = '', sourceText = '', fileName = '' } = {}) {
+  const providers = getConfiguredV4Providers();
+  if (!providers.length) throw new Error('Joytree API v4 is not configured. Add GROQ_API_KEY or XAI_API_KEY to your server .env file and restart.');
+
   const userInput = 'PROMPT:\n' + String(prompt || '').slice(0, 20000) + '\n\nSOURCE_TEXT:\n' + String(sourceText || '').slice(0, 20000) + '\n\nFILE_NAME:\n' + String(fileName || '').slice(0, 200);
-  const systemMsg = AI_FLOW_INSTRUCTION + '\nJoytree API v4 uses multi-AI cascade. If WEB_SEARCH_RESULTS appear in SOURCE_TEXT, use them as current context.';
+  const systemMsg = AI_FLOW_INSTRUCTION + '\nJoytree API v4 uses the platform Groq/xAI cascade. If WEB_SEARCH_RESULTS appear in SOURCE_TEXT, use them as current context.';
   const messages = [{ role: 'system', content: systemMsg }, { role: 'user', content: userInput }];
-  // Try Gemini first
-  try {
-    const text = await callGeminiChat({ messages: messages, temperature: 0.25, maxTokens: 8192, useGoogleSearch: true });
-    const parsed = extractJsonFromText(text);
-    if (parsed) return Object.assign({}, parsed, { _aiProvider: 'gemini', _aiModel: 'Joytree API v4' });
-    throw new Error('Gemini returned non-JSON output.');
-  } catch(e) {
-    console.warn('[v4] Gemini flow build failed:', e.message, '— falling back to DeepSeek');
+  let lastError = null;
+
+  for (const provider of providers) {
+    try {
+      const text = await callV4ProviderChat(provider, { messages, temperature: 0.25, maxTokens: 8192, timeoutMs: provider === 'xai' ? 180000 : 120000 });
+      const parsed = extractJsonFromText(text);
+      if (parsed) return Object.assign({}, parsed, { _aiProvider: provider === 'xai' ? 'joytree_xai' : 'joytree_groq', _aiModel: 'Joytree API v4' });
+      throw new Error(provider + ' returned non-JSON output.');
+    } catch(e) {
+      lastError = e;
+      console.warn('[v4] ' + provider + ' flow build failed:', e.message, '— trying next configured provider');
+    }
   }
-  // Fallback to DeepSeek
-  const text2 = await callDeepSeekChat({ messages: messages, temperature: 0.25, maxTokens: 8192 });
-  const parsed2 = extractJsonFromText(text2);
-  if (!parsed2) throw new Error('DeepSeek also returned non-JSON output. Try rephrasing your prompt.');
-  return Object.assign({}, parsed2, { _aiProvider: 'deepseek', _aiModel: 'Joytree API v4' });
+
+  throw new Error('Joytree API v4 could not build a valid flow with the configured Groq/xAI providers. Last error: ' + ((lastError && lastError.message) || 'unknown'));
 }
 
-// v4 provider pool — TRUE alternation (Gemini→DeepSeek→Gemini→…) with cooldown fallback
-const _v4CooldownUntil = { gemini: 0, deepseek: 0 };
-const V4_PROVIDERS = ['gemini', 'deepseek'];
+// v4 provider pool — TRUE alternation (Groq→xAI→Groq→…) with cooldown fallback
+const _v4CooldownUntil = { groq: 0, xai: 0 };
+const V4_PROVIDERS = ['groq', 'xai'];
 let _v4ChunkCounter = 0; // increments each chunk to drive alternation
 
-function getV4AlternatingProvider(chunkIndex) {
-  // Primary: strict round-robin alternation
+function getV4ProviderOrder(chunkIndex) {
+  const configured = V4_PROVIDERS.filter(function(provider) {
+    return provider === 'groq' ? !!GROQ_API_KEY : !!XAI_API_KEY;
+  });
+  if (configured.length <= 1) return configured;
   const preferred = V4_PROVIDERS[chunkIndex % V4_PROVIDERS.length];
-  const fallback  = V4_PROVIDERS[(chunkIndex + 1) % V4_PROVIDERS.length];
-  const now = Date.now();
-  if (now >= _v4CooldownUntil[preferred]) return preferred;
-  if (now >= _v4CooldownUntil[fallback])  return fallback;
-  // Both cooling — return whichever recovers soonest
-  return _v4CooldownUntil[preferred] <= _v4CooldownUntil[fallback] ? preferred : fallback;
+  const fallback = V4_PROVIDERS[(chunkIndex + 1) % V4_PROVIDERS.length];
+  return [preferred, fallback].filter(function(provider) { return configured.includes(provider); });
 }
 
 function markV4ProviderCooling(provider) {
-  _v4CooldownUntil[provider] = Date.now() + 65000; // 65s cooldown
-  console.warn('[v4] Provider', provider, 'rate-limited — cooling 65s, other provider takes over.');
+  _v4CooldownUntil[provider] = Date.now() + INTER_CHUNK_DELAY_MS;
+  console.warn('[v4] Provider', provider, 'is cooling for', Math.round(INTER_CHUNK_DELAY_MS / 1000) + 's; another configured provider will take over.');
 }
 
-// Call one chunk using v4 TRUE alternation — Gemini↔DeepSeek every chunk, failover on error
+// Call one chunk using v4 TRUE alternation — Groq↔xAI every chunk, failover on error
 async function callV4Chunk(messages) {
   const chunkIndex = _v4ChunkCounter++;
-  const order = [
-    V4_PROVIDERS[chunkIndex % V4_PROVIDERS.length],
-    V4_PROVIDERS[(chunkIndex + 1) % V4_PROVIDERS.length]
-  ];
+  const order = getV4ProviderOrder(chunkIndex);
+  if (!order.length) throw new Error('Joytree API v4 is not configured. Add GROQ_API_KEY or XAI_API_KEY to your server .env file and restart.');
+
   console.log('[v4] Chunk', chunkIndex, '— preferred provider:', order[0]);
-  for (let i = 0; i < order.length; i++) {
-    const provider = (Date.now() >= _v4CooldownUntil[order[i]]) ? order[i] : order[1 - i];
+  let lastError = null;
+
+  for (const provider of order) {
+    const now = Date.now();
+    if (now < (_v4CooldownUntil[provider] || 0) && order.length > 1) {
+      console.warn('[v4 chunk ' + chunkIndex + '] ' + provider + ' still cooling — trying another provider');
+      continue;
+    }
     try {
-      let text;
-      if (provider === 'gemini') {
-        text = await callGeminiChat({ messages: messages, temperature: 0.7, maxTokens: 4096, useGoogleSearch: true });
-      } else {
-        text = await callDeepSeekChat({ messages: messages, temperature: 0.7, maxTokens: 4096 });
-      }
+      const text = await callV4ProviderChat(provider, {
+        messages: messages,
+        temperature: 0.7,
+        maxTokens: 4096,
+        timeoutMs: provider === 'xai' ? 120000 : 90000
+      });
       console.log('[v4] Chunk', chunkIndex, 'completed by', provider);
       return { text: text, provider: provider };
     } catch(e) {
-      const isQuota = e.message && (e.message.includes('429') || e.message.includes('quota') || e.message.includes('rate') || e.message.includes('limit'));
-      if (isQuota) {
-        markV4ProviderCooling(provider);
-        console.warn('[v4 chunk ' + chunkIndex + '] ' + provider + ' quota hit — trying other provider');
-        await new Promise(function(r){ setTimeout(r, 800); });
-        continue;
-      }
-      console.warn('[v4 chunk ' + chunkIndex + '] ' + provider + ' error: ' + e.message + ' — trying other provider');
-      markV4ProviderCooling(provider);
+      lastError = e;
+      console.warn('[v4 chunk ' + chunkIndex + '] ' + provider + ' error: ' + e.message + ' — trying next configured provider');
+      if (isLikelyTransientAIError(e)) markV4ProviderCooling(provider);
       await new Promise(function(r){ setTimeout(r, 500); });
     }
   }
-  throw new Error('v4 chunk ' + chunkIndex + ': both Gemini and DeepSeek failed. Check API keys and quotas.');
+
+  // If every provider was skipped because of cooldown, wait briefly for the earliest recovery and try once more.
+  const retryable = order.filter(function(provider) { return Date.now() < (_v4CooldownUntil[provider] || 0); });
+  if (retryable.length) {
+    const waitMs = Math.max(500, Math.min.apply(null, retryable.map(function(provider) { return _v4CooldownUntil[provider] - Date.now(); })));
+    await new Promise(function(r){ setTimeout(r, Math.min(waitMs, 5000)); });
+    for (const provider of order) {
+      try {
+        const text = await callV4ProviderChat(provider, { messages: messages, temperature: 0.7, maxTokens: 4096, timeoutMs: provider === 'xai' ? 120000 : 90000 });
+        console.log('[v4] Chunk', chunkIndex, 'completed by', provider, 'after cooldown wait');
+        return { text: text, provider: provider };
+      } catch(e) {
+        lastError = e;
+      }
+    }
+  }
+
+  throw new Error('v4 chunk ' + chunkIndex + ': all configured Groq/xAI providers failed. Last error: ' + ((lastError && lastError.message) || 'unknown'));
 }
 
 
@@ -3978,7 +3950,7 @@ async function buildFlowWithXAI({ prompt = '', sourceText = '', fileName = '' } 
 }
 
 async function buildFlowWithAI({ prompt = '', sourceText = '', fileBase64 = '', fileMime = '', fileName = '', aiProvider = 'auto', aiVersion = 'v1' } = {}) {
-  // Joytree API v4 — Gemini + DeepSeek cascade with web search
+  // Joytree API v4 — Groq + xAI cascade with web search context
   if (aiVersion === 'v4') {
     const result = await buildFlowWithV4({ prompt, sourceText, fileName });
     if (result) return result; // already has _aiProvider and _aiModel set
@@ -4157,7 +4129,7 @@ app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
   const uniqueApiCount = new Set([...fbApis, ...localApis].map(a => String(a.flowId || ''))).size;
   if (uniqueApiCount >= Number(planLimits.maxApis || 0)) return res.status(403).json({ error: `API builder limit reached for ${userPlanKey} plan (${planLimits.maxApis} max). Upgrade to create more APIs.` });
   const flowId = `flow_${Date.now()}`;
-  if (selectedAiVersion === 'v4' && !GEMINI_API_KEY && !DEEPSEEK_API_KEY) return res.status(503).json({ error: 'Joytree API v4 is not configured. Add GEMINI_API_KEY or DEEPSEEK_API_KEY to your .env file.' });
+  if (selectedAiVersion === 'v4' && !GROQ_API_KEY && !XAI_API_KEY) return res.status(503).json({ error: 'Joytree API v4 is not configured. Add GROQ_API_KEY or XAI_API_KEY to your .env file.' });
   if (selectedAiVersion !== 'v3' && selectedAiVersion !== 'v4' && !GROQ_API_KEY) return res.status(503).json({ error: 'Joytree AI is not configured. Add GROQ_API_KEY to your server .env file and restart.' });
   if (selectedAiVersion === 'v3' && !CEREBRAS_API_KEY) return res.status(503).json({ error: 'Joytree API v3 is not configured. Add CEREBRAS_API_KEY to your server .env file and restart.' });
   const providerRequested = 'auto';
@@ -4165,7 +4137,7 @@ app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
     ? `\n[Uploaded file: ${fileName} (${fileMime}) — use this file context to generate API content]`
     : '';
   const scrapedContext = await fetchUrlContext(`${prompt}\n${sourceText}`).catch(() => '');
-  // v4 always gets web search context (Gemini excels at using current info)
+  // v4 always gets web search context before sending the prompt to Groq/xAI.
   const webSearchContext = selectedAiVersion === 'v4'
     ? await (async () => {
         // For v4 use DuckDuckGo directly (no SearXNG needed)
@@ -4354,8 +4326,8 @@ app.get('/api/developer/ai/status', requireAuth, (req, res) => {
       name: 'Joytree API v4',
       adminOnly: true,
       hasAccess: isRootEmailAdmin(req.user),
-      geminiConfigured: !!GEMINI_API_KEY,
-      deepseekConfigured: !!DEEPSEEK_API_KEY,
+      groqConfigured: !!GROQ_API_KEY,
+      xaiConfigured: !!XAI_API_KEY,
       webSearchEnabled: true
     }
   });
