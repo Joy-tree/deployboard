@@ -9745,19 +9745,19 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
               </div>
-            </div>
               <div class="jt-ai-option" data-value="v4" id="lfAiV4Option" onclick="lfAiDropSelectV4(this)">
                 <div class="jt-ai-option-icon v4" style="background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(239,68,68,.1));border:1px solid rgba(251,191,36,.3);">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" width="16" height="16"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                 </div>
                 <div class="jt-ai-option-body">
                   <div class="jt-ai-option-name" style="display:flex;align-items:center;gap:6px;">Joytree API v4 <span id="lfV4UpgradeBadge" style="font-size:.6rem;font-weight:800;color:#fbbf24;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);border-radius:999px;padding:1px 7px;letter-spacing:.03em;cursor:pointer;">Admin · Upgrade</span></div>
-                  <div class="jt-ai-option-desc">Multi-AI cascade — silently shifts between AI providers when one hits its limit. Includes live web search. Never fails mid-generation.</div>
+                  <div class="jt-ai-option-desc">Groq + xAI cascade — each chunk alternates to the other AI so generation continues provider-by-provider with failover.</div>
                 </div>
                 <div class="jt-ai-option-check" id="lfV4Check" style="display:none;">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
               </div>
+            </div>
           </div>
           <div id="lfAiVersionBadge" style="font-size:.7rem;padding:4px 10px;border-radius:999px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);color:#34d399;font-weight:700;white-space:nowrap;">v1 · Standard</div>
         </div>
@@ -21659,7 +21659,7 @@ function lfAiDropSelectV4(el) {
     const drop = document.getElementById('lfAiVersionDrop');
     if (drop) drop.classList.remove('open');
     showPage('pricing');
-    setTimeout(() => toast('Joytree API v4 is admin-only. Upgrade to unlock multi-AI cascade generation.', 'info'), 200);
+    setTimeout(() => toast('Joytree API v4 is admin-only. Upgrade to unlock Groq + xAI alternating chunk generation.', 'info'), 200);
     return;
   }
   lfAiDropSelect(el);
@@ -21741,7 +21741,7 @@ function lfAiDropSelect(el) {
   if (badge) {
     if (value === 'v4') {
       badge.style.background='rgba(251,191,36,.1)'; badge.style.borderColor='rgba(251,191,36,.3)'; badge.style.color='#fbbf24';
-      badge.textContent='v4 · Multi-AI';
+      badge.textContent='v4 · Groq+xAI';
     } else if (value === 'v3') {
       badge.style.background='rgba(168,85,247,.12)'; badge.style.borderColor='rgba(168,85,247,.28)'; badge.style.color='#c084fc';
       badge.textContent='v3 · Cerebras';
