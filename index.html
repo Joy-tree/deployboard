@@ -9631,8 +9631,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       <div class="app-hero" style="margin-bottom:22px;">
         <div>
           <div class="app-hero-kicker">AI-Powered Infrastructure</div>
-          <div class="app-hero-title">Joytree API v3 (Cerebras)</div>
-          <div class="app-hero-subtitle">Admin-grade ultra-fast cloud AI — Cerebras runs at 1000+ tokens/second on custom silicon. 1M tokens/day free tier. Perfect for massive batch generations.</div>
+          <div class="app-hero-title">Joytree API v3 (DeepSeek)</div>
+          <div class="app-hero-subtitle">Admin-grade DeepSeek high-reasoning AI for large API generation with structured JSON outputs and chunked batches.</div>
           <div style="display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;">
             <div class="hero-status-pill">Smart generation · live deploy</div>
             <div style="display:flex;align-items:center;gap:6px;background:rgba(2,6,23,.7);border:1px solid rgba(56,189,248,.2);border-radius:999px;padding:5px 12px;">
@@ -9650,7 +9650,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           <div style="position:absolute;top:10px;right:12px;opacity:.5;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#67e8f9" stroke-width="1.5" width="18" height="18"><path d="M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3m3.343-5.657-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
           </div>
-          <textarea id="lfPrompt" class="input" style="min-height:120px;border:none;background:transparent;box-shadow:none;padding:10px;padding-right:36px;" placeholder="Joytree API v3: e.g. Generate 1000 unique riddles with answers, difficulty tags (Cerebras ultra-fast AI — 1000+ tok/s)"></textarea><div style="font-size:.75rem;color:var(--text-3);margin-top:8px;">Create API from scratch by typing your prompt here. v3 uses Cerebras cloud AI for super-fast batch generation. Non-admin users are prompted to upgrade.</div>
+          <textarea id="lfPrompt" class="input" style="min-height:120px;border:none;background:transparent;box-shadow:none;padding:10px;padding-right:36px;" placeholder="Joytree API v3: e.g. Generate 1000 unique riddles with answers and difficulty tags (DeepSeek high-reasoning AI)"></textarea><div style="font-size:.75rem;color:var(--text-3);margin-top:8px;">Create API from scratch by typing your prompt here. v3 uses DeepSeek high-reasoning AI for large batch generation. Non-admin users are prompted to upgrade.</div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 6px 2px 6px;">
             <div style="font-size:.72rem;color:var(--text-3);font-family:var(--font-mono);">AI prompt canvas</div>
             <div style="font-size:.72rem;color:#67e8f9;">⚡ v3 large-task mode</div>
@@ -9738,26 +9738,26 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" width="16" height="16"><path d="M12 2v20"/><path d="M2 12h20"/><path d="M5 5l14 14"/><path d="M19 5L5 19"/></svg>
                 </div>
                 <div class="jt-ai-option-body">
-                  <div class="jt-ai-option-name" style="display:flex;align-items:center;gap:6px;">Joytree API v3 (Cerebras) <span id="lfV3UpgradeBadge" style="font-size:.6rem;font-weight:800;color:#c084fc;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.35);border-radius:999px;padding:1px 7px;letter-spacing:.03em;cursor:pointer;">Admin · Upgrade</span></div>
-                  <div class="jt-ai-option-desc">Ultra-fast Cerebras AI (1000+ tok/s) — admin-grade cloud generation for huge batches, 1M tokens/day free tier.</div>
+                  <div class="jt-ai-option-name" style="display:flex;align-items:center;gap:6px;">Joytree API v3 (DeepSeek) <span id="lfV3UpgradeBadge" style="font-size:.6rem;font-weight:800;color:#c084fc;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.35);border-radius:999px;padding:1px 7px;letter-spacing:.03em;cursor:pointer;">Admin · Upgrade</span></div>
+                  <div class="jt-ai-option-desc">DeepSeek high-reasoning AI — admin-grade cloud generation for structured APIs and large batches.</div>
                 </div>
                 <div class="jt-ai-option-check" id="lfV3Check" style="display:none;">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
               </div>
-            </div>
               <div class="jt-ai-option" data-value="v4" id="lfAiV4Option" onclick="lfAiDropSelectV4(this)">
                 <div class="jt-ai-option-icon v4" style="background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(239,68,68,.1));border:1px solid rgba(251,191,36,.3);">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" width="16" height="16"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                 </div>
                 <div class="jt-ai-option-body">
                   <div class="jt-ai-option-name" style="display:flex;align-items:center;gap:6px;">Joytree API v4 <span id="lfV4UpgradeBadge" style="font-size:.6rem;font-weight:800;color:#fbbf24;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);border-radius:999px;padding:1px 7px;letter-spacing:.03em;cursor:pointer;">Admin · Upgrade</span></div>
-                  <div class="jt-ai-option-desc">Multi-AI cascade — silently shifts between AI providers when one hits its limit. Includes live web search. Never fails mid-generation.</div>
+                  <div class="jt-ai-option-desc">Groq + xAI cascade — each chunk alternates to the other AI so generation continues provider-by-provider with failover.</div>
                 </div>
                 <div class="jt-ai-option-check" id="lfV4Check" style="display:none;">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
               </div>
+            </div>
           </div>
           <div id="lfAiVersionBadge" style="font-size:.7rem;padding:4px 10px;border-radius:999px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);color:#34d399;font-weight:700;white-space:nowrap;">v1 · Standard</div>
         </div>
@@ -21566,7 +21566,7 @@ async function deployLogiFlowFromPrompt(){
   } catch (e) {
     // Strip any AI provider names from error messages before showing user
     const rawMsg = e.name === 'AbortError' ? 'Request timed out. Try a shorter or simpler prompt.' : (e.message || 'Something went wrong. Please try again.');
-    const msg = rawMsg.replace(/\b(groq|cerebras|xai|grok|llama|openai|gsk-[\S]+|xai-[\S]+|csk-[\S]+)\b/gi, 'AI service');
+    const msg = rawMsg.replace(/\b(groq|deepseek|xai|grok|llama|openai|gsk-[\S]+|xai-[\S]+|csk-[\S]+|sk-[\S]+)\b/gi, 'AI service');
     toast(msg, 'error');
     // Only hide the progress bar if socket isn't still actively updating it
     // (leave it visible for 4s to show the last known state)
@@ -21594,7 +21594,7 @@ async function deployLogiFlowFromPrompt(){
       const pct = pctIn != null ? pctIn : (total > 0 ? Math.round((done / total) * 100) : 0);
       // Strip any AI model/provider names from the visible message
       const safeMsg = (message || ('Batch ' + chunkNum + '/' + totalChunks + ' — ' + done + '/' + total))
-        .replace(/\b(groq|xai|cerebras|grok|llama|openai|gsk-[\S]+|xai-[\S]+|csk-[\S]+)\b/gi, 'AI service');
+        .replace(/\b(groq|xai|deepseek|grok|llama|openai|gsk-[\S]+|xai-[\S]+|csk-[\S]+|sk-[\S]+)\b/gi, 'AI service');
       if (progMsg) progMsg.textContent = safeMsg;
       if (progPct) progPct.textContent = pct + '%';
       if (progBar) progBar.style.width = pct + '%';
@@ -21648,7 +21648,7 @@ function lfAiDropSelectV3(el) {
     const drop = document.getElementById('lfAiVersionDrop');
     if (drop) drop.classList.remove('open');
     showPage('pricing');
-    setTimeout(() => toast('Joytree API v3 (Cerebras) is admin-only right now. Upgrade to unlock ultra-fast Cerebras AI generation as soon as v3 opens to paid plans.', 'info'), 200);
+    setTimeout(() => toast('Joytree API v3 (DeepSeek) is admin-only right now. Upgrade to unlock DeepSeek high-reasoning AI generation as soon as v3 opens to paid plans.', 'info'), 200);
     return;
   }
   lfAiDropSelect(el);
@@ -21659,7 +21659,7 @@ function lfAiDropSelectV4(el) {
     const drop = document.getElementById('lfAiVersionDrop');
     if (drop) drop.classList.remove('open');
     showPage('pricing');
-    setTimeout(() => toast('Joytree API v4 is admin-only. Upgrade to unlock multi-AI cascade generation.', 'info'), 200);
+    setTimeout(() => toast('Joytree API v4 is admin-only. Upgrade to unlock Groq + xAI alternating chunk generation.', 'info'), 200);
     return;
   }
   lfAiDropSelect(el);
@@ -21726,7 +21726,7 @@ function lfAiDropSelect(el) {
   const trigIcon = document.getElementById('lfAiTriggerIcon');
   const trigName = document.getElementById('lfAiTriggerName');
   const trigDesc = document.getElementById('lfAiTriggerDesc');
-  if (trigName) trigName.textContent = value === 'v4' ? 'Joytree API v4' : (value === 'v3' ? 'Joytree API v3 (Cerebras)' : (value === 'v2' ? 'Joytree AI v2' : 'Joytree AI v1'));
+  if (trigName) trigName.textContent = value === 'v4' ? 'Joytree API v4' : (value === 'v3' ? 'Joytree API v3 (DeepSeek)' : (value === 'v2' ? 'Joytree AI v2' : 'Joytree AI v1'));
   if (trigDesc) trigDesc.textContent = desc.length > 50 ? desc.slice(0, 50) + '…' : desc;
   if (trigIcon) {
     trigIcon.className = 'jt-ai-trigger-icon';
@@ -21741,10 +21741,10 @@ function lfAiDropSelect(el) {
   if (badge) {
     if (value === 'v4') {
       badge.style.background='rgba(251,191,36,.1)'; badge.style.borderColor='rgba(251,191,36,.3)'; badge.style.color='#fbbf24';
-      badge.textContent='v4 · Multi-AI';
+      badge.textContent='v4 · Groq+xAI';
     } else if (value === 'v3') {
       badge.style.background='rgba(168,85,247,.12)'; badge.style.borderColor='rgba(168,85,247,.28)'; badge.style.color='#c084fc';
-      badge.textContent='v3 · Cerebras';
+      badge.textContent='v3 · DeepSeek';
     } else if (value === 'v2') {
       badge.style.background='rgba(56,189,248,.1)'; badge.style.borderColor='rgba(56,189,248,.25)'; badge.style.color='#67e8f9';
       badge.textContent='v2 · Dual-engine';

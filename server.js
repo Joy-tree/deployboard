@@ -67,23 +67,19 @@ const GROQ_MODEL = String(process.env.GROQ_MODEL || 'llama-3.3-70b-versatile').t
 // xAI (Grok) — secondary AI provider for fallback and Joy AI v2
 const XAI_API_KEY  = String(process.env.XAI_API_KEY  || process.env.XAI_API_KEY_1  || '').trim();
 const XAI_MODEL    = String(process.env.XAI_MODEL    || 'grok-3-mini').trim();
-// Joytree API v3 — Cerebras (ultra-fast 1000+ tok/s cloud AI, OpenAI-compatible)
+// Joytree API v3 — DeepSeek (OpenAI-compatible high-reasoning AI)
 const JOYTREE_V3_ADMIN_EMAIL = String(process.env.JOYTREE_V3_ADMIN_EMAIL || 'projectvpn89@gmail.com').trim().toLowerCase();
-const CEREBRAS_API_KEY = String(process.env.CEREBRAS_API_KEY || 'csk-fcn8h843kj8h5rn44f883hy9wthymxfnv2e9jw5n5m83pwen').trim();
-const CEREBRAS_MODEL = String(process.env.CEREBRAS_MODEL || 'llama-3.3-70b').trim();
-const CEREBRAS_MODEL_FALLBACK = 'llama3.1-8b'; // fast fallback if 70b is unavailable
-const CEREBRAS_FLOW_TIMEOUT_MS = Number(process.env.CEREBRAS_FLOW_TIMEOUT_MS || 120000);
-const CEREBRAS_CHUNK_TIMEOUT_MS = Number(process.env.CEREBRAS_CHUNK_TIMEOUT_MS || 90000);
-const CEREBRAS_FLOW_MAX_TOKENS = Number(process.env.CEREBRAS_FLOW_MAX_TOKENS || 8192);
-const CEREBRAS_CHUNK_MAX_TOKENS = Number(process.env.CEREBRAS_CHUNK_MAX_TOKENS || 4096);
+const DEEPSEEK_API_KEY = String(process.env.DEEPSEEK_API_KEY || '').trim();
+const DEEPSEEK_MODEL = String(process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro').trim();
+const DEEPSEEK_MODEL_FALLBACK = String(process.env.DEEPSEEK_MODEL_FALLBACK || 'deepseek-v4-flash').trim();
+const DEEPSEEK_FLOW_TIMEOUT_MS = Number(process.env.DEEPSEEK_FLOW_TIMEOUT_MS || 180000);
+const DEEPSEEK_CHUNK_TIMEOUT_MS = Number(process.env.DEEPSEEK_CHUNK_TIMEOUT_MS || 120000);
+const DEEPSEEK_FLOW_MAX_TOKENS = Number(process.env.DEEPSEEK_FLOW_MAX_TOKENS || 8192);
+const DEEPSEEK_CHUNK_MAX_TOKENS = Number(process.env.DEEPSEEK_CHUNK_MAX_TOKENS || 4096);
 const JOYTREE_WEB_SEARCH_URL = String(process.env.JOYTREE_WEB_SEARCH_URL || '').trim().replace(/\/+$/, '');
 const JOYTREE_WEB_SEARCH_ENABLED = String(process.env.JOYTREE_WEB_SEARCH_ENABLED || 'false').toLowerCase() !== 'false';
 
-// Joytree API v4 — Multi-AI cascade (Gemini + DeepSeek) with silent failover
-const GEMINI_API_KEY   = String(process.env.GEMINI_API_KEY   || 'AQ.Ab8RN6L49B7WDCwjw06d907y3btfdJgCpFmNRALN0tDHBgDUSg').trim();
-const GEMINI_MODEL     = String(process.env.GEMINI_MODEL     || 'gemini-2.5-flash-preview-05-20').trim(); // gemini-2.5-flash or gemini-flash-latest
-const DEEPSEEK_API_KEY = String(process.env.DEEPSEEK_API_KEY || 'sk-b8d6b6102095481c972ecc34fa7d6fe9').trim();
-const DEEPSEEK_MODEL   = String(process.env.DEEPSEEK_MODEL   || 'deepseek-v4-0520').trim(); // deepseek-v4-0520 = deepseek-v4-pro stable alias
+// Joytree API v4 — Groq + xAI cascade with alternating chunk providers
 
 const authOtpStore = new Map();
 const deployStopRequests = new Set();
@@ -3319,27 +3315,47 @@ async function callOpenAICompatibleChat({ apiUrl, apiKey = '', model, messages, 
   }
 }
 
-// Cerebras strict requirements:
-//   - Do NOT send top_p alongside temperature (causes 400 error)
-//   - Do NOT send stream: false explicitly (causes 400 error)
-//   - temperature must be between 0 and 1.5 (not 0-2 like OpenAI)
-async function callCerebrasChat({ messages, maxTokens = CEREBRAS_FLOW_MAX_TOKENS, timeoutMs = CEREBRAS_FLOW_TIMEOUT_MS, temperature = 0.3 } = {}) {
-  if (!CEREBRAS_API_KEY) throw new Error('CEREBRAS_API_KEY is not configured.');
+// DeepSeek is OpenAI-compatible, but v3 sends the high-reasoning options
+// requested by the platform owner. Do not hardcode keys here; use DEEPSEEK_API_KEY.
+function getDeepSeekAttemptProfiles() {
+  const profiles = [
+    { model: DEEPSEEK_MODEL, thinkingEnabled: true, label: 'primary-thinking' },
+    { model: DEEPSEEK_MODEL, thinkingEnabled: false, label: 'primary-json-safe' }
+  ];
+  if (DEEPSEEK_MODEL_FALLBACK && DEEPSEEK_MODEL_FALLBACK !== DEEPSEEK_MODEL) {
+    profiles.push(
+      { model: DEEPSEEK_MODEL_FALLBACK, thinkingEnabled: true, label: 'fallback-thinking' },
+      { model: DEEPSEEK_MODEL_FALLBACK, thinkingEnabled: false, label: 'fallback-json-safe' }
+    );
+  }
+  return profiles;
+}
+
+async function callDeepSeekChat({ messages, maxTokens = DEEPSEEK_FLOW_MAX_TOKENS, timeoutMs = DEEPSEEK_FLOW_TIMEOUT_MS, temperature = 0.3, model = DEEPSEEK_MODEL, thinkingEnabled = true, reasoningEffort = 'high' } = {}) {
+  if (!DEEPSEEK_API_KEY) throw new Error('DEEPSEEK_API_KEY is not configured.');
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const body = {
-      model: CEREBRAS_MODEL,
+      model: model || DEEPSEEK_MODEL,
       messages: messages,
       max_tokens: maxTokens,
-      temperature: Math.min(1.5, Math.max(0, temperature))
+      thinking: { type: thinkingEnabled ? 'enabled' : 'disabled' },
+      stream: false
     };
-    const r = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+    if (thinkingEnabled) {
+      body.reasoning_effort = reasoningEffort || 'high';
+      // Official DeepSeek docs say thinking mode ignores temperature/top_p.
+      // Omitting them keeps v3 closer to DeepSeek's expected thinking-mode shape.
+    } else {
+      body.temperature = Math.min(2, Math.max(0, temperature));
+    }
+    const r = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + CEREBRAS_API_KEY
+        'Authorization': 'Bearer ' + DEEPSEEK_API_KEY
       },
       body: JSON.stringify(body)
     });
@@ -3347,40 +3363,22 @@ async function callCerebrasChat({ messages, maxTokens = CEREBRAS_FLOW_MAX_TOKENS
       const errText = await r.text().catch(function(){ return ''; });
       const errJson = (function(){ try { return JSON.parse(errText); } catch(x){ return null; } })();
       const msg = (errJson && (errJson.error && errJson.error.message || errJson.message)) || errText.slice(0, 300) || ('HTTP ' + r.status);
-      console.error('[Cerebras] API error', r.status, ':', msg);
-      // If model not found, retry once with fallback model
-      if ((r.status === 404 || r.status === 400) && body.model !== CEREBRAS_MODEL_FALLBACK) {
-        console.warn('[Cerebras] Model', body.model, 'failed, retrying with', CEREBRAS_MODEL_FALLBACK);
-        body.model = CEREBRAS_MODEL_FALLBACK;
-        const r2 = await fetch('https://api.cerebras.ai/v1/chat/completions', {
-          method: 'POST',
-          signal: controller.signal,
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CEREBRAS_API_KEY },
-          body: JSON.stringify(body)
-        });
-        if (!r2.ok) {
-          const e2 = await r2.text().catch(function(){ return ''; });
-          const j2 = (function(){ try { return JSON.parse(e2); } catch { return null; } })();
-          throw new Error('Cerebras HTTP ' + r2.status + ': ' + ((j2 && (j2.error && j2.error.message || j2.message)) || e2.slice(0, 200)));
-        }
-        const d2 = await r2.json().catch(function(){ return {}; });
-        const c2 = String((d2 && d2.choices && d2.choices[0] && d2.choices[0].message && d2.choices[0].message.content) || '');
-        if (!c2) throw new Error('Cerebras fallback model returned empty content.');
-        return c2;
-      }
-      throw new Error('Cerebras HTTP ' + r.status + ': ' + msg);
+      console.error('[DeepSeek] API error', r.status, '(' + body.model + ', thinking=' + body.thinking.type + '):', msg);
+      throw new Error('DeepSeek HTTP ' + r.status + ': ' + msg);
     }
     const data = await r.json().catch(function(){ return {}; });
-    const content = String((data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '');
-    if (!content) throw new Error('Cerebras returned empty content. Check model name and API key.');
+    const msg = data && data.choices && data.choices[0] && data.choices[0].message;
+    const content = String((msg && msg.content) || data.content || '');
+    if (!content) throw new Error('DeepSeek returned empty content. Check model name and API key.');
     return content;
   } catch (e) {
-    if (e.name === 'AbortError') throw new Error('Cerebras timed out after ' + Math.round(timeoutMs / 1000) + 's.');
+    if (e.name === 'AbortError') throw new Error('DeepSeek timed out after ' + Math.round(timeoutMs / 1000) + 's.');
     throw e;
   } finally {
     clearTimeout(timeoutId);
   }
 }
+
 
 // Robust JSON array extractor — handles markdown fences, trailing commas, truncated arrays
 function extractChunkArray(text) {
@@ -3432,7 +3430,7 @@ function extractChunkArray(text) {
 }
 
 // Call AI to generate one chunk of questions and return the array
-async function generateQuestionChunk({ provider = 'groq', topic = '', count = 25, offset = 0, existing = [] } = {}) {
+async function generateQuestionChunk({ provider = 'groq', topic = '', count = 25, offset = 0, existing = [], maxTokens = 2000 } = {}) {
   const existingSample = existing.slice(-10).map(function(q){ return q.question; }).join('\n');
   const userMsg = 'Topic/context: ' + topic + '\n\nGenerate EXACTLY ' + count + ' items (items ' + (offset + 1) + ' to ' + (offset + count) + ').\n\n' +
     (existingSample ? 'EXISTING (do not repeat):\n' + existingSample + '\n' : '') +
@@ -3483,7 +3481,7 @@ async function generateQuestionChunk({ provider = 'groq', topic = '', count = 25
   };
 
   if (provider === 'v4cascade') {
-    // v4: use the cascade pool (Gemini -> DeepSeek with silent failover)
+    // v4: use the Groq/xAI cascade pool with silent failover
     const result = await callV4Chunk([
       { role: 'system', content: AI_CHUNK_INSTRUCTION },
       { role: 'user', content: userMsg }
@@ -3496,34 +3494,39 @@ async function generateQuestionChunk({ provider = 'groq', topic = '', count = 25
     return arr;
   }
 
-  if (provider === 'cerebras') {
-    let text;
-    try {
-      text = await callCerebrasChat({
-        messages: [
-          { role: 'system', content: AI_CHUNK_INSTRUCTION },
-          { role: 'user', content: userMsg }
-        ],
-        temperature: 0.7,
-        maxTokens: CEREBRAS_CHUNK_MAX_TOKENS,
-        timeoutMs: CEREBRAS_CHUNK_TIMEOUT_MS
-      });
-    } catch(e) {
-      console.error('[Cerebras chunk] call failed:', e.message);
-      throw e;
+  if (provider === 'deepseek') {
+    let lastErr = null;
+    const messages = [
+      { role: 'system', content: AI_CHUNK_INSTRUCTION },
+      { role: 'user', content: userMsg }
+    ];
+    for (const profile of getDeepSeekAttemptProfiles()) {
+      try {
+        const text = await callDeepSeekChat({
+          messages: messages,
+          temperature: 0.7,
+          maxTokens: Math.max(maxTokens, DEEPSEEK_CHUNK_MAX_TOKENS),
+          timeoutMs: DEEPSEEK_CHUNK_TIMEOUT_MS,
+          model: profile.model,
+          thinkingEnabled: profile.thinkingEnabled
+        });
+        const arr = extractChunkArray(text);
+        if (arr && arr.length > 0) return arr;
+        lastErr = new Error('DeepSeek returned unparseable response. Raw: ' + (text || '').slice(0, 120));
+        console.warn('[DeepSeek chunk] unparseable response from ' + profile.label + ':', (text || '').slice(0, 300));
+      } catch(e) {
+        lastErr = e;
+        console.warn('[DeepSeek chunk] ' + profile.label + ' failed:', e.message);
+      }
     }
-    const arr = extractChunkArray(text);
-    if (!arr || arr.length === 0) {
-      console.error('[Cerebras chunk] unparseable response:', (text || '').slice(0, 300));
-      throw new Error('Cerebras returned unparseable response. Raw: ' + (text || '').slice(0, 120));
-    }
-    return arr;
+    throw lastErr || new Error('DeepSeek chunk generation failed.');
   }
+
   if (provider === 'xai' && XAI_API_KEY) {
-    return callAI('https://api.x.ai/v1/chat/completions', XAI_API_KEY, XAI_MODEL, 2000, 120000);
+    return callAI('https://api.x.ai/v1/chat/completions', XAI_API_KEY, XAI_MODEL, maxTokens, 120000);
   }
   if (GROQ_API_KEY) {
-    return callAI('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, GROQ_MODEL, 2000, 90000);
+    return callAI('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, GROQ_MODEL, maxTokens, 90000);
   }
   throw new Error('No AI provider available for chunked generation.');
 }
@@ -3578,7 +3581,7 @@ async function buildQuestionsInChunks({ prompt = '', total = 0, aiVersion = 'v1'
 
   // Wait gapMs while emitting live countdown messages every 5 seconds
   // Strip AI provider/model names before showing to user
-  const sanitiseLabel = (s) => (s || '').replace(/\b(groq|xai|cerebras|grok|llama|openai|gsk-[\S]+|xai-[\S]+|csk-[\S]+)\b/gi, 'AI');
+  const sanitiseLabel = (s) => (s || '').replace(/\b(groq|xai|deepseek|grok|llama|openai|gsk-[\S]+|xai-[\S]+|csk-[\S]+|sk-[\S]+)\b/gi, 'AI');
 
   const waitWithCountdown = async (gapMs, label) => {
     label = sanitiseLabel(label || '');
@@ -3611,27 +3614,46 @@ async function buildQuestionsInChunks({ prompt = '', total = 0, aiVersion = 'v1'
   };
 
 
-  emitProgress(0, 0, 'Starting \u2014 generating ' + total + ' items in ' + totalChunks + ' batches...');
+  emitProgress(0, 0, 'Starting — generating ' + total + ' items in ' + totalChunks + ' batches...');
 
-  for (let chunk = 0; chunk < totalChunks; chunk++) {
-    const offset = chunk * chunkSize;
-    const count = Math.min(chunkSize, total - offset);
+  const getProvidersForChunk = (chunkIndex) => {
+    // v4 uses the SAME working chunk providers as v1/v2, but alternates the
+    // preferred provider each batch: Groq -> xAI -> Groq -> xAI, with the other
+    // provider as fallback so the next AI can continue from the prior chunks.
+    if (aiVersion === 'v4') {
+      const v4Providers = getV4ProviderOrder(chunkIndex);
+      return v4Providers.length ? v4Providers : ['groq'];
+    }
+    if (aiVersion === 'v3') return ['deepseek'];
+    return aiVersion === 'v2' && XAI_API_KEY ? ['groq', 'xai'] : ['groq'];
+  };
 
-    // v4 = Gemini+DeepSeek cascade; v3 = Cerebras; v2 = Groq+xAI; v1 = Groq only
-    const providers = aiVersion === 'v4'
-      ? ['v4cascade']
-      : (aiVersion === 'v3'
-        ? ['cerebras']
-        : (aiVersion === 'v2' && XAI_API_KEY ? ['groq', 'xai'] : ['groq']));
+  const shouldWaitAfterChunk = (chunkIndex, hasMoreWork) => {
+    if (!hasMoreWork) return false;
+    const v4ProviderCount = aiVersion === 'v4' ? getConfiguredV4Providers().length : 0;
+    // v4 should NOT wait between the first Groq chunk and the second xAI chunk,
+    // because the second provider is still fresh. Wait only after each provider
+    // in the pair has taken a turn (before chunk 3, 5, 7, ...).
+    if (v4ProviderCount > 1) return (chunkIndex + 1) % v4ProviderCount === 0;
+    return true;
+  };
+
+  let chunk = 0;
+  const maxChunkRuns = Math.max(totalChunks + 8, Math.ceil(total / Math.max(1, Math.floor(chunkSize / 2))) + 8);
+  while (allQuestions.length < total && chunk < maxChunkRuns) {
+    const offset = allQuestions.length;
+    const count = Math.min(chunkSize, total - allQuestions.length);
+    const displayTotalChunks = Math.max(totalChunks, Math.ceil(total / chunkSize), chunk + 1);
+    const providers = getProvidersForChunk(chunk);
 
     let chunkItems = null;
     let lastErr = null;
     let chunkSucceeded = false;
 
-    // Try this chunk up to CHUNK_MAX_RETRIES times with 2-min waits between attempts
+    // Try this chunk up to CHUNK_MAX_RETRIES times with waits between attempts
     for (let attempt = 0; attempt < CHUNK_MAX_RETRIES; attempt++) {
       if (attempt > 0) {
-        console.warn('[Chunker] chunk ' + (chunk + 1) + '/' + totalChunks + ' attempt ' + attempt + ' failed (' + (lastErr && lastErr.message) + '). Waiting 2 min before retry...');
+        console.warn('[Chunker] chunk ' + (chunk + 1) + '/' + displayTotalChunks + ' attempt ' + attempt + ' failed (' + (lastErr && lastErr.message) + '). Waiting before retry...');
         emitHint((lastErr && lastErr.message) || 'Batch failed, retrying...');
         await waitWithCountdown(INTER_CHUNK_DELAY_MS, 'retrying batch ' + (chunk + 1) + ' (attempt ' + (attempt + 1) + '/' + CHUNK_MAX_RETRIES + ')');
       }
@@ -3639,8 +3661,15 @@ async function buildQuestionsInChunks({ prompt = '', total = 0, aiVersion = 'v1'
       for (let pi = 0; pi < providers.length; pi++) {
         const provider = providers[pi];
         try {
-          emitProgress(allQuestions.length, chunk + 1, 'Generating batch ' + (chunk + 1) + '/' + totalChunks + ' \u2014 ' + allQuestions.length + '/' + total + ' done...');
-          chunkItems = await generateQuestionChunk({ provider: provider, topic: topic, count: count, offset: offset, existing: allQuestions });
+          emitProgress(allQuestions.length, chunk + 1, 'Generating batch ' + (chunk + 1) + '/' + displayTotalChunks + ' — ' + allQuestions.length + '/' + total + ' done...');
+          chunkItems = await generateQuestionChunk({
+            provider: provider,
+            topic: topic,
+            count: count,
+            offset: offset,
+            existing: allQuestions,
+            maxTokens: aiVersion === 'v4' ? 4096 : 2000
+          });
           if (Array.isArray(chunkItems) && chunkItems.length > 0) {
             chunkSucceeded = true;
             break;
@@ -3648,7 +3677,7 @@ async function buildQuestionsInChunks({ prompt = '', total = 0, aiVersion = 'v1'
         } catch (e) {
           lastErr = e;
           emitHint(e.message);
-          console.warn('[Chunker] chunk ' + (chunk + 1) + '/' + totalChunks + ' attempt ' + (attempt + 1) + ' failed on ' + provider + ':', e.message);
+          console.warn('[Chunker] chunk ' + (chunk + 1) + '/' + displayTotalChunks + ' attempt ' + (attempt + 1) + ' failed on ' + provider + ':', e.message);
         }
       }
 
@@ -3658,18 +3687,20 @@ async function buildQuestionsInChunks({ prompt = '', total = 0, aiVersion = 'v1'
     if (!chunkSucceeded || !Array.isArray(chunkItems) || chunkItems.length === 0) {
       if (allQuestions.length > 0) {
         console.warn('[Chunker] chunk ' + (chunk + 1) + ' exhausted all retries. Collected so far: ' + allQuestions.length + '. Continuing to next chunk...');
-        emitProgress(allQuestions.length, chunk + 1, 'Batch ' + (chunk + 1) + ' skipped after retries \u2014 continuing... (' + allQuestions.length + '/' + total + ' done)');
-        if (chunk < totalChunks - 1) {
+        emitProgress(allQuestions.length, chunk + 1, 'Batch ' + (chunk + 1) + ' skipped after retries — continuing... (' + allQuestions.length + '/' + total + ' done)');
+        if (shouldWaitAfterChunk(chunk, allQuestions.length < total)) {
           await waitWithCountdown(INTER_CHUNK_DELAY_MS, 'recovering tokens before batch ' + (chunk + 2));
         }
+        chunk++;
         continue;
       }
       throw new Error('Failed to generate any items after ' + CHUNK_MAX_RETRIES + ' attempts. Last error: ' + ((lastErr && lastErr.message) || 'unknown'));
     }
 
-    // Normalise and dedup
+    // Normalise and dedup, and never exceed the requested total.
+    const beforeCount = allQuestions.length;
     const seen = new Set(allQuestions.map(function(q){ return q.question.toLowerCase(); }));
-    for (let i = 0; i < chunkItems.length; i++) {
+    for (let i = 0; i < chunkItems.length && allQuestions.length < total; i++) {
       const item = chunkItems[i];
       const q = String((item && item.question) || '').trim();
       const a = String((item && item.answer) || '').trim();
@@ -3679,12 +3710,24 @@ async function buildQuestionsInChunks({ prompt = '', total = 0, aiVersion = 'v1'
       }
     }
 
+    if (allQuestions.length === beforeCount) {
+      console.warn('[Chunker] chunk ' + (chunk + 1) + ' produced only duplicates/invalid items. Retrying/top-up will continue if needed.');
+    }
+
     emitProgress(allQuestions.length, chunk + 1);
 
-    // After every chunk except the last, wait 2 full minutes for token recovery
-    if (chunk < totalChunks - 1) {
+    const hasMoreWork = allQuestions.length < total;
+    if (shouldWaitAfterChunk(chunk, hasMoreWork)) {
       await waitWithCountdown(INTER_CHUNK_DELAY_MS, 'recovering tokens before batch ' + (chunk + 2));
+    } else if (hasMoreWork && aiVersion === 'v4' && getConfiguredV4Providers().length > 1) {
+      emitProgress(allQuestions.length, chunk + 1, 'Switching to the next fresh AI provider immediately — ' + allQuestions.length + '/' + total + ' done...');
     }
+
+    chunk++;
+  }
+
+  if (allQuestions.length < total) {
+    throw new Error('Only generated ' + allQuestions.length + ' of ' + total + ' requested items after automatic v4 top-up attempts. Try a smaller batch or retry.');
   }
 
   emitProgress(allQuestions.length, totalChunks, '\u2713 All done \u2014 ' + allQuestions.length + ' items generated and deployed!');
@@ -3693,171 +3736,146 @@ async function buildQuestionsInChunks({ prompt = '', total = 0, aiVersion = 'v1'
 
 // ── Joytree API v4 helpers ────────────────────────────────────────────────────
 
-// Gemini uses a different REST API shape (not OpenAI-compatible)
-async function callGeminiChat({ messages, maxTokens = 4096, timeoutMs = 90000, temperature = 0.3, useGoogleSearch = false } = {}) {
-  if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not configured.');
-  // Convert OpenAI-style messages to Gemini contents format
-  // System message becomes first user turn context
-  const systemMsg = messages.find(function(m){ return m.role === 'system'; });
-  const userMsgs  = messages.filter(function(m){ return m.role !== 'system'; });
-  const contents  = userMsgs.map(function(m) {
-    return { role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: String(m.content || '') }] };
+function getConfiguredV4Providers() {
+  const providers = [];
+  if (GROQ_API_KEY) providers.push('groq');
+  if (XAI_API_KEY) providers.push('xai');
+  return providers;
+}
+
+async function callGroqChat({ messages, maxTokens = 4096, timeoutMs = 90000, temperature = 0.3 } = {}) {
+  if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY is not configured.');
+  return callOpenAICompatibleChat({
+    apiUrl: 'https://api.groq.com/openai/v1/chat/completions',
+    apiKey: GROQ_API_KEY,
+    model: GROQ_MODEL,
+    messages,
+    maxTokens,
+    timeoutMs,
+    temperature
   });
-  if (systemMsg && contents.length > 0) {
-    // Prepend system text to first user message
-    contents[0].parts[0].text = String(systemMsg.content) + '\n\n' + contents[0].parts[0].text;
-  }
-  const controller = new AbortController();
-  const tid = setTimeout(function(){ controller.abort(); }, timeoutMs);
-  try {
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent';
-    const geminiBody = {
-      contents: contents,
-      generationConfig: { maxOutputTokens: maxTokens, temperature: Math.min(2, Math.max(0, temperature)) }
-    };
-    // Enable Google Search grounding when requested (v4 web search)
-    if (useGoogleSearch) {
-      geminiBody.tools = [{ google_search: {} }];
-    }
-    const r = await fetch(url, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
-      body: JSON.stringify(geminiBody)
-    });
-    if (!r.ok) {
-      const t = await r.text().catch(function(){ return ''; });
-      const j = (function(){ try { return JSON.parse(t); } catch { return null; } })();
-      const msg = (j && j.error && j.error.message) || t.slice(0, 300) || ('HTTP ' + r.status);
-      console.error('[Gemini] API error', r.status, ':', msg);
-      throw new Error('Gemini HTTP ' + r.status + ': ' + msg);
-    }
-    const data = await r.json().catch(function(){ return {}; });
-    const text = String((data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text) || '');
-    if (!text) throw new Error('Gemini returned empty content.');
-    return text;
-  } catch(e) {
-    if (e.name === 'AbortError') throw new Error('Gemini timed out after ' + Math.round(timeoutMs / 1000) + 's.');
-    throw e;
-  } finally {
-    clearTimeout(tid);
-  }
 }
 
-// DeepSeek is OpenAI-compatible — simple fetch, no special SDK needed
-async function callDeepSeekChat({ messages, maxTokens = 4096, timeoutMs = 90000, temperature = 0.3 } = {}) {
-  if (!DEEPSEEK_API_KEY) throw new Error('DEEPSEEK_API_KEY is not configured.');
-  const controller = new AbortController();
-  const tid = setTimeout(function(){ controller.abort(); }, timeoutMs);
-  try {
-    const r = await fetch('https://api.deepseek.com/chat/completions', {
-      method: 'POST',
-      signal: controller.signal,
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DEEPSEEK_API_KEY },
-      body: JSON.stringify({
-        model: DEEPSEEK_MODEL,
-        messages: messages,
-        max_tokens: maxTokens,
-        temperature: Math.min(2, Math.max(0, temperature)),
-        thinking: { type: 'enabled' },
-        reasoning_effort: 'high',
-        stream: false
-      })
-    });
-    if (!r.ok) {
-      const t = await r.text().catch(function(){ return ''; });
-      const j = (function(){ try { return JSON.parse(t); } catch { return null; } })();
-      const msg = (j && j.error && j.error.message) || t.slice(0, 300) || ('HTTP ' + r.status);
-      console.error('[DeepSeek] API error', r.status, ':', msg);
-      throw new Error('DeepSeek HTTP ' + r.status + ': ' + msg);
-    }
-    const data = await r.json().catch(function(){ return {}; });
-    const text = String((data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '');
-    if (!text) throw new Error('DeepSeek returned empty content.');
-    return text;
-  } catch(e) {
-    if (e.name === 'AbortError') throw new Error('DeepSeek timed out after ' + Math.round(timeoutMs / 1000) + 's.');
-    throw e;
-  } finally {
-    clearTimeout(tid);
-  }
+async function callXAIChat({ messages, maxTokens = 4096, timeoutMs = 120000, temperature = 0.3 } = {}) {
+  if (!XAI_API_KEY) throw new Error('XAI_API_KEY is not configured.');
+  return callOpenAICompatibleChat({
+    apiUrl: 'https://api.x.ai/v1/chat/completions',
+    apiKey: XAI_API_KEY,
+    model: XAI_MODEL,
+    messages,
+    maxTokens,
+    timeoutMs,
+    temperature
+  });
 }
 
-// v4 single-shot flow builder — tries Gemini first then DeepSeek
+async function callV4ProviderChat(provider, options) {
+  if (provider === 'groq') return callGroqChat(options);
+  if (provider === 'xai') return callXAIChat(options);
+  throw new Error('Unsupported Joytree API v4 provider: ' + provider);
+}
+
+function isLikelyTransientAIError(err) {
+  const msg = String((err && err.message) || err || '').toLowerCase();
+  return msg.includes('429') || msg.includes('quota') || msg.includes('rate') ||
+    msg.includes('limit') || msg.includes('timeout') || msg.includes('timed out') ||
+    msg.includes('503') || msg.includes('502') || msg.includes('504');
+}
+
+// v4 single-shot flow builder — intentionally reuses the same proven v1/v2
+// functions. Groq starts the flow, then xAI continues if Groq fails or returns
+// invalid JSON. Web-search context is already merged into sourceText upstream.
 async function buildFlowWithV4({ prompt = '', sourceText = '', fileName = '' } = {}) {
-  const userInput = 'PROMPT:\n' + String(prompt || '').slice(0, 20000) + '\n\nSOURCE_TEXT:\n' + String(sourceText || '').slice(0, 20000) + '\n\nFILE_NAME:\n' + String(fileName || '').slice(0, 200);
-  const systemMsg = AI_FLOW_INSTRUCTION + '\nJoytree API v4 uses multi-AI cascade. If WEB_SEARCH_RESULTS appear in SOURCE_TEXT, use them as current context.';
-  const messages = [{ role: 'system', content: systemMsg }, { role: 'user', content: userInput }];
-  // Try Gemini first
-  try {
-    const text = await callGeminiChat({ messages: messages, temperature: 0.25, maxTokens: 8192, useGoogleSearch: true });
-    const parsed = extractJsonFromText(text);
-    if (parsed) return Object.assign({}, parsed, { _aiProvider: 'gemini', _aiModel: 'Joytree API v4' });
-    throw new Error('Gemini returned non-JSON output.');
-  } catch(e) {
-    console.warn('[v4] Gemini flow build failed:', e.message, '— falling back to DeepSeek');
+  const providers = getConfiguredV4Providers();
+  if (!providers.length) throw new Error('Joytree API v4 is not configured. Add GROQ_API_KEY or XAI_API_KEY to your server .env file and restart.');
+
+  let lastError = null;
+  for (const provider of providers) {
+    try {
+      const result = provider === 'xai'
+        ? await buildFlowWithXAI({ prompt, sourceText, fileName })
+        : await buildFlowWithGroq({ prompt, sourceText, fileName });
+      if (result) return Object.assign({}, result, { _aiProvider: provider === 'xai' ? 'joytree_xai' : 'joytree_groq', _aiModel: 'Joytree API v4' });
+      throw new Error(provider + ' returned an empty response.');
+    } catch(e) {
+      lastError = e;
+      console.warn('[v4] ' + provider + ' flow build failed:', e.message, '— trying next configured provider');
+    }
   }
-  // Fallback to DeepSeek
-  const text2 = await callDeepSeekChat({ messages: messages, temperature: 0.25, maxTokens: 8192 });
-  const parsed2 = extractJsonFromText(text2);
-  if (!parsed2) throw new Error('DeepSeek also returned non-JSON output. Try rephrasing your prompt.');
-  return Object.assign({}, parsed2, { _aiProvider: 'deepseek', _aiModel: 'Joytree API v4' });
+
+  throw new Error('Joytree API v4 could not build a valid flow with the configured Groq/xAI providers. Last error: ' + ((lastError && lastError.message) || 'unknown'));
 }
 
-// v4 provider pool — TRUE alternation (Gemini→DeepSeek→Gemini→…) with cooldown fallback
-const _v4CooldownUntil = { gemini: 0, deepseek: 0 };
-const V4_PROVIDERS = ['gemini', 'deepseek'];
+
+// v4 provider pool — TRUE alternation (Groq→xAI→Groq→…) with cooldown fallback
+const _v4CooldownUntil = { groq: 0, xai: 0 };
+const V4_PROVIDERS = ['groq', 'xai'];
 let _v4ChunkCounter = 0; // increments each chunk to drive alternation
 
-function getV4AlternatingProvider(chunkIndex) {
-  // Primary: strict round-robin alternation
+function getV4ProviderOrder(chunkIndex) {
+  const configured = V4_PROVIDERS.filter(function(provider) {
+    return provider === 'groq' ? !!GROQ_API_KEY : !!XAI_API_KEY;
+  });
+  if (configured.length <= 1) return configured;
   const preferred = V4_PROVIDERS[chunkIndex % V4_PROVIDERS.length];
-  const fallback  = V4_PROVIDERS[(chunkIndex + 1) % V4_PROVIDERS.length];
-  const now = Date.now();
-  if (now >= _v4CooldownUntil[preferred]) return preferred;
-  if (now >= _v4CooldownUntil[fallback])  return fallback;
-  // Both cooling — return whichever recovers soonest
-  return _v4CooldownUntil[preferred] <= _v4CooldownUntil[fallback] ? preferred : fallback;
+  const fallback = V4_PROVIDERS[(chunkIndex + 1) % V4_PROVIDERS.length];
+  return [preferred, fallback].filter(function(provider) { return configured.includes(provider); });
 }
 
 function markV4ProviderCooling(provider) {
-  _v4CooldownUntil[provider] = Date.now() + 65000; // 65s cooldown
-  console.warn('[v4] Provider', provider, 'rate-limited — cooling 65s, other provider takes over.');
+  _v4CooldownUntil[provider] = Date.now() + INTER_CHUNK_DELAY_MS;
+  console.warn('[v4] Provider', provider, 'is cooling for', Math.round(INTER_CHUNK_DELAY_MS / 1000) + 's; another configured provider will take over.');
 }
 
-// Call one chunk using v4 TRUE alternation — Gemini↔DeepSeek every chunk, failover on error
+// Call one chunk using v4 TRUE alternation — Groq↔xAI every chunk, failover on error
 async function callV4Chunk(messages) {
   const chunkIndex = _v4ChunkCounter++;
-  const order = [
-    V4_PROVIDERS[chunkIndex % V4_PROVIDERS.length],
-    V4_PROVIDERS[(chunkIndex + 1) % V4_PROVIDERS.length]
-  ];
+  const order = getV4ProviderOrder(chunkIndex);
+  if (!order.length) throw new Error('Joytree API v4 is not configured. Add GROQ_API_KEY or XAI_API_KEY to your server .env file and restart.');
+
   console.log('[v4] Chunk', chunkIndex, '— preferred provider:', order[0]);
-  for (let i = 0; i < order.length; i++) {
-    const provider = (Date.now() >= _v4CooldownUntil[order[i]]) ? order[i] : order[1 - i];
+  let lastError = null;
+
+  for (const provider of order) {
+    const now = Date.now();
+    if (now < (_v4CooldownUntil[provider] || 0) && order.length > 1) {
+      console.warn('[v4 chunk ' + chunkIndex + '] ' + provider + ' still cooling — trying another provider');
+      continue;
+    }
     try {
-      let text;
-      if (provider === 'gemini') {
-        text = await callGeminiChat({ messages: messages, temperature: 0.7, maxTokens: 4096, useGoogleSearch: true });
-      } else {
-        text = await callDeepSeekChat({ messages: messages, temperature: 0.7, maxTokens: 4096 });
-      }
+      const text = await callV4ProviderChat(provider, {
+        messages: messages,
+        temperature: 0.7,
+        maxTokens: 4096,
+        timeoutMs: provider === 'xai' ? 120000 : 90000
+      });
       console.log('[v4] Chunk', chunkIndex, 'completed by', provider);
       return { text: text, provider: provider };
     } catch(e) {
-      const isQuota = e.message && (e.message.includes('429') || e.message.includes('quota') || e.message.includes('rate') || e.message.includes('limit'));
-      if (isQuota) {
-        markV4ProviderCooling(provider);
-        console.warn('[v4 chunk ' + chunkIndex + '] ' + provider + ' quota hit — trying other provider');
-        await new Promise(function(r){ setTimeout(r, 800); });
-        continue;
-      }
-      console.warn('[v4 chunk ' + chunkIndex + '] ' + provider + ' error: ' + e.message + ' — trying other provider');
-      markV4ProviderCooling(provider);
+      lastError = e;
+      console.warn('[v4 chunk ' + chunkIndex + '] ' + provider + ' error: ' + e.message + ' — trying next configured provider');
+      if (isLikelyTransientAIError(e)) markV4ProviderCooling(provider);
       await new Promise(function(r){ setTimeout(r, 500); });
     }
   }
-  throw new Error('v4 chunk ' + chunkIndex + ': both Gemini and DeepSeek failed. Check API keys and quotas.');
+
+  // If every provider was skipped because of cooldown, wait briefly for the earliest recovery and try once more.
+  const retryable = order.filter(function(provider) { return Date.now() < (_v4CooldownUntil[provider] || 0); });
+  if (retryable.length) {
+    const waitMs = Math.max(500, Math.min.apply(null, retryable.map(function(provider) { return _v4CooldownUntil[provider] - Date.now(); })));
+    await new Promise(function(r){ setTimeout(r, Math.min(waitMs, 5000)); });
+    for (const provider of order) {
+      try {
+        const text = await callV4ProviderChat(provider, { messages: messages, temperature: 0.7, maxTokens: 4096, timeoutMs: provider === 'xai' ? 120000 : 90000 });
+        console.log('[v4] Chunk', chunkIndex, 'completed by', provider, 'after cooldown wait');
+        return { text: text, provider: provider };
+      } catch(e) {
+        lastError = e;
+      }
+    }
+  }
+
+  throw new Error('v4 chunk ' + chunkIndex + ': all configured Groq/xAI providers failed. Last error: ' + ((lastError && lastError.message) || 'unknown'));
 }
 
 
@@ -3914,28 +3932,46 @@ async function buildFlowWithGroq({ prompt = '', sourceText = '', fileName = '' }
   }
 }
 
-async function buildFlowWithCerebras({ prompt = '', sourceText = '', fileName = '' } = {}) {
-  if (!CEREBRAS_API_KEY) throw new Error('CEREBRAS_API_KEY is not configured. Add it to your .env file.');
-  const userInput = `PROMPT:\n${String(prompt || '').slice(0, 20000)}\n\nSOURCE_TEXT:\n${String(sourceText || '').slice(0, 20000)}\n\nFILE_NAME:\n${String(fileName || '').slice(0, 200)}`;
-  try {
-    const text = await callCerebrasChat({
-      messages: [
-        { role: 'system', content: `${AI_FLOW_INSTRUCTION}\nJoytree API v3 runs on Cerebras ultra-fast AI. If WEB_SEARCH_RESULTS appear in SOURCE_TEXT, use them as current web context.` },
-        { role: 'user', content: userInput }
-      ],
-      temperature: 0.25,
-      maxTokens: CEREBRAS_FLOW_MAX_TOKENS,
-      timeoutMs: CEREBRAS_FLOW_TIMEOUT_MS
-    });
-    const parsed = extractJsonFromText(text);
-    if (!parsed) throw new Error('Cerebras returned non-JSON output. Try rephrasing your prompt.');
-    return parsed && typeof parsed === 'object' ? parsed : null;
-  } catch (e) {
-    if (e.name === 'AbortError') throw new Error('Cerebras timed out. Try increasing CEREBRAS_FLOW_TIMEOUT_MS.');
-    console.error('[Joytree API v3] buildFlowWithCerebras error:', e.message);
-    throw e;
+async function buildFlowWithDeepSeek({ prompt = '', sourceText = '', fileName = '' } = {}) {
+  if (!DEEPSEEK_API_KEY) throw new Error('DEEPSEEK_API_KEY is not configured. Add it to your .env file.');
+  const userInput = `PROMPT:
+${String(prompt || '').slice(0, 20000)}
+
+SOURCE_TEXT:
+${String(sourceText || '').slice(0, 20000)}
+
+FILE_NAME:
+${String(fileName || '').slice(0, 200)}`;
+  const messages = [
+    { role: 'system', content: `${AI_FLOW_INSTRUCTION}
+Joytree API v3 runs on DeepSeek high-reasoning AI. If WEB_SEARCH_RESULTS appear in SOURCE_TEXT, use them as current web context. Return only valid JSON for the requested flow.` },
+    { role: 'user', content: userInput }
+  ];
+  let lastErr = null;
+  for (const profile of getDeepSeekAttemptProfiles()) {
+    try {
+      const text = await callDeepSeekChat({
+        messages: messages,
+        temperature: 0.25,
+        maxTokens: DEEPSEEK_FLOW_MAX_TOKENS,
+        timeoutMs: DEEPSEEK_FLOW_TIMEOUT_MS,
+        model: profile.model,
+        thinkingEnabled: profile.thinkingEnabled
+      });
+      const parsed = extractJsonFromText(text);
+      if (parsed && typeof parsed === 'object') return parsed;
+      lastErr = new Error('DeepSeek returned non-JSON output. Raw: ' + (text || '').slice(0, 160));
+      console.warn('[Joytree API v3] DeepSeek ' + profile.label + ' returned non-JSON:', (text || '').slice(0, 300));
+    } catch (e) {
+      lastErr = e;
+      console.warn('[Joytree API v3] DeepSeek ' + profile.label + ' failed:', e.message);
+    }
   }
+  if (lastErr && lastErr.name === 'AbortError') throw new Error('DeepSeek timed out. Try increasing DEEPSEEK_FLOW_TIMEOUT_MS.');
+  console.error('[Joytree API v3] buildFlowWithDeepSeek failed:', lastErr && lastErr.message);
+  throw lastErr || new Error('DeepSeek returned no valid JSON flow.');
 }
+
 
 async function buildFlowWithXAI({ prompt = '', sourceText = '', fileName = '' } = {}) {
   if (!XAI_API_KEY) throw new Error('xAI API key not configured. Add XAI_API_KEY to your server .env file.');
@@ -3978,18 +4014,19 @@ async function buildFlowWithXAI({ prompt = '', sourceText = '', fileName = '' } 
 }
 
 async function buildFlowWithAI({ prompt = '', sourceText = '', fileBase64 = '', fileMime = '', fileName = '', aiProvider = 'auto', aiVersion = 'v1' } = {}) {
-  // Joytree API v4 — Gemini + DeepSeek cascade with web search
+  // Joytree API v4 — use the same proven Groq/xAI flow builders as v1/v2,
+  // with Groq first and xAI continuing if Groq fails or returns invalid JSON.
   if (aiVersion === 'v4') {
     const result = await buildFlowWithV4({ prompt, sourceText, fileName });
     if (result) return result; // already has _aiProvider and _aiModel set
     throw new Error('Joytree API v4 returned an empty response.');
   }
 
-  // Joytree API v3 — Cerebras ultra-fast cloud AI (admin only at route layer)
+  // Joytree API v3 — DeepSeek high-reasoning cloud AI (admin only at route layer)
   if (aiVersion === 'v3') {
-    const result = await buildFlowWithCerebras({ prompt, sourceText, fileName });
-    if (result) return { ...result, _aiProvider: 'cerebras', _aiModel: 'Joytree API v3 (Cerebras)' };
-    throw new Error('Joytree API v3 returned an empty response. Check CEREBRAS_API_KEY.');
+    const result = await buildFlowWithDeepSeek({ prompt, sourceText, fileName });
+    if (result) return { ...result, _aiProvider: 'deepseek', _aiModel: 'Joytree API v3 (DeepSeek)' };
+    throw new Error('Joytree API v3 returned an empty response. Check DEEPSEEK_API_KEY.');
   }
   // Joy AI v1 — Groq only (fails if Groq fails)
   if (aiVersion === 'v1') {
@@ -4157,15 +4194,15 @@ app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
   const uniqueApiCount = new Set([...fbApis, ...localApis].map(a => String(a.flowId || ''))).size;
   if (uniqueApiCount >= Number(planLimits.maxApis || 0)) return res.status(403).json({ error: `API builder limit reached for ${userPlanKey} plan (${planLimits.maxApis} max). Upgrade to create more APIs.` });
   const flowId = `flow_${Date.now()}`;
-  if (selectedAiVersion === 'v4' && !GEMINI_API_KEY && !DEEPSEEK_API_KEY) return res.status(503).json({ error: 'Joytree API v4 is not configured. Add GEMINI_API_KEY or DEEPSEEK_API_KEY to your .env file.' });
+  if (selectedAiVersion === 'v4' && !GROQ_API_KEY && !XAI_API_KEY) return res.status(503).json({ error: 'Joytree API v4 is not configured. Add GROQ_API_KEY or XAI_API_KEY to your .env file.' });
   if (selectedAiVersion !== 'v3' && selectedAiVersion !== 'v4' && !GROQ_API_KEY) return res.status(503).json({ error: 'Joytree AI is not configured. Add GROQ_API_KEY to your server .env file and restart.' });
-  if (selectedAiVersion === 'v3' && !CEREBRAS_API_KEY) return res.status(503).json({ error: 'Joytree API v3 is not configured. Add CEREBRAS_API_KEY to your server .env file and restart.' });
+  if (selectedAiVersion === 'v3' && !DEEPSEEK_API_KEY) return res.status(503).json({ error: 'Joytree API v3 is not configured. Add DEEPSEEK_API_KEY to your server .env file and restart.' });
   const providerRequested = 'auto';
   const fileContextNote = (fileName && fileMime && !String(fileMime).startsWith('text/') && fileMime !== 'application/json')
     ? `\n[Uploaded file: ${fileName} (${fileMime}) — use this file context to generate API content]`
     : '';
   const scrapedContext = await fetchUrlContext(`${prompt}\n${sourceText}`).catch(() => '');
-  // v4 always gets web search context (Gemini excels at using current info)
+  // v4 always gets web search context before sending the prompt to Groq/xAI.
   const webSearchContext = selectedAiVersion === 'v4'
     ? await (async () => {
         // For v4 use DuckDuckGo directly (no SearXNG needed)
@@ -4238,7 +4275,7 @@ app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
   }
 
   const usedProvider = aiSpec?._aiProvider || 'joytree';
-  const usedModel = aiSpec?._aiModel || (selectedAiVersion === 'v4' ? 'Joytree API v4' : (selectedAiVersion === 'v3' ? 'Joytree API v3 (Cerebras)' : (selectedAiVersion === 'v2' ? 'Joy AI v2' : 'Joy AI v1')));
+  const usedModel = aiSpec?._aiModel || (selectedAiVersion === 'v4' ? 'Joytree API v4' : (selectedAiVersion === 'v3' ? 'Joytree API v3 (DeepSeek)' : (selectedAiVersion === 'v2' ? 'Joy AI v2' : 'Joy AI v1')));
   delete aiSpec._aiProvider; delete aiSpec._aiModel;
   const route = String(aiSpec?.routePath || routePath || '/api');
   const httpMethod = String(aiSpec?.method || method || 'GET').toUpperCase();
@@ -4344,18 +4381,18 @@ app.get('/api/developer/ai/status', requireAuth, (req, res) => {
     aiConfigured: !!GROQ_API_KEY,
     aiAnalysisMode: 'server-side-ai',
     v3: {
-      name: 'Joytree API v3 (Cerebras)',
+      name: 'Joytree API v3 (DeepSeek)',
       adminOnly: true,
       hasAccess: isRootEmailAdmin(req.user),
-      cerebrasConfigured: !!CEREBRAS_API_KEY,
+      deepseekConfigured: !!DEEPSEEK_API_KEY,
       webSearchEnabled: JOYTREE_WEB_SEARCH_ENABLED
     },
     v4: {
       name: 'Joytree API v4',
       adminOnly: true,
       hasAccess: isRootEmailAdmin(req.user),
-      geminiConfigured: !!GEMINI_API_KEY,
-      deepseekConfigured: !!DEEPSEEK_API_KEY,
+      groqConfigured: !!GROQ_API_KEY,
+      xaiConfigured: !!XAI_API_KEY,
       webSearchEnabled: true
     }
   });
