@@ -3232,11 +3232,119 @@ const NAMESILO_BASE    = 'https://www.namesilo.com/api';
 async function namesiloCall(operation, params = {}) {
   const qs = new URLSearchParams({ version: '1', type: 'json', key: NAMESILO_API_KEY, ...params });
   const url = `${NAMESILO_BASE}/${operation}?${qs}`;
-  const r = await fetch(url, { timeout: 15000 });
-  const json = await r.json().catch(() => ({}));
-  // NameSilo wraps everything in reply.reply
-  return json?.reply || json;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const r = await fetch(url, { signal: controller.signal });
+    const json = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(`NameSilo HTTP ${r.status}`);
+
+    // NameSilo JSON is usually { reply: {...} }, but some responses are
+    // double-wrapped as { reply: { reply: {...} } }. Always unwrap to the
+    // payload that contains code/available/prices so availability is not
+    // mistaken for taken when the API shape changes.
+    let payload = json;
+    while (payload?.reply && typeof payload.reply === 'object') payload = payload.reply;
+    return payload || {};
+  } finally {
+    clearTimeout(timer);
+  }
 }
+
+function namesiloCode(data) {
+  return Number(data?.code || data?.status || 0);
+}
+
+function namesiloDomainsToSet(value) {
+  const out = new Set();
+  const add = item => {
+    if (!item) return;
+    if (typeof item === 'string') out.add(item.toLowerCase());
+    else if (typeof item === 'object') add(item.domain || item.name || item._ || item.$t);
+  };
+  if (Array.isArray(value)) value.forEach(add);
+  else add(value);
+  return out;
+}
+
+function namesiloAvailabilityStatus(data, domain) {
+  const code = namesiloCode(data);
+  if (code && code !== 300) {
+    throw new Error(`NameSilo error ${code}: ${data?.detail || 'Availability check failed'}`);
+  }
+
+  const wanted = String(domain || '').toLowerCase();
+  const available = namesiloDomainsToSet(data?.available?.domain || data?.available);
+  const unavailable = namesiloDomainsToSet(data?.unavailable?.domain || data?.unavailable);
+
+  if (available.has(wanted)) return 'available';
+  if (unavailable.has(wanted)) return 'taken';
+
+  // If NameSilo returns a successful response but omits both lists, report an
+  // indeterminate state instead of falsely telling the user the domain is taken.
+  return 'unknown';
+}
+
+function namesiloNormalizeTld(raw) {
+  return String(raw || '').trim().toLowerCase().replace(/^\.+/, '');
+}
+
+function namesiloExtractPriceRows(priceData) {
+  const rows = [];
+  const containers = [priceData?.prices, priceData?.pricing, priceData];
+  for (const container of containers) {
+    if (!container || typeof container !== 'object' || Array.isArray(container)) continue;
+    for (const [key, value] of Object.entries(container)) {
+      const tld = namesiloNormalizeTld(value?.tld || value?.extension || key);
+      if (!tld || ['code', 'detail'].includes(tld)) continue;
+      const register = Number.parseFloat(value?.registration ?? value?.register ?? value?.registration_price ?? value?.price);
+      const renew = Number.parseFloat(value?.renewal ?? value?.renew ?? value?.renewal_price ?? value?.price ?? register);
+      if (Number.isFinite(register)) rows.push({ tld: `.${tld}`, register, renew: Number.isFinite(renew) ? renew : register });
+    }
+    if (rows.length) break;
+  }
+  return rows;
+}
+
+const DOMAIN_STORE_FALLBACK_TLDS = [
+  { tld: '.com', register: 9.95, renew: 11.99 },
+  { tld: '.net', register: 10.95, renew: 12.99 },
+  { tld: '.org', register: 10.95, renew: 12.99 },
+  { tld: '.io', register: 32.95, renew: 35.99 },
+  { tld: '.xyz', register: 2.99, renew: 9.99 },
+  { tld: '.tech', register: 7.99, renew: 34.99 },
+  { tld: '.app', register: 14.99, renew: 16.99 },
+  { tld: '.dev', register: 13.99, renew: 15.99 },
+  { tld: '.co', register: 25.99, renew: 27.99 },
+  { tld: '.site', register: 2.99, renew: 22.99 },
+];
+
+// ── Return up to 100 live NameSilo TLD options + prices ───────────────
+app.get('/api/domains/tlds', requireAuth, async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 100, 1), 100);
+
+    if (!NAMESILO_API_KEY) {
+      return res.json({ tlds: DOMAIN_STORE_FALLBACK_TLDS.slice(0, limit), demo: true });
+    }
+
+    const priceData = await namesiloCall('getPrices', {});
+    const rows = namesiloExtractPriceRows(priceData)
+      .sort((a, b) => {
+        const popular = ['.com', '.net', '.org', '.io', '.xyz', '.tech', '.app', '.dev', '.co', '.site'];
+        const ai = popular.indexOf(a.tld);
+        const bi = popular.indexOf(b.tld);
+        if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+        return a.tld.localeCompare(b.tld);
+      })
+      .slice(0, limit);
+
+    res.json({ tlds: rows.length ? rows : DOMAIN_STORE_FALLBACK_TLDS.slice(0, limit), demo: !rows.length });
+  } catch(e) {
+    console.warn('[DomainStore] tlds failed:', e.message);
+    res.status(502).json({ error: e.message, tlds: DOMAIN_STORE_FALLBACK_TLDS });
+  }
+});
 
 // ── Check domain availability + return live prices ───────────────
 app.get('/api/domains/check', requireAuth, async (req, res) => {
@@ -3250,11 +3358,9 @@ app.get('/api/domains/check', requireAuth, async (req, res) => {
       const mock = {}; const mockPrices = {};
       domainList.forEach(d => {
         mock[d] = Math.random() > 0.4 ? 'available' : 'taken';
-        // Return realistic demo wholesale prices
         const tld = '.' + d.split('.').slice(1).join('.');
-        const fallbacks = { '.com':9.95,'.net':10.95,'.org':10.95,'.io':32.95,'.xyz':2.99,'.tech':7.99,'.app':14.99,'.dev':13.99,'.co':25.99,'.site':2.99 };
-        const usd = fallbacks[tld] || 9.95;
-        mockPrices[d] = { register: usd, renew: usd * 1.1 };
+        const fallback = DOMAIN_STORE_FALLBACK_TLDS.find(x => x.tld === tld) || DOMAIN_STORE_FALLBACK_TLDS[0];
+        mockPrices[d] = { register: fallback.register, renew: fallback.renew };
       });
       return res.json({ availability: mock, prices: mockPrices, demo: true });
     }
@@ -3265,29 +3371,23 @@ app.get('/api/domains/check', requireAuth, async (req, res) => {
       Promise.all(domainList.map(async domain => {
         try {
           const data = await namesiloCall('checkRegisterAvailability', { domains: domain });
-          const avail = data?.available?.domain;
-          let status;
-          if (Array.isArray(avail)) status = avail.includes(domain) ? 'available' : 'taken';
-          else if (typeof avail === 'string') status = avail === domain ? 'available' : 'taken';
-          else status = 'taken';
-          return [domain, status];
-        } catch(e) { return [domain, 'unknown']; }
+          return [domain, namesiloAvailabilityStatus(data, domain)];
+        } catch(e) {
+          console.warn(`[DomainStore] availability failed for ${domain}:`, e.message);
+          return [domain, 'unknown'];
+        }
       })),
       // Live pricing — NameSilo getPrices returns per-TLD wholesale prices
       (async () => {
         try {
-          const tlds = [...new Set(domainList.map(d => d.split('.').slice(1).join('.')))];
           const priceData = await namesiloCall('getPrices', {});
+          const priceRows = namesiloExtractPriceRows(priceData);
+          const byTld = new Map(priceRows.map(row => [row.tld.replace(/^\./, ''), row]));
           const priceMap = {};
           domainList.forEach(domain => {
             const tld = domain.split('.').slice(1).join('.');
-            const tldData = priceData?.[tld] || priceData?.prices?.[tld];
-            if (tldData) {
-              priceMap[domain] = {
-                register: parseFloat(tldData.registration || tldData.register || tldData.price || 9.95),
-                renew:    parseFloat(tldData.renewal     || tldData.renew    || tldData.price || 9.95)
-              };
-            }
+            const row = byTld.get(tld);
+            if (row) priceMap[domain] = { register: row.register, renew: row.renew };
           });
           return priceMap;
         } catch(e) {

@@ -7895,17 +7895,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         </div>
         <!-- TLD quick filters -->
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;" id="dsTldFilters">
-          <span style="font-size:.7rem;color:var(--text-3);align-self:center;">Extensions:</span>
-          <button class="ds-tld-btn ds-tld-active" onclick="dsToggleTld(this,'.com')">.com</button>
-          <button class="ds-tld-btn" onclick="dsToggleTld(this,'.net')">.net</button>
-          <button class="ds-tld-btn" onclick="dsToggleTld(this,'.org')">.org</button>
-          <button class="ds-tld-btn" onclick="dsToggleTld(this,'.io')">.io</button>
-          <button class="ds-tld-btn" onclick="dsToggleTld(this,'.xyz')">.xyz</button>
-          <button class="ds-tld-btn" onclick="dsToggleTld(this,'.tech')">.tech</button>
-          <button class="ds-tld-btn" onclick="dsToggleTld(this,'.app')">.app</button>
-          <button class="ds-tld-btn" onclick="dsToggleTld(this,'.dev')">.dev</button>
-          <button class="ds-tld-btn" onclick="dsToggleTld(this,'.co')">.co</button>
-          <button class="ds-tld-btn" onclick="dsToggleTld(this,'.site')">.site</button>
+          <span style="font-size:.7rem;color:var(--text-3);align-self:center;">Loading NameSilo extensions…</span>
+        </div>
+        <div style="font-size:.66rem;color:var(--text-3);margin-top:8px;line-height:1.45;">
+          By default, searches check live NameSilo extensions 10 at a time. Pick one or more extensions to search only those filters.
         </div>
         <!-- Results -->
         <div id="dsSearchResults" style="margin-top:14px;display:none;"></div>
@@ -8070,78 +8063,213 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>`;
     }
 
-    let dsActiveTlds = ['.com'];
+    const DS_TLD_PAGE_SIZE = 10;
+    let dsActiveTlds = [];
+    let dsAllTlds = Object.entries(DS_TLD_FALLBACK).map(([tld, prices]) => ({ tld, register: prices.usd, renew: prices.renew }));
+    let dsVisibleTldCount = 0;
+    let dsTldsLoaded = false;
     let dsCurrentDomain = null;
     let dsManagedDomain = null;
+    let dsSearchBase = '';
+    let dsSearchOffset = 0;
+    let dsSearchHtml = '';
+
+    function dsEscapeHtml(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
+    }
+
+    function dsNormalizeTld(tld) {
+      const clean = String(tld || '').trim().toLowerCase().replace(/^\.+/, '');
+      return clean ? '.' + clean : '';
+    }
+
+    function dsFallbackForTld(tld) {
+      const fallback = DS_TLD_FALLBACK[tld] || DS_TLD_FALLBACK['.com'];
+      return { register: fallback.usd, renew: fallback.renew };
+    }
+
+    function dsMergeTlds(rows) {
+      const merged = new Map();
+      Object.entries(DS_TLD_FALLBACK).forEach(([tld, p]) => merged.set(tld, { tld, register: p.usd, renew: p.renew }));
+      (rows || []).forEach(row => {
+        const tld = dsNormalizeTld(row.tld || row.extension || row.name);
+        const register = Number.parseFloat(row.register ?? row.registration ?? row.price);
+        const renew = Number.parseFloat(row.renew ?? row.renewal ?? row.price ?? register);
+        if (tld && Number.isFinite(register)) merged.set(tld, { tld, register, renew: Number.isFinite(renew) ? renew : register });
+      });
+      const popular = ['.com', '.net', '.org', '.io', '.xyz', '.tech', '.app', '.dev', '.co', '.site'];
+      return [...merged.values()].sort((a, b) => {
+        const ai = popular.indexOf(a.tld);
+        const bi = popular.indexOf(b.tld);
+        if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+        return a.tld.localeCompare(b.tld);
+      }).slice(0, 100);
+    }
+
+    async function dsLoadTlds(force = false) {
+      if (dsTldsLoaded && !force) return dsAllTlds;
+      try {
+        const res = await apiFetch(API + '/api/domains/tlds?limit=100');
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Could not load NameSilo extensions');
+        dsAllTlds = dsMergeTlds(data.tlds || []);
+        dsTldsLoaded = true;
+      } catch(e) {
+        console.warn('[DomainStore] Could not load live NameSilo TLDs:', e);
+        dsAllTlds = dsMergeTlds([]);
+        dsTldsLoaded = true;
+      }
+      if (!dsVisibleTldCount) dsVisibleTldCount = Math.min(DS_TLD_PAGE_SIZE, dsAllTlds.length);
+      dsRenderTldFilters();
+      dsInitPricingTable();
+      return dsAllTlds;
+    }
+
+    function dsRenderTldFilters() {
+      const filters = document.getElementById('dsTldFilters');
+      if (!filters) return;
+      const visible = dsAllTlds.slice(0, dsVisibleTldCount || DS_TLD_PAGE_SIZE);
+      let html = '<span style="font-size:.7rem;color:var(--text-3);align-self:center;">Extensions:</span>';
+      html += visible.map(row => {
+        const active = dsActiveTlds.includes(row.tld) ? ' ds-tld-active' : '';
+        return `<button class="ds-tld-btn${active}" onclick="dsToggleTld(this,'${row.tld}')">${row.tld}</button>`;
+      }).join('');
+      if (visible.length < dsAllTlds.length) {
+        html += `<button class="ds-tld-btn" onclick="dsShowMoreTlds()" style="border-style:dashed;">+ ${Math.min(DS_TLD_PAGE_SIZE, dsAllTlds.length - visible.length)} more</button>`;
+      }
+      if (dsActiveTlds.length) {
+        html += '<button class="ds-tld-btn" onclick="dsClearTldFilters()" style="color:var(--text-2);border-color:rgba(255,255,255,0.14);">Clear filters</button>';
+      }
+      filters.innerHTML = html;
+    }
+
+    function dsShowMoreTlds() {
+      dsVisibleTldCount = Math.min((dsVisibleTldCount || DS_TLD_PAGE_SIZE) + DS_TLD_PAGE_SIZE, dsAllTlds.length);
+      dsRenderTldFilters();
+    }
 
     function dsToggleTld(btn, tld) {
+      tld = dsNormalizeTld(tld);
+      if (!tld) return;
       if (dsActiveTlds.includes(tld)) {
-        if (dsActiveTlds.length === 1) return; // keep at least one
         dsActiveTlds = dsActiveTlds.filter(t => t !== tld);
-        btn.classList.remove('ds-tld-active');
+        btn?.classList.remove('ds-tld-active');
       } else {
         dsActiveTlds.push(tld);
-        btn.classList.add('ds-tld-active');
+        btn?.classList.add('ds-tld-active');
       }
+      dsRenderTldFilters();
+    }
+
+    function dsClearTldFilters() {
+      dsActiveTlds = [];
+      dsRenderTldFilters();
+    }
+
+    function dsTldsForSearch() {
+      return dsActiveTlds.length ? dsActiveTlds : dsAllTlds.map(row => row.tld);
     }
 
     async function dsSearch() {
       const raw = (document.getElementById('dsSearchInput').value || '').trim().toLowerCase().replace(/https?:\/\//,'').split('/')[0];
       if (!raw) return toast('Enter a domain name to search.', 'error');
       const base = raw.includes('.') ? raw.split('.')[0] : raw;
-      if (!base) return toast('Enter a valid name.', 'error');
+      if (!base || !/^[a-z0-9-]+$/.test(base) || base.startsWith('-') || base.endsWith('-')) return toast('Enter a valid name.', 'error');
 
       const btn = document.getElementById('dsSearchBtn');
       btn.disabled = true; btn.textContent = 'Checking…';
 
       const results = document.getElementById('dsSearchResults');
       results.style.display = 'block';
-      results.innerHTML = '<div style="color:var(--text-3);font-size:.8rem;padding:8px 0;">Fetching live prices from NameSilo…</div>';
+      results.innerHTML = '<div style="color:var(--text-3);font-size:.8rem;padding:8px 0;">Loading live NameSilo extensions and prices…</div>';
 
-      const checks = dsActiveTlds.map(tld => base + tld);
-      let html = '';
+      dsSearchBase = base;
+      dsSearchOffset = 0;
+      dsSearchHtml = '';
+
+      try {
+        await dsLoadTlds();
+        await dsSearchMoreResults(true);
+      } catch(e) {
+        results.innerHTML = '<div style="color:#f87171;font-size:.8rem;padding:8px 0;">Could not check availability. Please try again.</div>';
+      } finally {
+        btn.disabled = false; btn.textContent = 'Check';
+      }
+    }
+
+    async function dsSearchMoreResults(reset = false) {
+      if (!dsSearchBase) return dsSearch();
+      const results = document.getElementById('dsSearchResults');
+      const tlds = dsTldsForSearch();
+      if (reset) { dsSearchOffset = 0; dsSearchHtml = ''; }
+
+      const batch = tlds.slice(dsSearchOffset, dsSearchOffset + DS_TLD_PAGE_SIZE);
+      if (!batch.length) return;
+
+      const loading = '<div style="color:var(--text-3);font-size:.8rem;padding:8px 0;">Checking live NameSilo availability…</div>';
+      results.innerHTML = dsSearchHtml + loading;
+
+      const checks = batch.map(tld => dsSearchBase + tld);
       try {
         const res = await apiFetch(API + '/api/domains/check?domains=' + encodeURIComponent(checks.join(',')));
         const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Availability check failed');
         const availability = data.availability || {};
-        const livePrices   = data.prices || {};       // live USD prices from NameSilo
+        const livePrices = data.prices || {};
 
+        let html = '';
         for (const domain of checks) {
           const tld = '.' + domain.split('.').slice(1).join('.');
-          // Use live price first, fall back to hardcoded table
-          const fallback = DS_TLD_FALLBACK[tld] || DS_TLD_FALLBACK['.com'];
-          const usdReg   = livePrices[domain]?.register ?? fallback.usd;
-          const usdRenew = livePrices[domain]?.renew    ?? fallback.renew;
-          const ghsReg   = dsUsdToGhs(usdReg);
+          const fallback = dsFallbackForTld(tld);
+          const rowPrice = dsAllTlds.find(row => row.tld === tld);
+          const usdReg = Number.parseFloat(livePrices[domain]?.register ?? rowPrice?.register ?? fallback.register);
+          const usdRenew = Number.parseFloat(livePrices[domain]?.renew ?? rowPrice?.renew ?? fallback.renew);
+          const ghsReg = dsUsdToGhs(usdReg);
           const ghsRenew = dsUsdToGhs(usdRenew);
           const avail = availability[domain];
+          const safeDomain = dsEscapeHtml(domain);
 
           if (avail === true || avail === 'available') {
             html += `<div class="ds-avail-row ds-avail-available">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
               <div style="flex:1;min-width:0;">
-                <div style="font-weight:700;font-size:.88rem;color:var(--text);">${domain}</div>
+                <div style="font-weight:700;font-size:.88rem;color:var(--text);">${safeDomain}</div>
                 <div style="font-size:.7rem;color:var(--text-3);">Available · renews GHS ${ghsRenew}/yr</div>
               </div>
               ${dsPriceTag(usdReg, ghsReg)}
               <button class="btn btn-primary" style="min-height:30px;font-size:.72rem;padding:0 12px;" onclick="dsOpenCheckout('${domain}',${ghsReg},${ghsRenew},${usdReg})">Register</button>
             </div>`;
-          } else {
+          } else if (avail === 'taken') {
             html += `<div class="ds-avail-row ds-avail-taken">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               <div style="flex:1;min-width:0;">
-                <div style="font-weight:700;font-size:.88rem;color:var(--text);">${domain}</div>
+                <div style="font-weight:700;font-size:.88rem;color:var(--text);">${safeDomain}</div>
                 <div style="font-size:.7rem;color:#f87171;">Taken</div>
               </div>
             </div>`;
+          } else {
+            html += `<div class="ds-avail-row">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:.88rem;color:var(--text);">${safeDomain}</div>
+                <div style="font-size:.7rem;color:var(--text-3);">Could not confirm availability</div>
+              </div>
+              ${dsPriceTag(usdReg, ghsReg)}
+            </div>`;
           }
         }
-        if (!html) html = '<div style="color:var(--text-3);font-size:.8rem;padding:8px 0;">No results. Try selecting more extensions.</div>';
+
+        dsSearchOffset += batch.length;
+        dsSearchHtml += html;
+        const remaining = tlds.length - dsSearchOffset;
+        if (remaining > 0) {
+          dsSearchHtml += `<button class="btn btn-secondary" onclick="dsSearchMoreResults()" style="width:100%;margin-top:10px;min-height:38px;">Show ${Math.min(DS_TLD_PAGE_SIZE, remaining)} more domains</button>`;
+        }
+        results.innerHTML = dsSearchHtml || '<div style="color:var(--text-3);font-size:.8rem;padding:8px 0;">No results. Try selecting more extensions.</div>';
+        if (remaining > 0) dsSearchHtml = dsSearchHtml.replace(/<button class="btn btn-secondary"[\s\S]*?<\/button>$/, '');
       } catch(e) {
-        html = '<div style="color:#f87171;font-size:.8rem;padding:8px 0;">Could not check availability. Please try again.</div>';
+        results.innerHTML = dsSearchHtml + '<div style="color:#f87171;font-size:.8rem;padding:8px 0;">Could not check availability. Please try again.</div>';
       }
-      results.innerHTML = html;
-      btn.disabled = false; btn.textContent = 'Check';
     }
 
     function dsOpenCheckout(domain, priceGhs, renewGhs, usdWholesale) {
@@ -8428,18 +8556,19 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     function dsInitPricingTable() {
       const tbody = document.getElementById('dsPricingRows');
       if (!tbody) return;
-      tbody.innerHTML = Object.entries(DS_TLD_FALLBACK).map(([tld, p]) => `
+      const rows = (dsAllTlds && dsAllTlds.length ? dsAllTlds : dsMergeTlds([])).slice(0, 100);
+      tbody.innerHTML = rows.map(row => `
         <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-          <td style="padding:10px 6px;font-family:var(--font-mono);color:var(--cyan);font-weight:700;">${tld}</td>
+          <td style="padding:10px 6px;font-family:var(--font-mono);color:var(--cyan);font-weight:700;">${row.tld}</td>
           <td style="padding:10px 6px;text-align:right;">
-            <div style="font-weight:700;color:var(--text);">GHS ${dsUsdToGhs(p.usd)}</div>
-            <div style="font-size:.62rem;color:var(--text-3);">$${p.usd} × 5</div>
+            <div style="font-weight:700;color:var(--text);">GHS ${dsUsdToGhs(row.register)}</div>
+            <div style="font-size:.62rem;color:var(--text-3);">$${Number(row.register).toFixed(2)} × 5</div>
           </td>
           <td style="padding:10px 6px;text-align:right;">
-            <div style="color:var(--text-2);">GHS ${dsUsdToGhs(p.renew)}</div>
-            <div style="font-size:.62rem;color:var(--text-3);">$${p.renew} × 5</div>
+            <div style="color:var(--text-2);">GHS ${dsUsdToGhs(row.renew)}</div>
+            <div style="font-size:.62rem;color:var(--text-3);">$${Number(row.renew).toFixed(2)} × 5</div>
           </td>
-          <td style="padding:10px 6px;"><button class="btn btn-sm btn-primary" onclick="document.getElementById('dsSearchInput').value='';dsActiveTlds=['${tld}'];document.querySelectorAll('.ds-tld-btn').forEach(b=>b.classList.remove('ds-tld-active'));document.querySelector('[onclick*=\\'${tld}\\']')?.classList.add('ds-tld-active');document.getElementById('dsSearchInput').focus();" style="font-size:.7rem;padding:0 10px;min-height:26px;">Search</button></td>
+          <td style="padding:10px 6px;"><button class="btn btn-sm btn-primary" onclick="dsActiveTlds=['${row.tld}'];dsVisibleTldCount=Math.max(dsVisibleTldCount,dsAllTlds.findIndex(r=>r.tld==='${row.tld}')+1);dsRenderTldFilters();document.getElementById('dsSearchInput').focus();" style="font-size:.7rem;padding:0 10px;min-height:26px;">Search</button></td>
         </tr>
       `).join('');
     }
@@ -8447,6 +8576,8 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     // Auto-load when page opens
     const _dsOrigShowPage = typeof showPage === 'function' ? showPage : null;
     document.addEventListener('DOMContentLoaded', () => {
+      dsVisibleTldCount = Math.min(DS_TLD_PAGE_SIZE, dsAllTlds.length);
+      dsRenderTldFilters();
       dsInitPricingTable();
     });
     // Hook into showPage to init when navigating to domain-store
@@ -8455,7 +8586,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       if (_orig) {
         window.showPage = function(page, el) {
           const r = _orig.apply(this, arguments);
-          if (page === 'domain-store') { dsInitPricingTable(); dsLoadMyDomains(); }
+          if (page === 'domain-store') { dsLoadTlds(); dsLoadMyDomains(); }
           return r;
         };
       }
