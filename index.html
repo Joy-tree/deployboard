@@ -8316,6 +8316,8 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       if (!firstName) return toast('First name required.', 'error');
       if (!lastName)  return toast('Last name required.', 'error');
       if (!email)     return toast('Email required.', 'error');
+      const momoPhone = normalizeGhanaMoMoPhone(phone);
+      if (!/^0\d{9}$/.test(momoPhone)) return toast('Enter a valid Ghana Mobile Money number, e.g. 0241234567.', 'error');
       if (!window.PaystackPop) return toast('Paystack not loaded. Refresh and retry.', 'error');
       if (!(await ensurePaystackConfig())) return;
 
@@ -8328,7 +8330,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            firstName, lastName, email, phone,
+            firstName, lastName, email, phone: momoPhone,
             plan: 'domain_registration',
             amountKobo,
             meta: { domain: dsCurrentDomain.domain, projectId, type: 'domain' }
@@ -8337,22 +8339,27 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         const initData = await initRes.json().catch(() => ({}));
         if (!initRes.ok || !initData?.reference) throw new Error(initData?.error || 'Could not initialize payment');
 
-        const handler = window.PaystackPop.setup({
+        const handler = window.PaystackPop.setup(buildPaystackInlineOptions({
           key: PAYSTACK_PUBLIC_KEY,
-          email, amount: amountKobo, currency: 'GHS',
-          ref: String(initData.reference),
+          email,
+          amountKobo,
+          reference: initData.reference,
+          accessCode: initData.accessCode,
+          phone: momoPhone,
+          firstName,
+          lastName,
           metadata: {
             domain: dsCurrentDomain.domain, projectId, type: 'domain_registration',
             custom_fields: [
               { display_name: 'Domain', variable_name: 'domain', value: dsCurrentDomain.domain },
-              { display_name: 'Phone', variable_name: 'phone', value: phone }
+              { display_name: 'Phone', variable_name: 'phone', value: momoPhone }
             ]
           },
           callback: function(response) {
             Promise.resolve().then(() => dsHandlePaymentSuccess(response, projectId));
           },
-          onClose: function() { toast('Payment window closed.', 'info', 4000); }
-        });
+          onClose: function() { toast('Payment window closed. If no MoMo prompt arrived, check the number/provider and try again.', 'info', 7000); }
+        }));
         handler.openIframe();
       } catch(e) {
         toast('Could not launch checkout: ' + (e.message || 'unknown error'), 'error', 7000);
@@ -15169,6 +15176,8 @@ async function startPaystackCheckout(){
   if (!firstName) return toast('First name is required for payment.', 'error');
   if (!lastName) return toast('Last name is required for payment.', 'error');
   if (!email) return toast('Email is required for payment.', 'error');
+  const momoPhone = normalizeGhanaMoMoPhone(phone);
+  if (!/^0\d{9}$/.test(momoPhone)) return toast('Enter a valid Ghana Mobile Money number, e.g. 0241234567.', 'error');
   if (!window.PaystackPop) return toast('Paystack script not loaded. Refresh and try again.', 'error');
 
   const payBtn = document.getElementById('paystackCheckoutBtn');
@@ -15181,24 +15190,27 @@ async function startPaystackCheckout(){
     const initRes = await apiFetch(API + '/api/billing/paystack/initialize', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ firstName, lastName, email, phone, plan: key, amountKobo })
+      body: JSON.stringify({ firstName, lastName, email, phone: momoPhone, plan: key, amountKobo })
     });
     const initData = await initRes.json().catch(() => ({}));
     if (!initRes.ok || !initData?.reference) throw new Error(initData?.error || 'Could not initialize payment');
 
-    const handler = window.PaystackPop.setup({
+    const handler = window.PaystackPop.setup(buildPaystackInlineOptions({
       key: PAYSTACK_PUBLIC_KEY,
       email,
-      amount: amountKobo,
-      currency: 'GHS',
-      ref: String(initData.reference || ''),
-      metadata: { plan: key, custom_fields: [{ display_name: 'Plan', variable_name: 'plan', value: key }, { display_name: 'Phone', variable_name: 'phone', value: phone }] },
+      amountKobo,
+      reference: initData.reference,
+      accessCode: initData.accessCode,
+      phone: momoPhone,
+      firstName,
+      lastName,
+      metadata: { plan: key, custom_fields: [{ display_name: 'Plan', variable_name: 'plan', value: key }, { display_name: 'Phone', variable_name: 'phone', value: momoPhone }] },
       callback: function(response){
         // Paystack expects a plain function callback.
         Promise.resolve().then(() => handlePaystackSuccess(response, key, amountKobo));
       },
-      onClose: function(){ toast('Payment window closed. If MoMo prompt did not arrive, confirm your Paystack account is Live-approved and retry.', 'info', 8000); }
-    });
+      onClose: function(){ toast('Payment window closed. If no MoMo prompt arrived, check the number/provider and try again.', 'info', 8000); }
+    }));
     handler.openIframe();
   } catch (e) {
     toast('Could not launch checkout: ' + (e.message || 'unknown error'), 'error', 8000);
@@ -15271,6 +15283,38 @@ async function apiFetch(url, opts={}) {
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
   const res = await fetch(url, Object.assign({}, opts, { headers }));
   return res;
+}
+
+function normalizeGhanaMoMoPhone(raw = '') {
+  const input = String(raw || '').trim();
+  const digits = input.replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.length === 10 && digits.startsWith('0')) return digits;
+  if (digits.length === 12 && digits.startsWith('233')) return '0' + digits.slice(3);
+  if (digits.length === 9) return '0' + digits;
+  return digits;
+}
+
+function buildPaystackInlineOptions({ key, email, amountKobo, reference, accessCode, phone, firstName = '', lastName = '', metadata = {}, callback, onClose }) {
+  const normalizedPhone = normalizeGhanaMoMoPhone(phone);
+  const options = {
+    key,
+    email,
+    amount: amountKobo,
+    currency: 'GHS',
+    ref: String(reference || ''),
+    channels: ['mobile_money'],
+    phone: normalizedPhone,
+    firstname: firstName,
+    lastname: lastName,
+    first_name: firstName,
+    last_name: lastName,
+    metadata,
+    callback,
+    onClose
+  };
+  if (accessCode) options.access_code = String(accessCode);
+  return options;
 }
 
 // ══════════════════════════════════════════════════════════════════

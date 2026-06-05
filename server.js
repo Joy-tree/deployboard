@@ -7255,6 +7255,7 @@ app.post('/api/billing/paystack/initialize', requireAuth, async (req, res) => {
     const plan = String(req.body?.plan || '').trim().toLowerCase();
     const amountKobo = Number(req.body?.amountKobo || 0);
     const phone = String(req.body?.phone || '').trim();
+    const meta = (req.body?.meta && typeof req.body.meta === 'object') ? req.body.meta : {};
     if (!firstName) return res.status(400).json({ error: 'firstName is required' });
     if (!lastName) return res.status(400).json({ error: 'lastName is required' });
     if (!email) return res.status(400).json({ error: 'email is required' });
@@ -7270,11 +7271,13 @@ app.post('/api/billing/paystack/initialize', requireAuth, async (req, res) => {
         email,
         first_name: firstName,
         last_name: lastName,
+        phone,
         amount: Math.round(amountKobo),
         currency: 'GHS',
         callback_url: `https://${BASE_DOMAIN}/dashboard/checkout`,
         channels: ['mobile_money'],
         metadata: {
+          ...meta,
           plan,
           custom_fields: [
             { display_name: 'Plan', variable_name: 'plan', value: plan },
