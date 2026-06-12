@@ -1052,6 +1052,7 @@ const projectSchema = new mongoose.Schema({
   buildCmd:   { type: String, default: 'npm run build' },
   startCmd:   { type: String, default: '' },
   outputDir:  { type: String, default: 'dist' },
+  workingDir: { type: String, default: '' },
   nodeVer:    { type: String, default: '20' },
   siteType:   { type: String, default: 'static' },
   appPort:    { type: Number, default: 0 },
@@ -1231,6 +1232,81 @@ async function writeWorkspaceToFirebase(user, workspace) {
     return r.ok;
   } catch(e) {
     console.warn('[Firebase] writeWorkspaceToFirebase exception:', e.message);
+    return false;
+  }
+}
+
+
+async function syncDeploymentProjectToFirebase(user, { project, deployment, status, liveUrl = '', envVars = null }) {
+  try {
+    const userForFirebase = await enrichAuthUser(user);
+    if (!userForFirebase?.email || !project) return false;
+
+    const nowIso = new Date().toISOString();
+    const projectId = String(project._id || project.id || '');
+    const deployId = deployment ? String(deployment._id || deployment.id || '') : '';
+    const ws = (await readWorkspaceFromFirebase(userForFirebase)) || {};
+    ws.projects = Array.isArray(ws.projects) ? ws.projects : [];
+    ws.deployments = Array.isArray(ws.deployments) ? ws.deployments : [];
+
+    const pIdx = ws.projects.findIndex(p =>
+      String(p.id || p._id || '') === projectId ||
+      String(p.subdomain || '') === String(project.subdomain || '')
+    );
+    const existingProject = pIdx >= 0 ? (ws.projects[pIdx] || {}) : {};
+    const projectSnapshot = {
+      ...existingProject,
+      id: projectId || existingProject.id,
+      _id: projectId || existingProject._id,
+      name: project.name || existingProject.name || '',
+      subdomain: project.subdomain || existingProject.subdomain || '',
+      repoUrl: project.repoUrl || existingProject.repoUrl || '',
+      branch: project.branch || existingProject.branch || 'main',
+      installCmd: project.installCmd || existingProject.installCmd || 'npm install',
+      buildCmd: project.buildCmd || existingProject.buildCmd || 'npm run build',
+      startCmd: project.startCmd || existingProject.startCmd || '',
+      outputDir: project.outputDir || existingProject.outputDir || 'dist',
+      workingDir: project.workingDir || '',
+      nodeVer: project.nodeVer || existingProject.nodeVer || '20',
+      siteType: project.siteType || existingProject.siteType || 'static',
+      status: status || existingProject.status || 'building',
+      liveUrl: liveUrl || project.liveUrl || existingProject.liveUrl || '',
+      updatedAt: nowIso
+    };
+    if (envVars && typeof envVars === 'object') {
+      projectSnapshot.envVars = { ...(existingProject.envVars || {}), ...envVars };
+    }
+    if (pIdx >= 0) ws.projects[pIdx] = projectSnapshot;
+    else ws.projects.unshift({ ...projectSnapshot, createdAt: nowIso });
+
+    if (deployment && deployId) {
+      const dIdx = ws.deployments.findIndex(d => String(d.id || d._id || '') === deployId);
+      const existingDeployment = dIdx >= 0 ? (ws.deployments[dIdx] || {}) : {};
+      const deploymentSnapshot = {
+        ...existingDeployment,
+        id: deployId,
+        _id: deployId,
+        projectId: projectId || existingDeployment.projectId,
+        projectName: project.name || existingDeployment.projectName || '',
+        subdomain: project.subdomain || existingDeployment.subdomain || '',
+        branch: project.branch || existingDeployment.branch || 'main',
+        status: status || existingDeployment.status || 'building',
+        source: deployment.source || existingDeployment.source || 'manual',
+        triggerSha: deployment.triggerSha || existingDeployment.triggerSha || '',
+        duration: deployment.duration ?? existingDeployment.duration,
+        startedAt: deployment.startedAt ? new Date(deployment.startedAt).toISOString() : (existingDeployment.startedAt || nowIso),
+        endedAt: deployment.endedAt ? new Date(deployment.endedAt).toISOString() : existingDeployment.endedAt
+      };
+      if (dIdx >= 0) ws.deployments[dIdx] = deploymentSnapshot;
+      else ws.deployments.unshift(deploymentSnapshot);
+      if (ws.deployments.length > 100) ws.deployments = ws.deployments.slice(0, 100);
+    }
+
+    await writeWorkspaceToFirebase(userForFirebase, ws);
+    refreshApiKeySnapshot(userForFirebase, ws).catch(() => {});
+    return true;
+  } catch (e) {
+    console.warn('[Firebase] Failed to sync deployment project:', e.message);
     return false;
   }
 }
@@ -6161,7 +6237,7 @@ app.get('/api/activity', async (req, res) => {
 
 
 const PLAN_RUNTIME_PROFILES = {
-  free:    { memoryLimit: '800m',  cpuShares: 256,  memorySwap: '1g' },
+  free:    { memoryLimit: '870m',  cpuShares: 384,  memorySwap: '1g' },
   starter: { memoryLimit: '1g',    cpuShares: 384,  memorySwap: '1536m' },
   pro:     { memoryLimit: '2g',    cpuShares: 640,  memorySwap: '3g' },
   growth:  { memoryLimit: '5g',    cpuShares: 1024, memorySwap: '6g' },
@@ -6268,7 +6344,7 @@ async function getUserPlanKey(user) {
 // ── Deploy endpoint ───────────────────────────────────────────────────────────
 app.post('/api/deploy', requireAuth, async (req, res) => {
   const { name, subdomain, repoUrl, branch, installCmd, buildCmd,
-          startCmd, outputDir, nodeVer, siteType, envVars,
+          startCmd, outputDir, workingDir, nodeVer, siteType, envVars,
           isDockerfileDeploy, isWorker, dockerfilePath, exposedPort, billingPlan } = req.body;
   const deploySource = (req.body?.source === 'auto' || req.body?.autoDeploy === true || req.headers['x-deployboard-deploy-source'] === 'auto') ? 'auto' : 'manual';
   const triggerSha = String(req.body?.triggerSha || req.headers['x-deployboard-trigger-sha'] || '').trim();
@@ -6279,6 +6355,10 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
 
   const cleanSub = subdomain.toLowerCase()
     .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const cleanWorkingDir = sanitizeWorkingDir(workingDir);
+  if (cleanWorkingDir === null) {
+    return res.status(400).json({ error: 'Working directory must be a relative path inside the repository.' });
+  }
 
   // Respect explicit site type first so static deployments are not forced into
   // server mode when UI/default data still contains a start command.
@@ -6359,6 +6439,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
         buildCmd:   buildCmd   || 'npm run build',
         startCmd:   startCmd   || '',
         outputDir:  outputDir  || 'dist',
+        workingDir: cleanWorkingDir,
         nodeVer:    nodeVer    || '20',
         siteType:   siteType   || 'static',
         appPort,
@@ -6380,7 +6461,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       _id: 'local_' + Date.now(), name, subdomain: cleanSub, repoUrl,
       branch: branch||'main', installCmd: installCmd||'npm install',
       buildCmd: buildCmd||'npm run build', startCmd: startCmd||'',
-      outputDir: outputDir||'dist', nodeVer: nodeVer||'20',
+      outputDir: outputDir||'dist', workingDir: cleanWorkingDir, nodeVer: nodeVer||'20',
       siteType: siteType||'static', appPort, billingPlan: planKey, memoryLimit: runtimeProfile.memoryLimit, cpuShares: runtimeProfile.cpuShares, memorySwap: runtimeProfile.memorySwap, envVars: envVars||{},
       save: async () => {}
     };
@@ -6443,6 +6524,13 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   }
 
   const deployId = deployment._id.toString();
+  await syncDeploymentProjectToFirebase(req.user, {
+    project,
+    deployment,
+    status: 'building',
+    liveUrl: `https://${cleanSub}.${BASE_DOMAIN}`,
+    envVars: envVars && typeof envVars === 'object' ? envVars : null
+  });
   deployStopRequests.delete(deployId);
   if (deploySource === 'auto') {
     emitAutoDeployStatus(project._id, 'deploying', {
@@ -6641,6 +6729,13 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     const duration = Math.round((Date.now() - buildStart) / 1000);
     deployment.status = 'success'; deployment.duration = duration; deployment.endedAt = new Date();
     try { await deployment.save(); } catch(e) {}
+    await syncDeploymentProjectToFirebase(req.user, {
+      project,
+      deployment,
+      status: 'success',
+      liveUrl: cf?.url || `https://${cleanSub}.${BASE_DOMAIN}`,
+      envVars: resolvedEnvVars
+    });
 
     // ── Sync final status + duration to Firebase (source of truth on reload) ──
     try {
@@ -6669,7 +6764,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
         if (pIdx >= 0) ws.projects[pIdx] = { ...ws.projects[pIdx], status: 'success', updatedAt: updated.endedAt };
         await writeWorkspaceToFirebase(userForFirebase, ws);
       }
-    } catch (_fbErr) { /* non-fatal — MongoDB is already saved above */ }
+    } catch (_fbErr) { /* non-fatal — Firebase was already synced by syncDeploymentProjectToFirebase */ }
 
     const ownerUserSuccess = project?.ownerUserId
       ? await User.findById(project.ownerUserId).select('email').lean().catch(() => null)
@@ -6717,6 +6812,13 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     const duration = Math.round((Date.now() - buildStart) / 1000);
     deployment.status = 'failed'; deployment.duration = duration; deployment.endedAt = new Date();
     try { await deployment.save(); } catch(e) {}
+    await syncDeploymentProjectToFirebase(req.user, {
+      project,
+      deployment,
+      status: 'failed',
+      liveUrl: `https://${cleanSub}.${BASE_DOMAIN}`,
+      envVars: envVars && typeof envVars === 'object' ? envVars : null
+    });
 
     // ── Sync final status + duration to Firebase (source of truth on reload) ──
     try {
@@ -6745,7 +6847,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
         if (pIdx >= 0) ws.projects[pIdx] = { ...ws.projects[pIdx], status: 'failed', updatedAt: updated.endedAt };
         await writeWorkspaceToFirebase(userForFirebase, ws);
       }
-    } catch (_fbErr) { /* non-fatal */ }
+    } catch (_fbErr) { /* non-fatal — Firebase was already synced by syncDeploymentProjectToFirebase */ }
 
     if (deploySource === 'auto') {
       const safeAutoErr = sanitizeSecrets(buildErr.message).slice(0, 240);
@@ -10046,6 +10148,14 @@ server.listen(PORT, () => {
   // Pre-populate custom domain routing cache from Firebase + MongoDB
   setTimeout(() => refreshCustomDomainCache().catch(() => {}), 2000);
 });
+
+function sanitizeWorkingDir(dir = '') {
+  const raw = String(dir || '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  if (!raw || raw === '.') return '';
+  const parts = raw.split('/').filter(Boolean);
+  if (parts.some(part => part === '.' || part === '..')) return null;
+  return parts.join('/');
+}
 
 function sanitizeSecrets(text = '') {
   return String(text)

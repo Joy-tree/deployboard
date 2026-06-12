@@ -146,23 +146,21 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  // For Dockerfile deploys, search from repo root first, then subdirs
-  // DO NOT use findProjectRoot — it finds package.json which may be in a subdir
-  let dockerfileDir = buildDir;
-  const dfAtRoot = path.join(buildDir, dfPath);
-  if (fs.existsSync(dfAtRoot)) {
-    dockerfileDir = buildDir;
-  } else {
-    // Try one level deep
+  // For Dockerfile deploys, honor an explicitly selected working directory
+  // before falling back to the historical repo-root / one-level-deep search.
+  let dockerfileDir = resolveWorkingDirRoot(buildDir, project, log) || buildDir;
+  const dfAtRoot = path.join(dockerfileDir, dfPath);
+  if (!fs.existsSync(dfAtRoot)) {
+    // Try one level deep from the selected root (or repo root when none selected).
     let found = false;
-    for (const entry of fs.readdirSync(buildDir)) {
-      const sub = path.join(buildDir, entry);
+    for (const entry of fs.readdirSync(dockerfileDir)) {
+      const sub = path.join(dockerfileDir, entry);
       if (fs.statSync(sub).isDirectory()) {
         const candidate = path.join(sub, dfPath);
         if (fs.existsSync(candidate)) { dockerfileDir = sub; found = true; break; }
       }
     }
-    if (!found) throw new Error(`Dockerfile not found. Make sure "${dfPath}" exists at the root of your repo.`);
+    if (!found) throw new Error(`Dockerfile not found. Make sure "${dfPath}" exists inside the selected working directory.`);
   }
   const dfFullPath = path.join(dockerfileDir, dfPath);
   log(`\x1b[90m[docker] Found Dockerfile at: ${path.relative(buildDir, dfFullPath)}\x1b[0m`);
@@ -256,7 +254,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findProjectRoot(buildDir, log);
+  const projectRoot = findProjectRoot(buildDir, log, project);
 
   // Step 2: Install
   emitStep(emit, 'install', 'active');
@@ -349,7 +347,7 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findPythonProjectRoot(buildDir, log);
+  const projectRoot = findPythonProjectRoot(buildDir, log, project);
   log(`\x1b[90m[python] Framework: ${runtime.framework} | Image: ${pythonImage}\x1b[0m`);
 
   // ── Detect the actual requirements file ──────────────────────────────────
@@ -615,7 +613,10 @@ function detectPythonRuntime(project) {
   return { ...cfg, pythonVer };
 }
 
-function findPythonProjectRoot(buildDir, log) {
+function findPythonProjectRoot(buildDir, log, project = null) {
+  const explicitRoot = resolveWorkingDirRoot(buildDir, project, log);
+  if (explicitRoot) return explicitRoot;
+
   // Look for requirements.txt, setup.py, pyproject.toml, Pipfile
   const markers = ['requirements.txt', 'setup.py', 'pyproject.toml', 'Pipfile', 'manage.py'];
 
@@ -1476,7 +1477,7 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findRoot ? findRoot(buildDir, log) : buildDir;
+  const projectRoot = resolveWorkingDirRoot(buildDir, project, log) || (findRoot ? findRoot(buildDir, log) : buildDir);
   log(`\x1b[90m[${stepLabel}] Image: ${dockerImage}\x1b[0m`);
 
   // ── Smart command resolution (per-framework hooks) ──────────────────────────
@@ -1573,11 +1574,13 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
   log(`\x1b[90m[docker] Pulling ${dockerImage}…\x1b[0m`);
   try { await exec('docker', ['pull', dockerImage], {}, log); } catch(_) { log('\x1b[33m[docker] Using cached image\x1b[0m'); }
 
+  const runtime = getRuntimeConfig(project);
   const runArgs = [
     'run', '-d',
     '--name', candidateContainerName, '--restart', 'unless-stopped',
     '--network', 'deployboard_deployboard-net',
-    '--cpu-shares', CPU_SHARES, '--pids-limit', PIDS_LIMIT, '-m', '2g',
+    '--cpu-shares', runtime.cpuShares, '--pids-limit', PIDS_LIMIT,
+    '-m', runtime.memory, '--memory-reservation', runtime.memory,
     '-e', `PORT=${expectedPort}`,
     ...Object.entries(runtimeEnv).flatMap(([k, v]) => {
       if (String(k).toUpperCase() === 'PORT') return [];
@@ -1586,6 +1589,8 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
     '-v', `${dockerMountSrc}:/app`, '-w', '/app',
     dockerImage, 'sh', '-c', resolvedStartCmd
   ];
+  if (runtime.memorySwap) runArgs.splice(runArgs.indexOf('-e'), 0, '--memory-swap', runtime.memorySwap);
+  log(`\x1b[90m[docker] Persistent server container: restart=unless-stopped | ${runtime.cpuShares} CPU shares | ${runtime.memory} RAM | ${PIDS_LIMIT} max processes\x1b[0m`);
 
   await exec('docker', runArgs, {}, log);
   log(`\x1b[32m[docker] ✓ Container started\x1b[0m`);
@@ -2298,7 +2303,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findProjectRoot(buildDir, log);
+  const projectRoot = findProjectRoot(buildDir, log, project);
   const hasPackageJson = fs.existsSync(path.join(projectRoot, 'package.json'));
   const profile = detectProjectProfile(projectRoot);
   log(`\x1b[90m[detect] Static project type: ${profile.kind}${profile.framework ? ' · framework: ' + profile.framework : ''}\x1b[0m`);
@@ -2506,7 +2511,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findProjectRoot(buildDir, log);
+  const projectRoot = findProjectRoot(buildDir, log, project);
 
   // ── Auto-detect Node.js version from engines field ─────────────────────────
   const configuredNodeVer = String(project.nodeVer || '20');
@@ -2640,17 +2645,20 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     '--cpu-shares',   runtime.cpuShares,
     '--pids-limit',   PIDS_LIMIT,
     '-m',             runtime.memory,
+    '--memory-reservation', runtime.memory,
     '-e',             `PORT=${expectedPort}`,
     '-e',             `NODE_ENV=production`,
     '-e',             `HOST=0.0.0.0`,
     '-e',             `HOSTNAME=0.0.0.0`,
+    '-e',             `NEXT_TELEMETRY_DISABLED=1`,
+    '-e',             `NODE_OPTIONS=--max-old-space-size=${runtime.nodeHeapMb}`,
     '-v',             `${dockerMountSrc}:/app`,
     '-w',             '/app',
   ];
   if (runtime.memorySwap) {
     dockerArgs.push('--memory-swap', runtime.memorySwap);
   }
-  log(`\x1b[90m[docker] Runtime limits: ${runtime.cpuShares} CPU shares | ${runtime.memory} memory | ${PIDS_LIMIT} max processes\x1b[0m`);
+  log(`\x1b[90m[docker] Persistent server container: restart=unless-stopped | ${runtime.cpuShares} CPU shares | ${runtime.memory} RAM | ${PIDS_LIMIT} max processes\x1b[0m`);
 
   for (const [k, v] of Object.entries(env)) {
     const key = String(k || '').toUpperCase();
@@ -2707,18 +2715,20 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
       throw new Error(`Readiness gate failed after ${runtime.startupTimeoutSeconds}s`);
     }
     const targetPort = normalizePort(livePort, expectedPort);
-    registry[project.subdomain] = `${containerName}:${targetPort}`;
-    fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
-    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${targetPort}\x1b[0m`);
     if (targetPort !== expectedPort) {
       log(`\x1b[33m[docker] App ignored PORT=${expectedPort}; routing to detected port ${targetPort}\x1b[0m`);
     }
     log(`\x1b[90m[docker] Strict readiness gate passed before promotion\x1b[0m`);
 
-    // Promote: archive previous stable container for fast rollback, then prune old archives.
+    // Promote first, then publish the stable container name to the proxy registry.
+    // Publishing before rename can briefly route Cloudflare/nginx to a container
+    // name that does not exist yet, producing intermittent 502s.
     await archivePreviousContainer(containerName, project.subdomain, log);
     await exec('docker', ['rename', candidateContainerName, containerName], {}, () => {});
     log(`\x1b[90m[docker] Promoted candidate to stable: ${containerName}\x1b[0m`);
+    registry[project.subdomain] = `${containerName}:${targetPort}`;
+    fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
+    log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${targetPort}\x1b[0m`);
     await cleanupArchivedContainers(project.subdomain, DEPLOY_HISTORY_KEEP, log);
 
   } catch(e) {
@@ -2897,10 +2907,13 @@ async function detectPortFromContainerLogs(containerName) {
 
 function getRuntimeConfig(project) {
   const requestedMemory = (project.memoryLimit || project.memory || '2g').toString();
+  const memory = normalizeMemoryLimit(requestedMemory);
+  const memoryMb = memoryLimitToMb(memory);
   return {
     cpuShares: String(normalizePort(project.cpuShares, normalizePort(project.cpu, Number(CPU_SHARES)))),
-    memory: normalizeMemoryLimit(requestedMemory),
+    memory,
     memorySwap: (project.memorySwap || process.env.DEFAULT_APP_MEMORY_SWAP || '3g').toString(),
+    nodeHeapMb: Math.max(128, Math.floor(memoryMb * 0.75)),
     startupTimeoutSeconds: normalizePort(project.startupTimeoutSeconds || project.startupTimeout, DEFAULT_STARTUP_TIMEOUT_SECONDS)
   };
 }
@@ -2917,15 +2930,24 @@ function normalizeMemoryLimit(value) {
   return unit === 'g' ? `${num}g` : `${num}m`;
 }
 
+function memoryLimitToMb(value) {
+  const text = String(value || '').trim().toLowerCase();
+  const m = text.match(/^(\d+)([mg])$/);
+  if (!m) return 2048;
+  const num = Number(m[1]);
+  return m[2] === 'g' ? num * 1024 : num;
+}
+
 async function getContainerIP(containerName) {
   const chunks = [];
   await exec(
     'docker',
-    ['inspect', '--format={{range $k,$v := .NetworkSettings.Networks}}{{.IPAddress}}{{end}}', containerName],
+    ['inspect', '--format={{range $k,$v := .NetworkSettings.Networks}}{{println .IPAddress}}{{end}}', containerName],
     {},
     (line) => chunks.push(line)
   );
-  return (chunks.join('\n').trim().split('\n').pop() || '').trim();
+  const ips = chunks.join('\n').trim().split(/\s+/).filter(Boolean);
+  return ips.find(ip => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(ip)) || '';
 }
 
 function resolveServiceEnv(project) {
@@ -3112,7 +3134,35 @@ async function cloneRepo(project, buildDir, githubToken, log) {
   log(`\x1b[32m[clone] ✓ Cloned successfully\x1b[0m`);
 }
 
-function findProjectRoot(buildDir, log) {
+function normalizeWorkingDirPath(dir) {
+  const raw = String(dir || '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  if (!raw || raw === '.') return '';
+  const parts = raw.split('/').filter(Boolean);
+  if (parts.some(part => part === '.' || part === '..')) return null;
+  return parts.join('/');
+}
+
+function resolveWorkingDirRoot(buildDir, project, log) {
+  const clean = normalizeWorkingDirPath(project && project.workingDir);
+  if (clean === null) throw new Error('Invalid working directory. Use a relative path inside the repository.');
+  if (!clean) return null;
+
+  const root = path.resolve(buildDir);
+  const candidate = path.resolve(root, clean);
+  if (candidate !== root && !candidate.startsWith(root + path.sep)) {
+    throw new Error('Invalid working directory. Use a relative path inside the repository.');
+  }
+  if (!fs.existsSync(candidate) || !fs.statSync(candidate).isDirectory()) {
+    throw new Error(`Working directory not found: ${clean}`);
+  }
+  if (log) log(`\x1b[90m[info] Using selected working directory: ${clean}/\x1b[0m`);
+  return candidate;
+}
+
+function findProjectRoot(buildDir, log, project = null) {
+  const explicitRoot = resolveWorkingDirRoot(buildDir, project, log);
+  if (explicitRoot) return explicitRoot;
+
   // Walk the entire repo tree to find package.json, no matter how deep it is.
   // Skips node_modules, .git, and hidden folders.
   // Prefers the shallowest match (closest to repo root).
@@ -3320,14 +3370,24 @@ function resolveDeployableRoot(currentRoot, buildDir, startCmd, log) {
 function resolveRuntimeStartCommand({ projectRoot, startCmd, expectedPort }) {
   const raw = (startCmd || '').trim() || getDefaultStartCmd(projectRoot);
   const normalized = raw.replace(/\s+/g, ' ').trim().toLowerCase();
-  const hostFlags = `--host 0.0.0.0 --port ${expectedPort}`;
+  const nextFlags = `-H 0.0.0.0 -p ${expectedPort}`;
+  const hasHostFlag = /(^|\s)(-H|--hostname|--host)(\s|=)/i.test(raw);
+  const hasPortFlag = /(^|\s)(-p|--port)(\s|=)/i.test(raw);
+  const flags = `${hasHostFlag ? '' : '-H 0.0.0.0'} ${hasPortFlag ? '' : `-p ${expectedPort}`}`.trim();
 
-  // Do not force host/port flags for generic package-manager shorthands.
-  // Many repos treat extra args as script args and can fail/hang unexpectedly.
-  if (normalized === 'npm start' || normalized === 'yarn start' || normalized === 'pnpm start') {
-    return raw;
-  }
-  if (normalized.startsWith('next start')) return `${raw} ${hostFlags}`;
+  let startScript = '';
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
+    startScript = String(pkg?.scripts?.start || '').trim().toLowerCase();
+  } catch (_) {}
+  const packageStartRunsNext = /(^|\s)next\s+start(\s|$)/.test(startScript);
+
+  // Next.js must bind to 0.0.0.0 inside Docker; localhost-only starts pass
+  // locally but are unreachable from the Joytree proxy and cause 502s/stalls.
+  if (normalized === 'npm start' && packageStartRunsNext) return `npm start -- ${nextFlags}`;
+  if (normalized === 'pnpm start' && packageStartRunsNext) return `pnpm start -- ${nextFlags}`;
+  if (normalized === 'yarn start' && packageStartRunsNext) return `yarn start ${nextFlags}`;
+  if (normalized.startsWith('next start')) return flags ? `${raw} ${flags}` : raw;
   return raw;
 }
 
@@ -3615,7 +3675,7 @@ async function runUploadBuild({ deployId, project, sitesDir, tmpDir, appPort, em
 
   // For server apps with no explicit start command, resolve from package.json
   if (isServerApp && !startCmd) {
-    const detectedRoot = findProjectRoot(uploadFilesDir, () => {});
+    const detectedRoot = findProjectRoot(uploadFilesDir, () => {}, project);
     const pkgPath = path.join(detectedRoot, 'package.json');
     if (fs.existsSync(pkgPath)) {
       try {
@@ -3659,7 +3719,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
   log(`\x1b[32m[upload]\x1b[0m Loaded \x1b[1m${totalFiles}\x1b[0m files from upload`);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findProjectRoot(buildDir, log);
+  const projectRoot = findProjectRoot(buildDir, log, project);
 
   // Resolve Node.js image — same logic as GitHub static/server builds
   const configuredNodeVer = String(project.nodeVer || '20');
@@ -3828,7 +3888,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   log(`\x1b[32m[upload]\x1b[0m Loaded \x1b[1m${totalFiles}\x1b[0m files`);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findProjectRoot(buildDir, log);
+  const projectRoot = findProjectRoot(buildDir, log, project);
 
   // Step 2: Install
   emitStep(emit, 'install', 'active');
