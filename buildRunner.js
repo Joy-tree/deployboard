@@ -146,23 +146,21 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  // For Dockerfile deploys, search from repo root first, then subdirs
-  // DO NOT use findProjectRoot — it finds package.json which may be in a subdir
-  let dockerfileDir = buildDir;
-  const dfAtRoot = path.join(buildDir, dfPath);
-  if (fs.existsSync(dfAtRoot)) {
-    dockerfileDir = buildDir;
-  } else {
-    // Try one level deep
+  // For Dockerfile deploys, honor an explicitly selected working directory
+  // before falling back to the historical repo-root / one-level-deep search.
+  let dockerfileDir = resolveWorkingDirRoot(buildDir, project, log) || buildDir;
+  const dfAtRoot = path.join(dockerfileDir, dfPath);
+  if (!fs.existsSync(dfAtRoot)) {
+    // Try one level deep from the selected root (or repo root when none selected).
     let found = false;
-    for (const entry of fs.readdirSync(buildDir)) {
-      const sub = path.join(buildDir, entry);
+    for (const entry of fs.readdirSync(dockerfileDir)) {
+      const sub = path.join(dockerfileDir, entry);
       if (fs.statSync(sub).isDirectory()) {
         const candidate = path.join(sub, dfPath);
         if (fs.existsSync(candidate)) { dockerfileDir = sub; found = true; break; }
       }
     }
-    if (!found) throw new Error(`Dockerfile not found. Make sure "${dfPath}" exists at the root of your repo.`);
+    if (!found) throw new Error(`Dockerfile not found. Make sure "${dfPath}" exists inside the selected working directory.`);
   }
   const dfFullPath = path.join(dockerfileDir, dfPath);
   log(`\x1b[90m[docker] Found Dockerfile at: ${path.relative(buildDir, dfFullPath)}\x1b[0m`);
@@ -256,7 +254,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findProjectRoot(buildDir, log);
+  const projectRoot = findProjectRoot(buildDir, log, project);
 
   // Step 2: Install
   emitStep(emit, 'install', 'active');
@@ -349,7 +347,7 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findPythonProjectRoot(buildDir, log);
+  const projectRoot = findPythonProjectRoot(buildDir, log, project);
   log(`\x1b[90m[python] Framework: ${runtime.framework} | Image: ${pythonImage}\x1b[0m`);
 
   // ── Detect the actual requirements file ──────────────────────────────────
@@ -615,7 +613,10 @@ function detectPythonRuntime(project) {
   return { ...cfg, pythonVer };
 }
 
-function findPythonProjectRoot(buildDir, log) {
+function findPythonProjectRoot(buildDir, log, project = null) {
+  const explicitRoot = resolveWorkingDirRoot(buildDir, project, log);
+  if (explicitRoot) return explicitRoot;
+
   // Look for requirements.txt, setup.py, pyproject.toml, Pipfile
   const markers = ['requirements.txt', 'setup.py', 'pyproject.toml', 'Pipfile', 'manage.py'];
 
@@ -1476,7 +1477,7 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findRoot ? findRoot(buildDir, log) : buildDir;
+  const projectRoot = resolveWorkingDirRoot(buildDir, project, log) || (findRoot ? findRoot(buildDir, log) : buildDir);
   log(`\x1b[90m[${stepLabel}] Image: ${dockerImage}\x1b[0m`);
 
   // ── Smart command resolution (per-framework hooks) ──────────────────────────
@@ -2298,7 +2299,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findProjectRoot(buildDir, log);
+  const projectRoot = findProjectRoot(buildDir, log, project);
   const hasPackageJson = fs.existsSync(path.join(projectRoot, 'package.json'));
   const profile = detectProjectProfile(projectRoot);
   log(`\x1b[90m[detect] Static project type: ${profile.kind}${profile.framework ? ' · framework: ' + profile.framework : ''}\x1b[0m`);
@@ -2506,7 +2507,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   await cloneRepo(project, buildDir, githubToken, log);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findProjectRoot(buildDir, log);
+  const projectRoot = findProjectRoot(buildDir, log, project);
 
   // ── Auto-detect Node.js version from engines field ─────────────────────────
   const configuredNodeVer = String(project.nodeVer || '20');
@@ -3112,7 +3113,35 @@ async function cloneRepo(project, buildDir, githubToken, log) {
   log(`\x1b[32m[clone] ✓ Cloned successfully\x1b[0m`);
 }
 
-function findProjectRoot(buildDir, log) {
+function normalizeWorkingDirPath(dir) {
+  const raw = String(dir || '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  if (!raw || raw === '.') return '';
+  const parts = raw.split('/').filter(Boolean);
+  if (parts.some(part => part === '.' || part === '..')) return null;
+  return parts.join('/');
+}
+
+function resolveWorkingDirRoot(buildDir, project, log) {
+  const clean = normalizeWorkingDirPath(project && project.workingDir);
+  if (clean === null) throw new Error('Invalid working directory. Use a relative path inside the repository.');
+  if (!clean) return null;
+
+  const root = path.resolve(buildDir);
+  const candidate = path.resolve(root, clean);
+  if (candidate !== root && !candidate.startsWith(root + path.sep)) {
+    throw new Error('Invalid working directory. Use a relative path inside the repository.');
+  }
+  if (!fs.existsSync(candidate) || !fs.statSync(candidate).isDirectory()) {
+    throw new Error(`Working directory not found: ${clean}`);
+  }
+  if (log) log(`\x1b[90m[info] Using selected working directory: ${clean}/\x1b[0m`);
+  return candidate;
+}
+
+function findProjectRoot(buildDir, log, project = null) {
+  const explicitRoot = resolveWorkingDirRoot(buildDir, project, log);
+  if (explicitRoot) return explicitRoot;
+
   // Walk the entire repo tree to find package.json, no matter how deep it is.
   // Skips node_modules, .git, and hidden folders.
   // Prefers the shallowest match (closest to repo root).
@@ -3615,7 +3644,7 @@ async function runUploadBuild({ deployId, project, sitesDir, tmpDir, appPort, em
 
   // For server apps with no explicit start command, resolve from package.json
   if (isServerApp && !startCmd) {
-    const detectedRoot = findProjectRoot(uploadFilesDir, () => {});
+    const detectedRoot = findProjectRoot(uploadFilesDir, () => {}, project);
     const pkgPath = path.join(detectedRoot, 'package.json');
     if (fs.existsSync(pkgPath)) {
       try {
@@ -3659,7 +3688,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
   log(`\x1b[32m[upload]\x1b[0m Loaded \x1b[1m${totalFiles}\x1b[0m files from upload`);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findProjectRoot(buildDir, log);
+  const projectRoot = findProjectRoot(buildDir, log, project);
 
   // Resolve Node.js image — same logic as GitHub static/server builds
   const configuredNodeVer = String(project.nodeVer || '20');
@@ -3828,7 +3857,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   log(`\x1b[32m[upload]\x1b[0m Loaded \x1b[1m${totalFiles}\x1b[0m files`);
   emitStep(emit, 'clone', 'done');
 
-  const projectRoot = findProjectRoot(buildDir, log);
+  const projectRoot = findProjectRoot(buildDir, log, project);
 
   // Step 2: Install
   emitStep(emit, 'install', 'active');
