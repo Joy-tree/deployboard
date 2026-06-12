@@ -6237,7 +6237,7 @@ app.get('/api/activity', async (req, res) => {
 
 
 const PLAN_RUNTIME_PROFILES = {
-  free:    { memoryLimit: '800m',  cpuShares: 256,  memorySwap: '1g' },
+  free:    { memoryLimit: '870m',  cpuShares: 384,  memorySwap: '1g' },
   starter: { memoryLimit: '1g',    cpuShares: 384,  memorySwap: '1536m' },
   pro:     { memoryLimit: '2g',    cpuShares: 640,  memorySwap: '3g' },
   growth:  { memoryLimit: '5g',    cpuShares: 1024, memorySwap: '6g' },
