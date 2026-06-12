@@ -2324,6 +2324,8 @@ textarea.input { resize: vertical; min-height: 80px; }
 .repo-loading { padding:44px 18px; text-align:center; color:var(--text-2); font-size:.85rem; }
 .repo-empty { padding:44px 18px; text-align:center; color:var(--text-2); }
 .repo-empty strong { display:block; color:var(--text); font-size:1rem; margin-bottom:4px; }
+.repo-empty-actions { display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap; margin-top:18px; }
+.repo-empty-actions .btn { min-height:44px; padding:10px 16px; border-radius:12px; font-size:.86rem; font-weight:800; }
 
 @media(max-width:768px) {
   .repo-hero { grid-template-columns:1fr; padding:16px; }
@@ -23373,9 +23375,33 @@ function updateRepoStats(repos) {
   set('repoStatLanguages', languages.size || '—');
 }
 
+function repoReconnectActionsHtml() {
+  return `<div class="repo-empty-actions">
+    <button class="btn btn-primary" type="button" onclick="connectGitHubFromReposPage()">
+      Reconnect GitHub
+    </button>
+    <button class="btn btn-ghost" type="button" onclick="renderReposPage(true)">
+      Refresh live repos
+    </button>
+  </div>`;
+}
+
+function repoConnectionErrorHtml(title, message) {
+  return `<div class="repo-empty" style="grid-column:1/-1;">
+    <strong>${escHtml(title || 'Failed to load repositories')}</strong>
+    <span>${escHtml(message || 'Reconnect GitHub or tap refresh to try again.')}</span>
+    ${repoReconnectActionsHtml()}
+  </div>`;
+}
+
+function setRepoReconnectVisible(visible) {
+  const btn = document.getElementById('repoConnectGithubBtn');
+  if (!btn) return;
+  btn.style.display = visible ? 'flex' : 'none';
+}
+
 async function renderReposPage(force = false) {
   const wrap = document.getElementById('reposGrid');
-  const connectBtn = document.getElementById('repoConnectGithubBtn');
   try {
     if (force || !githubReposLoaded) {
       if (wrap) wrap.innerHTML = '<div class="repo-loading" style="grid-column:1/-1;">Syncing live repository metadata from GitHub…</div>';
@@ -23385,11 +23411,11 @@ async function renderReposPage(force = false) {
         // Check if it's a not-connected error — show connect button instead of hard error
         const errMsg = d.error || '';
         if (/not connected|no.*token|missing.*token/i.test(errMsg)) {
-          if (connectBtn) connectBtn.style.display = 'flex';
-          if (wrap) wrap.innerHTML = `<div class="repo-empty" style="grid-column:1/-1;">
-            <strong>GitHub not connected</strong>
-            <span>Connect your GitHub account to browse your repositories and import them into deployments.</span>
-          </div>`;
+          setRepoReconnectVisible(true);
+          if (wrap) wrap.innerHTML = repoConnectionErrorHtml(
+            'GitHub not connected',
+            'Connect or reconnect your GitHub account to browse repositories and import them into deployments.'
+          );
           return;
         }
         throw new Error(errMsg || 'Failed to load repos');
@@ -23399,7 +23425,7 @@ async function renderReposPage(force = false) {
     }
 
     // GitHub is connected — hide the connect button
-    if (connectBtn) connectBtn.style.display = 'none';
+    setRepoReconnectVisible(false);
     fillConnectedRepoSelect('deployRepoSelect');
     fillConnectedRepoSelect('dfRepoSelect');
     fillConnectedRepoSelect('workerRepoSelect');
@@ -23459,16 +23485,19 @@ async function renderReposPage(force = false) {
 
     resetTurnstileToken();
   } catch (e) {
-    const connectBtnCatch = document.getElementById('repoConnectGithubBtn');
-    if (/not connected|no.*token|missing.*token/i.test(e.message || '')) {
-      if (connectBtnCatch) connectBtnCatch.style.display = 'flex';
-      if (wrap) wrap.innerHTML = `<div class="repo-empty" style="grid-column:1/-1;">
-        <strong>GitHub not connected</strong>
-        <span>Connect your GitHub account to browse your repositories and import them into deployments.</span>
-      </div>`;
+    const message = e.message || 'Failed to load repositories';
+    const needsReconnect = /not connected|no.*token|missing.*token|bad credentials|fetch failed|failed to fetch|401|403/i.test(message);
+    setRepoReconnectVisible(needsReconnect);
+    if (/not connected|no.*token|missing.*token/i.test(message)) {
+      if (wrap) wrap.innerHTML = repoConnectionErrorHtml(
+        'GitHub not connected',
+        'Connect or reconnect your GitHub account to browse repositories and import them into deployments.'
+      );
     } else {
-      if (connectBtnCatch) connectBtnCatch.style.display = 'none';
-      if (wrap) wrap.innerHTML = `<div class="repo-empty" style="grid-column:1/-1;"><strong>${escHtml(e.message || 'Failed to load repositories')}</strong><span>Reconnect GitHub or tap refresh to try again.</span></div>`;
+      if (wrap) wrap.innerHTML = repoConnectionErrorHtml(
+        message,
+        needsReconnect ? 'Reconnect GitHub or tap refresh to try again.' : 'Tap refresh to try again, or reconnect GitHub if the problem continues.'
+      );
     }
   }
 }
