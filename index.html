@@ -20168,6 +20168,22 @@ function showProjectDetail(projectId) {
         '</div>' +
       '</div>' +
 
+      // ── Runtime Logs (live Docker container output after deployment)
+      '<div class="card" id="runtimeLogsCard-' + p.id + '">' +
+        '<div class="card-header">' +
+          '<div>' +
+            '<div class="card-title">Runtime Logs</div>' +
+            '<div class="card-subtitle">Live output from the deployed Docker container, like Render logs.</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+            '<button class="btn btn-primary btn-sm" id="runtimeLogsToggle-' + p.id + '" onclick="toggleRuntimeLogs(\'' + p.id + '\')">▶ Stream logs</button>' +
+            '<button class="btn btn-ghost btn-sm" onclick="clearRuntimeLogs(\'' + p.id + '\')">Clear</button>' +
+          '</div>' +
+        '</div>' +
+        '<div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:0.75rem;color:var(--text-3);font-family:var(--font-mono);" id="runtimeLogsStatus-' + p.id + '">Disconnected · click Stream logs to follow app output after deployment.</div>' +
+        '<pre id="runtimeLogsOutput-' + p.id + '" style="margin:0;min-height:260px;max-height:460px;overflow:auto;padding:16px;background:#010d1a;color:#c8d3f5;font-family:var(--font-mono);font-size:0.76rem;line-height:1.65;white-space:pre-wrap;word-break:break-word;">Runtime logs will appear here…</pre>' +
+      '</div>' +
+
       // ── Deployment History
       '<div class="card">' +
         '<div class="card-header"><div class="card-title">Deployment History</div></div>' +
@@ -20279,6 +20295,73 @@ async function pdDeleteEnvVar(projectId, key) {
   if (envStore[projectId]) { delete envStore[projectId][key]; save(); }
   toast('"' + key + '" deleted', 'info');
   pdRefreshEnv(projectId);
+}
+
+var _runtimeLogStreams = {};
+function _runtimeLogLine(projectId, text, cls) {
+  const out = document.getElementById('runtimeLogsOutput-' + projectId);
+  if (!out) return;
+  if (out.textContent === 'Runtime logs will appear here…') out.textContent = '';
+  out.textContent += String(text || '') + '\n';
+  const lines = out.textContent.split('\n');
+  if (lines.length > 2500) out.textContent = lines.slice(-2500).join('\n');
+  out.scrollTop = out.scrollHeight;
+}
+function setRuntimeLogsStatus(projectId, text) {
+  const el = document.getElementById('runtimeLogsStatus-' + projectId);
+  if (el) el.textContent = text;
+}
+function stopRuntimeLogs(projectId) {
+  const es = _runtimeLogStreams[projectId];
+  if (es) es.close();
+  delete _runtimeLogStreams[projectId];
+  const btn = document.getElementById('runtimeLogsToggle-' + projectId);
+  if (btn) btn.textContent = '▶ Stream logs';
+}
+function clearRuntimeLogs(projectId) {
+  const out = document.getElementById('runtimeLogsOutput-' + projectId);
+  if (out) out.textContent = 'Runtime logs will appear here…';
+}
+function toggleRuntimeLogs(projectId) {
+  if (_runtimeLogStreams[projectId]) { stopRuntimeLogs(projectId); setRuntimeLogsStatus(projectId, 'Disconnected · stream stopped.'); return; }
+  const p = projects.find(x => String(x.id || x._id || x.subdomain || '') === String(projectId));
+  const id = encodeURIComponent(projectId);
+  const url = '/api/projects/' + id + '/runtime-logs';
+  const btn = document.getElementById('runtimeLogsToggle-' + projectId);
+  if (btn) btn.textContent = '■ Stop stream';
+  clearRuntimeLogs(projectId);
+  setRuntimeLogsStatus(projectId, 'Connecting to live container logs' + (p?.subdomain ? ' for ' + p.subdomain : '') + '…');
+  _runtimeLogLine(projectId, '[joytree] attaching to deployed app runtime logs…');
+  const es = new EventSource(url);
+  _runtimeLogStreams[projectId] = es;
+  es.addEventListener('meta', (ev) => {
+    const d = JSON.parse(ev.data || '{}');
+    setRuntimeLogsStatus(projectId, 'Streaming · container: ' + (d.containerName || 'unknown') + ' · subdomain: ' + (d.subdomain || '—'));
+    _runtimeLogLine(projectId, '[joytree] connected to ' + (d.containerName || 'container'));
+  });
+  es.addEventListener('log', (ev) => {
+    const d = JSON.parse(ev.data || '{}');
+    _runtimeLogLine(projectId, d.line || '');
+  });
+  es.addEventListener('end', (ev) => {
+    const d = JSON.parse(ev.data || '{}');
+    _runtimeLogLine(projectId, '[joytree] docker log stream ended' + (d.code != null ? ' with code ' + d.code : ''));
+    setRuntimeLogsStatus(projectId, 'Disconnected · container log stream ended.');
+    stopRuntimeLogs(projectId);
+  });
+  es.addEventListener('runtime-error', (ev) => {
+    let d = {};
+    try { d = JSON.parse(ev.data || '{}'); } catch(_e) {}
+    _runtimeLogLine(projectId, '[joytree] runtime log stream error: ' + (d.error || 'unknown error'));
+    setRuntimeLogsStatus(projectId, 'Error · ' + (d.error || 'could not stream runtime logs'));
+    stopRuntimeLogs(projectId);
+  });
+  es.onerror = () => {
+    if (!_runtimeLogStreams[projectId]) return;
+    _runtimeLogLine(projectId, '[joytree] runtime log stream disconnected. If this repeats, check whether the container is still running.');
+    setRuntimeLogsStatus(projectId, 'Disconnected · check container status or retry.');
+    stopRuntimeLogs(projectId);
+  };
 }
 
 function _configRow(label, valueHtml) {

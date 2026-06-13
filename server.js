@@ -282,6 +282,19 @@ function _portFromEntry(entry) {
   return Number(s);
 }
 
+// Extract the Docker container name from a registry entry. Current entries use
+// "containerName:port" so the proxy can route to Docker DNS; legacy numeric
+// entries fall back to the conventional db-<subdomain> container name.
+function _containerFromEntry(subdomain, entry) {
+  const fallback = `db-${String(subdomain || '').toLowerCase().replace(/[^a-z0-9-]/g, '-')}`;
+  if (entry == null || typeof entry === 'number') return fallback;
+  const s = String(entry).trim();
+  if (!s) return fallback;
+  const name = s.includes(':') ? s.split(':')[0] : s;
+  if (/^\d+$/.test(name)) return fallback;
+  return name.replace(/[^a-zA-Z0-9_.-]/g, '') || fallback;
+}
+
 function getOrAssignPort(subdomain) {
   const isPortAvailable = (port) => {
     try {
@@ -3257,6 +3270,79 @@ app.get('/api/projects/check-availability', async (req, res) => {
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+
+app.get('/api/projects/:id/runtime-logs', attachAuthIfPresent, async (req, res) => {
+  let child;
+  const send = (event, data) => {
+    if (res.writableEnded) return;
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+  try {
+    const projectId = String(req.params.id || '');
+    let project = null;
+    if (isDbReady() && mongoose.Types.ObjectId.isValid(projectId)) {
+      project = await Project.findById(projectId).lean().maxTimeMS(5000).catch(() => null);
+    }
+    if (!project && isDbReady()) {
+      project = await Project.findOne({ subdomain: projectId }).lean().maxTimeMS(5000).catch(() => null);
+    }
+    if (!project && req.user) {
+      const ws = (await readWorkspaceFromFirebase(req.user).catch(() => null)) || {};
+      project = (Array.isArray(ws.projects) ? ws.projects : []).find(p =>
+        String(p.id || p._id || '') === projectId || String(p.subdomain || '') === projectId
+      ) || null;
+    }
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const subdomain = String(project.subdomain || '').toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-|-$/g, '');
+    if (!subdomain) return res.status(400).json({ error: 'Project has no subdomain/container mapping' });
+    const containerName = _containerFromEntry(subdomain, portRegistry[subdomain]);
+
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    if (typeof res.flushHeaders === 'function') res.flushHeaders();
+
+    send('meta', { projectId, subdomain, containerName, startedAt: new Date().toISOString() });
+    const { spawn, spawnSync } = require('child_process');
+    const inspect = spawnSync('docker', ['inspect', '--format', '{{.State.Status}}|{{.State.Running}}|{{range $name,$net := .NetworkSettings.Networks}}{{if $net.IPAddress}}{{$name}}={{$net.IPAddress}} {{end}}{{end}}', containerName], { encoding: 'utf8' });
+    if (inspect.status !== 0) {
+      send('log', { source: 'diagnostic', line: `[joytree] Container ${containerName} was not found by Docker.` });
+      send('log', { source: 'diagnostic', line: `[joytree] Registry entry for ${subdomain}: ${JSON.stringify(portRegistry[subdomain] || null)}` });
+      send('log', { source: 'diagnostic', line: '[joytree] Run on the backend: docker ps -a --filter name=' + containerName + ' && docker logs --tail 200 ' + containerName });
+      send('end', { code: inspect.status, signal: null, endedAt: new Date().toISOString(), reason: 'container-not-found' });
+      return res.end();
+    }
+    send('log', { source: 'diagnostic', line: `[joytree] Docker inspect: ${String(inspect.stdout || '').trim()}` });
+    child = spawn('docker', ['logs', '--tail', '200', '--follow', '--timestamps', containerName], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+    const forward = (stream, source) => {
+      let buffered = '';
+      stream.on('data', (chunk) => {
+        buffered += chunk.toString('utf8');
+        const lines = buffered.split(/\r?\n/);
+        buffered = lines.pop() || '';
+        lines.filter(Boolean).forEach(line => send('log', { source, line }));
+      });
+      stream.on('end', () => { if (buffered.trim()) send('log', { source, line: buffered }); });
+    };
+    forward(child.stdout, 'stdout');
+    forward(child.stderr, 'stderr');
+
+    child.on('error', (e) => send('runtime-error', { error: e.message || 'Could not start docker logs' }));
+    child.on('close', (code, signal) => send('end', { code, signal, endedAt: new Date().toISOString() }));
+    const keepAlive = setInterval(() => send('ping', { t: Date.now() }), 15000);
+    req.on('close', () => { clearInterval(keepAlive); if (child && !child.killed) child.kill('SIGTERM'); });
+  } catch(e) {
+    if (!res.headersSent) return res.status(500).json({ error: e.message });
+    send('runtime-error', { error: e.message });
+    if (child && !child.killed) child.kill('SIGTERM');
+    res.end();
   }
 });
 
