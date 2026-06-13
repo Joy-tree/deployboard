@@ -3270,20 +3270,23 @@ async function runBuildCommandInContainer({ projectRoot, nodeImage, envObj, node
   ], {}, log);
 }
 
-function normalizeInstallLikeCommand(command, projectRoot) {
+function stripLeadingCdPrefix(command) {
   let raw = String(command || '').trim();
 
-  // ── Strip leading "cd <subdir> && ..." ────────────────────────────────────
-  // The container is already launched with -w /workspace (= projectRoot), so
-  // any "cd <dir> && <cmd>" prefix is wrong and will fail with "can't cd to <dir>".
-  // This happens when the project has a subdirectory (e.g. lovable-ui/) and the
-  // stored install/build command was written for the repo root context.
-  // Strip it so only the actual package-manager command runs.
-  const cdPrefixMatch = raw.match(/^cd\s+\S+\s*&&\s*/i);
+  // The Docker runtime/build containers are already launched with the selected
+  // project directory mounted as their working directory. Stored commands may
+  // still include the original repo-root context, e.g. `cd lovable-ui && npm
+  // start`; keep only the command that should run inside the mounted app dir.
+  const cdPrefixMatch = raw.match(/^cd\s+(?:"[^"]+"|'[^']+'|\S+)\s*&&\s*/i);
   if (cdPrefixMatch) {
     raw = raw.slice(cdPrefixMatch[0].length).trim();
   }
 
+  return raw;
+}
+
+function normalizeInstallLikeCommand(command, projectRoot) {
+  const raw = stripLeadingCdPrefix(command);
   const low = raw.toLowerCase();
   const hasNpmLock = fs.existsSync(path.join(projectRoot, 'package-lock.json'));
 
@@ -3408,7 +3411,7 @@ function resolveDeployableRoot(currentRoot, buildDir, startCmd, log) {
 }
 
 function resolveRuntimeStartCommand({ projectRoot, startCmd, expectedPort }) {
-  const raw = (startCmd || '').trim() || getDefaultStartCmd(projectRoot);
+  const raw = stripLeadingCdPrefix((startCmd || '').trim()) || getDefaultStartCmd(projectRoot);
   const normalized = raw.replace(/\s+/g, ' ').trim().toLowerCase();
   const nextFlags = `-H 0.0.0.0 -p ${expectedPort}`;
   const hasHostFlag = /(^|\s)(-H|--hostname|--host)(\s|=)/i.test(raw);
