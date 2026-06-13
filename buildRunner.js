@@ -2718,6 +2718,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   dockerArgs.push(nodeImage, 'sh', '-c', resolvedStartCmd);
   await exec('docker', dockerArgs, {}, log);
   log(`\x1b[32m[docker] ✓ Container started\x1b[0m`);
+  log(`\x1b[90m[docker] Runtime resources applied: ${runtime.cpuShares} CPU shares | ${runtime.memory} RAM | swap ${runtime.memorySwap || 'disabled'} | ${PIDS_LIMIT} max processes\x1b[0m`);
 
   // Give container a moment, then verify it's still running.
   log(`\x1b[90m[docker] Waiting for process to stabilize…\x1b[0m`);
@@ -2825,7 +2826,6 @@ function safeDockerToken(value, fallback = 'token') {
 
 async function detectLivePort(containerName, preferredPort, startupTimeoutSeconds, log) {
   const candidates = [];
-  const seedPorts = new Set();
   const add = (v) => {
     const n = Number(v);
     if (!Number.isInteger(n) || n <= 0) return;
@@ -2834,7 +2834,6 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
   const addSeed = (v) => {
     const n = Number(v);
     if (!Number.isInteger(n) || n <= 0) return;
-    seedPorts.add(n);
     add(n);
   };
 
@@ -2865,19 +2864,11 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
         log(`\x1b[32m[docker] ✓ App reachable on ${containerName}:${port}\x1b[0m`);
         return port;
       } catch (_) {
-        // Some apps don't return valid HTTP on "/" during warmup but still listen.
-        // Accept open TCP socket as a fallback readiness signal.
-        // Only allow TCP-only readiness for known web defaults.
-        if (seedPorts.has(port)) {
-          try {
-            await probeTcp(containerName, port, 1200);
-            log(`\x1b[32m[docker] ✓ TCP listener detected on ${containerName}:${port} (seed port)\x1b[0m`);
-            return port;
-          } catch (_) {}
-        }
-
         // DNS/container-name routing can fail in some Docker/network edge cases.
-        // Fall back to direct container IP probing before giving up.
+        // Fall back to direct container IP HTTP probing before giving up. Do not
+        // promote a TCP-only listener: the Joytree proxy forwards HTTP traffic,
+        // so a bare TCP socket can register the wrong port while the real app is
+        // listening elsewhere (for example Vite selecting a random fallback port).
         if (fallbackIP) {
           try {
             await probeHttp(fallbackIP, port, 1500);
@@ -2885,15 +2876,7 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
             await probeHttp(fallbackIP, port, 1500);
             log(`\x1b[32m[docker] ✓ App reachable on ${fallbackIP}:${port} (IP fallback)\x1b[0m`);
             return port;
-          } catch (_) {
-            if (seedPorts.has(port)) {
-              try {
-                await probeTcp(fallbackIP, port, 1200);
-                log(`\x1b[32m[docker] ✓ TCP listener on ${fallbackIP}:${port} (IP fallback seed port)\x1b[0m`);
-                return port;
-              } catch (_) {}
-            }
-          }
+          } catch (_) {}
         }
       }
     }
