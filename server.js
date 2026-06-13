@@ -327,6 +327,25 @@ function clearAssignedPort(subdomain) {
   }
 }
 
+function reloadPortRegistryFromDisk() {
+  try {
+    if (fs.existsSync(PORTS_FILE)) {
+      portRegistry = JSON.parse(fs.readFileSync(PORTS_FILE, 'utf8'));
+    }
+  } catch(e) {
+    console.warn('[Ports] Could not reload ports.json:', e.message);
+  }
+}
+
+function parseProxyTarget(entry) {
+  if (typeof entry !== 'string' || !entry.includes(':')) return null;
+  const idx = entry.lastIndexOf(':');
+  const host = entry.slice(0, idx).trim();
+  const port = Number(entry.slice(idx + 1));
+  if (!host || !Number.isInteger(port) || port <= 0 || port > 65535) return null;
+  return { host, port };
+}
+
 function requestPrefersJson(req) {
   const accept = String(req.headers.accept || '').toLowerCase();
   const contentType = String(req.headers['content-type'] || '').toLowerCase();
@@ -388,6 +407,13 @@ app.use((req, res, next) => {
 function serveStatic(req, res, distDir) {
   const mw = express.static(distDir, { index: 'index.html' });
   mw(req, res, () => {
+    if (requestLooksProgrammatic(req)) {
+      return res.status(404).json({
+        error: 'No server/API route is active for this deployment.',
+        detail: 'This request fell through to the static file handler. Deploy the project as a Server App or add the requested API route.',
+        path: req.originalUrl || req.url
+      });
+    }
     const idx = path.join(distDir, 'index.html');
     if (fs.existsSync(idx)) return res.sendFile(idx);
     res.status(404).send('Not found');
@@ -473,52 +499,42 @@ app.use(async (req, res, next) => {
     const cd = { domain: host, subdomain: cachedSubdomain };
 
     const subdomain = cd.subdomain;
-    try {
-      if (fs.existsSync(PORTS_FILE)) {
-        portRegistry = JSON.parse(fs.readFileSync(PORTS_FILE, 'utf8'));
-      }
-    } catch(e) {}
+    reloadPortRegistryFromDisk();
 
     const appEntry = portRegistry[subdomain];
     const distDir  = path.join(SITES_DIR, subdomain, 'dist');
 
     if (appEntry) {
-      let proxyHost, proxyPort;
-      if (typeof appEntry === 'string' && appEntry.includes(':')) {
-        [proxyHost, proxyPort] = appEntry.split(':');
-        proxyPort = parseInt(proxyPort);
+      const target = parseProxyTarget(appEntry);
+      if (!target) {
+        console.warn(`[Proxy] Ignoring non-stable port registry entry for ${subdomain}: ${appEntry}`);
+        return sendProxyError(req, res, 503, 'not_deployed', subdomain, BASE_DOMAIN);
       } else {
-        proxyHost = '127.0.0.1';
-        proxyPort = parseInt(appEntry);
-      }
-      const hopByHop = ['connection','keep-alive','proxy-authenticate','proxy-authorization','te','trailers','transfer-encoding','upgrade'];
-      const fwdHeaders = { ...req.headers };
-      hopByHop.forEach(h => delete fwdHeaders[h]);
-      fwdHeaders['host'] = host;
-      fwdHeaders['x-forwarded-for'] = req.ip || '';
-      fwdHeaders['x-real-ip'] = req.ip || '';
-      fwdHeaders['x-forwarded-proto'] = 'https';
+        const { host: proxyHost, port: proxyPort } = target;
+        const hopByHop = ['connection','keep-alive','proxy-authenticate','proxy-authorization','te','trailers','transfer-encoding','upgrade'];
+        const fwdHeaders = { ...req.headers };
+        hopByHop.forEach(h => delete fwdHeaders[h]);
+        fwdHeaders['host'] = host;
+        fwdHeaders['x-forwarded-for'] = req.ip || '';
+        fwdHeaders['x-real-ip'] = req.ip || '';
+        fwdHeaders['x-forwarded-proto'] = 'https';
 
-      const proxyReq = require('http').request(
-        { hostname: proxyHost, port: proxyPort, path: req.url, method: req.method, headers: fwdHeaders },
-        (proxyRes) => {
-          proxyResponseOrJsonMismatch(req, res, proxyRes, subdomain);
-        }
-      );
-      proxyReq.setTimeout(APP_PROXY_TIMEOUT_MS, () => { proxyReq.destroy(); sendProxyError(req, res, 504, 'gateway_timeout', subdomain, BASE_DOMAIN); });
-      proxyReq.on('error', () => sendProxyError(req, res, 502, 'bad_gateway', subdomain, BASE_DOMAIN));
-      req.pipe(proxyReq, { end: true });
-      req.on('error', () => proxyReq.destroy());
-      return;
+        const proxyReq = require('http').request(
+          { hostname: proxyHost, port: proxyPort, path: req.url, method: req.method, headers: fwdHeaders },
+          (proxyRes) => {
+            proxyResponseOrJsonMismatch(req, res, proxyRes, subdomain);
+          }
+        );
+        proxyReq.setTimeout(APP_PROXY_TIMEOUT_MS, () => { proxyReq.destroy(); sendProxyError(req, res, 504, 'gateway_timeout', subdomain, BASE_DOMAIN); });
+        proxyReq.on('error', () => sendProxyError(req, res, 502, 'bad_gateway', subdomain, BASE_DOMAIN));
+        req.pipe(proxyReq, { end: true });
+        req.on('error', () => proxyReq.destroy());
+        return;
+      }
     }
 
     if (fs.existsSync(distDir)) {
-      const mw = require('express').static(distDir, { index: 'index.html' });
-      return mw(req, res, () => {
-        const idx = path.join(distDir, 'index.html');
-        if (fs.existsSync(idx)) return res.sendFile(idx);
-        res.status(404).end();
-      });
+      return serveStatic(req, res, distDir);
     }
 
     return res.status(404).send(`<h2>${host}</h2><p>Project not found or not deployed yet.</p>`);
@@ -545,73 +561,67 @@ app.use((req, res, next) => {
 
   // Reload port registry from disk on every request so newly-deployed apps
   // are reachable immediately without restarting Joytree.
-  try {
-    if (fs.existsSync(PORTS_FILE)) {
-      portRegistry = JSON.parse(fs.readFileSync(PORTS_FILE, 'utf8'));
-    }
-  } catch(e) {}
+  reloadPortRegistryFromDisk();
 
   const appEntry  = portRegistry[subdomain];
   const distDir   = path.join(SITES_DIR, subdomain, 'dist');
 
   // ── Server app: proxy to its isolated Docker container ──────────────────
   if (appEntry) {
-    // appEntry can be "192.168.x.x:3000" (Docker network) or plain port number (legacy)
-    let proxyHost, proxyPort;
-    if (typeof appEntry === 'string' && appEntry.includes(':')) {
-      [proxyHost, proxyPort] = appEntry.split(':');
-      proxyPort = parseInt(proxyPort);
+    const target = parseProxyTarget(appEntry);
+    if (!target) {
+      console.warn(`[Proxy] Ignoring non-stable port registry entry for ${subdomain}: ${appEntry}`);
+      return sendProxyError(req, res, 503, 'not_deployed', subdomain, BASE_DOMAIN);
     } else {
-      proxyHost = '127.0.0.1';
-      proxyPort = parseInt(appEntry);
+      const { host: proxyHost, port: proxyPort } = target;
+      const appPort = proxyPort; // for display in error pages
+
+      // Strip hop-by-hop headers before forwarding (prevents proxy errors)
+      const hopByHop = ['connection','keep-alive','proxy-authenticate',
+                        'proxy-authorization','te','trailers','transfer-encoding','upgrade'];
+      const forwardHeaders = { ...req.headers };
+      hopByHop.forEach(h => delete forwardHeaders[h]);
+      forwardHeaders['host']            = req.headers.host;
+      forwardHeaders['x-forwarded-for'] = req.ip || '';
+      forwardHeaders['x-real-ip']       = req.ip || '';
+      forwardHeaders['x-forwarded-proto'] = 'https';
+
+      const proxyReq = http.request({
+        hostname: proxyHost,
+        port:     proxyPort,
+        path:     req.url,
+        method:   req.method,
+        headers:  forwardHeaders
+      }, (proxyRes) => {
+        // Intercept framework 404 on root so it shows a nice page
+        if (proxyRes.statusCode === 404 && req.url === '/') {
+          let body = '';
+          proxyRes.on('data', c => body += c);
+          proxyRes.on('end', () => {
+            if (body.includes('Cannot GET') || body.includes('Not Found')) {
+              return res.status(200).send(noRootRoutePage(subdomain, appPort));
+            }
+            res.writeHead(proxyRes.statusCode, proxyRes.headers);
+            res.end(body);
+          });
+          return;
+        }
+        proxyResponseOrJsonMismatch(req, res, proxyRes, subdomain);
+      });
+
+      proxyReq.setTimeout(APP_PROXY_TIMEOUT_MS, () => {
+        proxyReq.destroy();
+        sendProxyError(req, res, 504, 'gateway_timeout', subdomain, BASE_DOMAIN);
+      });
+
+      proxyReq.on('error', () => {
+        sendProxyError(req, res, 502, 'bad_gateway', subdomain, BASE_DOMAIN);
+      });
+
+      req.pipe(proxyReq, { end: true });
+      req.on('error', () => proxyReq.destroy());
+      return;
     }
-    const appPort = proxyPort; // for display in error pages
-
-    // Strip hop-by-hop headers before forwarding (prevents proxy errors)
-    const hopByHop = ['connection','keep-alive','proxy-authenticate',
-                      'proxy-authorization','te','trailers','transfer-encoding','upgrade'];
-    const forwardHeaders = { ...req.headers };
-    hopByHop.forEach(h => delete forwardHeaders[h]);
-    forwardHeaders['host']            = req.headers.host;
-    forwardHeaders['x-forwarded-for'] = req.ip || '';
-    forwardHeaders['x-real-ip']       = req.ip || '';
-    forwardHeaders['x-forwarded-proto'] = 'https';
-
-    const proxyReq = http.request({
-      hostname: proxyHost,
-      port:     proxyPort,
-      path:     req.url,
-      method:   req.method,
-      headers:  forwardHeaders
-    }, (proxyRes) => {
-      // Intercept framework 404 on root so it shows a nice page
-      if (proxyRes.statusCode === 404 && req.url === '/') {
-        let body = '';
-        proxyRes.on('data', c => body += c);
-        proxyRes.on('end', () => {
-          if (body.includes('Cannot GET') || body.includes('Not Found')) {
-            return res.status(200).send(noRootRoutePage(subdomain, appPort));
-          }
-          res.writeHead(proxyRes.statusCode, proxyRes.headers);
-          res.end(body);
-        });
-        return;
-      }
-      proxyResponseOrJsonMismatch(req, res, proxyRes, subdomain);
-    });
-
-    proxyReq.setTimeout(APP_PROXY_TIMEOUT_MS, () => {
-      proxyReq.destroy();
-      sendProxyError(req, res, 504, 'gateway_timeout', subdomain, BASE_DOMAIN);
-    });
-
-    proxyReq.on('error', () => {
-      sendProxyError(req, res, 502, 'bad_gateway', subdomain, BASE_DOMAIN);
-    });
-
-    req.pipe(proxyReq, { end: true });
-    req.on('error', () => proxyReq.destroy());
-    return;
   }
 
   // ── Static site ───────────────────────────────────────────────────────────

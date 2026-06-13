@@ -232,7 +232,10 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
     '--cpu-shares',   CPU_SHARES,
     '--pids-limit',   PIDS_LIMIT,
     '-e', `PORT=${exposedPort}`,
-    ...Object.entries(envObj).flatMap(([k,v]) => ['-e', `${k}=${v}`]),
+    ...Object.entries(envObj).flatMap(([k,v]) => {
+      const key = String(k || '').toUpperCase();
+      return (key === 'PORT' || key === 'HOST' || key === 'HOSTNAME') ? [] : ['-e', `${k}=${v}`];
+    }),
     imageName
   ];
 
@@ -279,7 +282,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
   const candidateContainerName = `${containerName}-cand-${safeDockerToken(deployId, 'build').slice(0,20)}`;
-  const nodeImage     = 'node:' + (project.nodeVer || '18') + '-bullseye';
+  const nodeImage     = 'node:' + (project.nodeVer || '18');
   const startCmd      = (project.startCmd || '').trim();
   const appDir        = path.join(sitesDir, project.subdomain, 'app');
 
@@ -602,7 +605,7 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
     log(`\x1b[31m[docker] Candidate failed: ${e.message}\x1b[0m`);
     try { await exec('docker', ['logs', '--tail', '80', candidateContainerName], {}, log); } catch(_) {}
     try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(_) {}
-    if (!previousTarget) {
+    if (!isStableRegistryTarget(previousTarget)) {
       let registry = {};
       try { registry = JSON.parse(fs.readFileSync(pFile, 'utf8')); } catch(_) {}
       delete registry[project.subdomain];
@@ -1663,7 +1666,7 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
     log(`\x1b[31m[docker] Failed: ${e.message}\x1b[0m`);
     try { await exec('docker', ['logs', '--tail', '60', candidateContainerName], {}, log); } catch(_) {}
     try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(_) {}
-    if (!previousTarget) {
+    if (!isStableRegistryTarget(previousTarget)) {
       let reg = {};
       try { reg = JSON.parse(fs.readFileSync(pFile, 'utf8')); } catch(_) {}
       delete reg[project.subdomain];
@@ -2362,7 +2365,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   } else if (detectedNodeVer) {
     log(`\x1b[90m[detect] Node.js version confirmed: ${resolvedNodeVer} (matches package.json engines)\x1b[0m`);
   }
-  const nodeImage = `node:${resolvedNodeVer}-bullseye`;
+  const nodeImage = `node:${resolvedNodeVer}`;
 
   const outputDir   = path.join(projectRoot, project.outputDir || 'dist');
 
@@ -2569,7 +2572,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   } else if (detectedNodeVer) {
     log(`\x1b[90m[detect] Node.js version confirmed: ${resolvedNodeVer} (matches package.json engines)\x1b[0m`);
   }
-  const nodeImage = `node:${resolvedNodeVer}-bullseye`;
+  const nodeImage = `node:${resolvedNodeVer}`;
   if (!isDeployableServerProject(projectRoot, startCmd)) {
     log(`\x1b[33m[auto] No production server start could be inferred. Falling back to static deployment flow.\x1b[0m`);
     const fallbackProject = { ...project, siteType: 'static', buildCmd: project.buildCmd || 'echo skip', outputDir: project.outputDir || '.' };
@@ -2789,7 +2792,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     log(`\x1b[31m[docker] Candidate failed: ${e.message}\x1b[0m`);
     try { await exec('docker', ['logs', '--tail', '80', candidateContainerName], {}, log); } catch(_) {}
     try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(_) {}
-    if (previousTarget) {
+    if (isStableRegistryTarget(previousTarget)) {
       log(`\x1b[33m[docker] Rolled back to previous live mapping: ${project.subdomain} → ${previousTarget}\x1b[0m`);
     } else {
       let registry = {};
@@ -2949,8 +2952,15 @@ async function detectListeningPorts(containerName) {
   );
   const ports = new Set();
   for (const row of rows) {
-    const m = String(row).match(/:\s*([0-9A-Fa-f]{8}):([0-9A-Fa-f]{4})\s+[0-9A-Fa-f]{8}:[0-9A-Fa-f]{4}\s+0A/);
+    const m = String(row).match(/:\s*([0-9A-Fa-f]{8}|[0-9A-Fa-f]{32}):([0-9A-Fa-f]{4})\s+[0-9A-Fa-f]{8,32}:[0-9A-Fa-f]{4}\s+0A/);
     if (!m) continue;
+    const localAddr = String(m[1] || '').toUpperCase();
+    // /proc/net/tcp also exposes Docker's internal DNS stub on 127.0.0.11
+    // with a random high port. That is not the user web server, and logging or
+    // probing it makes deploys look like they have "two ports". Only keep ports
+    // bound to all interfaces, IPv6 all-interfaces, or non-loopback addresses.
+    if (localAddr === '0100007F' || localAddr.startsWith('0B00007F')) continue; // 127.0.0.1 / 127.0.0.11
+    if (localAddr === '00000000000000000000000000000001') continue; // ::1
     const p = parseInt(m[2], 16);
     if (Number.isInteger(p) && p > 0 && p < 65536) ports.add(p);
   }
@@ -3060,6 +3070,10 @@ function readRegistryTarget(portsFile, subdomain) {
   } catch (_) {
     return '';
   }
+}
+
+function isStableRegistryTarget(target) {
+  return typeof target === 'string' && /^[a-z0-9][a-z0-9_.-]*:\d{2,5}$/i.test(target.trim());
 }
 
 async function getContainerState(containerName) {
@@ -3355,28 +3369,10 @@ function stripLeadingCdPrefix(command) {
 }
 
 function normalizeInstallLikeCommand(command, projectRoot) {
-  const raw = stripLeadingCdPrefix(command);
-  const low = raw.toLowerCase();
-  const hasNpmLock = fs.existsSync(path.join(projectRoot, 'package-lock.json'));
-
-  if (low === 'npm i' || low === 'npm install') {
-    return hasNpmLock
-      ? 'npm ci --legacy-peer-deps --no-audit --no-fund --progress=false'
-      : 'npm install --legacy-peer-deps --no-audit --no-fund --progress=false';
-  }
-  if (low.startsWith('npm ci')) {
-    return `${raw} --no-audit --no-fund --progress=false`;
-  }
-  if (low.startsWith('npm install') || low.startsWith('npm i ')) {
-    return `${raw} --no-audit --no-fund --progress=false`;
-  }
-  if (low.startsWith('yarn install') && !low.includes('--non-interactive')) {
-    return `${raw} --non-interactive`;
-  }
-  if (low.startsWith('pnpm install') && !low.includes('--reporter=')) {
-    return `${raw} --reporter=append-only`;
-  }
-  return raw;
+  // Render-style command execution: respect the user's install/build command
+  // exactly in the selected project root. Do not rewrite npm install to npm ci,
+  // and do not append --no-audit/--no-fund/progress flags behind the user's back.
+  return stripLeadingCdPrefix(command);
 }
 
 function detectPackageManager(projectRoot) {
@@ -3420,15 +3416,9 @@ function packageManagerExec(pm, binAndArgs) {
 
 function getDefaultInstallCmd(projectRoot) {
   const pm = detectPackageManager(projectRoot);
-  if (pm === 'pnpm') return 'pnpm install --frozen-lockfile';
-  if (pm === 'yarn') return 'yarn install --frozen-lockfile';
-
-  // npm v7+ enforces peer dependency resolution and can fail builds for
-  // otherwise-runnable apps. Use legacy peer resolution by default to make
-  // third-party app deployments more resilient.
-  return fs.existsSync(path.join(projectRoot, 'package-lock.json'))
-    ? 'npm ci --legacy-peer-deps'
-    : 'npm install --legacy-peer-deps';
+  if (pm === 'pnpm') return 'pnpm install';
+  if (pm === 'yarn') return 'yarn install';
+  return 'npm install';
 }
 
 function getDefaultBuildCmd(projectRoot) {
@@ -3958,7 +3948,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
   if (detectedNodeVer && detectedNodeVer !== configuredNodeVer) {
     emitNodeVersionWarning(log, configuredNodeVer, detectedNodeVer);
   }
-  const nodeImage = `node:${resolvedNodeVer}-bullseye`;
+  const nodeImage = `node:${resolvedNodeVer}`;
   const env = resolveEnvVars(project.envVars);
 
   // Step 2: Install — runs inside Docker container just like GitHub builds,
@@ -4106,6 +4096,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
 
 async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPort, emit, onLog, uploadFilesDir, log, cleanSub }) {
   const buildDir = path.join(tmpDir, deployId + '_upload');
+  const appDir = path.join(sitesDir, cleanSub, 'app');
   if (fs.existsSync(buildDir)) fs.rmSync(buildDir, { recursive: true, force: true });
   fs.mkdirSync(buildDir, { recursive: true });
 
@@ -4119,6 +4110,8 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   emitStep(emit, 'clone', 'done');
 
   const projectRoot = findProjectRoot(buildDir, log, project);
+  const relativeProjectRoot = path.relative(buildDir, projectRoot) || '.';
+  log(`\x1b[90m[deploy] Server app root: ${relativeProjectRoot} — install, build, and start all use this same directory.\x1b[0m`);
 
   // Step 2: Install
   emitStep(emit, 'install', 'active');
@@ -4127,6 +4120,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   if (hasPackageJson) {
     const installCmd = project.installCmd || 'npm install';
     const installParts = splitCmd(installCmd);
+    log(`\x1b[90m[install] cwd: ${relativeProjectRoot}\x1b[0m`);
     log(`\x1b[90m$ ${installCmd}\x1b[0m`);
     await exec(installParts[0], installParts[1], { cwd: projectRoot }, log);
   } else {
@@ -4142,6 +4136,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
     log('\x1b[90m(no build step)\x1b[0m');
   } else {
     const buildParts = splitCmd(buildCmd);
+    log(`\x1b[90m[build] cwd: ${relativeProjectRoot}\x1b[0m`);
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
     try {
       await exec(buildParts[0], buildParts[1], { cwd: projectRoot }, log);
@@ -4157,20 +4152,37 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   }
   emitStep(emit, 'build', 'done');
 
-  // Step 4: Start container
+  // Step 4: Persist the exact built app directory, then start container from it.
+  // This mirrors Render-style server deploys: install/build happen in one app
+  // root and the same completed tree is mounted as /app for the long-running
+  // server process. Never copy only static output for server apps.
   emitStep(emit, 'copy', 'active');
-  log('\n\x1b[36m━━━ Step 4/5 — Launch Container ━━━\x1b[0m');
+  log('\n\x1b[36m━━━ Step 4/5 — Prepare App + Launch Container ━━━\x1b[0m');
+
+  if (fs.existsSync(appDir)) fs.rmSync(appDir, { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(appDir), { recursive: true });
+  try {
+    fs.renameSync(projectRoot, appDir);
+    log(`\x1b[32m[deploy]\x1b[0m ✓ Server app moved to permanent storage with build artifacts and node_modules intact`);
+  } catch (moveErr) {
+    log(`\x1b[90m[deploy] Cross-device move, copying full server app tree…\x1b[0m`);
+    fs.mkdirSync(appDir, { recursive: true });
+    copyDir(projectRoot, appDir);
+    log(`\x1b[32m[deploy]\x1b[0m ✓ Server app copied to permanent storage`);
+  }
 
   const containerName = 'db-' + cleanSub;
   const candidateContainerName = containerName + '-cand-' + safeDockerToken(deployId, 'build').slice(0, 20);
-  const imageName = 'deployboard-' + cleanSub;
   const nodeVer = String(project.nodeVer || '20');
   const expectedPort = appPort || 3000;
   const envObj = resolveEnvVars(project.envVars);
-  const startCmdResolved = resolveRuntimeStartCommand({ projectRoot, startCmd: project.startCmd, expectedPort });
+  const startCmdResolved = resolveRuntimeStartCommand({ projectRoot: appDir, startCmd: project.startCmd, expectedPort });
   const networkName = 'deployboard_deployboard-net';
+  const hostAppDir = appDir.replace('/var/www/user-sites', '/var/lib/docker/volumes/deployboard_sites-data/_data');
+  const portsFile = path.join(sitesDir, 'ports.json');
+  const previousTarget = readRegistryTarget(portsFile, cleanSub);
 
-  try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
+  try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(e) {}
 
   const runArgs = [
     'run', '-d', '--restart=unless-stopped',
@@ -4180,14 +4192,20 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
     '--pids-limit', PIDS_LIMIT,
     '-e', `PORT=${expectedPort}`,
     '-e', `NODE_ENV=production`,
-    ...Object.entries(envObj).flatMap(([k,v]) => ['-e', `${k}=${v}`]),
-    '-v', `${projectRoot}:/app:ro`,
+    '-e', `HOST=0.0.0.0`,
+    '-e', `HOSTNAME=0.0.0.0`,
+    '-e', `NEXT_TELEMETRY_DISABLED=1`,
+    ...Object.entries(envObj).flatMap(([k,v]) => {
+      const key = String(k || '').toUpperCase();
+      return (key === 'PORT' || key === 'HOST' || key === 'HOSTNAME') ? [] : ['-e', `${k}=${v}`];
+    }),
+    '-v', `${hostAppDir}:/app`,
     '-w', '/app',
-    `node:${nodeVer}-alpine`,
-    'sh', '-c', String(startCmdResolved || 'node server.js').replace(/"/g, '\\"')
+    `node:${nodeVer}`,
+    'sh', '-c', `export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH && ${String(startCmdResolved || 'node server.js').replace(/`/g, '\\`')}`
   ];
 
-  log(`\x1b[90m[docker] Launching Node.js ${nodeVer} container…\x1b[0m`);
+  log(`\x1b[90m[docker] Launching Node.js ${nodeVer} container from /app (same built server tree)…\x1b[0m`);
   await exec('docker', runArgs, {}, log);
   emitStep(emit, 'copy', 'done');
 
@@ -4198,22 +4216,56 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   const stable = await waitForContainerRunning(candidateContainerName, 30, log);
   if (!stable) {
     try { await exec('docker', ['logs', '--tail', '60', candidateContainerName], {}, log); } catch(e) {}
+    try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(e) {}
+    if (!isStableRegistryTarget(previousTarget)) {
+      let registry = {};
+      try { registry = JSON.parse(fs.readFileSync(portsFile, 'utf8')); } catch(_) {}
+      delete registry[cleanSub];
+      fs.writeFileSync(portsFile, JSON.stringify(registry, null, 2));
+    }
     throw new Error('Container exited during startup. Check logs above.');
   }
   const livePort = await detectLivePort(candidateContainerName, expectedPort, 60, log);
-  const targetPort = livePort || expectedPort;
+  if (!livePort) {
+    try { await exec('docker', ['logs', '--tail', '80', candidateContainerName], {}, log); } catch(e) {}
+    try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(e) {}
+    if (isStableRegistryTarget(previousTarget)) {
+      log(`\x1b[33m[docker]\x1b[0m Readiness failed; keeping previous live mapping: ${cleanSub} → ${previousTarget}`);
+    } else {
+      let registry = {};
+      try { registry = JSON.parse(fs.readFileSync(portsFile, 'utf8')); } catch(_) {}
+      delete registry[cleanSub];
+      fs.writeFileSync(portsFile, JSON.stringify(registry, null, 2));
+      log(`\x1b[33m[docker]\x1b[0m Readiness failed; removed placeholder port for ${cleanSub}`);
+    }
+    throw new Error('Readiness gate failed: server app did not expose a reachable HTTP port.');
+  }
+  const targetPort = normalizePort(livePort, expectedPort);
+  if (targetPort !== expectedPort) {
+    log(`\x1b[33m[docker]\x1b[0m App ignored PORT=${expectedPort}; routing to detected port ${targetPort}`);
+  }
 
-  try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
-  await exec('docker', ['rename', candidateContainerName, containerName], {}, () => {});
-
-  // Register port
   try {
-    const portsFile = path.join(sitesDir, 'ports.json');
+    await archivePreviousContainer(containerName, cleanSub, log);
+    await exec('docker', ['rename', candidateContainerName, containerName], {}, () => {});
+    log(`\x1b[90m[docker]\x1b[0m Promoted candidate to stable: ${containerName}`);
+
     let registry = {};
     try { registry = JSON.parse(fs.readFileSync(portsFile,'utf8')); } catch(e) {}
     registry[cleanSub] = `${containerName}:${targetPort}`; // must be "name:port" string — proxy does appEntry.split(':')
     fs.writeFileSync(portsFile, JSON.stringify(registry, null, 2));
-  } catch(e) {}
+    await cleanupArchivedContainers(cleanSub, DEPLOY_HISTORY_KEEP, log);
+  } catch(e) {
+    log(`\x1b[31m[docker]\x1b[0m Candidate failed during promotion: ${e.message}`);
+    try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(_) {}
+    if (!isStableRegistryTarget(previousTarget)) {
+      let registry = {};
+      try { registry = JSON.parse(fs.readFileSync(portsFile, 'utf8')); } catch(_) {}
+      delete registry[cleanSub];
+      fs.writeFileSync(portsFile, JSON.stringify(registry, null, 2));
+    }
+    throw e;
+  }
   log(`\x1b[32m[docker]\x1b[0m Container running on port ${targetPort}`);
   emitStep(emit, 'start', 'done');
 
