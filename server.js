@@ -243,6 +243,7 @@ async function sendDeploymentStatusEmail({
 const PORTS_FILE = path.join(SITES_DIR, 'ports.json');
 const PORT_START = Number(process.env.APP_PORT_START || 10000);
 const PORT_END   = Number(process.env.APP_PORT_END || 20000);
+const APP_PROXY_TIMEOUT_MS = Math.max(30000, Number(process.env.APP_PROXY_TIMEOUT_MS || 300000));
 
 let portRegistry = {};
 try {
@@ -324,6 +325,26 @@ function clearAssignedPort(subdomain) {
     delete portRegistry[subdomain];
     savePortRegistry();
   }
+}
+
+function requestPrefersJson(req) {
+  const accept = String(req.headers.accept || '').toLowerCase();
+  const contentType = String(req.headers['content-type'] || '').toLowerCase();
+  return accept.includes('application/json') || contentType.includes('application/json') || req.path.startsWith('/api/');
+}
+
+function sendProxyError(req, res, status, type, subdomain, baseDomain) {
+  if (res.headersSent) return;
+  if (requestPrefersJson(req)) {
+    const timeoutSeconds = Math.round(APP_PROXY_TIMEOUT_MS / 1000);
+    const messages = {
+      bad_gateway: 'The app container is not responding. It may have crashed or restarted.',
+      gateway_timeout: `The app did not respond within ${timeoutSeconds}s. Long-running server work can continue, but the request exceeded the Joytree proxy timeout.`,
+      not_deployed: 'This subdomain has no active deployment.'
+    };
+    return res.status(status).json({ error: messages[type] || messages.not_deployed });
+  }
+  return res.status(status).send(errorPage(type, subdomain, baseDomain));
 }
 
 // ── Middleware ────────────────────────────────────────────────────────────────
@@ -463,8 +484,8 @@ app.use(async (req, res, next) => {
           proxyRes.on('error', () => { if (!res.headersSent) res.end(); });
         }
       );
-      proxyReq.setTimeout(30000, () => { proxyReq.destroy(); if (!res.headersSent) res.status(502).end(); });
-      proxyReq.on('error', () => { if (!res.headersSent) res.status(502).end(); });
+      proxyReq.setTimeout(APP_PROXY_TIMEOUT_MS, () => { proxyReq.destroy(); sendProxyError(req, res, 504, 'gateway_timeout', subdomain, BASE_DOMAIN); });
+      proxyReq.on('error', () => sendProxyError(req, res, 502, 'bad_gateway', subdomain, BASE_DOMAIN));
       req.pipe(proxyReq, { end: true });
       req.on('error', () => proxyReq.destroy());
       return;
@@ -560,13 +581,13 @@ app.use((req, res, next) => {
       proxyRes.on('error', () => { if (!res.headersSent) res.end(); });
     });
 
-    proxyReq.setTimeout(30000, () => {
+    proxyReq.setTimeout(APP_PROXY_TIMEOUT_MS, () => {
       proxyReq.destroy();
-      if (!res.headersSent) res.status(504).send(errorPage('gateway_timeout', subdomain, BASE_DOMAIN));
+      sendProxyError(req, res, 504, 'gateway_timeout', subdomain, BASE_DOMAIN);
     });
 
     proxyReq.on('error', () => {
-      if (!res.headersSent) res.status(502).send(errorPage('bad_gateway', subdomain, BASE_DOMAIN));
+      sendProxyError(req, res, 502, 'bad_gateway', subdomain, BASE_DOMAIN);
     });
 
     req.pipe(proxyReq, { end: true });
@@ -578,7 +599,7 @@ app.use((req, res, next) => {
   if (fs.existsSync(distDir)) return serveStatic(req, res, distDir);
 
   // ── Not deployed ──────────────────────────────────────────────────────────
-  res.status(503).send(errorPage('not_deployed', subdomain, BASE_DOMAIN));
+  sendProxyError(req, res, 503, 'not_deployed', subdomain, BASE_DOMAIN);
 });
 
 // Dashboard static serving is registered AFTER all API routes (see bottom of file)
@@ -635,10 +656,10 @@ function errorPage(type, subdomain, baseDomain) {
       colorBorder: 'rgba(249,115,22,0.22)',
       dotColor: '#f97316',
       icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-      detail: 'The app did not respond within 30 seconds. It may still be starting up — wait a moment and try again, or redeploy from the dashboard.',
+      detail: 'The app did not respond before the Joytree proxy timeout. It may still be processing a long-running server request — wait a moment and try again, or redeploy from the dashboard if it keeps timing out.',
       meta: [
         { k: 'STATUS',    v: '504 Gateway Timeout' },
-        { k: 'REASON',    v: 'Upstream response timeout (30s)' },
+        { k: 'REASON',    v: `Upstream response timeout (${Math.round(APP_PROXY_TIMEOUT_MS / 1000)}s)` },
         { k: 'HOST',      v: host },
         { k: 'TIMESTAMP', v: ts },
         { k: 'REQUEST ID',v: reqId },
