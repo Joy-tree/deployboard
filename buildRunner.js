@@ -232,7 +232,10 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
     '--cpu-shares',   CPU_SHARES,
     '--pids-limit',   PIDS_LIMIT,
     '-e', `PORT=${exposedPort}`,
-    ...Object.entries(envObj).flatMap(([k,v]) => ['-e', `${k}=${v}`]),
+    ...Object.entries(envObj).flatMap(([k,v]) => {
+      const key = String(k || '').toUpperCase();
+      return (key === 'PORT' || key === 'HOST' || key === 'HOSTNAME') ? [] : ['-e', `${k}=${v}`];
+    }),
     imageName
   ];
 
@@ -279,7 +282,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
   const candidateContainerName = `${containerName}-cand-${safeDockerToken(deployId, 'build').slice(0,20)}`;
-  const nodeImage     = 'node:' + (project.nodeVer || '18') + '-bullseye';
+  const nodeImage     = 'node:' + (project.nodeVer || '18');
   const startCmd      = (project.startCmd || '').trim();
   const appDir        = path.join(sitesDir, project.subdomain, 'app');
 
@@ -2362,7 +2365,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   } else if (detectedNodeVer) {
     log(`\x1b[90m[detect] Node.js version confirmed: ${resolvedNodeVer} (matches package.json engines)\x1b[0m`);
   }
-  const nodeImage = `node:${resolvedNodeVer}-bullseye`;
+  const nodeImage = `node:${resolvedNodeVer}`;
 
   const outputDir   = path.join(projectRoot, project.outputDir || 'dist');
 
@@ -2569,7 +2572,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   } else if (detectedNodeVer) {
     log(`\x1b[90m[detect] Node.js version confirmed: ${resolvedNodeVer} (matches package.json engines)\x1b[0m`);
   }
-  const nodeImage = `node:${resolvedNodeVer}-bullseye`;
+  const nodeImage = `node:${resolvedNodeVer}`;
   if (!isDeployableServerProject(projectRoot, startCmd)) {
     log(`\x1b[33m[auto] No production server start could be inferred. Falling back to static deployment flow.\x1b[0m`);
     const fallbackProject = { ...project, siteType: 'static', buildCmd: project.buildCmd || 'echo skip', outputDir: project.outputDir || '.' };
@@ -3355,28 +3358,10 @@ function stripLeadingCdPrefix(command) {
 }
 
 function normalizeInstallLikeCommand(command, projectRoot) {
-  const raw = stripLeadingCdPrefix(command);
-  const low = raw.toLowerCase();
-  const hasNpmLock = fs.existsSync(path.join(projectRoot, 'package-lock.json'));
-
-  if (low === 'npm i' || low === 'npm install') {
-    return hasNpmLock
-      ? 'npm ci --legacy-peer-deps --no-audit --no-fund --progress=false'
-      : 'npm install --legacy-peer-deps --no-audit --no-fund --progress=false';
-  }
-  if (low.startsWith('npm ci')) {
-    return `${raw} --no-audit --no-fund --progress=false`;
-  }
-  if (low.startsWith('npm install') || low.startsWith('npm i ')) {
-    return `${raw} --no-audit --no-fund --progress=false`;
-  }
-  if (low.startsWith('yarn install') && !low.includes('--non-interactive')) {
-    return `${raw} --non-interactive`;
-  }
-  if (low.startsWith('pnpm install') && !low.includes('--reporter=')) {
-    return `${raw} --reporter=append-only`;
-  }
-  return raw;
+  // Render-style command execution: respect the user's install/build command
+  // exactly in the selected project root. Do not rewrite npm install to npm ci,
+  // and do not append --no-audit/--no-fund/progress flags behind the user's back.
+  return stripLeadingCdPrefix(command);
 }
 
 function detectPackageManager(projectRoot) {
@@ -3420,15 +3405,9 @@ function packageManagerExec(pm, binAndArgs) {
 
 function getDefaultInstallCmd(projectRoot) {
   const pm = detectPackageManager(projectRoot);
-  if (pm === 'pnpm') return 'pnpm install --frozen-lockfile';
-  if (pm === 'yarn') return 'yarn install --frozen-lockfile';
-
-  // npm v7+ enforces peer dependency resolution and can fail builds for
-  // otherwise-runnable apps. Use legacy peer resolution by default to make
-  // third-party app deployments more resilient.
-  return fs.existsSync(path.join(projectRoot, 'package-lock.json'))
-    ? 'npm ci --legacy-peer-deps'
-    : 'npm install --legacy-peer-deps';
+  if (pm === 'pnpm') return 'pnpm install';
+  if (pm === 'yarn') return 'yarn install';
+  return 'npm install';
 }
 
 function getDefaultBuildCmd(projectRoot) {
@@ -3958,7 +3937,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
   if (detectedNodeVer && detectedNodeVer !== configuredNodeVer) {
     emitNodeVersionWarning(log, configuredNodeVer, detectedNodeVer);
   }
-  const nodeImage = `node:${resolvedNodeVer}-bullseye`;
+  const nodeImage = `node:${resolvedNodeVer}`;
   const env = resolveEnvVars(project.envVars);
 
   // Step 2: Install — runs inside Docker container just like GitHub builds,
@@ -4106,6 +4085,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
 
 async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPort, emit, onLog, uploadFilesDir, log, cleanSub }) {
   const buildDir = path.join(tmpDir, deployId + '_upload');
+  const appDir = path.join(sitesDir, cleanSub, 'app');
   if (fs.existsSync(buildDir)) fs.rmSync(buildDir, { recursive: true, force: true });
   fs.mkdirSync(buildDir, { recursive: true });
 
@@ -4119,6 +4099,8 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   emitStep(emit, 'clone', 'done');
 
   const projectRoot = findProjectRoot(buildDir, log, project);
+  const relativeProjectRoot = path.relative(buildDir, projectRoot) || '.';
+  log(`\x1b[90m[deploy] Server app root: ${relativeProjectRoot} — install, build, and start all use this same directory.\x1b[0m`);
 
   // Step 2: Install
   emitStep(emit, 'install', 'active');
@@ -4127,6 +4109,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   if (hasPackageJson) {
     const installCmd = project.installCmd || 'npm install';
     const installParts = splitCmd(installCmd);
+    log(`\x1b[90m[install] cwd: ${relativeProjectRoot}\x1b[0m`);
     log(`\x1b[90m$ ${installCmd}\x1b[0m`);
     await exec(installParts[0], installParts[1], { cwd: projectRoot }, log);
   } else {
@@ -4142,6 +4125,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
     log('\x1b[90m(no build step)\x1b[0m');
   } else {
     const buildParts = splitCmd(buildCmd);
+    log(`\x1b[90m[build] cwd: ${relativeProjectRoot}\x1b[0m`);
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
     try {
       await exec(buildParts[0], buildParts[1], { cwd: projectRoot }, log);
@@ -4157,18 +4141,33 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   }
   emitStep(emit, 'build', 'done');
 
-  // Step 4: Start container
+  // Step 4: Persist the exact built app directory, then start container from it.
+  // This mirrors Render-style server deploys: install/build happen in one app
+  // root and the same completed tree is mounted as /app for the long-running
+  // server process. Never copy only static output for server apps.
   emitStep(emit, 'copy', 'active');
-  log('\n\x1b[36m━━━ Step 4/5 — Launch Container ━━━\x1b[0m');
+  log('\n\x1b[36m━━━ Step 4/5 — Prepare App + Launch Container ━━━\x1b[0m');
+
+  if (fs.existsSync(appDir)) fs.rmSync(appDir, { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(appDir), { recursive: true });
+  try {
+    fs.renameSync(projectRoot, appDir);
+    log(`\x1b[32m[deploy]\x1b[0m ✓ Server app moved to permanent storage with build artifacts and node_modules intact`);
+  } catch (moveErr) {
+    log(`\x1b[90m[deploy] Cross-device move, copying full server app tree…\x1b[0m`);
+    fs.mkdirSync(appDir, { recursive: true });
+    copyDir(projectRoot, appDir);
+    log(`\x1b[32m[deploy]\x1b[0m ✓ Server app copied to permanent storage`);
+  }
 
   const containerName = 'db-' + cleanSub;
   const candidateContainerName = containerName + '-cand-' + safeDockerToken(deployId, 'build').slice(0, 20);
-  const imageName = 'deployboard-' + cleanSub;
   const nodeVer = String(project.nodeVer || '20');
   const expectedPort = appPort || 3000;
   const envObj = resolveEnvVars(project.envVars);
-  const startCmdResolved = resolveRuntimeStartCommand({ projectRoot, startCmd: project.startCmd, expectedPort });
+  const startCmdResolved = resolveRuntimeStartCommand({ projectRoot: appDir, startCmd: project.startCmd, expectedPort });
   const networkName = 'deployboard_deployboard-net';
+  const hostAppDir = appDir.replace('/var/www/user-sites', '/var/lib/docker/volumes/deployboard_sites-data/_data');
 
   try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
 
@@ -4180,14 +4179,20 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
     '--pids-limit', PIDS_LIMIT,
     '-e', `PORT=${expectedPort}`,
     '-e', `NODE_ENV=production`,
-    ...Object.entries(envObj).flatMap(([k,v]) => ['-e', `${k}=${v}`]),
-    '-v', `${projectRoot}:/app:ro`,
+    '-e', `HOST=0.0.0.0`,
+    '-e', `HOSTNAME=0.0.0.0`,
+    '-e', `NEXT_TELEMETRY_DISABLED=1`,
+    ...Object.entries(envObj).flatMap(([k,v]) => {
+      const key = String(k || '').toUpperCase();
+      return (key === 'PORT' || key === 'HOST' || key === 'HOSTNAME') ? [] : ['-e', `${k}=${v}`];
+    }),
+    '-v', `${hostAppDir}:/app`,
     '-w', '/app',
-    `node:${nodeVer}-alpine`,
-    'sh', '-c', String(startCmdResolved || 'node server.js').replace(/"/g, '\\"')
+    `node:${nodeVer}`,
+    'sh', '-c', `export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH && ${String(startCmdResolved || 'node server.js').replace(/`/g, '\\`')}`
   ];
 
-  log(`\x1b[90m[docker] Launching Node.js ${nodeVer} container…\x1b[0m`);
+  log(`\x1b[90m[docker] Launching Node.js ${nodeVer} container from /app (same built server tree)…\x1b[0m`);
   await exec('docker', runArgs, {}, log);
   emitStep(emit, 'copy', 'done');
 
