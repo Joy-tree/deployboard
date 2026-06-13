@@ -279,7 +279,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
   const candidateContainerName = `${containerName}-cand-${safeDockerToken(deployId, 'build').slice(0,20)}`;
-  const nodeImage     = 'node:' + (project.nodeVer || '18') + '-bullseye';
+  const nodeImage     = 'node:' + (project.nodeVer || '18') + '-bookworm-slim';
   const startCmd      = (project.startCmd || '').trim();
   const appDir        = path.join(sitesDir, project.subdomain, 'app');
 
@@ -295,11 +295,14 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   emitStep(emit, 'clone', 'done');
 
   const projectRoot = findProjectRoot(buildDir, log, project);
+  const relativeProjectRoot = path.relative(buildDir, projectRoot) || '.';
+  log(`\x1b[90m[deploy] Worker root: ${relativeProjectRoot} — install, build, and worker start all use this same directory.\x1b[0m`);
 
   // Step 2: Install
   emitStep(emit, 'install', 'active');
   log(`\n\x1b[36m━━━ Step 2/4 — Install ━━━\x1b[0m`);
   const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
+  log(`\x1b[90m[install] cwd: ${relativeProjectRoot}\x1b[0m`);
   log(`\x1b[90m$ ${installCmd}\x1b[0m`);
   await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'production', command: installCmd, log });
   emitStep(emit, 'install', 'done');
@@ -309,6 +312,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\n\x1b[36m━━━ Step 3/4 — Build ━━━\x1b[0m`);
   const buildCmd = (project.buildCmd || '').trim() || 'echo skip';
   if (buildCmd !== 'echo skip') {
+    log(`\x1b[90m[build] cwd: ${relativeProjectRoot}\x1b[0m`);
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
     await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'production', command: buildCmd, log });
   } else { log('\x1b[90m(no build step)\x1b[0m'); }
@@ -2358,7 +2362,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   } else if (detectedNodeVer) {
     log(`\x1b[90m[detect] Node.js version confirmed: ${resolvedNodeVer} (matches package.json engines)\x1b[0m`);
   }
-  const nodeImage = `node:${resolvedNodeVer}-bullseye`;
+  const nodeImage = `node:${resolvedNodeVer}-bookworm-slim`;
 
   const outputDir   = path.join(projectRoot, project.outputDir || 'dist');
 
@@ -2537,7 +2541,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const startCmd  = (project.startCmd || '').trim();
   const containerName = `db-${project.subdomain}`;
   const candidateContainerName = `${containerName}-cand-${safeDockerToken(deployId, 'build').slice(0,20)}`;
-  const expectedPort = normalizePort(appPort, 4000);
+  const expectedPort = normalizePort(appPort, 3000);
   const runtime = getRuntimeConfig(project);
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
@@ -2552,6 +2556,8 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   emitStep(emit, 'clone', 'done');
 
   const projectRoot = findProjectRoot(buildDir, log, project);
+  const relativeProjectRoot = path.relative(buildDir, projectRoot) || '.';
+  log(`\x1b[90m[deploy] Server app root: ${relativeProjectRoot} — install, build, and start all use this same directory.\x1b[0m`);
 
   // ── Auto-detect Node.js version from engines field ─────────────────────────
   const configuredNodeVer = String(project.nodeVer || '20');
@@ -2563,13 +2569,9 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   } else if (detectedNodeVer) {
     log(`\x1b[90m[detect] Node.js version confirmed: ${resolvedNodeVer} (matches package.json engines)\x1b[0m`);
   }
-  const nodeImage = `node:${resolvedNodeVer}-bullseye`;
-  const packageJsonPath = path.join(projectRoot, 'package.json');
-  let pkg = {};
-  try { if (fs.existsSync(packageJsonPath)) pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')); } catch (_) {}
-  const hasStartScript = !!(pkg.scripts && pkg.scripts.start);
-  if (!startCmd && !hasStartScript) {
-    log(`\x1b[33m[auto] No start command/script found. Falling back to static deployment flow.\x1b[0m`);
+  const nodeImage = `node:${resolvedNodeVer}-bookworm-slim`;
+  if (!isDeployableServerProject(projectRoot, startCmd)) {
+    log(`\x1b[33m[auto] No production server start could be inferred. Falling back to static deployment flow.\x1b[0m`);
     const fallbackProject = { ...project, siteType: 'static', buildCmd: project.buildCmd || 'echo skip', outputDir: project.outputDir || '.' };
     return runStaticBuild({ deployId, project: fallbackProject, sitesDir, tmpDir, githubToken, emit, onLog });
   }
@@ -2578,6 +2580,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   emitStep(emit, 'install', 'active');
   log(`\n\x1b[36m━━━ Step 2/6 — Install ━━━\x1b[0m`);
   const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
+  log(`\x1b[90m[install] cwd: ${relativeProjectRoot}\x1b[0m`);
   log(`\x1b[90m$ ${installCmd}\x1b[0m`);
   await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: installCmd, log });
   emitStep(emit, 'install', 'done');
@@ -2587,6 +2590,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\n\x1b[36m━━━ Step 3/6 — Build ━━━\x1b[0m`);
   const buildCmd = (project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot);
   if (buildCmd !== 'echo skip') {
+    log(`\x1b[90m[build] cwd: ${relativeProjectRoot}\x1b[0m`);
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
     try {
       await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: buildCmd, log });
@@ -2646,7 +2650,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
       };
       copyFiltered(projectRoot, appDir);
       usedBuildDir = appDir;
-      log(`\x1b[33m[copy] Source copied — container will run npm install on startup\x1b[0m`);
+      log(`\x1b[33m[copy] Source copied without node_modules — runtime bootstrap will reinstall dependencies in /app before start\x1b[0m`);
     }
   }
 
@@ -2657,6 +2661,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   log(`\n\x1b[36m━━━ Step 5/6 — Launch Container ━━━\x1b[0m`);
   log(`\x1b[90m[docker] Image:     ${nodeImage}\x1b[0m`);
   log(`\x1b[90m[docker] Container: ${candidateContainerName} (candidate)\x1b[0m`);
+  log(`\x1b[90m[docker] Runtime cwd: /app (same files prepared from ${relativeProjectRoot})\x1b[0m`);
   const resolvedStartCmd = resolveRuntimeStartCommand({
     projectRoot: usedBuildDir || projectRoot,
     startCmd,
@@ -2717,9 +2722,12 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // Prefix PATH so npm/node are always found regardless of how the container
   // shell initialises its environment (some sh builds skip /usr/local/bin).
-  // node_modules are already built in the same bullseye image during Step 2
-  // (install) so no reinstall is needed here.
-  const startWithPath = `export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH && ${resolvedStartCmd}`;
+  // Normally node_modules was prepared in Step 2 and moved into /app. If a
+  // cross-device copy had to omit node_modules, bootstrap dependencies in the
+  // same /app runtime directory before executing the start command.
+  const runtimeInstallCmd = normalizeInstallLikeCommand(installCmd, usedBuildDir || projectRoot).replace(/`/g, '\\`');
+  const ensureRuntimeDeps = `[ -d node_modules ] || [ ! -f package.json ] || (echo "[Joytree] node_modules missing in /app — reinstalling dependencies before start" && corepack enable >/dev/null 2>&1 || true; ${runtimeInstallCmd})`;
+  const startWithPath = `export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH && ${ensureRuntimeDeps} && ${resolvedStartCmd}`;
   dockerArgs.push(nodeImage, 'sh', '-c', startWithPath);
   await exec('docker', dockerArgs, {}, log);
   log(`\x1b[32m[docker] ✓ Container started\x1b[0m`);
@@ -2843,20 +2851,26 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
   const addDiscovered = (v) => {
     const n = Number(v);
     if (!Number.isInteger(n) || n <= 0) return;
-    if (discoveredSet.has(n) || seedSet.has(n)) return; // already present
+    if (discoveredSet.has(n)) return;
     discoveredSet.add(n);
-    candidates.unshift(n); // front of the list
+    // Discovered sockets belong to this container. Keep them before generic
+    // framework seeds, but never move the preferred platform port behind
+    // internal helper sockets.
+    if (!candidates.includes(n)) {
+      const insertAt = candidates[0] === preferredPort ? 1 : 0;
+      candidates.splice(insertAt, 0, n);
+    }
   };
   const addSeed = (v) => {
     const n = Number(v);
     if (!Number.isInteger(n) || n <= 0) return;
-    if (discoveredSet.has(n) || seedSet.has(n)) return;
+    if (seedSet.has(n) || candidates.includes(n)) return;
     seedSet.add(n);
     candidates.push(n); // back of the list
   };
 
   addSeed(preferredPort);
-  [3000, 3001, 4000, 4173, 5000, 5173, 8000, 8080, 8787].forEach(addSeed);
+  [3000, 3001, 3002, 4000, 4173, 5000, 5173, 8000, 8080, 8787].forEach(addSeed);
 
   let fallbackIP = '';
   try { fallbackIP = await getContainerIP(containerName); } catch (_) {}
@@ -2898,7 +2912,7 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
       // Allow HTML responses from ports the app actually bound to.
       // Full-stack apps (Next.js, Remix, SvelteKit, etc.) serve HTML on '/'.
       // Reject HTML only from seed ports where a foreign service might answer.
-      const allowHtml = discoveredSet.has(port);
+      const allowHtml = discoveredSet.has(port) || port === preferredPort;
       try {
         await probeHttp(containerName, port, 1500, allowHtml);
         await new Promise(r => setTimeout(r, 800));
@@ -3372,6 +3386,38 @@ function detectPackageManager(projectRoot) {
   return 'npm';
 }
 
+function readPackageJson(projectRoot) {
+  try { return JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8')); }
+  catch (_) { return {}; }
+}
+
+function packageScripts(projectRoot) {
+  const pkg = readPackageJson(projectRoot);
+  return pkg && pkg.scripts && typeof pkg.scripts === 'object' ? pkg.scripts : {};
+}
+
+function packageDeps(projectRoot) {
+  const pkg = readPackageJson(projectRoot);
+  return { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+}
+
+function hasPackageScript(projectRoot, name) {
+  const script = packageScripts(projectRoot)[name];
+  return typeof script === 'string' && script.trim().length > 0;
+}
+
+function runScriptCommand(pm, name) {
+  if (pm === 'pnpm') return `pnpm run ${name}`;
+  if (pm === 'yarn') return `yarn ${name}`;
+  return `npm run ${name}`;
+}
+
+function packageManagerExec(pm, binAndArgs) {
+  if (pm === 'pnpm') return `pnpm exec ${binAndArgs}`;
+  if (pm === 'yarn') return `yarn ${binAndArgs}`;
+  return `npx ${binAndArgs}`;
+}
+
 function getDefaultInstallCmd(projectRoot) {
   const pm = detectPackageManager(projectRoot);
   if (pm === 'pnpm') return 'pnpm install --frozen-lockfile';
@@ -3387,15 +3433,27 @@ function getDefaultInstallCmd(projectRoot) {
 
 function getDefaultBuildCmd(projectRoot) {
   const pm = detectPackageManager(projectRoot);
-  if (pm === 'pnpm') return 'pnpm run build';
-  if (pm === 'yarn') return 'yarn build';
-  return 'npm run build';
+  const deps = packageDeps(projectRoot);
+  if (hasPackageScript(projectRoot, 'build')) return runScriptCommand(pm, 'build');
+  if (deps.next) return packageManagerExec(pm, 'next build');
+  if (deps.vite || deps['@vitejs/plugin-react'] || deps['@vitejs/plugin-vue']) return packageManagerExec(pm, 'vite build');
+  return 'echo skip';
 }
 
 function getDefaultStartCmd(projectRoot) {
   const pm = detectPackageManager(projectRoot);
-  if (pm === 'pnpm') return 'pnpm start';
-  if (pm === 'yarn') return 'yarn start';
+  const deps = packageDeps(projectRoot);
+  if (hasPackageScript(projectRoot, 'start')) {
+    if (pm === 'pnpm') return 'pnpm start';
+    if (pm === 'yarn') return 'yarn start';
+    return 'npm start';
+  }
+  if (deps.next) return packageManagerExec(pm, 'next start');
+  if (hasPackageScript(projectRoot, 'preview')) return runScriptCommand(pm, 'preview');
+  if (deps.vite || deps['@vitejs/plugin-react'] || deps['@vitejs/plugin-vue']) return packageManagerExec(pm, 'vite preview');
+  if (fs.existsSync(path.join(projectRoot, 'server.js'))) return 'node server.js';
+  if (fs.existsSync(path.join(projectRoot, 'app.js'))) return 'node app.js';
+  if (fs.existsSync(path.join(projectRoot, 'index.js'))) return 'node index.js';
   return 'npm start';
 }
 
@@ -3422,16 +3480,16 @@ function assertDeployableServerApp(projectRoot, startCmd, log) {
 
 function isDeployableServerProject(projectRoot, startCmd = '') {
   if ((startCmd || '').trim()) return true;
-  const pkgPath = path.join(projectRoot, 'package.json');
-  let pkg = null;
-  try { pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8')); } catch (_) {}
-  const scripts = pkg && pkg.scripts && typeof pkg.scripts === 'object' ? pkg.scripts : {};
+  const scripts = packageScripts(projectRoot);
+  const deps = packageDeps(projectRoot);
   const hasStartScript = typeof scripts.start === 'string' && scripts.start.trim().length > 0;
+  const hasPreviewScript = typeof scripts.preview === 'string' && scripts.preview.trim().length > 0;
   const hasServerEntry =
     fs.existsSync(path.join(projectRoot, 'server.js')) ||
     fs.existsSync(path.join(projectRoot, 'app.js')) ||
     fs.existsSync(path.join(projectRoot, 'index.js'));
-  return hasStartScript || hasServerEntry;
+  const hasFrameworkServer = Boolean(deps.next || deps.vite || deps['@vitejs/plugin-react'] || deps['@vitejs/plugin-vue']);
+  return hasStartScript || hasPreviewScript || hasServerEntry || hasFrameworkServer;
 }
 
 function resolveDeployableRoot(currentRoot, buildDir, startCmd, log) {
@@ -3473,15 +3531,11 @@ function resolveRuntimeStartCommand({ projectRoot, startCmd, expectedPort }) {
   const hasPortFlag = /(^|\s)(-p|--port)(\s|=)/i.test(raw);
   const flags = `${hasHostFlag ? '' : '-H 0.0.0.0'} ${hasPortFlag ? '' : `-p ${expectedPort}`}`.trim();
 
-  let startScript = '';
-  let previewScript = '';
-  let devScript = '';
-  try {
-    const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
-    startScript   = String(pkg?.scripts?.start   || '').trim().toLowerCase();
-    previewScript = String(pkg?.scripts?.preview || '').trim().toLowerCase();
-    devScript     = String(pkg?.scripts?.dev     || '').trim().toLowerCase();
-  } catch (_) {}
+  const scripts = packageScripts(projectRoot);
+  const deps = packageDeps(projectRoot);
+  const startScript   = String(scripts.start   || '').trim().toLowerCase();
+  const previewScript = String(scripts.preview || '').trim().toLowerCase();
+  const devScript     = String(scripts.dev     || '').trim().toLowerCase();
   const packageStartRunsNext = /(^|\s)next\s+start(\s|$)/.test(startScript);
 
   // Next.js must bind to 0.0.0.0 inside Docker; localhost-only starts pass
@@ -3489,7 +3543,10 @@ function resolveRuntimeStartCommand({ projectRoot, startCmd, expectedPort }) {
   if (normalized === 'npm start' && packageStartRunsNext) return `npm start -- ${nextFlags}`;
   if (normalized === 'pnpm start' && packageStartRunsNext) return `pnpm start -- ${nextFlags}`;
   if (normalized === 'yarn start' && packageStartRunsNext) return `yarn start ${nextFlags}`;
-  if (normalized.startsWith('next start')) return flags ? `${raw} ${flags}` : raw;
+  if (/^(?:npx |pnpm exec |yarn )?next start\b/.test(normalized)) return flags ? `${raw} ${flags}` : raw;
+  if (!startScript && deps.next && /^(?:npm start|pnpm start|yarn start)$/.test(normalized)) {
+    return `${packageManagerExec(detectPackageManager(projectRoot), 'next start')} ${nextFlags}`;
+  }
 
   // ── Vite-based projects (e.g. Lovable, Vite+React/Vue scaffolds) ───────────
   // `vite`, `vite dev`, `vite preview` all bind to 127.0.0.1 by default — this
@@ -3901,7 +3958,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
   if (detectedNodeVer && detectedNodeVer !== configuredNodeVer) {
     emitNodeVersionWarning(log, configuredNodeVer, detectedNodeVer);
   }
-  const nodeImage = `node:${resolvedNodeVer}-bullseye`;
+  const nodeImage = `node:${resolvedNodeVer}-bookworm-slim`;
   const env = resolveEnvVars(project.envVars);
 
   // Step 2: Install — runs inside Docker container just like GitHub builds,

@@ -241,8 +241,8 @@ async function sendDeploymentStatusEmail({
 // ── Port registry ─────────────────────────────────────────────────────────────
 // Maps subdomain → host port where the user's Docker container is listening
 const PORTS_FILE = path.join(SITES_DIR, 'ports.json');
-const PORT_START = Number(process.env.APP_PORT_START || 10000);
-const PORT_END   = Number(process.env.APP_PORT_END || 20000);
+const PORT_START = Number(process.env.APP_PORT_START || 3000);
+const PORT_END   = Number(process.env.APP_PORT_END || 3999);
 const APP_PROXY_TIMEOUT_MS = Math.max(30000, Number(process.env.APP_PROXY_TIMEOUT_MS || 300000));
 
 let portRegistry = {};
@@ -330,13 +330,29 @@ function clearAssignedPort(subdomain) {
 function requestPrefersJson(req) {
   const accept = String(req.headers.accept || '').toLowerCase();
   const contentType = String(req.headers['content-type'] || '').toLowerCase();
-  return accept.includes('application/json') || contentType.includes('application/json') || req.path.startsWith('/api/');
+  const pathOnly = String(req.path || req.url || '').split('?')[0].toLowerCase();
+  return accept.includes('application/json') ||
+    contentType.includes('application/json') ||
+    pathOnly.startsWith('/api/') ||
+    pathOnly.startsWith('/trpc') ||
+    pathOnly.startsWith('/rpc');
 }
 
 function requestLooksProgrammatic(req) {
+  const accept = String(req.headers.accept || '').toLowerCase();
   const dest = String(req.headers['sec-fetch-dest'] || '').toLowerCase();
   const mode = String(req.headers['sec-fetch-mode'] || '').toLowerCase();
-  return requestPrefersJson(req) || (dest === 'empty' && ['cors', 'same-origin', ''].includes(mode));
+  const requestedWith = String(req.headers['x-requested-with'] || '').toLowerCase();
+
+  // Browser document navigations advertise text/html. fetch()/XHR calls often
+  // send */* or no Accept header at all, especially from generated apps. Treat
+  // those as programmatic so HTML fallbacks do not bubble up as JSON parse
+  // crashes like "Unexpected token '<'".
+  const acceptsHtmlDocument = accept.includes('text/html');
+  return requestPrefersJson(req) ||
+    requestedWith === 'xmlhttprequest' ||
+    (dest === 'empty' && ['cors', 'same-origin', ''].includes(mode)) ||
+    (!acceptsHtmlDocument && ['cors', 'same-origin', ''].includes(mode));
 }
 
 function proxyResponseOrJsonMismatch(req, res, proxyRes, subdomain) {
@@ -347,8 +363,10 @@ function proxyResponseOrJsonMismatch(req, res, proxyRes, subdomain) {
     const statusCode = Number(proxyRes.statusCode) >= 400 ? Number(proxyRes.statusCode) : 502;
     return res.status(statusCode).json({
       error: 'The deployed app returned HTML for a fetch/API request instead of JSON.',
-      detail: 'This usually means the request hit the frontend fallback page, not a server/API route. Check that the backend route exists and that required environment variables or managed resources are configured.',
-      subdomain
+      detail: 'The deployed process is reachable, but this request hit an HTML page or framework fallback instead of a JSON/API handler. Verify the backend route exists in the deployed server app and that the frontend fetch URL matches it.',
+      subdomain,
+      path: req.originalUrl || req.url || '',
+      upstreamStatus: proxyRes.statusCode || 0
     });
   }
   res.writeHead(proxyRes.statusCode, proxyRes.headers);
