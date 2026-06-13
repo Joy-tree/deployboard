@@ -2718,6 +2718,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   dockerArgs.push(nodeImage, 'sh', '-c', resolvedStartCmd);
   await exec('docker', dockerArgs, {}, log);
   log(`\x1b[32m[docker] ✓ Container started\x1b[0m`);
+  log(`\x1b[90m[docker] Runtime resources applied: ${runtime.cpuShares} CPU shares | ${runtime.memory} RAM | swap ${runtime.memorySwap || 'disabled'} | ${PIDS_LIMIT} max processes\x1b[0m`);
 
   // Give container a moment, then verify it's still running.
   log(`\x1b[90m[docker] Waiting for process to stabilize…\x1b[0m`);
@@ -2825,7 +2826,6 @@ function safeDockerToken(value, fallback = 'token') {
 
 async function detectLivePort(containerName, preferredPort, startupTimeoutSeconds, log) {
   const candidates = [];
-  const seedPorts = new Set();
   const add = (v) => {
     const n = Number(v);
     if (!Number.isInteger(n) || n <= 0) return;
@@ -2834,7 +2834,6 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
   const addSeed = (v) => {
     const n = Number(v);
     if (!Number.isInteger(n) || n <= 0) return;
-    seedPorts.add(n);
     add(n);
   };
 
@@ -2865,19 +2864,11 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
         log(`\x1b[32m[docker] ✓ App reachable on ${containerName}:${port}\x1b[0m`);
         return port;
       } catch (_) {
-        // Some apps don't return valid HTTP on "/" during warmup but still listen.
-        // Accept open TCP socket as a fallback readiness signal.
-        // Only allow TCP-only readiness for known web defaults.
-        if (seedPorts.has(port)) {
-          try {
-            await probeTcp(containerName, port, 1200);
-            log(`\x1b[32m[docker] ✓ TCP listener detected on ${containerName}:${port} (seed port)\x1b[0m`);
-            return port;
-          } catch (_) {}
-        }
-
         // DNS/container-name routing can fail in some Docker/network edge cases.
-        // Fall back to direct container IP probing before giving up.
+        // Fall back to direct container IP HTTP probing before giving up. Do not
+        // promote a TCP-only listener: the Joytree proxy forwards HTTP traffic,
+        // so a bare TCP socket can register the wrong port while the real app is
+        // listening elsewhere (for example Vite selecting a random fallback port).
         if (fallbackIP) {
           try {
             await probeHttp(fallbackIP, port, 1500);
@@ -2885,15 +2876,7 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
             await probeHttp(fallbackIP, port, 1500);
             log(`\x1b[32m[docker] ✓ App reachable on ${fallbackIP}:${port} (IP fallback)\x1b[0m`);
             return port;
-          } catch (_) {
-            if (seedPorts.has(port)) {
-              try {
-                await probeTcp(fallbackIP, port, 1200);
-                log(`\x1b[32m[docker] ✓ TCP listener on ${fallbackIP}:${port} (IP fallback seed port)\x1b[0m`);
-                return port;
-              } catch (_) {}
-            }
-          }
+          } catch (_) {}
         }
       }
     }
@@ -2945,14 +2928,28 @@ async function detectPortFromContainerLogs(containerName) {
   return 0;
 }
 
+const PLAN_RUNTIME_PROFILES = {
+  free:    { memoryLimit: '870m',  cpuShares: 384,  memorySwap: '1g' },
+  starter: { memoryLimit: '1g',    cpuShares: 384,  memorySwap: '1536m' },
+  pro:     { memoryLimit: '2g',    cpuShares: 640,  memorySwap: '3g' },
+  growth:  { memoryLimit: '5g',    cpuShares: 1024, memorySwap: '6g' },
+  scale:   { memoryLimit: '6g',    cpuShares: 1536, memorySwap: '8g' }
+};
+
+function getPlanRuntimeProfile(planKey = 'free') {
+  const key = String(planKey || 'free').toLowerCase();
+  return PLAN_RUNTIME_PROFILES[key] || PLAN_RUNTIME_PROFILES.free;
+}
+
 function getRuntimeConfig(project) {
-  const requestedMemory = (project.memoryLimit || project.memory || '2g').toString();
+  const planProfile = getPlanRuntimeProfile(project.billingPlan);
+  const requestedMemory = (project.memoryLimit || project.memory || planProfile.memoryLimit).toString();
   const memory = normalizeMemoryLimit(requestedMemory);
   const memoryMb = memoryLimitToMb(memory);
   return {
-    cpuShares: String(normalizePort(project.cpuShares, normalizePort(project.cpu, Number(CPU_SHARES)))),
+    cpuShares: String(normalizePort(project.cpuShares, normalizePort(project.cpu, Number(planProfile.cpuShares || CPU_SHARES)))),
     memory,
-    memorySwap: (project.memorySwap || process.env.DEFAULT_APP_MEMORY_SWAP || '3g').toString(),
+    memorySwap: (project.memorySwap || process.env.DEFAULT_APP_MEMORY_SWAP || planProfile.memorySwap || '3g').toString(),
     nodeHeapMb: Math.max(128, Math.floor(memoryMb * 0.75)),
     startupTimeoutSeconds: normalizePort(project.startupTimeoutSeconds || project.startupTimeout, DEFAULT_STARTUP_TIMEOUT_SECONDS)
   };
@@ -3270,20 +3267,23 @@ async function runBuildCommandInContainer({ projectRoot, nodeImage, envObj, node
   ], {}, log);
 }
 
-function normalizeInstallLikeCommand(command, projectRoot) {
+function stripLeadingCdPrefix(command) {
   let raw = String(command || '').trim();
 
-  // ── Strip leading "cd <subdir> && ..." ────────────────────────────────────
-  // The container is already launched with -w /workspace (= projectRoot), so
-  // any "cd <dir> && <cmd>" prefix is wrong and will fail with "can't cd to <dir>".
-  // This happens when the project has a subdirectory (e.g. lovable-ui/) and the
-  // stored install/build command was written for the repo root context.
-  // Strip it so only the actual package-manager command runs.
-  const cdPrefixMatch = raw.match(/^cd\s+\S+\s*&&\s*/i);
+  // The Docker runtime/build containers are already launched with the selected
+  // project directory mounted as their working directory. Stored commands may
+  // still include the original repo-root context, e.g. `cd lovable-ui && npm
+  // start`; keep only the command that should run inside the mounted app dir.
+  const cdPrefixMatch = raw.match(/^cd\s+(?:"[^"]+"|'[^']+'|\S+)\s*&&\s*/i);
   if (cdPrefixMatch) {
     raw = raw.slice(cdPrefixMatch[0].length).trim();
   }
 
+  return raw;
+}
+
+function normalizeInstallLikeCommand(command, projectRoot) {
+  const raw = stripLeadingCdPrefix(command);
   const low = raw.toLowerCase();
   const hasNpmLock = fs.existsSync(path.join(projectRoot, 'package-lock.json'));
 
@@ -3408,7 +3408,7 @@ function resolveDeployableRoot(currentRoot, buildDir, startCmd, log) {
 }
 
 function resolveRuntimeStartCommand({ projectRoot, startCmd, expectedPort }) {
-  const raw = (startCmd || '').trim() || getDefaultStartCmd(projectRoot);
+  const raw = stripLeadingCdPrefix((startCmd || '').trim()) || getDefaultStartCmd(projectRoot);
   const normalized = raw.replace(/\s+/g, ' ').trim().toLowerCase();
   const nextFlags = `-H 0.0.0.0 -p ${expectedPort}`;
   const hasHostFlag = /(^|\s)(-H|--hostname|--host)(\s|=)/i.test(raw);
