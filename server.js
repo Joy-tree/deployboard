@@ -241,8 +241,8 @@ async function sendDeploymentStatusEmail({
 // ── Port registry ─────────────────────────────────────────────────────────────
 // Maps subdomain → host port where the user's Docker container is listening
 const PORTS_FILE = path.join(SITES_DIR, 'ports.json');
-const PORT_START = Number(process.env.APP_PORT_START || 10000);
-const PORT_END   = Number(process.env.APP_PORT_END || 20000);
+const PORT_START = Number(process.env.APP_PORT_START || 3000);
+const PORT_END   = Number(process.env.APP_PORT_END || 3999);
 const APP_PROXY_TIMEOUT_MS = Math.max(30000, Number(process.env.APP_PROXY_TIMEOUT_MS || 300000));
 
 let portRegistry = {};
