@@ -2537,7 +2537,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const startCmd  = (project.startCmd || '').trim();
   const containerName = `db-${project.subdomain}`;
   const candidateContainerName = `${containerName}-cand-${safeDockerToken(deployId, 'build').slice(0,20)}`;
-  const expectedPort = normalizePort(appPort, 4000);
+  const expectedPort = normalizePort(appPort, 3000);
   const runtime = getRuntimeConfig(project);
 
   const log = line => { emit('build:log', { line }); if (typeof onLog === 'function') onLog(line); };
@@ -2843,20 +2843,26 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
   const addDiscovered = (v) => {
     const n = Number(v);
     if (!Number.isInteger(n) || n <= 0) return;
-    if (discoveredSet.has(n) || seedSet.has(n)) return; // already present
+    if (discoveredSet.has(n)) return;
     discoveredSet.add(n);
-    candidates.unshift(n); // front of the list
+    // Discovered sockets belong to this container. Keep them before generic
+    // framework seeds, but never move the preferred platform port behind
+    // internal helper sockets.
+    if (!candidates.includes(n)) {
+      const insertAt = candidates[0] === preferredPort ? 1 : 0;
+      candidates.splice(insertAt, 0, n);
+    }
   };
   const addSeed = (v) => {
     const n = Number(v);
     if (!Number.isInteger(n) || n <= 0) return;
-    if (discoveredSet.has(n) || seedSet.has(n)) return;
+    if (seedSet.has(n) || candidates.includes(n)) return;
     seedSet.add(n);
     candidates.push(n); // back of the list
   };
 
   addSeed(preferredPort);
-  [3000, 3001, 4000, 4173, 5000, 5173, 8000, 8080, 8787].forEach(addSeed);
+  [3000, 3001, 3002, 4000, 4173, 5000, 5173, 8000, 8080, 8787].forEach(addSeed);
 
   let fallbackIP = '';
   try { fallbackIP = await getContainerIP(containerName); } catch (_) {}
@@ -2898,7 +2904,7 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
       // Allow HTML responses from ports the app actually bound to.
       // Full-stack apps (Next.js, Remix, SvelteKit, etc.) serve HTML on '/'.
       // Reject HTML only from seed ports where a foreign service might answer.
-      const allowHtml = discoveredSet.has(port);
+      const allowHtml = discoveredSet.has(port) || port === preferredPort;
       try {
         await probeHttp(containerName, port, 1500, allowHtml);
         await new Promise(r => setTimeout(r, 800));
