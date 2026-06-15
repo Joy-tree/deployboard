@@ -201,16 +201,16 @@ async function runBuild(args) {
   }
 }
 
-async function _runBuildDispatch({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, isDockerfileDeploy, isWorker }) {
+async function _runBuildDispatch({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, isDockerfileDeploy, isWorker, baseDomain }) {
   // Merge flags from args or from project record
   const dockerfileDeploy = isDockerfileDeploy || project.isDockerfileDeploy;
   const workerDeploy     = isWorker           || project.isWorker;
 
   if (dockerfileDeploy) {
-    return runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
+    return runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
   }
   if (workerDeploy) {
-    return runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
+    return runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
   }
 
   // ── Python runtime detection ─────────────────────────────────────────────
@@ -227,16 +227,16 @@ async function _runBuildDispatch({ deployId, project, sitesDir, tmpDir, githubTo
   const isBun     = runtime === 'bun';
   const isDeno    = runtime === 'deno';
 
-  if (isPython)  return runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
-  if (isGo)      return runGoBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
-  if (isPHP)     return runPhpBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
-  if (isRuby)    return runRubyBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
-  if (isJava)    return runJvmBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
-  if (isRust)    return runRustBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
-  if (isDotnet)  return runDotnetBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
-  if (isElixir)  return runElixirBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
-  if (isBun)     return runBunBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
-  if (isDeno)    return runDenoBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
+  if (isPython)  return runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
+  if (isGo)      return runGoBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
+  if (isPHP)     return runPhpBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
+  if (isRuby)    return runRubyBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
+  if (isJava)    return runJvmBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
+  if (isRust)    return runRustBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
+  if (isDotnet)  return runDotnetBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
+  if (isElixir)  return runElixirBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
+  if (isBun)     return runBunBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
+  if (isDeno)    return runDenoBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
 
   // Respect explicit site type first.
   // · "static"  → always static, never forced into server mode.
@@ -251,15 +251,15 @@ async function _runBuildDispatch({ deployId, project, sitesDir, tmpDir, githubTo
     return runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken, emit, onLog });
   }
   if (explicitType === 'server' || hasStartCmd) {
-    return runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
+    return runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
   }
   // blank siteType, no startCmd — try server (auto-detects from repo after clone)
-  return runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog });
+  return runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
 }
 
 // ── DOCKERFILE BUILD ─────────────────────────────────────────────────────────
 // Clones the repo and builds + runs the user's own Dockerfile
-async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog }) {
+async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain }) {
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
   const imageName     = 'deployboard-' + project.subdomain;
@@ -302,7 +302,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
   log(`\x1b[90m$ docker build -f ${dfPath} -t ${imageName} .\x1b[0m`);
 
   // Build args from envVars
-  const envObj  = resolveEnvVars(project.envVars);
+  const envObj  = withDeployedAppRuntimeDefaults(resolveEnvVars(project.envVars), project, baseDomain);
   const buildArgs = Object.entries(envObj).map(([k,v]) => `--build-arg ${k}=${v}`).join(' ');
   const buildCmd  = `docker build -f ${dfPath} ${buildArgs} -t ${imageName} ${dockerfileDir}`;
 
@@ -376,7 +376,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
 
 // ── WORKER BUILD ─────────────────────────────────────────────────────────────
 // Same as server build but skips port polling — workers don't expose HTTP ports
-async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog }) {
+async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain }) {
   const buildDir      = path.join(tmpDir, deployId);
   const containerName = 'db-' + project.subdomain;
   const candidateContainerName = `${containerName}-cand-${safeDockerToken(deployId, 'build').slice(0,20)}`;
@@ -477,7 +477,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 // Supports Django, Flask, FastAPI, and generic Python server apps.
 // Uses python:<ver>-slim Docker image. Install via pip/poetry/pipenv.
 // Runs app via gunicorn (Django/Flask) or uvicorn (FastAPI) or user startCmd.
-async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog }) {
+async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain }) {
   const buildDir      = path.join(tmpDir, deployId);
   const appDir        = path.join(sitesDir, project.subdomain, 'app');
   const containerName = `db-${project.subdomain}`;
@@ -487,7 +487,7 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const pythonImage   = `python:${runtime.pythonVer}-slim`;
 
   const log = createBatchedLogger(emit, onLog);
-  const env = { ...resolveEnvVars(project.envVars), ...resolveServiceEnv(project) };
+  const env = withDeployedAppRuntimeDefaults({ ...resolveEnvVars(project.envVars), ...resolveServiceEnv(project) }, project, baseDomain);
 
   // ── Step 1: Clone ────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
@@ -1607,7 +1607,7 @@ async function runPythonCommandInContainer({ projectRoot, pythonImage, envObj, c
 // Shared skeleton used by Go, PHP, Ruby, Java, Rust, .NET, Elixir, Bun, Deno.
 // Each caller supplies: dockerImage, installCmd, buildCmd, startCmd,
 //   findRoot (fn or null → falls back to repo root), extraEnv (obj).
-async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog,
+async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain,
   dockerImage, findRoot, extraEnv = {}, stepLabel, smartHooks = {} }) {
 
   const buildDir      = path.join(tmpDir, deployId);
@@ -1617,7 +1617,7 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
   const expectedPort  = normalizePort(appPort, 8080);
 
   const log = createBatchedLogger(emit, onLog);
-  const env = { ...resolveEnvVars(project.envVars), ...resolveServiceEnv(project), ...extraEnv };
+  const env = withDeployedAppRuntimeDefaults({ ...resolveEnvVars(project.envVars), ...resolveServiceEnv(project), ...extraEnv }, project, baseDomain);
 
   // Step 1: Clone
   emitStep(emit, 'clone', 'active');
@@ -2641,7 +2641,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 // ── SERVER BUILD ──────────────────────────────────────────────────────────────
 // Each server app runs in its OWN Docker container — fully isolated.
 // Port conflicts are impossible. Container survives Joytree restarts.
-async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog }) {
+async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain }) {
   const buildDir  = path.join(tmpDir, deployId);
   const appDir    = path.join(sitesDir, project.subdomain, 'app');
   const startCmd  = (project.startCmd || '').trim();
@@ -2651,7 +2651,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const runtime = getRuntimeConfig(project);
 
   const log = createBatchedLogger(emit, onLog);
-  const env = { ...resolveEnvVars(project.envVars), ...resolveServiceEnv(project) };
+  const env = withDeployedAppRuntimeDefaults({ ...resolveEnvVars(project.envVars), ...resolveServiceEnv(project) }, project, baseDomain);
 
   // ── Step 1: Clone ──────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
@@ -3443,6 +3443,33 @@ function resolveEnvVars(evars) {
   return evars;
 }
 
+function publicOriginForProject(project, baseDomain) {
+  const liveUrl = String(project?.liveUrl || '').trim().replace(/\/$/, '');
+  if (/^https?:\/\//i.test(liveUrl)) return liveUrl;
+  const cleanSub = String(project?.subdomain || '').trim().toLowerCase();
+  const cleanBase = String(baseDomain || process.env.BASE_DOMAIN || '').trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0].replace(/:[0-9]+$/, '').replace(/^\.+|\.+$/g, '');
+  return cleanSub && cleanBase ? `https://${cleanSub}.${cleanBase}` : '';
+}
+
+function withDeployedAppRuntimeDefaults(envObj, project, baseDomain) {
+  const env = { ...(envObj || {}) };
+  const has = (key) => Object.keys(env).some(k => String(k).toUpperCase() === key);
+  const setDefault = (key, value) => {
+    if (!has(key) && value !== undefined && value !== null) env[key] = value;
+  };
+  const publicOrigin = publicOriginForProject(project, baseDomain);
+  setDefault('TRUST_PROXY', '1');
+  setDefault('VITE_API_URL', '');
+  setDefault('VITE_API_BASE_URL', '');
+  if (publicOrigin) {
+    setDefault('CORS_ORIGIN', publicOrigin);
+    setDefault('ALLOWED_ORIGINS', publicOrigin);
+    setDefault('FRONTEND_URL', publicOrigin);
+    setDefault('PUBLIC_URL', publicOrigin);
+  }
+  return env;
+}
+
 async function runBuildCommandInContainer({ projectRoot, nodeImage, envObj, nodeEnv = 'development', command, log }) {
   try { await exec('docker', ['pull', nodeImage], {}, () => {}); } catch(e) {}
   const normalizedCommand = normalizeInstallLikeCommand(command, projectRoot);
@@ -4022,7 +4049,7 @@ async function runUploadBuild(args) {
   }
 }
 
-async function _runUploadBuildInner({ deployId, project, sitesDir, tmpDir, appPort, emit, onLog, uploadFilesDir }) {
+async function _runUploadBuildInner({ deployId, project, sitesDir, tmpDir, appPort, emit, onLog, uploadFilesDir, baseDomain }) {
   const log = createBatchedLogger(emit, onLog);
 
   const cleanSub = String(project.subdomain || '').toLowerCase().replace(/[^a-z0-9-]/g,'');
@@ -4053,7 +4080,7 @@ async function _runUploadBuildInner({ deployId, project, sitesDir, tmpDir, appPo
     copyDir(uploadFilesDir, buildDir);
     log(`\x1b[32m[upload]\x1b[0m Files ready`);
     const uploadProject = { ...project, _uploadBuildDir: buildDir, repoUrl: '__UPLOAD__' };
-    return builderFn({ deployId, project: uploadProject, sitesDir, tmpDir, githubToken: null, appPort, emit, onLog });
+    return builderFn({ deployId, project: uploadProject, sitesDir, tmpDir, githubToken: null, appPort, emit, onLog, baseDomain });
   }
 
   if (isPython) return routeToFrameworkBuild(runPythonBuild);
@@ -4103,7 +4130,7 @@ async function _runUploadBuildInner({ deployId, project, sitesDir, tmpDir, appPo
   }
 
   if (isServerApp) {
-    return runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPort, emit, onLog, uploadFilesDir, log, cleanSub });
+    return runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPort, emit, onLog, uploadFilesDir, log, cleanSub, baseDomain });
   }
   return runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit, onLog, uploadFilesDir, log, cleanSub });
 }
@@ -4277,7 +4304,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
 }
 
-async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPort, emit, onLog, uploadFilesDir, log, cleanSub }) {
+async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPort, emit, onLog, uploadFilesDir, log, cleanSub, baseDomain }) {
   const buildDir = path.join(tmpDir, deployId + '_upload');
   const appDir = path.join(sitesDir, cleanSub, 'app');
   if (fs.existsSync(buildDir)) fs.rmSync(buildDir, { recursive: true, force: true });
@@ -4358,7 +4385,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   const candidateContainerName = containerName + '-cand-' + safeDockerToken(deployId, 'build').slice(0, 20);
   const nodeVer = String(project.nodeVer || '20');
   const expectedPort = appPort || 3000;
-  const envObj = resolveEnvVars(project.envVars);
+  const envObj = withDeployedAppRuntimeDefaults(resolveEnvVars(project.envVars), project, baseDomain);
   const startCmdResolved = resolveRuntimeStartCommand({ projectRoot: appDir, startCmd: project.startCmd, expectedPort });
   const networkName = 'deployboard_deployboard-net';
   const hostAppDir = appDir.replace('/var/www/user-sites', '/var/lib/docker/volumes/deployboard_sites-data/_data');
