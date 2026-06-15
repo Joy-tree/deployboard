@@ -128,6 +128,39 @@ function normalizeHostHeader(value) {
     .replace(/^\.+|\.+$/g, '');
 }
 
+
+function getRequestPublicHost(req) {
+  return normalizeHostHeader(
+    req.headers['x-forwarded-host'] ||
+    req.headers.host ||
+    ''
+  );
+}
+
+function isDashboardHost(host) {
+  return !host || host === BASE_DOMAIN || host === 'localhost';
+}
+
+
+function isDeployedAppHost(host) {
+  return !!host && !isDashboardHost(host);
+}
+
+function buildProxyHeaders(req, publicHost, proxyHost, proxyPort) {
+  const hopByHop = ['connection','keep-alive','proxy-authenticate',
+                    'proxy-authorization','te','trailers','transfer-encoding','upgrade'];
+  const headers = { ...req.headers };
+  hopByHop.forEach(h => delete headers[h]);
+  headers.host = `${proxyHost}:${proxyPort}`;
+  headers['x-forwarded-host'] = publicHost || req.headers.host || '';
+  headers['x-forwarded-for'] = headers['x-forwarded-for']
+    ? `${headers['x-forwarded-for']}, ${req.ip || req.socket?.remoteAddress || ''}`
+    : (req.ip || req.socket?.remoteAddress || '');
+  headers['x-real-ip'] = req.ip || req.socket?.remoteAddress || '';
+  headers['x-forwarded-proto'] = req.headers['x-forwarded-proto'] || 'https';
+  return headers;
+}
+
 async function sendDeploymentStatusEmail({
   userEmail = '',
   projectName = '',
@@ -525,11 +558,17 @@ function sendProxyError(req, res, status, type, subdomain, baseDomain) {
 
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
-  // Skip express.json for multipart upload routes — raw stream needed for parseMultipart
+  // Skip express.json for multipart upload routes and deployed-app proxy traffic.
+  // The proxy forwards deployed app requests with req.pipe(), so consuming the
+  // body here would leave POST/PUT/PATCH requests empty inside the app container.
   if (req.path === '/api/upload-project') return next();
+  if (isDeployedAppHost(getRequestPublicHost(req))) return next();
   express.json({ verify: (req, _res, buf) => { req.rawBody = Buffer.from(buf || ''); } })(req, res, next);
 });
 app.use((req, res, next) => {
+  // Dashboard API CORS only. Deployed apps/custom domains must answer their own
+  // preflights so app-level CORS policy is not masked by the platform.
+  if (isDeployedAppHost(getRequestPublicHost(req))) return next();
   res.setHeader('Access-Control-Allow-Origin',  '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-deployboard-internal-key, x-deployboard-owner-id');
@@ -606,11 +645,7 @@ function upsertCustomDomainCache(domain, subdomain) {
 
 // If the incoming host matches a saved custom domain, serve that project directly
 app.use(async (req, res, next) => {
-  const host = normalizeHostHeader(
-    req.headers['x-forwarded-host'] ||
-    req.headers.host ||
-    ''
-  );
+  const host = getRequestPublicHost(req);
 
   // Skip bare base domain and localhost
   if (!host || host === BASE_DOMAIN || host === 'localhost') return next();
@@ -645,13 +680,7 @@ app.use(async (req, res, next) => {
         return sendProxyError(req, res, 503, 'not_deployed', subdomain, BASE_DOMAIN);
       } else {
         const { host: proxyHost, port: proxyPort } = target;
-        const hopByHop = ['connection','keep-alive','proxy-authenticate','proxy-authorization','te','trailers','transfer-encoding','upgrade'];
-        const fwdHeaders = { ...req.headers };
-        hopByHop.forEach(h => delete fwdHeaders[h]);
-        fwdHeaders['host'] = host;
-        fwdHeaders['x-forwarded-for'] = req.ip || '';
-        fwdHeaders['x-real-ip'] = req.ip || '';
-        fwdHeaders['x-forwarded-proto'] = 'https';
+        const fwdHeaders = buildProxyHeaders(req, host, proxyHost, proxyPort);
 
         const proxyReq = require('http').request(
           { hostname: proxyHost, port: proxyPort, path: req.url, method: req.method, headers: fwdHeaders },
@@ -681,11 +710,7 @@ app.use(async (req, res, next) => {
 app.use((req, res, next) => {
   // Cloudflare Tunnel forwards the original hostname in X-Forwarded-Host.
   // Fall back to the Host header when running locally or without a tunnel.
-  const host = normalizeHostHeader(
-    req.headers['x-forwarded-host'] ||
-    req.headers.host ||
-    ''
-  );
+  const host = getRequestPublicHost(req);
 
   const regex = new RegExp(`^([a-z0-9][a-z0-9-]{0,61}[a-z0-9]?)\\.${BASE_DOMAIN.replace(/\./g,'\\.')}$`);
   const match = host.match(regex);
@@ -710,15 +735,8 @@ app.use((req, res, next) => {
       const { host: proxyHost, port: proxyPort } = target;
       const appPort = proxyPort; // for display in error pages
 
-      // Strip hop-by-hop headers before forwarding (prevents proxy errors)
-      const hopByHop = ['connection','keep-alive','proxy-authenticate',
-                        'proxy-authorization','te','trailers','transfer-encoding','upgrade'];
-      const forwardHeaders = { ...req.headers };
-      hopByHop.forEach(h => delete forwardHeaders[h]);
-      forwardHeaders['host']            = req.headers.host;
-      forwardHeaders['x-forwarded-for'] = req.ip || '';
-      forwardHeaders['x-real-ip']       = req.ip || '';
-      forwardHeaders['x-forwarded-proto'] = 'https';
+      // Strip hop-by-hop headers and forward proxy metadata consistently.
+      const forwardHeaders = buildProxyHeaders(req, host, proxyHost, proxyPort);
 
       const proxyReq = http.request({
         hostname: proxyHost,
@@ -7105,6 +7123,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       await runBuild({
         deployId, project, sitesDir: SITES_DIR, tmpDir: TMP_DIR,
         githubToken: deployGithubToken, appPort, emit,
+        baseDomain: BASE_DOMAIN,
         envVars: resolvedEnvVars,
         isDockerfileDeploy: !!isDockerfileDeploy,
         isWorker:           !!isWorker,
@@ -7924,7 +7943,7 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
       const { runUploadBuild } = require('./buildRunner');
       await runUploadBuild({
         deployId: finalDeployId, project: projectRecord, sitesDir: SITES_DIR, tmpDir: TMP_DIR,
-        appPort, emit, uploadFilesDir: filesDir,
+        appPort, emit, uploadFilesDir: filesDir, baseDomain: BASE_DOMAIN,
         onLog: line => { deploymentRecord.logs = deploymentRecord.logs || []; deploymentRecord.logs.push(line); }
       });
 
@@ -8223,7 +8242,7 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
       const { runUploadBuild } = require('./buildRunner');
       await runUploadBuild({
         deployId: finalDeployId, project: projectRecord, sitesDir: SITES_DIR, tmpDir: TMP_DIR,
-        appPort, emit, uploadFilesDir: filesDir,
+        appPort, emit, uploadFilesDir: filesDir, baseDomain: BASE_DOMAIN,
         onLog: line => { deploymentRecord.logs = deploymentRecord.logs || []; deploymentRecord.logs.push(line); }
       });
       const duration = Math.round((Date.now() - buildStart) / 1000);
@@ -10620,14 +10639,21 @@ server.on('upgrade', (req, socket, head) => {
     const proxySocket = net.connect(target.port, target.host, () => {
       // Reconstruct the upgrade request headers to forward to the container
       const headerLines = [`${req.method} ${req.url} HTTP/1.1`];
-      for (const [k, v] of Object.entries(req.headers)) {
+      const wsHeaders = {
+        ...req.headers,
+        host: `${target.host}:${target.port}`,
+        'x-forwarded-host': host,
+        'x-forwarded-for': req.headers['x-forwarded-for']
+          ? `${req.headers['x-forwarded-for']}, ${req.socket.remoteAddress || ''}`
+          : (req.socket.remoteAddress || ''),
+        'x-real-ip': req.socket.remoteAddress || '',
+        'x-forwarded-proto': req.headers['x-forwarded-proto'] || 'https',
+      };
+      for (const [k, v] of Object.entries(wsHeaders)) {
         // Skip hop-by-hop except connection/upgrade which are needed for WS
         if (['proxy-authenticate','proxy-authorization','te','trailers','transfer-encoding'].includes(k.toLowerCase())) continue;
         headerLines.push(`${k}: ${Array.isArray(v) ? v.join(', ') : v}`);
       }
-      // Ensure the container knows the real origin
-      if (!req.headers['x-forwarded-for']) headerLines.push(`x-forwarded-for: ${req.socket.remoteAddress || ''}`);
-      if (!req.headers['x-forwarded-proto']) headerLines.push(`x-forwarded-proto: https`);
       headerLines.push('');
       headerLines.push('');
       proxySocket.write(headerLines.join('\r\n'));
