@@ -5844,7 +5844,7 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   }
   .jt-wl-bg{
     position:absolute; inset:0;
-    background:radial-gradient(ellipse at center,rgba(16,185,129,.14),transparent 68%);
+    background:radial-gradient(ellipse at center,rgba(16,185,129,.07),transparent 60%),#050807;
     pointer-events:none;
   }
   .jt-wl-flare{
@@ -5868,17 +5868,18 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 
   .jt-wl-leaf.jt-wl-clearing{
     animation-name:jtWlLeafClear;
-    animation-timing-function:cubic-bezier(.55,0,.75,.1);
+    animation-timing-function:cubic-bezier(.33,0,.18,1);
     animation-fill-mode:forwards;
   }
   @keyframes jtWlLeafClear{
     0%{ transform:rotate(var(--start-rot,0deg)) translate(0,0); opacity:1; }
+    60%{ opacity:1; }
     100%{ transform:rotate(var(--fall-rot,220deg)) translate(var(--fall-x,0px),160%); opacity:0; }
   }
 
   .jt-wl-leaf.jt-wl-gathering{
     animation-name:jtWlLeafGather;
-    animation-timing-function:cubic-bezier(.2,.6,.35,1);
+    animation-timing-function:cubic-bezier(.22,.7,.25,1);
     animation-fill-mode:forwards;
     opacity:0;
   }
@@ -5891,8 +5892,8 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     position:relative; z-index:2;
     display:flex; flex-direction:column; align-items:center; gap:4px;
     text-align:center; padding:0 20px;
-    opacity:0; transform:scale(.92);
-    transition:opacity 1.1s ease, transform 1.1s cubic-bezier(.16,.7,.2,1);
+    opacity:0; transform:scale(.94);
+    transition:opacity 1.5s ease, transform 1.5s cubic-bezier(.16,.7,.2,1);
   }
   .jt-wl-text.jt-wl-text-visible{ opacity:1; transform:scale(1); }
   .jt-wl-kicker{
@@ -6021,9 +6022,11 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       el.style.width = t.size + 'px';
       el.style.height = t.size + 'px';
       el.style.color = pick(GREENS);
+      var restRot = Math.floor(rand(-16, 16));
+      el.style.transform = 'rotate(' + restRot + 'deg)';
       el.innerHTML = '<svg><use href="#' + pick(TYPES) + '"></use></svg>';
       frag.appendChild(el);
-      items.push({ el: el, dist: t.dist });
+      items.push({ el: el, dist: t.dist, restRot: restRot });
     });
     leavesContainer.appendChild(frag);
     return items;
@@ -6048,12 +6051,12 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   function clearLeaves(items, maxD){
     for (var i = 0; i < items.length; i++) {
       var item = items[i];
-      var startRot = Math.floor(rand(0, 360));
+      var startRot = item.restRot || 0;
       item.el.style.setProperty('--start-rot', startRot + 'deg');
-      item.el.style.setProperty('--fall-x', Math.round(rand(-30, 30)) + 'px');
-      item.el.style.setProperty('--fall-rot', (startRot + 180 + rand(0, 180)) + 'deg');
-      var delay = (item.dist / maxD) * 0.75 + Math.random() * 0.16;
-      var dur = rand(1.1, 1.6);
+      item.el.style.setProperty('--fall-x', Math.round(rand(-22, 22)) + 'px');
+      item.el.style.setProperty('--fall-rot', (startRot + rand(-32, 32)) + 'deg');
+      var delay = (item.dist / maxD) * 0.6 + Math.random() * 0.14;
+      var dur = rand(1.9, 2.5);
       item.el.style.animationDelay = delay.toFixed(2) + 's';
       item.el.style.animationDuration = dur.toFixed(2) + 's';
       item.el.classList.remove('jt-wl-gathering');
@@ -6066,13 +6069,13 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     var maxD = computeMaxDist(items);
     for (var i = 0; i < items.length; i++) {
       var item = items[i];
-      var gatherStartRot = Math.floor(rand(0, 360));
-      var restRot = Math.floor(rand(-8, 8));
+      var restRot = item.restRot || 0;
+      var gatherStartRot = restRot + Math.floor(rand(-32, 32));
       item.el.style.setProperty('--gather-start-rot', gatherStartRot + 'deg');
-      item.el.style.setProperty('--gather-x', Math.round(rand(-30, 30)) + 'px');
+      item.el.style.setProperty('--gather-x', Math.round(rand(-22, 22)) + 'px');
       item.el.style.setProperty('--rest-rot', restRot + 'deg');
-      var delay = (item.dist / maxD) * 0.75 + Math.random() * 0.16;
-      var dur = rand(1.1, 1.6);
+      var delay = (item.dist / maxD) * 0.6 + Math.random() * 0.14;
+      var dur = rand(1.9, 2.5);
       item.el.style.animationDelay = delay.toFixed(2) + 's';
       item.el.style.animationDuration = dur.toFixed(2) + 's';
       item.el.classList.add('jt-wl-gathering');
@@ -6093,29 +6096,32 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       item.el.style.opacity = '1';
     });
 
-    // covered pause, then clear away to reveal the text
-    after(650, function(){
+    // covered pause, then clear away — text starts emerging shortly after the
+    // leaves visibly begin moving, so the two read as one connected motion
+    // rather than two unrelated events
+    after(900, function(){
       clearLeaves(leaves, maxDist);
     });
-    after(1450, function(){
+    after(1200, function(){
       textEl.classList.add('jt-wl-text-visible');
       flareEl.classList.remove('jt-wl-flare-burst');
       void flareEl.offsetWidth;
       flareEl.classList.add('jt-wl-flare-burst');
     });
-    after(3300, function(){
+    after(4300, function(){
       leavesContainer.innerHTML = '';
     });
 
-    // hold, then hide the text and let the leaves gather back over it
-    after(4600, function(){
+    // long calm hold, then hide the text and let the leaves gather back over
+    // it shortly after — again, motion and text stay connected
+    after(7800, function(){
       textEl.classList.remove('jt-wl-text-visible');
     });
-    after(5500, function(){
+    after(8100, function(){
       var freshTiles = tileGrid();
       gatherLeaves(freshTiles);
     });
-    after(7500, function(){
+    after(11500, function(){
       runCycle(); // loop
     });
   }
