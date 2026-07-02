@@ -5346,6 +5346,223 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 </head>
 <body>
 
+<!-- ═══════════════ Joytree welcome splash ═══════════════ -->
+<noscript><style>.jt-splash{display:none!important}</style></noscript>
+<div class="jt-splash" id="jtSplash" aria-label="Welcome to JoyTree">
+  <div class="jt-splash-bg"></div>
+  <div class="jt-splash-flare" id="jtSplashFlare"></div>
+  <div class="jt-splash-leaves" id="jtSplashLeaves"></div>
+  <div class="jt-splash-text" id="jtSplashText">
+    <span class="jt-splash-kicker">Welcome to</span>
+    <span class="jt-splash-title">JOYTREE</span>
+  </div>
+</div>
+<style>
+  .jt-splash{
+    position:fixed; inset:0; z-index:100000;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden; background:#050807;
+    opacity:1; transition:opacity .8s ease;
+    touch-action:none;
+  }
+  .jt-splash.jt-splash-hide{ opacity:0; pointer-events:none; }
+  .jt-splash-bg{
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse at center,rgba(16,185,129,.16),transparent 62%),#050807;
+  }
+  .jt-splash-flare{
+    position:absolute; left:50%; top:50%;
+    width:140vmax; height:140vmax;
+    transform:translate(-50%,-50%) scale(0);
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.4) 0%,rgba(34,211,238,.22) 32%,transparent 66%);
+    opacity:0; pointer-events:none;
+  }
+  .jt-splash-flare.jt-flare-burst{ animation:jtFlareBurst 1.2s ease-out forwards; }
+  @keyframes jtFlareBurst{
+    0%{ transform:translate(-50%,-50%) scale(0); opacity:0; }
+    30%{ opacity:.85; }
+    100%{ transform:translate(-50%,-50%) scale(1); opacity:0; }
+  }
+
+  .jt-splash-leaves{ position:absolute; inset:0; }
+  .jt-splash-leaf{
+    position:absolute;
+    will-change:transform,opacity;
+  }
+  .jt-splash-leaf svg{ display:block; width:100%; height:100%; }
+  .jt-splash-leaf.jt-leaf-clear{
+    animation:jtSplashLeafFall var(--fall-dur,1.1s) cubic-bezier(.55,0,.75,.1) forwards;
+    animation-delay:var(--fall-delay,0s);
+  }
+  @keyframes jtSplashLeafFall{
+    0%{ transform:rotate(var(--start-rot,0deg)) translate(0,0); opacity:1; }
+    100%{ transform:rotate(var(--fall-rot,220deg)) translate(var(--fall-x,0px),130vh); opacity:0; }
+  }
+
+  .jt-splash-text{
+    position:relative; z-index:2;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    text-align:center; padding:0 20px;
+    opacity:0; transform:scale(.85);
+    transition:opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1);
+  }
+  .jt-splash-text.jt-text-visible{ opacity:1; transform:scale(1); }
+  .jt-splash-kicker{
+    font-family:var(--font-ui);
+    font-size:clamp(.9rem,2.3vw,1.25rem);
+    letter-spacing:.34em; text-transform:uppercase;
+    color:#a7f3d0; opacity:.85;
+  }
+  .jt-splash-title{
+    font-family:var(--font-ui); font-weight:800; letter-spacing:-.02em;
+    font-size:clamp(2.6rem,10vw,6.5rem);
+    background:linear-gradient(96deg,#10b981 0%,#06b6d4 45%,#22d3ee 100%);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:transparent;
+    filter:drop-shadow(0 0 18px rgba(16,185,129,.5)) drop-shadow(0 0 44px rgba(34,211,238,.3));
+  }
+  .jt-splash-text.jt-text-visible .jt-splash-title{
+    animation:jtTitleGlow 1.7s ease-in-out .05s 2;
+  }
+  @keyframes jtTitleGlow{
+    0%,100%{ filter:drop-shadow(0 0 18px rgba(16,185,129,.5)) drop-shadow(0 0 44px rgba(34,211,238,.3)); }
+    50%{ filter:drop-shadow(0 0 36px rgba(16,185,129,.95)) drop-shadow(0 0 84px rgba(34,211,238,.7)); }
+  }
+
+  @media (max-width:600px){
+    .jt-splash-kicker{ letter-spacing:.24em; }
+  }
+</style>
+
+<script>
+(function(){
+  var root = document.getElementById('jtSplash');
+  if (!root) return;
+
+  // ── Absolute safety net — registered before anything else that could
+  // throw, so the splash can NEVER permanently block the site. ──
+  var done = false;
+  var safetyTimer = setTimeout(forceRemove, 8000);
+
+  function forceRemove(){
+    if (done) return;
+    done = true;
+    clearTimeout(safetyTimer);
+    if (root && root.parentNode) root.parentNode.removeChild(root);
+    document.documentElement.style.overflow = '';
+    window.__jtSplashDone = true;
+    try { document.dispatchEvent(new Event('jtSplashDone')); } catch(e){}
+  }
+
+  try {
+    var SPLASH_KEY = 'jtSplashSeenV1';
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var alreadySeen = false;
+    try { alreadySeen = sessionStorage.getItem(SPLASH_KEY) === '1'; } catch(e) {}
+
+    if (alreadySeen || reduceMotion) { forceRemove(); return; }
+
+    window.__jtSplashPending = true;
+    document.documentElement.style.overflow = 'hidden';
+
+    var leavesContainer = document.getElementById('jtSplashLeaves');
+    var textEl = document.getElementById('jtSplashText');
+    var flareEl = document.getElementById('jtSplashFlare');
+
+    var GREENS = ['#14532d', '#166534', '#15803d', '#0f3d20', '#1b5e34', '#1f7a3f'];
+    var TYPES  = ['jt-leaf-a', 'jt-leaf-b1', 'jt-leaf-b2', 'jt-leaf-c1', 'jt-leaf-c2'];
+
+    function rand(min, max){ return Math.random() * (max - min) + min; }
+    function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+    function buildCurtain(){
+      var vw = window.innerWidth, vh = window.innerHeight;
+      var size = Math.max(64, Math.min(130, vw / 9));
+      var cols = Math.min(16, Math.ceil(vw / (size * 0.72)) + 1);
+      var rows = Math.min(11, Math.ceil(vh / (size * 0.72)) + 1);
+      var cx = cols / 2, cy = rows / 2;
+      var items = [];
+      var frag = document.createDocumentFragment();
+
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          var el = document.createElement('div');
+          el.className = 'jt-splash-leaf';
+
+          var jx = (Math.random() - 0.5) * size * 0.5;
+          var jy = (Math.random() - 0.5) * size * 0.5;
+          var x = c * size * 0.72 - size * 0.3 + jx;
+          var y = r * size * 0.72 - size * 0.3 + jy;
+          var s = size * (0.85 + Math.random() * 0.4);
+          var startRot = Math.floor(rand(0, 360));
+
+          el.style.left = x + 'px';
+          el.style.top = y + 'px';
+          el.style.width = s + 'px';
+          el.style.height = s + 'px';
+          el.style.color = pick(GREENS);
+          el.style.setProperty('--start-rot', startRot + 'deg');
+          el.style.transform = 'rotate(' + startRot + 'deg)';
+          el.style.setProperty('--fall-x', Math.round(rand(-40, 40)) + 'px');
+          el.style.setProperty('--fall-rot', (startRot + 180 + rand(0, 180)) + 'deg');
+          el.style.setProperty('--fall-dur', rand(0.9, 1.4).toFixed(2) + 's');
+
+          el.innerHTML = '<svg><use href="#' + pick(TYPES) + '"></use></svg>';
+
+          var dist = Math.sqrt(Math.pow(c - cx, 2) + Math.pow(r - cy, 2));
+          frag.appendChild(el);
+          items.push({ el: el, dist: dist });
+        }
+      }
+      leavesContainer.appendChild(frag);
+      return items;
+    }
+
+    var leaves = buildCurtain();
+    var maxDist = 1;
+    for (var i = 0; i < leaves.length; i++) if (leaves[i].dist > maxDist) maxDist = leaves[i].dist;
+
+    // brief beat so the leaf curtain is actually seen before it clears
+    setTimeout(function(){
+      for (var i = 0; i < leaves.length; i++) {
+        var item = leaves[i];
+        var delay = (item.dist / maxDist) * 0.55 + Math.random() * 0.12;
+        item.el.style.setProperty('--fall-delay', delay.toFixed(2) + 's');
+        item.el.classList.add('jt-leaf-clear');
+      }
+    }, 550);
+
+    // text glows in as the leaves clear
+    setTimeout(function(){
+      textEl.classList.add('jt-text-visible');
+      flareEl.classList.add('jt-flare-burst');
+    }, 950);
+
+    // tidy the DOM once leaves are fully cleared
+    setTimeout(function(){
+      leavesContainer.innerHTML = '';
+    }, 2500);
+
+    // hold, then fade the whole splash away
+    setTimeout(function(){
+      root.classList.add('jt-splash-hide');
+      document.documentElement.style.overflow = '';
+    }, 3600);
+
+    setTimeout(function(){
+      try { sessionStorage.setItem(SPLASH_KEY, '1'); } catch(e) {}
+      forceRemove();
+    }, 4450);
+
+  } catch (e) {
+    forceRemove();
+  }
+})();
+</script>
+<!-- ═══════════════ /Joytree welcome splash ═══════════════ -->
+
+
 <div id="toast-wrap"></div>
 <div id="auth-view">
 
@@ -38070,7 +38287,12 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
     for (var i = 0; i < count; i++) spawnLeaf(container);
   }
 
-  initLeaves('jtLeavesFall', 30);
+  function bootAmbientLeaves(){ initLeaves('jtLeavesFall', 30); }
+  if (window.__jtSplashDone || !window.__jtSplashPending) {
+    bootAmbientLeaves();
+  } else {
+    document.addEventListener('jtSplashDone', bootAmbientLeaves, { once: true });
+  }
 })();
 </script>
 <!-- ═══════════════ /Joytree falling leaves ambiance ═══════════════ -->
