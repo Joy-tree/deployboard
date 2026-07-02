@@ -101,4 +101,5 @@ volumes:
 
 networks:
   deployboard-net:
+    name: deployboard-net
     driver: bridge
