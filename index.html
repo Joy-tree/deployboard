@@ -5828,7 +5828,7 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   <div class="jt-wl-flare" id="jtWlFlare"></div>
   <div class="jt-wl-leaves" id="jtWlLeaves"></div>
   <div class="jt-wl-text" id="jtWlText">
-    <span class="jt-wl-kicker">Welcome to</span>
+    <span class="jt-wl-kicker">Welcome to your all-in-one shipping site</span>
     <span class="jt-wl-title">JOYTREE</span>
   </div>
 </div>
@@ -5836,7 +5836,7 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   .jt-welcome-loop{
     position:relative;
     width:100%;
-    height:clamp(150px,22vw,220px);
+    height:clamp(168px,24vw,240px);
     overflow:hidden;
     display:flex; align-items:center; justify-content:center;
     margin:0 auto 6px;
@@ -5898,44 +5898,49 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   .jt-wl-text.jt-wl-text-visible{ opacity:1; }
   .jt-wl-kicker{
     font-family:var(--font-ui);
-    font-size:clamp(.72rem,1.7vw,.95rem);
-    letter-spacing:.32em; text-transform:uppercase;
+    font-size:clamp(.68rem,1.6vw,.85rem);
+    letter-spacing:.1em; text-transform:uppercase;
     color:#a7f3d0; opacity:.85;
+    max-width:min(90%,420px); line-height:1.5;
   }
   .jt-wl-title{
     font-family:var(--font-ui); font-weight:800; letter-spacing:-.02em;
     font-size:clamp(2rem,7vw,4.2rem);
-    background:linear-gradient(96deg,#0d9488 0%,#10b981 28%,#4ade80 52%,#10b981 76%,#0d9488 100%);
+    background:linear-gradient(96deg,#064e3b 0%,#047857 26%,#10b981 50%,#047857 74%,#064e3b 100%);
     -webkit-background-clip:text; background-clip:text;
     -webkit-text-fill-color:transparent; color:transparent;
-    filter:drop-shadow(0 0 14px rgba(16,185,129,.5)) drop-shadow(0 0 34px rgba(52,211,153,.3));
+    filter:drop-shadow(0 0 16px rgba(5,150,105,.6)) drop-shadow(0 0 38px rgba(16,185,129,.35));
   }
   .jt-wl-text.jt-wl-text-visible .jt-wl-title{
     animation:jtWlTitleGlow 2.8s ease-in-out infinite;
   }
   @keyframes jtWlTitleGlow{
-    0%,100%{ filter:drop-shadow(0 0 14px rgba(16,185,129,.5)) drop-shadow(0 0 34px rgba(52,211,153,.3)); }
-    50%{ filter:drop-shadow(0 0 26px rgba(16,185,129,.9)) drop-shadow(0 0 60px rgba(52,211,153,.6)); }
+    0%,100%{ filter:drop-shadow(0 0 16px rgba(5,150,105,.6)) drop-shadow(0 0 38px rgba(16,185,129,.35)); }
+    50%{ filter:drop-shadow(0 0 30px rgba(5,150,105,1)) drop-shadow(0 0 66px rgba(16,185,129,.7)); }
   }
 
-  .jt-wl-sparks{ position:absolute; inset:-20px -40px; pointer-events:none; z-index:1; }
+  .jt-wl-sparks{ position:absolute; inset:-30px -50px; pointer-events:none; z-index:1; }
   .jt-wl-spark{
     position:absolute;
-    width:4px; height:4px; border-radius:50%;
-    background:#6ee7b7;
-    box-shadow:0 0 7px 2px rgba(110,231,183,.9), 0 0 15px 5px rgba(16,185,129,.5);
+    width:6px; height:6px; border-radius:50%;
+    background:#34d399;
+    box-shadow:
+      0 0 6px 2px rgba(167,243,208,1),
+      0 0 16px 6px rgba(52,211,153,.85),
+      0 0 32px 12px rgba(5,150,105,.5),
+      0 0 54px 20px rgba(5,150,105,.22);
     opacity:0;
   }
   .jt-wl-text.jt-wl-text-visible .jt-wl-spark{
-    animation:jtWlSparkTwinkle 2s ease-in-out infinite;
+    animation:jtWlSparkTwinkle 2.4s ease-in-out infinite;
   }
   @keyframes jtWlSparkTwinkle{
-    0%,100%{ opacity:0; transform:scale(.6); }
-    50%{ opacity:1; transform:scale(1.1); }
+    0%,100%{ opacity:0; transform:scale(.5); }
+    50%{ opacity:1; transform:scale(1.35); }
   }
 
   @media (max-width:600px){
-    .jt-welcome-loop{ height:clamp(130px,32vw,180px); margin-bottom:2px; }
+    .jt-welcome-loop{ height:clamp(148px,36vw,200px); margin-bottom:2px; }
     .jt-wl-kicker{ letter-spacing:.22em; }
   }
 
@@ -5961,8 +5966,10 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   // Build the sparkle points once — they just twinkle in/out with the text.
   (function buildSparks(){
     var POS = [
-      {top:'6%', left:'8%'}, {top:'72%', left:'4%'}, {top:'10%', left:'90%'},
-      {top:'78%', left:'92%'}, {top:'-4%', left:'44%'}, {top:'96%', left:'56%'}
+      {top:'4%', left:'6%'}, {top:'68%', left:'2%'}, {top:'8%', left:'92%'},
+      {top:'74%', left:'94%'}, {top:'-8%', left:'40%'}, {top:'100%', left:'58%'},
+      {top:'36%', left:'-4%'}, {top:'30%', left:'102%'}, {top:'-2%', left:'18%'},
+      {top:'92%', left:'22%'}, {top:'50%', left:'96%'}, {top:'56%', left:'-2%'}
     ];
     var wrap = document.createElement('div');
     wrap.className = 'jt-wl-sparks';
@@ -5971,7 +5978,7 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       s.className = 'jt-wl-spark';
       s.style.top = pos.top;
       s.style.left = pos.left;
-      s.style.animationDelay = (i * 0.3).toFixed(2) + 's';
+      s.style.animationDelay = (i * 0.22).toFixed(2) + 's';
       wrap.appendChild(s);
     });
     textEl.appendChild(wrap);
