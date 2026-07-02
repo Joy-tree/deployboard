@@ -4122,26 +4122,60 @@ app.get('/api/projects/:id', async (req, res) => {
 
 app.delete('/api/projects/:id', async (req, res) => {
   try {
-    const p = await Project.findByIdAndDelete(req.params.id);
-    if (p) {
-      await Deployment.deleteMany({ projectId: req.params.id });
-      // Remove site files
-      try { fs.rmSync(path.join(SITES_DIR, p.subdomain), { recursive: true, force: true }); } catch(e) {}
-      // Stop and remove user app Docker container
-      // [FIX] async — execSync here blocked the proxy/event loop for every
-      // other tenant while Docker tore down this container.
-      try {
-        await execP(`docker rm -f db-${p.subdomain}`);
-        console.log(`[Docker] Removed container db-${p.subdomain}`);
-      } catch(e) {}
-      // Remove from port registry
-      delete portRegistry[p.subdomain];
-      savePortRegistry();
-      // Remove CF DNS
-      await removeSubdomain(p.subdomain);
+    const reqId = req.params.id;
+    const isValidObjectId = mongoose.Types.ObjectId.isValid(reqId) && String(new mongoose.Types.ObjectId(reqId)) === reqId;
+
+    // Many projects here use a custom string id (subdomain-based uploads like
+    // "e-commerce-test", or "local_..." ids for git-deployed projects) rather
+    // than a real Mongo ObjectId. findByIdAndDelete only works for the latter
+    // -- for everything else it throws a CastError, which used to mean the
+    // whole delete silently failed (caught below, 500 returned, but nothing
+    // about *why* was visible, and depending on how the frontend handled that
+    // response it could look like the delete "worked" while actually leaving
+    // every file, container, and DNS record in place). Fall back to matching
+    // on subdomain/name so these delete for real too.
+    const p = isValidObjectId
+      ? await Project.findByIdAndDelete(reqId)
+      : await Project.findOneAndDelete({ $or: [{ subdomain: reqId }, { name: reqId }, { id: reqId }] });
+
+    if (!p) {
+      console.warn(`[Delete] No project found matching id "${reqId}" (tried ${isValidObjectId ? 'ObjectId' : 'subdomain/name/id'} lookup) -- nothing to clean up`);
+      return res.status(404).json({ error: 'Project not found' });
     }
-    res.json({ ok: true });
-  } catch(e) { res.status(500).json({ error: e.message }); }
+
+    console.log(`[Delete] Removing project "${p.name}" (subdomain: ${p.subdomain})`);
+
+    await Deployment.deleteMany({ projectId: String(p._id) }).catch(e =>
+      console.error(`[Delete] Failed to remove deployment records for ${p.subdomain}:`, e.message));
+
+    // Remove site files -- now actually logs if this fails instead of
+    // silently leaving orphaned files behind with no trace of why.
+    try {
+      fs.rmSync(path.join(SITES_DIR, p.subdomain), { recursive: true, force: true });
+      console.log(`[Delete] Removed site files for ${p.subdomain}`);
+    } catch(e) {
+      console.error(`[Delete] Failed to remove site files for ${p.subdomain}:`, e.message);
+    }
+
+    // Stop and remove user app Docker container
+    try {
+      await execP(`docker rm -f db-${p.subdomain}`);
+      console.log(`[Docker] Removed container db-${p.subdomain}`);
+    } catch(e) {
+      console.error(`[Delete] Failed to remove container db-${p.subdomain}:`, e.message);
+    }
+
+    delete portRegistry[p.subdomain];
+    savePortRegistry();
+
+    await removeSubdomain(p.subdomain).catch(e =>
+      console.error(`[Delete] Failed to remove DNS/tunnel route for ${p.subdomain}:`, e.message));
+
+    res.json({ ok: true, removedProjectId: String(p._id), subdomain: p.subdomain });
+  } catch(e) {
+    console.error('[Delete] Unexpected error deleting project:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get('/api/deployments', attachAuthIfPresent, async (req, res) => {
