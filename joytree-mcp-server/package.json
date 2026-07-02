@@ -1,0 +1,17 @@
+{
+  "name": "joytree-mcp-server",
+  "version": "1.0.0",
+  "description": "Official JoyTree MCP server \u2014 lets Claude (and any other MCP client) deploy, manage databases, and generate APIs on JoyTree directly.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node src/server.js & sleep 1; node test/protocol-check.js; kill %1"
+  },
+  "license": "MIT",
+  "engines": { "node": ">=20.0.0" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "express": "^4.19.2",
+    "zod": "^3.23.8"
+  }
+}

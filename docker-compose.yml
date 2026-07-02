@@ -87,6 +87,18 @@ services:
     networks:
       - deployboard-net
 
+  # MCP server that lets Claude (and other MCP clients) deploy, manage
+  # databases, and generate APIs on JoyTree directly — see
+  # joytree-mcp-server/README.md for what it exposes and why it exists.
+  joytree-mcp:
+    build: ./joytree-mcp-server
+    container_name: joytree-mcp
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    networks:
+      - deployboard-net
+
 volumes:
   sites-data:
 
