@@ -6436,12 +6436,12 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 
   /* invisible left/right tap zones, like Stories */
   .jt-story-tap{
-    position:absolute; top:0; bottom:0; width:35%;
+    position:absolute; top:0; bottom:0;
     background:transparent; border:none; cursor:pointer; padding:0;
     z-index:2;
   }
-  .jt-story-tap.prev{ left:0; }
-  .jt-story-tap.next{ right:0; }
+  .jt-story-tap.prev{ left:0; width:30%; }
+  .jt-story-tap.next{ right:0; width:70%; }
 
   /* visible arrow buttons, desktop hover affordance */
   .jt-story-arrow{
@@ -6575,16 +6575,31 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     clearTimeout(advanceTimer);
   }, {passive:true});
   frame.addEventListener('touchend', function(e){
-    var dx = e.changedTouches[0].clientX - touchStartX;
-    var dy = e.changedTouches[0].clientY - touchStartY;
+    var endX = e.changedTouches[0].clientX;
+    var endY = e.changedTouches[0].clientY;
+    var dx = endX - touchStartX;
+    var dy = endY - touchStartY;
     paused = false;
+
     if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+      // deliberate swipe
+      e.preventDefault();
       goTo(dx < 0 ? idx + 1 : idx - 1);
-    } else {
-      setSegState(idx);
-      scheduleAdvance();
+      return;
     }
-  }, {passive:true});
+
+    // A simple tap — anywhere. Always navigate, never just replay the
+    // current slide: left third of the frame goes back, everywhere else
+    // (including what used to be a dead zone in the middle) goes forward.
+    e.preventDefault();
+    var rect = frame.getBoundingClientRect();
+    var relX = endX - rect.left;
+    if (relX < rect.width * 0.3) {
+      goTo(idx - 1);
+    } else {
+      goTo(idx + 1);
+    }
+  }, {passive:false});
 
   // only start once the section is actually visible, so it doesn't burn
   // through slides while scrolled past off-screen
