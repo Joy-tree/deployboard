@@ -6094,17 +6094,17 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     if (!running) return;
     clearTimers();
 
-    var tiles = tileGrid();
-    leaves = buildLeaves(tiles);
+    // Only build a brand-new curtain if nothing is currently sitting there
+    // (i.e. this is the very first run). On every later loop iteration, the
+    // leaves left over from the previous cycle's gather phase are already
+    // sitting correctly in place — reusing them instead of swapping in a
+    // fresh random arrangement is what fixes the visible "jump" that used
+    // to happen right before each reveal.
+    if (!leaves.length) {
+      var tiles = tileGrid();
+      leaves = buildLeaves(tiles);
+    }
     maxDist = computeMaxDist(leaves);
-    // (buildLeaves() above always creates brand-new elements, so there is no
-    // stale animation state to clear here — a leftover reset step used to
-    // set style.animation = 'none' on these fresh elements, which pins an
-    // inline animation-name:none that permanently blocks the .jt-wl-clearing
-    // / .jt-wl-gathering class animations from ever applying, since inline
-    // styles always win over stylesheet rules. That's what caused leaves to
-    // sit frozen and then vanish all at once when the cleanup timer wiped
-    // the container, instead of animating away.)
 
     // covered pause, then the text quietly turns on UNDERNEATH the leaves
     // (which now sit above it in stacking order) at the same moment the
@@ -6119,6 +6119,7 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     });
     after(4300, function(){
       leavesContainer.innerHTML = '';
+      leaves = [];
     });
 
     // long calm hold, then hide the text and let the leaves gather back over
@@ -6128,7 +6129,7 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     });
     after(8100, function(){
       var freshTiles = tileGrid();
-      gatherLeaves(freshTiles);
+      leaves = gatherLeaves(freshTiles); // keep for reuse by the next cycle
     });
     after(11500, function(){
       runCycle(); // loop
@@ -6143,6 +6144,13 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   function stop(){
     running = false;
     clearTimers();
+    // Reset to a clean slate rather than leaving leaves mid-transition —
+    // CSS animations keep running in the background even while our JS
+    // timers are paused, so anything mid-flight when we stop could be in
+    // an inconsistent state by the time the banner scrolls back into view.
+    leavesContainer.innerHTML = '';
+    leaves = [];
+    textEl.classList.remove('jt-wl-text-visible');
   }
 
   // Only animate while the banner is actually on screen.
