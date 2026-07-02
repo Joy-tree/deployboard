@@ -90,14 +90,11 @@ services:
   # MCP server that lets Claude (and other MCP clients) deploy, manage
   # databases, and generate APIs on JoyTree directly — see
   # joytree-mcp-server/README.md for what it exposes and why it exists.
-  joytree-mcp:
-    build: ./joytree-mcp-server
-    container_name: joytree-mcp
-    restart: unless-stopped
-    ports:
-      - "8787:8787"
-    networks:
-      - deployboard-net
+  # The joytree-mcp service used to live here, but it now lives in its own
+  # repo (github.com/Joy-tree/joytree-mcp-server) with its own
+  # docker-compose.yml, run independently on this same VPS. Keeping two
+  # compose projects both trying to own a container named "joytree-mcp"
+  # caused a name conflict, so it's been removed from here.
 
 volumes:
   sites-data:
