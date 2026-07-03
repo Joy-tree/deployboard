@@ -4144,33 +4144,54 @@ app.get('/api/projects/:id', async (req, res) => {
 app.delete('/api/projects/:id', async (req, res) => {
   try {
     const reqId = req.params.id;
-    const isValidObjectId = mongoose.Types.ObjectId.isValid(reqId) && String(new mongoose.Types.ObjectId(reqId)) === reqId;
 
-    // Many projects here use a custom string id (subdomain-based uploads like
-    // "e-commerce-test", or "local_..." ids for git-deployed projects) rather
-    // than a real Mongo ObjectId. findByIdAndDelete only works for the latter
-    // -- for everything else it throws a CastError, which used to mean the
-    // whole delete silently failed (caught below, 500 returned, but nothing
-    // about *why* was visible, and depending on how the frontend handled that
-    // response it could look like the delete "worked" while actually leaving
-    // every file, container, and DNS record in place). Fall back to matching
-    // on subdomain/name so these delete for real too.
-    const p = isValidObjectId
-      ? await Project.findByIdAndDelete(reqId)
-      : await Project.findOneAndDelete({ $or: [{ subdomain: reqId }, { name: reqId }, { id: reqId }] });
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required to resolve which workspace to delete from.' });
+    }
+
+    // [FIX] This used to look the project up via Mongoose (Project.findById /
+    // findOneAndDelete), which only ever works if MongoDB is both running
+    // and actually the source of truth -- it isn't. This account (and
+    // apparently this whole platform) runs on Firebase as its real
+    // database; Mongo being unreachable is normal, not a fault condition.
+    // That mismatch is *why* deletes kept silently failing all night: the
+    // lookup was always hitting a store that doesn't hold the real data.
+    // Firebase is now the primary and only required lookup; Mongo cleanup
+    // below is best-effort only, for any legacy records that might still
+    // exist from before the platform moved to Firebase.
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    const p = (ws.projects || []).find(pr => pr.id === reqId || pr.subdomain === reqId || pr.name === reqId);
 
     if (!p) {
-      console.warn(`[Delete] No project found matching id "${reqId}" (tried ${isValidObjectId ? 'ObjectId' : 'subdomain/name/id'} lookup) -- nothing to clean up`);
+      console.warn(`[Delete] No project found in Firebase workspace matching id "${reqId}" -- nothing to clean up`);
       return res.status(404).json({ error: 'Project not found' });
     }
 
     console.log(`[Delete] Removing project "${p.name}" (subdomain: ${p.subdomain})`);
 
-    await Deployment.deleteMany({ projectId: String(p._id) }).catch(e =>
-      console.error(`[Delete] Failed to remove deployment records for ${p.subdomain}:`, e.message));
+    // Remove from the Firebase workspace -- this is the real deletion.
+    ws.projects = (ws.projects || []).filter(pr => pr.id !== p.id);
+    if (Array.isArray(ws.deployments)) {
+      ws.deployments = ws.deployments.filter(d => d.projectId !== p.id);
+    }
+    const wroteOk = await writeWorkspaceToFirebase(req.user, ws);
+    if (!wroteOk) {
+      console.error(`[Delete] Failed to write updated workspace to Firebase for ${p.subdomain} -- aborting before touching files/containers, since the project would still show as existing`);
+      return res.status(502).json({ error: 'Failed to update Firebase workspace; nothing was deleted.' });
+    }
 
-    // Remove site files -- now actually logs if this fails instead of
-    // silently leaving orphaned files behind with no trace of why.
+    // Best-effort legacy Mongo cleanup, in case this project also has an
+    // old Mongo-side record from before the Firebase migration. Not
+    // required to succeed -- Firebase above is what actually matters now.
+    if (isDbReady()) {
+      await Project.deleteOne({ $or: [{ subdomain: p.subdomain }, { name: p.name }, { id: p.id }] }).catch(e =>
+        console.warn(`[Delete] Legacy Mongo project cleanup skipped/failed for ${p.subdomain} (expected if Mongo isn't the real store):`, e.message));
+      await Deployment.deleteMany({ projectId: p.id }).catch(e =>
+        console.warn(`[Delete] Legacy Mongo deployment cleanup skipped/failed for ${p.subdomain}:`, e.message));
+    }
+
+    // Remove site files -- logs if this fails instead of silently leaving
+    // orphaned files behind with no trace of why.
     try {
       fs.rmSync(path.join(SITES_DIR, p.subdomain), { recursive: true, force: true });
       console.log(`[Delete] Removed site files for ${p.subdomain}`);
@@ -4192,7 +4213,7 @@ app.delete('/api/projects/:id', async (req, res) => {
     await removeSubdomain(p.subdomain).catch(e =>
       console.error(`[Delete] Failed to remove DNS/tunnel route for ${p.subdomain}:`, e.message));
 
-    res.json({ ok: true, removedProjectId: String(p._id), subdomain: p.subdomain });
+    res.json({ ok: true, removedProjectId: p.id, subdomain: p.subdomain });
   } catch(e) {
     console.error('[Delete] Unexpected error deleting project:', e.message);
     res.status(500).json({ error: e.message });
@@ -12726,11 +12747,33 @@ v1.patch('/projects/:id', async (req, res) => {
 v1.delete('/projects/:id', async (req, res) => {
   try {
     const ws = (await readWorkspaceFromFirebase(req.user)) || {};
-    const before = (Array.isArray(ws.projects) ? ws.projects : []).length;
-    ws.projects = (ws.projects || []).filter(p => p.id !== req.params.id && p.subdomain !== req.params.id);
-    if (ws.projects.length === before) return res.status(404).json({ ok: false, error: 'Project not found.' });
-    await writeWorkspaceToFirebase(req.user, ws);
-    res.json({ ok: true, message: 'Project removed from workspace.' });
+    const p = (ws.projects || []).find(pr => pr.id === req.params.id || pr.subdomain === req.params.id);
+    if (!p) return res.status(404).json({ ok: false, error: 'Project not found.' });
+
+    ws.projects = (ws.projects || []).filter(pr => pr.id !== p.id);
+    if (Array.isArray(ws.deployments)) {
+      ws.deployments = ws.deployments.filter(d => d.projectId !== p.id);
+    }
+    const wroteOk = await writeWorkspaceToFirebase(req.user, ws);
+    if (!wroteOk) return res.status(502).json({ ok: false, error: 'Failed to update Firebase workspace; nothing was deleted.' });
+
+    // [FIX] This used to only remove the workspace record, leaving site
+    // files, the Docker container, and the DNS/tunnel route all still in
+    // place -- the exact bug behind tonight's docs.joytree.site mess. Now
+    // does the same full cleanup as /api/projects/:id.
+    try { fs.rmSync(path.join(SITES_DIR, p.subdomain), { recursive: true, force: true }); }
+    catch(e) { console.error(`[v1 Delete] Failed to remove site files for ${p.subdomain}:`, e.message); }
+
+    try { await execP(`docker rm -f db-${p.subdomain}`); }
+    catch(e) { console.error(`[v1 Delete] Failed to remove container db-${p.subdomain}:`, e.message); }
+
+    delete portRegistry[p.subdomain];
+    savePortRegistry();
+
+    await removeSubdomain(p.subdomain).catch(e =>
+      console.error(`[v1 Delete] Failed to remove DNS/tunnel route for ${p.subdomain}:`, e.message));
+
+    res.json({ ok: true, message: 'Project fully removed: workspace record, site files, container, and DNS route.' });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
