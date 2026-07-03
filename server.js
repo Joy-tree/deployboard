@@ -1712,6 +1712,27 @@ const Deployment = mongoose.model('Deployment', deploymentSchema);
 const User = mongoose.model('User', userSchema);
 const Session = mongoose.model('Session', sessionSchema);
 
+// [FIX] Many projects here use a custom string id rather than a real Mongo
+// ObjectId -- subdomain-based uploads ("e-commerce-test"), or "local_..."
+// ids for git-deployed projects. Project.findById()/findOne({_id}) throws a
+// CastError for any of these instead of just returning null, which was
+// surfacing as opaque 500s ("Cast to ObjectId failed for value ...") on
+// several endpoints (get project, runtime logs, deployment history) for
+// exactly this class of project. This is the single place that logic lives
+// now -- every endpoint below calls this instead of Project.findById
+// directly, so a project not existing looks like a normal 404 regardless of
+// which id format it has.
+function looksLikeObjectId(id) {
+  return mongoose.Types.ObjectId.isValid(id) && String(new mongoose.Types.ObjectId(id)) === id;
+}
+async function findProjectByAnyId(id) {
+  if (looksLikeObjectId(id)) {
+    const byObjectId = await Project.findById(id);
+    if (byObjectId) return byObjectId;
+  }
+  return Project.findOne({ $or: [{ subdomain: id }, { name: id }, { id: id }] });
+}
+
 // ── Database model ────────────────────────────────────────────────────────────
 const databaseSchema = new mongoose.Schema({
   name:          { type: String, required: true },
@@ -4114,7 +4135,7 @@ app.get('/api/projects/:id/runtime-logs', attachAuthIfPresent, async (req, res) 
 
 app.get('/api/projects/:id', async (req, res) => {
   try {
-    const p = await Project.findById(req.params.id);
+    const p = await findProjectByAnyId(req.params.id);
     if (!p) return res.status(404).json({ error: 'Not found' });
     res.json(p);
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -12853,14 +12874,22 @@ v1.get('/databases', async (req, res) => {
       const ownerMatch = { $or: [{ ownerEmail: user.email }, { ownerUserId: String(user._id || user.id) }] };
       dbs = await (require('mongoose').model('Database') || (() => null))?.find(ownerMatch).lean().catch(() => []) || [];
     } else {
-      // Firebase RTDB databases
-      dbs = await readDbsFromFirebase(user).catch(() => []) || [];
+      // [FIX] This called readDbsFromFirebase(user), a function that was
+      // never defined anywhere in this file -- guaranteed crash any time
+      // MongoDB isn't ready. There's no evidence databases are tracked in
+      // Firebase at all (no writes to a .databases field anywhere in this
+      // codebase, unlike projects/deployments which clearly are), so rather
+      // than invent a Firebase read that might silently return wrong data,
+      // this degrades to an empty list with a clear signal in the response
+      // and logs, rather than crashing the request outright.
+      console.warn('[v1/databases] MongoDB not ready and no Firebase-backed database store exists -- returning empty list');
+      dbs = [];
     }
     res.json({ ok: true, count: dbs.length, databases: dbs.map(d => ({
       id: d._id || d.id, name: d.name, engine: d.engine, status: d.status || 'unknown',
       host: d.host || '', port: d.port || null, createdAt: d.createdAt || null,
       internalUrl: d.internalUrl || '', externalUrl: d.externalUrl || ''
-    })) });
+    })), degraded: !isDbReady() });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
