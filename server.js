@@ -9179,12 +9179,23 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   const hasStartCmd = !!String(startCmd || '').trim();
   const isServerApp = explicitType === 'server' || (!explicitType && hasStartCmd);
 
-  // Ensure project name/subdomain are available before creating/updating.
-  // Allow redeploy updates for the same existing subdomain record.
-  const existingBySub = await Project.findOne({ subdomain: cleanSub }).select('_id name subdomain').lean().maxTimeMS(5000).catch(() => null);
-  const existingByName = await Project.findOne({ name }).select('_id name subdomain').lean().maxTimeMS(5000).catch(() => null);
-  const existingBySubId = existingBySub?._id ? String(existingBySub._id) : '';
-  const existingByNameId = existingByName?._id ? String(existingByName._id) : '';
+  // [FIX] These were Project.findOne / Project.exists / Project.countDocuments
+  // calls -- all Mongoose, querying a database that isn't actually this
+  // platform's real datastore (Firebase is). That meant every deploy was
+  // checked against an effectively empty/stale collection: existing-project
+  // lookups would come back null even for a genuine redeploy of the same
+  // subdomain (spawning a brand new project record instead of updating the
+  // real one -- this is very likely why repeated deploys to the same "docs"
+  // subdomain kept generating new project ids all night instead of updating
+  // one project), and the project-count plan limit was being checked against
+  // the wrong number entirely. Firebase is the real source of truth here, so
+  // read from the same workspace data every other working endpoint uses.
+  const deployWs = (await readWorkspaceFromFirebase(req.user)) || {};
+  const deployWsProjects = Array.isArray(deployWs.projects) ? deployWs.projects : [];
+  const existingBySub = deployWsProjects.find(p => p.subdomain === cleanSub) || null;
+  const existingByName = deployWsProjects.find(p => p.name === name) || null;
+  const existingBySubId = existingBySub?.id || '';
+  const existingByNameId = existingByName?.id || '';
   if (existingByName && existingBySubId && existingByNameId !== existingBySubId) {
     return res.status(409).json({ error: 'Project name is unavailable. Please choose another name.' });
   }
@@ -9203,12 +9214,11 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   const runtimeProfile = getRuntimeProfileForPlan(planKey);
 
   // ── Plan project-count limit check ───────────────────────────────────────
-  // Skip for redeploying an existing project (subdomain already in DB).
+  // Skip for redeploying an existing project (subdomain already exists).
   const githubPlanLimits = PLAN_DB_API_LIMITS[planKey] || PLAN_DB_API_LIMITS.free;
-  const isExistingGithubProject = await Project.exists({ subdomain: cleanSub }).catch(() => null);
+  const isExistingGithubProject = !!existingBySub;
   if (!isExistingGithubProject) {
-    const ownerId = String(req.user?._id || req.user?.id || '');
-    const ownedProjectCount = await Project.countDocuments({ ownerUserId: ownerId }).catch(() => 0);
+    const ownedProjectCount = deployWsProjects.length; // already scoped to this user's own workspace
     if (Number.isFinite(githubPlanLimits.maxProjects) && ownedProjectCount >= githubPlanLimits.maxProjects) {
       return res.status(403).json({
         error: `Project limit reached for ${planKey} plan (${githubPlanLimits.maxProjects} max). Upgrade your plan to deploy more projects.`,
@@ -9222,12 +9232,15 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
 
   // ── Monthly build-time quota check ───────────────────────────────────────
   if (Number.isFinite(githubPlanLimits.monthlyBuildSeconds) && githubPlanLimits.monthlyBuildSeconds > 0) {
-    const ownerId = String(req.user?._id || req.user?.id || '');
     const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,1,0);
-    const usedSeconds = await Deployment.aggregate([
-      { $match: { ownerUserId: ownerId, startedAt: { $gte: monthStart }, status: 'success' } },
-      { $group: { _id: null, total: { $sum: '$durationSeconds' } } }
-    ]).then(r => r[0]?.total || 0).catch(() => 0);
+    // [FIX] Same issue as above -- Deployment.aggregate() against Mongo,
+    // silently returning 0 on failure/timeout, meaning this quota never
+    // actually blocked anyone. Sum from the real Firebase deployment history
+    // instead.
+    const deployWsDeployments = Array.isArray(deployWs.deployments) ? deployWs.deployments : [];
+    const usedSeconds = deployWsDeployments
+      .filter(d => d.status === 'success' && d.startedAt && new Date(d.startedAt) >= monthStart)
+      .reduce((sum, d) => sum + (Number(d.durationSeconds) || 0), 0);
     if (usedSeconds >= githubPlanLimits.monthlyBuildSeconds) {
       return res.status(403).json({
         error: `Monthly build-time quota reached (${usedSeconds}s / ${githubPlanLimits.monthlyBuildSeconds}s). Resets at the start of next month.`,
