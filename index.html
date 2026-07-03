@@ -6181,9 +6181,221 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     </div>
   </div>
 
-  <p class="hero-sub">
-    Describe an API in plain English and JoyTree generates a complete REST endpoint from scratch — built, hosted, and shipped as a live URL in seconds. Deploy apps from GitHub or a ZIP upload, and when a build fails JoyTree closes the full loop for you: AI diagnoses the error, writes the fix, opens a Pull Request, and redeploys — even for uploaded, non-Git projects. Spin up managed databases and control everything from one dashboard. No DevOps experience required.
-  </p>
+<!-- ═══ Animated flow diagram, replaces the old hero-sub paragraph ═══ -->
+
+<style>
+  .jt-flow-wrap{
+    position:relative;
+    max-width:600px;
+    margin:8px auto 0;
+  }
+  .jt-flow-svg{ display:block; overflow:visible; }
+
+  .jt-flow-leaf{
+    opacity:.16;
+    animation:jtFlowLeafSway 7s ease-in-out infinite;
+  }
+  @keyframes jtFlowLeafSway{
+    0%,100%{ transform:rotate(calc(var(--rot) - 4deg)); }
+    50%{ transform:rotate(calc(var(--rot) + 4deg)); }
+  }
+
+  .jt-flow-path{
+    stroke:#10b981;
+    stroke-width:1.6;
+    stroke-linecap:round;
+    opacity:.32;
+    filter:drop-shadow(0 0 6px rgba(16,185,129,.55));
+  }
+
+  .jt-flow-particle{
+    fill:#a7f3d0;
+    filter:drop-shadow(0 0 5px rgba(167,243,208,1)) drop-shadow(0 0 12px rgba(16,185,129,.85));
+  }
+  .jt-flow-particle.p2{ fill:#6ee7b7; }
+  .jt-flow-particle.p3{ fill:#34d399; }
+
+  .jt-flow-node{
+    opacity:0;
+    transform-box:fill-box;
+    transform-origin:center;
+    animation:jtFlowNodeIn .8s ease forwards;
+    animation-delay:var(--d);
+  }
+  @keyframes jtFlowNodeIn{
+    from{ opacity:0; transform:scale(.7); }
+    to{ opacity:1; transform:scale(1); }
+  }
+  .jt-flow-halo{
+    fill:#10b981;
+    opacity:.16;
+    filter:blur(9px);
+    animation:jtFlowHaloPulse 3.4s ease-in-out infinite;
+    animation-delay:var(--d);
+  }
+  @keyframes jtFlowHaloPulse{
+    0%,100%{ opacity:.14; r:28; }
+    50%{ opacity:.28; r:33; }
+  }
+  .jt-flow-ring{
+    stroke:#6ee7b7;
+    opacity:.55;
+    animation:jtFlowRingPulse 3.4s ease-in-out infinite;
+    animation-delay:var(--d);
+  }
+  @keyframes jtFlowRingPulse{
+    0%,100%{ r:20; opacity:.4; }
+    50%{ r:23; opacity:.75; }
+  }
+  .jt-flow-core{
+    fill:#052e22;
+    stroke:#10b981;
+    stroke-width:1.4;
+  }
+  .jt-flow-icon{
+    color:#6ee7b7;
+    filter:drop-shadow(0 0 3px rgba(110,231,183,.8));
+  }
+
+  .jt-flow-label{
+    opacity:0;
+    animation:jtFlowLabelIn .8s ease forwards;
+    animation-delay:calc(var(--d) + .15s);
+  }
+  @keyframes jtFlowLabelIn{
+    from{ opacity:0; transform:translateY(6px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .jt-flow-title{
+    font-family:var(--font-ui);
+    font-size:15px;
+    font-weight:700;
+    fill:#e2f8ee;
+  }
+  .jt-flow-sub{
+    font-family:var(--font-ui);
+    font-size:11.5px;
+    fill:#94a3b8;
+  }
+
+  @media (max-width:600px){
+    .jt-flow-title{ font-size:13.5px; }
+    .jt-flow-sub{ font-size:10.5px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .jt-flow-particle{ display:none; }
+    .jt-flow-leaf, .jt-flow-halo, .jt-flow-ring{ animation:none; }
+    .jt-flow-node, .jt-flow-label{ animation:none; opacity:1; }
+  }
+</style>
+
+<div class="jt-flow-wrap">
+<svg class="jt-flow-svg" viewBox="0 0 600 1230" width="100%" role="img" aria-label="How JoyTree works: describe an API, get a live URL in seconds, deploy from GitHub or a ZIP, self-healing builds, managed databases, one dashboard">
+  <defs>
+    <filter id="jtFlowGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <g transform="translate(40,60)"><use href="#jt-leaf-a" x="-17.0" y="-17.0" width="34" height="34" class="jt-flow-leaf" style="color:#14532d;--rot:-15deg" /></g><g transform="translate(540,180)"><use href="#jt-leaf-b1" x="-15.0" y="-15.0" width="30" height="30" class="jt-flow-leaf" style="color:#14532d;--rot:20deg" /></g><g transform="translate(30,340)"><use href="#jt-leaf-c2" x="-13.0" y="-13.0" width="26" height="26" class="jt-flow-leaf" style="color:#14532d;--rot:10deg" /></g><g transform="translate(520,560)"><use href="#jt-leaf-b2" x="-16.0" y="-16.0" width="32" height="32" class="jt-flow-leaf" style="color:#14532d;--rot:-25deg" /></g><g transform="translate(60,780)"><use href="#jt-leaf-a" x="-14.0" y="-14.0" width="28" height="28" class="jt-flow-leaf" style="color:#14532d;--rot:15deg" /></g><g transform="translate(540,1010)"><use href="#jt-leaf-c1" x="-15.0" y="-15.0" width="30" height="30" class="jt-flow-leaf" style="color:#14532d;--rot:-10deg" /></g><g transform="translate(200,1150)"><use href="#jt-leaf-b1" x="-13.0" y="-13.0" width="26" height="26" class="jt-flow-leaf" style="color:#14532d;--rot:20deg" /></g>
+
+  <path class="jt-flow-path" d="M 300,90 C 300,194.5 470,175.5 470,280 C 470,384.5 130,365.5 130,470 C 130,596.5 470,573.5 470,700 C 470,810.0 130,790.0 130,900 C 130,1004.5 300,985.5 300,1090" fill="none"/>
+
+  <circle class="jt-flow-particle p1" r="4"><animateMotion dur="9s" repeatCount="indefinite" path="M 300,90 C 300,194.5 470,175.5 470,280 C 470,384.5 130,365.5 130,470 C 130,596.5 470,573.5 470,700 C 470,810.0 130,790.0 130,900 C 130,1004.5 300,985.5 300,1090"/></circle>
+  <circle class="jt-flow-particle p2" r="3.2"><animateMotion dur="9s" begin="-3s" repeatCount="indefinite" path="M 300,90 C 300,194.5 470,175.5 470,280 C 470,384.5 130,365.5 130,470 C 130,596.5 470,573.5 470,700 C 470,810.0 130,790.0 130,900 C 130,1004.5 300,985.5 300,1090"/></circle>
+  <circle class="jt-flow-particle p3" r="3.2"><animateMotion dur="9s" begin="-6s" repeatCount="indefinite" path="M 300,90 C 300,194.5 470,175.5 470,280 C 470,384.5 130,365.5 130,470 C 130,596.5 470,573.5 470,700 C 470,810.0 130,790.0 130,900 C 130,1004.5 300,985.5 300,1090"/></circle>
+
+  
+      <g transform="translate(300,90)">
+        <g class="jt-flow-node" style="--d:0.0s">
+          <circle class="jt-flow-halo" r="30"/>
+          <circle class="jt-flow-ring" r="21" fill="none" stroke-width="1"/>
+          <circle class="jt-flow-core" r="16"/>
+          <g class="jt-flow-icon"><path d="M-9,-6 L9,-6 A4,4 0 0 1 13,-2 L13,4 A4,4 0 0 1 9,8 L-2,8 L-9,13 L-8,8 A4,4 0 0 1 -13,4 L-13,-2 A4,4 0 0 1 -9,-6 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="-5" cy="1" r="1.1" fill="currentColor"/><circle cx="0" cy="1" r="1.1" fill="currentColor"/><circle cx="5" cy="1" r="1.1" fill="currentColor"/></g>
+        </g>
+      </g>
+      <g transform="translate(470,280)">
+        <g class="jt-flow-node" style="--d:0.4s">
+          <circle class="jt-flow-halo" r="30"/>
+          <circle class="jt-flow-ring" r="21" fill="none" stroke-width="1"/>
+          <circle class="jt-flow-core" r="16"/>
+          <g class="jt-flow-icon"><path d="M0,-13 C6,-9 8,-2 6,5 L-6,5 C-8,-2 -6,-9 0,-13 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="0" cy="-4" r="2.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M-6,5 L-9,13 M6,5 L9,13 M-3,6 L-4,13 M3,6 L4,13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></g>
+        </g>
+      </g>
+      <g transform="translate(130,470)">
+        <g class="jt-flow-node" style="--d:0.8s">
+          <circle class="jt-flow-halo" r="30"/>
+          <circle class="jt-flow-ring" r="21" fill="none" stroke-width="1"/>
+          <circle class="jt-flow-core" r="16"/>
+          <g class="jt-flow-icon"><path d="M0,-13 A13,13 0 1 0 0.1,-13" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M-4,-2 L-4,10 M4,-2 L4,10 M-4,3 Q0,7 4,3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="-4" cy="-4" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="4" cy="-4" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/></g>
+        </g>
+      </g>
+      <g transform="translate(470,700)">
+        <g class="jt-flow-node" style="--d:1.2s">
+          <circle class="jt-flow-halo" r="30"/>
+          <circle class="jt-flow-ring" r="21" fill="none" stroke-width="1"/>
+          <circle class="jt-flow-core" r="16"/>
+          <g class="jt-flow-icon"><path d="M-9,-2 A9,9 0 1 1 -7,6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M-7,6 L-11,4 M-7,6 L-9,10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M-3,-1 L-1,1.5 L3,-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></g>
+        </g>
+      </g>
+      <g transform="translate(130,900)">
+        <g class="jt-flow-node" style="--d:1.6s">
+          <circle class="jt-flow-halo" r="30"/>
+          <circle class="jt-flow-ring" r="21" fill="none" stroke-width="1"/>
+          <circle class="jt-flow-core" r="16"/>
+          <g class="jt-flow-icon"><ellipse cx="0" cy="-7" rx="9" ry="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M-9,-7 L-9,7 A9,3.2 0 0 0 9,7 L9,-7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M-9,0 A9,3.2 0 0 0 9,0" fill="none" stroke="currentColor" stroke-width="1.6"/></g>
+        </g>
+      </g>
+      <g transform="translate(300,1090)">
+        <g class="jt-flow-node" style="--d:2.0s">
+          <circle class="jt-flow-halo" r="30"/>
+          <circle class="jt-flow-ring" r="21" fill="none" stroke-width="1"/>
+          <circle class="jt-flow-core" r="16"/>
+          <g class="jt-flow-icon"><rect x="-11" y="-11" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="2" y="-11" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="-11" y="2" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="2" y="2" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></g>
+        </g>
+      </g>
+  
+      <g transform="translate(300,90)">
+        <g class="jt-flow-label" style="--d:0.0s">
+          <text class="jt-flow-title" x="0" y="-6" text-anchor="middle">Describe it</text>
+          <text class="jt-flow-sub" x="0" y="14" text-anchor="middle">Plain English → REST API</text>
+        </g>
+      </g>
+      <g transform="translate(430,280)">
+        <g class="jt-flow-label" style="--d:0.4s">
+          <text class="jt-flow-title" x="0" y="-6" text-anchor="end">Live in seconds</text>
+          <text class="jt-flow-sub" x="0" y="14" text-anchor="end">Built, hosted, shipped</text>
+        </g>
+      </g>
+      <g transform="translate(170,470)">
+        <g class="jt-flow-label" style="--d:0.8s">
+          <text class="jt-flow-title" x="0" y="-6" text-anchor="start">GitHub or ZIP</text>
+          <text class="jt-flow-sub" x="0" y="14" text-anchor="start">Deploy either way</text>
+        </g>
+      </g>
+      <g transform="translate(430,700)">
+        <g class="jt-flow-label" style="--d:1.2s">
+          <text class="jt-flow-title" x="0" y="-6" text-anchor="end">Self-healing builds</text>
+          <text class="jt-flow-sub" x="0" y="14" text-anchor="end">AI fixes failed builds & opens a PR</text>
+        </g>
+      </g>
+      <g transform="translate(170,900)">
+        <g class="jt-flow-label" style="--d:1.6s">
+          <text class="jt-flow-title" x="0" y="-6" text-anchor="start">Managed databases</text>
+          <text class="jt-flow-sub" x="0" y="14" text-anchor="start">Spin up in one click</text>
+        </g>
+      </g>
+      <g transform="translate(300,1090)">
+        <g class="jt-flow-label" style="--d:2.0s">
+          <text class="jt-flow-title" x="0" y="-6" text-anchor="middle">One dashboard</text>
+          <text class="jt-flow-sub" x="0" y="14" text-anchor="middle">No DevOps experience required</text>
+        </g>
+      </g>
+</svg>
+</div>
+<!-- ═══ /Animated flow diagram ═══ -->
 
   <div class="hero-actions">
     <a href="#" onclick="showDashboard();return false;" class="btn-hero-primary">
