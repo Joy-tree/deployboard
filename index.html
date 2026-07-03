@@ -893,6 +893,7 @@ body.landing-drawer-open { overflow:hidden; }
 .hero-orb.three{width:190px;height:190px;right:18%;bottom:12%;background:radial-gradient(circle,rgba(74,222,128,.28),rgba(139,92,246,0));animation-delay:3.5s}
 @keyframes orbFloat{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-16px) translateX(8px)}}
 .hero-headline-stack{position:relative;display:grid;gap:16px;margin-bottom:22px;max-width:1080px;width:100%;justify-items:center;}
+.hero-headline-stack > *{min-width:0;}
 .hero-kicker-pro{display:none;}
 .hero-kicker-pro i{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 14px rgba(16,185,129,.9)}
 .hero-h1{font-size:clamp(2.55rem,8.3vw,6.05rem)!important;line-height:1.03;font-weight:800;letter-spacing:-.03em;text-shadow:none;text-align:center;}
@@ -6173,119 +6174,70 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   <div class="hero-glow"></div>
   <div class="hero-glow-2"></div>
 
-  <!-- ═══ Atmospheric scene: mountains, waterfalls, fireflies ═══ -->
-  
-<style>
-  .hero{ position:relative; overflow:hidden; }
+<!-- ═══ Atmospheric scene: real photo background + light firefly overlay ═══ -->
+  <style>
+    .hero{ position:relative; overflow:hidden; }
 
-  .jt-scene{
-    position:absolute;
-    inset:0;
-    z-index:0;
-    pointer-events:none;
-    overflow:hidden;
-  }
-  .jt-scene-svg{ position:absolute; inset:0; display:block; }
+    .jt-scene{
+      position:absolute;
+      inset:0;
+      z-index:0;
+      pointer-events:none;
+      overflow:hidden;
+      background-image:
+        linear-gradient(180deg, rgba(3,8,6,.55) 0%, rgba(3,8,6,.25) 15%, rgba(3,8,6,.35) 55%, rgba(3,8,6,.7) 100%),
+        url('assets/hero/hero-scenery.jpg');
+      background-size:cover;
+      background-position:center top;
+      background-repeat:no-repeat;
+    }
+    .jt-scene-svg{ position:absolute; inset:0; display:block; width:100%; height:100%; }
 
-  .jt-scene-mtn{
-    fill:#0a1f14;
-    opacity:.85;
-  }
-  .jt-scene-mtn.m1{ fill:#0c2818; opacity:.6; }
-  .jt-scene-mtn.m2{ fill:#0a2015; opacity:.72; }
-  .jt-scene-mtn.m3{ fill:#081a10; opacity:.82; }
-  .jt-scene-mtn.m4{ fill:#06140c; opacity:.92; }
+    .jt-scene-firefly{
+      fill:#a7f3d0;
+      filter:drop-shadow(0 0 3px rgba(167,243,208,.95)) drop-shadow(0 0 7px rgba(16,185,129,.6));
+      animation:jtSceneFireflyBlink var(--fdur) ease-in-out infinite;
+      animation-delay:var(--fdelay);
+    }
+    @keyframes jtSceneFireflyBlink{
+      0%,100%{ opacity:.15; }
+      50%{ opacity:.9; }
+    }
 
-  .jt-scene-falls{
-    fill:url(#jtSceneFall);
-    filter:blur(1.5px) drop-shadow(0 0 8px rgba(110,231,183,.7));
-    animation:jtSceneFallShimmer 2.4s ease-in-out infinite;
-  }
-  .jt-scene-falls.f2{ animation-delay:.5s; }
-  .jt-scene-falls.f3{ animation-delay:1s; }
-  .jt-scene-falls.f4{ animation-delay:1.5s; }
-  @keyframes jtSceneFallShimmer{
-    0%,100%{ opacity:.65; }
-    50%{ opacity:1; }
-  }
+    .hero-headline-stack, .jt-flow-wrap, .hero-actions{
+      position:relative;
+      z-index:1;
+    }
 
-  .jt-scene-firefly{
-    fill:#a7f3d0;
-    filter:drop-shadow(0 0 3px rgba(167,243,208,.95)) drop-shadow(0 0 7px rgba(16,185,129,.6));
-    animation:jtSceneFireflyBlink var(--fdur) ease-in-out infinite;
-    animation-delay:var(--fdelay);
-  }
-  @keyframes jtSceneFireflyBlink{
-    0%,100%{ opacity:.15; }
-    50%{ opacity:.9; }
-  }
+    .jt-headline-glow{
+      position:absolute;
+      left:50%; top:50%;
+      width:130%;
+      aspect-ratio:1.6/1;
+      transform:translate(-50%,-50%);
+      background:radial-gradient(ellipse at center,rgba(16,185,129,.22),rgba(52,211,153,.08) 45%,transparent 72%);
+      filter:blur(18px);
+      pointer-events:none;
+      z-index:0;
+      animation:jtHeadlineGlowPulse 5s ease-in-out infinite;
+    }
+    @keyframes jtHeadlineGlowPulse{
+      0%,100%{ opacity:.8; }
+      50%{ opacity:1; }
+    }
+    .hero-headline-stack{ position:relative; }
+    .hero-headline-stack > *{ position:relative; z-index:1; }
 
-  .hero-headline-stack, .jt-flow-wrap, .hero-actions{
-    position:relative;
-    z-index:1;
-  }
-
-  .jt-headline-glow{
-    position:absolute;
-    left:50%; top:50%;
-    width:130%;
-    aspect-ratio:1.6/1;
-    transform:translate(-50%,-50%);
-    background:radial-gradient(ellipse at center,rgba(16,185,129,.22),rgba(52,211,153,.08) 45%,transparent 72%);
-    filter:blur(18px);
-    pointer-events:none;
-    z-index:0;
-    animation:jtHeadlineGlowPulse 5s ease-in-out infinite;
-  }
-  @keyframes jtHeadlineGlowPulse{
-    0%,100%{ opacity:.8; }
-    50%{ opacity:1; }
-  }
-  .hero-headline-stack{ position:relative; }
-  .hero-headline-stack > *{ position:relative; z-index:1; }
-
-  @media (max-width:768px){
-    .jt-scene-mtn{ opacity:.5; }
-  }
-
-  @media (prefers-reduced-motion: reduce){
-    .jt-scene-firefly, .jt-scene-falls, .jt-headline-glow{ animation:none; }
-  }
-</style>
+    @media (prefers-reduced-motion: reduce){
+      .jt-scene-firefly, .jt-headline-glow{ animation:none; }
+    }
+  </style>
 
   <div class="jt-scene" aria-hidden="true">
-<svg class="jt-scene-svg" viewBox="0 0 600 1800" preserveAspectRatio="none" width="100%" height="100%">
-  <defs>
-    <linearGradient id="jtSceneWash" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#08120d" stop-opacity="0"/>
-      <stop offset="18%" stop-color="#0a1a12" stop-opacity=".55"/>
-      <stop offset="45%" stop-color="#0d2418" stop-opacity=".7"/>
-      <stop offset="70%" stop-color="#0a1c14" stop-opacity=".65"/>
-      <stop offset="100%" stop-color="#050b08" stop-opacity=".4"/>
-    </linearGradient>
-    <linearGradient id="jtSceneFall" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#a7f3d0" stop-opacity="0"/>
-      <stop offset="35%" stop-color="#6ee7b7" stop-opacity=".85"/>
-      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
-    </linearGradient>
-  </defs>
-
-  <rect x="0" y="0" width="600" height="1800" fill="url(#jtSceneWash)"/>
-
-  <polygon class="jt-scene-mtn m1" points="-20,340 90,210 180,290 260,180 360,270 460,190 560,260 620,220 620,420 -20,420"/>
-  <polygon class="jt-scene-mtn m2" points="-20,760 70,640 170,710 280,600 380,690 480,610 580,680 620,650 620,850 -20,850"/>
-  <polygon class="jt-scene-mtn m3" points="-20,1180 100,1060 210,1140 320,1030 420,1120 520,1040 620,1100 620,1300 -20,1300"/>
-  <polygon class="jt-scene-mtn m4" points="-20,1600 110,1490 220,1560 330,1460 440,1550 540,1470 620,1520 620,1720 -20,1720"/>
-
-  <rect class="jt-scene-falls f1" x="248" y="185" width="7" height="150"/>
-  <rect class="jt-scene-falls f2" x="404" y="600" width="6" height="180"/>
-  <rect class="jt-scene-falls f3" x="150" y="1035" width="6" height="160"/>
-  <rect class="jt-scene-falls f4" x="378" y="1460" width="7" height="170"/>
-
-  <circle class="jt-scene-firefly" cx="201" cy="296" r="2.5" style="--fdur:2.8s;--fdelay:2.7s"/><circle class="jt-scene-firefly" cx="225" cy="139" r="2.3" style="--fdur:2.7s;--fdelay:2.2s"/><circle class="jt-scene-firefly" cx="59" cy="194" r="2.1" style="--fdur:4.7s;--fdelay:0.6s"/><circle class="jt-scene-firefly" cx="145" cy="1107" r="3.1" style="--fdur:4.1s;--fdelay:2.0s"/><circle class="jt-scene-firefly" cx="567" cy="119" r="2.9" style="--fdur:3.4s;--fdelay:0.7s"/><circle class="jt-scene-firefly" cx="86" cy="564" r="2.9" style="--fdur:3.1s;--fdelay:2.9s"/><circle class="jt-scene-firefly" cx="378" cy="673" r="2.3" style="--fdur:2.8s;--fdelay:0.3s"/><circle class="jt-scene-firefly" cx="135" cy="1197" r="2.1" style="--fdur:3.4s;--fdelay:2.9s"/><circle class="jt-scene-firefly" cx="274" cy="550" r="2.8" style="--fdur:4.4s;--fdelay:1.2s"/><circle class="jt-scene-firefly" cx="342" cy="933" r="3.0" style="--fdur:4.5s;--fdelay:1.4s"/><circle class="jt-scene-firefly" cx="569" cy="241" r="2.1" style="--fdur:4.6s;--fdelay:0.8s"/><circle class="jt-scene-firefly" cx="294" cy="107" r="2.6" style="--fdur:4.6s;--fdelay:2.9s"/><circle class="jt-scene-firefly" cx="510" cy="573" r="2.6" style="--fdur:4.1s;--fdelay:2.9s"/><circle class="jt-scene-firefly" cx="275" cy="1468" r="3.1" style="--fdur:3.8s;--fdelay:3.3s"/><circle class="jt-scene-firefly" cx="54" cy="1233" r="2.5" style="--fdur:5.2s;--fdelay:4.1s"/><circle class="jt-scene-firefly" cx="179" cy="696" r="2.6" style="--fdur:2.7s;--fdelay:2.3s"/><circle class="jt-scene-firefly" cx="114" cy="239" r="1.4" style="--fdur:4.6s;--fdelay:0.6s"/><circle class="jt-scene-firefly" cx="159" cy="705" r="3.0" style="--fdur:2.8s;--fdelay:2.2s"/><circle class="jt-scene-firefly" cx="328" cy="1542" r="2.9" style="--fdur:4.8s;--fdelay:1.4s"/><circle class="jt-scene-firefly" cx="253" cy="650" r="3.0" style="--fdur:5.1s;--fdelay:0.8s"/><circle class="jt-scene-firefly" cx="119" cy="434" r="1.7" style="--fdur:3.9s;--fdelay:2.9s"/><circle class="jt-scene-firefly" cx="167" cy="47" r="2.1" style="--fdur:3.6s;--fdelay:2.8s"/><circle class="jt-scene-firefly" cx="554" cy="1214" r="2.3" style="--fdur:4.2s;--fdelay:3.4s"/><circle class="jt-scene-firefly" cx="50" cy="1569" r="2.8" style="--fdur:4.9s;--fdelay:4.0s"/><circle class="jt-scene-firefly" cx="240" cy="718" r="1.5" style="--fdur:4.2s;--fdelay:0.3s"/><circle class="jt-scene-firefly" cx="58" cy="395" r="1.6" style="--fdur:3.5s;--fdelay:0.3s"/><circle class="jt-scene-firefly" cx="20" cy="297" r="1.5" style="--fdur:3.5s;--fdelay:0.1s"/><circle class="jt-scene-firefly" cx="510" cy="1084" r="1.6" style="--fdur:3.3s;--fdelay:1.7s"/><circle class="jt-scene-firefly" cx="224" cy="249" r="2.9" style="--fdur:5.2s;--fdelay:2.3s"/><circle class="jt-scene-firefly" cx="291" cy="186" r="1.5" style="--fdur:3.5s;--fdelay:1.3s"/><circle class="jt-scene-firefly" cx="484" cy="314" r="1.3" style="--fdur:5.1s;--fdelay:2.6s"/><circle class="jt-scene-firefly" cx="102" cy="963" r="1.4" style="--fdur:4.0s;--fdelay:4.9s"/><circle class="jt-scene-firefly" cx="503" cy="1224" r="1.8" style="--fdur:3.6s;--fdelay:0.8s"/><circle class="jt-scene-firefly" cx="452" cy="945" r="2.8" style="--fdur:3.5s;--fdelay:1.1s"/>
-</svg>
-</div>
-
+    <svg class="jt-scene-svg" viewBox="0 0 600 1800" preserveAspectRatio="none">
+      <circle class="jt-scene-firefly" cx="159" cy="925" r="1.9" style="--fdur:4.1s;--fdelay:3.1s"/><circle class="jt-scene-firefly" cx="65" cy="81" r="2.6" style="--fdur:3.4s;--fdelay:1.2s"/><circle class="jt-scene-firefly" cx="568" cy="808" r="2.6" style="--fdur:3.8s;--fdelay:3.2s"/><circle class="jt-scene-firefly" cx="111" cy="1069" r="2.6" style="--fdur:4.0s;--fdelay:3.7s"/><circle class="jt-scene-firefly" cx="393" cy="162" r="2.5" style="--fdur:4.1s;--fdelay:1.5s"/><circle class="jt-scene-firefly" cx="47" cy="1436" r="2.1" style="--fdur:4.4s;--fdelay:4.4s"/><circle class="jt-scene-firefly" cx="416" cy="1525" r="2.0" style="--fdur:4.6s;--fdelay:2.2s"/><circle class="jt-scene-firefly" cx="535" cy="1457" r="1.5" style="--fdur:3.1s;--fdelay:1.1s"/><circle class="jt-scene-firefly" cx="551" cy="753" r="2.3" style="--fdur:3.5s;--fdelay:2.5s"/><circle class="jt-scene-firefly" cx="238" cy="618" r="2.2" style="--fdur:4.1s;--fdelay:4.5s"/><circle class="jt-scene-firefly" cx="398" cy="1537" r="2.6" style="--fdur:5.0s;--fdelay:3.4s"/><circle class="jt-scene-firefly" cx="118" cy="1428" r="2.8" style="--fdur:4.8s;--fdelay:2.8s"/>
+    </svg>
+  </div>
   <!-- ═══ /Atmospheric scene ═══ -->
 
   <div class="hero-headline-stack">
@@ -7533,8 +7485,26 @@ const tw = document.getElementById('typewriter');
 function renderAnimatedWord(word){
   tw.classList.remove('is-switching');
   tw.textContent = word;
+  tw.style.fontSize = '';
   void tw.offsetWidth;
   tw.classList.add('is-switching');
+
+  // Shrink-to-fit: white-space:nowrap on this element means it never wraps,
+  // so a long phrase (e.g. "Realtime API Builder Teams") can render wider
+  // than its container on narrow screens and spill past the edge. The
+  // container's own clamp() font-size only accounts for viewport width, not
+  // how long the specific phrase is -- so measure the actual rendered width
+  // against what's available and scale down only when needed.
+  var wrap = tw.closest('.hero-typewriter-line') || tw.parentElement;
+  if (wrap) {
+    var available = wrap.clientWidth;
+    var actual = tw.scrollWidth;
+    if (actual > available && available > 0) {
+      var scale = Math.max(0.62, available / actual);
+      var baseSize = parseFloat(getComputedStyle(tw).fontSize);
+      tw.style.fontSize = (baseSize * scale) + 'px';
+    }
+  }
 }
 
 function loopAnimatedWords(){
