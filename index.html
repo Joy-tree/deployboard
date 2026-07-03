@@ -6239,6 +6239,70 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     </svg>
   </div>
   <!-- ═══ /Atmospheric scene ═══ -->
+  <style>
+    .hero-h1{
+      background:linear-gradient(180deg,#ffffff 0%,#eafff5 45%,#a7f3d0 100%) !important;
+      -webkit-background-clip:text !important;
+      -webkit-text-fill-color:transparent !important;
+      background-clip:text !important;
+      color:transparent !important;
+      filter:drop-shadow(0 0 18px rgba(167,243,208,.45)) drop-shadow(0 0 42px rgba(16,185,129,.3));
+      animation:fadeUp .6s .1s ease both, jtHeroTextGlow 4.5s ease-in-out infinite;
+    }
+    @keyframes jtHeroTextGlow{
+      0%,100%{ filter:drop-shadow(0 0 18px rgba(167,243,208,.45)) drop-shadow(0 0 42px rgba(16,185,129,.3)); }
+      50%{ filter:drop-shadow(0 0 30px rgba(167,243,208,.75)) drop-shadow(0 0 62px rgba(16,185,129,.55)); }
+    }
+
+    .hero-h1 .accent{
+      background:linear-gradient(120deg,#34d399 0%,#6ee7b7 30%,#22d3ee 65%,#34d399 100%) !important;
+      background-size:200% auto;
+      -webkit-background-clip:text !important;
+      -webkit-text-fill-color:transparent !important;
+      background-clip:text !important;
+      filter:drop-shadow(0 0 16px rgba(52,211,153,.65)) drop-shadow(0 0 36px rgba(34,211,238,.4)) !important;
+      animation:jtAccentShimmer 5s linear infinite;
+    }
+    @keyframes jtAccentShimmer{
+      0%{ background-position:0% center; }
+      100%{ background-position:200% center; }
+    }
+
+    .hero-typewriter-wrap{
+      width:100% !important;
+      max-width:480px;
+      margin:0 auto 32px !important;
+      background:rgba(6,20,14,.42);
+      border:1px solid rgba(110,231,183,.32);
+      border-radius:22px;
+      padding:14px 22px;
+      box-shadow:0 0 24px rgba(16,185,129,.22), inset 0 0 20px rgba(16,185,129,.07);
+      animation:fadeUp .6s .15s ease both, jtChipPulse 4s ease-in-out infinite;
+    }
+    @keyframes jtChipPulse{
+      0%,100%{ box-shadow:0 0 24px rgba(16,185,129,.22), inset 0 0 20px rgba(16,185,129,.07); }
+      50%{ box-shadow:0 0 36px rgba(16,185,129,.38), inset 0 0 26px rgba(16,185,129,.13); }
+    }
+
+    .hero-typewriter-label{
+      letter-spacing:.14em !important;
+      text-transform:uppercase;
+      font-size:.42em !important;
+      font-weight:700 !important;
+      color:#a7f3d0 !important;
+      opacity:.85;
+      margin-bottom:2px;
+    }
+
+    @media (max-width:768px){
+      .hero-typewriter-wrap{ padding:12px 18px; border-radius:18px; }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .hero-h1, .hero-h1 .accent, .hero-typewriter-wrap{ animation:none !important; }
+    }
+  </style>
+
 
   <div class="hero-headline-stack">
     <div class="jt-headline-glow"></div>
