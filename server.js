@@ -11173,7 +11173,20 @@ const DB_ENGINE_CONFIG = {
     envVars: (u,p,d) => [`MONGO_INITDB_ROOT_USERNAME=${u}`, `MONGO_INITDB_ROOT_PASSWORD=${p}`, `MONGO_INITDB_DATABASE=${d}`],
     startArgs: (memStr) => {
       const bytes = parseMemToBytes(memStr || '256m');
-      const cacheGb = Math.max(0.1, Math.round((bytes * 0.6) / (1024**3) * 10) / 10);
+      // [FIX] MongoDB hard-rejects any --wiredTigerCacheSizeGB below 0.25 at
+      // startup ("must be greater than or equal to 0.25"), but this floor was
+      // previously 0.1 — below Mongo's own minimum. At the default 256m
+      // container memory (0.6 * 256m ≈ 0.15GB → rounds to 0.2), mongod was
+      // computing a value that passed OUR floor but failed MONGO's real one,
+      // so it crashed on every single boot. Docker's --restart unless-stopped
+      // then endlessly relaunched it, and containerStatus() maps 'restarting'
+      // to 'running' (intentionally, for MySQL's normal first-boot restarts),
+      // so the dashboard showed "RUNNING" the whole time even though mongod
+      // itself never once came up. Any TCP client (like the migration engine)
+      // connecting during a restart cycle got an instantly-closed empty
+      // socket, not a real handshake -- hence "Input must be at least 5
+      // bytes, got 0 bytes" from the driver, at every attempt.
+      const cacheGb = Math.max(0.25, Math.round((bytes * 0.6) / (1024**3) * 10) / 10);
       return `--wiredTigerCacheSizeGB ${cacheGb}`;
     }
   },
@@ -11403,7 +11416,13 @@ async function provisionDbContainer(db) {
   // process itself to stay within the container's memory allocation.
   // MySQL 8 requires at least 512m to initialize without OOM crashing.
   // 256m causes a restart loop: Docker keeps killing and restarting the process.
-  const engineMinMem = (db.engine === 'mysql') ? '512m' : '256m';
+  // [FIX] MongoDB now gets the same 512m floor as MySQL. Mongo's own hard
+  // minimum for --wiredTigerCacheSizeGB is 0.25GB (256MB) -- at a 256m total
+  // container limit, that leaves ~0 headroom for the mongod process itself
+  // above the cache, so it would pass Mongo's config validation only to be
+  // OOM-killed moments later by Docker's --memory limit, restart, repeat.
+  // 512m gives the cache calc (~0.3GB at 60% of 512m) real room to breathe.
+  const engineMinMem = (db.engine === 'mysql' || db.engine === 'mongodb') ? '512m' : '256m';
   const memAlloc = (() => {
     const requested = db.memory || process.env.DB_DEFAULT_MEMORY || engineMinMem;
     const reqBytes  = parseMemToBytes(requested);
