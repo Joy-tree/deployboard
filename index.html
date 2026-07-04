@@ -5848,12 +5848,30 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     background:radial-gradient(ellipse at center,rgba(16,185,129,.07),transparent 60%),#050807;
     pointer-events:none;
   }
+  /* [FIX] Perfectly smooth radial gradients read as flat/synthetic ("AI
+     generated") — real light bloom is never that clean. A faint tiling
+     noise layer breaks up the smoothness without being visible as texture
+     on its own; it just stops the gradient from looking airbrushed. */
+  .jt-wl-bg::after{
+    content:''; position:absolute; inset:0;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    opacity:.05; mix-blend-mode:overlay; pointer-events:none;
+  }
   .jt-wl-flare{
     position:absolute; left:50%; top:50%;
-    width:110%; height:280%;
-    transform:translate(-50%,-50%) scale(0);
+    width:120%; height:300%;
+    transform:translate(-50%,-50%) scale(0) rotate(-4deg);
     border-radius:50%;
-    background:radial-gradient(circle,rgba(255,255,255,.32) 0%,rgba(52,211,153,.2) 32%,transparent 66%);
+    /* [FIX] Was one perfectly centered radial-gradient circle -- the
+       textbook "AI glow" look. Three off-axis, differently-sized blobs
+       overlapping via screen blend + a touch of blur reads as an actual
+       light burst catching the scene unevenly, not a generated icon. */
+    background:
+      radial-gradient(circle at 38% 34%, rgba(255,255,255,.34) 0%, transparent 20%),
+      radial-gradient(circle at 62% 58%, rgba(167,243,208,.4) 0%, transparent 34%),
+      radial-gradient(circle at 50% 50%, rgba(52,211,153,.24) 8%, rgba(5,150,105,.14) 34%, transparent 64%);
+    mix-blend-mode:screen;
+    filter:blur(3px);
     opacity:0; pointer-events:none;
   }
   .jt-wl-flare.jt-wl-flare-burst{ animation:jtWlFlareBurst 1.6s ease-out; }
@@ -5868,25 +5886,66 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   .jt-wl-leaf svg{ display:block; width:100%; height:100%; }
 
   .jt-wl-leaf.jt-wl-clearing{
-    animation-name:jtWlLeafClear;
     animation-timing-function:cubic-bezier(.33,0,.18,1);
     animation-fill-mode:forwards;
   }
-  @keyframes jtWlLeafClear{
-    0%{ transform:rotate(var(--start-rot,0deg)) translate(0,0); opacity:1; }
-    60%{ opacity:1; }
-    100%{ transform:rotate(var(--fall-rot,220deg)) translate(var(--fall-x,0px),160%); opacity:0; }
+  /* [FIX] Every leaf previously shared ONE animation (jtWlLeafClear) --
+     identical straight-line vector, only the destination point differed.
+     That uniformity is exactly what reads as computer-generated: real
+     falling leaves flutter and drift sideways as they go, don't move at a
+     constant rate, and blur slightly at peak speed. Three distinct paths
+     (assigned randomly per leaf in JS below) each with their own
+     mid-flight wobble, a body-turn each way of rotation rather than one
+     steady spin, a slight shrink for departing depth, and the faintest
+     motion blur through the fastest part of the fall replace that one
+     shared curve. */
+  .jt-wl-leaf.jt-wl-clearing.v1{ animation-name:jtWlLeafClear1; }
+  .jt-wl-leaf.jt-wl-clearing.v2{ animation-name:jtWlLeafClear2; }
+  .jt-wl-leaf.jt-wl-clearing.v3{ animation-name:jtWlLeafClear3; }
+  @keyframes jtWlLeafClear1{
+    0%{   transform:rotate(var(--start-rot,0deg)) translate(0,0) scale(1); opacity:1; filter:blur(0px); }
+    24%{  transform:rotate(calc(var(--start-rot,0deg) + 16deg)) translate(calc(var(--fall-x,0px) * .35),24%) scale(.98); opacity:1; filter:blur(.3px); }
+    58%{  transform:rotate(calc(var(--start-rot,0deg) + 95deg)) translate(calc(var(--fall-x,0px) * -.45),72%) scale(.93); opacity:.88; filter:blur(.7px); }
+    100%{ transform:rotate(var(--fall-rot,220deg)) translate(var(--fall-x,0px),160%) scale(.85); opacity:0; filter:blur(0px); }
+  }
+  @keyframes jtWlLeafClear2{
+    0%{   transform:rotate(var(--start-rot,0deg)) translate(0,0) scale(1); opacity:1; filter:blur(0px); }
+    30%{  transform:rotate(calc(var(--start-rot,0deg) - 22deg)) translate(calc(var(--fall-x,0px) * -.5),32%) scale(.97); opacity:1; filter:blur(.4px); }
+    66%{  transform:rotate(calc(var(--start-rot,0deg) + 55deg)) translate(calc(var(--fall-x,0px) * .6),84%) scale(.91); opacity:.82; filter:blur(.6px); }
+    100%{ transform:rotate(var(--fall-rot,220deg)) translate(var(--fall-x,0px),160%) scale(.84); opacity:0; filter:blur(0px); }
+  }
+  @keyframes jtWlLeafClear3{
+    0%{   transform:rotate(var(--start-rot,0deg)) translate(0,0) scale(1); opacity:1; filter:blur(0px); }
+    40%{  transform:rotate(calc(var(--start-rot,0deg) + 28deg)) translate(calc(var(--fall-x,0px) * .22),46%) scale(.95); opacity:1; filter:blur(.5px); }
+    72%{  transform:rotate(calc(var(--start-rot,0deg) - 40deg)) translate(calc(var(--fall-x,0px) * -.3),96%) scale(.89); opacity:.78; filter:blur(.6px); }
+    100%{ transform:rotate(var(--fall-rot,220deg)) translate(var(--fall-x,0px),160%) scale(.86); opacity:0; filter:blur(0px); }
   }
 
   .jt-wl-leaf.jt-wl-gathering{
-    animation-name:jtWlLeafGather;
     animation-timing-function:cubic-bezier(.22,.7,.25,1);
     animation-fill-mode:forwards;
     opacity:0;
   }
-  @keyframes jtWlLeafGather{
-    0%{ transform:rotate(var(--gather-start-rot,0deg)) translate(var(--gather-x,0px),-160%); opacity:0; }
-    100%{ transform:rotate(var(--rest-rot,0deg)) translate(0,0); opacity:1; }
+  .jt-wl-leaf.jt-wl-gathering.v1{ animation-name:jtWlLeafGather1; }
+  .jt-wl-leaf.jt-wl-gathering.v2{ animation-name:jtWlLeafGather2; }
+  .jt-wl-leaf.jt-wl-gathering.v3{ animation-name:jtWlLeafGather3; }
+  @keyframes jtWlLeafGather1{
+    0%{   transform:rotate(var(--gather-start-rot,0deg)) translate(var(--gather-x,0px),-160%) scale(.85); opacity:0; filter:blur(.5px); }
+    42%{  transform:rotate(calc(var(--gather-start-rot,0deg) - 20deg)) translate(calc(var(--gather-x,0px) * .4),-52%) scale(.95); opacity:.85; filter:blur(.3px); }
+    76%{  transform:rotate(calc(var(--rest-rot,0deg) + 11deg)) translate(calc(var(--gather-x,0px) * -.16),-7%) scale(1.02); opacity:1; filter:blur(0px); }
+    100%{ transform:rotate(var(--rest-rot,0deg)) translate(0,0) scale(1); opacity:1; filter:blur(0px); }
+  }
+  @keyframes jtWlLeafGather2{
+    0%{   transform:rotate(var(--gather-start-rot,0deg)) translate(var(--gather-x,0px),-160%) scale(.84); opacity:0; filter:blur(.6px); }
+    48%{  transform:rotate(calc(var(--gather-start-rot,0deg) + 24deg)) translate(calc(var(--gather-x,0px) * -.36),-46%) scale(.94); opacity:.8; filter:blur(.4px); }
+    80%{  transform:rotate(calc(var(--rest-rot,0deg) - 9deg)) translate(calc(var(--gather-x,0px) * .14),-6%) scale(1.03); opacity:1; filter:blur(0px); }
+    100%{ transform:rotate(var(--rest-rot,0deg)) translate(0,0) scale(1); opacity:1; filter:blur(0px); }
+  }
+  @keyframes jtWlLeafGather3{
+    0%{   transform:rotate(var(--gather-start-rot,0deg)) translate(var(--gather-x,0px),-160%) scale(.86); opacity:0; filter:blur(.4px); }
+    38%{  transform:rotate(calc(var(--gather-start-rot,0deg) + 14deg)) translate(calc(var(--gather-x,0px) * .3),-60%) scale(.93); opacity:.75; filter:blur(.5px); }
+    74%{  transform:rotate(calc(var(--rest-rot,0deg) + 8deg)) translate(calc(var(--gather-x,0px) * -.2),-9%) scale(1.02); opacity:1; filter:blur(0px); }
+    100%{ transform:rotate(var(--rest-rot,0deg)) translate(0,0) scale(1); opacity:1; filter:blur(0px); }
   }
 
   .jt-wl-text{
@@ -5913,11 +5972,22 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     filter:drop-shadow(0 0 16px rgba(5,150,105,.6)) drop-shadow(0 0 38px rgba(16,185,129,.35));
   }
   .jt-wl-text.jt-wl-text-visible .jt-wl-title{
-    animation:jtWlTitleGlow 2.8s ease-in-out infinite;
+    animation:jtWlTitleGlow 3.4s ease-in-out infinite;
   }
+  /* [FIX] Was a clean two-point sine pulse (0%/50%/100%, one smooth up-down)
+     -- reads as a mechanical/synthetic pulse, the kind of thing that gives
+     away CSS-generated glow. Real light (candle, bioluminescence, neon)
+     never breathes in one perfectly even wave. Uneven timing + intermediate
+     dips/spikes at irregular intervals sells "alive" instead of "looping". */
   @keyframes jtWlTitleGlow{
-    0%,100%{ filter:drop-shadow(0 0 16px rgba(5,150,105,.6)) drop-shadow(0 0 38px rgba(16,185,129,.35)); }
-    50%{ filter:drop-shadow(0 0 30px rgba(5,150,105,1)) drop-shadow(0 0 66px rgba(16,185,129,.7)); }
+    0%{   filter:drop-shadow(0 0 14px rgba(5,150,105,.55)) drop-shadow(0 0 34px rgba(16,185,129,.32)); }
+    17%{  filter:drop-shadow(0 0 21px rgba(5,150,105,.72)) drop-shadow(0 0 44px rgba(16,185,129,.46)); }
+    29%{  filter:drop-shadow(0 0 16px rgba(5,150,105,.6)) drop-shadow(0 0 36px rgba(16,185,129,.34)); }
+    46%{  filter:drop-shadow(0 0 29px rgba(5,150,105,.95)) drop-shadow(0 0 60px rgba(16,185,129,.62)); }
+    58%{  filter:drop-shadow(0 0 19px rgba(5,150,105,.65)) drop-shadow(0 0 40px rgba(16,185,129,.38)); }
+    74%{  filter:drop-shadow(0 0 31px rgba(5,150,105,1)) drop-shadow(0 0 66px rgba(16,185,129,.7)); }
+    88%{  filter:drop-shadow(0 0 18px rgba(5,150,105,.62)) drop-shadow(0 0 38px rgba(16,185,129,.36)); }
+    100%{ filter:drop-shadow(0 0 14px rgba(5,150,105,.55)) drop-shadow(0 0 34px rgba(16,185,129,.32)); }
   }
 
   .jt-wl-sparks{ position:absolute; inset:-30px -50px; pointer-events:none; z-index:1; }
@@ -5996,6 +6066,12 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 
   function rand(min, max){ return Math.random() * (max - min) + min; }
   function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  // [FIX] Randomly assigns one of the three fall/rise motion variants added
+  // above per leaf, so neighboring leaves don't all move along the exact
+  // same path -- see the jtWlLeafClear1/2/3 and jtWlLeafGather1/2/3
+  // keyframe comments for why that uniformity was the main giveaway.
+  var VARIANTS = ['v1', 'v2', 'v3'];
+  function pickVariant(){ return pick(VARIANTS); }
 
   function tileGrid(){
     var w = root.clientWidth || 800;
@@ -6030,6 +6106,12 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       el.style.width = t.size + 'px';
       el.style.height = t.size + 'px';
       el.style.color = pick(GREENS);
+      // [FIX] Every leaf previously stacked in DOM/grid order regardless of
+      // size -- a "closer" (bigger) leaf could end up layered BEHIND a
+      // "farther" (smaller) one, which flattens the illusion of depth. Bigger
+      // tiles are meant to read as nearer to the viewer, so they now
+      // consistently layer on top.
+      el.style.zIndex = Math.round(t.size);
       var restRot = Math.floor(rand(-16, 16));
       el.style.transform = 'rotate(' + restRot + 'deg)';
       el.innerHTML = '<svg><use href="#' + pick(TYPES) + '"></use></svg>';
@@ -6067,8 +6149,8 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       var dur = rand(1.9, 2.5);
       item.el.style.animationDelay = delay.toFixed(2) + 's';
       item.el.style.animationDuration = dur.toFixed(2) + 's';
-      item.el.classList.remove('jt-wl-gathering');
-      item.el.classList.add('jt-wl-clearing');
+      item.el.classList.remove('jt-wl-gathering', 'v1', 'v2', 'v3');
+      item.el.classList.add('jt-wl-clearing', pickVariant());
     }
   }
 
@@ -6086,7 +6168,7 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       var dur = rand(1.9, 2.5);
       item.el.style.animationDelay = delay.toFixed(2) + 's';
       item.el.style.animationDuration = dur.toFixed(2) + 's';
-      item.el.classList.add('jt-wl-gathering');
+      item.el.classList.add('jt-wl-gathering', pickVariant());
     }
     return items;
   }
