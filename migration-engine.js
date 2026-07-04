@@ -73,7 +73,42 @@ function fetchJson(urlStr) {
 
 // ── Readers: source -> { collections: [{ name, rows: [obj,...] }] } ───────
 
+// [FIX] Extracts the database name from a Mongo connection string without
+// using the WHATWG URL parser -- that throws outright on replica-set style
+// strings with multiple comma-separated hosts
+// (mongodb://host1:27017,host2:27017,host3:27017/db?replicaSet=rs0), which
+// are completely valid and common for self-hosted/non-Atlas clusters.
+// Anchoring on the last '@' (auth/host separator -- a literal '@' in a
+// password must be percent-encoded per the connection string spec, so the
+// last one always marks the real boundary) and the first '/' after that
+// handles both srv and standard, single-host and multi-host forms.
+function extractMongoDbName(connectionString) {
+  const afterScheme = String(connectionString).replace(/^mongodb(\+srv)?:\/\//, '');
+  const afterAuth = afterScheme.includes('@') ? afterScheme.slice(afterScheme.lastIndexOf('@') + 1) : afterScheme;
+  if (!afterAuth.includes('/')) return '';
+  const pathAndQuery = afterAuth.slice(afterAuth.indexOf('/') + 1);
+  return pathAndQuery.split('?')[0].trim();
+}
+
 async function readFromMongo(connectionString) {
+  // [FIX] client.db() with no name uses whatever database is in the
+  // connection string's path -- but if there isn't one (very common: the
+  // default "Copy connection string" button in Atlas gives you
+  // mongodb+srv://user:pass@cluster.mongodb.net/?retryWrites=true&w=majority
+  // with NO db name before the ?), the driver silently falls back to a
+  // database literally named "test". That means a migration could run
+  // "successfully" against the wrong database with no error at all.
+  // Checked before connecting so it fails fast/clearly rather than only
+  // after establishing a network connection.
+  if (!extractMongoDbName(connectionString)) {
+    throw new Error(
+      'Your MongoDB connection string doesn\'t include a database name (the part after the last "/" before any "?"). ' +
+      'Atlas\'s default "Copy connection string" button omits it -- add it explicitly, ' +
+      'e.g. mongodb+srv://user:pass@cluster.mongodb.net/YOUR_DB_NAME?retryWrites=true, ' +
+      'otherwise MongoDB silently defaults to a database named "test".'
+    );
+  }
+
   const client = new MongoClient(connectionString, { serverSelectionTimeoutMS: 8000 });
   await client.connect();
   try {
@@ -97,29 +132,47 @@ async function readFromFirebaseRtdb(databaseUrl, authSecret) {
   // Firebase RTDB's REST API returns the entire tree as one JSON document
   // at <databaseUrl>/.json -- no SDK needed, just a plain HTTPS GET. Each
   // top-level key becomes a "collection"; its immediate children become
-  // that collection's documents (or, if the value at a key is a scalar
-  // rather than an object of children, it's wrapped as a single-field row
-  // so nothing is silently skipped).
+  // that collection's documents.
   const base = databaseUrl.replace(/\/$/, '');
   const qs = authSecret ? `?auth=${encodeURIComponent(authSecret)}` : '';
   const tree = await fetchJson(`${base}/.json${qs}`);
   if (!tree || typeof tree !== 'object') return [];
 
+  // [FIX] A single child-to-row conversion used for both object-map and
+  // array-style RTDB nodes below. Object children get their fields spread
+  // into the row (unchanged prior behavior); scalar or array children
+  // become a row shaped { _id, value } instead of being silently collapsed.
+  const childToRow = (id, child) =>
+    (child && typeof child === 'object' && !Array.isArray(child)) ? { _id: id, ...child } : { _id: id, value: child };
+
   const collections = [];
   for (const [topKey, value] of Object.entries(tree)) {
+    if (Array.isArray(value) && value.length) {
+      // [FIX] Previously fell through to the scalar/array branch below and
+      // got collapsed into ONE row wrapping the entire array -- a common
+      // RTDB shape (ordered lists of children) lost its per-element
+      // structure entirely. Firebase arrays can contain holes (sparse
+      // arrays from deleted indices come back as `null`), so those are
+      // skipped rather than turned into meaningless empty rows.
+      const rows = value.map((child, i) => (child === null ? null : childToRow(i, child))).filter(Boolean);
+      if (rows.length) { collections.push({ name: topKey, rows }); continue; }
+    }
     if (value && typeof value === 'object' && !Array.isArray(value)) {
       const childKeys = Object.keys(value);
-      const looksLikeCollection = childKeys.every(k => value[k] && typeof value[k] === 'object');
-      if (looksLikeCollection && childKeys.length) {
-        collections.push({
-          name: topKey,
-          rows: childKeys.map(k => ({ _id: k, ...value[k] })),
-        });
+      if (childKeys.length) {
+        // [FIX] Previously only treated this as a "collection of documents"
+        // when EVERY child was itself an object. A very common RTDB shape --
+        // a flat map of scalar values, e.g. counters: { user1: 5, user2: 10 }
+        // -- failed that check and got collapsed into a single row for the
+        // whole node, silently losing the per-child structure. Now handles
+        // children of any kind (object, scalar, or a mix) uniformly, one
+        // row per child either way.
+        collections.push({ name: topKey, rows: childKeys.map(k => childToRow(k, value[k])) });
         continue;
       }
     }
-    // Scalar or array at the top level -- still capture it as a
-    // single-row collection rather than dropping it.
+    // Scalar, empty object, or empty array at the top level -- still
+    // capture it as a single-row collection rather than dropping it.
     collections.push({ name: topKey, rows: [{ _id: topKey, value }] });
   }
   return collections;
