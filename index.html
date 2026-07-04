@@ -12708,7 +12708,7 @@ async function migStartMigration() {
   btn.disabled = true;
   btn.innerHTML = 'Starting…';
   try {
-    const res = await apiFetch('/api/v1/migrations', {
+    const res = await apiFetch('/api/migrations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ source, destination: { databaseId: destinationId } }),
@@ -12744,7 +12744,7 @@ function migJobRowHtml(job) {
 async function migLoadJobs() {
   const container = document.getElementById('migJobList');
   try {
-    const res = await apiFetch('/api/v1/migrations');
+    const res = await apiFetch('/api/migrations');
     const data = await res.json();
     const jobs = data.jobs || [];
     if (!jobs.length) { container.innerHTML = '<div class="mig-empty">No migrations yet — start one above.</div>'; return; }
@@ -12759,7 +12759,7 @@ function migPollJob(jobId) {
   if (migPollTimers[jobId]) return;
   migPollTimers[jobId] = setInterval(async () => {
     try {
-      const res = await apiFetch('/api/v1/migrations/' + encodeURIComponent(jobId));
+      const res = await apiFetch('/api/migrations/' + encodeURIComponent(jobId));
       const data = await res.json();
       if (!data.ok) return;
       const el = document.getElementById('mig-job-' + jobId);

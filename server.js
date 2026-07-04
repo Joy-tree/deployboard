@@ -12707,8 +12707,16 @@ async function resolveMigrationSource(user, source) {
   throw new Error(`Unsupported source kind: ${source.kind}`);
 }
 
-// ── POST /api/v1/migrations -- start a migration ────────────────────────────
-v1.post('/migrations', async (req, res) => {
+// ── POST /api/migrations -- start a migration ───────────────────────────────
+// [FIX] Moved off the /api/v1 router. That router is the PUBLIC REST API,
+// gated exclusively by requirePersonalApiKey (jtk_... keys) for external/CLI
+// consumers. The dashboard's browser session sends its regular session
+// authToken via apiFetch(), which requirePersonalApiKey rejects outright
+// ("Missing or invalid API key"). requireAuth (used below, same as
+// /api/databases which already works from this dashboard) accepts session
+// tokens, jtk_ keys, and internal server keys, so it's the correct gate for
+// a dashboard-facing feature like this one.
+app.post('/api/migrations', requireAuth, async (req, res) => {
   try {
     const { source, destination } = req.body || {};
     if (!source || !source.kind) return res.status(400).json({ ok: false, error: 'source.kind is required (joytree | mongo | firebase)' });
@@ -12749,14 +12757,14 @@ v1.post('/migrations', async (req, res) => {
       await persistMigrationJobSummary(req.user, job).catch(() => {});
     });
 
-    res.json({ ok: true, jobId, message: 'Migration started. Poll GET /api/v1/migrations/:id for progress.' });
+    res.json({ ok: true, jobId, message: 'Migration started. Poll GET /api/migrations/:id for progress.' });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
 });
 
-// ── GET /api/v1/migrations -- list jobs for this user (current process + persisted history) ──
-v1.get('/migrations', async (req, res) => {
+// ── GET /api/migrations -- list jobs for this user (current process + persisted history) ──
+app.get('/api/migrations', requireAuth, async (req, res) => {
   try {
     const ws = (await readWorkspaceFromFirebase(req.user)) || {};
     const persisted = Array.isArray(ws.migrations) ? ws.migrations : [];
@@ -12767,8 +12775,8 @@ v1.get('/migrations', async (req, res) => {
   }
 });
 
-// ── GET /api/v1/migrations/:id -- one job's full detail + logs ──────────────
-v1.get('/migrations/:id', async (req, res) => {
+// ── GET /api/migrations/:id -- one job's full detail + logs ─────────────────
+app.get('/api/migrations/:id', requireAuth, async (req, res) => {
   const job = migrationJobs.get(req.params.id);
   if (job) return res.json({ ok: true, job });
   try {
