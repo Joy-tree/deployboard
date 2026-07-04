@@ -12626,6 +12626,14 @@ function renderMigSourceFields(kind) {
         <select class="mig-select" id="migSourceJoytreeSelect">${migDbOptionsHtml()}</select>
         <div class="mig-help">Copies every table/collection from this database into the destination below.</div>
       </div>`;
+    // [FIX] This <select> is destroyed and recreated fresh every time the
+    // source type is switched back to "joytree" (innerHTML replacement
+    // above), which would leave makeCustomSelect's cached refresher
+    // pointing at the old, now-detached element. Clear the stale cache
+    // entry first so it wraps the new element instead of silently
+    // reusing a broken reference to the old one.
+    if (window.__customSelectRefreshers) delete window.__customSelectRefreshers['migSourceJoytreeSelect'];
+    makeCustomSelect('migSourceJoytreeSelect', 'Select a database…');
   } else if (kind === 'mongo') {
     el.innerHTML = `
       <div class="mig-field">
@@ -12656,7 +12664,16 @@ async function migLoadDatabases() {
     migJoyTreeDatabases = [];
   }
   const destSelect = document.getElementById('migDestSelect');
-  if (destSelect) destSelect.innerHTML = migDbOptionsHtml();
+  if (destSelect) {
+    destSelect.innerHTML = migDbOptionsHtml();
+    // [FIX] Was rendering as a plain native <select> -- browser-default
+    // styling, not the site's theme. makeCustomSelect() is the same
+    // component already used elsewhere in this dashboard (e.g. the deploy
+    // repo/branch pickers): it hides this native select and builds a
+    // themed dropdown next to it that stays in sync, so all the existing
+    // .value reads elsewhere in this file keep working unchanged.
+    makeCustomSelect('migDestSelect', 'Select a destination database…');
+  }
   if (migSelectedSource === 'joytree') renderMigSourceFields('joytree');
 }
 
@@ -12755,10 +12772,14 @@ function migPollJob(jobId) {
   }, 2500);
 }
 
-// Hook into the existing page router: initialize this page's data the
-// first time it's shown, matching the exact pattern already used for
-// other pages (e.g. domain-store) elsewhere in this file.
-(function() {
+// [FIX] The real showPage function isn't defined until much later in this
+// document (~8000 lines further down). Wrapping it here, at script-parse
+// time, meant window.showPage was still undefined when this ran -- the
+// `if (_orig)` guard silently failed and the wrap never happened at all,
+// which is why this page's data never loaded no matter how long you
+// waited. Deferring to DOMContentLoaded guarantees every earlier script
+// tag (including the real showPage definition) has already run.
+document.addEventListener('DOMContentLoaded', function() {
   const _orig = window.showPage;
   if (_orig) {
     window.showPage = function(page, el) {
@@ -12771,7 +12792,7 @@ function migPollJob(jobId) {
       return r;
     };
   }
-})();
+});
 </script>
 
     <div class="page" id="page-databases">
