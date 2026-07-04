@@ -12873,7 +12873,15 @@ async function resolveMigrationSource(user, source) {
 // /api/databases which already works from this dashboard) accepts session
 // tokens, jtk_ keys, and internal server keys, so it's the correct gate for
 // a dashboard-facing feature like this one.
-app.post('/api/migrations', requireAuth, async (req, res) => {
+// [FIX] Extracted into named handlers (rather than inline route callbacks)
+// so the exact same logic can be mounted on BOTH routers: `app` here with
+// requireAuth (session cookie -- what the dashboard's browser uses) and
+// `v1` further down with requirePersonalApiKey (jtk_... key -- what the
+// CLI and MCP server use). Migrations previously only existed on `app`,
+// which meant there was no way for the CLI or MCP tools to trigger or
+// inspect a migration at all -- they only ever talk to the API via a
+// personal API key, never a browser session.
+async function migrationsCreateHandler(req, res) {
   try {
     const { source, destination } = req.body || {};
     if (!source || !source.kind) return res.status(400).json({ ok: false, error: 'source.kind is required (joytree | mongo | firebase | sql | redis)' });
@@ -12884,10 +12892,6 @@ app.post('/api/migrations', requireAuth, async (req, res) => {
 
     const jobId = 'mig_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
     const logs = [];
-    // [FIX] Previously only handled joytree/mongo/firebase -- external sql/
-    // redis sources (added alongside this fix) fell through to the final
-    // 'else' branch and were mislabeled as "Firebase Realtime Database" in
-    // migration history regardless of what they actually were.
     const sqlEngineLabels = { mysql: 'MySQL', postgres: 'PostgreSQL', mariadb: 'MariaDB' };
     const sourceLabel =
       source.kind === 'joytree'  ? `JoyTree DB (${source.databaseId})` :
@@ -12896,15 +12900,6 @@ app.post('/api/migrations', requireAuth, async (req, res) => {
       source.kind === 'sql'      ? `External ${sqlEngineLabels[source.engine] || source.engine}` :
       source.kind === 'redis'    ? 'External Redis' :
       source.kind;
-    // [FIX] migrationJobs is one shared in-memory Map across every user on
-    // this server process -- without an owner tag on each job, ANY
-    // authenticated user could see (via GET /api/migrations) or poll the
-    // full logs of (via GET /api/migrations/:id, just by guessing/observing
-    // a jobId) another user's still-running migration. Only jobs that have
-    // already finished are ever written to Firebase (per-user, via
-    // persistMigrationJobSummary) -- this ownerUserId is what lets the
-    // in-memory "live" list below be scoped the same way finished jobs
-    // already are.
     const job = {
       id: jobId,
       status: 'running',
@@ -12920,7 +12915,7 @@ app.post('/api/migrations', requireAuth, async (req, res) => {
     };
     migrationJobs.set(jobId, job);
 
-    // Runs in the background; the caller polls GET /migrations/:id for progress.
+    // Runs in the background; the caller polls GET .../migrations/:id for progress.
     runMigration(resolvedSource, resolvedDest, (line) => {
       logs.push({ t: new Date().toISOString(), line });
     }).then(async (result) => {
@@ -12936,20 +12931,17 @@ app.post('/api/migrations', requireAuth, async (req, res) => {
       await persistMigrationJobSummary(req.user, job).catch(() => {});
     });
 
-    res.json({ ok: true, jobId, message: 'Migration started. Poll GET /api/migrations/:id for progress.' });
+    res.json({ ok: true, jobId, message: 'Migration started. Poll GET .../migrations/:id for progress.' });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
-});
+}
 
-// ── GET /api/migrations -- list jobs for this user (current process + persisted history) ──
-app.get('/api/migrations', requireAuth, async (req, res) => {
+async function migrationsListHandler(req, res) {
   try {
     const userId = String(req.user._id || req.user.id);
     const ws = (await readWorkspaceFromFirebase(req.user)) || {};
     const persisted = Array.isArray(ws.migrations) ? ws.migrations : [];
-    // [FIX] Scope in-memory "live" jobs to this user -- see the ownerUserId
-    // comment on job creation above for why this matters.
     const live = [...migrationJobs.values()]
       .filter(j => String(j.ownerUserId) === userId)
       .map(j => ({ ...j, logs: undefined }));
@@ -12957,16 +12949,11 @@ app.get('/api/migrations', requireAuth, async (req, res) => {
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
-});
+}
 
-// ── GET /api/migrations/:id -- one job's full detail + logs ─────────────────
-app.get('/api/migrations/:id', requireAuth, async (req, res) => {
+async function migrationsGetHandler(req, res) {
   const userId = String(req.user._id || req.user.id);
   const job = migrationJobs.get(req.params.id);
-  // [FIX] Without this ownership check, any authenticated user who obtained
-  // or guessed a jobId (they're not secret/random-looking-only -- see the
-  // 'mig_<timestamp>_<random>' format) could poll another user's live
-  // migration and read its logs, which can contain connection strings.
   if (job && String(job.ownerUserId) === userId) return res.json({ ok: true, job });
   try {
     const ws = (await readWorkspaceFromFirebase(req.user)) || {};
@@ -12974,31 +12961,14 @@ app.get('/api/migrations/:id', requireAuth, async (req, res) => {
     if (persisted) return res.json({ ok: true, job: persisted });
   } catch (_) {}
   res.status(404).json({ ok: false, error: 'Migration job not found' });
-});
+}
 
-// ── DELETE /api/migrations/:id -- remove one history entry ──────────────────
-app.delete('/api/migrations/:id', requireAuth, async (req, res) => {
+async function migrationsDeleteOneHandler(req, res) {
   try {
     const userId = String(req.user._id || req.user.id);
     const jobId = req.params.id;
     const job = migrationJobs.get(jobId);
-    // [FIX] Only treat the in-memory job as "this user's" if ownerUserId
-    // actually matches -- without this check, any authenticated user could
-    // delete (or get a false "still running" block on) another user's live
-    // job just by guessing/observing its id, since migrationJobs is one
-    // Map shared across every user on the process.
     const ownJob = job && String(job.ownerUserId) === userId ? job : null;
-
-    // A migration that's still actively running lives only in the
-    // in-memory migrationJobs Map (it isn't persisted to Firebase until it
-    // finishes -- see persistMigrationJobSummary). Deleting it out from
-    // under a live run wouldn't stop anything real (runMigration() has
-    // already captured its own closures independent of this Map entry) but
-    // it WOULD orphan the job: it'd keep writing to a log array nothing
-    // still references, and finish by calling persistMigrationJobSummary
-    // anyway, silently reviving the "deleted" entry a moment later. Block
-    // deleting a running job instead of allowing a delete that doesn't
-    // actually stick.
     if (ownJob && ownJob.status === 'running') {
       return res.status(409).json({ ok: false, error: 'This migration is still running — wait for it to finish before deleting it.' });
     }
@@ -13015,15 +12985,10 @@ app.delete('/api/migrations/:id', requireAuth, async (req, res) => {
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
-});
+}
 
-// ── DELETE /api/migrations -- clear all migration history ───────────────────
-app.delete('/api/migrations', requireAuth, async (req, res) => {
+async function migrationsClearAllHandler(req, res) {
   try {
-    // Same reasoning as the single-delete route above: don't clear out jobs
-    // that are still actively running, and only ever touch this user's own
-    // jobs (ownerUserId is set unconditionally at job creation now, so no
-    // fallback-to-current-user is needed or safe here).
     const userId = String(req.user._id || req.user.id);
     for (const [jobId, job] of migrationJobs.entries()) {
       if (job.status !== 'running' && String(job.ownerUserId) === userId) {
@@ -13037,7 +13002,13 @@ app.delete('/api/migrations', requireAuth, async (req, res) => {
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
-});
+}
+
+app.post('/api/migrations', requireAuth, migrationsCreateHandler);
+app.get('/api/migrations', requireAuth, migrationsListHandler);
+app.get('/api/migrations/:id', requireAuth, migrationsGetHandler);
+app.delete('/api/migrations/:id', requireAuth, migrationsDeleteOneHandler);
+app.delete('/api/migrations', requireAuth, migrationsClearAllHandler);
 
 async function persistMigrationJobSummary(user, job) {
   const ws = (await readWorkspaceFromFirebase(user)) || {};
@@ -13318,6 +13289,18 @@ v1.get('/databases', async (req, res) => {
     })), degraded: !isDbReady() });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
+
+// ── /api/v1/migrations -- same handlers as the dashboard's /api/migrations,
+// mounted here so the CLI and MCP server (which authenticate via jtk_...
+// personal API keys, never a browser session) can trigger and inspect
+// migrations too. req.user is already set correctly by this router's own
+// v1.use(requirePersonalApiKey) applied earlier -- see migrationsCreateHandler
+// and friends above for the shared logic.
+v1.post('/migrations', migrationsCreateHandler);
+v1.get('/migrations', migrationsListHandler);
+v1.get('/migrations/:id', migrationsGetHandler);
+v1.delete('/migrations/:id', migrationsDeleteOneHandler);
+v1.delete('/migrations', migrationsClearAllHandler);
 
 // ── GET /api/v1/usage ─────────────────────────────────────────────────────────
 v1.get('/usage', async (req, res) => {
