@@ -12851,6 +12851,16 @@ async function resolveMigrationSource(user, source) {
   if (source.kind === 'joytree') return resolveJoyTreeDbAsEndpoint(user, source.databaseId);
   if (source.kind === 'mongo') return { kind: 'mongo', connectionString: source.connectionString };
   if (source.kind === 'firebase') return { kind: 'firebase', databaseUrl: source.databaseUrl, authSecret: source.authSecret || null };
+  // [FIX] readFromSql/readFromRedis in migration-engine.js already supported
+  // arbitrary external connection strings -- only the frontend source-type
+  // picker and this resolver were missing, so external MySQL/PostgreSQL/
+  // MariaDB/Redis sources (as opposed to JoyTree-provisioned ones) had no
+  // way to reach the engine at all.
+  if (source.kind === 'sql') {
+    if (!['mysql', 'postgres', 'mariadb'].includes(source.engine)) throw new Error(`Unsupported SQL engine: ${source.engine}`);
+    return { kind: 'sql', engine: source.engine, connectionString: source.connectionString };
+  }
+  if (source.kind === 'redis') return { kind: 'redis', connectionString: source.connectionString };
   throw new Error(`Unsupported source kind: ${source.kind}`);
 }
 
@@ -12866,7 +12876,7 @@ async function resolveMigrationSource(user, source) {
 app.post('/api/migrations', requireAuth, async (req, res) => {
   try {
     const { source, destination } = req.body || {};
-    if (!source || !source.kind) return res.status(400).json({ ok: false, error: 'source.kind is required (joytree | mongo | firebase)' });
+    if (!source || !source.kind) return res.status(400).json({ ok: false, error: 'source.kind is required (joytree | mongo | firebase | sql | redis)' });
     if (!destination || !destination.databaseId) return res.status(400).json({ ok: false, error: 'destination.databaseId is required (must be one of your JoyTree databases)' });
 
     const resolvedSource = await resolveMigrationSource(req.user, source);
@@ -12874,11 +12884,33 @@ app.post('/api/migrations', requireAuth, async (req, res) => {
 
     const jobId = 'mig_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
     const logs = [];
+    // [FIX] Previously only handled joytree/mongo/firebase -- external sql/
+    // redis sources (added alongside this fix) fell through to the final
+    // 'else' branch and were mislabeled as "Firebase Realtime Database" in
+    // migration history regardless of what they actually were.
+    const sqlEngineLabels = { mysql: 'MySQL', postgres: 'PostgreSQL', mariadb: 'MariaDB' };
+    const sourceLabel =
+      source.kind === 'joytree'  ? `JoyTree DB (${source.databaseId})` :
+      source.kind === 'mongo'    ? 'External MongoDB' :
+      source.kind === 'firebase' ? 'Firebase Realtime Database' :
+      source.kind === 'sql'      ? `External ${sqlEngineLabels[source.engine] || source.engine}` :
+      source.kind === 'redis'    ? 'External Redis' :
+      source.kind;
+    // [FIX] migrationJobs is one shared in-memory Map across every user on
+    // this server process -- without an owner tag on each job, ANY
+    // authenticated user could see (via GET /api/migrations) or poll the
+    // full logs of (via GET /api/migrations/:id, just by guessing/observing
+    // a jobId) another user's still-running migration. Only jobs that have
+    // already finished are ever written to Firebase (per-user, via
+    // persistMigrationJobSummary) -- this ownerUserId is what lets the
+    // in-memory "live" list below be scoped the same way finished jobs
+    // already are.
     const job = {
       id: jobId,
       status: 'running',
+      ownerUserId: String(req.user._id || req.user.id),
       sourceKind: source.kind,
-      sourceLabel: source.kind === 'joytree' ? `JoyTree DB (${source.databaseId})` : source.kind === 'mongo' ? 'External MongoDB' : 'Firebase Realtime Database',
+      sourceLabel,
       destinationLabel: `JoyTree DB (${destination.databaseId})`,
       startedAt: new Date().toISOString(),
       completedAt: null,
@@ -12913,9 +12945,14 @@ app.post('/api/migrations', requireAuth, async (req, res) => {
 // ── GET /api/migrations -- list jobs for this user (current process + persisted history) ──
 app.get('/api/migrations', requireAuth, async (req, res) => {
   try {
+    const userId = String(req.user._id || req.user.id);
     const ws = (await readWorkspaceFromFirebase(req.user)) || {};
     const persisted = Array.isArray(ws.migrations) ? ws.migrations : [];
-    const live = [...migrationJobs.values()].map(j => ({ ...j, logs: undefined }));
+    // [FIX] Scope in-memory "live" jobs to this user -- see the ownerUserId
+    // comment on job creation above for why this matters.
+    const live = [...migrationJobs.values()]
+      .filter(j => String(j.ownerUserId) === userId)
+      .map(j => ({ ...j, logs: undefined }));
     res.json({ ok: true, jobs: [...live, ...persisted].sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt)) });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -12924,14 +12961,82 @@ app.get('/api/migrations', requireAuth, async (req, res) => {
 
 // ── GET /api/migrations/:id -- one job's full detail + logs ─────────────────
 app.get('/api/migrations/:id', requireAuth, async (req, res) => {
+  const userId = String(req.user._id || req.user.id);
   const job = migrationJobs.get(req.params.id);
-  if (job) return res.json({ ok: true, job });
+  // [FIX] Without this ownership check, any authenticated user who obtained
+  // or guessed a jobId (they're not secret/random-looking-only -- see the
+  // 'mig_<timestamp>_<random>' format) could poll another user's live
+  // migration and read its logs, which can contain connection strings.
+  if (job && String(job.ownerUserId) === userId) return res.json({ ok: true, job });
   try {
     const ws = (await readWorkspaceFromFirebase(req.user)) || {};
     const persisted = (ws.migrations || []).find(j => j.id === req.params.id);
     if (persisted) return res.json({ ok: true, job: persisted });
   } catch (_) {}
   res.status(404).json({ ok: false, error: 'Migration job not found' });
+});
+
+// ── DELETE /api/migrations/:id -- remove one history entry ──────────────────
+app.delete('/api/migrations/:id', requireAuth, async (req, res) => {
+  try {
+    const userId = String(req.user._id || req.user.id);
+    const jobId = req.params.id;
+    const job = migrationJobs.get(jobId);
+    // [FIX] Only treat the in-memory job as "this user's" if ownerUserId
+    // actually matches -- without this check, any authenticated user could
+    // delete (or get a false "still running" block on) another user's live
+    // job just by guessing/observing its id, since migrationJobs is one
+    // Map shared across every user on the process.
+    const ownJob = job && String(job.ownerUserId) === userId ? job : null;
+
+    // A migration that's still actively running lives only in the
+    // in-memory migrationJobs Map (it isn't persisted to Firebase until it
+    // finishes -- see persistMigrationJobSummary). Deleting it out from
+    // under a live run wouldn't stop anything real (runMigration() has
+    // already captured its own closures independent of this Map entry) but
+    // it WOULD orphan the job: it'd keep writing to a log array nothing
+    // still references, and finish by calling persistMigrationJobSummary
+    // anyway, silently reviving the "deleted" entry a moment later. Block
+    // deleting a running job instead of allowing a delete that doesn't
+    // actually stick.
+    if (ownJob && ownJob.status === 'running') {
+      return res.status(409).json({ ok: false, error: 'This migration is still running — wait for it to finish before deleting it.' });
+    }
+    if (ownJob) migrationJobs.delete(jobId);
+
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    const before = Array.isArray(ws.migrations) ? ws.migrations.length : 0;
+    ws.migrations = (ws.migrations || []).filter(j => j.id !== jobId);
+    if (ws.migrations.length === before && !ownJob) {
+      return res.status(404).json({ ok: false, error: 'Migration job not found' });
+    }
+    await writeWorkspaceToFirebase(req.user, ws);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ── DELETE /api/migrations -- clear all migration history ───────────────────
+app.delete('/api/migrations', requireAuth, async (req, res) => {
+  try {
+    // Same reasoning as the single-delete route above: don't clear out jobs
+    // that are still actively running, and only ever touch this user's own
+    // jobs (ownerUserId is set unconditionally at job creation now, so no
+    // fallback-to-current-user is needed or safe here).
+    const userId = String(req.user._id || req.user.id);
+    for (const [jobId, job] of migrationJobs.entries()) {
+      if (job.status !== 'running' && String(job.ownerUserId) === userId) {
+        migrationJobs.delete(jobId);
+      }
+    }
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    ws.migrations = [];
+    await writeWorkspaceToFirebase(req.user, ws);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
 async function persistMigrationJobSummary(user, job) {
