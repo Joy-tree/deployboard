@@ -11251,10 +11251,18 @@ const DB_ENGINE_CONFIG = {
 
 // Find a free port in range 14000–15000 avoiding already-used ones
 // [FIX] async — execSync('docker ps ...') blocked the event loop.
-async function findFreeDbPort() {
+async function findFreeDbPort(preferredPort) {
   try {
     const used = await execP("docker ps --format '{{.Ports}}' 2>/dev/null || echo ''");
     const usedPorts = new Set([...used.matchAll(/:(\d+)->/g)].map(m => Number(m[1])));
+    // [FIX] Recreate passes the database's previous port here so a rebuild
+    // preserves its connection string. But that port isn't guaranteed to
+    // still be free -- another database can grab it in the window between
+    // the old container being removed and the new one starting (exactly
+    // what happened when a freshly-created Postgres database took over
+    // migration-test's old port 14000 mid-recreate). Validate it against
+    // what's actually in use right now rather than trusting it blindly.
+    if (preferredPort && !usedPorts.has(Number(preferredPort))) return Number(preferredPort);
     for (let p = 14000; p <= 15000; p++) {
       if (!usedPorts.has(p)) return p;
     }
@@ -11391,12 +11399,10 @@ async function provisionDbContainer(db, opts = {}) {
   if (!cfg) throw new Error(`Unknown engine: ${db.engine}`);
 
   const containerName = `jt-db-${db.name}-${String(db._id).slice(-6)}`;
-  // [FIX] Recreate flow passes opts.hostPort to reuse the database's existing
-  // port (freed by the docker rm that precedes this call) instead of always
-  // picking a fresh one via findFreeDbPort() -- otherwise every recreate would
-  // silently change the connection string and break any already-linked
-  // project env vars or saved external connection strings.
-  const hostPort      = opts.hostPort || await findFreeDbPort();
+  // [FIX] findFreeDbPort() now validates opts.hostPort against what's
+  // actually in use before reusing it, instead of trusting it blindly --
+  // see findFreeDbPort() for why that mattered in practice.
+  const hostPort      = await findFreeDbPort(opts.hostPort);
   const volumePath    = db.volume || `/var/joytree-data/${containerName}`;
   const imageToUse    = db.image || cfg.image;
 
@@ -11943,7 +11949,15 @@ app.post('/api/databases/:id/recreate', requireAuth, async (req, res) => {
         (_dbRecreateUserId ? io.to('user:' + _dbRecreateUserId) : io).emit('db:status', {
           id: db.id, name: db.name, engine: db.engine, status: 'running', connStr: extConn || realConn
         });
-        addActivity('database', `✅ Database "${db.name}" (${db.engine}) recreated on port ${hostPort}`);
+        // [FIX] hostPort can legitimately differ from oldHostPort now that
+        // findFreeDbPort() validates availability instead of trusting the
+        // old value blindly (see findFreeDbPort()) -- surface that clearly
+        // since it means the connection string just changed.
+        if (oldHostPort && hostPort !== oldHostPort) {
+          addActivity('database', `⚠ Database "${db.name}" recreated on a NEW port ${hostPort} (was ${oldHostPort} — that port was taken by another database). Connection string updated.`);
+        } else {
+          addActivity('database', `✅ Database "${db.name}" (${db.engine}) recreated on port ${hostPort}`);
+        }
         console.log(`[DB] Recreated ${db.engine} container "${containerName}" on port ${hostPort}`);
       } catch (e) {
         const updated = { ...db, status: 'error', updatedAt: new Date().toISOString() };
