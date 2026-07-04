@@ -7697,7 +7697,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
 <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
 <aside id="sidebar">
-  <div class="sidebar-logo">
+  <div class="sidebar-logo" onclick="showPage('dashboard')" style="cursor:pointer;" title="Go to Dashboard">
     <div class="sidebar-logo-mark"><img src="https://raw.githubusercontent.com/joygood123/Url/refs/heads/main/favicon_256.png" alt="joytree logo"></div>
     <span class="sidebar-logo-name">JOYTREE</span>
     <!-- beta badge removed -->
@@ -12510,6 +12510,19 @@ document.addEventListener('keydown', function(e){
 .mig-job-status.running{ background:rgba(234,179,8,.14);color:#facc15; }
 .mig-job-status.success{ background:rgba(16,185,129,.14);color:#34d399; }
 .mig-job-status.failed{ background:rgba(239,68,68,.14);color:#f87171; }
+.mig-job-delete{
+  background:none;border:1px solid rgba(239,68,68,.22);color:#f87171;
+  border-radius:8px;width:26px;height:26px;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s;
+}
+.mig-job-delete:hover{ background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4); }
+.mig-clear-all-btn{
+  display:flex;align-items:center;gap:6px;background:none;
+  border:1px solid rgba(239,68,68,.22);color:#f87171;border-radius:8px;
+  padding:6px 12px;font-size:.76rem;font-weight:600;font-family:var(--font-ui);
+  cursor:pointer;transition:all .15s;flex-shrink:0;
+}
+.mig-clear-all-btn:hover{ background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4); }
 .mig-job-meta{ font-size:.76rem;color:#64748b;margin-top:6px; }
 .mig-job-logs{
   margin-top:10px;background:#050505;border-radius:10px;padding:10px 12px;
@@ -12531,6 +12544,7 @@ document.addEventListener('keydown', function(e){
 }
     </style>
 
+    <button class="page-back" onclick="showPage('databases')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Databases</button>
     <div class="mig-hero">
       <div class="mig-hero-kicker">Data Migration</div>
       <div class="mig-hero-title">Move your data, from anywhere.</div>
@@ -12564,6 +12578,26 @@ document.addEventListener('keydown', function(e){
           <span class="mig-source-opt-label">Firebase Realtime DB</span>
           <span class="mig-source-opt-sub">Pull the whole tree straight from your Firebase project</span>
         </div>
+        <div class="mig-source-opt" data-source="mysql" onclick="migSelectSource('mysql')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+          <span class="mig-source-opt-label">MySQL</span>
+          <span class="mig-source-opt-sub">A real, external MySQL server — not Docker-provisioned</span>
+        </div>
+        <div class="mig-source-opt" data-source="postgres" onclick="migSelectSource('postgres')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+          <span class="mig-source-opt-label">PostgreSQL</span>
+          <span class="mig-source-opt-sub">A real, external Postgres server — not Docker-provisioned</span>
+        </div>
+        <div class="mig-source-opt" data-source="mariadb" onclick="migSelectSource('mariadb')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+          <span class="mig-source-opt-label">MariaDB</span>
+          <span class="mig-source-opt-sub">A real, external MariaDB server — not Docker-provisioned</span>
+        </div>
+        <div class="mig-source-opt" data-source="redis" onclick="migSelectSource('redis')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l9 5v10l-9 5-9-5V7z"/></svg>
+          <span class="mig-source-opt-label">Redis</span>
+          <span class="mig-source-opt-sub">A real, external Redis instance — not Docker-provisioned</span>
+        </div>
       </div>
 
       <div id="migSourceFields">
@@ -12587,9 +12621,12 @@ document.addEventListener('keydown', function(e){
     </div>
 
     <div class="mig-card">
-      <div class="mig-card-title">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="color:#10b981"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Migration History
+      <div class="mig-card-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="display:flex;align-items:center;gap:10px;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="color:#10b981"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Migration History
+        </span>
+        <button class="mig-clear-all-btn" onclick="migClearAllHistory()" title="Delete all finished migration history"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg> Clear All</button>
       </div>
       <div class="mig-card-sub">Every migration you've run, most recent first.</div>
       <div id="migJobList"><div class="mig-empty">Loading…</div></div>
@@ -12639,7 +12676,7 @@ function renderMigSourceFields(kind) {
       <div class="mig-field">
         <label>MongoDB connection string</label>
         <input class="mig-input" id="migMongoConnStr" type="password" placeholder="mongodb+srv://user:pass@cluster.mongodb.net/mydb">
-        <div class="mig-help">Your Atlas connection string — used once to run this migration, not stored.</div>
+        <div class="mig-help">Your Atlas connection string — used once to run this migration, not stored. Must include the database name (the part after the last "/" before any "?") — Atlas's default "Copy connection string" button leaves it out, so add it yourself if needed.</div>
       </div>`;
   } else if (kind === 'firebase') {
     el.innerHTML = `
@@ -12651,6 +12688,34 @@ function renderMigSourceFields(kind) {
         <label>Database secret <span style="color:#4b5563;font-weight:400;">(optional — only if your rules require auth)</span></label>
         <input class="mig-input" id="migFirebaseSecret" type="password" placeholder="Leave blank for public/rules-open databases">
         <div class="mig-help">Pulls your entire RTDB tree in one pass. Each top-level key becomes its own collection/table on the other side.</div>
+      </div>`;
+  } else if (kind === 'mysql') {
+    el.innerHTML = `
+      <div class="mig-field">
+        <label>MySQL connection string</label>
+        <input class="mig-input" id="migMysqlConnStr" type="password" placeholder="mysql://user:pass@host:3306/mydb">
+        <div class="mig-help">Used once to run this migration, not stored. Copies every table (up to 50,000 rows each) into the destination below.</div>
+      </div>`;
+  } else if (kind === 'postgres') {
+    el.innerHTML = `
+      <div class="mig-field">
+        <label>PostgreSQL connection string</label>
+        <input class="mig-input" id="migPostgresConnStr" type="password" placeholder="postgresql://user:pass@host:5432/mydb">
+        <div class="mig-help">Used once to run this migration, not stored. Copies every table in the "public" schema (up to 50,000 rows each) into the destination below.</div>
+      </div>`;
+  } else if (kind === 'mariadb') {
+    el.innerHTML = `
+      <div class="mig-field">
+        <label>MariaDB connection string</label>
+        <input class="mig-input" id="migMariadbConnStr" type="password" placeholder="mariadb://user:pass@host:3306/mydb">
+        <div class="mig-help">Used once to run this migration, not stored. Copies every table (up to 50,000 rows each) into the destination below.</div>
+      </div>`;
+  } else if (kind === 'redis') {
+    el.innerHTML = `
+      <div class="mig-field">
+        <label>Redis connection string</label>
+        <input class="mig-input" id="migRedisConnStr" type="password" placeholder="redis://:password@host:6379">
+        <div class="mig-help">Used once to run this migration, not stored. Pulls every key (string, hash, list, or set) into a single collection/table on the other side.</div>
       </div>`;
   }
 }
@@ -12694,6 +12759,26 @@ function migBuildSourcePayload() {
     const authSecret = document.getElementById('migFirebaseSecret')?.value.trim() || null;
     return { kind: 'firebase', databaseUrl, authSecret };
   }
+  if (migSelectedSource === 'mysql') {
+    const connectionString = document.getElementById('migMysqlConnStr')?.value.trim();
+    if (!connectionString) throw new Error('Enter a MySQL connection string.');
+    return { kind: 'sql', engine: 'mysql', connectionString };
+  }
+  if (migSelectedSource === 'postgres') {
+    const connectionString = document.getElementById('migPostgresConnStr')?.value.trim();
+    if (!connectionString) throw new Error('Enter a PostgreSQL connection string.');
+    return { kind: 'sql', engine: 'postgres', connectionString };
+  }
+  if (migSelectedSource === 'mariadb') {
+    const connectionString = document.getElementById('migMariadbConnStr')?.value.trim();
+    if (!connectionString) throw new Error('Enter a MariaDB connection string.');
+    return { kind: 'sql', engine: 'mariadb', connectionString };
+  }
+  if (migSelectedSource === 'redis') {
+    const connectionString = document.getElementById('migRedisConnStr')?.value.trim();
+    if (!connectionString) throw new Error('Enter a Redis connection string.');
+    return { kind: 'redis', connectionString };
+  }
 }
 
 async function migStartMigration() {
@@ -12730,15 +12815,56 @@ function migJobRowHtml(job) {
   const statusClass = job.status === 'running' ? 'running' : job.status === 'success' ? 'success' : 'failed';
   const logsText = (job.logs || []).map(l => typeof l === 'string' ? l : l.line).join('\n');
   const resultLine = job.result ? `${job.result.collections} collection(s), ${job.result.rows} row(s)/document(s)` : (job.error || '');
+  // [FIX] No way to remove a history entry previously -- every migration
+  // (including test runs and mistakes) accumulated forever. Delete button
+  // is omitted (not just disabled) for still-running jobs since the backend
+  // rejects deleting those outright -- see the /api/migrations/:id DELETE
+  // route for why that's a hard block rather than just a UX nicety.
+  const deleteBtn = job.status !== 'running'
+    ? `<button class="mig-job-delete" title="Delete this history entry" onclick="migDeleteJob('${job.id}')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>`
+    : '';
   return `
     <div class="mig-job" id="mig-job-${job.id}">
       <div class="mig-job-top">
         <div class="mig-job-route">${job.sourceLabel} <span style="color:#4b5563;">→</span> ${job.destinationLabel}</div>
-        <div class="mig-job-status ${statusClass}">${job.status}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="mig-job-status ${statusClass}">${job.status}</div>
+          ${deleteBtn}
+        </div>
       </div>
       <div class="mig-job-meta">Started ${new Date(job.startedAt).toLocaleString()}${resultLine ? ' · ' + resultLine : ''}</div>
       ${logsText ? `<button class="mig-job-toggle" onclick="this.nextElementSibling.classList.toggle('open')">View logs</button><div class="mig-job-logs">${logsText.replace(/</g,'&lt;')}</div>` : ''}
     </div>`;
+}
+
+async function migDeleteJob(jobId) {
+  if (!confirm('Delete this migration history entry? This cannot be undone.')) return;
+  try {
+    const res = await apiFetch(`/api/migrations/${encodeURIComponent(jobId)}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to delete');
+    const row = document.getElementById('mig-job-' + jobId);
+    if (row) row.remove();
+    if (migPollTimers[jobId]) { clearInterval(migPollTimers[jobId]); delete migPollTimers[jobId]; }
+    const list = document.getElementById('migJobList');
+    if (list && !list.children.length) list.innerHTML = '<div class="mig-empty">No migrations yet — start one above.</div>';
+    toast('Migration deleted', 'success');
+  } catch (e) {
+    toast(e.message || 'Failed to delete migration', 'error');
+  }
+}
+
+async function migClearAllHistory() {
+  if (!confirm('Clear ALL migration history? Running migrations are left untouched, but every finished entry will be permanently deleted. This cannot be undone.')) return;
+  try {
+    const res = await apiFetch('/api/migrations', { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to clear history');
+    toast('Migration history cleared', 'success');
+    await migLoadJobs();
+  } catch (e) {
+    toast(e.message || 'Failed to clear history', 'error');
+  }
 }
 
 async function migLoadJobs() {
@@ -15026,6 +15152,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 #dbRefreshIcon.spinning { animation: dbRefreshSpin .7s linear infinite; }
     </style>
 
+      <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
       <!-- Hero -->
       <div class="db-hero">
         <div class="db-hero-orb"></div>
