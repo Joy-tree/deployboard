@@ -28487,6 +28487,7 @@ function renderDatabasesPage() {
         ? `<button class="db-btn" onclick="event.stopPropagation();dbAction('stop','${db.id}')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>Stop</button>`
         : `<button class="db-btn primary" onclick="event.stopPropagation();dbAction('start','${db.id}')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3"/></svg>Start</button>`}
       <button class="db-btn" onclick="event.stopPropagation();dbAction('restart','${db.id}')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Restart</button>
+      <button class="db-btn" style="color:#f59e0b;border-color:rgba(245,158,11,.22);" onclick="event.stopPropagation();confirmDbRecreate('${db.id}','${db.name}')" title="Rebuild the container from scratch — use this if the database won't start even after Restart"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>Recreate</button>
       <button class="db-btn" onclick="event.stopPropagation();openDbLogs('${db.id}','${db.name}')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Logs</button>
       ${db.status === 'running' ? `<button class="db-btn" style="color:#10b981;border-color:rgba(16,185,129,.22);" onclick="event.stopPropagation();openDataBrowser('${db.id}')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Browse</button>` : ''}
       <button class="db-btn danger" onclick="event.stopPropagation();confirmDbDelete('${db.id}','${db.name}')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
@@ -28527,6 +28528,51 @@ function closeDbDeleteModal() {
   const modal = document.getElementById('dbDeleteModal');
   if (modal) modal.classList.remove('open');
   document.documentElement.classList.remove('modal-open');
+}
+
+// ── DB Recreate (rebuilds the container from scratch — picks up config/
+// memory fixes that a plain restart can never apply, since flags like
+// --memory and --wiredTigerCacheSizeGB are baked in at `docker run` time) ──
+function confirmDbRecreate(id, name) {
+  const modal = document.getElementById('dbRecreateModal');
+  const title = document.getElementById('dbRecreateModalName');
+  if (!modal || !title) { _doDbRecreate(id, name, true); return; }
+  title.textContent = name;
+  modal.dataset.dbId = id;
+  modal.dataset.dbName = name;
+  const wipeBox = document.getElementById('dbRecreateWipeData');
+  if (wipeBox) wipeBox.checked = true;
+  modal.classList.add('open');
+  document.documentElement.classList.add('modal-open');
+}
+function closeDbRecreateModal() {
+  const modal = document.getElementById('dbRecreateModal');
+  if (modal) modal.classList.remove('open');
+  document.documentElement.classList.remove('modal-open');
+}
+function confirmDbRecreateExecute() {
+  const modal = document.getElementById('dbRecreateModal');
+  const id = modal?.dataset.dbId;
+  const name = modal?.dataset.dbName;
+  const wipeData = document.getElementById('dbRecreateWipeData')?.checked !== false;
+  closeDbRecreateModal();
+  if (id) _doDbRecreate(id, name, wipeData);
+}
+async function _doDbRecreate(id, name, wipeData) {
+  try {
+    toast(`Recreating "${name}"…`, 'info');
+    const r = await apiFetch(`/api/databases/${id}/recreate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wipeData: wipeData !== false }),
+    });
+    const d = await r.json();
+    if (!r.ok || !d.ok) throw new Error(d.error || 'Recreate failed');
+    toast(`"${name}" is being recreated…`, 'success');
+    await loadDatabases();
+  } catch (e) {
+    toast(e.message || 'Recreate failed', 'error');
+  }
 }
 async function _doDbDelete(id, name) {
   closeDbDeleteModal();
@@ -33038,6 +33084,9 @@ async function jtApiLinkExecute() {
 #dbDeleteModal { display: none; }
 #dbDeleteModal.open { display: flex; align-items: center; justify-content: center; }
 #dbDeleteModal button:hover { opacity: .85; }
+#dbRecreateModal { display: none; }
+#dbRecreateModal.open { display: flex; align-items: center; justify-content: center; }
+#dbRecreateModal button:hover { opacity: .85; }
 </style>
 
 <!-- Custom Edit Prompt Modal -->
@@ -33265,6 +33314,35 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button onclick="closeDbDeleteModal()" style="padding:9px 20px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#94a3b8;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;">Cancel</button>
       <button onclick="confirmDbDeleteExecute()" style="padding:9px 20px;border-radius:9px;border:none;background:#b91c1c;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s;">Delete Database</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DB Recreate Modal ────────────────────────────────────────────────────── -->
+<div id="dbRecreateModal" class="modal-overlay" onclick="if(event.target===this)closeDbRecreateModal()">
+  <div class="modal" style="max-width:440px;background:#0a1628;border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:32px 28px;box-shadow:0 24px 80px rgba(0,0,0,.7);">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" width="18" height="18"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:1rem;color:#f1f5f9;">Recreate Database</div>
+        <div style="font-size:.82rem;color:#64748b;margin-top:2px;">Rebuilds the container from scratch</div>
+      </div>
+    </div>
+    <p style="font-size:.88rem;color:#94a3b8;line-height:1.6;margin-bottom:8px;">
+      Recreate <strong style="color:#f1f5f9;" id="dbRecreateModalName"></strong>?
+    </p>
+    <p style="font-size:.82rem;color:#64748b;line-height:1.5;margin-bottom:20px;">
+      Use this if the database won't start even after Restart — Restart only relaunches the existing container, so it can't fix things baked in at creation time (memory limits, engine config, etc). Recreate removes the container and provisions a fresh one with the same name, credentials, and connection details, so nothing else needs to be updated afterward.
+    </p>
+    <label style="display:flex;align-items:flex-start;gap:10px;margin-bottom:28px;cursor:pointer;font-size:.82rem;color:#94a3b8;line-height:1.5;">
+      <input type="checkbox" id="dbRecreateWipeData" checked style="margin-top:2px;">
+      <span>Also erase existing data <span style="color:#64748b;">(recommended — a database that won't start usually never finished writing usable data anyway; leaving this checked avoids reusing a half-initialized data directory)</span></span>
+    </label>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeDbRecreateModal()" style="padding:9px 20px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#94a3b8;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;">Cancel</button>
+      <button onclick="confirmDbRecreateExecute()" style="padding:9px 20px;border-radius:9px;border:none;background:#b45309;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s;">Recreate Database</button>
     </div>
   </div>
 </div>

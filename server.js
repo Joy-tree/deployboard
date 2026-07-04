@@ -11370,12 +11370,17 @@ async function containerStatus(name) {
 }
 
 // Provision a new Docker database container
-async function provisionDbContainer(db) {
+async function provisionDbContainer(db, opts = {}) {
   const cfg = DB_ENGINE_CONFIG[db.engine];
   if (!cfg) throw new Error(`Unknown engine: ${db.engine}`);
 
   const containerName = `jt-db-${db.name}-${String(db._id).slice(-6)}`;
-  const hostPort      = await findFreeDbPort();
+  // [FIX] Recreate flow passes opts.hostPort to reuse the database's existing
+  // port (freed by the docker rm that precedes this call) instead of always
+  // picking a fresh one via findFreeDbPort() -- otherwise every recreate would
+  // silently change the connection string and break any already-linked
+  // project env vars or saved external connection strings.
+  const hostPort      = opts.hostPort || await findFreeDbPort();
   const volumePath    = db.volume || `/var/joytree-data/${containerName}`;
   const imageToUse    = db.image || cfg.image;
 
@@ -11839,6 +11844,96 @@ app.post('/api/databases/:id/restart', requireAuth, async (req, res) => {
     (_dbRestartUserId ? io.to('user:' + _dbRestartUserId) : io).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'running', connStr: db.connStr || db.connectionString || '' });
     addActivity('database', `↺ Database "${db.name}" restarted`);
     res.json({ ok: true, status: 'running' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── POST /api/databases/:id/recreate ─────────────────────────────────────────
+// [FIX] docker restart/start/stop only ever touch an EXISTING container —
+// they cannot change flags baked in at `docker run` time (memory limits,
+// --wiredTigerCacheSizeGB, etc). A database provisioned under an old/buggy
+// DB_ENGINE_CONFIG (like the MongoDB cache-size bug fixed alongside this
+// endpoint) stays broken forever no matter how many times it's restarted --
+// the only way to pick up a corrected config is a fresh `docker run`. Until
+// now that meant delete-then-recreate-from-scratch in the dashboard, which
+// loses the database's identity (new id, has to be re-linked to projects,
+// any saved external connection strings go stale).
+//
+// This does the equivalent of delete+recreate under the hood, but keeps the
+// same DB record (id, name, credentials) and reuses the same container name
+// and host port, so:
+//   - the connection string shown in the dashboard doesn't change
+//   - any project already linked to this database keeps working without
+//     re-linking
+//   - it picks up whatever the current DB_ENGINE_CONFIG says (memory floor,
+//     startArgs, etc) since it goes through the same provisionDbContainer()
+//     used for brand-new databases
+//
+// Body: { wipeData?: boolean }  (default true)
+//   true  — also deletes the volume directory first. Needed whenever the
+//           existing container never finished a healthy first boot (like a
+//           crash-looping Mongo container): MongoDB/MySQL/etc only apply
+//           MONGO_INITDB_ROOT_USERNAME/PASSWORD (or equivalent) on a
+//           completely empty data directory, so reusing a half-initialized
+//           volume with new credentials/config can leave things in a worse,
+//           inconsistent state.
+//   false — preserve the existing volume/data. Only safe if the database
+//           previously had a genuinely healthy boot and you just want to
+//           apply a new memory/config tier going forward.
+app.post('/api/databases/:id/recreate', requireAuth, async (req, res) => {
+  try {
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => d.id === req.params.id);
+    if (!db) return res.status(404).json({ error: 'Not found' });
+    if (!db.containerName) return res.status(400).json({ error: 'Container not provisioned yet — nothing to recreate' });
+
+    const wipeData = req.body?.wipeData !== false; // default true
+    const oldHostPort = Number(db.internalPort) || null;
+    const volumePath = db.volume || '';
+
+    addActivity('database', `↻ Recreating database "${db.name}" (${db.engine})…`);
+
+    // Stop + remove the old container (best-effort — it may already be
+    // dead/crash-looping, so failures here are not fatal to the recreate).
+    await runDocker(`docker stop ${db.containerName} 2>/dev/null || true`);
+    await runDocker(`docker rm -f ${db.containerName} 2>/dev/null || true`);
+
+    if (wipeData && volumePath && volumePath.startsWith('/var/joytree-data/')) {
+      try { await fs.promises.rm(volumePath, { recursive: true, force: true }); } catch {}
+    }
+
+    db.status = 'provisioning'; db.updatedAt = new Date().toISOString();
+    await persistDb(req.user, db);
+    const _dbRecreateUserId = String(req.user?._id || req.user?.id || '');
+    (_dbRecreateUserId ? io.to('user:' + _dbRecreateUserId) : io).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'provisioning' });
+
+    res.json({ ok: true, status: 'provisioning' });
+
+    // Provision in background, same pattern as initial creation.
+    setImmediate(async () => {
+      try {
+        const { containerName, hostPort } = await provisionDbContainer(
+          { ...db, _id: db.id },
+          { hostPort: oldHostPort }
+        );
+
+        const realConn = buildDbConnStr(db.engine, db.user, db.pass, db.dbName, 'localhost', hostPort);
+        const updated = { ...db, containerName, internalPort: hostPort, connStr: realConn, status: 'running', updatedAt: new Date().toISOString() };
+        await persistDb(req.user, updated);
+
+        const extConn = externalDbConnStr(updated);
+        (_dbRecreateUserId ? io.to('user:' + _dbRecreateUserId) : io).emit('db:status', {
+          id: db.id, name: db.name, engine: db.engine, status: 'running', connStr: extConn || realConn
+        });
+        addActivity('database', `✅ Database "${db.name}" (${db.engine}) recreated on port ${hostPort}`);
+        console.log(`[DB] Recreated ${db.engine} container "${containerName}" on port ${hostPort}`);
+      } catch (e) {
+        const updated = { ...db, status: 'error', updatedAt: new Date().toISOString() };
+        await persistDb(req.user, updated).catch(() => {});
+        (_dbRecreateUserId ? io.to('user:' + _dbRecreateUserId) : io).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'error' });
+        addActivity('database', `❌ Failed to recreate database "${db.name}": ${e.message}`);
+        console.error(`[DB] Recreate failed for "${db.name}":`, e.message);
+      }
+    });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
