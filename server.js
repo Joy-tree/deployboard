@@ -12658,6 +12658,107 @@ app.post('/api/account/api-key/rotate', requireAuth, async (req, res) => {
 // Base: /api/v1
 // ═══════════════════════════════════════════════════════════════════════════════
 const v1 = express.Router();
+const { runMigration } = require('./migration-engine');
+const migrationJobs = new Map(); // in-memory job registry for this process; persisted summary lives in Firebase (below) so history survives restarts
+
+async function resolveJoyTreeDbAsEndpoint(user, databaseId) {
+  const dbs = await loadUserDatabases(user);
+  const db = dbs.find(d => String(d.id || d._id || '') === String(databaseId));
+  if (!db) throw new Error(`JoyTree database not found: ${databaseId}`);
+  const connectionString = db.externalConnectionString || externalDbConnStr(db);
+  if (!connectionString) throw new Error(`Could not build a connection string for database ${databaseId}`);
+  if (db.engine === 'redis') return { kind: 'redis', connectionString };
+  if (db.engine === 'mongodb') return { kind: 'mongo', connectionString };
+  return { kind: 'sql', engine: db.engine, connectionString };
+}
+
+async function resolveMigrationSource(user, source) {
+  if (source.kind === 'joytree') return resolveJoyTreeDbAsEndpoint(user, source.databaseId);
+  if (source.kind === 'mongo') return { kind: 'mongo', connectionString: source.connectionString };
+  if (source.kind === 'firebase') return { kind: 'firebase', databaseUrl: source.databaseUrl, authSecret: source.authSecret || null };
+  throw new Error(`Unsupported source kind: ${source.kind}`);
+}
+
+// ── POST /api/v1/migrations -- start a migration ────────────────────────────
+v1.post('/migrations', async (req, res) => {
+  try {
+    const { source, destination } = req.body || {};
+    if (!source || !source.kind) return res.status(400).json({ ok: false, error: 'source.kind is required (joytree | mongo | firebase)' });
+    if (!destination || !destination.databaseId) return res.status(400).json({ ok: false, error: 'destination.databaseId is required (must be one of your JoyTree databases)' });
+
+    const resolvedSource = await resolveMigrationSource(req.user, source);
+    const resolvedDest = await resolveJoyTreeDbAsEndpoint(req.user, destination.databaseId);
+
+    const jobId = 'mig_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const logs = [];
+    const job = {
+      id: jobId,
+      status: 'running',
+      sourceKind: source.kind,
+      sourceLabel: source.kind === 'joytree' ? `JoyTree DB (${source.databaseId})` : source.kind === 'mongo' ? 'External MongoDB' : 'Firebase Realtime Database',
+      destinationLabel: `JoyTree DB (${destination.databaseId})`,
+      startedAt: new Date().toISOString(),
+      completedAt: null,
+      result: null,
+      error: null,
+      logs,
+    };
+    migrationJobs.set(jobId, job);
+
+    // Runs in the background; the caller polls GET /migrations/:id for progress.
+    runMigration(resolvedSource, resolvedDest, (line) => {
+      logs.push({ t: new Date().toISOString(), line });
+    }).then(async (result) => {
+      job.status = 'success';
+      job.result = result;
+      job.completedAt = new Date().toISOString();
+      await persistMigrationJobSummary(req.user, job).catch(() => {});
+    }).catch(async (err) => {
+      job.status = 'failed';
+      job.error = err.message;
+      job.completedAt = new Date().toISOString();
+      logs.push({ t: new Date().toISOString(), line: `ERROR: ${err.message}` });
+      await persistMigrationJobSummary(req.user, job).catch(() => {});
+    });
+
+    res.json({ ok: true, jobId, message: 'Migration started. Poll GET /api/v1/migrations/:id for progress.' });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ── GET /api/v1/migrations -- list jobs for this user (current process + persisted history) ──
+v1.get('/migrations', async (req, res) => {
+  try {
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    const persisted = Array.isArray(ws.migrations) ? ws.migrations : [];
+    const live = [...migrationJobs.values()].map(j => ({ ...j, logs: undefined }));
+    res.json({ ok: true, jobs: [...live, ...persisted].sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt)) });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ── GET /api/v1/migrations/:id -- one job's full detail + logs ──────────────
+v1.get('/migrations/:id', async (req, res) => {
+  const job = migrationJobs.get(req.params.id);
+  if (job) return res.json({ ok: true, job });
+  try {
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    const persisted = (ws.migrations || []).find(j => j.id === req.params.id);
+    if (persisted) return res.json({ ok: true, job: persisted });
+  } catch (_) {}
+  res.status(404).json({ ok: false, error: 'Migration job not found' });
+});
+
+async function persistMigrationJobSummary(user, job) {
+  const ws = (await readWorkspaceFromFirebase(user)) || {};
+  ws.migrations = Array.isArray(ws.migrations) ? ws.migrations : [];
+  ws.migrations.unshift({ ...job, logs: job.logs.slice(-200) }); // cap stored logs per job
+  ws.migrations = ws.migrations.slice(0, 50); // cap total history
+  await writeWorkspaceToFirebase(user, ws);
+}
+
 v1.use(express.json());
 v1.use(requirePersonalApiKey);
 

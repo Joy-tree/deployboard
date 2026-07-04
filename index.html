@@ -7803,6 +7803,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
       Databases
     </div>
+    <div class="nav-item" data-page="db-migration" onclick="showPage('db-migration',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      Data Migration
+    </div>
     <div class="nav-item" data-page="db-query" onclick="showPage('db-query',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
       Data Query
@@ -12417,6 +12421,359 @@ document.addEventListener('keydown', function(e){
     </script>
 
     <!-- ════════ DATABASES PAGE ════════ -->
+    <div class="page" id="page-db-migration">
+    <style>
+/* ── Data Migration Page Styles ──────────────────────────────────── */
+.mig-hero {
+  position:relative;overflow:hidden;border-radius:24px;
+  padding:36px 32px 32px;margin-bottom:28px;
+  background:
+    radial-gradient(ellipse 55% 44% at 8% 12%, rgba(16,185,129,.12), transparent),
+    #0d0d0d;
+  border:1px solid rgba(16,185,129,.18);
+  box-shadow:0 0 0 1px rgba(16,185,129,.05), 0 14px 44px rgba(0,0,0,.28);
+}
+.mig-hero-kicker {
+  font-family:var(--font-mono);font-size:.72rem;letter-spacing:.16em;
+  text-transform:uppercase;color:#86efac;margin-bottom:8px;
+}
+.mig-hero-title {
+  font-family:var(--font-ui);font-weight:800;font-size:clamp(1.65rem,3vw,2.45rem);
+  letter-spacing:-.04em;color:#f8fafc;line-height:1.1;margin-bottom:10px;
+}
+.mig-hero-sub { color:#94a3b8;font-size:.95rem;max-width:640px;line-height:1.55; }
+
+.mig-card{
+  background:#111;border:1px solid rgba(255,255,255,.07);border-radius:20px;
+  padding:24px;margin-bottom:22px;
+}
+.mig-card-title{
+  font-family:var(--font-ui);font-weight:700;font-size:1.05rem;color:#f1f5f9;
+  margin-bottom:4px;display:flex;align-items:center;gap:9px;
+}
+.mig-card-sub{ color:#64748b;font-size:.82rem;margin-bottom:18px; }
+
+.mig-source-grid{ display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px; }
+.mig-source-opt{
+  background:#0b0b0b;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;
+  padding:16px;cursor:pointer;transition:border-color .15s,transform .15s,background .15s;
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;
+}
+.mig-source-opt:hover{ transform:translateY(-2px);border-color:rgba(16,185,129,.28); }
+.mig-source-opt.active{ border-color:#10b981;background:rgba(16,185,129,.08);box-shadow:0 0 0 1px rgba(16,185,129,.15) inset; }
+.mig-source-opt svg{ color:#6ee7b7;width:26px;height:26px; }
+.mig-source-opt-label{ font-family:var(--font-ui);font-weight:700;font-size:.88rem;color:#e2e8f0; }
+.mig-source-opt-sub{ font-size:.72rem;color:#64748b;line-height:1.3; }
+
+.mig-field{ margin-bottom:16px; }
+.mig-field label{
+  display:block;font-size:.78rem;font-weight:600;color:#94a3b8;
+  margin-bottom:7px;letter-spacing:.02em;
+}
+.mig-input, .mig-select{
+  width:100%;background:#0b0b0b;border:1.5px solid rgba(255,255,255,.09);
+  border-radius:12px;padding:12px 14px;color:#f1f5f9;font-size:.92rem;
+  font-family:var(--font-ui);transition:border-color .15s;outline:none;
+}
+.mig-input:focus, .mig-select:focus{ border-color:rgba(16,185,129,.55); }
+.mig-input::placeholder{ color:#4b5563; }
+.mig-help{ font-size:.74rem;color:#64748b;margin-top:6px;line-height:1.4; }
+.mig-arrow-divider{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  color:#10b981;margin:4px 0 18px;font-family:var(--font-mono);font-size:.78rem;
+  letter-spacing:.08em;text-transform:uppercase;
+}
+.mig-arrow-divider::before, .mig-arrow-divider::after{
+  content:'';flex:1;height:1px;background:rgba(16,185,129,.2);
+}
+
+.mig-btn-start{
+  width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#04140d;
+  border:none;border-radius:14px;padding:15px;font-family:var(--font-ui);
+  font-weight:800;font-size:.98rem;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:10px;transition:transform .15s,box-shadow .15s;
+  box-shadow:0 8px 26px rgba(16,185,129,.28);
+}
+.mig-btn-start:hover{ transform:translateY(-2px);box-shadow:0 12px 34px rgba(16,185,129,.4); }
+.mig-btn-start:disabled{ opacity:.5;cursor:not-allowed;transform:none; }
+
+.mig-job{
+  background:#0b0b0b;border:1px solid rgba(255,255,255,.07);border-radius:16px;
+  padding:16px 18px;margin-bottom:12px;
+}
+.mig-job-top{ display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap; }
+.mig-job-route{ font-family:var(--font-ui);font-weight:700;font-size:.9rem;color:#e2e8f0;display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
+.mig-job-status{
+  font-family:var(--font-mono);font-size:.7rem;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;padding:4px 10px;border-radius:999px;
+}
+.mig-job-status.running{ background:rgba(234,179,8,.14);color:#facc15; }
+.mig-job-status.success{ background:rgba(16,185,129,.14);color:#34d399; }
+.mig-job-status.failed{ background:rgba(239,68,68,.14);color:#f87171; }
+.mig-job-meta{ font-size:.76rem;color:#64748b;margin-top:6px; }
+.mig-job-logs{
+  margin-top:10px;background:#050505;border-radius:10px;padding:10px 12px;
+  font-family:var(--font-mono);font-size:.74rem;color:#86efac;max-height:160px;
+  overflow-y:auto;white-space:pre-wrap;line-height:1.5;display:none;
+}
+.mig-job-logs.open{ display:block; }
+.mig-job-toggle{
+  background:none;border:none;color:#64748b;font-size:.74rem;cursor:pointer;
+  margin-top:8px;font-family:var(--font-ui);
+}
+.mig-job-toggle:hover{ color:#10b981; }
+.mig-empty{ text-align:center;padding:32px 16px;color:#64748b;font-size:.88rem; }
+
+@media (max-width:768px){
+  .mig-hero{ padding:26px 20px 22px; }
+  .mig-source-grid{ grid-template-columns:repeat(2,1fr); }
+  .mig-card{ padding:18px; }
+}
+    </style>
+
+    <div class="mig-hero">
+      <div class="mig-hero-kicker">Data Migration</div>
+      <div class="mig-hero-title">Move your data, from anywhere.</div>
+      <div class="mig-hero-sub">
+        Bring data in from a real MongoDB Atlas cluster, a Firebase Realtime Database, or any of your
+        own JoyTree databases — and land it in any database you provision here, regardless of engine.
+        Mongo to MySQL, Firebase to Postgres, Redis to MariaDB — JoyTree handles the translation.
+      </div>
+    </div>
+
+    <div class="mig-card">
+      <div class="mig-card-title">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="color:#10b981"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        New Migration
+      </div>
+      <div class="mig-card-sub">Pick a source, pick one of your JoyTree databases as the destination, and start the transfer.</div>
+
+      <div class="mig-source-grid" id="migSourceOptions">
+        <div class="mig-source-opt active" data-source="joytree" onclick="migSelectSource('joytree')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+          <span class="mig-source-opt-label">JoyTree Database</span>
+          <span class="mig-source-opt-sub">One of your own provisioned databases</span>
+        </div>
+        <div class="mig-source-opt" data-source="mongo" onclick="migSelectSource('mongo')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C9 6 6 9 6 14a6 6 0 0 0 12 0c0-5-3-8-6-12z"/><path d="M12 14v8"/></svg>
+          <span class="mig-source-opt-label">MongoDB Atlas</span>
+          <span class="mig-source-opt-sub">A real, external Mongo cluster — not Docker-provisioned</span>
+        </div>
+        <div class="mig-source-opt" data-source="firebase" onclick="migSelectSource('firebase')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span class="mig-source-opt-label">Firebase Realtime DB</span>
+          <span class="mig-source-opt-sub">Pull the whole tree straight from your Firebase project</span>
+        </div>
+      </div>
+
+      <div id="migSourceFields">
+        <!-- populated by migSelectSource() -->
+      </div>
+
+      <div class="mig-arrow-divider">migrates into</div>
+
+      <div class="mig-field">
+        <label>Destination — one of your JoyTree databases</label>
+        <select class="mig-select" id="migDestSelect">
+          <option value="">Loading your databases…</option>
+        </select>
+        <div class="mig-help">This is always one of your own provisioned databases — that's what JoyTree manages.</div>
+      </div>
+
+      <button class="mig-btn-start" id="migStartBtn" onclick="migStartMigration()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="17" height="17"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Start Migration
+      </button>
+    </div>
+
+    <div class="mig-card">
+      <div class="mig-card-title">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="color:#10b981"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Migration History
+      </div>
+      <div class="mig-card-sub">Every migration you've run, most recent first.</div>
+      <div id="migJobList"><div class="mig-empty">Loading…</div></div>
+    </div>
+    </div>
+
+
+<script>
+let migSelectedSource = 'joytree';
+let migJoyTreeDatabases = [];
+let migPollTimers = {};
+
+function migSelectSource(kind) {
+  migSelectedSource = kind;
+  document.querySelectorAll('#migSourceOptions .mig-source-opt').forEach(el => {
+    el.classList.toggle('active', el.dataset.source === kind);
+  });
+  renderMigSourceFields(kind);
+}
+
+function migDbOptionsHtml(excludeSelectId) {
+  if (!migJoyTreeDatabases.length) return '<option value="">No databases yet — create one first</option>';
+  return migJoyTreeDatabases.map(db =>
+    `<option value="${db.id}">${db.name} (${db.engine})</option>`
+  ).join('');
+}
+
+function renderMigSourceFields(kind) {
+  const el = document.getElementById('migSourceFields');
+  if (kind === 'joytree') {
+    el.innerHTML = `
+      <div class="mig-field">
+        <label>Source database</label>
+        <select class="mig-select" id="migSourceJoytreeSelect">${migDbOptionsHtml()}</select>
+        <div class="mig-help">Copies every table/collection from this database into the destination below.</div>
+      </div>`;
+  } else if (kind === 'mongo') {
+    el.innerHTML = `
+      <div class="mig-field">
+        <label>MongoDB connection string</label>
+        <input class="mig-input" id="migMongoConnStr" type="password" placeholder="mongodb+srv://user:pass@cluster.mongodb.net/mydb">
+        <div class="mig-help">Your Atlas connection string — used once to run this migration, not stored.</div>
+      </div>`;
+  } else if (kind === 'firebase') {
+    el.innerHTML = `
+      <div class="mig-field">
+        <label>Firebase Realtime Database URL</label>
+        <input class="mig-input" id="migFirebaseUrl" placeholder="https://your-project-default-rtdb.firebaseio.com">
+      </div>
+      <div class="mig-field">
+        <label>Database secret <span style="color:#4b5563;font-weight:400;">(optional — only if your rules require auth)</span></label>
+        <input class="mig-input" id="migFirebaseSecret" type="password" placeholder="Leave blank for public/rules-open databases">
+        <div class="mig-help">Pulls your entire RTDB tree in one pass. Each top-level key becomes its own collection/table on the other side.</div>
+      </div>`;
+  }
+}
+
+async function migLoadDatabases() {
+  try {
+    const res = await apiFetch('/api/databases');
+    const data = await res.json();
+    migJoyTreeDatabases = Array.isArray(data) ? data : (data.databases || []);
+  } catch (e) {
+    migJoyTreeDatabases = [];
+  }
+  const destSelect = document.getElementById('migDestSelect');
+  if (destSelect) destSelect.innerHTML = migDbOptionsHtml();
+  if (migSelectedSource === 'joytree') renderMigSourceFields('joytree');
+}
+
+function migBuildSourcePayload() {
+  if (migSelectedSource === 'joytree') {
+    const id = document.getElementById('migSourceJoytreeSelect')?.value;
+    if (!id) throw new Error('Pick a source database.');
+    return { kind: 'joytree', databaseId: id };
+  }
+  if (migSelectedSource === 'mongo') {
+    const connectionString = document.getElementById('migMongoConnStr')?.value.trim();
+    if (!connectionString) throw new Error('Enter a MongoDB connection string.');
+    return { kind: 'mongo', connectionString };
+  }
+  if (migSelectedSource === 'firebase') {
+    const databaseUrl = document.getElementById('migFirebaseUrl')?.value.trim();
+    if (!databaseUrl) throw new Error('Enter your Firebase Realtime Database URL.');
+    const authSecret = document.getElementById('migFirebaseSecret')?.value.trim() || null;
+    return { kind: 'firebase', databaseUrl, authSecret };
+  }
+}
+
+async function migStartMigration() {
+  const btn = document.getElementById('migStartBtn');
+  const destinationId = document.getElementById('migDestSelect')?.value;
+  if (!destinationId) { toast('Pick a destination database.', 'error'); return; }
+
+  let source;
+  try { source = migBuildSourcePayload(); }
+  catch (e) { toast(e.message, 'error'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = 'Starting…';
+  try {
+    const res = await apiFetch('/api/v1/migrations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source, destination: { databaseId: destinationId } }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to start migration');
+    toast('Migration started', 'success');
+    migLoadJobs();
+    migPollJob(data.jobId);
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="17" height="17"><polygon points="5 3 19 12 5 21 5 3"/></svg> Start Migration`;
+  }
+}
+
+function migJobRowHtml(job) {
+  const statusClass = job.status === 'running' ? 'running' : job.status === 'success' ? 'success' : 'failed';
+  const logsText = (job.logs || []).map(l => typeof l === 'string' ? l : l.line).join('\n');
+  const resultLine = job.result ? `${job.result.collections} collection(s), ${job.result.rows} row(s)/document(s)` : (job.error || '');
+  return `
+    <div class="mig-job" id="mig-job-${job.id}">
+      <div class="mig-job-top">
+        <div class="mig-job-route">${job.sourceLabel} <span style="color:#4b5563;">→</span> ${job.destinationLabel}</div>
+        <div class="mig-job-status ${statusClass}">${job.status}</div>
+      </div>
+      <div class="mig-job-meta">Started ${new Date(job.startedAt).toLocaleString()}${resultLine ? ' · ' + resultLine : ''}</div>
+      ${logsText ? `<button class="mig-job-toggle" onclick="this.nextElementSibling.classList.toggle('open')">View logs</button><div class="mig-job-logs">${logsText.replace(/</g,'&lt;')}</div>` : ''}
+    </div>`;
+}
+
+async function migLoadJobs() {
+  const container = document.getElementById('migJobList');
+  try {
+    const res = await apiFetch('/api/v1/migrations');
+    const data = await res.json();
+    const jobs = data.jobs || [];
+    if (!jobs.length) { container.innerHTML = '<div class="mig-empty">No migrations yet — start one above.</div>'; return; }
+    container.innerHTML = jobs.map(migJobRowHtml).join('');
+    jobs.filter(j => j.status === 'running').forEach(j => migPollJob(j.id));
+  } catch (e) {
+    container.innerHTML = '<div class="mig-empty">Could not load migration history.</div>';
+  }
+}
+
+function migPollJob(jobId) {
+  if (migPollTimers[jobId]) return;
+  migPollTimers[jobId] = setInterval(async () => {
+    try {
+      const res = await apiFetch('/api/v1/migrations/' + encodeURIComponent(jobId));
+      const data = await res.json();
+      if (!data.ok) return;
+      const el = document.getElementById('mig-job-' + jobId);
+      if (el) el.outerHTML = migJobRowHtml(data.job);
+      if (data.job.status !== 'running') {
+        clearInterval(migPollTimers[jobId]);
+        delete migPollTimers[jobId];
+      }
+    } catch (_) {}
+  }, 2500);
+}
+
+// Hook into the existing page router: initialize this page's data the
+// first time it's shown, matching the exact pattern already used for
+// other pages (e.g. domain-store) elsewhere in this file.
+(function() {
+  const _orig = window.showPage;
+  if (_orig) {
+    window.showPage = function(page, el) {
+      const r = _orig.apply(this, arguments);
+      if (page === 'db-migration') {
+        migLoadDatabases();
+        migLoadJobs();
+        renderMigSourceFields('joytree');
+      }
+      return r;
+    };
+  }
+})();
+</script>
+
     <div class="page" id="page-databases">
     <style>
 /* ── Database Page Styles ──────────────────────────────────────────── */
