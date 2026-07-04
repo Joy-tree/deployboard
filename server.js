@@ -11163,6 +11163,22 @@ function bytesToDockerMem(bytes) {
   return Math.round(bytes / 1024**2) + 'm';
 }
 
+// [FIX] runDocker()/exec() runs commands through a real shell (`/bin/sh -c`),
+// so any user-supplied value interpolated into a command string with only a
+// bare `"..."` wrapper is NOT actually safe — an embedded `$`, backtick, or
+// `"` is still interpreted by the shell. For DB passwords specifically this
+// silently corrupts what actually gets set inside the container vs. what's
+// stored in the DB record and used to build the connection string, causing
+// exactly the kind of "everything looks fine but auth/connect fails" bug we
+// hit with the migration-test container. For db.image/db.volume (both
+// directly user-suppliable at creation) it's a straightforward command
+// injection vector. Wrapping in single quotes and escaping any embedded
+// single quotes (the standard POSIX-safe technique) neutralizes all shell
+// metacharacters regardless of content.
+function shellQuote(str) {
+  return `'${String(str).replace(/'/g, `'\\''`)}'`;
+}
+
 const DB_ENGINE_CONFIG = {
   // [FIX] Each engine now includes startArgs() which passes memory-limiting
   // flags directly to the DB process inside the container. Without these,
@@ -11228,7 +11244,7 @@ const DB_ENGINE_CONFIG = {
     startArgs: (memStr, _u, p) => {
       const bytes = parseMemToBytes(memStr || '128m');
       const maxMem = Math.floor(bytes * 0.8 / (1024**2)) + 'mb';
-      return (p ? `--requirepass "${p}" ` : '') + `--maxmemory ${maxMem} --maxmemory-policy allkeys-lru`;
+      return (p ? `--requirepass ${shellQuote(p)} ` : '') + `--maxmemory ${maxMem} --maxmemory-policy allkeys-lru`;
     }
   }
 };
@@ -11393,15 +11409,18 @@ async function provisionDbContainer(db, opts = {}) {
   // here means (a) we get a clear error if the registry is unreachable and (b)
   // the subsequent docker run completes in seconds because the layers are cached.
   console.log(`[DB] Pulling image ${imageToUse} for "${db.name}"…`);
-  const pullResult = await runDocker(`docker pull ${imageToUse}`, 180000);
+  const pullResult = await runDocker(`docker pull ${shellQuote(imageToUse)}`, 180000);
   if (!pullResult.ok) {
     throw new Error(`Failed to pull Docker image "${imageToUse}": ${pullResult.stderr}`);
   }
   console.log(`[DB] Image ${imageToUse} ready.`);
 
   // Build env flags
+  // [FIX] Was `-e "${e}"` (naive double-quote wrap) — shellQuote() properly
+  // escapes the whole KEY=VALUE pair so any special character in a
+  // user-supplied password/username/db name survives the shell intact.
   const envFlags = cfg.envVars(db.user, db.pass, db.dbName)
-    .map(e => `-e "${e}"`)
+    .map(e => `-e ${shellQuote(e)}`)
     .join(' ');
 
   // Redis uses a config arg for password, not just env
@@ -11443,14 +11462,14 @@ async function provisionDbContainer(db, opts = {}) {
     `--name ${containerName}`,
     `--restart unless-stopped`,
     `-p 0.0.0.0:${hostPort}:${cfg.defaultPort}`,
-    `-v "${volumePath}:${volumeMount}"`,
+    `-v ${shellQuote(volumePath + ':' + volumeMount)}`,
     `--memory="${memAlloc}"`,
     `--memory-swap="${swapAlloc}"`,
     `--pids-limit=300`,
     `--cpus="${process.env.DB_CONTAINER_CPUS || '0.75'}"`,
     `--ulimit nofile=65536:65536`,
     envFlags,
-    imageToUse,
+    shellQuote(imageToUse),
     engineStartArgs
   ].filter(Boolean).join(' ');
 
