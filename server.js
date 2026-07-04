@@ -12658,6 +12658,34 @@ app.post('/api/account/api-key/rotate', requireAuth, async (req, res) => {
 // Base: /api/v1
 // ═══════════════════════════════════════════════════════════════════════════════
 const v1 = express.Router();
+
+// [FIX] Auth + parsing middleware MUST be registered before any v1 routes,
+// including the migrations routes below — Express routers run middleware and
+// routes in strict registration order. These were previously declared further
+// down the file, after the /migrations routes, which meant every migrations
+// request ran with req.user still undefined (requirePersonalApiKey is the only
+// thing on this router that sets it), causing "Cannot read properties of
+// undefined (reading '_id')" inside loadUserDatabases(). Moved here, unchanged
+// otherwise, so they run first for every route on this router.
+v1.use(express.json());
+v1.use(requirePersonalApiKey);
+
+// Rate limiting per API key (simple in-memory, 120 req/min)
+const v1RateMap = new Map();
+v1.use((req, res, next) => {
+  const key = req.apiKeyEmailKey || 'anon';
+  const now = Date.now();
+  const bucket = v1RateMap.get(key) || { count: 0, reset: now + 60000 };
+  if (now > bucket.reset) { bucket.count = 0; bucket.reset = now + 60000; }
+  bucket.count++;
+  v1RateMap.set(key, bucket);
+  res.setHeader('X-RateLimit-Limit', '120');
+  res.setHeader('X-RateLimit-Remaining', String(Math.max(0, 120 - bucket.count)));
+  res.setHeader('X-RateLimit-Reset', String(Math.floor(bucket.reset / 1000)));
+  if (bucket.count > 120) return res.status(429).json({ ok: false, error: 'Rate limit exceeded. Max 120 requests/minute.' });
+  next();
+});
+
 const { runMigration } = require('./migration-engine');
 const migrationJobs = new Map(); // in-memory job registry for this process; persisted summary lives in Firebase (below) so history survives restarts
 
@@ -12758,25 +12786,6 @@ async function persistMigrationJobSummary(user, job) {
   ws.migrations = ws.migrations.slice(0, 50); // cap total history
   await writeWorkspaceToFirebase(user, ws);
 }
-
-v1.use(express.json());
-v1.use(requirePersonalApiKey);
-
-// Rate limiting per API key (simple in-memory, 120 req/min)
-const v1RateMap = new Map();
-v1.use((req, res, next) => {
-  const key = req.apiKeyEmailKey || 'anon';
-  const now = Date.now();
-  const bucket = v1RateMap.get(key) || { count: 0, reset: now + 60000 };
-  if (now > bucket.reset) { bucket.count = 0; bucket.reset = now + 60000; }
-  bucket.count++;
-  v1RateMap.set(key, bucket);
-  res.setHeader('X-RateLimit-Limit', '120');
-  res.setHeader('X-RateLimit-Remaining', String(Math.max(0, 120 - bucket.count)));
-  res.setHeader('X-RateLimit-Reset', String(Math.floor(bucket.reset / 1000)));
-  if (bucket.count > 120) return res.status(429).json({ ok: false, error: 'Rate limit exceeded. Max 120 requests/minute.' });
-  next();
-});
 
 // ── GET /api/v1/account ───────────────────────────────────────────────────────
 v1.get('/account', async (req, res) => {
