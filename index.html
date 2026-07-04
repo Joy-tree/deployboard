@@ -39463,5 +39463,321 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
 </script>
 <!-- ═══════════════ /Joytree falling leaves ambiance ═══════════════ -->
 
+<!-- ═══════════════ Dashboard onboarding tour ═══════════════ -->
+<style>
+  /* [FEATURE] First-visit walkthrough for the dashboard app (distinct from
+     the public homepage's static "onboarding story" scroll section above --
+     this one actually drives real navigation via showPage() as it
+     progresses, and can be replayed anytime via the floating Guide button. */
+  #jtTourOverlay{
+    position:fixed; inset:0; z-index:9990;
+    background:rgba(2,6,4,.62);
+    opacity:0; pointer-events:none;
+    transition:opacity .35s ease;
+  }
+  #jtTourOverlay.open{ opacity:1; pointer-events:auto; }
+
+  .jt-tour-spotlight{
+    position:fixed; z-index:9991; pointer-events:none;
+    border-radius:12px;
+    box-shadow:0 0 0 4px rgba(16,185,129,.55), 0 0 0 9999px rgba(2,6,4,.62), 0 0 26px rgba(16,185,129,.4);
+    transition:top .5s cubic-bezier(.33,1,.4,1), left .5s cubic-bezier(.33,1,.4,1),
+               width .5s cubic-bezier(.33,1,.4,1), height .5s cubic-bezier(.33,1,.4,1),
+               opacity .3s ease;
+    opacity:0;
+  }
+  .jt-tour-spotlight.open{ opacity:1; }
+
+  #jtTourCard{
+    position:fixed; z-index:9992; width:328px; max-width:calc(100vw - 32px);
+    background:#0a1510; border:1px solid rgba(16,185,129,.28);
+    border-radius:16px; padding:20px;
+    box-shadow:0 20px 60px rgba(0,0,0,.55), 0 0 40px rgba(16,185,129,.08);
+    opacity:0; transform:translateY(8px) scale(.97);
+    transition:opacity .3s ease, transform .3s ease, top .5s cubic-bezier(.33,1,.4,1), left .5s cubic-bezier(.33,1,.4,1);
+    pointer-events:none;
+  }
+  #jtTourCard.open{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+
+  .jt-tour-head{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .jt-tour-avatar{
+    width:34px; height:34px; border-radius:50%; flex-shrink:0;
+    background:radial-gradient(circle at 35% 32%, #34d399, #0d6b47);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 16px rgba(16,185,129,.4);
+  }
+  .jt-tour-avatar svg{ width:18px; height:18px; color:#eafff2; }
+  .jt-tour-title{ font-size:.95rem; font-weight:700; color:#f0fdf4; line-height:1.3; }
+  .jt-tour-body{ font-size:.85rem; color:#9ca8a0; line-height:1.55; margin:0 0 16px; }
+  .jt-tour-dots{ display:flex; gap:6px; margin-bottom:16px; }
+  .jt-tour-dot{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.16); transition:all .25s ease; }
+  .jt-tour-dot.active{ background:#34d399; width:16px; border-radius:3px; }
+  .jt-tour-dot.done{ background:rgba(52,211,153,.5); }
+  .jt-tour-actions{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .jt-tour-actions-right{ display:flex; gap:8px; }
+  .jt-tour-btn{
+    font-family:inherit; font-size:.82rem; font-weight:600; cursor:pointer;
+    border-radius:8px; padding:7px 14px; transition:all .15s;
+  }
+  .jt-tour-btn.skip{ background:none; border:none; color:#5b6b62; }
+  .jt-tour-btn.skip:hover{ color:#9ca8a0; }
+  .jt-tour-btn.back{ background:transparent; border:1px solid rgba(255,255,255,.14); color:#d1fae5; }
+  .jt-tour-btn.back:hover{ border-color:rgba(255,255,255,.28); }
+  .jt-tour-btn.next{ background:#10b981; border:1px solid #10b981; color:#04150d; }
+  .jt-tour-btn.next:hover{ background:#34d399; }
+
+  #jtTourGuideBtn{
+    position:fixed; right:22px; bottom:22px; z-index:9200;
+    width:48px; height:48px; border-radius:50%;
+    background:#0a1510; border:1px solid rgba(16,185,129,.35);
+    box-shadow:0 8px 24px rgba(0,0,0,.4), 0 0 20px rgba(16,185,129,.15);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:all .15s;
+  }
+  #jtTourGuideBtn:hover{ border-color:rgba(16,185,129,.6); transform:translateY(-2px); }
+  #jtTourGuideBtn svg{ width:20px; height:20px; color:#34d399; }
+  #jtTourGuideBtn{ display:none; }
+  html.app-mode #jtTourGuideBtn{ display:flex; }
+</style>
+
+<div id="jtTourOverlay"></div>
+<div id="jtTourSpotlight" class="jt-tour-spotlight"></div>
+<div id="jtTourCard">
+  <div class="jt-tour-head">
+    <div class="jt-tour-avatar">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22V12M12 12C12 12 4 10 4 4C10 4 12 12 12 12ZM12 12C12 12 20 10 20 4C14 4 12 12 12 12Z"/></svg>
+    </div>
+    <div class="jt-tour-title" id="jtTourTitle">Welcome to JoyTree</div>
+  </div>
+  <p class="jt-tour-body" id="jtTourBody">Let's take a quick look around.</p>
+  <div class="jt-tour-dots" id="jtTourDots"></div>
+  <div class="jt-tour-actions">
+    <button class="jt-tour-btn skip" id="jtTourSkip">Skip</button>
+    <div class="jt-tour-actions-right">
+      <button class="jt-tour-btn back" id="jtTourBack">Back</button>
+      <button class="jt-tour-btn next" id="jtTourNext">Next</button>
+    </div>
+  </div>
+</div>
+
+<button id="jtTourGuideBtn" title="Replay the guided tour" onclick="startJtTour(true)">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+</button>
+
+<script>
+(function(){
+  // [FEATURE] Each step optionally navigates to a real dashboard page (via
+  // the same showPage() every sidebar click uses -- no separate fake
+  // "preview" screens) and optionally spotlights a real nav item so the
+  // highlight and the page you land on are always the same element a user
+  // would actually click themselves.
+  var JT_TOUR_STEPS = [
+    {
+      page: 'dashboard',
+      title: 'Welcome to JoyTree',
+      body: "I'm your quick guide — I'll show you around so you can get the most out of your hosting dashboard. Let's get started."
+    },
+    {
+      page: 'projects', navSelector: '.nav-item[data-page="projects"]',
+      title: 'Your Projects',
+      body: 'Every app you deploy shows up here — live URLs, screenshots, and one-click redeploys, all in one place.'
+    },
+    {
+      page: 'deployments', navSelector: '.nav-item[data-page="deployments"]',
+      title: 'Deployments',
+      body: 'Every build you\u2019ve ever run, with logs and status for each one, so you can see exactly what shipped and when.'
+    },
+    {
+      page: 'databases', navSelector: '.nav-item[data-page="databases"]',
+      title: 'Databases',
+      body: 'Spin up Postgres, MySQL, MariaDB, MongoDB, or Redis in one click \u2014 plus Data Migration, for moving data in from anywhere, even a different engine entirely.'
+    },
+    {
+      page: 'domains', navSelector: '.nav-item[data-page="domains"]',
+      title: 'Domains',
+      body: 'Connect your own domain, or grab one straight from the Domain Store, and point it at any project.'
+    },
+    {
+      page: 'analytics', navSelector: '.nav-item[data-page="analytics"]',
+      title: 'Analytics',
+      body: 'Live traffic, request volume, and health for your projects \u2014 no separate service to wire up.'
+    },
+    {
+      page: 'joytree-ai', navSelector: '.nav-item[data-page="joytree-ai"]',
+      title: 'JoyTree AI',
+      body: 'An autonomous coding agent that can work directly in your repos \u2014 describe what you need, and it opens the pull request.'
+    },
+    {
+      page: 'dashboard',
+      title: "You're all set",
+      body: 'That\u2019s the tour. Tap the guide button in the bottom-right corner anytime you want to go through this again.'
+    }
+  ];
+
+  var tourIndex = 0;
+  var tourActive = false;
+
+  var overlay = document.getElementById('jtTourOverlay');
+  var spotlight = document.getElementById('jtTourSpotlight');
+  var card = document.getElementById('jtTourCard');
+  var titleEl = document.getElementById('jtTourTitle');
+  var bodyEl = document.getElementById('jtTourBody');
+  var dotsEl = document.getElementById('jtTourDots');
+  var backBtn = document.getElementById('jtTourBack');
+  var nextBtn = document.getElementById('jtTourNext');
+  var skipBtn = document.getElementById('jtTourSkip');
+
+  function buildDots(){
+    dotsEl.innerHTML = '';
+    JT_TOUR_STEPS.forEach(function(_, i){
+      var d = document.createElement('span');
+      d.className = 'jt-tour-dot' + (i === tourIndex ? ' active' : i < tourIndex ? ' done' : '');
+      dotsEl.appendChild(d);
+    });
+  }
+
+  var MOBILE_MQ = window.matchMedia('(max-width: 900px)');
+
+  function positionForStep(step){
+    var navEl = step.navSelector ? document.querySelector(step.navSelector) : null;
+    var isMobile = MOBILE_MQ.matches;
+
+    if (navEl && isMobile) {
+      // [FIX] The sidebar is a hidden off-screen drawer on mobile (only
+      // shown via the hamburger toggle) -- without opening it first, the
+      // nav item's bounding rect would just be off-screen and the
+      // spotlight would point at nothing. Every screenshot in this whole
+      // project has come from a phone, so this path matters as much as
+      // the desktop one, not as an edge case.
+      document.getElementById('sidebar')?.classList.add('open');
+      document.getElementById('sidebarOverlay')?.classList.add('open');
+      setTimeout(function(){ placeSpotlight(navEl); }, 300);
+    } else if (navEl) {
+      setTimeout(function(){ placeSpotlight(navEl); }, 260);
+    } else {
+      spotlight.classList.remove('open');
+    }
+
+    if (isMobile) {
+      // [FIX] A side-anchored tooltip (computed from a nav item's on-screen
+      // position) doesn't translate to a narrow phone viewport -- there's
+      // rarely room beside the item, and the sidebar drawer itself often
+      // covers most/all of the width when open. Matches the Esi's Kitchen
+      // reference: one consistent bottom-sheet position for every step,
+      // regardless of what's being spotlighted behind it.
+      card.style.top = 'auto';
+      card.style.bottom = '16px';
+      card.style.left = '16px';
+      card.style.right = '16px';
+      card.style.width = 'auto';
+      card.style.transform = 'none';
+    } else if (navEl) {
+      card.style.bottom = 'auto';
+      card.style.right = 'auto';
+      card.style.width = '328px';
+      setTimeout(function(){ placeCardBesideNav(navEl); }, 260);
+    } else {
+      card.style.bottom = 'auto';
+      card.style.right = 'auto';
+      card.style.width = '328px';
+      card.style.top = '50%';
+      card.style.left = '50%';
+      card.style.transform = 'translate(-50%,-50%)';
+    }
+  }
+
+  function placeSpotlight(navEl){
+    navEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(function(){
+      var r = navEl.getBoundingClientRect();
+      spotlight.style.top = (r.top - 6) + 'px';
+      spotlight.style.left = (r.left - 6) + 'px';
+      spotlight.style.width = (r.width + 12) + 'px';
+      spotlight.style.height = (r.height + 12) + 'px';
+      spotlight.classList.add('open');
+    }, 220);
+  }
+
+  function placeCardBesideNav(navEl){
+    var r = navEl.getBoundingClientRect();
+    var cardTop = Math.min(window.innerHeight - 260, Math.max(16, r.top - 20));
+    card.style.top = cardTop + 'px';
+    card.style.left = (r.right + 20) + 'px';
+  }
+
+  function renderStep(){
+    var step = JT_TOUR_STEPS[tourIndex];
+    var navEl = step.navSelector ? document.querySelector(step.navSelector) : null;
+    // Real navigation -- same showPage() a sidebar click triggers, so the
+    // page shown during the tour is never a separate fake mock-up.
+    if (typeof showPage === 'function' && typeof currentPage !== 'undefined' && currentPage !== step.page) {
+      showPage(step.page, navEl || null);
+    }
+    titleEl.textContent = step.title;
+    bodyEl.textContent = step.body;
+    buildDots();
+    backBtn.style.visibility = tourIndex === 0 ? 'hidden' : 'visible';
+    nextBtn.textContent = tourIndex === JT_TOUR_STEPS.length - 1 ? 'Done' : 'Next';
+    // Let the new page finish rendering before measuring its nav item position.
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ positionForStep(step); }); });
+  }
+
+  function openTour(){
+    tourActive = true;
+    overlay.classList.add('open');
+    card.classList.add('open');
+    document.documentElement.classList.add('jt-tour-open');
+    renderStep();
+  }
+
+  function closeTour(){
+    tourActive = false;
+    overlay.classList.remove('open');
+    card.classList.remove('open');
+    spotlight.classList.remove('open');
+    document.documentElement.classList.remove('jt-tour-open');
+    if (MOBILE_MQ.matches) {
+      document.getElementById('sidebar')?.classList.remove('open');
+      document.getElementById('sidebarOverlay')?.classList.remove('open');
+    }
+    try { localStorage.setItem('jt_tour_done', '1'); } catch(_) {}
+  }
+
+  window.startJtTour = function(force){
+    tourIndex = 0;
+    openTour();
+  };
+
+  nextBtn.addEventListener('click', function(){
+    if (tourIndex >= JT_TOUR_STEPS.length - 1) { closeTour(); return; }
+    tourIndex++;
+    renderStep();
+  });
+  backBtn.addEventListener('click', function(){
+    if (tourIndex === 0) return;
+    tourIndex--;
+    renderStep();
+  });
+  skipBtn.addEventListener('click', closeTour);
+
+  window.addEventListener('resize', function(){
+    if (tourActive) positionForStep(JT_TOUR_STEPS[tourIndex]);
+  });
+
+  // Auto-launch once per browser, only inside the app (never on the public
+  // marketing site), a beat after first load so the dashboard has settled.
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){
+      var seen = false;
+      try { seen = localStorage.getItem('jt_tour_done') === '1'; } catch(_) {}
+      if (!seen && document.documentElement.classList.contains('app-mode') && hasAuthToken()) {
+        startJtTour();
+      }
+    }, 1200);
+  });
+})();
+</script>
+<!-- ═══════════════ /Dashboard onboarding tour ═══════════════ -->
+
 </body>
 </html>
