@@ -412,7 +412,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
 
   try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
 
-  const networkName = 'deployboard_deployboard-net';
+  const networkName = 'deployboard-net';
   // [FIX] Apply the same memory/swap caps used by other deploy paths.
   // Previously this path had only --cpu-shares/--pids-limit with no
   // memory limit, so a Dockerfile-based app with a memory leak (or just
@@ -533,7 +533,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   // Stop old container
   try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
 
-  const networkName = 'deployboard_deployboard-net';
+  const networkName = 'deployboard-net';
   // [FIX] Cap memory for worker containers too — same rationale as other
   // deploy paths (see comment near the Dockerfile-deploy path above).
   const runtime = getRuntimeConfig(project);
@@ -732,7 +732,7 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
     'run', '-d',
     '--name',       candidateContainerName,
     '--restart',    'unless-stopped',
-    '--network',    'deployboard_deployboard-net',
+    '--network',    'deployboard-net',
     '--add-host',   'host.docker.internal:host-gateway',
     '--cpu-shares', CPU_SHARES,
     '--pids-limit', PIDS_LIMIT,
@@ -1852,7 +1852,7 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
   const runArgs = [
     'run', '-d',
     '--name', candidateContainerName, '--restart', 'unless-stopped',
-    '--network', 'deployboard_deployboard-net',
+    '--network', 'deployboard-net',
     '--add-host', 'host.docker.internal:host-gateway',
     '--cpu-shares', runtime.cpuShares, '--pids-limit', PIDS_LIMIT,
     '-m', runtime.memory, '--memory-reservation', runtime.memory,
@@ -3410,7 +3410,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     'run', '-d',
     '--name',         candidateContainerName,
     '--restart',      'unless-stopped',
-    '--network',      'deployboard_deployboard-net',
+    '--network',      'deployboard-net',
     // [FIX] Lets apps reach VPS-local services (e.g. a self-hosted DB bound
     // to the VPS's public IP) via host.docker.internal instead of hairpinning
     // out through the public IP and back in — a path many VPS networks
@@ -5046,7 +5046,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   const expectedPort = appPort || 3000;
   const envObj = withDeployedAppRuntimeDefaults(resolveEnvVars(project.envVars), project, baseDomain);
   const startCmdResolved = resolveRuntimeStartCommand({ projectRoot: appDir, startCmd: project.startCmd, expectedPort });
-  const networkName = 'deployboard_deployboard-net';
+  const networkName = 'deployboard-net';
   const hostAppDir = appDir.replace('/var/www/user-sites', '/var/lib/docker/volumes/deployboard_sites-data/_data');
   const portsFile = path.join(sitesDir, 'ports.json');
   const previousTarget = readRegistryTarget(portsFile, cleanSub);
