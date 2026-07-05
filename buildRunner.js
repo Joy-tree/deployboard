@@ -422,6 +422,12 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
     'run', '-d', '--restart=unless-stopped',
     '--name',         candidateContainerName,
     '--network',      networkName,
+    // [FIX] Apps that dial the VPS's own public IP for a locally-hosted
+    // service (e.g. a self-hosted database) can hit hairpin-NAT: the
+    // connection leaves the box and never routes back in, hanging until
+    // the OS gives up. host.docker.internal:host-gateway gives apps a
+    // route to the host that never leaves the machine.
+    '--add-host',     'host.docker.internal:host-gateway',
     '--cpu-shares',   CPU_SHARES,
     '--pids-limit',   PIDS_LIMIT,
     '-m',             runtime.memory,
@@ -535,6 +541,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     'run', '-d', '--restart=unless-stopped',
     '--name',         candidateContainerName,
     '--network',      networkName,
+    '--add-host',     'host.docker.internal:host-gateway',
     '--cpu-shares',   CPU_SHARES,
     '--pids-limit',   PIDS_LIMIT,
     '-m',             runtime.memory,
@@ -726,6 +733,7 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
     '--name',       candidateContainerName,
     '--restart',    'unless-stopped',
     '--network',    'deployboard_deployboard-net',
+    '--add-host',   'host.docker.internal:host-gateway',
     '--cpu-shares', CPU_SHARES,
     '--pids-limit', PIDS_LIMIT,
     '-m',           '2g',
@@ -1845,6 +1853,7 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
     'run', '-d',
     '--name', candidateContainerName, '--restart', 'unless-stopped',
     '--network', 'deployboard_deployboard-net',
+    '--add-host', 'host.docker.internal:host-gateway',
     '--cpu-shares', runtime.cpuShares, '--pids-limit', PIDS_LIMIT,
     '-m', runtime.memory, '--memory-reservation', runtime.memory,
     '-e', `PORT=${expectedPort}`,
@@ -3402,6 +3411,12 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     '--name',         candidateContainerName,
     '--restart',      'unless-stopped',
     '--network',      'deployboard_deployboard-net',
+    // [FIX] Lets apps reach VPS-local services (e.g. a self-hosted DB bound
+    // to the VPS's public IP) via host.docker.internal instead of hairpinning
+    // out through the public IP and back in — a path many VPS networks
+    // silently drop, stalling startup for a long time (SYN retry backoff)
+    // before falling through to any DB-connect failure handling.
+    '--add-host',     'host.docker.internal:host-gateway',
     '--cpu-shares',   runtime.cpuShares,
     '--pids-limit',   PIDS_LIMIT,
     '-m',             runtime.memory,
@@ -5044,6 +5059,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
     'run', '-d', '--restart=unless-stopped',
     '--name', candidateContainerName,
     '--network', networkName,
+    '--add-host', 'host.docker.internal:host-gateway',
     '--cpu-shares', CPU_SHARES,
     '--pids-limit', PIDS_LIMIT,
     '-m', runtime.memory,
