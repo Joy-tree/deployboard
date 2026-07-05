@@ -9305,7 +9305,16 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
         outputDir:  outputDir  || 'dist',
         workingDir: cleanWorkingDir,
         nodeVer:    nodeVer    || '20',
-        siteType:   siteType   || 'static',
+        // [FIX] Was `siteType || 'static'` -- this is the actual Project
+        // record used to build with (via runBuild -> _runBuildDispatch in
+        // buildRunner.js), completely independent of the v1 API layer fix
+        // made earlier tonight. That fix passed blank siteType through
+        // correctly at the API boundary, but this line re-applied its own
+        // 'static' default right here, silently undoing it every time --
+        // forcing every deploy without an explicit siteType into the
+        // static-file build path (expecting a "dist" output folder) instead
+        // of letting _runBuildDispatch's real post-clone detection run.
+        siteType:   siteType   || '',
         appPort,
         billingPlan: planKey,
         memoryLimit: runtimeProfile.memoryLimit,
@@ -9332,7 +9341,13 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       branch: branch||'main', installCmd: installCmd||'npm install',
       buildCmd: buildCmd||'npm run build', startCmd: startCmd||'',
       outputDir: outputDir||'dist', workingDir: cleanWorkingDir, nodeVer: nodeVer||'20',
-      siteType: siteType||'static', appPort, billingPlan: planKey, memoryLimit: runtimeProfile.memoryLimit, cpuShares: runtimeProfile.cpuShares, memorySwap: runtimeProfile.memorySwap, envVars: envVars||{},
+      // [FIX] Same as the primary upsert above -- pass blank through instead
+      // of forcing 'static', so _runBuildDispatch's real detection runs.
+      // This fallback branch is the one actually used whenever Mongo isn't
+      // configured (this account's normal Firebase-only setup), so this was
+      // the line actually responsible for every auto-detected GitHub deploy
+      // landing as a static site tonight.
+      siteType: siteType||'', appPort, billingPlan: planKey, memoryLimit: runtimeProfile.memoryLimit, cpuShares: runtimeProfile.cpuShares, memorySwap: runtimeProfile.memorySwap, envVars: envVars||{},
       save: async () => {}
     };
   }
