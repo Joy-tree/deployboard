@@ -3622,19 +3622,24 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
     }
 
     for (const port of candidates) {
-      // Fast TCP pre-check: skip ports that aren't accepting connections at all
-      // rather than burning 1500ms on an HTTP timeout. This is critical when a
-      // non-HTTP internal socket (e.g. 45443) sits at the front of the candidate
-      // list — without this it consumes the full timeout on every loop iteration
-      // while the real app port (e.g. 10037) never gets probed in time.
-      if (fallbackIP) {
-        try { await probeTcp(fallbackIP, port, 400); } catch (_) { continue; }
-      }
-
       // Allow HTML responses from ports the app actually bound to.
       // Full-stack apps (Next.js, Remix, SvelteKit, etc.) serve HTML on '/'.
       // Reject HTML only from seed ports where a foreign service might answer.
       const allowHtml = discoveredSet.has(port) || port === preferredPort;
+
+      // Fast TCP pre-check against the fallback IP. This only decides whether
+      // it's worth trying the IP-based probe further down — it must NOT skip
+      // the containerName-based probe below. Docker's embedded DNS resolves
+      // container names reliably over the shared bridge network even when
+      // getContainerIP()'s reported address isn't yet reachable (propagation
+      // lag, a transient blip, etc.). Treating a failed IP precheck as proof
+      // the port is dead was causing readiness to fail on apps that had
+      // already started fine and were reachable by name.
+      let fallbackReachable = false;
+      if (fallbackIP) {
+        try { await probeTcp(fallbackIP, port, 400); fallbackReachable = true; } catch (_) {}
+      }
+
       try {
         await probeHttp(containerName, port, 1500, allowHtml);
         await new Promise(r => setTimeout(r, 800));
@@ -3642,7 +3647,7 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
         log(`\x1b[32m[docker] ✓ App reachable on ${containerName}:${port}\x1b[0m`);
         return port;
       } catch (_) {
-        if (fallbackIP) {
+        if (fallbackIP && fallbackReachable) {
           try {
             await probeHttp(fallbackIP, port, 1500, allowHtml);
             await new Promise(r => setTimeout(r, 500));
