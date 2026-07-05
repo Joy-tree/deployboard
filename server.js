@@ -14884,6 +14884,24 @@ async function checkAndAutoDeployProjects() {
   try {
   if (!isDbReady()) {
     for (const user of localAuth.users || []) {
+      // [FIX] This used to read user.workspace.projects directly -- the
+      // in-memory (and on-disk, via local-auth.json) cache. That cache is
+      // only ever as fresh as whatever was loaded when THIS process
+      // started. Firebase is the real source of truth and can have moved on
+      // since then (e.g. a project deleted, or a new deploy created, while
+      // a previous process instance was still running). Every restart's
+      // first poll was reading that stale snapshot, then
+      // checkWorkspaceProjectAutoDeploy -> updateLocalWorkspaceProject would
+      // write that same stale snapshot's *entire* project list straight
+      // back to Firebase -- silently undoing anything that had changed
+      // there since this process's local-auth.json was last saved.
+      // Refreshing from Firebase here, right before using it, closes that
+      // gap: the poller (and everything it calls) now always operates on
+      // live data instead of a potentially-stale disk snapshot.
+      try {
+        const freshWs = await readWorkspaceFromFirebase(user);
+        if (freshWs && typeof freshWs === 'object') user.workspace = freshWs;
+      } catch (_) {}
       const workspaceProjects = Array.isArray(user?.workspace?.projects) ? user.workspace.projects : [];
       for (const raw of workspaceProjects) {
         const project = normalizeWorkspaceAutoDeployProject(raw, raw?.id || raw?._id || raw?.subdomain);
