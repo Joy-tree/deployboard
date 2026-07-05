@@ -21163,7 +21163,15 @@ let metricTimer = null;
 let latestAiAnalysis = null;
 
 function restartActiveDeployment() {
-  const d = deployments.find(x => x.id === activeBuildId);
+  // [FIX] Was reading `deployments.find(x => x.id === activeBuildId)` directly.
+  // activeBuildId gets set to null by stopActiveDeployment() once a stop
+  // succeeds (correctly — there's no longer an active *running* build), but
+  // Restart isn't asking "is something running", it's asking "which project
+  // was I just looking at on this page" — the same question the Live Logs
+  // page itself answers via resolveLogsContextDeployment() (which falls back
+  // to the most recent deployment when nothing is actively building). Using
+  // that instead means Restart keeps working right after a Stop.
+  const d = resolveLogsContextDeployment();
   if (!d) return toast('No active deployment selected to restart', 'info');
   const p = projects.find(x => String(x.id || x._id || '') === String(d.projectId || ''));
   if (!p) return toast('Could not find project to restart', 'error');
@@ -21191,7 +21199,9 @@ function restartActiveDeployment() {
   setTimeout(() => { startDeployment(); }, 120);
 }
 async function stopActiveDeployment() {
-  const d = deployments.find(x => x.id === activeBuildId);
+  // [FIX] Same activeBuildId issue as restartActiveDeployment() above — use
+  // the page's actual context resolver instead.
+  const d = resolveLogsContextDeployment();
   if (!d) return toast('No active deployment selected to stop', 'info');
   try {
     const r = await apiFetch(`/api/deploy/${encodeURIComponent(d.id)}/stop`, { method: 'POST' });
@@ -21203,7 +21213,15 @@ async function stopActiveDeployment() {
     d.logs.push('[manual] Deployment stop requested by user.');
     activeBuildId = null;
     save();
-    renderLogsPage();
+    // [FIX] renderLogsPage() doesn't exist anywhere in this file — calling it
+    // threw a ReferenceError right after the stop request had already
+    // succeeded on the backend, which the catch below then displayed as a
+    // raw JS error ("renderLogsPage is not defined") — the "render page not
+    // found"-looking toast, even though the stop itself worked fine.
+    // showPage('logs', null, true) re-runs the exact same setup the page
+    // already uses on first load (terminal title/status/hud refresh), with
+    // _skipPush=true so it doesn't touch browser history.
+    showPage('logs', null, true);
     toast('Deployment stop requested. Backend is halting build.', 'success');
   } catch (e) {
     toast(e.message || 'Could not stop deployment', 'error');
