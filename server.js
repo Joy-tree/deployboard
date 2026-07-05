@@ -13184,7 +13184,15 @@ v1.post('/deploy', async (req, res) => {
         buildCmd:   buildCmd   || '',
         startCmd:   startCmd   || '',
         installCmd: installCmd || '',
-        siteType:   siteType   || 'static',
+        // [FIX] Was `siteType || 'static'` — forcing every deploy through this
+        // endpoint that didn't explicitly pass siteType:'server' into the
+        // static-file build path, before it ever reached the real dispatch
+        // logic in buildRunner.js (_runBuildDispatch: blank siteType tries
+        // runServerBuild, which auto-detects the runtime from the cloned repo
+        // and falls back to static internally only if no server entry point
+        // is found). This silently broke auto-detect for every server app
+        // deployed via the CLI or MCP without an explicit siteType override.
+        siteType:   siteType   || '',
         nodeVer:    nodeVer    || '20',
         outputDir:  outputDir  || '',
         workingDir: workingDir || '',
