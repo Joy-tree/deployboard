@@ -4141,10 +4141,15 @@ app.get('/api/projects/:id', async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.delete('/api/projects/:id', async (req, res) => {
+app.delete('/api/projects/:id', requireAuth, async (req, res) => {
   try {
     const reqId = req.params.id;
 
+    // [FIX] This route never had requireAuth attached at all -- req.user was
+    // always undefined, so every call (API, MCP, anything not going through
+    // the dashboard's own session) unconditionally hit the 401 branch below.
+    // Added requireAuth (same middleware every other authenticated route
+    // uses; accepts session cookie, jtk_ API key, or internal deploy key).
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required to resolve which workspace to delete from.' });
     }
@@ -4409,7 +4414,7 @@ app.post('/api/domains/:domain/verify', async (req, res) => {
   }
 });
 
-app.delete('/api/domains/:domain', async (req, res) => {
+app.delete('/api/domains/:domain', requireAuth, async (req, res) => {
   try {
     const domain = String(req.params.domain || '').toLowerCase();
     // Remove from Firebase
@@ -5294,7 +5299,7 @@ app.post('/api/domains/proxy-import', async (req, res) => {
 });
 
 // DELETE /api/domains/proxy-import/:subdomain — remove an external proxy
-app.delete('/api/domains/proxy-import/:subdomain', async (req, res) => {
+app.delete('/api/domains/proxy-import/:subdomain', requireAuth, async (req, res) => {
   try {
     const subdomain = String(req.params.subdomain).trim().toLowerCase();
     _epCache.delete(subdomain);
