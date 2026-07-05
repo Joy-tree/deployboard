@@ -13394,7 +13394,11 @@ v1.post('/projects/:id/restart', async (req, res) => {
     if (!project) return res.status(404).json({ ok: false, error: 'Project not found.' });
     // [FIX] async — execSync('docker restart ...') here blocked the event
     // loop (and the proxy for every tenant) for up to 30s on a slow restart.
-    const containerName = `joytree-${project.subdomain}`;
+    // [FIX] Container name prefix was 'joytree-<subdomain>', but every
+    // container this platform actually spawns (buildRunner.js, all six
+    // deploy paths) uses 'db-<subdomain>'. This endpoint has been silently
+    // failing on every call — 'docker restart' on a name that never existed.
+    const containerName = `db-${project.subdomain}`;
     const r = await execP(`docker restart ${containerName}`, { timeout: 30000 });
     if (r !== '') {
       res.json({ ok: true, message: `Container ${containerName} restarted.` });
@@ -13413,7 +13417,11 @@ v1.get('/projects/:id/status', async (req, res) => {
     // [FIX] async — both execSync calls here blocked the event loop (and the
     // proxy for every tenant) for up to 5s/8s on a slow Docker daemon, and
     // this endpoint is polled frequently by users checking project status.
-    const containerName = `joytree-${project.subdomain}`;
+    // [FIX] Same wrong container-name prefix as the restart endpoint above —
+    // 'joytree-<subdomain>' never matched any real container, so this always
+    // reported 'unknown' status and empty stats regardless of the app's
+    // actual state.
+    const containerName = `db-${project.subdomain}`;
     let containerStatusResult = 'unknown';
     let stats = {};
     try {
