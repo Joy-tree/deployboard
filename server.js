@@ -4144,6 +4144,7 @@ app.get('/api/projects/:id', async (req, res) => {
 app.delete('/api/projects/:id', requireAuth, async (req, res) => {
   try {
     const reqId = req.params.id;
+    const userId = String(req.user?._id || req.user?.id || '');
 
     // [FIX] This route never had requireAuth attached at all -- req.user was
     // always undefined, so every call (API, MCP, anything not going through
@@ -4183,6 +4184,23 @@ app.delete('/api/projects/:id', requireAuth, async (req, res) => {
     if (!wroteOk) {
       console.error(`[Delete] Failed to write updated workspace to Firebase for ${p.subdomain} -- aborting before touching files/containers, since the project would still show as existing`);
       return res.status(502).json({ error: 'Failed to update Firebase workspace; nothing was deleted.' });
+    }
+
+    // [FIX] This is the actual reason deleted projects kept silently coming
+    // back: this route wrote the deletion straight to Firebase but never
+    // touched the parallel in-memory copy at localAuth.users[].workspace.
+    // That cached copy is what functions like updateLocalWorkspaceProject()
+    // read AND write wholesale -- e.g. the autodeploy poller, which runs on
+    // an interval for every project with autoDeployEnabled. The next time it
+    // ticked, it read its own stale (pre-delete) copy of the workspace,
+    // changed one unrelated field, and wrote the WHOLE thing back to
+    // Firebase -- silently resurrecting the project we just deleted. Every
+    // endpoint that writes to Firebase needs to keep this cache in sync or
+    // it becomes a ticking time bomb for exactly this kind of lost update.
+    const localUserForDelete = localAuth.users.find(u => String(u.id || u._id || '') === userId || u.email === req.user.email);
+    if (localUserForDelete) {
+      localUserForDelete.workspace = ws;
+      saveLocalAuth();
     }
 
     // Best-effort legacy Mongo cleanup, in case this project also has an
