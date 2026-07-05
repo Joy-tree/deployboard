@@ -12841,7 +12841,15 @@ const v1 = express.Router();
 // thing on this router that sets it), causing "Cannot read properties of
 // undefined (reading '_id')" inside loadUserDatabases(). Moved here, unchanged
 // otherwise, so they run first for every route on this router.
-v1.use(express.json());
+// [FIX] Default express.json() body limit is 100kb -- far too small for the
+// new /deploy-from-zip endpoint below, which accepts a base64-encoded zip
+// archive in the JSON body (for MCP/API clients that don't have a git repo
+// to point at, e.g. an AI agent that just generated a project's files).
+// 300mb comfortably covers the ~33% base64 size inflation on top of the
+// existing 260MB raw multipart upload limit used by the dashboard's own
+// upload flow (parseMultipart's MAX). A larger limit is harmless for every
+// other v1 route, which send/receive tiny JSON payloads.
+v1.use(express.json({ limit: '300mb' }));
 v1.use(requirePersonalApiKey);
 
 // Rate limiting per API key (simple in-memory, 120 req/min)
@@ -13203,6 +13211,100 @@ v1.post('/deploy', async (req, res) => {
     const data = await r.json().catch(() => ({}));
     if (!r.ok) return res.status(r.status).json({ ok: false, error: data.error || `HTTP ${r.status}` });
     res.json({ ok: true, deployId: data.deployId || null, subdomain: subdomain || name, message: 'Deploy triggered.' });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
+// ── POST /api/v1/deploy-from-zip ──────────────────────────────────────────────
+// Deploy from a base64-encoded zip archive instead of a git repo. Exists for
+// API/MCP clients that don't have a repo to point at -- most notably an AI
+// agent that generated a project's files locally and needs to ship them
+// without ever pushing to GitHub first. The CLI intentionally does NOT expose
+// this (zipping/uploading a local directory via a terminal command is a much
+// worse experience than just deploying from the repo you already have), but
+// there's no such friction for an MCP tool call, which can carry the archive
+// bytes directly in the request.
+//
+// Reuses the exact same extraction (extractUploadedArchive) and build
+// (runUploadBuild via /api/upload-deploy) pipeline the dashboard's own
+// "Upload files" flow already uses and that we spent a long night confirming
+// works correctly -- this endpoint's only job is turning a base64 string into
+// the same on-disk layout /api/upload-project produces, then handing off to
+// the proven /api/upload-deploy endpoint (which accepts the same jtk_ Bearer
+// token this request already carried, via requireAuth's branch 2).
+v1.post('/deploy-from-zip', async (req, res) => {
+  try {
+    const { name, subdomain, zipBase64, branch, buildCmd, startCmd, installCmd,
+            outputDir, siteType, nodeVer, envVars } = req.body || {};
+
+    if (!name || !zipBase64) {
+      return res.status(400).json({ ok: false, error: 'name and zipBase64 are required' });
+    }
+
+    let archiveBuffer;
+    try {
+      archiveBuffer = Buffer.from(String(zipBase64), 'base64');
+    } catch (_) {
+      return res.status(400).json({ ok: false, error: 'zipBase64 is not valid base64' });
+    }
+    if (!archiveBuffer.length) {
+      return res.status(400).json({ ok: false, error: 'Decoded archive is empty -- check the base64 encoding' });
+    }
+    const MAX_ZIP_BYTES = 260 * 1024 * 1024; // matches parseMultipart's own limit
+    if (archiveBuffer.length > MAX_ZIP_BYTES) {
+      return res.status(413).json({ ok: false, error: `Archive exceeds ${MAX_ZIP_BYTES / (1024*1024)}MB limit` });
+    }
+
+    const userId = String(req.user?._id || req.user?.id || 'anon');
+    const projectId = 'zip_' + Date.now();
+    const userUploadDir = path.join(UPLOADS_DIR, userId, projectId);
+    try { fs.mkdirSync(userUploadDir, { recursive: true }); }
+    catch (e) { return res.status(500).json({ ok: false, error: 'Could not create upload directory: ' + e.message }); }
+
+    const archivePath = path.join(userUploadDir, 'archive.zip');
+    try { fs.writeFileSync(archivePath, archiveBuffer); }
+    catch (e) { return res.status(500).json({ ok: false, error: 'Failed to write archive: ' + e.message }); }
+
+    const filesDir = path.join(userUploadDir, 'files');
+    try {
+      await extractUploadedArchive(archivePath, filesDir);
+    } catch (e) {
+      return res.status(400).json({ ok: false, error: 'Failed to extract archive: ' + e.message });
+    }
+
+    const cleanSubdomain = String(subdomain || name).toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+
+    // Hand off to the existing, already-proven upload-deploy pipeline. Forward
+    // the same Authorization header this request came in with -- requireAuth
+    // accepts jtk_ Bearer tokens directly (see branch 2), so no separate
+    // internal-key auth path is needed here.
+    const r = await fetch(`http://localhost:${PORT}/api/upload-deploy`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': req.headers.authorization || '',
+      },
+      body: JSON.stringify({
+        projectId, name, subdomain: cleanSubdomain,
+        siteType:   siteType   || '',
+        buildCmd:   buildCmd   || '',
+        startCmd:   startCmd   || '',
+        installCmd: installCmd || '',
+        outputDir:  outputDir  || '',
+        nodeVer:    nodeVer    || '20',
+        envVars:    envVars    || {},
+      }),
+    });
+
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return res.status(r.status).json({ ok: false, error: data.error || `HTTP ${r.status}` });
+    res.json({
+      ok: true,
+      deployId: data.deployId || null,
+      subdomain: cleanSubdomain,
+      liveUrl: data.liveUrl || null,
+      message: data.message || 'Deploy from zip triggered.',
+    });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
