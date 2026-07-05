@@ -1843,6 +1843,35 @@ async function writeWorkspaceToFirebase(user, workspace) {
     if (!r.ok) {
       const body = await r.text().catch(()=>'');
       console.warn('[Firebase] writeWorkspaceToFirebase HTTP', r.status, body.slice(0,200));
+    } else {
+      // [FIX] Firebase is the source of truth, but localAuth.users[].workspace
+      // is a separate in-memory (+ on-disk) cache that other code paths --
+      // most notably updateLocalWorkspaceProject(), used by the autodeploy
+      // poller on every interval tick -- read AND write wholesale, entirely
+      // independent of this function. Before this fix, only a handful of the
+      // ~30 call sites of writeWorkspaceToFirebase remembered to also update
+      // that cache. Every one that didn't was a ticking time bomb: any write
+      // made only to Firebase could be silently clobbered the next time a
+      // stale-cache writer (like the autodeploy poller) did its own
+      // read-modify-write of the whole workspace object. This is exactly
+      // what made deleted projects reappear and made newly-created ones
+      // vanish before they could even be queried. Syncing the cache here,
+      // once, for every successful write, protects every current and future
+      // caller instead of relying on each one to remember to do it.
+      try {
+        const uid = String(user?._id || user?.id || '');
+        const uemail = String(user?.email || '').trim().toLowerCase();
+        const localUser = localAuth.users.find(u =>
+          (uid && String(u.id || u._id || '') === uid) ||
+          (uemail && String(u.email || '').trim().toLowerCase() === uemail)
+        );
+        if (localUser) {
+          localUser.workspace = payload;
+          saveLocalAuth();
+        }
+      } catch (sy) {
+        console.warn('[Firebase] writeWorkspaceToFirebase: localAuth cache sync failed (non-fatal):', sy.message);
+      }
     }
     return r.ok;
   } catch(e) {
@@ -4185,23 +4214,9 @@ app.delete('/api/projects/:id', requireAuth, async (req, res) => {
       console.error(`[Delete] Failed to write updated workspace to Firebase for ${p.subdomain} -- aborting before touching files/containers, since the project would still show as existing`);
       return res.status(502).json({ error: 'Failed to update Firebase workspace; nothing was deleted.' });
     }
-
-    // [FIX] This is the actual reason deleted projects kept silently coming
-    // back: this route wrote the deletion straight to Firebase but never
-    // touched the parallel in-memory copy at localAuth.users[].workspace.
-    // That cached copy is what functions like updateLocalWorkspaceProject()
-    // read AND write wholesale -- e.g. the autodeploy poller, which runs on
-    // an interval for every project with autoDeployEnabled. The next time it
-    // ticked, it read its own stale (pre-delete) copy of the workspace,
-    // changed one unrelated field, and wrote the WHOLE thing back to
-    // Firebase -- silently resurrecting the project we just deleted. Every
-    // endpoint that writes to Firebase needs to keep this cache in sync or
-    // it becomes a ticking time bomb for exactly this kind of lost update.
-    const localUserForDelete = localAuth.users.find(u => String(u.id || u._id || '') === userId || u.email === req.user.email);
-    if (localUserForDelete) {
-      localUserForDelete.workspace = ws;
-      saveLocalAuth();
-    }
+    // Note: writeWorkspaceToFirebase() now keeps localAuth.users[].workspace
+    // in sync automatically on every successful write -- see its definition
+    // for why that matters here specifically.
 
     // Best-effort legacy Mongo cleanup, in case this project also has an
     // old Mongo-side record from before the Firebase migration. Not
