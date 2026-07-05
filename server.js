@@ -14101,12 +14101,133 @@ server.on('upgrade', (req, socket, head) => {
   }
 });
 
+// ── Recover builds orphaned by a mid-deploy server restart ──────────────────
+// A deploy's candidate container only gets promoted (renamed to its stable
+// db-<sub> name + written into ports.json) at the very end of the build
+// function, inside buildRunner.js. That function runs detached from the
+// browser/SSE connection — closing the dashboard tab does NOT kill it. But
+// if the deployboard process ITSELF is restarted while a build is still
+// running (e.g. redeploying deployboard to pick up a fix), the build
+// function dies with it, mid-flight, before it ever reaches the promote
+// step or the catch block that would normally write a final 'success' or
+// 'failed' status. The candidate container is left running forever under
+// its "-cand-" name — often perfectly healthy — while the dashboard shows
+// the deploy frozen on "building"/"still waiting for app HTTP port"
+// indefinitely, because nothing ever told it the job was gone.
+//
+// On every startup we look for leftover "-cand-" containers: if one is
+// actually healthy and serving HTTP, we finish the promotion the
+// interrupted build never got to do (so the site actually comes online
+// with zero manual cleanup); if it isn't, we remove it. Either way, any
+// workspace record still stuck on 'building' for that project gets
+// resolved to a real terminal status so the dashboard reflects reality
+// instead of hanging forever.
+async function recoverOrphanedBuildsOnStartup() {
+  try {
+    const raw = await execP(`docker ps -a --format '{{.Names}}' | grep -- '-cand-' || true`);
+    const names = raw ? raw.split('\n').map(s => s.trim()).filter(Boolean) : [];
+    if (!names.length) return;
+
+    console.log(`[Startup Recovery] Found ${names.length} leftover candidate container(s) from an interrupted build`);
+    const { detectLivePort } = require('./buildRunner');
+
+    for (const candidateName of names) {
+      const m = candidateName.match(/^(db-.+?)-cand-/);
+      if (!m) continue;
+      const containerName = m[1];
+      const cleanSub = containerName.replace(/^db-/, '');
+
+      let state = '';
+      try { state = await execP(`docker inspect --format='{{.State.Status}}' ${candidateName}`); } catch (_) {}
+
+      let promoted = false;
+      let promotedPort = null;
+      if (state === 'running') {
+        try {
+          const livePort = await detectLivePort(candidateName, 3000, 20, (line) => {
+            console.log(`[Startup Recovery] ${String(line).replace(/\x1b\[[0-9;]*m/g, '')}`);
+          });
+          if (livePort) {
+            // Archive whatever is currently live under the stable name (don't
+            // just delete it — same "archive, don't destroy" behavior the
+            // normal promotion step uses), then promote the recovered candidate.
+            try {
+              const prevState = await execP(`docker inspect --format='{{.State.Status}}' ${containerName}`);
+              if (prevState) {
+                await execP(`docker stop -t 20 ${containerName}`);
+                await execP(`docker rename ${containerName} ${containerName}-prev-${Date.now()}`);
+              }
+            } catch (_) {}
+            await execP(`docker rename ${candidateName} ${containerName}`);
+            let registry = {};
+            try { registry = JSON.parse(fs.readFileSync(PORTS_FILE, 'utf8')); } catch (_) {}
+            registry[cleanSub] = `${containerName}:${livePort}`;
+            fs.writeFileSync(PORTS_FILE, JSON.stringify(registry, null, 2));
+            portRegistry = registry;
+            console.log(`[Startup Recovery] \u2713 Finished interrupted deploy: promoted ${candidateName} -> ${containerName}:${livePort}`);
+            promoted = true;
+            promotedPort = livePort;
+          }
+        } catch (_) {}
+      }
+
+      if (!promoted) {
+        try { await execP(`docker rm -f ${candidateName}`); } catch (_) {}
+        console.log(`[Startup Recovery] Removed broken/unreachable orphaned candidate: ${candidateName}`);
+      }
+
+      // Resolve any workspace record still stuck on 'building' for this project.
+      if (FIREBASE_RTDB_URL) {
+        try {
+          const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+          const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_workspaces.json${authQuery}`);
+          const allWs = await r.json().catch(() => ({}));
+          for (const [key, ws] of Object.entries(allWs || {})) {
+            let changed = false;
+            const projects = Array.isArray(ws?.projects) ? ws.projects : [];
+            const pIdx = projects.findIndex(p => p.subdomain === cleanSub && p.status === 'building');
+            if (pIdx >= 0) {
+              projects[pIdx] = { ...projects[pIdx], status: promoted ? 'success' : 'failed', updatedAt: new Date().toISOString() };
+              changed = true;
+            }
+            const deployments = Array.isArray(ws?.deployments) ? ws.deployments : [];
+            const dIdx = deployments.findIndex(d => d.subdomain === cleanSub && d.status === 'building');
+            if (dIdx >= 0) {
+              deployments[dIdx] = {
+                ...deployments[dIdx],
+                status: promoted ? 'success' : 'failed',
+                endedAt: new Date().toISOString(),
+                liveUrl: promoted ? `https://${cleanSub}.${BASE_DOMAIN}` : deployments[dIdx].liveUrl,
+                note: promoted
+                  ? 'Recovered on server restart \u2014 the app had actually started successfully, it just never got promoted before the interruption.'
+                  : 'Interrupted by a server restart before it could finish. Please redeploy.'
+              };
+              changed = true;
+            }
+            if (changed) {
+              const writeUrl = `${FIREBASE_RTDB_URL}/deployboard_workspaces/${encodeURIComponent(key)}.json${authQuery}`;
+              await fetch(writeUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ws) }).catch(() => {});
+            }
+          }
+        } catch (e) {
+          console.warn('[Startup Recovery] Could not reconcile workspace status:', e.message);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('[Startup Recovery] Failed:', e.message);
+  }
+}
+
 server.listen(PORT, () => {
   console.log(`[Joytree] Running on http://localhost:${PORT}`);
   console.log(`[Joytree] Base domain: ${BASE_DOMAIN}`);
   console.log(`[Joytree] Sites dir:   ${SITES_DIR}`);
   // Rebuild ports.json from any already-running containers automatically
   recoverPortRegistryFromDocker().catch(() => {});
+  // Finish or clean up any build interrupted by a previous server restart —
+  // see recoverOrphanedBuildsOnStartup() above for why this exists.
+  recoverOrphanedBuildsOnStartup().catch(() => {});
   // Restore flows from Firebase (fills gaps not covered by local api_catalog.json)
   restoreFlowRegistryFromFirebase().catch(() => {});
   // [FIX] On every startup, auto-repair any DB DNS records that are still

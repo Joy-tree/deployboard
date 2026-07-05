@@ -456,7 +456,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
     throw new Error('Dockerfile container exited during startup. Check logs above.');
   }
 
-  const livePort = await detectLivePort(candidateContainerName, exposedPort, 60, log);
+  const livePort = await detectLivePort(candidateContainerName, exposedPort, 120, log);
   const targetPort = livePort || exposedPort;
 
   // Promote candidate to stable name used by proxy/registry
@@ -4621,7 +4621,7 @@ function emitStep(emit, id, state) {
   emit('build:step', { step: { id, state } });
 }
 
-module.exports = { runBuild, runUploadBuild, getPlanRuntimeProfile, normalizeMemoryLimit, PLAN_RUNTIME_PROFILES };
+module.exports = { runBuild, runUploadBuild, getPlanRuntimeProfile, normalizeMemoryLimit, PLAN_RUNTIME_PROFILES, detectLivePort };
 
 // ── UPLOAD BUILD ──────────────────────────────────────────────────────────────
 // Deploy from a locally extracted directory instead of cloning from GitHub.
@@ -5099,7 +5099,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
     }
     throw new Error('Container exited during startup. Check logs above.');
   }
-  const livePort = await detectLivePort(candidateContainerName, expectedPort, 60, log);
+  const livePort = await detectLivePort(candidateContainerName, expectedPort, 120, log);
   if (!livePort) {
     try { await exec('docker', ['logs', '--tail', '80', candidateContainerName], {}, log); } catch(e) {}
     try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(e) {}
