@@ -9778,20 +9778,47 @@ app.post('/api/deploy/:deployId/stop', requireAuth, async (req, res) => {
   try {
     const deployId = String(req.params.deployId || '').trim();
     if (!deployId) return res.status(400).json({ error: 'deployId required' });
-    const dep = await Deployment.findById(deployId);
-    if (!dep) return res.status(404).json({ error: 'Deployment not found' });
-    const project = await findProjectByAnyId(dep.projectId);
-    if (project?.ownerUserId && String(project.ownerUserId) !== String(req.user?._id || req.user?.id || '')) return res.status(403).json({ error: 'Forbidden' });
+    // [FIX] Register the stop signal FIRST, unconditionally. This Set is what
+    // the actual build loop polls to know it should abort (see the
+    // deployStopRequests.has(deployId) checks in the git-deploy build flow
+    // above) — it doesn't touch Mongo at all. Previously this only happened
+    // AFTER Deployment.findById(deployId) succeeded, so for any deployment
+    // using a non-ObjectId id (e.g. "local_..." ids used by git-deployed/IDE
+    // projects, which are never saved as real Mongo documents) that lookup
+    // threw a CastError before the stop signal was ever added — meaning
+    // Stop silently failed to stop anything AND surfaced an opaque 500
+    // ("Cast to ObjectId failed...") to the user.
     deployStopRequests.add(deployId);
-    dep.status = 'failed';
-    dep.endedAt = new Date();
-    dep.logs = dep.logs || [];
-    dep.logs.push('[manual] Deployment stop requested by user.');
-    await dep.save().catch(()=>{});
-    const _stopOwner = String(project?.ownerUserId || req.user?._id || req.user?.id || '');
+
+    // [FIX] Only query Mongo when the id is actually a valid ObjectId.
+    // Deployments with synthetic ids (local_..., subdomain-based, etc.)
+    // simply don't have a Mongo document to update — that's expected, not
+    // an error condition, so we skip straight to emitting the stop events.
+    let dep = null;
+    if (looksLikeObjectId(deployId)) {
+      dep = await Deployment.findById(deployId).catch(() => null);
+    }
+
+    let projectId = '';
+    let ownerUserId = '';
+    if (dep) {
+      const project = await findProjectByAnyId(dep.projectId);
+      if (project?.ownerUserId && String(project.ownerUserId) !== String(req.user?._id || req.user?.id || '')) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+      projectId = String(dep.projectId || '');
+      ownerUserId = String(project?.ownerUserId || '');
+      dep.status = 'failed';
+      dep.endedAt = new Date();
+      dep.logs = dep.logs || [];
+      dep.logs.push('[manual] Deployment stop requested by user.');
+      await dep.save().catch(() => {});
+    }
+
+    const _stopOwner = ownerUserId || String(req.user?._id || req.user?.id || '');
     const _stopTarget = _stopOwner ? io.to('user:' + _stopOwner) : io;
-    _stopTarget.emit('build:log', { deployId, projectId: String(dep.projectId || ''), line: '\x1b[33m[Joytree]\x1b[0m Stop requested by user. Attempting to halt build\u2026' });
-    _stopTarget.emit('build:done', { deployId, projectId: String(dep.projectId || ''), status: 'canceled' });
+    _stopTarget.emit('build:log', { deployId, projectId, line: '\x1b[33m[Joytree]\x1b[0m Stop requested by user. Attempting to halt build\u2026' });
+    _stopTarget.emit('build:done', { deployId, projectId, status: 'canceled' });
     res.json({ ok: true, message: 'Stop requested' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
