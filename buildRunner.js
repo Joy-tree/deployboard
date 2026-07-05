@@ -3197,6 +3197,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
   emitStep(emit, 'cleanup', 'done');
   log(`\n\x1b[32;1m✓ Static site deployed!\x1b[0m`);
+  return { siteType: 'static' };
 }
 
 // ── SERVER BUILD ──────────────────────────────────────────────────────────────
@@ -3544,6 +3545,13 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
   emitStep(emit, 'cleanup', 'done');
   log(`\n\x1b[32;1m✓ Server app deployed in isolated container!\x1b[0m`);
+  // [FIX] This function never reported back what it actually determined --
+  // callers just kept whatever siteType (often blank, for auto-detect)
+  // the project record started with, so a correctly-auto-detected server
+  // app's persisted metadata still showed 'static' after a successful
+  // deploy, even though it was genuinely running as a server. Returning the
+  // resolved type lets the caller correct the stored record to match reality.
+  return { siteType: 'server' };
 }
 
 
@@ -4961,6 +4969,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
 
   emitStep(emit, 'start', 'done');
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
+  return { siteType: 'static' };
 }
 
 async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPort, emit, onLog, uploadFilesDir, log, cleanSub, baseDomain }) {
@@ -5144,4 +5153,5 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   emitStep(emit, 'start', 'done');
 
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
+  return { siteType: 'server' };
 }

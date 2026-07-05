@@ -9215,7 +9215,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   // server mode when UI/default data still contains a start command.
   const explicitType = String(siteType || '').trim().toLowerCase();
   const hasStartCmd = !!String(startCmd || '').trim();
-  const isServerApp = explicitType === 'server' || (!explicitType && hasStartCmd);
+  let isServerApp = explicitType === 'server' || (!explicitType && hasStartCmd);
 
   // [FIX] These were Project.findOne / Project.exists / Project.countDocuments
   // calls -- all Mongoose, querying a database that isn't actually this
@@ -9608,8 +9608,9 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       emit('build:log', { line: `\x1b[33m[Joytree]\x1b[0m Waiting for a free build slot (${_activeBuildCount}/${MAX_CONCURRENT_BUILDS} builds currently running)...` });
     }
     await acquireBuildSlot();
+    let buildResult;
     try {
-      await runBuild({
+      buildResult = await runBuild({
         deployId, project, sitesDir: SITES_DIR, tmpDir: TMP_DIR,
         githubToken: deployGithubToken, appPort, emit,
         envVars: resolvedEnvVars,
@@ -9626,6 +9627,18 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       });
     } finally {
       releaseBuildSlot();
+    }
+    // [FIX] runBuild() now reports back which type it actually resolved to
+    // (see buildRunner.js's runServerBuild/runStaticBuild return values).
+    // Without this, a correctly auto-detected server app's persisted
+    // siteType stayed whatever it started as (blank, defaulting to
+    // 'static' downstream) even though it deployed and ran as a server --
+    // e.g. samz-demo-v2 showing siteType:"static" in the dashboard/API
+    // despite being a working Express app with no build step at all.
+    if (buildResult && buildResult.siteType && buildResult.siteType !== project.siteType) {
+      project = { ...project, siteType: buildResult.siteType };
+      isServerApp = buildResult.siteType === 'server';
+      try { await Project.findByIdAndUpdate(project._id, { siteType: buildResult.siteType }); } catch (_) {}
     }
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
     await flushLogs();
@@ -10250,7 +10263,7 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
 
   const explicitType = String(siteType || '').trim().toLowerCase();
   const hasStartCmd = !!String(startCmd || '').trim();
-  const isServerApp = explicitType === 'server' || (!explicitType && hasStartCmd);
+  let isServerApp = explicitType === 'server' || (!explicitType && hasStartCmd);
 
   let appPort = 0;
   if (isServerApp) {
@@ -10399,7 +10412,7 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
   const emit = (event, data) => _uploadEmitTarget.emit(event, { deployId: finalDeployId, projectId: cleanSub, source: 'upload', ...data });
 
   // Helper to persist deployment status to Firebase
-  async function saveDeployStatus(status, extra = {}) {
+  async function saveDeployStatus(status, extra = {}, projectPatch = {}) {
     try {
       const ws = (await readWorkspaceFromFirebase(userForFirebase)) || {};
       ws.deployments = Array.isArray(ws.deployments) ? ws.deployments : [];
@@ -10409,7 +10422,13 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
       // Update project status too
       ws.projects = Array.isArray(ws.projects) ? ws.projects : [];
       const pIdx = ws.projects.findIndex(p => p.subdomain === cleanSub);
-      if (pIdx >= 0) ws.projects[pIdx] = { ...ws.projects[pIdx], status, updatedAt: new Date().toISOString() };
+      // [FIX] projectPatch lets callers correct fields determined only after
+      // the build actually ran -- specifically siteType, which the pre-build
+      // record could only guess at for auto-detect deploys. Without this,
+      // a correctly auto-detected server app kept showing siteType:"static"
+      // in the dashboard/API forever, since nothing ever wrote the real
+      // resolved type back after a successful build.
+      if (pIdx >= 0) ws.projects[pIdx] = { ...ws.projects[pIdx], ...projectPatch, status, updatedAt: new Date().toISOString() };
       await writeWorkspaceToFirebase(userForFirebase, ws);
       const localUser = localAuth.users.find(u => String(u.id || u._id || '') === userId || u.email === userForFirebase.email);
       if (localUser) { localUser.workspace = ws; saveLocalAuth(); }
@@ -10456,11 +10475,14 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
       }
 
       const { runUploadBuild } = require('./buildRunner');
-      await runUploadBuild({
+      const buildResult = await runUploadBuild({
         deployId: finalDeployId, project: projectRecord, sitesDir: SITES_DIR, tmpDir: TMP_DIR,
         appPort, emit, uploadFilesDir: filesDir,
         onLog: line => { deploymentRecord.logs = deploymentRecord.logs || []; deploymentRecord.logs.push(line); }
       });
+      if (buildResult && buildResult.siteType && buildResult.siteType !== projectRecord.siteType) {
+        projectRecord.siteType = buildResult.siteType;
+      }
 
       const duration = Math.round((Date.now() - buildStart) / 1000);
       const cf = await registerSubdomain(cleanSub).catch(() => null);
@@ -10468,7 +10490,8 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
       if (cf?.url) emit('build:log', { line: `\x1b[32m[CF]\x1b[0m Live at: \x1b[1m${cf.url}\x1b[0m` });
       emit('build:log', { line: `\n\x1b[32m✓ Deployed in ${duration}s\x1b[0m` });
       const endedAt = new Date().toISOString();
-      await saveDeployStatus('success', { duration, endedAt, liveUrl: finalLiveUrl });
+      await saveDeployStatus('success', { duration, endedAt, liveUrl: finalLiveUrl },
+        buildResult && buildResult.siteType ? { siteType: buildResult.siteType } : {});
 
       // ── Deployment-success email ──────────────────────────────────────────
       const notifyUploadSuccess = await sendDeploymentStatusEmail({
@@ -10729,7 +10752,7 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
   const _redeployTarget = _redeployOwnerRoomId ? io.to('user:' + _redeployOwnerRoomId) : io;
   const emit = (event, data) => _redeployTarget.emit(event, { deployId: finalDeployId, projectId: cleanSub, source: 'upload', ...data });
 
-  async function saveRedeployStatus(status, extra = {}) {
+  async function saveRedeployStatus(status, extra = {}, projectPatch = {}) {
     try {
       const ws = (await readWorkspaceFromFirebase(userForFirebase)) || {};
       ws.deployments = Array.isArray(ws.deployments) ? ws.deployments : [];
@@ -10738,7 +10761,7 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
       if (idx >= 0) ws.deployments[idx] = updated; else ws.deployments.unshift(updated);
       ws.projects = Array.isArray(ws.projects) ? ws.projects : [];
       const pIdx2 = ws.projects.findIndex(p => p.subdomain === cleanSub);
-      if (pIdx2 >= 0) ws.projects[pIdx2] = { ...ws.projects[pIdx2], status, updatedAt: new Date().toISOString() };
+      if (pIdx2 >= 0) ws.projects[pIdx2] = { ...ws.projects[pIdx2], ...projectPatch, status, updatedAt: new Date().toISOString() };
       await writeWorkspaceToFirebase(userForFirebase, ws);
       const localUser = localAuth.users.find(u => String(u.id||u._id||'') === userId || u.email === userForFirebase.email);
       if (localUser) { localUser.workspace = ws; saveLocalAuth(); }
@@ -10755,16 +10778,20 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
       emit('build:log', { line: `\x1b[90mTarget: ${liveUrl}\x1b[0m` });
       emit('build:log', { line: '' });
       const { runUploadBuild } = require('./buildRunner');
-      await runUploadBuild({
+      const buildResult = await runUploadBuild({
         deployId: finalDeployId, project: projectRecord, sitesDir: SITES_DIR, tmpDir: TMP_DIR,
         appPort, emit, uploadFilesDir: filesDir,
         onLog: line => { deploymentRecord.logs = deploymentRecord.logs || []; deploymentRecord.logs.push(line); }
       });
+      if (buildResult && buildResult.siteType && buildResult.siteType !== projectRecord.siteType) {
+        projectRecord.siteType = buildResult.siteType;
+      }
       const duration = Math.round((Date.now() - buildStart) / 1000);
       const cf = await registerSubdomain(cleanSub).catch(() => null);
       const finalLiveUrl = cf?.url || liveUrl;
       emit('build:log', { line: `\n\x1b[32m✓ Redeployed in ${duration}s\x1b[0m` });
-      await saveRedeployStatus('success', { duration, endedAt: new Date().toISOString(), liveUrl: finalLiveUrl });
+      await saveRedeployStatus('success', { duration, endedAt: new Date().toISOString(), liveUrl: finalLiveUrl },
+        buildResult && buildResult.siteType ? { siteType: buildResult.siteType } : {});
       emit('build:done', { status: 'success', duration, liveUrl: finalLiveUrl });
       emit('runtime:ready', { subdomain: cleanSub, liveUrl: finalLiveUrl });
     } catch(e) {
