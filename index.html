@@ -12670,6 +12670,11 @@ document.addEventListener('keydown', function(e){
           <span class="mig-source-opt-label">PostgreSQL</span>
           <span class="mig-source-opt-sub">A real, external Postgres server — not Docker-provisioned</span>
         </div>
+        <div class="mig-source-opt" data-source="supabase" onclick="migSelectSource('supabase')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span class="mig-source-opt-label">Supabase</span>
+          <span class="mig-source-opt-sub">Supabase's Postgres — connection string from Project Settings → Database</span>
+        </div>
         <div class="mig-source-opt" data-source="mariadb" onclick="migSelectSource('mariadb')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
           <span class="mig-source-opt-label">MariaDB</span>
@@ -12785,6 +12790,13 @@ function renderMigSourceFields(kind) {
         <input class="mig-input" id="migPostgresConnStr" type="password" placeholder="postgresql://user:pass@host:5432/mydb">
         <div class="mig-help">Used once to run this migration, not stored. Copies every table in the "public" schema (up to 50,000 rows each) into the destination below.</div>
       </div>`;
+  } else if (kind === 'supabase') {
+    el.innerHTML = `
+      <div class="mig-field">
+        <label>Supabase connection string</label>
+        <input class="mig-input" id="migSupabaseConnStr" type="password" placeholder="postgresql://postgres.xxxxxxxxxxxx:[password]@aws-0-xx-xxxx-1.pooler.supabase.com:6543/postgres">
+        <div class="mig-help">From your Supabase project: Project Settings → Database → Connection string (either the pooler/Transaction mode string on port 6543, or the Direct connection on port 5432, both work — Supabase is standard Postgres under the hood). Used once to run this migration, not stored. Copies every table in the "public" schema (up to 50,000 rows each) into the destination below.</div>
+      </div>`;
   } else if (kind === 'mariadb') {
     el.innerHTML = `
       <div class="mig-field">
@@ -12849,6 +12861,15 @@ function migBuildSourcePayload() {
   if (migSelectedSource === 'postgres') {
     const connectionString = document.getElementById('migPostgresConnStr')?.value.trim();
     if (!connectionString) throw new Error('Enter a PostgreSQL connection string.');
+    return { kind: 'sql', engine: 'postgres', connectionString };
+  }
+  if (migSelectedSource === 'supabase') {
+    // Supabase's database is standard Postgres under the hood -- same
+    // reader/writer path, no special-casing needed server-side. This is a
+    // dedicated UI option purely so people don't have to already know
+    // "Supabase = Postgres" to find it.
+    const connectionString = document.getElementById('migSupabaseConnStr')?.value.trim();
+    if (!connectionString) throw new Error('Enter your Supabase connection string.');
     return { kind: 'sql', engine: 'postgres', connectionString };
   }
   if (migSelectedSource === 'mariadb') {

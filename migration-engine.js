@@ -50,6 +50,26 @@ function sanitizeIdent(name) {
   return String(name).toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/^[^a-z_]/, '_').slice(0, 63) || 'col';
 }
 
+// Many managed Postgres providers (Supabase, Neon, Render, Heroku, etc.)
+// require SSL, but the connection string you copy from their dashboard
+// doesn't always include `sslmode=require` -- node-postgres defaults to no
+// SSL unless told otherwise, so a plain paste of those strings can fail to
+// connect at all. Auto-enable SSL unless the string explicitly opts out
+// (sslmode=disable) or already specifies its own ssl mode. rejectUnauthorized
+// is left off (accepting the provider's cert without strict CA validation)
+// since that's the common pragmatic default for this kind of one-off
+// migration tool -- these are managed providers' own valid certs, not
+// self-signed ones from an untrusted source.
+function pgPoolOptions(connectionString) {
+  const opts = { connectionString, connectionTimeoutMillis: 8000 };
+  const explicitlyDisabled = /[?&]sslmode=disable\b/i.test(connectionString);
+  const alreadySpecifiesSsl = /[?&]sslmode=/i.test(connectionString) || /[?&]ssl=/i.test(connectionString);
+  if (!explicitlyDisabled && !alreadySpecifiesSsl) {
+    opts.ssl = { rejectUnauthorized: false };
+  }
+  return opts;
+}
+
 function serializeForSql(v) {
   if (v === null || v === undefined) return null;
   if (typeof v === 'object') return JSON.stringify(v);
@@ -180,7 +200,7 @@ async function readFromFirebaseRtdb(databaseUrl, authSecret) {
 
 async function readFromSql(engine, connectionString) {
   if (engine === 'postgres') {
-    const pool = new Pool({ connectionString, connectionTimeoutMillis: 8000 });
+    const pool = new Pool(pgPoolOptions(connectionString));
     try {
       const tablesRes = await pool.query(`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`);
       const collections = [];
@@ -282,7 +302,7 @@ async function writeToMongo(connectionString, collections, log) {
 
 async function writeToSql(engine, connectionString, collections, log) {
   const isPg = engine === 'postgres';
-  const pool = isPg ? new Pool({ connectionString, connectionTimeoutMillis: 8000 }) : null;
+  const pool = isPg ? new Pool(pgPoolOptions(connectionString)) : null;
   const conn = isPg ? null : await mysql.createConnection(connectionString);
   const run = async (sql, params) => isPg ? pool.query(sql, params) : conn.query(sql, params);
   const PK_COL = '_jt_row_id'; // namespaced so it doesn't collide with real source data, including data this same engine wrote on a previous hop
