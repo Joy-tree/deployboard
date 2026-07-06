@@ -3096,12 +3096,66 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   }
 
   if (!fs.existsSync(finalSrcDir)) {
-    const dirs = fs.readdirSync(buildDir).filter(f => {
-      try { return fs.lstatSync(path.join(buildDir, f)).isDirectory(); } catch(e) { return false; }
-    });
-    log(`\x1b[31m[error] Output dir not found: "${project.outputDir || 'dist'}"\x1b[0m`);
-    log(`\x1b[33m[hint] Dirs in repo: ${dirs.join(', ') || '(none)'}\x1b[0m`);
-    throw new Error(`Output dir "${project.outputDir||'dist'}" not found. Available: ${dirs.join(', ')}`);
+    // [FIX] This used to fail immediately with a list of what WAS available,
+    // but never tried any of them. That's a real, common deployment
+    // interrupter: Create React App outputs to "build" (not "dist"),
+    // Gatsby outputs to "public", Nuxt 3's static generate outputs to
+    // ".output/public", and Angular nests its output inside
+    // "dist/<project-name>/" (or "dist/<project-name>/browser/" on newer
+    // esbuild-based Angular). All of these are extremely common frameworks
+    // -- an auto-detect deploy of any of them would fail outright even
+    // though the correct output directory exists right there, one level
+    // away from what was guessed.
+    //
+    // Only auto-recover when the configured outputDir was left at the bare
+    // default ("dist") -- if someone explicitly typed a custom outputDir
+    // and got it wrong, that's their call to fix, not ours to silently
+    // override.
+    let recovered = false;
+    if ((project.outputDir || 'dist').trim() === 'dist') {
+      const candidates = ['build', 'public', path.join('.output', 'public'), 'out'];
+      for (const cand of candidates) {
+        const candPath = path.join(projectRoot, cand);
+        if (fs.existsSync(candPath) && fs.lstatSync(candPath).isDirectory()) {
+          log(`\x1b[33m[Joytree] "dist" not found, but "${cand}" looks like your build output (common for Create React App, Gatsby, Nuxt static generate) -- using it instead.\x1b[0m`);
+          finalSrcDir = candPath;
+          project = { ...project, outputDir: cand };
+          recovered = true;
+          break;
+        }
+      }
+      // Angular-style nesting: dist/<project-name>/ or dist/<project-name>/browser/.
+      // Not caught above since "dist" itself DOES exist here -- it's just
+      // empty of an index.html at its top level, one or two folders too shallow.
+      if (!recovered) {
+        const distPath = path.join(projectRoot, 'dist');
+        if (fs.existsSync(distPath) && fs.lstatSync(distPath).isDirectory()) {
+          const distChildren = fs.readdirSync(distPath).filter(f => {
+            try { return fs.lstatSync(path.join(distPath, f)).isDirectory(); } catch (_) { return false; }
+          });
+          if (distChildren.length === 1) {
+            const nested = path.join(distPath, distChildren[0]);
+            const nestedBrowser = path.join(nested, 'browser');
+            const finalNested = fs.existsSync(nestedBrowser) && fs.lstatSync(nestedBrowser).isDirectory() ? nestedBrowser : nested;
+            if (fs.existsSync(path.join(finalNested, 'index.html'))) {
+              const relOutputDir = path.relative(projectRoot, finalNested);
+              log(`\x1b[33m[Joytree] "dist" exists but has no index.html directly inside it -- found one nested at "${relOutputDir}" (typical of Angular's per-project build output) and using that instead.\x1b[0m`);
+              finalSrcDir = finalNested;
+              project = { ...project, outputDir: relOutputDir };
+              recovered = true;
+            }
+          }
+        }
+      }
+    }
+    if (!recovered) {
+      const dirs = fs.readdirSync(buildDir).filter(f => {
+        try { return fs.lstatSync(path.join(buildDir, f)).isDirectory(); } catch(e) { return false; }
+      });
+      log(`\x1b[31m[error] Output dir not found: "${project.outputDir || 'dist'}"\x1b[0m`);
+      log(`\x1b[33m[hint] Dirs in repo: ${dirs.join(', ') || '(none)'}\x1b[0m`);
+      throw new Error(`Output dir "${project.outputDir||'dist'}" not found. Available: ${dirs.join(', ')}`);
+    }
   }
 
   // ── Static entry detection: find index.html / 200.html, or any .html file ──
@@ -4891,16 +4945,58 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
   emitStep(emit, 'copy', 'active');
   log('\n\x1b[36m━━━ Step 4/4 — Copy to Serve ━━━\x1b[0m');
   const outputDir = String(project.outputDir || 'dist').trim() || 'dist';
-  const srcDist = outputDir === '.' ? projectRoot : path.join(projectRoot, outputDir);
+  let resolvedOutputDir = outputDir;
+  let srcDist = outputDir === '.' ? projectRoot : path.join(projectRoot, outputDir);
+
+  // [FIX] This used to silently fall back to copying projectRoot itself
+  // (raw source files, node_modules, package.json, everything) whenever
+  // the configured outputDir didn't exist -- meaning an auto-detect upload
+  // of a Create React App (outputs to "build"), Gatsby ("public"), Nuxt 3
+  // static generate (".output/public"), or Angular (nested inside
+  // "dist/<project-name>/") would report success while actually serving
+  // the wrong content entirely, with no error or explanation anywhere.
+  // Try the same common alternate output folders the GitHub deploy path
+  // now does, before giving up and falling back to the root.
+  if (outputDir === 'dist' && !fs.existsSync(srcDist)) {
+    const candidates = ['build', 'public', path.join('.output', 'public'), 'out'];
+    for (const cand of candidates) {
+      const candPath = path.join(projectRoot, cand);
+      if (fs.existsSync(candPath) && fs.lstatSync(candPath).isDirectory()) {
+        log(`\x1b[33m[Joytree]\x1b[0m "dist" not found, but "${cand}" looks like your build output (common for Create React App, Gatsby, Nuxt static generate) -- using it instead.`);
+        srcDist = candPath;
+        resolvedOutputDir = cand;
+        break;
+      }
+    }
+    if (srcDist === path.join(projectRoot, 'dist')) {
+      // Angular-style nesting: dist/<project-name>/ or dist/<project-name>/browser/
+      const distPath = path.join(projectRoot, 'dist');
+      if (fs.existsSync(distPath) && fs.lstatSync(distPath).isDirectory()) {
+        const distChildren = fs.readdirSync(distPath).filter(f => {
+          try { return fs.lstatSync(path.join(distPath, f)).isDirectory(); } catch (_) { return false; }
+        });
+        if (distChildren.length === 1) {
+          const nested = path.join(distPath, distChildren[0]);
+          const nestedBrowser = path.join(nested, 'browser');
+          const finalNested = fs.existsSync(nestedBrowser) && fs.lstatSync(nestedBrowser).isDirectory() ? nestedBrowser : nested;
+          if (fs.existsSync(path.join(finalNested, 'index.html'))) {
+            resolvedOutputDir = path.relative(projectRoot, finalNested);
+            log(`\x1b[33m[Joytree]\x1b[0m "dist" exists but has no index.html directly inside it -- found one nested at "${resolvedOutputDir}" (typical of Angular's per-project build output) and using that instead.`);
+            srcDist = finalNested;
+          }
+        }
+      }
+    }
+  }
   const destDist = path.join(sitesDir, cleanSub, 'dist');
   // Always wipe destDist first so stale files from a previous deploy never cause "Not found"
   try { fs.rmSync(destDist, { recursive: true, force: true }); } catch(_) {}
   fs.mkdirSync(destDist, { recursive: true });
   const actualSrc = fs.existsSync(srcDist) ? srcDist : projectRoot;
   if (!fs.existsSync(srcDist)) {
-    log(`\x1b[33m[Joytree]\x1b[0m Output dir "${outputDir}" not found — copying project root`);
+    log(`\x1b[33m[Joytree]\x1b[0m Output dir "${resolvedOutputDir}" not found — copying project root`);
   } else {
-    log(`\x1b[90m[copy] Copying ${outputDir}/ → ${destDist}\x1b[0m`);
+    log(`\x1b[90m[copy] Copying ${resolvedOutputDir}/ → ${destDist}\x1b[0m`);
   }
   copyDir(actualSrc, destDist);
 
