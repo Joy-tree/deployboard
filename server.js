@@ -12291,9 +12291,37 @@ app.post('/api/databases/:id/query', requireAuth, async (req, res) => {
 
     const result = await runDocker(cmd);
 
-    // If the command itself failed (non-zero exit), return the error immediately.
-    // Prefer stdout since 2>&1 redirects DB error text there; fall back to stderr/message.
-    if (!result.ok) {
+    // [FIX] Previously, a non-zero exit code from the underlying `docker
+    // exec` command was treated as an unconditional failure, and whatever
+    // the command printed to stdout was shoved into the `error` field --
+    // even when that stdout was perfectly valid, complete data. The
+    // frontend's Data Browser then dumped that raw JSON/row text into its
+    // red error box, making successful queries look like failures (and,
+    // confusingly, showing the person their own real, correct data
+    // formatted as an error message).
+    //
+    // A non-zero exit doesn't necessarily mean the command failed to
+    // produce good output -- e.g. mongosh/psql can print a trailing
+    // deprecation warning or exit with a nonstandard code in some
+    // versions/configurations while still having written a complete,
+    // correct result to stdout first. So now: if the exit was non-zero BUT
+    // the stdout content doesn't actually look like an error for this
+    // engine (checked the same way the isErrorOutput heuristic below
+    // already does for the exit-0 case), we proceed to parse and return it
+    // as a normal successful result instead of discarding it.
+    const _rawOutOnFail = (result.stdout || '').trim();
+    const _looksLikeRealErrorOnFail = (() => {
+      if (!result.ok && !_rawOutOnFail) return true; // no output at all -- genuinely nothing to salvage
+      if (db.engine === 'postgres') return /^ERROR:/m.test(_rawOutOnFail) || /^FATAL:/m.test(_rawOutOnFail);
+      if (db.engine === 'mysql' || db.engine === 'mariadb') return /^ERROR\s+\d+/m.test(_rawOutOnFail);
+      if (db.engine === 'redis') return /^\(error\)/m.test(_rawOutOnFail) || /^-[A-Z]/m.test(_rawOutOnFail);
+      if (db.engine === 'mongodb') {
+        try { const p = JSON.parse(_rawOutOnFail); return p?.ok === 0 || !!p?.errmsg; } catch { return true; } // can't parse -- treat as real error
+      }
+      return true;
+    })();
+
+    if (!result.ok && _looksLikeRealErrorOnFail) {
       const errMsg = (result.stdout || result.stderr || 'Query execution failed').trim();
       // Docker rejects exec on a restarting container with this specific message.
       // Give the user a clear actionable message instead of the raw daemon error.
