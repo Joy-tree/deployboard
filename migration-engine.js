@@ -255,7 +255,20 @@ async function writeToMongo(connectionString, collections, log) {
   try {
     const db = client.db();
     for (const col of collections) {
-      if (!col.rows.length) continue;
+      // [FIX] Was `if (!col.rows.length) continue` -- an empty source
+      // collection was skipped entirely, so it never even existed in the
+      // destination. A migration should move everything it found, not just
+      // the collections that happened to have documents at that moment --
+      // otherwise the destination's schema is silently incomplete and
+      // there's no way to tell "this collection doesn't exist" apart from
+      // "this collection was never migrated". insertMany can't create an
+      // empty collection (nothing to insert), so create it explicitly.
+      if (!col.rows.length) {
+        const exists = await db.listCollections({ name: col.name }).hasNext();
+        if (!exists) await db.createCollection(col.name).catch(e => log(`  ! ${col.name}: could not create empty collection: ${e.message}`));
+        log(`  -> ${col.name}: 0 documents (source collection was empty)`);
+        continue;
+      }
       const docs = col.rows.map(r => { const { _id, ...rest } = r; return rest; }); // let Mongo assign fresh _ids
       for (let i = 0; i < docs.length; i += 500) {
         await db.collection(col.name).insertMany(docs.slice(i, i + 500), { ordered: false }).catch(e => log(`  ! ${col.name}: ${e.message}`));
@@ -276,7 +289,23 @@ async function writeToSql(engine, connectionString, collections, log) {
 
   try {
     for (const col of collections) {
-      if (!col.rows.length) continue;
+      // [FIX] Was `if (!col.rows.length) continue` -- an empty source
+      // collection/table never got created in the destination at all, with
+      // no log line explaining why. Same reasoning as the writeToMongo fix
+      // above: a migration should account for everything it found. There's
+      // no data to infer column types from, so an empty table gets created
+      // with just the PK column -- schema-complete once real data starts
+      // flowing in, rather than silently nonexistent.
+      if (!col.rows.length) {
+        const table = sanitizeIdent(col.name);
+        if (isPg) {
+          await run(`CREATE TABLE IF NOT EXISTS "${table}" (${PK_COL} SERIAL PRIMARY KEY)`);
+        } else {
+          await run(`CREATE TABLE IF NOT EXISTS \`${table}\` (${PK_COL} INT AUTO_INCREMENT PRIMARY KEY)`);
+        }
+        log(`  -> ${table}: 0 rows (source collection was empty; created with no columns beyond the primary key)`);
+        continue;
+      }
       const table = sanitizeIdent(col.name);
       const allKeys = new Set();
       col.rows.forEach(r => Object.keys(r).forEach(k => allKeys.add(k)));
