@@ -220,11 +220,6 @@ async function sendDeploymentStatusEmail({
   const sourceLabel = source === 'auto' ? 'Automatic (GitHub push)' : source === 'upload' ? 'Upload (file archive)' : 'Manual (Redeploy click)';
   const safeError = String(errorMessage || '').trim().slice(0, 500);
   const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
-  const heroImageUrl = (
-    isStartedPhase
-      ? (RESEND_HERO_IMAGE_STARTED_URL || RESEND_HERO_IMAGE_URL)
-      : (status === 'success' ? (RESEND_HERO_IMAGE_SUCCESS_URL || RESEND_HERO_IMAGE_URL) : (RESEND_HERO_IMAGE_FAILED_URL || RESEND_HERO_IMAGE_URL))
-  ) || '';
   const deployedAtText = deployedAt ? new Date(deployedAt).toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'medium', timeStyle: 'short' }) + ' UTC' : '';
   const dashboardUrl = `https://${BASE_DOMAIN}`;
   const lines = [
@@ -240,51 +235,44 @@ async function sendDeploymentStatusEmail({
     '',
     'Sent by JOYTREE.'
   ].filter(Boolean);
-  const statusColor = isStartedPhase ? '#1d4ed8' : (status === 'success' ? '#0f766e' : '#b91c1c');
-  const statusBg = isStartedPhase ? '#eff6ff' : (status === 'success' ? '#ecfeff' : '#fef2f2');
   const html = `<!doctype html>
-<html><body style="margin:0;padding:0;background:#f5f8fb;font-family:Inter,Segoe UI,Arial,sans-serif;color:#0f172a;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 12px;">
+<html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #dadce0;border-radius:8px;">
         <tr>
-          <td style="padding:22px 26px;background:linear-gradient(120deg,#0f172a,#14532d);color:#fff;">
+          <td style="padding:24px 32px 0;">
             <table role="presentation" width="100%"><tr>
-              <td style="width:54px;vertical-align:middle;">
-                <img src="${logoUrl}" alt="JOYTREE" width="44" height="44" style="width:44px;height:44px;border-radius:10px;display:block;background:#fff;object-fit:cover;">
+              <td style="width:32px;vertical-align:middle;">
+                <img src="${logoUrl}" alt="JOYTREE" width="28" height="28" style="width:28px;height:28px;border-radius:6px;display:block;object-fit:cover;">
               </td>
-              <td style="vertical-align:middle;">
-                <div style="font-size:12px;letter-spacing:.12em;opacity:.82;">DEPLOYMENT INTELLIGENCE</div>
-                <div style="font-size:24px;font-weight:800;line-height:1.2;">JOYTREE</div>
+              <td style="vertical-align:middle;padding-left:10px;">
+                <span style="font-size:15px;font-weight:600;color:#202124;">JoyTree</span>
               </td>
             </tr></table>
           </td>
         </tr>
-        ${heroImageUrl ? `<tr><td><img src="${heroImageUrl}" alt="JOYTREE Deployment Banner" style="display:block;width:100%;max-height:280px;object-fit:cover;"></td></tr>` : ''}
-        <tr><td style="padding:24px 26px;">
-          <div style="display:inline-block;padding:8px 12px;border-radius:999px;background:${statusBg};color:${statusColor};font-size:12px;font-weight:700;letter-spacing:.03em;">
-            ${statusLabel.toUpperCase()} DEPLOYMENT
-          </div>
-          <h2 style="margin:14px 0 8px;font-size:22px;line-height:1.3;">${projectName || subdomain} is now ${isStartedPhase ? 'being deployed' : (status === 'success' ? 'live' : 'reporting an issue')}.</h2>
-          <p style="margin:0 0 16px;color:#334155;font-size:14px;">Here’s your professional deployment report from JOYTREE.</p>
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
-            <tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Project:</strong> ${projectName || subdomain}</td></tr>
-            <tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Source:</strong> ${sourceLabel}</td></tr>
-            ${repoUrl ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Repository:</strong> ${source === 'upload' ? `<span style="color:#64748b;">${repoUrl}</span>` : `<a href="${repoUrl}" style="color:#0ea5e9;text-decoration:none;">${repoUrl}</a>`}</td></tr>` : ''}
-            <tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Branch:</strong> ${branch || 'main'}${shortSha ? ` <span style="color:#64748b;">(${shortSha})</span>` : ''}</td></tr>
-            ${duration > 0 ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Duration:</strong> ${duration}s</td></tr>` : ''}
-            ${buildStatus ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Build Status:</strong> ${buildStatus}</td></tr>` : ''}
-            ${deployStatus ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Deployment Status:</strong> ${deployStatus}</td></tr>` : ''}
-            ${memoryLimit || cpuShares ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Resources:</strong> RAM ${memoryLimit || '—'} • CPU ${cpuShares ? `${cpuShares} shares` : '—'}</td></tr>` : ''}
-            ${deployedAtText ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Deployed At:</strong> ${deployedAtText}</td></tr>` : ''}
-            ${totalDeployments > 0 ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Total Deployments:</strong> ${totalDeployments}</td></tr>` : ''}
-            ${liveUrl ? `<tr><td style="padding:14px 16px;border-bottom:${safeError ? '1px solid #e2e8f0' : '0'};font-size:14px;"><strong>Live URL:</strong> <a href="${liveUrl}" style="color:#0ea5e9;text-decoration:none;">${liveUrl}</a></td></tr>` : ''}
-            ${safeError ? `<tr><td style="padding:14px 16px;font-size:14px;color:#991b1b;"><strong>Error:</strong> ${safeError}</td></tr>` : ''}
+        <tr><td style="padding:24px 32px 4px;">
+          <h2 style="margin:0 0 4px;font-size:19px;font-weight:500;color:#202124;">${projectName || subdomain} ${isStartedPhase ? 'deployment started' : (status === 'success' ? 'is live' : 'deployment failed')}</h2>
+          <p style="margin:0 0 20px;color:#5f6368;font-size:14px;line-height:1.6;">
+            ${isStartedPhase ? 'Your deployment has started. We\'ll let you know when it finishes.' : (status === 'success' ? 'Your project deployed successfully and is now live.' : 'Your deployment ran into a problem. Details are below.')}
+          </p>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e8eaed;">
+            <tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Project</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${projectName || subdomain}</td></tr>
+            <tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Source</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${sourceLabel}</td></tr>
+            <tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Branch</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${branch || 'main'}${shortSha ? ` (${shortSha})` : ''}</td></tr>
+            ${duration > 0 ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Duration</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${duration}s</td></tr>` : ''}
+            ${deployedAtText ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Deployed at</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${deployedAtText}</td></tr>` : ''}
+            ${liveUrl ? `<tr><td style="padding:12px 0;${safeError ? 'border-bottom:1px solid #e8eaed;' : ''}font-size:13px;color:#5f6368;">Live URL</td><td style="padding:12px 0;${safeError ? 'border-bottom:1px solid #e8eaed;' : ''}font-size:13px;text-align:right;"><a href="${liveUrl}" style="color:#1a73e8;text-decoration:none;">${liveUrl}</a></td></tr>` : ''}
+            ${safeError ? `<tr><td colspan="2" style="padding:12px 0;font-size:13px;color:#c5221f;">${safeError}</td></tr>` : ''}
           </table>
-          <div style="margin-top:18px;">
-            <a href="${liveUrl || dashboardUrl}" style="display:inline-block;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:700;">View Deployment</a>
+          <div style="margin-top:24px;">
+            <a href="${liveUrl || dashboardUrl}" style="display:inline-block;background:#1a73e8;color:#ffffff;text-decoration:none;padding:9px 20px;border-radius:4px;font-weight:500;font-size:14px;">View deployment</a>
           </div>
-          <p style="margin:16px 0 0;color:#64748b;font-size:12px;">This message was sent by JOYTREE deployment notifications.</p>
+        </td></tr>
+        <tr><td style="padding:24px 32px 24px;">
+          <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 16px;">
+          <p style="margin:0;color:#80868b;font-size:12px;line-height:1.6;">This is an automated deployment notification from JoyTree. You're receiving it because you have an account at ${BASE_DOMAIN}.</p>
         </td></tr>
       </table>
     </td></tr>
@@ -2180,14 +2168,13 @@ async function sendWelcomeEmail({ userEmail = '', userName = '' } = {}) {
   if (!recipient) return { ok: false, skipped: true, reason: 'missing_recipient' };
 
   const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
-  const heroImageUrl = RESEND_WELCOME_HERO_IMAGE_URL || '';
   const firstName = String(userName || '').trim().split(/\s+/)[0] || 'there';
   const dashboardUrl = `https://${BASE_DOMAIN}/dashboard`;
   const deployUrl = `https://${BASE_DOMAIN}/dashboard/new-deploy`;
   const docsUrl = `https://${BASE_DOMAIN}/dashboard/docs`;
   const supportUrl = `https://${BASE_DOMAIN}/dashboard/support`;
 
-  const subject = 'Welcome to JOYTREE — your professional deployment workspace is ready';
+  const subject = 'Welcome to JoyTree';
 
   const text = [
     `Welcome to JOYTREE, ${firstName}.`,
@@ -2208,308 +2195,47 @@ async function sendWelcomeEmail({ userEmail = '', userName = '' } = {}) {
   ].join('\n');
 
   const html = `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Welcome to JOYTREE</title>
-</head>
-<body style="margin:0;padding:0;background:#f0f4f8;font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;-webkit-font-smoothing:antialiased;">
-
-<!-- Outer wrapper -->
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f0f4f8;padding:36px 12px 48px;">
-<tr><td align="center">
-
-<!-- Card -->
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:640px;">
-
-  <!-- ══ HEADER ══ -->
-  <tr>
-    <td style="background:linear-gradient(135deg,#052e16 0%,#064e2c 50%,#0a3d20 100%);border-radius:18px 18px 0 0;padding:28px 32px 26px;">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+<html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #dadce0;border-radius:8px;">
         <tr>
-          <td style="vertical-align:middle;width:52px;">
-            <img src="${logoUrl}" alt="JOYTREE" width="48" height="48" style="width:48px;height:48px;border-radius:12px;display:block;object-fit:cover;border:2px solid rgba(255,255,255,.12);">
-          </td>
-          <td style="vertical-align:middle;padding-left:14px;">
-            <div style="font-size:11px;letter-spacing:.22em;color:rgba(134,239,172,.75);text-transform:uppercase;font-weight:600;">Ship Anything. Instantly.</div>
-            <div style="font-size:22px;font-weight:800;color:#ffffff;margin-top:3px;letter-spacing:-.02em;">JOYTREE</div>
-          </td>
-          <td style="vertical-align:middle;text-align:right;">
-            <span style="display:inline-block;background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.3);color:#6ee7b7;font-size:11px;font-weight:700;letter-spacing:.1em;padding:5px 11px;border-radius:999px;text-transform:uppercase;">New Member</span>
+          <td style="padding:24px 32px 0;">
+            <table role="presentation" width="100%"><tr>
+              <td style="width:32px;vertical-align:middle;">
+                <img src="${logoUrl}" alt="JoyTree" width="28" height="28" style="width:28px;height:28px;border-radius:6px;display:block;object-fit:cover;">
+              </td>
+              <td style="vertical-align:middle;padding-left:10px;">
+                <span style="font-size:15px;font-weight:600;color:#202124;">JoyTree</span>
+              </td>
+            </tr></table>
           </td>
         </tr>
+        <tr><td style="padding:24px 32px 4px;">
+          <h2 style="margin:0 0 4px;font-size:19px;font-weight:500;color:#202124;">Welcome to JoyTree, ${firstName}</h2>
+          <p style="margin:0 0 16px;color:#5f6368;font-size:14px;line-height:1.6;">
+            Your account is verified and your workspace is ready. JoyTree deploys your code from a GitHub repository (or a plain file upload) to a live URL, handling the build, hosting, and routing for you.
+          </p>
+          <p style="margin:0 0 24px;color:#5f6368;font-size:14px;line-height:1.6;">
+            When you're ready, open your dashboard to connect a repository and create your first deployment. Real-time build logs, environment variables, custom domains, and rollback are all available from there.
+          </p>
+          <div style="margin-bottom:24px;">
+            <a href="${dashboardUrl}" style="display:inline-block;background:#1a73e8;color:#ffffff;text-decoration:none;padding:9px 20px;border-radius:4px;font-weight:500;font-size:14px;">Open dashboard</a>
+          </div>
+          <p style="margin:0 0 4px;color:#5f6368;font-size:13px;line-height:1.8;">
+            <a href="${deployUrl}" style="color:#1a73e8;text-decoration:none;">Create a deployment</a> &nbsp;·&nbsp;
+            <a href="${docsUrl}" style="color:#1a73e8;text-decoration:none;">Documentation</a> &nbsp;·&nbsp;
+            <a href="${supportUrl}" style="color:#1a73e8;text-decoration:none;">Support</a>
+          </p>
+        </td></tr>
+        <tr><td style="padding:24px 32px 24px;">
+          <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 16px;">
+          <p style="margin:0;color:#80868b;font-size:12px;line-height:1.6;">You're receiving this email because you created an account at ${BASE_DOMAIN}. If this wasn't you, you can ignore this message.</p>
+        </td></tr>
       </table>
-    </td>
-  </tr>
-
-  <!-- ══ HERO IMAGE ══ -->
-  ${heroImageUrl ? `
-  <tr>
-    <td style="background:#052e16;">
-      <img src="${heroImageUrl}" alt="JOYTREE — Ship Anything Instantly" width="640" style="display:block;width:100%;max-height:280px;object-fit:cover;">
-    </td>
-  </tr>` : `
-  <tr>
-    <td style="background:linear-gradient(180deg,#064e2c,#0a0a0a);padding:32px 32px 36px;text-align:center;">
-      <div style="font-size:13px;letter-spacing:.18em;color:#34d399;text-transform:uppercase;font-weight:600;margin-bottom:10px;">Your workspace is live</div>
-      <div style="font-size:38px;font-weight:900;color:#ffffff;line-height:1.15;letter-spacing:-.03em;">Ship anything.<br>Instantly.</div>
-      <div style="margin-top:14px;font-size:14px;color:rgba(255,255,255,.5);letter-spacing:.04em;">GitHub → Production in minutes</div>
-    </td>
-  </tr>`}
-
-  <!-- ══ WHITE BODY ══ -->
-  <tr>
-    <td style="background:#ffffff;padding:40px 36px 0;">
-
-      <!-- Greeting -->
-      <p style="margin:0 0 6px;font-size:12px;color:#16a34a;font-weight:700;letter-spacing:.1em;text-transform:uppercase;">Account verified &amp; workspace ready</p>
-      <h1 style="margin:0 0 20px;font-size:28px;font-weight:800;color:#0f172a;line-height:1.2;letter-spacing:-.02em;">Welcome to JOYTREE, ${firstName}.</h1>
-
-      <!-- Intro paragraph -->
-      <p style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#334155;">
-        Your account is fully verified and your JOYTREE workspace is now active. JOYTREE is a professional deployment platform that takes your code from a GitHub repository to a live, publicly accessible URL — in minutes, with zero DevOps configuration required.
-      </p>
-      <p style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#334155;">
-        Whether you're deploying a Node.js API, a static site, a full-stack web app, or any other server-based project, JOYTREE handles the entire release pipeline on your behalf: cloning your code, running your build, provisioning a subdomain, routing traffic, and keeping your deployment live 24/7.
-      </p>
-      <p style="margin:0 0 28px;font-size:15px;line-height:1.9;color:#334155;">
-        Every project you deploy gets its own real-time log terminal, resource monitor, and deployment history. You stay in full control — redeploy, rollback, pause, or delete at any time from your dashboard. No CLI knowledge required. No server management. Just push your code and ship.
-      </p>
-
-      <!-- Divider -->
-      <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 30px;">
-
-      <!-- What JOYTREE does — prose block -->
-      <p style="margin:0 0 8px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;font-weight:700;">How it works</p>
-      <p style="margin:0 0 14px;font-size:14px;line-height:1.85;color:#475569;">
-        You connect your GitHub account, select a repository, and JOYTREE takes over. It pulls your latest code, installs dependencies, runs your configured build command, and deploys the result to a live subdomain under <strong style="color:#0f172a;">joytree.site</strong>. The entire process is visible in real time through a streaming log terminal — every line of output, from install to boot.
-      </p>
-      <p style="margin:0 0 28px;font-size:14px;line-height:1.85;color:#475569;">
-        Once live, JOYTREE monitors your deployment continuously. If you push new code to GitHub and have auto-deploy enabled, your project is automatically rebuilt and redeployed without any manual action. If something breaks, you can roll back to the last working deployment in a single click — no re-uploading, no reconfiguring.
-      </p>
-
-      <!-- Divider -->
-      <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 30px;">
-
-      <!-- Section heading -->
-      <p style="margin:0 0 20px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;font-weight:700;">Everything included in your account</p>
-
-      <!-- Feature grid: 2 columns -->
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-        <tr>
-          <td style="width:50%;vertical-align:top;padding:0 10px 16px 0;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
-              <tr><td>
-                <div style="font-size:22px;margin-bottom:8px;">⚡</div>
-                <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:6px;">GitHub Deployments</div>
-                <div style="font-size:13px;color:#64748b;line-height:1.7;">Connect any public or private GitHub repo. JOYTREE auto-detects your stack, runs your build, and deploys to a live URL — one click from your dashboard.</div>
-              </td></tr>
-            </table>
-          </td>
-          <td style="width:50%;vertical-align:top;padding:0 0 16px 0;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
-              <tr><td>
-                <div style="font-size:22px;margin-bottom:8px;">📡</div>
-                <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:6px;">Real-Time Log Terminal</div>
-                <div style="font-size:13px;color:#64748b;line-height:1.7;">Watch every build and runtime event as it happens — from <code style="font-size:12px;background:#f1f5f9;padding:1px 5px;border-radius:4px;">git clone</code> to server boot — with full diagnostic output streamed live.</div>
-              </td></tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="width:50%;vertical-align:top;padding:0 10px 16px 0;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
-              <tr><td>
-                <div style="font-size:22px;margin-bottom:8px;">🌐</div>
-                <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:6px;">Custom Domains</div>
-                <div style="font-size:13px;color:#64748b;line-height:1.7;">Point your own domain to any deployment. JOYTREE handles DNS verification, CNAME routing, and HTTPS automatically — setup takes under two minutes.</div>
-              </td></tr>
-            </table>
-          </td>
-          <td style="width:50%;vertical-align:top;padding:0 0 16px 0;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
-              <tr><td>
-                <div style="font-size:22px;margin-bottom:8px;">🔄</div>
-                <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:6px;">Instant Rollbacks</div>
-                <div style="font-size:13px;color:#64748b;line-height:1.7;">Every deployment is preserved in your history. Roll back to any previous version in one click — no re-uploading, no downtime, no configuration changes needed.</div>
-              </td></tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="width:50%;vertical-align:top;padding:0 10px 0 0;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
-              <tr><td>
-                <div style="font-size:22px;margin-bottom:8px;">🔐</div>
-                <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:6px;">Environment Variables</div>
-                <div style="font-size:13px;color:#64748b;line-height:1.7;">Define secrets, API keys, and config per project. They are injected securely at build and runtime — never exposed in your repository or logs.</div>
-              </td></tr>
-            </table>
-          </td>
-          <td style="width:50%;vertical-align:top;padding:0;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
-              <tr><td>
-                <div style="font-size:22px;margin-bottom:8px;">💳</div>
-                <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:6px;">Plans &amp; Billing</div>
-                <div style="font-size:13px;color:#64748b;line-height:1.7;">Choose a plan that matches your usage. Upgrade, downgrade, or view payment history and invoices at any time from your billing settings.</div>
-              </td></tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-
-    </td>
-  </tr>
-
-  <!-- ══ GETTING STARTED STEPS ══ -->
-  <tr>
-    <td style="background:#ffffff;padding:32px 36px 0;">
-      <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 28px;">
-      <p style="margin:0 0 20px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;font-weight:700;">Your first deployment — 3 steps</p>
-
-      <!-- Step 1 -->
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:20px;">
-        <tr>
-          <td style="width:36px;vertical-align:top;padding-top:2px;">
-            <div style="width:28px;height:28px;background:#052e16;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:800;color:#4ade80;">1</div>
-          </td>
-          <td style="vertical-align:top;padding-left:12px;">
-            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:5px;">Connect your GitHub repository</div>
-            <div style="font-size:13px;color:#64748b;line-height:1.75;">Open your dashboard and click <strong style="color:#0f172a;">New Deployment</strong>. Authorize JOYTREE to access your GitHub account, then select any repository — public or private. JOYTREE reads your project structure and pre-fills recommended settings for common frameworks including Node.js, React, Next.js, and static sites.</div>
-          </td>
-        </tr>
-      </table>
-
-      <!-- Step 2 -->
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:20px;">
-        <tr>
-          <td style="width:36px;vertical-align:top;padding-top:2px;">
-            <div style="width:28px;height:28px;background:#052e16;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:800;color:#4ade80;">2</div>
-          </td>
-          <td style="vertical-align:top;padding-left:12px;">
-            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:5px;">Configure, set environment variables, and deploy</div>
-            <div style="font-size:13px;color:#64748b;line-height:1.75;">Review your build command and output settings, add any required environment variables, and click <strong style="color:#0f172a;">Deploy</strong>. The log terminal opens immediately — you will see every step in real time, from dependency installation through to your server coming online.</div>
-          </td>
-        </tr>
-      </table>
-
-      <!-- Step 3 -->
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-        <tr>
-          <td style="width:36px;vertical-align:top;padding-top:2px;">
-            <div style="width:28px;height:28px;background:#052e16;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:800;color:#4ade80;">3</div>
-          </td>
-          <td style="vertical-align:top;padding-left:12px;">
-            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:5px;">Go live, share your URL, and enable auto-deploy</div>
-            <div style="font-size:13px;color:#64748b;line-height:1.75;">When your build succeeds, your project is immediately accessible at a JOYTREE subdomain. Share that link or attach your own custom domain — DNS configuration is guided step by step and takes under two minutes. Turn on auto-deploy in your project settings so that every future push to your selected branch triggers a new deployment automatically, with no manual action required.</div>
-          </td>
-        </tr>
-      </table>
-
-      <!-- Support note -->
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:24px;">
-        <tr>
-          <td style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 20px;">
-            <p style="margin:0;font-size:13px;color:#166534;line-height:1.75;">
-              <strong>Need help getting started?</strong> Reply directly to this email and a member of our team will assist you with your first deployment. We also have step-by-step documentation available in your dashboard under the <strong>Docs</strong> section.
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-
-  <!-- ══ CTA BUTTONS ══ -->
-  <tr>
-    <td style="background:#ffffff;padding:28px 36px 0;">
-      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-        <tr>
-          <td style="padding-bottom:12px;">
-            <a href="${dashboardUrl}" style="display:block;background:linear-gradient(135deg,#16a34a,#15803d);color:#ffffff;text-decoration:none;padding:15px 24px;border-radius:12px;font-weight:800;font-size:15px;text-align:center;letter-spacing:.01em;">
-              Open My Dashboard →
-            </a>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-              <tr>
-                <td style="width:50%;padding-right:6px;">
-                  <a href="${deployUrl}" style="display:block;background:#0f172a;color:#ffffff;text-decoration:none;padding:12px 16px;border-radius:10px;font-weight:700;font-size:13px;text-align:center;">
-                    ⚡ New Deployment
-                  </a>
-                </td>
-                <td style="width:50%;padding-left:6px;">
-                  <a href="${docsUrl}" style="display:block;background:#f1f5f9;color:#334155;text-decoration:none;padding:12px 16px;border-radius:10px;font-weight:700;font-size:13px;text-align:center;border:1px solid #e2e8f0;">
-                    📖 Documentation
-                  </a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-
-  <!-- ══ DIVIDER + QUICK LINKS ══ -->
-  <tr>
-    <td style="background:#ffffff;padding:24px 36px 0;">
-      <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 18px;">
-      <p style="margin:0;font-size:13px;color:#64748b;line-height:2;">
-        <strong style="color:#334155;">Quick links:</strong>&nbsp;&nbsp;
-        <a href="${dashboardUrl}" style="color:#16a34a;text-decoration:none;font-weight:600;">Dashboard</a> &nbsp;·&nbsp;
-        <a href="${deployUrl}" style="color:#16a34a;text-decoration:none;font-weight:600;">Deploy</a> &nbsp;·&nbsp;
-        <a href="${docsUrl}" style="color:#16a34a;text-decoration:none;font-weight:600;">Docs</a> &nbsp;·&nbsp;
-        <a href="${supportUrl}" style="color:#16a34a;text-decoration:none;font-weight:600;">Support</a>
-      </p>
-    </td>
-  </tr>
-
-  <!-- ══ FOOTER LOGO REPEAT ══ -->
-  <tr>
-    <td style="background:#ffffff;padding:32px 36px 0;">
-      <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 28px;">
-      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-        <tr>
-          <td style="vertical-align:middle;width:44px;">
-            <img src="${logoUrl}" alt="JOYTREE" width="40" height="40" style="width:40px;height:40px;border-radius:10px;display:block;object-fit:cover;">
-          </td>
-          <td style="vertical-align:middle;padding-left:12px;">
-            <div style="font-size:15px;font-weight:800;color:#0f172a;letter-spacing:-.01em;">JOYTREE</div>
-            <div style="font-size:12px;color:#94a3b8;margin-top:1px;">Ship Anything. Instantly.</div>
-          </td>
-          <td style="text-align:right;vertical-align:middle;">
-            <a href="${dashboardUrl}" style="font-size:12px;color:#16a34a;text-decoration:none;font-weight:600;">joytree.site →</a>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-
-  <!-- ══ DARK FOOTER ══ -->
-  <tr>
-    <td style="background:#0a0f1a;border-radius:0 0 18px 18px;padding:24px 36px 28px;margin-top:24px;">
-      <p style="margin:0 0 10px;font-size:12px;color:rgba(148,163,184,.6);line-height:1.75;text-align:center;">
-        This message was sent to <strong style="color:rgba(148,163,184,.85);">${recipient}</strong> because you created a JOYTREE account.<br>
-        If you need help with your first deployment, just reply — our team will get back to you.
-      </p>
-      <p style="margin:0;font-size:11px;color:rgba(148,163,184,.35);text-align:center;letter-spacing:.04em;">
-        © ${new Date().getFullYear()} JOYTREE &nbsp;·&nbsp; joytree.site &nbsp;·&nbsp; All rights reserved
-      </p>
-    </td>
-  </tr>
-
-</table>
-<!-- End card -->
-
-</td></tr>
-</table>
-<!-- End outer wrapper -->
-
-</body>
-</html>`;
+    </td></tr>
+  </table>
+</body></html>`;
 
   const payload = { from: RESEND_FROM_EMAIL, to: [recipient], subject, html, text };
   if (RESEND_REPLY_TO_EMAIL) payload.reply_to = RESEND_REPLY_TO_EMAIL;
