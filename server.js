@@ -10631,6 +10631,7 @@ app.post('/api/billing/paystack/initialize', requireAuth, async (req, res) => {
     if (!lastName) return res.status(400).json({ error: 'lastName is required' });
     if (!email) return res.status(400).json({ error: 'email is required' });
     if (!Number.isFinite(amountKobo) || amountKobo < 100) return res.status(400).json({ error: 'amountKobo must be at least 100' });
+    if (!/^0\d{9}$/.test(phone)) return res.status(400).json({ error: 'A valid Ghana Mobile Money number is required' });
 
     // Detect Ghana MoMo provider from number prefix
     const mtnPrefixes = ['024','054','055','059','025'];
@@ -10642,7 +10643,17 @@ app.post('/api/billing/paystack/initialize', requireAuth, async (req, res) => {
       : atPrefixes.includes(phonePrefix) ? 'tgo'
       : 'mtn'; // default to mtn
 
-    const r = await fetch('https://api.paystack.co/transaction/initialize', {
+    // [FIX] Was POSTing to /transaction/initialize with a `mobile_money`
+    // field -- that endpoint does NOT support direct mobile money charging
+    // at all; it's a parameter Paystack silently ignores there. The only
+    // endpoint that actually triggers a real mobile money PIN/USSD prompt
+    // is POST /charge. This is very likely the actual, deeper reason the
+    // MoMo prompt has been unreliable regardless of the frontend
+    // access_code fix made earlier tonight -- that fix was real and
+    // necessary, but the backend was never actually asking Paystack to
+    // charge mobile money in the first place.
+    console.log(`[Paystack] Charging mobile money: provider=${momoProvider} amountKobo=${amountKobo} plan=${plan || metaType || 'n/a'}`);
+    const r = await fetch('https://api.paystack.co/charge', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
@@ -10650,12 +10661,8 @@ app.post('/api/billing/paystack/initialize', requireAuth, async (req, res) => {
       },
       body: JSON.stringify({
         email,
-        first_name: firstName,
-        last_name: lastName,
         amount: Math.round(amountKobo),
         currency: 'GHS',
-        callback_url: `https://${BASE_DOMAIN}/dashboard/checkout`,
-        channels: ['mobile_money'],
         mobile_money: { phone, provider: momoProvider },
         metadata: {
           plan,
@@ -10673,14 +10680,15 @@ app.post('/api/billing/paystack/initialize', requireAuth, async (req, res) => {
       })
     });
     const d = await r.json().catch(() => ({}));
+    console.log(`[Paystack] /charge response: http=${r.status} status=${d?.data?.status || 'n/a'} message=${d?.message || 'n/a'}`);
     if (!r.ok || d?.status !== true || !d?.data?.reference) {
-      return res.status(400).json({ error: d?.message || 'Failed to initialize Paystack transaction' });
+      return res.status(400).json({ error: d?.message || 'Failed to initiate mobile money charge' });
     }
     return res.json({
       ok: true,
       reference: String(d.data.reference || ''),
-      accessCode: String(d.data.access_code || ''),
-      authorizationUrl: String(d.data.authorization_url || '')
+      chargeStatus: String(d.data.status || ''),
+      displayText: String(d.data.display_text || d.message || '')
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
