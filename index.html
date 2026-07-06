@@ -11669,18 +11669,16 @@ document.addEventListener('keydown', function(e){
           s.onerror = () => reject(new Error('Failed to reload Paystack script'));
           document.head.appendChild(s);
         });
-        const handler = window.PaystackPop.setup({
+        const handler = window.PaystackPop.setup(buildPaystackInlineOptions({
           key: PAYSTACK_PUBLIC_KEY,
           email: email,
-          amount: amountKobo,
-          currency: 'GHS',
-          ref: String(initData.reference || ''),
-          access_code: String(initData.accessCode || ''),
+          amountKobo: amountKobo,
+          reference: initData.reference,
           callback: function(response) {
             Promise.resolve().then(() => dsHandlePaymentSuccess(response, projectId));
           },
           onClose: function() { toast('Payment cancelled. If MoMo prompt did not arrive, check your number and retry.', 'info', 7000); }
-        });
+        }));
         handler.openIframe();
       } catch(e) {
         toast('Could not launch checkout: ' + (e.message || 'unknown error'), 'error', 7000);
@@ -20463,18 +20461,16 @@ async function startPaystackCheckout(){
       s.onerror = () => reject(new Error('Failed to reload Paystack script'));
       document.head.appendChild(s);
     });
-    const handler = window.PaystackPop.setup({
+    const handler = window.PaystackPop.setup(buildPaystackInlineOptions({
       key: PAYSTACK_PUBLIC_KEY,
       email: email,
-      amount: amountKobo,
-      currency: 'GHS',
-      ref: String(initData.reference || ''),
-      access_code: String(initData.accessCode || ''),
+      amountKobo: amountKobo,
+      reference: initData.reference,
       callback: function(response){
         Promise.resolve().then(() => handlePaystackSuccess(response, key, amountKobo));
       },
       onClose: function(){ toast('Payment cancelled. If MoMo prompt did not arrive, check your number and retry.', 'info', 8000); }
-    });
+    }));
     handler.openIframe();
   } catch (e) {
     toast('Could not launch checkout: ' + (e.message || 'unknown error'), 'error', 8000);
