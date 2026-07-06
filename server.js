@@ -10324,7 +10324,15 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
     startCmd: startCmd || '',
     outputDir: outputDir || 'dist',
     nodeVer: nodeVer || '20',
-    siteType: siteType || 'static',
+    // [FIX] Was `siteType || 'static'`. runUploadBuild's own dispatcher
+    // (buildRunner.js) only runs its real auto-detect (autoDetectUploadServerApp)
+    // when siteType is neither 'server' nor 'static' -- forcing it to
+    // 'static' here short-circuited that check before it ever ran, exactly
+    // like the two GitHub-deploy defaults fixed earlier tonight (bf9bca5).
+    // Reproduced live: samz-demo-zip deployed via joytree_deploy_from_zip
+    // with no siteType given, "succeeded", but the actual Express app was
+    // never detected or started -- it silently ran as a static site instead.
+    siteType: siteType || '',
     appPort,
     billingPlan: planKey,
     memoryLimit: runtimeProfile.memoryLimit,
