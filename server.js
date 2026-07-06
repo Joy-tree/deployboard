@@ -2083,15 +2083,6 @@ async function sendPaymentSuccessEmail({ userEmail = '', plan = '', amountKobo =
     ? new Date(paidAt).toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'medium', timeStyle: 'short' }) + ' UTC'
     : new Date().toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'medium', timeStyle: 'short' }) + ' UTC';
 
-  const billingHeroMap = {
-    free: RESEND_BILLING_HERO_IMAGE_FREE_URL,
-    starter: RESEND_BILLING_HERO_IMAGE_STARTER_URL,
-    pro: RESEND_BILLING_HERO_IMAGE_PRO_URL,
-    growth: RESEND_BILLING_HERO_IMAGE_GROWTH_URL,
-    scale: RESEND_BILLING_HERO_IMAGE_SCALE_URL
-  };
-  const heroImageUrl = billingHeroMap[safePlan] || RESEND_BILLING_HERO_IMAGE_URL || '';
-
   const subject = `JOYTREE • Subscription payment confirmed — ${planLabel}`;
   const text = [
     'JOYTREE subscription payment receipt',
@@ -2106,41 +2097,40 @@ async function sendPaymentSuccessEmail({ userEmail = '', plan = '', amountKobo =
   ].join('\n');
 
   const html = `<!doctype html>
-<html><body style="margin:0;padding:0;background:#f5f8fb;font-family:Inter,Segoe UI,Arial,sans-serif;color:#0f172a;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 12px;">
+<html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #dadce0;border-radius:8px;">
         <tr>
-          <td style="padding:20px 24px;background:linear-gradient(120deg,#0f172a,#14532d);color:#fff;">
+          <td style="padding:24px 32px 0;">
             <table role="presentation" width="100%"><tr>
-              <td style="width:52px;vertical-align:middle;">
-                <img src="${logoUrl}" alt="JOYTREE" width="42" height="42" style="width:42px;height:42px;border-radius:10px;display:block;background:#fff;object-fit:cover;">
+              <td style="width:32px;vertical-align:middle;">
+                <img src="${logoUrl}" alt="JoyTree" width="28" height="28" style="width:28px;height:28px;border-radius:6px;display:block;object-fit:cover;">
               </td>
-              <td style="vertical-align:middle;">
-                <div style="font-size:12px;letter-spacing:.12em;opacity:.82;">BILLING CONFIRMATION</div>
-                <div style="font-size:24px;font-weight:800;line-height:1.2;">JOYTREE</div>
+              <td style="vertical-align:middle;padding-left:10px;">
+                <span style="font-size:15px;font-weight:600;color:#202124;">JoyTree</span>
               </td>
             </tr></table>
           </td>
         </tr>
-        ${heroImageUrl ? `<tr><td><img src="${heroImageUrl}" alt="JOYTREE Billing Banner" style="display:block;width:100%;max-height:280px;object-fit:cover;"></td></tr>` : ''}
-        <tr><td style="padding:24px;">
-          <div style="display:inline-block;padding:8px 12px;border-radius:999px;background:#ecfeff;color:#0f766e;font-size:12px;font-weight:700;letter-spacing:.03em;">PAYMENT RECEIVED</div>
-          <h2 style="margin:14px 0 8px;font-size:22px;line-height:1.3;color:#0f172a;">Your ${planLabel} subscription is active.</h2>
-          <p style="margin:0 0 16px;color:#334155;font-size:14px;">Thank you for your payment. This receipt confirms your subscription activation on JOYTREE.</p>
-
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
-            <tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Plan:</strong> ${planLabel}</td></tr>
-            <tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Amount:</strong> ${currency} ${amountMajor.toFixed(2)}</td></tr>
-            <tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;"><strong>Reference:</strong> <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#334155;">${reference || '-'}</span></td></tr>
-            <tr><td style="padding:14px 16px;font-size:14px;"><strong>Paid At:</strong> ${paidText}</td></tr>
+        <tr><td style="padding:24px 32px 4px;">
+          <h2 style="margin:0 0 4px;font-size:19px;font-weight:500;color:#202124;">Payment received</h2>
+          <p style="margin:0 0 20px;color:#5f6368;font-size:14px;line-height:1.6;">
+            Thanks for your payment. Your ${planLabel} subscription is now active.
+          </p>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e8eaed;">
+            <tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Plan</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${planLabel}</td></tr>
+            <tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Amount</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${currency} ${amountMajor.toFixed(2)}</td></tr>
+            <tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Reference</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${reference || '-'}</td></tr>
+            <tr><td style="padding:12px 0;font-size:13px;color:#5f6368;">Paid at</td><td style="padding:12px 0;font-size:13px;color:#202124;text-align:right;">${paidText}</td></tr>
           </table>
-
-          <div style="margin-top:18px;">
-            <a href="https://${BASE_DOMAIN}/dashboard/usage" style="display:inline-block;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:700;">Open Billing & Usage</a>
+          <div style="margin-top:24px;">
+            <a href="https://${BASE_DOMAIN}/dashboard/usage" style="display:inline-block;background:#1a73e8;color:#ffffff;text-decoration:none;padding:9px 20px;border-radius:4px;font-weight:500;font-size:14px;">View billing &amp; usage</a>
           </div>
-
-          <p style="margin:16px 0 0;color:#64748b;font-size:12px;">Need help with billing? Reply to this email and our team will assist you.</p>
+        </td></tr>
+        <tr><td style="padding:24px 32px 24px;">
+          <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 16px;">
+          <p style="margin:0;color:#80868b;font-size:12px;line-height:1.6;">This is an automated billing confirmation from JoyTree. Reply to this email if you have a billing question.</p>
         </td></tr>
       </table>
     </td></tr>
@@ -2214,11 +2204,25 @@ async function sendWelcomeEmail({ userEmail = '', userName = '' } = {}) {
         <tr><td style="padding:24px 32px 4px;">
           <h2 style="margin:0 0 4px;font-size:19px;font-weight:500;color:#202124;">Welcome to JoyTree, ${firstName}</h2>
           <p style="margin:0 0 16px;color:#5f6368;font-size:14px;line-height:1.6;">
-            Your account is verified and your workspace is ready. JoyTree deploys your code from a GitHub repository (or a plain file upload) to a live URL, handling the build, hosting, and routing for you.
+            Your account is verified and your workspace is ready. JoyTree is a deployment platform that takes your code from a GitHub repository — or a plain file upload — to a live, publicly accessible URL, handling the build, hosting, and routing for you.
           </p>
-          <p style="margin:0 0 24px;color:#5f6368;font-size:14px;line-height:1.6;">
-            When you're ready, open your dashboard to connect a repository and create your first deployment. Real-time build logs, environment variables, custom domains, and rollback are all available from there.
+          <p style="margin:0 0 20px;color:#5f6368;font-size:14px;line-height:1.6;">
+            Connect a repository and JoyTree clones your code, installs dependencies, runs your build, and deploys the result to a subdomain under joytree.site. If you enable auto-deploy, future pushes to your selected branch are rebuilt and redeployed automatically, with no manual steps.
           </p>
+
+          <p style="margin:20px 0 8px;color:#202124;font-size:13px;font-weight:600;">What's included in your account</p>
+          <p style="margin:0 0 6px;color:#5f6368;font-size:13px;line-height:1.7;"><strong style="color:#202124;">GitHub deployments</strong> — connect any public or private repo; JoyTree auto-detects your stack and build settings.</p>
+          <p style="margin:0 0 6px;color:#5f6368;font-size:13px;line-height:1.7;"><strong style="color:#202124;">Real-time logs</strong> — every build and runtime event streamed live, from clone to server boot.</p>
+          <p style="margin:0 0 6px;color:#5f6368;font-size:13px;line-height:1.7;"><strong style="color:#202124;">Custom domains</strong> — point your own domain at any deployment; DNS and HTTPS are handled for you.</p>
+          <p style="margin:0 0 6px;color:#5f6368;font-size:13px;line-height:1.7;"><strong style="color:#202124;">Instant rollback</strong> — every deployment is kept in history; revert to a previous version in one click.</p>
+          <p style="margin:0 0 6px;color:#5f6368;font-size:13px;line-height:1.7;"><strong style="color:#202124;">Environment variables</strong> — store secrets and config per project, injected securely at build and runtime.</p>
+          <p style="margin:0 0 20px;color:#5f6368;font-size:13px;line-height:1.7;"><strong style="color:#202124;">Plans &amp; billing</strong> — view usage, upgrade or downgrade, and manage invoices from your dashboard at any time.</p>
+
+          <p style="margin:20px 0 8px;color:#202124;font-size:13px;font-weight:600;">Your first deployment, in three steps</p>
+          <p style="margin:0 0 6px;color:#5f6368;font-size:13px;line-height:1.7;"><strong style="color:#202124;">1.</strong> Open your dashboard and click New Deployment, then authorize GitHub and pick a repository.</p>
+          <p style="margin:0 0 6px;color:#5f6368;font-size:13px;line-height:1.7;"><strong style="color:#202124;">2.</strong> Review the auto-detected build settings, add any environment variables you need, and click Deploy.</p>
+          <p style="margin:0 0 24px;color:#5f6368;font-size:13px;line-height:1.7;"><strong style="color:#202124;">3.</strong> Once the build succeeds your project is live at a joytree.site subdomain — share it, attach your own domain, or enable auto-deploy for future pushes.</p>
+
           <div style="margin-bottom:24px;">
             <a href="${dashboardUrl}" style="display:inline-block;background:#1a73e8;color:#ffffff;text-decoration:none;padding:9px 20px;border-radius:4px;font-weight:500;font-size:14px;">Open dashboard</a>
           </div>
@@ -2268,161 +2272,46 @@ async function sendVerificationCodeEmail(email = '', code = '') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>JOYTREE — Verify your email</title>
+  <title>JoyTree — Verify your email</title>
 </head>
-<body style="margin:0;padding:0;background:#f0f4f8;font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;-webkit-font-smoothing:antialiased;">
-
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f0f4f8;padding:36px 12px 48px;">
-<tr><td align="center">
-
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;">
-
-  <!-- ══ HEADER ══ -->
-  <tr>
-    <td style="background:linear-gradient(135deg,#052e16 0%,#064e2c 55%,#0a3d20 100%);border-radius:18px 18px 0 0;padding:26px 32px 24px;">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #dadce0;border-radius:8px;">
         <tr>
-          <td style="vertical-align:middle;width:50px;">
-            <img src="${logoUrl}" alt="JOYTREE" width="44" height="44" style="width:44px;height:44px;border-radius:11px;display:block;object-fit:cover;border:2px solid rgba(255,255,255,.1);">
-          </td>
-          <td style="vertical-align:middle;padding-left:13px;">
-            <div style="font-size:10px;letter-spacing:.22em;color:rgba(134,239,172,.7);text-transform:uppercase;font-weight:600;">Security alert</div>
-            <div style="font-size:20px;font-weight:800;color:#ffffff;margin-top:2px;letter-spacing:-.01em;">JOYTREE</div>
-          </td>
-          <td style="text-align:right;vertical-align:middle;">
-            <span style="display:inline-block;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.3);color:#fde047;font-size:11px;font-weight:700;letter-spacing:.08em;padding:5px 11px;border-radius:999px;text-transform:uppercase;">Action Required</span>
+          <td style="padding:24px 32px 0;">
+            <table role="presentation" width="100%"><tr>
+              <td style="width:32px;vertical-align:middle;">
+                <img src="${logoUrl}" alt="JoyTree" width="28" height="28" style="width:28px;height:28px;border-radius:6px;display:block;object-fit:cover;">
+              </td>
+              <td style="vertical-align:middle;padding-left:10px;">
+                <span style="font-size:15px;font-weight:600;color:#202124;">JoyTree</span>
+              </td>
+            </tr></table>
           </td>
         </tr>
+        <tr><td style="padding:24px 32px 4px;">
+          <h2 style="margin:0 0 4px;font-size:19px;font-weight:500;color:#202124;">Verify your email address</h2>
+          <p style="margin:0 0 24px;color:#5f6368;font-size:14px;line-height:1.6;">
+            Enter this code to confirm it's you. It expires in 10 minutes.
+          </p>
+          <div style="text-align:center;margin-bottom:24px;">
+            ${digitBoxesHtml}
+          </div>
+          <p style="margin:0 0 4px;color:#5f6368;font-size:13px;line-height:1.8;">
+            This code is single-use and expires automatically after 10 minutes. Don't share it with anyone — JoyTree staff will never ask you for it, and it should only ever be entered on joytree.site.
+          </p>
+          <p style="margin:12px 0 0;color:#5f6368;font-size:13px;line-height:1.8;">
+            If you didn't request this code, you can safely ignore this email — no action is needed.
+          </p>
+        </td></tr>
+        <tr><td style="padding:24px 32px 24px;">
+          <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 16px;">
+          <p style="margin:0;color:#80868b;font-size:12px;line-height:1.6;">This code was sent to ${email} at your request. &copy; ${year} JoyTree</p>
+        </td></tr>
       </table>
-    </td>
-  </tr>
-
-  <!-- ══ LOCK ICON BANNER ══ -->
-  <tr>
-    <td style="background:#ffffff;padding:40px 36px 28px;text-align:center;border-bottom:1px solid #f1f5f9;">
-      <!-- Lock icon as table -->
-      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto 20px;">
-        <tr>
-          <td style="width:64px;height:64px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:16px;text-align:center;line-height:64px;font-size:30px;">
-            🔐
-          </td>
-        </tr>
-      </table>
-      <h1 style="margin:0 0 10px;font-size:24px;font-weight:800;color:#0f172a;letter-spacing:-.02em;line-height:1.2;">Verify your email address</h1>
-      <p style="margin:0;font-size:14px;color:#64748b;line-height:1.75;max-width:400px;display:inline-block;">
-        Enter the 6-digit code below to confirm your identity and access your JOYTREE workspace. This code expires in <strong style="color:#0f172a;">10 minutes</strong>.
-      </p>
-    </td>
-  </tr>
-
-  <!-- ══ CODE BLOCK ══ -->
-  <tr>
-    <td style="background:#ffffff;padding:32px 36px;">
-
-      <p style="margin:0 0 16px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#94a3b8;font-weight:700;text-align:center;">Your one-time verification code</p>
-
-      <!-- Individual digit boxes -->
-      <div style="text-align:center;margin-bottom:18px;">
-        ${digitBoxesHtml}
-      </div>
-
-      <!-- Expiry note -->
-      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
-        <tr>
-          <td style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 18px;">
-            <p style="margin:0;font-size:12px;color:#92400e;text-align:center;">
-              ⏱ &nbsp;This code expires in <strong>10 minutes</strong>. Do not share it with anyone.
-            </p>
-          </td>
-        </tr>
-      </table>
-
-      <!-- Divider -->
-      <hr style="border:none;border-top:1px solid #e2e8f0;margin:28px 0 24px;">
-
-      <!-- Security tips heading -->
-      <p style="margin:0 0 14px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#94a3b8;font-weight:700;">🛡️ Security reminders</p>
-
-      <!-- Tip 1 -->
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:12px;">
-        <tr>
-          <td style="width:32px;vertical-align:top;padding-top:1px;">
-            <div style="width:24px;height:24px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:50%;text-align:center;line-height:24px;font-size:12px;">✓</div>
-          </td>
-          <td style="vertical-align:top;padding-left:10px;">
-            <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px;">Never share this code</div>
-            <div style="font-size:12px;color:#64748b;line-height:1.6;">No JOYTREE staff will ever ask for your verification code — not by email, chat, or phone.</div>
-          </td>
-        </tr>
-      </table>
-
-      <!-- Tip 2 -->
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:12px;">
-        <tr>
-          <td style="width:32px;vertical-align:top;padding-top:1px;">
-            <div style="width:24px;height:24px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:50%;text-align:center;line-height:24px;font-size:12px;">✓</div>
-          </td>
-          <td style="vertical-align:top;padding-left:10px;">
-            <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px;">Only enter this on joytree.site</div>
-            <div style="font-size:12px;color:#64748b;line-height:1.6;">Make sure you're on the official site. Bookmark it to avoid phishing pages.</div>
-          </td>
-        </tr>
-      </table>
-
-      <!-- Tip 3 -->
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-        <tr>
-          <td style="width:32px;vertical-align:top;padding-top:1px;">
-            <div style="width:24px;height:24px;background:#fff1f2;border:1px solid #fecdd3;border-radius:50%;text-align:center;line-height:24px;font-size:12px;color:#e11d48;">!</div>
-          </td>
-          <td style="vertical-align:top;padding-left:10px;">
-            <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px;">Didn't request this?</div>
-            <div style="font-size:12px;color:#64748b;line-height:1.6;">If you didn't try to sign in, you can safely ignore this email. No action is needed — your account is secure.</div>
-          </td>
-        </tr>
-      </table>
-
-    </td>
-  </tr>
-
-  <!-- ══ FOOTER LOGO ══ -->
-  <tr>
-    <td style="background:#ffffff;padding:0 36px 28px;">
-      <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 24px;">
-      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-        <tr>
-          <td style="vertical-align:middle;width:40px;">
-            <img src="${logoUrl}" alt="JOYTREE" width="36" height="36" style="width:36px;height:36px;border-radius:9px;display:block;object-fit:cover;">
-          </td>
-          <td style="vertical-align:middle;padding-left:10px;">
-            <div style="font-size:14px;font-weight:800;color:#0f172a;">JOYTREE</div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:1px;">Ship Anything. Instantly.</div>
-          </td>
-          <td style="text-align:right;vertical-align:middle;">
-            <a href="${dashboardUrl}" style="font-size:12px;color:#16a34a;text-decoration:none;font-weight:600;">joytree.site →</a>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-
-  <!-- ══ DARK FOOTER ══ -->
-  <tr>
-    <td style="background:#0a0f1a;border-radius:0 0 18px 18px;padding:22px 36px 26px;">
-      <p style="margin:0 0 8px;font-size:12px;color:rgba(148,163,184,.55);line-height:1.75;text-align:center;">
-        This security code was sent to <strong style="color:rgba(148,163,184,.8);">${email}</strong> at your request.<br>
-        Codes are single-use and expire automatically after 10 minutes.
-      </p>
-      <p style="margin:0;font-size:11px;color:rgba(148,163,184,.3);text-align:center;letter-spacing:.04em;">
-        © ${year} JOYTREE &nbsp;·&nbsp; joytree.site &nbsp;·&nbsp; All rights reserved
-      </p>
-    </td>
-  </tr>
-
-</table>
-</td></tr>
-</table>
-
+    </td></tr>
+  </table>
 </body>
 </html>`;
 
