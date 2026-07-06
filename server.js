@@ -10274,13 +10274,27 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
   const runtimeProfile = getRuntimeProfileForPlan(planKey);
 
   // ── Plan project-count limit check (same gate as GitHub /api/deploy) ────────
-  // Only applies to NEW projects (subdomain not yet in DB).
+  // Only applies to NEW projects (subdomain not yet in the workspace).
+  //
+  // [FIX] This used to check Project.exists()/Project.countDocuments() --
+  // straight MongoDB queries. This account (and any Firebase-only setup,
+  // which is the normal/default configuration per MONGODB_URI not being
+  // set) has no Mongo data at all, so isExistingUploadProject was always
+  // null and ownedProjectCount was always 0 (from the .catch(() => 0)
+  // fallback, since the query itself errors with no DB connection) --
+  // meaning `0 >= maxProjects` was always false and this check silently
+  // never fired. Reproduced live: deployed a 6th project on a 5-project
+  // free plan with zero pushback, via both /api/upload-deploy directly and
+  // the new /api/v1/deploy-from-zip, which both go through this same
+  // handler. The GitHub deploy path (/api/deploy) never had this problem
+  // because it already counts from the Firebase workspace directly
+  // (deployWsProjects.length) -- switched this check to the same source.
   const uploadPlanLimits = PLAN_DB_API_LIMITS[planKey] || PLAN_DB_API_LIMITS.free;
-  const isExistingUploadProject = await Project.exists({ subdomain: cleanSub }).catch(() => null);
+  const uploadDeployWs = (await readWorkspaceFromFirebase(req.user)) || {};
+  const uploadDeployWsProjects = Array.isArray(uploadDeployWs.projects) ? uploadDeployWs.projects : [];
+  const isExistingUploadProject = uploadDeployWsProjects.some(p => p.subdomain === cleanSub);
   if (!isExistingUploadProject) {
-    const ownerId = String(req.user?._id || req.user?.id || '');
-    // Count all projects owned by this user (both GitHub and upload combined)
-    const ownedProjectCount = await Project.countDocuments({ ownerUserId: ownerId }).catch(() => 0);
+    const ownedProjectCount = uploadDeployWsProjects.length; // already scoped to this user's own workspace
     if (Number.isFinite(uploadPlanLimits.maxProjects) && ownedProjectCount >= uploadPlanLimits.maxProjects) {
       return res.status(403).json({
         error: `Project limit reached for ${planKey} plan (${uploadPlanLimits.maxProjects} max). Upgrade your plan to deploy more projects.`,
