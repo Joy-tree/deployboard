@@ -13313,23 +13313,69 @@ v1.post('/deploy', async (req, res) => {
 // token this request already carried, via requireAuth's branch 2).
 v1.post('/deploy-from-zip', async (req, res) => {
   try {
-    const { name, subdomain, zipBase64, branch, buildCmd, startCmd, installCmd,
+    const { name, subdomain, zipBase64, zipUrl, branch, buildCmd, startCmd, installCmd,
             outputDir, siteType, nodeVer, envVars } = req.body || {};
 
-    if (!name || !zipBase64) {
-      return res.status(400).json({ ok: false, error: 'name and zipBase64 are required' });
+    if (!name || (!zipBase64 && !zipUrl)) {
+      return res.status(400).json({ ok: false, error: 'name and one of zipBase64 or zipUrl are required' });
     }
 
-    let archiveBuffer;
-    try {
-      archiveBuffer = Buffer.from(String(zipBase64), 'base64');
-    } catch (_) {
-      return res.status(400).json({ ok: false, error: 'zipBase64 is not valid base64' });
-    }
-    if (!archiveBuffer.length) {
-      return res.status(400).json({ ok: false, error: 'Decoded archive is empty -- check the base64 encoding' });
-    }
     const MAX_ZIP_BYTES = 260 * 1024 * 1024; // matches parseMultipart's own limit
+    let archiveBuffer;
+
+    if (zipUrl) {
+      // [FEATURE] Pull the archive server-side instead of requiring the
+      // caller to inline potentially hundreds of KB of base64 in the
+      // request body. Particularly useful for MCP/chat-based clients where
+      // round-tripping a large base64 blob through a conversation transcript
+      // is unreliable — passing a URL (e.g. a GitHub archive/release asset
+      // link, or any other directly-downloadable zip URL) avoids that
+      // entirely.
+      let parsed;
+      try { parsed = new URL(String(zipUrl)); } catch (_) {
+        return res.status(400).json({ ok: false, error: 'zipUrl is not a valid URL' });
+      }
+      if (parsed.protocol !== 'https:') {
+        return res.status(400).json({ ok: false, error: 'zipUrl must be an https:// URL' });
+      }
+      // Basic SSRF guard -- reject obviously internal/loopback hosts. Not
+      // exhaustive (doesn't resolve DNS to check the actual IP), but blocks
+      // the trivial cases; this endpoint also requires a valid jtk_ API key.
+      const host = parsed.hostname.toLowerCase();
+      if (host === 'localhost' || host === '127.0.0.1' || host === '::1' ||
+          host.endsWith('.local') || host.startsWith('169.254.') ||
+          /^10\.\d+\.\d+\.\d+$/.test(host) || /^192\.168\.\d+\.\d+$/.test(host) ||
+          /^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/.test(host)) {
+        return res.status(400).json({ ok: false, error: 'zipUrl may not point to an internal/loopback address' });
+      }
+
+      let zr;
+      try { zr = await fetch(parsed.toString(), { redirect: 'follow' }); }
+      catch (e) { return res.status(400).json({ ok: false, error: 'Failed to fetch zipUrl: ' + e.message }); }
+      if (!zr.ok) {
+        return res.status(400).json({ ok: false, error: `zipUrl fetch failed: HTTP ${zr.status}` });
+      }
+      const lenHeader = Number(zr.headers.get('content-length') || 0);
+      if (lenHeader && lenHeader > MAX_ZIP_BYTES) {
+        return res.status(413).json({ ok: false, error: `Archive exceeds ${MAX_ZIP_BYTES / (1024*1024)}MB limit (per Content-Length)` });
+      }
+      try {
+        const ab = await zr.arrayBuffer();
+        archiveBuffer = Buffer.from(ab);
+      } catch (e) {
+        return res.status(400).json({ ok: false, error: 'Failed to read zipUrl response body: ' + e.message });
+      }
+    } else {
+      try {
+        archiveBuffer = Buffer.from(String(zipBase64), 'base64');
+      } catch (_) {
+        return res.status(400).json({ ok: false, error: 'zipBase64 is not valid base64' });
+      }
+    }
+
+    if (!archiveBuffer.length) {
+      return res.status(400).json({ ok: false, error: 'Decoded archive is empty -- check the base64 encoding or zipUrl response' });
+    }
     if (archiveBuffer.length > MAX_ZIP_BYTES) {
       return res.status(413).json({ ok: false, error: `Archive exceeds ${MAX_ZIP_BYTES / (1024*1024)}MB limit` });
     }
