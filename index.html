@@ -11635,17 +11635,14 @@ document.addEventListener('keydown', function(e){
       if (!email)     return toast('Email required.', 'error');
       const momoPhone = normalizeGhanaMoMoPhone(phone);
       if (!/^0\d{9}$/.test(momoPhone)) return toast('Enter a valid Ghana Mobile Money number, e.g. 0241234567.', 'error');
+      if (!window.PaystackPop) return toast('Paystack not loaded. Refresh and retry.', 'error');
+      if (!(await ensurePaystackConfig())) return;
 
       const btn = document.getElementById('dsCoPayBtn');
-      btn.disabled = true; btn.textContent = 'Sending prompt to your phone…';
+      btn.disabled = true; btn.textContent = 'Opening checkout…';
 
       try {
         const amountKobo = Math.round(dsCurrentDomain.priceGhs * 100);
-        // [FIX] This used to call PaystackPop.setup()/openIframe() here, relying
-        // on Paystack's client popup to somehow trigger a mobile money charge.
-        // /api/billing/paystack/initialize now calls Paystack's real /charge
-        // endpoint directly (see server.js) which actually sends the PIN/USSD
-        // prompt to the phone -- no popup needed at all for this flow.
         const initRes = await apiFetch(API + '/api/billing/paystack/initialize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -11657,94 +11654,37 @@ document.addEventListener('keydown', function(e){
           })
         });
         const initData = await initRes.json().catch(() => ({}));
-        if (!initRes.ok || !initData?.reference) throw new Error(initData?.error || 'Could not start mobile money charge');
-        dsShowMomoWaiting(initData.reference, projectId);
+        if (!initRes.ok || !initData?.reference) throw new Error(initData?.error || 'Could not initialize payment');
+
+        // Always reload Paystack inline script fresh to bust the singleton.
+        // After cancelling, PaystackPop holds the dead iframe and won't trigger a
+        // new USSD prompt on the same session unless the script is re-initialised.
+        await new Promise((resolve, reject) => {
+          const existing = document.querySelector('script[src*="js.paystack.co"]');
+          if (existing) existing.remove();
+          delete window.PaystackPop;
+          const s = document.createElement('script');
+          s.src = 'https://js.paystack.co/v1/inline.js';
+          s.onload = resolve;
+          s.onerror = () => reject(new Error('Failed to reload Paystack script'));
+          document.head.appendChild(s);
+        });
+        const handler = window.PaystackPop.setup(buildPaystackInlineOptions({
+          key: PAYSTACK_PUBLIC_KEY,
+          email: email,
+          amountKobo: amountKobo,
+          reference: initData.reference,
+          callback: function(response) {
+            Promise.resolve().then(() => dsHandlePaymentSuccess(response, projectId));
+          },
+          onClose: function() { toast('Payment cancelled. If MoMo prompt did not arrive, check your number and retry.', 'info', 7000); }
+        }));
+        handler.openIframe();
       } catch(e) {
-        toast('Could not start payment: ' + (e.message || 'unknown error'), 'error', 7000);
+        toast('Could not launch checkout: ' + (e.message || 'unknown error'), 'error', 7000);
+      } finally {
         btn.disabled = false; btn.textContent = 'Pay with Mobile Money (GHS)';
       }
-    }
-
-    // [FIX] Replaces the PaystackPop popup/iframe entirely for this flow.
-    // Shows a plain "check your phone" panel and polls /api/domains/register
-    // (which itself verifies the charge via Paystack's /transaction/verify
-    // before registering -- see server.js) until it succeeds, the user
-    // cancels, or it times out. /api/domains/register is idempotent, so
-    // repeated calls with the same reference are safe.
-    function dsShowMomoWaiting(reference, projectId) {
-      const btn = document.getElementById('dsCoPayBtn');
-      btn.style.display = 'none';
-      let panel = document.getElementById('dsMomoWaitPanel');
-      if (panel) panel.remove();
-      panel = document.createElement('div');
-      panel.id = 'dsMomoWaitPanel';
-      btn.parentNode.insertBefore(panel, btn);
-      panel.innerHTML = `
-        <div style="text-align:center;padding:16px 0;">
-          <div style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Please approve this payment on your phone — enter your Mobile Money PIN when prompted.</div>
-          <button class="btn" id="dsMomoCheckBtn" style="width:100%;margin-bottom:8px;">I've completed the payment</button>
-          <button class="btn" id="dsMomoCancelBtn" style="width:100%;background:transparent;">Cancel</button>
-        </div>`;
-
-      let stopped = false;
-      let attempts = 0;
-      const maxAttempts = 40; // ~3 minutes at 4.5s intervals
-
-      const cleanup = () => {
-        stopped = true;
-        panel.remove();
-        btn.style.display = '';
-        btn.disabled = false; btn.textContent = 'Pay with Mobile Money (GHS)';
-      };
-
-      document.getElementById('dsMomoCancelBtn').onclick = () => {
-        cleanup();
-        toast('Payment cancelled.', 'info', 5000);
-      };
-
-      const checkOnce = async () => {
-        if (stopped) return;
-        attempts++;
-        try {
-          const res = await apiFetch(API + '/api/domains/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ domain: dsCurrentDomain?.domain, paystackRef: reference, projectId })
-          });
-          const data = await res.json().catch(() => ({}));
-          if (res.ok && data.ok) {
-            cleanup();
-            dsCloseCheckout();
-            toast('Payment received! Domain registered.', 'success', 7000);
-            dsLoadMyDomains();
-            if (projectId) {
-              await apiFetch(API + '/api/domains/attach', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ domain: dsCurrentDomain?.domain, projectId })
-              }).catch(() => {});
-              toast('Domain attached to project. Cloudflare routing active.', 'success', 6000);
-            }
-            return;
-          }
-          if (data.paymentTaken) {
-            cleanup();
-            dsShowRegistrationFailure(dsCurrentDomain?.domain, reference, data.error || 'NameSilo registration failed');
-            return;
-          }
-          // HTTP 402 "still pending" (or any other not-yet-successful state) — keep waiting.
-          if (attempts >= maxAttempts) {
-            cleanup();
-            toast('Still waiting for approval. If you approved on your phone, reopen checkout and try "I\'ve completed the payment" again.', 'info', 9000);
-            return;
-          }
-        } catch (_) {
-          // Transient network error — keep polling rather than giving up.
-        }
-        if (!stopped) setTimeout(checkOnce, 4500);
-      };
-
-      document.getElementById('dsMomoCheckBtn').onclick = () => { attempts = 0; checkOnce(); };
-      setTimeout(checkOnce, 4500); // also auto-poll, so it resolves even without a manual click
     }
 
     async function dsHandlePaymentSuccess(response, projectId) {
@@ -20491,104 +20431,52 @@ async function startPaystackCheckout(){
   if (!email) return toast('Email is required for payment.', 'error');
   const momoPhone = normalizeGhanaMoMoPhone(phone);
   if (!/^0\d{9}$/.test(momoPhone)) return toast('Enter a valid Ghana Mobile Money number, e.g. 0241234567.', 'error');
+  if (!window.PaystackPop) return toast('Paystack script not loaded. Refresh and try again.', 'error');
 
   const payBtn = document.getElementById('paystackCheckoutBtn');
-  if (payBtn) { payBtn.disabled = true; payBtn.textContent = 'Sending prompt to your phone…'; }
+  if (payBtn) { payBtn.disabled = true; payBtn.textContent = 'Opening checkout…'; }
 
   try {
+    if (!(await ensurePaystackConfig())) return;
     const amountKobo = Math.round(Number(PLAN_PRICES_GHS[key]) * 100);
-    // [FIX] This used to open PaystackPop's popup/iframe and rely on it to
-    // somehow trigger a mobile money charge. /api/billing/paystack/initialize
-    // now calls Paystack's real /charge endpoint directly (see server.js),
-    // which actually sends the PIN/USSD prompt to the phone — no popup
-    // needed for this flow at all.
+
     const initRes = await apiFetch(API + '/api/billing/paystack/initialize', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ firstName, lastName, email, phone: momoPhone, plan: key, amountKobo })
     });
     const initData = await initRes.json().catch(() => ({}));
-    if (!initRes.ok || !initData?.reference) throw new Error(initData?.error || 'Could not start mobile money charge');
-    showPlanMomoWaiting(initData.reference, key, amountKobo);
+    if (!initRes.ok || !initData?.reference) throw new Error(initData?.error || 'Could not initialize payment');
+
+    // Always reload Paystack inline script fresh to bust the singleton.
+    // After cancelling, PaystackPop holds the dead iframe and won't trigger a
+    // new USSD prompt on the same session unless the script is re-initialised.
+    await new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[src*="js.paystack.co"]');
+      if (existing) existing.remove();
+      delete window.PaystackPop;
+      const s = document.createElement('script');
+      s.src = 'https://js.paystack.co/v1/inline.js';
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Failed to reload Paystack script'));
+      document.head.appendChild(s);
+    });
+    const handler = window.PaystackPop.setup(buildPaystackInlineOptions({
+      key: PAYSTACK_PUBLIC_KEY,
+      email: email,
+      amountKobo: amountKobo,
+      reference: initData.reference,
+      callback: function(response){
+        Promise.resolve().then(() => handlePaystackSuccess(response, key, amountKobo));
+      },
+      onClose: function(){ toast('Payment cancelled. If MoMo prompt did not arrive, check your number and retry.', 'info', 8000); }
+    }));
+    handler.openIframe();
   } catch (e) {
-    toast('Could not start payment: ' + (e.message || 'unknown error'), 'error', 8000);
+    toast('Could not launch checkout: ' + (e.message || 'unknown error'), 'error', 8000);
+  } finally {
     if (payBtn) { payBtn.disabled = false; payBtn.textContent = 'Pay & Activate'; }
   }
-}
-
-// [FIX] Replaces the PaystackPop popup/iframe entirely for this flow. Shows a
-// plain "check your phone" panel and polls /api/billing/paystack/verify
-// (which returns a 400 "Payment not successful" while the charge is still
-// pending on Paystack's side — not a real failure) until it succeeds, the
-// user cancels, or it times out.
-function showPlanMomoWaiting(reference, planKey, amountKobo) {
-  const payBtn = document.getElementById('paystackCheckoutBtn');
-  if (payBtn) payBtn.style.display = 'none';
-  let panel = document.getElementById('planMomoWaitPanel');
-  if (panel) panel.remove();
-  panel = document.createElement('div');
-  panel.id = 'planMomoWaitPanel';
-  if (payBtn && payBtn.parentNode) payBtn.parentNode.insertBefore(panel, payBtn);
-  panel.innerHTML = `
-    <div style="text-align:center;padding:16px 0;">
-      <div style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Please approve this payment on your phone — enter your Mobile Money PIN when prompted.</div>
-      <button class="btn" id="planMomoCheckBtn" style="width:100%;margin-bottom:8px;">I've completed the payment</button>
-      <button class="btn" id="planMomoCancelBtn" style="width:100%;background:transparent;">Cancel</button>
-    </div>`;
-
-  let stopped = false;
-  let attempts = 0;
-  const maxAttempts = 40; // ~3 minutes at 4.5s intervals
-
-  const cleanup = () => {
-    stopped = true;
-    panel.remove();
-    if (payBtn) { payBtn.style.display = ''; payBtn.disabled = false; payBtn.textContent = 'Pay & Activate'; }
-  };
-
-  document.getElementById('planMomoCancelBtn').onclick = () => {
-    cleanup();
-    toast('Payment cancelled.', 'info', 5000);
-  };
-
-  const checkOnce = async () => {
-    if (stopped) return;
-    attempts++;
-    try {
-      const vr = await apiFetch(API + '/api/billing/paystack/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reference })
-      });
-      const vd = await vr.json().catch(() => ({}));
-      if (vr.ok && vd?.ok) {
-        cleanup();
-        const verifiedPlan = String(vd.plan || planKey).toLowerCase();
-        const finalPlan = PLAN_LIMITS[verifiedPlan] ? verifiedPlan : planKey;
-        applyPaidPlan(finalPlan);
-        settings.subscriptionReference = reference;
-        settings.subscriptionVerifiedAt = new Date().toISOString();
-        settings.subscriptionPaidAmountKobo = Number(vd.amountKobo || amountKobo);
-        save();
-        toast(`${PLAN_LIMITS[finalPlan].label} activated successfully. Reference: ${reference}`, 'success', 7000);
-        showPage('usage');
-        if (typeof renderDashboard === 'function') renderDashboard();
-        return;
-      }
-      // HTTP 400 "Payment not successful" (still pending) — keep waiting.
-      if (attempts >= maxAttempts) {
-        cleanup();
-        toast('Still waiting for approval. If you approved on your phone, reopen checkout and try again in a moment.', 'info', 9000);
-        return;
-      }
-    } catch (_) {
-      // Transient network error — keep polling rather than giving up.
-    }
-    if (!stopped) setTimeout(checkOnce, 4500);
-  };
-
-  document.getElementById('planMomoCheckBtn').onclick = () => { attempts = 0; checkOnce(); };
-  setTimeout(checkOnce, 4500); // also auto-poll, so it resolves even without a manual click
 }
 let envRows      = []; // current deploy form env rows
 let currentPage  = 'dashboard';
