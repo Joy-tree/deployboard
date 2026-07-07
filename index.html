@@ -22212,6 +22212,25 @@ function _doRenderProjects() {
   _doRenderProjectsNow();
 }
 
+// [FIX] renderProjects() does a full teardown-and-rebuild of every project
+// card (document.createElement per card, discarding the old ones). That was
+// harmless when cards used <img> screenshots -- recreating an <img> pointing
+// at an already-cached URL is cheap. Now that cards use live <iframe>
+// previews, recreating a card means the embedded site's iframe reloads
+// completely from scratch. Two socket handlers (deploy status changes, and
+// especially build:log which fires per LOG LINE during an active build)
+// were calling renderProjects() directly and unconditionally -- during any
+// active deploy, this reloaded every visible project's iframe many times
+// per second, which is exactly what caused the reload/freeze symptom.
+// Debouncing these specific call sites (not the one-off ones like delete or
+// build:done, which are already infrequent) fixes it without needing to
+// rearchitect renderProjects() into a full DOM-diffing renderer.
+let _renderProjectsDebounceTimer = null;
+function renderProjectsDebounced(delayMs = 2500) {
+  clearTimeout(_renderProjectsDebounceTimer);
+  _renderProjectsDebounceTimer = setTimeout(renderProjects, delayMs);
+}
+
 function renderProjects() {
   scheduleRenderProjects();
 }
@@ -24091,7 +24110,7 @@ function initSocket() {
       }
       save();
       if (['projects','dashboard','project-detail'].includes(currentPage)) {
-        renderProjects();
+        renderProjectsDebounced();
         renderDashboard();
       }
     });
@@ -24147,7 +24166,7 @@ function initSocket() {
         save();
       }
       if (incomingBuildMadeVisible && ['projects','dashboard','project-detail'].includes(currentPage)) {
-        renderProjects();
+        renderProjectsDebounced();
         renderDashboard();
       }
 
