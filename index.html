@@ -12667,6 +12667,29 @@ document.addEventListener('keydown', function(e){
           if (page === 'remix') remixLoadGallery();
           return r;
         };
+      } else {
+        // [FIX] The real function showPage(...) is declared much further
+        // down in this file (a separate <script> block) -- at the point
+        // THIS script block runs, window.showPage doesn't exist yet, since
+        // classic <script> tags execute strictly in document order and
+        // hoisting doesn't cross that boundary. That made the `if (_origRemix)`
+        // check above silently false and the wrapper never installed, so
+        // clicking the Remix nav item ran the real showPage fine (the page
+        // switched) but never called remixLoadGallery() -- the gallery grid
+        // was stuck on its static "Loading gallery…" placeholder forever,
+        // with no error anywhere to explain why. Deferring to
+        // DOMContentLoaded guarantees every script block (including the one
+        // that defines the real showPage) has already run by the time this
+        // fires, regardless of source order.
+        document.addEventListener('DOMContentLoaded', () => {
+          const _orig2 = window.showPage;
+          if (!_orig2) return;
+          window.showPage = function(page, el) {
+            const r = _orig2.apply(this, arguments);
+            if (page === 'remix') remixLoadGallery();
+            return r;
+          };
+        });
       }
     })();
     </script>
