@@ -10612,6 +10612,15 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
     memoryLimit: runtimeProfile.memoryLimit,
     cpuShares: runtimeProfile.cpuShares,
     memorySwap: runtimeProfile.memorySwap,
+    // [FIX] filesDir (resolved a few lines up, with a fallback path for
+    // records that never had this field set at all) was used to run the
+    // actual build but never saved back here -- projectRecord only ever
+    // spread the OLD project object, so if uploadFilesDir was missing
+    // before, it stayed missing after every subsequent redeploy too,
+    // forever. Confirmed live: a project redeployed today still failed
+    // Remix with "Original project files are no longer available" because
+    // its persisted record had never actually carried this field.
+    uploadFilesDir: filesDir,
     status: 'building', updatedAt: now
   };
 
