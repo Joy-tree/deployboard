@@ -2263,6 +2263,17 @@ textarea.input { resize: vertical; min-height: 80px; }
   display:block; transition: transform 0.35s ease;
 }
 .tree-project-node:hover .tree-node-thumb img { transform: scale(1.04); }
+/* Live iframe preview -- same "declare 4x size, scale back down 0.25" trick
+   as the Remix gallery: shows a shrunk full-page view instead of a cropped
+   viewport, and works at any actual container pixel size since it's all
+   relative percentages. */
+.tree-thumb-iframe-wrap iframe {
+  width: 400%; height: 400%;
+  transform: scale(0.25); transform-origin: top left;
+  border: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.tree-project-node:hover .tree-thumb-iframe-wrap iframe { transform: scale(0.26); }
 .tree-thumb-placeholder {
   width:100%; height:100%;
   display:flex; align-items:center; justify-content:center;
@@ -2637,6 +2648,7 @@ textarea.input { resize: vertical; min-height: 80px; }
   background: #0d0d0d;
   position: relative;
   min-height: 150px;
+  height: 220px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2647,6 +2659,13 @@ textarea.input { resize: vertical; min-height: 80px; }
   object-fit: cover;
   object-position: top;
   max-height: 220px;
+}
+/* Live iframe preview -- same scale-down trick as the Remix gallery and
+   Projects card previews, sized against this wrap's fixed 220px height. */
+.dss-live-iframe {
+  width: 400%; height: 400%;
+  transform: scale(0.25); transform-origin: top left;
+  border: 0; pointer-events: none;
 }
 .deploy-ss-loading { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 2rem; }
 .dss-loader-track { width: 28px; height: 28px; flex-shrink: 0; }
@@ -22203,6 +22222,32 @@ renderProjects.now = function() {
   _doRenderProjects();
 };
 
+// Shared lazy-load observer for project card live previews (mirrors the
+// Remix gallery's approach) -- created once, reused across every re-render,
+// so navigating back to the Projects page repeatedly doesn't pile up
+// duplicate observers.
+let _projectThumbObserver = null;
+function getProjectThumbObserver() {
+  if (_projectThumbObserver) return _projectThumbObserver;
+  _projectThumbObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const wrap = entry.target;
+      const liveUrl = wrap.dataset.liveUrl;
+      if (!liveUrl || wrap.dataset.loaded) return;
+      wrap.dataset.loaded = '1';
+      const iframe = document.createElement('iframe');
+      iframe.src = liveUrl;
+      iframe.loading = 'lazy';
+      iframe.referrerPolicy = 'no-referrer';
+      wrap.innerHTML = '';
+      wrap.appendChild(iframe);
+      _projectThumbObserver.unobserve(wrap);
+    });
+  }, { rootMargin: '150px' });
+  return _projectThumbObserver;
+}
+
 function _doRenderProjectsNow() {
   // Heal stale auto-deploy active statuses so banners don't stick forever.
   let _autoDeployStateFixed = false;
@@ -22307,22 +22352,25 @@ function _doRenderProjectsNow() {
     const st = String(displayStatus || '').toLowerCase();
     const idx = p.id.charCodeAt(0) % 5;
     const liveUrl = p.liveUrl || ('https://' + p.subdomain + '.' + domainBase);
-    const hasDeployed = !!p.screenshotUrl || !!p.liveUrl || displayStatus === 'success';
-    const sessionSs = window._projectScreenshots && window._projectScreenshots[String(p.id||p._id||'')];
-    const _ssTs = p.lastDeployedAt ? new Date(p.lastDeployedAt).getTime() : '';
-    const _ssApiKey = 'ae7530bb50b05fad2b86b19e4361ec39';
-    const _ssFallbackUrl = hasDeployed
-      ? ('https://api.apiflash.com/v1/urltoimage?access_key=' + _ssApiKey
-          + '&url=' + encodeURIComponent(liveUrl)
-          + '&width=1280&height=800&format=jpeg&quality=85'
-          + '&delay=3&fresh=false&no_ads=true&response_type=image'
-          + (_ssTs ? '&_t=' + _ssTs : ''))
-      : null;
-    const ssUrl = sessionSs || p.screenshotUrl || _ssFallbackUrl;
+    const hasDeployed = !!p.liveUrl || displayStatus === 'success';
 
-    const thumbHtml = (hasDeployed && ssUrl)
-      ? `<div class="tree-node-thumb"><img src="${ssUrl}" alt="Preview" loading="lazy" decoding="async"
-           onerror="this.parentNode.innerHTML='<div class=\\'tree-thumb-placeholder\\'><svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><rect x=\\'2\\' y=\\'3\\' width=\\'20\\' height=\\'14\\' rx=\\'2\\'/><line x1=\\'8\\' y1=\\'21\\' x2=\\'16\\' y2=\\'21\\'/><line x1=\\'12\\' y1=\\'17\\' x2=\\'12\\' y2=\\'21\\'/></svg><span>Preview unavailable</span></div>'">
+    // [CHANGE] Was a static screenshot (APIFlash/Microlink API call, ~3s
+    // delay per card, goes stale between deploys until manually refreshed).
+    // Replaced with the same lazy live-iframe technique used on the Remix
+    // gallery page: a real embed of the actual live site, always current,
+    // no external screenshot service or per-card API cost. The iframe
+    // itself isn't injected here -- only a placeholder + data-live-url --
+    // an IntersectionObserver (set up once, below, and attached to each
+    // card right after it's appended to the DOM) injects the real iframe
+    // only once a card actually scrolls into view, same reasoning as the
+    // gallery: a page full of projects shouldn't load every live site's
+    // iframe simultaneously.
+    const thumbHtml = hasDeployed
+      ? `<div class="tree-node-thumb tree-thumb-iframe-wrap" data-live-url="${liveUrl}">
+           <div class="tree-thumb-placeholder">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+             <span>Loading preview…</span>
+           </div>
            ${st === 'success' ? '<div class="tree-thumb-live-badge">LIVE PREVIEW</div>' : ''}
          </div>`
       : `<div class="tree-node-thumb"><div class="tree-thumb-placeholder">
@@ -22396,6 +22444,8 @@ function _doRenderProjectsNow() {
 
     node.style.cssText += `position:absolute;left:${cardX}px;top:${cardY}px;width:${effectiveCardW}px;`;
     g.appendChild(node);
+    const _thumbWrap = node.querySelector('.tree-thumb-iframe-wrap');
+    if (_thumbWrap) getProjectThumbObserver().observe(_thumbWrap);
 
     if (svgEl) {
       const cardCX  = cardX + effectiveCardW / 2;
@@ -27935,7 +27985,7 @@ async function showDeploySuccess(liveUrl, projectId, buildDuration) {
   const existingLabel = ssWrap ? ssWrap.querySelector('.dss-ss-label') : null;
   if (existingLabel) existingLabel.remove();
   if (ssLoading) ssLoading.style.display = 'flex';
-  if (ssMsg) ssMsg.textContent = 'Capturing screenshot…';
+  if (ssMsg) ssMsg.textContent = 'Loading live preview…';
 
   // ── Populate stat pills ───────────────────────────────────────────
   if (statsEl) {
@@ -27963,107 +28013,41 @@ async function showDeploySuccess(liveUrl, projectId, buildDuration) {
   overlay.classList.add('active');
   document.body.style.overflow = 'hidden';
 
-  // ── Screenshot — direct APIFlash call from browser ───────────────
-  // Third-party image URLs load cross-origin fine in <img>/new Image()
-  // without any CORS restriction, so we call APIFlash directly rather
-  // than routing through the server proxy (which would need CORS headers
-  // on the fetch() response to convert to base64).
-  //
-  // fresh=true + unique _t= param busts APIFlash's cache so every deploy
-  // (including redeployments) gets a genuinely new screenshot.
-  const _ssCacheBust = Date.now();
-  const APIFLASH_KEY = 'ae7530bb50b05fad2b86b19e4361ec39';
-  const ssUrlPrimary = 'https://api.apiflash.com/v1/urltoimage'
-    + '?access_key=' + APIFLASH_KEY
-    + '&url=' + encodeURIComponent(liveUrl)
-    + '&width=1280&height=800&format=jpeg&quality=90'
-    + '&delay=5&fresh=true&no_ads=true&scroll_page=false'
-    + '&response_type=image&_t=' + _ssCacheBust;
-
-  // Fallbacks in order: thum.io → microlink
-  const ssFallbacks = [
-    'https://image.thum.io/get/width/1280/crop/800/noanimate/' + encodeURIComponent(liveUrl) + '?t=' + _ssCacheBust,
-    'https://api.microlink.io/?url=' + encodeURIComponent(liveUrl) + '&screenshot=true&meta=false&embed=screenshot.url&force=true'
-  ];
-
-  // Give the newly-deployed site ~8 s to come fully online before snapping
-  const SITE_WARMUP_MS = 8000;
-  // Total capture budget after warmup (ms)
-  const MAX_WAIT_MS = 32000;
-
-  const msgCycle = ['Waiting for site to come online…','Capturing screenshot…','Rendering page…','Almost ready…','Finalising…'];
-  let mIdx = 0;
-  const msgTimer = setInterval(() => {
-    mIdx = (mIdx + 1) % msgCycle.length;
-    if (ssMsg) ssMsg.textContent = msgCycle[mIdx];
-  }, 2500);
+  // ── Live preview — direct iframe embed of the actual deployed site ─
+  // [CHANGE] Was a screenshot captured via a chain of three external
+  // services (APIFlash, then thum.io, then microlink as fallbacks), each
+  // probed with an Image() load/error handshake, with up to 40s of combined
+  // warmup+capture wait. Replaced with a direct iframe embed of the live
+  // site itself: always current (no "stale until next deploy" screenshot
+  // caching problem), no external service dependency or per-deploy API
+  // cost, and the site only needs to be reachable, not separately
+  // photographed. Uses the same scale-down trick as the Remix gallery and
+  // Projects card previews for a full-page thumbnail look.
+  const SITE_WARMUP_MS = 3000; // give a freshly-deployed site a moment to finish starting up
+  const IFRAME_LOAD_TIMEOUT_MS = 15000;
 
   await new Promise(r => setTimeout(r, SITE_WARMUP_MS));
 
-  let resolvedSrc = null;
-  let ssFbIdx = 0;
-
-  await new Promise(resolve => {
-    const killTimer = setTimeout(() => {
-      clearInterval(msgTimer);
-      resolve();
-    }, MAX_WAIT_MS);
-
-    const tryLoad = (src) => {
-      const probe = new Image();
-      probe.onload = () => {
-        // Reject 1×1 / tiny error images some services return on failure
-        if (probe.naturalWidth < 10) {
-          if (ssFbIdx < ssFallbacks.length) { tryLoad(ssFallbacks[ssFbIdx++]); return; }
-          clearTimeout(killTimer); clearInterval(msgTimer); resolve(); return;
-        }
-        clearTimeout(killTimer);
-        clearInterval(msgTimer);
-        resolvedSrc = src;
-        resolve();
-      };
-      probe.onerror = () => {
-        if (ssFbIdx < ssFallbacks.length) {
-          tryLoad(ssFallbacks[ssFbIdx++]);
-        } else {
-          clearTimeout(killTimer);
-          clearInterval(msgTimer);
-          resolve();
-        }
-      };
-      probe.src = src;
-    };
-    tryLoad(ssUrlPrimary);
+  const loaded = await new Promise(resolve => {
+    const iframe = document.createElement('iframe');
+    iframe.className = 'dss-live-iframe';
+    iframe.loading = 'eager';
+    iframe.referrerPolicy = 'no-referrer';
+    const killTimer = setTimeout(() => resolve(false), IFRAME_LOAD_TIMEOUT_MS);
+    iframe.onload = () => { clearTimeout(killTimer); resolve(true); };
+    iframe.onerror = () => { clearTimeout(killTimer); resolve(false); };
+    iframe.src = liveUrl;
+    if (ssWrap) ssWrap.appendChild(iframe);
   });
 
   // Hide loader
   if (ssLoading) ssLoading.style.display = 'none';
 
-  if (resolvedSrc && ssWrap) {
-    const img = document.createElement('img');
-    img.src = resolvedSrc;
-    img.alt = 'Live site preview';
-    // Append label overlay
+  if (loaded && ssWrap) {
     const label = document.createElement('div');
     label.className = 'dss-ss-label';
     label.textContent = 'LIVE PREVIEW';
-    ssWrap.appendChild(img);
     ssWrap.appendChild(label);
-
-    // ── Persist screenshot URL on the project ─────────────────────
-    // Store the resolved URL (APIFlash / thum.io / microlink) so the
-    // project card shows it on reload without a new API call.
-    if (projectId) {
-      window._projectScreenshots[String(projectId)] = resolvedSrc;
-      const proj = projects.find(p => String(p.id||p._id||'') === String(projectId));
-      if (proj) {
-        proj.screenshotUrl  = resolvedSrc;
-        proj.lastDeployedAt = new Date().toISOString();
-        save();
-        renderDashboard();
-        renderProjects();
-      }
-    }
   } else if (ssWrap) {
     ssWrap.innerHTML = `
       <div style="padding:2.5rem 2rem;text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.75rem;">
