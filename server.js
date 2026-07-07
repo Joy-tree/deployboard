@@ -223,6 +223,16 @@ async function sendDeploymentStatusEmail({
   const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
   const deployedAtText = deployedAt ? new Date(deployedAt).toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'medium', timeStyle: 'short' }) + ' UTC' : '';
   const dashboardUrl = `https://${BASE_DOMAIN}`;
+  // Clean, flat status banner -- a colored strip + simple line-icon + label,
+  // same register as Vercel/GitHub deployment emails. Not an illustration,
+  // just a clear at-a-glance status signal before you even read the body.
+  const bannerBg = isStartedPhase ? '#eff6ff' : (status === 'success' ? '#ecfdf5' : '#fef2f2');
+  const bannerFg = isStartedPhase ? '#1d4ed8' : (status === 'success' ? '#047857' : '#b91c1c');
+  const bannerIcon = isStartedPhase
+    ? '<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>'
+    : (status === 'success'
+        ? '<path d="M20 6 9 17l-5-5"/>'
+        : '<circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12.01" y2="16"/>');
   const lines = [
     `JOYTREE deployment report`,
     `Project: ${projectName || subdomain}`,
@@ -240,9 +250,21 @@ async function sendDeploymentStatusEmail({
 <html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #dadce0;border-radius:8px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
         <tr>
-          <td style="padding:24px 32px 0;">
+          <td style="background:${bannerBg};padding:14px 32px;">
+            <table role="presentation" width="100%"><tr>
+              <td style="width:22px;vertical-align:middle;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${bannerFg}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${bannerIcon}</svg>
+              </td>
+              <td style="vertical-align:middle;padding-left:8px;">
+                <span style="font-size:13px;font-weight:600;color:${bannerFg};letter-spacing:0.02em;">${isStartedPhase ? 'DEPLOYMENT STARTED' : (status === 'success' ? 'DEPLOYMENT SUCCESSFUL' : 'DEPLOYMENT FAILED')}</span>
+              </td>
+            </tr></table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 32px 0;">
             <table role="presentation" width="100%"><tr>
               <td style="width:32px;vertical-align:middle;">
                 <img src="${logoUrl}" alt="JOYTREE" width="28" height="28" style="width:28px;height:28px;border-radius:6px;display:block;object-fit:cover;">
@@ -264,11 +286,11 @@ async function sendDeploymentStatusEmail({
             <tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Branch</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${branch || 'main'}${shortSha ? ` (${shortSha})` : ''}</td></tr>
             ${duration > 0 ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Duration</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${duration}s</td></tr>` : ''}
             ${deployedAtText ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Deployed at</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${deployedAtText}</td></tr>` : ''}
-            ${liveUrl ? `<tr><td style="padding:12px 0;${safeError ? 'border-bottom:1px solid #e8eaed;' : ''}font-size:13px;color:#5f6368;">Live URL</td><td style="padding:12px 0;${safeError ? 'border-bottom:1px solid #e8eaed;' : ''}font-size:13px;text-align:right;"><a href="${liveUrl}" style="color:#1a73e8;text-decoration:none;">${liveUrl}</a></td></tr>` : ''}
+            ${liveUrl ? `<tr><td style="padding:12px 0;${safeError ? 'border-bottom:1px solid #e8eaed;' : ''}font-size:13px;color:#5f6368;">Live URL</td><td style="padding:12px 0;${safeError ? 'border-bottom:1px solid #e8eaed;' : ''}font-size:13px;text-align:right;"><a href="${liveUrl}" style="color:#0d9488;text-decoration:none;">${liveUrl}</a></td></tr>` : ''}
             ${safeError ? `<tr><td colspan="2" style="padding:12px 0;font-size:13px;color:#c5221f;">${safeError}</td></tr>` : ''}
           </table>
           <div style="margin-top:24px;">
-            <a href="${liveUrl || dashboardUrl}" style="display:inline-block;background:#1a73e8;color:#ffffff;text-decoration:none;padding:9px 20px;border-radius:4px;font-weight:500;font-size:14px;">View deployment</a>
+            <a href="${liveUrl || dashboardUrl}" style="display:inline-block;background:#10b981;color:#ffffff;text-decoration:none;padding:9px 20px;border-radius:4px;font-weight:500;font-size:14px;">View deployment</a>
           </div>
         </td></tr>
         <tr><td style="padding:24px 32px 24px;">
@@ -2101,7 +2123,7 @@ async function sendPaymentSuccessEmail({ userEmail = '', plan = '', amountKobo =
 <html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #dadce0;border-radius:8px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
         <tr>
           <td style="padding:24px 32px 0;">
             <table role="presentation" width="100%"><tr>
@@ -2126,7 +2148,7 @@ async function sendPaymentSuccessEmail({ userEmail = '', plan = '', amountKobo =
             <tr><td style="padding:12px 0;font-size:13px;color:#5f6368;">Paid at</td><td style="padding:12px 0;font-size:13px;color:#202124;text-align:right;">${paidText}</td></tr>
           </table>
           <div style="margin-top:24px;">
-            <a href="https://${BASE_DOMAIN}/dashboard/usage" style="display:inline-block;background:#1a73e8;color:#ffffff;text-decoration:none;padding:9px 20px;border-radius:4px;font-weight:500;font-size:14px;">View billing &amp; usage</a>
+            <a href="https://${BASE_DOMAIN}/dashboard/usage" style="display:inline-block;background:#10b981;color:#ffffff;text-decoration:none;padding:9px 20px;border-radius:4px;font-weight:500;font-size:14px;">View billing &amp; usage</a>
           </div>
         </td></tr>
         <tr><td style="padding:24px 32px 24px;">
@@ -2189,7 +2211,7 @@ async function sendWelcomeEmail({ userEmail = '', userName = '' } = {}) {
 <html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #dadce0;border-radius:8px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
         <tr>
           <td style="padding:24px 32px 0;">
             <table role="presentation" width="100%"><tr>
@@ -2225,7 +2247,7 @@ async function sendWelcomeEmail({ userEmail = '', userName = '' } = {}) {
           <p style="margin:0 0 24px;color:#5f6368;font-size:13px;line-height:1.7;"><strong style="color:#202124;">3.</strong> Once the build succeeds your project is live at a joytree.site subdomain — share it, attach your own domain, or enable auto-deploy for future pushes.</p>
 
           <div style="margin-bottom:24px;">
-            <a href="${dashboardUrl}" style="display:inline-block;background:#1a73e8;color:#ffffff;text-decoration:none;padding:9px 20px;border-radius:4px;font-weight:500;font-size:14px;">Open dashboard</a>
+            <a href="${dashboardUrl}" style="display:inline-block;background:#10b981;color:#ffffff;text-decoration:none;padding:9px 20px;border-radius:4px;font-weight:500;font-size:14px;">Open dashboard</a>
           </div>
           <p style="margin:0 0 4px;color:#5f6368;font-size:13px;line-height:1.8;">
             <a href="${deployUrl}" style="color:#1a73e8;text-decoration:none;">Create a deployment</a> &nbsp;·&nbsp;
@@ -2278,7 +2300,7 @@ async function sendVerificationCodeEmail(email = '', code = '') {
 <body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #dadce0;border-radius:8px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
         <tr>
           <td style="padding:24px 32px 0;">
             <table role="presentation" width="100%"><tr>
