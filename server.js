@@ -39,6 +39,7 @@ const http     = require('http');
 const { Server: SocketIO } = require('socket.io');
 const path     = require('path');
 const fs       = require('fs');
+const archiver = require('archiver');
 const os       = require('os');
 const mongoose = require('mongoose');
 const crypto   = require('crypto');
@@ -3777,12 +3778,278 @@ app.get('/api/projects/:id/runtime-logs', attachAuthIfPresent, async (req, res) 
   }
 });
 
-app.get('/api/projects/:id', async (req, res) => {
+// [FIX] This previously called findProjectByAnyId(), which is Mongo-only and
+// always returns null now that Mongo has been fully removed from this
+// platform -- this endpoint has been silently 404'ing on every call since
+// then. Confirmed via search that neither the dashboard frontend nor the
+// CLI/MCP (which use the separate, already-correct /api/v1/projects/:id)
+// actually call this route, so it was safe to fix properly rather than
+// leave it broken: also added requireAuth and scoped the lookup to the
+// caller's own workspace. Without that scoping, "fixing" the lookup alone
+// would have turned a harmless dead endpoint into a real vulnerability --
+// it returns the full project record, envVars included, and this route has
+// no auth check at all, so anyone who guessed a project id/subdomain would
+// have been able to read any user's secrets.
+app.get('/api/projects/:id', requireAuth, async (req, res) => {
   try {
-    const p = await findProjectByAnyId(req.params.id);
+    const reqId = String(req.params.id || '').trim();
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    const p = (ws.projects || []).find(pr => pr.id === reqId || pr.subdomain === reqId || pr.name === reqId);
     if (!p) return res.status(404).json({ error: 'Not found' });
     res.json(p);
   } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Remix feature: publish toggle ────────────────────────────────────────────
+// Flips a project's `published` flag in the owner's own Firebase workspace.
+// This never exposes anything by itself -- it's just metadata on the owner's
+// own record. What actually gets shown publicly is controlled entirely by
+// GET /api/remix/projects below, which explicitly whitelists safe fields.
+app.post('/api/projects/:id/publish', requireAuth, async (req, res) => {
+  try {
+    const projectId = String(req.params.id || '').trim();
+    const published = !!req.body?.published;
+    const description = String(req.body?.description || '').slice(0, 500);
+    const tags = Array.isArray(req.body?.tags) ? req.body.tags.map(t => String(t).slice(0, 30)).slice(0, 8) : undefined;
+
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    ws.projects = Array.isArray(ws.projects) ? ws.projects : [];
+    const idx = ws.projects.findIndex(p => p.id === projectId || p.subdomain === projectId || p.name === projectId);
+    if (idx < 0) return res.status(404).json({ error: 'Project not found' });
+
+    ws.projects[idx] = {
+      ...ws.projects[idx],
+      published,
+      publishedAt: published ? (ws.projects[idx].publishedAt || new Date().toISOString()) : ws.projects[idx].publishedAt,
+      description: description || ws.projects[idx].description || '',
+      ...(tags ? { tags } : {}),
+      viewCount: ws.projects[idx].viewCount || 0,
+      likeCount: ws.projects[idx].likeCount || 0,
+      remixCount: ws.projects[idx].remixCount || 0,
+    };
+
+    const ok = await writeWorkspaceToFirebase(req.user, ws);
+    if (!ok) return res.status(502).json({ error: 'Failed to save publish state' });
+    res.json({ ok: true, published, project: ws.projects[idx] });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// [SECURITY] This whitelist is the ONLY thing standing between "safe public
+// gallery" and "leaking every user's env vars, internal file paths, and
+// upload storage locations to the entire internet". Every field returned by
+// the endpoints below must be listed here explicitly -- never spread a raw
+// project object into a public response, no matter how convenient.
+function toPublicRemixFields(p, ownerWs, ownerKey) {
+  return {
+    id: p.id || p.subdomain,
+    name: p.name,
+    subdomain: p.subdomain,
+    liveUrl: p.liveUrl || (p.subdomain ? `https://${p.subdomain}.${BASE_DOMAIN}` : ''),
+    description: p.description || '',
+    tags: Array.isArray(p.tags) ? p.tags : [],
+    siteType: p.siteType || '',
+    framework: p.framework || '',
+    repoUrl: (p.repoUrl && p.repoUrl.startsWith('http')) ? p.repoUrl : '',
+    source: p.repoUrl && p.repoUrl.startsWith('http') ? 'github' : 'upload',
+    publishedAt: p.publishedAt || null,
+    viewCount: p.viewCount || 0,
+    likeCount: p.likeCount || 0,
+    remixCount: p.remixCount || 0,
+    owner: {
+      name: ownerWs?.name || ownerWs?.githubUsername || (ownerWs?.email ? ownerWs.email.split('@')[0] : 'anonymous'),
+      avatarUrl: ownerWs?.githubAvatarUrl || ownerWs?.googleAvatarUrl || '',
+    },
+    _ownerKey: ownerKey, // internal only, stripped before sending -- see callers
+  };
+}
+
+async function fetchAllWorkspaces() {
+  if (!FIREBASE_RTDB_URL) return {};
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_workspaces.json${authQuery}`);
+  return (await r.json().catch(() => ({}))) || {};
+}
+
+// [FIX] The remix endpoints below scan across ALL users' workspaces (they
+// have to -- a public gallery isn't scoped to one account) and need to write
+// back to a SPECIFIC workspace found during that scan. writeWorkspaceToFirebase
+// derives its write target by re-sanitizing user.email -- calling it with a
+// synthetic {email: <already-sanitized-key>} would re-sanitize an
+// already-sanitized string (harmless) but would also break its localAuth
+// cache-sync step, which matches by real email and would never find this
+// user, silently reintroducing the exact stale-cache bug fixed earlier
+// tonight (ba49ee6 / f6dae72). Writing directly to the already-known-correct
+// key avoids any re-derivation risk entirely, and does the same cache sync
+// keyed off the real key instead of a fabricated email.
+async function writeWorkspaceByKnownKey(key, workspace) {
+  if (!FIREBASE_RTDB_URL || !key) return false;
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  const url = `${FIREBASE_RTDB_URL}/deployboard_workspaces/${key}.json${authQuery}`;
+  try {
+    const r = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(workspace) });
+    if (!r.ok) return false;
+    const localUser = localAuth.users.find(u => firebaseWorkspaceKey(u) === key);
+    if (localUser) { localUser.workspace = workspace; saveLocalAuth(); }
+    return true;
+  } catch (_) { return false; }
+}
+
+// ── GET /api/remix/projects — public gallery listing ─────────────────────────
+// No auth required. Only ever returns projects with published === true, and
+// only the whitelisted fields above -- never envVars, uploadFilesDir,
+// appPort, memoryLimit, or anything else from the raw project record.
+app.get('/api/remix/projects', async (req, res) => {
+  try {
+    const allWs = await fetchAllWorkspaces();
+    const out = [];
+    for (const [key, ws] of Object.entries(allWs || {})) {
+      const projects = Array.isArray(ws?.projects) ? ws.projects : [];
+      for (const p of projects) {
+        if (p.published) out.push(toPublicRemixFields(p, ws, key));
+      }
+    }
+    out.sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0));
+    out.forEach(p => delete p._ownerKey);
+    res.json({ ok: true, projects: out, count: out.length });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── GET /api/remix/projects/:id — single public project detail ───────────────
+async function findPublishedProject(id) {
+  const allWs = await fetchAllWorkspaces();
+  for (const [key, ws] of Object.entries(allWs || {})) {
+    const projects = Array.isArray(ws?.projects) ? ws.projects : [];
+    const idx = projects.findIndex(p => (p.id === id || p.subdomain === id) && p.published);
+    if (idx >= 0) return { ws, key, idx, project: projects[idx] };
+  }
+  return null;
+}
+
+app.get('/api/remix/projects/:id', async (req, res) => {
+  try {
+    const found = await findPublishedProject(req.params.id);
+    if (!found) return res.status(404).json({ error: 'Not found or not published' });
+    const pub = toPublicRemixFields(found.project, found.ws, found.key);
+    delete pub._ownerKey;
+    res.json({ ok: true, project: pub });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// In-memory view-dedup so refreshing doesn't inflate counts -- one view per
+// (IP, project) per 30 minutes. Not persisted; resets on restart, which is
+// fine for a soft engagement metric like this.
+const remixViewDedup = new Map();
+app.post('/api/remix/projects/:id/view', async (req, res) => {
+  try {
+    const found = await findPublishedProject(req.params.id);
+    if (!found) return res.status(404).json({ error: 'Not found or not published' });
+    const dedupKey = `${req.ip || 'unknown'}:${found.project.id || found.project.subdomain}`;
+    const last = remixViewDedup.get(dedupKey);
+    if (last && Date.now() - last < 30 * 60 * 1000) {
+      return res.json({ ok: true, counted: false, viewCount: found.project.viewCount || 0 });
+    }
+    remixViewDedup.set(dedupKey, Date.now());
+    found.ws.projects[found.idx].viewCount = (found.project.viewCount || 0) + 1;
+    await writeWorkspaceByKnownKey(found.key, found.ws);
+    res.json({ ok: true, counted: true, viewCount: found.ws.projects[found.idx].viewCount });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/remix/projects/:id/like', requireAuth, async (req, res) => {
+  try {
+    const found = await findPublishedProject(req.params.id);
+    if (!found) return res.status(404).json({ error: 'Not found or not published' });
+    const likerId = String(req.user?._id || req.user?.id || req.user?.email || '');
+    found.ws.projects[found.idx].likedBy = Array.isArray(found.ws.projects[found.idx].likedBy) ? found.ws.projects[found.idx].likedBy : [];
+    const already = found.ws.projects[found.idx].likedBy.includes(likerId);
+    if (already) {
+      found.ws.projects[found.idx].likedBy = found.ws.projects[found.idx].likedBy.filter(id => id !== likerId);
+    } else {
+      found.ws.projects[found.idx].likedBy.push(likerId);
+    }
+    found.ws.projects[found.idx].likeCount = found.ws.projects[found.idx].likedBy.length;
+    await writeWorkspaceByKnownKey(found.key, found.ws);
+    res.json({ ok: true, liked: !already, likeCount: found.ws.projects[found.idx].likeCount });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── POST /api/remix/projects/:id/remix — the actual remix action ─────────────
+// GitHub-sourced projects: forks the repo into the requester's own connected
+// GitHub account (their existing OAuth token already has the `repo` scope
+// needed -- no re-auth required). Upload-sourced projects (no repo to fork):
+// builds a zip of the stored files on the fly, stripping common secret-file
+// patterns as a safety net in case the original uploader included one.
+app.post('/api/remix/projects/:id/remix', requireAuth, async (req, res) => {
+  try {
+    const found = await findPublishedProject(req.params.id);
+    if (!found) return res.status(404).json({ error: 'Not found or not published' });
+    const p = found.project;
+
+    found.ws.projects[found.idx].remixCount = (p.remixCount || 0) + 1;
+    await writeWorkspaceByKnownKey(found.key, found.ws);
+
+    if (p.repoUrl && p.repoUrl.startsWith('http')) {
+      const token = req.user?.githubAccessToken;
+      if (!token) {
+        return res.status(400).json({ error: 'Connect your GitHub account first to remix this project (Settings -> Connect GitHub).' });
+      }
+      const m = p.repoUrl.match(/github\.com\/([^/]+)\/([^/.]+)/i);
+      if (!m) return res.status(400).json({ error: 'Could not parse repository from this project.' });
+      const [, owner, repo] = m;
+      const fr = await fetch(`https://api.github.com/repos/${owner}/${repo}/forks`, {
+        method: 'POST',
+        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'joytree-remix' }
+      });
+      const fd = await fr.json().catch(() => ({}));
+      if (!fr.ok) return res.status(400).json({ error: fd?.message || 'GitHub fork failed' });
+      return res.json({ ok: true, type: 'fork', repoUrl: fd.html_url, cloneUrl: fd.clone_url });
+    }
+
+    // Upload-sourced: zip the stored files, excluding common secret patterns.
+    const cleanSub = p.subdomain;
+    const uploadFilesDir = p.uploadFilesDir || null;
+    if (!uploadFilesDir || !fs.existsSync(uploadFilesDir)) {
+      return res.status(404).json({ error: 'Original project files are no longer available to remix.' });
+    }
+    const SECRET_PATTERNS = [/^\.env(\..+)?$/i, /\.pem$/i, /\.key$/i, /credentials\.json$/i, /service-account.*\.json$/i];
+    const remixZipDir = path.join(TMP_DIR, 'remix-zips');
+    fs.mkdirSync(remixZipDir, { recursive: true });
+    const zipName = `remix-${cleanSub}-${Date.now()}.zip`;
+    const zipPath = path.join(remixZipDir, zipName);
+
+    await new Promise((resolve, reject) => {
+      const output = fs.createWriteStream(zipPath);
+      const archive = archiver('zip', { zlib: { level: 9 } });
+      output.on('close', resolve);
+      archive.on('error', reject);
+      archive.pipe(output);
+      const walk = (dir, rel = '') => {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+          if (entry.name === 'node_modules' || entry.name === '.git') continue;
+          if (SECRET_PATTERNS.some(rx => rx.test(entry.name))) continue;
+          const full = path.join(dir, entry.name);
+          const relPath = path.join(rel, entry.name);
+          if (entry.isDirectory()) walk(full, relPath);
+          else archive.file(full, { name: relPath });
+        }
+      };
+      walk(uploadFilesDir);
+      archive.finalize();
+    });
+
+    res.json({ ok: true, type: 'zip', downloadUrl: `/api/remix/download/${zipName}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/remix/download/:zipName', (req, res) => {
+  const zipName = String(req.params.zipName || '');
+  if (!/^remix-[a-z0-9-]+-\d+\.zip$/i.test(zipName)) return res.status(400).json({ error: 'Invalid file name' });
+  const zipPath = path.join(TMP_DIR, 'remix-zips', zipName);
+  if (!fs.existsSync(zipPath)) return res.status(404).json({ error: 'This download link has expired.' });
+  res.download(zipPath, zipName, (err) => {
+    // Best-effort cleanup a few minutes after download, whether or not it succeeded.
+    setTimeout(() => { try { fs.unlinkSync(zipPath); } catch (_) {} }, 5 * 60 * 1000);
+  });
 });
 
 app.delete('/api/projects/:id', requireAuth, async (req, res) => {
