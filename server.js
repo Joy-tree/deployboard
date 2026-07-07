@@ -226,8 +226,8 @@ async function sendDeploymentStatusEmail({
   // Clean, flat status banner -- a colored strip + simple line-icon + label,
   // same register as Vercel/GitHub deployment emails. Not an illustration,
   // just a clear at-a-glance status signal before you even read the body.
-  const bannerBg = isStartedPhase ? '#eff6ff' : (status === 'success' ? '#ecfdf5' : '#fef2f2');
-  const bannerFg = isStartedPhase ? '#1d4ed8' : (status === 'success' ? '#047857' : '#b91c1c');
+  const bannerBg = isStartedPhase ? '#eff6ff' : (status === 'success' ? '#10b981' : '#fef2f2');
+  const bannerFg = isStartedPhase ? '#1d4ed8' : (status === 'success' ? '#ffffff' : '#b91c1c');
   const bannerIcon = isStartedPhase
     ? '<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>'
     : (status === 'success'
@@ -280,14 +280,14 @@ async function sendDeploymentStatusEmail({
           <p style="margin:0 0 20px;color:#5f6368;font-size:14px;line-height:1.6;">
             ${isStartedPhase ? 'Your deployment has started. We\'ll let you know when it finishes.' : (status === 'success' ? 'Your project deployed successfully and is now live.' : 'Your deployment ran into a problem. Details are below.')}
           </p>
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e8eaed;">
-            <tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Project</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${projectName || subdomain}</td></tr>
-            <tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Source</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${sourceLabel}</td></tr>
-            <tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Branch</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${branch || 'main'}${shortSha ? ` (${shortSha})` : ''}</td></tr>
-            ${duration > 0 ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Duration</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${duration}s</td></tr>` : ''}
-            ${deployedAtText ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#5f6368;">Deployed at</td><td style="padding:12px 0;border-bottom:1px solid #e8eaed;font-size:13px;color:#202124;text-align:right;">${deployedAtText}</td></tr>` : ''}
-            ${liveUrl ? `<tr><td style="padding:12px 0;${safeError ? 'border-bottom:1px solid #e8eaed;' : ''}font-size:13px;color:#5f6368;">Live URL</td><td style="padding:12px 0;${safeError ? 'border-bottom:1px solid #e8eaed;' : ''}font-size:13px;text-align:right;"><a href="${liveUrl}" style="color:#0d9488;text-decoration:none;">${liveUrl}</a></td></tr>` : ''}
-            ${safeError ? `<tr><td colspan="2" style="padding:12px 0;font-size:13px;color:#c5221f;">${safeError}</td></tr>` : ''}
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Project</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${projectName || subdomain}</td></tr>
+            <tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Source</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${sourceLabel}</td></tr>
+            <tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Branch</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${branch || 'main'}${shortSha ? ` (${shortSha})` : ''}</td></tr>
+            ${duration > 0 ? `<tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Duration</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${duration}s</td></tr>` : ''}
+            ${deployedAtText ? `<tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Deployed at</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${deployedAtText}</td></tr>` : ''}
+            ${liveUrl ? `<tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Live URL</td><td style="padding:10px 0;font-size:13px;text-align:right;"><a href="${liveUrl}" style="color:#0d9488;text-decoration:none;">${liveUrl}</a></td></tr>` : ''}
+            ${safeError ? `<tr><td colspan="2" style="padding:10px 0;font-size:13px;color:#c5221f;">${safeError}</td></tr>` : ''}
           </table>
           <div style="margin-top:24px;">
             <a href="${liveUrl || dashboardUrl}" style="display:inline-block;background:#10b981;color:#ffffff;text-decoration:none;padding:9px 20px;border-radius:4px;font-weight:500;font-size:14px;">View deployment</a>
