@@ -245,7 +245,7 @@ async function sendDeploymentStatusEmail({
       : (status === 'success' ? (RESEND_HERO_IMAGE_SUCCESS_URL || RESEND_HERO_IMAGE_URL) : (RESEND_HERO_IMAGE_FAILED_URL || RESEND_HERO_IMAGE_URL))
   ) || '';
   const bannerIconHtml = heroImageUrl
-    ? `<img src="${heroImageUrl}" alt="" width="40" height="40" style="width:40px;height:40px;border-radius:8px;display:block;object-fit:cover;">`
+    ? `<img src="${heroImageUrl}" alt="" width="56" height="56" style="width:56px;height:56px;border-radius:10px;display:block;object-fit:cover;">`
     : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${bannerFg}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${bannerIcon}</svg>`;
   const lines = [
     `JOYTREE deployment report`,
@@ -266,13 +266,13 @@ async function sendDeploymentStatusEmail({
     <tr><td align="center">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;">
         <tr>
-          <td style="background:${bannerBg};padding:14px 32px;">
+          <td style="background:${bannerBg};padding:18px 32px;">
             <table role="presentation" width="100%"><tr>
-              <td style="width:40px;vertical-align:middle;">
+              <td style="width:56px;vertical-align:middle;">
                 ${bannerIconHtml}
               </td>
-              <td style="vertical-align:middle;padding-left:10px;">
-                <span style="font-size:15px;font-weight:700;color:${bannerFg};letter-spacing:0.02em;">${isStartedPhase ? 'DEPLOYMENT STARTED' : (status === 'success' ? 'DEPLOYMENT SUCCESSFUL' : 'DEPLOYMENT FAILED')}</span>
+              <td style="vertical-align:middle;padding-left:14px;">
+                <span style="font-size:16px;font-weight:700;color:${bannerFg};letter-spacing:0.02em;">${isStartedPhase ? 'DEPLOYMENT STARTED' : (status === 'success' ? 'DEPLOYMENT SUCCESSFUL' : 'DEPLOYMENT FAILED')}</span>
               </td>
             </tr></table>
           </td>
