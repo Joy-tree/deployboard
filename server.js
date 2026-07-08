@@ -297,9 +297,14 @@ async function sendDeploymentStatusEmail({
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Project</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${projectName || subdomain}</td></tr>
             <tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Source</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${sourceLabel}</td></tr>
+            ${repoUrl ? `<tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Repository</td><td style="padding:10px 0;font-size:13px;text-align:right;">${source === 'upload' ? `<span style="color:#5f6368;">Uploaded archive — ${projectName || subdomain}</span>` : `<a href="${repoUrl}" style="color:#0d9488;text-decoration:none;">${repoUrl}</a>`}</td></tr>` : ''}
             <tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Branch</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${branch || 'main'}${shortSha ? ` (${shortSha})` : ''}</td></tr>
             ${duration > 0 ? `<tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Duration</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${duration}s</td></tr>` : ''}
+            ${buildStatus ? `<tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Build status</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${buildStatus}</td></tr>` : ''}
+            ${deployStatus ? `<tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Deployment status</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${deployStatus}</td></tr>` : ''}
+            ${(memoryLimit || cpuShares) ? `<tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Resources</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${memoryLimit ? `RAM ${memoryLimit}` : ''}${memoryLimit && cpuShares ? ' · ' : ''}${cpuShares ? `CPU ${cpuShares} shares` : ''}</td></tr>` : ''}
             ${deployedAtText ? `<tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Deployed at</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${deployedAtText}</td></tr>` : ''}
+            ${totalDeployments > 0 ? `<tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Total deployments</td><td style="padding:10px 0;font-size:13px;color:#202124;text-align:right;">${totalDeployments}</td></tr>` : ''}
             ${liveUrl ? `<tr><td style="padding:10px 0;font-size:13px;color:#5f6368;">Live URL</td><td style="padding:10px 0;font-size:13px;text-align:right;"><a href="${liveUrl}" style="color:#0d9488;text-decoration:none;">${liveUrl}</a></td></tr>` : ''}
             ${safeError ? `<tr><td colspan="2" style="padding:10px 0;font-size:13px;color:#c5221f;">${safeError}</td></tr>` : ''}
           </table>
