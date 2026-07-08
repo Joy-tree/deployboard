@@ -12870,32 +12870,32 @@ document.addEventListener('keydown', function(e){
           <span class="mig-source-opt-sub">One of your own provisioned databases</span>
         </div>
         <div class="mig-source-opt" data-source="mongo" onclick="migSelectSource('mongo')">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C9 6 6 9 6 14a6 6 0 0 0 12 0c0-5-3-8-6-12z"/><path d="M12 14v8"/></svg>
+          <img src="/icons/mongodb.svg" alt="MongoDB" width="26" height="26" style="width:26px;height:26px;object-fit:contain;">
           <span class="mig-source-opt-label">MongoDB Atlas</span>
           <span class="mig-source-opt-sub">A real, external Mongo cluster — not Docker-provisioned</span>
         </div>
         <div class="mig-source-opt" data-source="firebase" onclick="migSelectSource('firebase')">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <img src="/icons/firebase.svg" alt="Firebase" width="26" height="26" style="width:26px;height:26px;object-fit:contain;">
           <span class="mig-source-opt-label">Firebase Realtime DB</span>
           <span class="mig-source-opt-sub">Pull the whole tree straight from your Firebase project</span>
         </div>
         <div class="mig-source-opt" data-source="mysql" onclick="migSelectSource('mysql')">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+          <img src="/icons/mysql.svg" alt="MySQL" width="26" height="26" style="width:26px;height:26px;object-fit:contain;">
           <span class="mig-source-opt-label">MySQL</span>
           <span class="mig-source-opt-sub">A real, external MySQL server — not Docker-provisioned</span>
         </div>
         <div class="mig-source-opt" data-source="postgres" onclick="migSelectSource('postgres')">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+          <img src="/icons/postgresql.svg" alt="PostgreSQL" width="26" height="26" style="width:26px;height:26px;object-fit:contain;">
           <span class="mig-source-opt-label">PostgreSQL</span>
           <span class="mig-source-opt-sub">A real, external Postgres server — not Docker-provisioned</span>
         </div>
         <div class="mig-source-opt" data-source="supabase" onclick="migSelectSource('supabase')">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <img src="/icons/supabase.svg" alt="Supabase" width="26" height="26" style="width:26px;height:26px;object-fit:contain;">
           <span class="mig-source-opt-label">Supabase</span>
           <span class="mig-source-opt-sub">Supabase's Postgres — connection string from Project Settings → Database</span>
         </div>
         <div class="mig-source-opt" data-source="mariadb" onclick="migSelectSource('mariadb')">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+          <img src="/icons/mariadb.svg" alt="MariaDB" width="26" height="26" style="width:26px;height:26px;object-fit:contain;">
           <span class="mig-source-opt-label">MariaDB</span>
           <span class="mig-source-opt-sub">A real, external MariaDB server — not Docker-provisioned</span>
         </div>
@@ -28866,8 +28866,15 @@ function dbStatusHtml(status) {
   return `<span class="db-status-pill ${dotCls}"><span class="db-status-dot ${dotCls}"></span>${s || 'unknown'}</span>`;
 }
 
+// Real SVG logos for the engines we actually have artwork for. Anything not
+// listed here (currently just redis) falls back to the old letter-badge.
+const DB_ENGINE_SVG = { mongodb: 'mongodb', postgres: 'postgresql', mysql: 'mysql', mariadb: 'mariadb' };
 function dbEngineIconHtml(engine) {
   const c = dbEngineColor(engine);
+  const svgFile = DB_ENGINE_SVG[engine];
+  if (svgFile) {
+    return `<div class="db-engine-icon ${engine}" style="background:${c.bg};border:1px solid ${c.border};padding:9px;"><img src="/icons/${svgFile}.svg" alt="${engine}" style="width:100%;height:100%;object-fit:contain;"></div>`;
+  }
   return `<div class="db-engine-icon ${engine}" style="background:${c.bg};border:1px solid ${c.border};color:${c.text};">${DB_ENGINE_ICONS[engine]||'DB'}</div>`;
 }
 
