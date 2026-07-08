@@ -2663,6 +2663,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 /* Live iframe preview -- same scale-down trick as the Remix gallery and
    Projects card previews, sized against this wrap's fixed 220px height. */
 .dss-live-iframe {
+  position: absolute; top: 0; left: 0;
   width: 400%; height: 400%;
   transform: scale(0.25); transform-origin: top left;
   border: 0; pointer-events: none;
