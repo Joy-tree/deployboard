@@ -2876,7 +2876,7 @@ app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
 <html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;">
         <tr>
           <td style="padding:24px 32px 0;">
             <table role="presentation" width="100%"><tr>
