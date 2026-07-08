@@ -15626,7 +15626,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         <div class="db-engine-dropdown" id="dbEngineDropdown">
           <!-- Trigger row — shows selected engine -->
           <button class="db-engine-dropdown-trigger" id="dbEngineTrigger" onclick="toggleDbEngineDropdown()" type="button">
-            <div class="db-engine-btn-icon" id="dbEngineTriggerIcon" style="background:rgba(242,145,17,.1);border:1px solid rgba(242,145,17,.2);color:#f29111;width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:800;font-size:.85rem;">MY</div>
+            <div class="db-engine-btn-icon" id="dbEngineTriggerIcon" style="background:rgba(242,145,17,.1);border:1px solid rgba(242,145,17,.2);width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:7px;"><img src="/icons/mysql.svg" alt="" style="width:100%;height:100%;object-fit:contain;"></div>
             <div style="flex:1;min-width:0;">
               <div class="db-engine-btn-name" id="dbEngineTriggerName">MySQL</div>
               <div class="db-engine-btn-ver" id="dbEngineTriggerVer">mysql:8 · relational</div>
@@ -15636,23 +15636,23 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           <!-- Options menu -->
           <div class="db-engine-dropdown-menu" id="dbEngineMenu">
             <button class="db-engine-menu-item" data-engine="mongodb" onclick="selectDbEngineDD('mongodb')" type="button">
-              <div style="background:rgba(0,237,100,.1);border:1px solid rgba(0,237,100,.2);color:#00ed64;width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:800;font-size:.85rem;">M</div>
+              <div style="background:rgba(0,237,100,.1);border:1px solid rgba(0,237,100,.2);width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:7px;"><img src="/icons/mongodb.svg" alt="" style="width:100%;height:100%;object-fit:contain;"></div>
               <div style="flex:1;min-width:0;"><div class="db-engine-btn-name">MongoDB</div><div class="db-engine-btn-ver">mongo:7 · document DB</div></div>
             </button>
             <button class="db-engine-menu-item" data-engine="postgres" onclick="selectDbEngineDD('postgres')" type="button">
-              <div style="background:rgba(111,159,201,.12);border:1px solid rgba(111,159,201,.25);color:#6f9fc9;width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:800;font-size:.85rem;">PG</div>
+              <div style="background:rgba(111,159,201,.12);border:1px solid rgba(111,159,201,.25);width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:7px;"><img src="/icons/postgresql.svg" alt="" style="width:100%;height:100%;object-fit:contain;"></div>
               <div style="flex:1;min-width:0;"><div class="db-engine-btn-name">PostgreSQL</div><div class="db-engine-btn-ver">postgres:16 · relational</div></div>
             </button>
             <button class="db-engine-menu-item selected" data-engine="mysql" onclick="selectDbEngineDD('mysql')" type="button">
-              <div style="background:rgba(242,145,17,.1);border:1px solid rgba(242,145,17,.2);color:#f29111;width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:800;font-size:.85rem;">MY</div>
+              <div style="background:rgba(242,145,17,.1);border:1px solid rgba(242,145,17,.2);width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:7px;"><img src="/icons/mysql.svg" alt="" style="width:100%;height:100%;object-fit:contain;"></div>
               <div style="flex:1;min-width:0;"><div class="db-engine-btn-name">MySQL</div><div class="db-engine-btn-ver">mysql:8 · relational</div></div>
             </button>
             <button class="db-engine-menu-item" data-engine="redis" onclick="selectDbEngineDD('redis')" type="button">
-              <div style="background:rgba(220,56,44,.1);border:1px solid rgba(220,56,44,.2);color:#dc382c;width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:800;font-size:.85rem;">R</div>
+              <div style="background:rgba(220,56,44,.1);border:1px solid rgba(220,56,44,.2);width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:7px;"><img src="/icons/redis.svg" alt="" style="width:100%;height:100%;object-fit:contain;"></div>
               <div style="flex:1;min-width:0;"><div class="db-engine-btn-name">Redis</div><div class="db-engine-btn-ver">redis:7 · key-value cache</div></div>
             </button>
             <button class="db-engine-menu-item" data-engine="mariadb" onclick="selectDbEngineDD('mariadb')" type="button">
-              <div style="background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.25);color:#60a5fa;width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:800;font-size:.85rem;">MA</div>
+              <div style="background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.25);width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:7px;"><img src="/icons/mariadb.svg" alt="" style="width:100%;height:100%;object-fit:contain;"></div>
               <div style="flex:1;min-width:0;"><div class="db-engine-btn-name">MariaDB</div><div class="db-engine-btn-ver">mariadb:11 · relational</div></div>
             </button>
           </div>
@@ -29998,11 +29998,11 @@ function selectDbEngine(engine, btn) {
 
 // ── Dropdown engine selector ─────────────────────────────────────
 const _DD_ENGINES = {
-  mongodb:  { icon:'M',  label:'MongoDB',    ver:'mongo:7 · document DB',     bg:'rgba(0,237,100,.1)',  border:'rgba(0,237,100,.2)',    color:'#00ed64' },
-  postgres: { icon:'PG', label:'PostgreSQL', ver:'postgres:16 · relational',  bg:'rgba(111,159,201,.12)',border:'rgba(111,159,201,.25)', color:'#6f9fc9' },
-  mysql:    { icon:'MY', label:'MySQL',      ver:'mysql:8 · relational',       bg:'rgba(242,145,17,.1)', border:'rgba(242,145,17,.2)',   color:'#f29111' },
-  redis:    { icon:'R',  label:'Redis',      ver:'redis:7 · key-value cache',  bg:'rgba(220,56,44,.1)',  border:'rgba(220,56,44,.2)',    color:'#dc382c' },
-  mariadb:  { icon:'MA', label:'MariaDB',    ver:'mariadb:11 · relational',    bg:'rgba(96,165,250,.12)',border:'rgba(96,165,250,.25)',  color:'#60a5fa' },
+  mongodb:  { icon:'M',  svgFile:'mongodb',    label:'MongoDB',    ver:'mongo:7 · document DB',     bg:'rgba(0,237,100,.1)',  border:'rgba(0,237,100,.2)',    color:'#00ed64' },
+  postgres: { icon:'PG', svgFile:'postgresql', label:'PostgreSQL', ver:'postgres:16 · relational',  bg:'rgba(111,159,201,.12)',border:'rgba(111,159,201,.25)', color:'#6f9fc9' },
+  mysql:    { icon:'MY', svgFile:'mysql',      label:'MySQL',      ver:'mysql:8 · relational',       bg:'rgba(242,145,17,.1)', border:'rgba(242,145,17,.2)',   color:'#f29111' },
+  redis:    { icon:'R',  svgFile:'redis',      label:'Redis',      ver:'redis:7 · key-value cache',  bg:'rgba(220,56,44,.1)',  border:'rgba(220,56,44,.2)',    color:'#dc382c' },
+  mariadb:  { icon:'MA', svgFile:'mariadb',    label:'MariaDB',    ver:'mariadb:11 · relational',    bg:'rgba(96,165,250,.12)',border:'rgba(96,165,250,.25)',  color:'#60a5fa' },
 };
 function toggleDbEngineDropdown() {
   const dd = document.getElementById('dbEngineDropdown');
@@ -30015,7 +30015,11 @@ function selectDbEngineDD(engine) {
   const icon = document.getElementById('dbEngineTriggerIcon');
   const name = document.getElementById('dbEngineTriggerName');
   const ver  = document.getElementById('dbEngineTriggerVer');
-  if (icon) { icon.textContent = e.icon; icon.style.background = e.bg; icon.style.border = '1px solid ' + e.border; icon.style.color = e.color; }
+  // [FIX] Was icon.textContent = e.icon -- reset the trigger back to a plain
+  // letter on every selection, silently undoing the real-SVG-logo fix as
+  // soon as the user picked anything from the dropdown. Now injects the
+  // same real logo image the static menu items use.
+  if (icon) { icon.innerHTML = `<img src="/icons/${e.svgFile}.svg" alt="" style="width:100%;height:100%;object-fit:contain;">`; icon.style.background = e.bg; icon.style.border = '1px solid ' + e.border; }
   if (name) name.textContent = e.label;
   if (ver)  ver.textContent  = e.ver;
   // Mark selected in menu
