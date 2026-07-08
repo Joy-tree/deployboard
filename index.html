@@ -7879,6 +7879,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12"/></svg>
       Remix
     </div>
+    <div class="nav-item emails-admin-only" data-page="admin-panel" onclick="showPage('admin-panel',this)" style="display:none;" hidden>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6v6c0 5 3.5 9.4 9 10 5.5-.6 9-5 9-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      Admin
+    </div>
     <div class="nav-item" data-page="analytics" onclick="showPage('analytics',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       Analytics
@@ -12718,6 +12722,131 @@ document.addEventListener('keydown', function(e){
           };
         });
       }
+    })();
+    </script>
+
+    <!-- ════════ ADMIN PANEL PAGE (admin-only) ════════ -->
+    <div class="page emails-admin-only" id="page-admin-panel" style="display:none;" hidden>
+      <style>
+        .admin-lookup-result { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-top: 18px; }
+        .admin-project-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .admin-project-row:last-child { border-bottom: none; }
+        .admin-log-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; color: var(--text-2); }
+        .admin-impersonate-banner { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: #b91c1c; color: #fff; text-align: center; padding: 10px 16px; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .admin-impersonate-banner button { background: #fff; color: #b91c1c; border: none; border-radius: 6px; padding: 5px 12px; font-weight: 700; font-size: 0.78rem; cursor: pointer; }
+      </style>
+      <div class="page-header">
+        <div>
+          <h1 style="margin:0;font-size:1.4rem;">Admin</h1>
+          <div style="color:var(--text-3);font-size:0.85rem;margin-top:4px;">Look up a customer's account by email, or by one of their project IDs/subdomains, and view their dashboard as them to help fix an issue.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <input id="adminLookupInput" type="text" placeholder="Email, project ID, or subdomain…" style="flex:1;min-width:220px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:0.88rem;">
+        <button class="btn btn-primary" onclick="adminLookupUser()">Look up</button>
+      </div>
+
+      <div id="adminLookupResult"></div>
+
+      <div style="margin-top:36px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="margin:0;font-size:1rem;">Impersonation history</h3>
+          <button class="btn btn-ghost btn-sm" onclick="adminLoadImpersonationLog()">Refresh</button>
+        </div>
+        <div id="adminImpersonationLog" style="margin-top:12px;color:var(--text-3);font-size:0.85rem;">Click Refresh to load.</div>
+      </div>
+    </div>
+
+    <script>
+    (function() {
+      window.adminLookupUser = async function() {
+        const input = document.getElementById('adminLookupInput');
+        const resultEl = document.getElementById('adminLookupResult');
+        const query = (input?.value || '').trim();
+        if (!query) return toast('Enter an email, project ID, or subdomain.', 'error');
+        resultEl.innerHTML = '<div style="padding:20px;color:var(--text-3);">Looking up…</div>';
+        try {
+          const res = await apiFetch('/api/admin/lookup?query=' + encodeURIComponent(query));
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Lookup failed');
+          const u = data.user;
+          resultEl.innerHTML = `
+            <div class="admin-lookup-result">
+              <div style="font-weight:700;font-size:1rem;">${escapeHtml(u.name || u.email)}</div>
+              <div style="color:var(--text-3);font-size:0.85rem;margin-bottom:12px;">${escapeHtml(u.email)}${u.githubUsername ? ' · GitHub: ' + escapeHtml(u.githubUsername) : ''}</div>
+              <div style="font-size:0.8rem;color:var(--text-2);margin-bottom:8px;">${data.projectCount} project${data.projectCount === 1 ? '' : 's'}</div>
+              ${data.projects.map(p => `<div class="admin-project-row"><span>${escapeHtml(p.name || p.subdomain)}</span><span style="color:var(--text-3);">${escapeHtml(p.status || '')}</span></div>`).join('')}
+              <div style="margin-top:16px;">
+                <button class="btn btn-primary" onclick="adminImpersonate(${JSON.stringify(query)})">View dashboard as this user (1 hour)</button>
+              </div>
+            </div>`;
+        } catch (e) {
+          resultEl.innerHTML = `<div style="padding:20px;color:var(--text-3);">${escapeHtml(e.message)}</div>`;
+        }
+      };
+
+      window.adminImpersonate = async function(query) {
+        if (!confirm("You are about to view this account's dashboard as them. This is logged. Continue?")) return;
+        try {
+          const res = await apiFetch('/api/admin/impersonate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not start impersonation');
+          // Stash the admin's own token so "Exit impersonation" can restore it,
+          // then swap the active session to the target user's token and reload.
+          localStorage.setItem('db_admin_own_token', authToken);
+          localStorage.setItem('db_auth_token', data.token);
+          toast(`Now viewing as ${data.targetUser.email}…`, 'success', 4000);
+          setTimeout(() => window.location.reload(), 600);
+        } catch (e) {
+          toast(e.message || 'Could not start impersonation', 'error');
+        }
+      };
+
+      window.adminExitImpersonation = function() {
+        const ownToken = localStorage.getItem('db_admin_own_token');
+        if (!ownToken) { window.location.reload(); return; }
+        localStorage.setItem('db_auth_token', ownToken);
+        localStorage.removeItem('db_admin_own_token');
+        window.location.reload();
+      };
+
+      window.adminLoadImpersonationLog = async function() {
+        const el = document.getElementById('adminImpersonationLog');
+        el.textContent = 'Loading…';
+        try {
+          const res = await apiFetch('/api/admin/impersonation-log');
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load log');
+          if (!data.entries.length) { el.textContent = 'No impersonation events yet.'; return; }
+          el.innerHTML = data.entries.map(e => `
+            <div class="admin-log-row">
+              <span>${escapeHtml(e.adminEmail)} → ${escapeHtml(e.targetEmail)} <span style="color:var(--text-3);">(searched "${escapeHtml(e.query)}")</span></span>
+              <span>${new Date(e.at).toLocaleString()}</span>
+            </div>`).join('');
+        } catch (e) {
+          el.textContent = e.message || 'Could not load log';
+        }
+      };
+
+      // Show a persistent banner site-wide whenever the active session is an
+      // impersonated one, regardless of which page is open, with a one-click
+      // way back to the admin's own account.
+      window.adminShowImpersonationBannerIfNeeded = function(user) {
+        const existing = document.getElementById('adminImpersonateBanner');
+        if (existing) existing.remove();
+        if (!user || !user.impersonating) return;
+        const banner = document.createElement('div');
+        banner.id = 'adminImpersonateBanner';
+        banner.className = 'admin-impersonate-banner';
+        banner.innerHTML = `Viewing as ${escapeHtml(user.email)} (as ${escapeHtml(user.impersonating.by)}) <button onclick="adminExitImpersonation()">Exit</button>`;
+        document.body.prepend(banner);
+        document.body.style.paddingTop = '42px';
+      };
     })();
     </script>
 
@@ -20985,6 +21114,7 @@ async function bootstrapSession(){
       throw err;
     }
     applyUserProfile(meD.user);
+    if (typeof adminShowImpersonationBannerIfNeeded === 'function') adminShowImpersonationBannerIfNeeded(meD.user);
     let wsD = null;
     const wsR = await apiFetch('/api/workspace', { signal: AbortSignal.timeout(5000) });
     const localWs = await wsR.json();

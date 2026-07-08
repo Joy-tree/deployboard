@@ -1734,7 +1734,11 @@ const sessionSchema = new mongoose.Schema({
   token: { type: String, required: true, unique: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   createdAt: { type: Date, default: Date.now },
-  expiresAt: { type: Date, required: true }
+  expiresAt: { type: Date, required: true },
+  // Set only on sessions minted via admin impersonation (see
+  // /api/admin/impersonate) -- the admin's own email, for audit purposes.
+  // Absent/undefined on every normal login session.
+  impersonatedBy: { type: String }
 });
 
 const Project    = mongoose.model('Project',    projectSchema);
@@ -2411,11 +2415,15 @@ async function getAuthUser(req) {
   if (isDbReady()) {
     const session = await Session.findOne({ token, expiresAt: { $gt: new Date() } }).lean();
     if (!session) return null;
-    return User.findById(session.userId);
+    const u = await User.findById(session.userId);
+    if (u && session.impersonatedBy) u._impersonatedBy = session.impersonatedBy;
+    return u;
   }
   const session = localAuth.sessions.find(s => s.token === token && new Date(s.expiresAt) > new Date());
   if (!session) return null;
-  return localAuth.users.find(u => u.id === session.userId) || null;
+  const u = localAuth.users.find(u => u.id === session.userId) || null;
+  if (u && session.impersonatedBy) u._impersonatedBy = session.impersonatedBy;
+  return u;
 }
 
 async function upsertFirebaseGitHubUser(githubAccessToken) {
@@ -2737,13 +2745,119 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.get('/api/auth/me', requireAuth, async (req, res) => {
-  res.json({ user: { id: req.user._id || req.user.id, email: req.user.email, name: req.user.name, githubUsername: req.user.githubUsername, githubAvatarUrl: req.user.githubAvatarUrl || '', googleAvatarUrl: req.user.googleAvatarUrl || '', firebaseUid: req.user.firebaseUid || '' } });
+  res.json({ user: { id: req.user._id || req.user.id, email: req.user.email, name: req.user.name, githubUsername: req.user.githubUsername, githubAvatarUrl: req.user.githubAvatarUrl || '', googleAvatarUrl: req.user.googleAvatarUrl || '', firebaseUid: req.user.firebaseUid || '', isAdmin: isRootEmailAdmin(req.user), impersonating: !!req.user._impersonatedBy ? { by: req.user._impersonatedBy } : null } });
 });
 
 function isRootEmailAdmin(user = {}) {
   const email = String(user?.email || '').trim().toLowerCase();
   return email === JOYTREE_V3_ADMIN_EMAIL;
 }
+
+// ── Admin: find a user's account by email, or by one of their project
+// ids/subdomains/names (so support can act on "my project X is broken"
+// without the customer needing to know their own account email). ──────────
+async function findUserForAdminLookup(query) {
+  const q = String(query || '').trim().toLowerCase();
+  if (!q) return null;
+
+  if (isDbReady()) {
+    const byEmail = await User.findOne({ email: q }).catch(() => null);
+    if (byEmail) return byEmail;
+  } else {
+    const byEmail = localAuth.users.find(u => String(u.email || '').toLowerCase() === q);
+    if (byEmail) return byEmail;
+  }
+
+  // Not a direct email match -- search every workspace's projects for a
+  // matching id/subdomain/name, then resolve back to the owning account.
+  const allWs = await fetchAllWorkspaces();
+  for (const [key, ws] of Object.entries(allWs || {})) {
+    const projects = Array.isArray(ws?.projects) ? ws.projects : [];
+    const match = projects.find(p =>
+      String(p.id || '').toLowerCase() === q ||
+      String(p.subdomain || '').toLowerCase() === q ||
+      String(p.name || '').toLowerCase() === q
+    );
+    if (!match) continue;
+    const owner = localAuth.users.find(u => firebaseWorkspaceKey(u) === key);
+    if (owner) return owner;
+    if (ws.email) return { email: ws.email, id: 'fb_' + key, name: ws.name || '' };
+  }
+  return null;
+}
+
+// Preview-only: shows what/who would be impersonated, without creating a
+// session. Lets the admin confirm they found the right account first.
+app.get('/api/admin/lookup', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const query = String(req.query.query || '').trim();
+    if (!query) return res.status(400).json({ error: 'query is required' });
+    const target = await findUserForAdminLookup(query);
+    if (!target) return res.status(404).json({ error: 'No matching account or project found' });
+    const targetEmail = String(target.email || '').trim().toLowerCase();
+    const ws = (await readWorkspaceFromFirebase(target)) || {};
+    const projects = Array.isArray(ws.projects) ? ws.projects : [];
+    res.json({
+      ok: true,
+      user: { email: target.email, name: target.name || '', githubUsername: target.githubUsername || '' },
+      projectCount: projects.length,
+      projects: projects.slice(0, 20).map(p => ({ id: p.id, name: p.name, subdomain: p.subdomain, status: p.lastStatus || p.status || '' })),
+      isAdminAccount: targetEmail === JOYTREE_V3_ADMIN_EMAIL
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Actually mints a short-lived (1 hour) session for the target account, so
+// the admin can act as that user in the dashboard -- without ever seeing or
+// needing their password. Every call is logged for accountability.
+app.post('/api/admin/impersonate', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const query = String(req.body?.query || '').trim();
+    if (!query) return res.status(400).json({ error: 'query (email, project id, or subdomain) is required' });
+    const target = await findUserForAdminLookup(query);
+    if (!target) return res.status(404).json({ error: 'No matching account or project found' });
+    const targetEmail = String(target.email || '').trim().toLowerCase();
+    if (targetEmail === JOYTREE_V3_ADMIN_EMAIL) return res.status(400).json({ error: 'Cannot impersonate the admin account itself' });
+
+    const token = createSessionToken();
+    const expiresAt = new Date(Date.now() + 60 * 60000); // deliberately short -- 1 hour
+    const targetUserId = target._id || target.id;
+
+    if (isDbReady()) {
+      await Session.create({ token, userId: targetUserId, expiresAt, impersonatedBy: req.user.email });
+    } else {
+      localAuth.sessions.push({ token, userId: targetUserId, expiresAt, impersonatedBy: req.user.email });
+      saveLocalAuth();
+    }
+
+    // Persisted audit trail -- who impersonated whom, when, and what they
+    // searched for to find them. Not just a console log line.
+    try {
+      const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+      await fetch(`${FIREBASE_RTDB_URL}/deployboard_admin_impersonation_log.json${authQuery}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminEmail: req.user.email, targetEmail, query, at: new Date().toISOString() })
+      });
+    } catch (_) {}
+
+    res.json({ ok: true, token, expiresAt, targetUser: { email: target.email, name: target.name || '' } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// So the admin can review their own impersonation history for accountability.
+app.get('/api/admin/impersonation-log', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+    const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_admin_impersonation_log.json?orderBy="at"&limitToLast=100${authQuery ? '&' + authQuery.slice(1) : ''}`);
+    const data = await r.json().catch(() => ({}));
+    const entries = Object.values(data || {}).sort((a, b) => new Date(b.at) - new Date(a.at));
+    res.json({ ok: true, entries });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 function collectEmailsDeep(input, out = new Set()) {
   if (!input) return out;
