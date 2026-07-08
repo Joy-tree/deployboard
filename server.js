@@ -2858,18 +2858,50 @@ app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
     const recipients = Array.from(new Set([...dbEmails, ...firebaseAuthEmails, ...firebaseRtdbEmails]));
     if (!recipients.length) return res.status(400).json({ error: 'No users found to receive email' });
 
-    const logoUrl = 'https://raw.githubusercontent.com/joygood123/Url/refs/heads/main/favicon_256.png';
+    // [FIX] This template was never touched by the earlier consistency pass
+    // across the other four emails -- still had the old bordered/rounded
+    // card, a different font stack (Inter vs Arial), a different color
+    // palette (slate blues vs the Google-style greys used everywhere else),
+    // and a hardcoded logo URL different from every other template's
+    // RESEND_LOGO_URL fallback. Aligned all of that here, plus per request:
+    // the logo shown larger and uncropped (64px, not squeezed into a tiny
+    // 36px icon) since this is the one email variant meant to feel a
+    // deliberate step above the standard user-facing ones -- an amber
+    // "ADMIN BROADCAST" eyebrow label is the one intentional visual
+    // difference, everything else (borderless card, fonts, text colors)
+    // matches the other four exactly.
+    const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
     const safeMessage = message.replace(/\n/g, '<br>');
-    const html = `<!doctype html><html><body style="margin:0;padding:0;background:#f8fafc;font-family:Inter,Arial,sans-serif;color:#0f172a;">
-<div style="max-width:640px;margin:24px auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
-<div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;background:#020617;color:#e2e8f0;">
-<img src="${logoUrl}" alt="JOYTREE" width="36" height="36" style="border-radius:8px;vertical-align:middle;margin-right:10px;"><strong style="font-size:16px;vertical-align:middle;">JOYTREE</strong>
-</div><div style="padding:24px;">
-${intro ? `<p style="margin:0 0 14px;font-size:16px;">${intro}</p>` : ''}
-<div style="font-size:15px;line-height:1.7;color:#1e293b;">${safeMessage}</div>
-<p style="margin:22px 0 0;font-size:14px;color:#475569;">— ${senderName}<br>JOYTREE Team</p>
-</div></div>
-<div style="max-width:640px;margin:0 auto 20px;padding:0 10px;color:#64748b;font-size:12px;text-align:center;">${preheader || 'You received this update because you are a JOYTREE user.'}</div>
+    const html = `<!doctype html>
+<html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="padding:24px 32px 0;">
+            <table role="presentation" width="100%"><tr>
+              <td style="width:64px;vertical-align:middle;">
+                <img src="${logoUrl}" alt="JoyTree" width="64" height="64" style="width:64px;height:64px;border-radius:12px;display:block;object-fit:contain;">
+              </td>
+              <td style="vertical-align:middle;padding-left:14px;">
+                <div style="font-size:11px;font-weight:700;color:#b45309;letter-spacing:0.06em;margin-bottom:2px;">ADMIN BROADCAST</div>
+                <span style="font-size:17px;font-weight:700;color:#202124;">JoyTree</span>
+              </td>
+            </tr></table>
+          </td>
+        </tr>
+        <tr><td style="padding:24px 32px 4px;">
+          ${intro ? `<p style="margin:0 0 14px;font-size:15px;color:#202124;line-height:1.6;">${intro}</p>` : ''}
+          <div style="font-size:14px;line-height:1.7;color:#5f6368;">${safeMessage}</div>
+          <p style="margin:22px 0 0;font-size:13px;color:#5f6368;">— ${senderName}<br>JoyTree Team</p>
+        </td></tr>
+        <tr><td style="padding:24px 32px 24px;">
+          <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 16px;">
+          <p style="margin:0;color:#80868b;font-size:12px;line-height:1.6;">${preheader || 'You received this update because you are a JoyTree user.'}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
 </body></html>`;
 
     let sent = 0; let failed = 0;
