@@ -245,7 +245,7 @@ async function sendDeploymentStatusEmail({
       : (status === 'success' ? (RESEND_HERO_IMAGE_SUCCESS_URL || RESEND_HERO_IMAGE_URL) : (RESEND_HERO_IMAGE_FAILED_URL || RESEND_HERO_IMAGE_URL))
   ) || '';
   const bannerIconHtml = heroImageUrl
-    ? `<img src="${heroImageUrl}" alt="" width="88" height="88" style="width:88px;height:88px;border-radius:12px;display:block;object-fit:cover;">`
+    ? `<img src="${heroImageUrl}" alt="" width="104" height="104" style="width:104px;height:104px;border-radius:14px;display:block;object-fit:cover;">`
     : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${bannerFg}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${bannerIcon}</svg>`;
   const lines = [
     `JOYTREE deployment report`,
@@ -268,7 +268,7 @@ async function sendDeploymentStatusEmail({
         <tr>
           <td style="background:${bannerBg};padding:24px 32px;">
             <table role="presentation" width="100%"><tr>
-              <td style="width:88px;vertical-align:middle;">
+              <td style="width:104px;vertical-align:middle;">
                 ${bannerIconHtml}
               </td>
               <td style="vertical-align:middle;padding-left:18px;">
