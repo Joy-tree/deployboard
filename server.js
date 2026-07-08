@@ -233,6 +233,20 @@ async function sendDeploymentStatusEmail({
     : (status === 'success'
         ? '<path d="M20 6 9 17l-5-5"/>'
         : '<circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12.01" y2="16"/>');
+  // These images are real, user-configured assets (RESEND_HERO_IMAGE_*_URL
+  // env vars) -- not something to drop just because the old full-width
+  // banner treatment was too much. Used here as a small icon inside the
+  // clean status strip instead: a tasteful accent, not a giant illustration.
+  // Falls back to the plain line-icon above if no image is configured for
+  // this particular status.
+  const heroImageUrl = (
+    isStartedPhase
+      ? (RESEND_HERO_IMAGE_STARTED_URL || RESEND_HERO_IMAGE_URL)
+      : (status === 'success' ? (RESEND_HERO_IMAGE_SUCCESS_URL || RESEND_HERO_IMAGE_URL) : (RESEND_HERO_IMAGE_FAILED_URL || RESEND_HERO_IMAGE_URL))
+  ) || '';
+  const bannerIconHtml = heroImageUrl
+    ? `<img src="${heroImageUrl}" alt="" width="22" height="22" style="width:22px;height:22px;border-radius:5px;display:block;object-fit:cover;">`
+    : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${bannerFg}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${bannerIcon}</svg>`;
   const lines = [
     `JOYTREE deployment report`,
     `Project: ${projectName || subdomain}`,
@@ -255,7 +269,7 @@ async function sendDeploymentStatusEmail({
           <td style="background:${bannerBg};padding:14px 32px;">
             <table role="presentation" width="100%"><tr>
               <td style="width:22px;vertical-align:middle;">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${bannerFg}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${bannerIcon}</svg>
+                ${bannerIconHtml}
               </td>
               <td style="vertical-align:middle;padding-left:8px;">
                 <span style="font-size:13px;font-weight:600;color:${bannerFg};letter-spacing:0.02em;">${isStartedPhase ? 'DEPLOYMENT STARTED' : (status === 'success' ? 'DEPLOYMENT SUCCESSFUL' : 'DEPLOYMENT FAILED')}</span>
