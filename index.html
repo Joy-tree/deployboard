@@ -2268,6 +2268,7 @@ textarea.input { resize: vertical; min-height: 80px; }
    viewport, and works at any actual container pixel size since it's all
    relative percentages. */
 .tree-thumb-iframe-wrap iframe {
+  position: absolute; top: 0; left: 0;
   width: 400%; height: 400%;
   transform: scale(0.25); transform-origin: top left;
   border: 0; pointer-events: none;
@@ -2280,6 +2281,12 @@ textarea.input { resize: vertical; min-height: 80px; }
   flex-direction:column; gap:8px;
   background: linear-gradient(135deg, #0d0d0d 0%, #111 100%);
 }
+.tree-thumb-iframe-wrap .tree-thumb-placeholder {
+  position: absolute; inset: 0;
+  transition: opacity 0.3s ease;
+}
+.tree-thumb-spinner { animation: treeThumbSpin 0.8s linear infinite; }
+@keyframes treeThumbSpin { to { transform: rotate(360deg); } }
 .tree-thumb-placeholder svg { width:28px; height:28px; opacity:0.12; }
 .tree-thumb-placeholder span { font-size:0.62rem; color:var(--text-3); opacity:0.5; letter-spacing:0.03em; }
 
@@ -22256,11 +22263,37 @@ function getProjectThumbObserver() {
       const liveUrl = wrap.dataset.liveUrl;
       if (!liveUrl || wrap.dataset.loaded) return;
       wrap.dataset.loaded = '1';
+      // [FIX] Was replacing the "Loading preview…" placeholder with the
+      // iframe immediately on scroll-into-view -- but setting iframe.src
+      // only starts the load, it doesn't mean the site is visible yet, so
+      // the card just went blank for however long the site actually took to
+      // load, with no feedback at all. Now the placeholder (with a spinner)
+      // stays visible, layered UNDER the iframe, until the iframe's own
+      // onload fires -- then it fades out to reveal the now-actually-loaded
+      // preview underneath, same loading -> reveal pattern as the
+      // deploy-success overlay.
+      const placeholder = wrap.querySelector('.tree-thumb-placeholder');
+      if (placeholder) {
+        placeholder.innerHTML = `
+          <svg class="tree-thumb-spinner" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" stroke-opacity="0.25"/><path d="M21 12a9 9 0 0 0-9-9"/></svg>
+          <span>Loading preview…</span>`;
+      }
       const iframe = document.createElement('iframe');
       iframe.src = liveUrl;
       iframe.loading = 'lazy';
       iframe.referrerPolicy = 'no-referrer';
-      wrap.innerHTML = '';
+      iframe.style.opacity = '0';
+      const reveal = () => {
+        iframe.style.opacity = '1';
+        if (placeholder) placeholder.style.opacity = '0';
+        setTimeout(() => { if (placeholder) placeholder.remove(); }, 300);
+      };
+      iframe.onload = reveal;
+      // Cross-origin iframes that refuse to be framed (X-Frame-Options)
+      // never fire onload/onerror reliably -- fall back to revealing
+      // whatever's there after a timeout so the card doesn't show a
+      // spinner forever.
+      setTimeout(reveal, 8000);
       wrap.appendChild(iframe);
       _projectThumbObserver.unobserve(wrap);
     });
