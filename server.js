@@ -3019,7 +3019,6 @@ app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
                 <img src="${logoUrl}" alt="JoyTree" width="64" height="64" style="width:64px;height:64px;border-radius:12px;display:block;object-fit:contain;">
               </td>
               <td style="vertical-align:middle;padding-left:14px;">
-                <div style="font-size:11px;font-weight:700;color:#b45309;letter-spacing:0.06em;margin-bottom:2px;">ADMIN BROADCAST</div>
                 <span style="font-size:17px;font-weight:700;color:#202124;">JoyTree</span>
               </td>
             </tr></table>
