@@ -12765,6 +12765,7 @@ document.addEventListener('keydown', function(e){
         const resultEl = document.getElementById('adminLookupResult');
         const query = (input?.value || '').trim();
         if (!query) return toast('Enter an email, project ID, or subdomain.', 'error');
+        window._adminLastLookupQuery = query;
         resultEl.innerHTML = '<div style="padding:20px;color:var(--text-3);">Looking up…</div>';
         try {
           const res = await apiFetch('/api/admin/lookup?query=' + encodeURIComponent(query));
@@ -12778,7 +12779,7 @@ document.addEventListener('keydown', function(e){
               <div style="font-size:0.8rem;color:var(--text-2);margin-bottom:8px;">${data.projectCount} project${data.projectCount === 1 ? '' : 's'}</div>
               ${data.projects.map(p => `<div class="admin-project-row"><span>${escapeHtml(p.name || p.subdomain)}</span><span style="color:var(--text-3);">${escapeHtml(p.status || '')}</span></div>`).join('')}
               <div style="margin-top:16px;">
-                <button class="btn btn-primary" onclick="adminImpersonate(${JSON.stringify(query)})">View dashboard as this user (1 hour)</button>
+                <button class="btn btn-primary" onclick="adminImpersonate()">View dashboard as this user (1 hour)</button>
               </div>
             </div>`;
         } catch (e) {
@@ -12786,7 +12787,16 @@ document.addEventListener('keydown', function(e){
         }
       };
 
-      window.adminImpersonate = async function(query) {
+      window.adminImpersonate = async function() {
+        // [FIX] Was onclick="adminImpersonate(${JSON.stringify(query)})" --
+        // JSON.stringify wraps the string in double quotes, which collided
+        // with the onclick attribute's own double-quote delimiters,
+        // producing malformed HTML (the attribute value ended right after
+        // "adminImpersonate("). The button never actually invoked the
+        // function correctly. Reading from a stored variable instead avoids
+        // embedding arbitrary data inside an HTML attribute at all.
+        const query = window._adminLastLookupQuery;
+        if (!query) return toast('Look up an account first.', 'error');
         if (!confirm("You are about to view this account's dashboard as them. This is logged. Continue?")) return;
         try {
           const res = await apiFetch('/api/admin/impersonate', {

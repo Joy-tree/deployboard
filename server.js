@@ -2796,8 +2796,13 @@ app.get('/api/admin/lookup', requireAuth, async (req, res) => {
     const target = await findUserForAdminLookup(query);
     if (!target) return res.status(404).json({ error: 'No matching account or project found' });
     const targetEmail = String(target.email || '').trim().toLowerCase();
-    const ws = (await readWorkspaceFromFirebase(target)) || {};
-    const projects = Array.isArray(ws.projects) ? ws.projects : [];
+    // [DEBUG] Temporary logging to diagnose "0 projects" reports -- shows
+    // exactly which workspace key was derived and whether Firebase actually
+    // returned data, rather than silently falling back to an empty object.
+    const debugKey = firebaseWorkspaceKey(target);
+    const ws = await readWorkspaceFromFirebase(target);
+    console.log(`[Admin Lookup] query="${query}" -> matched email="${targetEmail}" workspaceKey="${debugKey}" wsFound=${!!ws} projectCount=${Array.isArray(ws?.projects) ? ws.projects.length : 'n/a'}`);
+    const projects = Array.isArray(ws?.projects) ? ws.projects : [];
     res.json({
       ok: true,
       user: { email: target.email, name: target.name || '', githubUsername: target.githubUsername || '' },
@@ -2852,9 +2857,25 @@ app.get('/api/admin/impersonation-log', requireAuth, async (req, res) => {
   try {
     if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
     const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
-    const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_admin_impersonation_log.json?orderBy="at"&limitToLast=100${authQuery ? '&' + authQuery.slice(1) : ''}`);
-    const data = await r.json().catch(() => ({}));
-    const entries = Object.values(data || {}).sort((a, b) => new Date(b.at) - new Date(a.at));
+    // [FIX] Was including &orderBy="at"&limitToLast=100 -- Firebase RTDB
+    // rejects orderBy queries on a path with no ".indexOn" rule configured
+    // for that field, returning an error response body instead of data.
+    // The old code parsed that response regardless of r.ok, so the error
+    // message string got treated as if it were the entries object --
+    // that's exactly what produced the garbled "→ (searched "") ...
+    // Invalid Date" log row. Since entries are already sorted in JS below
+    // anyway, orderBy was serving no purpose here and only introduced this
+    // failure mode. Also now checks r.ok before using the response at all.
+    const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_admin_impersonation_log.json${authQuery}`);
+    if (!r.ok) {
+      const errText = await r.text().catch(() => '');
+      console.warn('[Admin] impersonation-log fetch failed:', r.status, errText.slice(0, 200));
+      return res.json({ ok: true, entries: [] });
+    }
+    const data = await r.json().catch(() => null);
+    const entries = (data && typeof data === 'object')
+      ? Object.values(data).filter(e => e && typeof e === 'object').sort((a, b) => new Date(b.at) - new Date(a.at))
+      : [];
     res.json({ ok: true, entries });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
