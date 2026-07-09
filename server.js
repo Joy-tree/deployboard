@@ -3418,7 +3418,7 @@ app.post('/api/auth/github/exchange', async (req, res) => {
 // are "safe enough" to allow.
 function blockIfImpersonating(req, res) {
   if (req.user?._impersonatedBy) {
-    res.status(403).json({ error: 'Connecting external accounts (GitHub/Google) is disabled while viewing a dashboard as another user via admin impersonation, to prevent your own account from being linked onto theirs. Exit impersonation first.' });
+    res.status(403).json({ error: 'This action is disabled while viewing a dashboard as another user via admin impersonation, to prevent your own account\'s data/identity from being written onto theirs. Exit impersonation first.' });
     return true;
   }
   return false;
@@ -3727,6 +3727,23 @@ app.get('/api/workspace', requireAuth, async (req, res) => {
 
 app.post('/api/workspace', requireAuth, async (req, res) => {
   try {
+    // [FIX-CRITICAL] This endpoint blindly overwrites the account's ENTIRE
+    // projects/deployments/settings with whatever the client currently has
+    // in memory -- it's a bulk "sync my client state to the server"
+    // mechanism, not a scoped update. Reproduced live: a real customer's
+    // projects/deployments were replaced with a copy of the admin's own
+    // test projects after an impersonation session, almost certainly via
+    // this exact endpoint firing with stale/wrong client-side state during
+    // or shortly after the identity switch. Rather than trying to prove
+    // the exact race condition, blocking this endpoint outright during
+    // impersonation removes the entire risk category -- bulk-overwriting
+    // a customer's real data based on client state that may not
+    // correctly reflect who's actually supposed to be logged in right now.
+    // Targeted fixes (deleting one project, changing one setting) should
+    // go through their own specific, scoped endpoints instead, which don't
+    // carry this same "overwrite everything with whatever the client has"
+    // risk.
+    if (blockIfImpersonating(req, res)) return;
     const payload = req.body || {};
     // Read existing workspace first to preserve uploadedProjects (and any other
     // fields the dashboard sync does not send). Without this, every auto-sync
