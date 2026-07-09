@@ -3152,6 +3152,32 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
       }
     }
     if (!recovered) {
+      // [FIX] Before giving up entirely: if this is clearly a Vite project
+      // (has a vite.config.*) but the configured/default build command
+      // didn't actually produce any output, the most common real-world
+      // cause is a placeholder "build" script in package.json (e.g.
+      // `"build": "echo 'Build complete'"` left over from a template) that
+      // never actually invokes Vite. Rather than fail outright, try running
+      // the real build command directly.
+      const viteConfigFile = ['vite.config.js', 'vite.config.ts', 'vite.config.mjs', 'vite.config.cjs']
+        .map(f => path.join(projectRoot, f)).find(f => fs.existsSync(f));
+      if (viteConfigFile) {
+        log(`\x1b[33m[Joytree]\x1b[0m Found ${path.basename(viteConfigFile)} but no build output — your configured build script may not actually be running Vite. Trying \`npx vite build\` directly...\x1b[0m`);
+        try {
+          await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'production', command: 'npx vite build', log });
+          const distPath = path.join(projectRoot, 'dist');
+          if (fs.existsSync(distPath) && fs.readdirSync(distPath).length > 0) {
+            log(`\x1b[32m[Joytree]\x1b[0m \`npx vite build\` succeeded — using its output. Consider fixing your package.json "build" script to say "vite build" so this runs automatically next time.\x1b[0m`);
+            finalSrcDir = distPath;
+            project = { ...project, outputDir: 'dist' };
+            recovered = true;
+          }
+        } catch (_) {
+          // Fall through to the normal error below if this also fails.
+        }
+      }
+    }
+    if (!recovered) {
       const dirs = fs.readdirSync(buildDir).filter(f => {
         try { return fs.lstatSync(path.join(buildDir, f)).isDirectory(); } catch(e) { return false; }
       });
@@ -3215,11 +3241,39 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
     }
 
     if (!hasStaticEntry) {
-      const htmlList = allHtmlFiles.map(f => path.relative(finalSrcDir, f)).join(', ') || 'none';
-      log(`\x1b[31m[error] No HTML entry file found in output directory\x1b[0m`);
-      log(`\x1b[33m[hint] Ensure your project has at least one .html file, or check your outputDir setting.\x1b[0m`);
-      log(`\x1b[33m[hint] HTML files found: ${htmlList}\x1b[0m`);
-      throw new Error('Static deploy validation failed: no HTML entry file found in output directory');
+      // [FIX] Same reasoning as the output-dir fallback above: a "dist"
+      // folder existing but containing no real HTML output (rather than
+      // dist not existing at all) is the same underlying symptom -- a
+      // placeholder build script that isn't actually invoking Vite. Try the
+      // real command directly before giving up, if this looks like a Vite
+      // project.
+      let recoveredViaVite = false;
+      const viteConfigFile2 = ['vite.config.js', 'vite.config.ts', 'vite.config.mjs', 'vite.config.cjs']
+        .map(f => path.join(projectRoot, f)).find(f => fs.existsSync(f));
+      if (viteConfigFile2) {
+        log(`\x1b[33m[Joytree]\x1b[0m Found ${path.basename(viteConfigFile2)} but no HTML output — your configured build script may not actually be running Vite. Trying \`npx vite build\` directly...\x1b[0m`);
+        try {
+          await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'production', command: 'npx vite build', log });
+          const distPath = path.join(projectRoot, 'dist');
+          const freshHtml = fs.existsSync(distPath) ? findHtmlFiles(distPath) : [];
+          if (freshHtml.length > 0) {
+            log(`\x1b[32m[Joytree]\x1b[0m \`npx vite build\` succeeded — using its output. Consider fixing your package.json "build" script to say "vite build" so this runs automatically next time.\x1b[0m`);
+            finalSrcDir = distPath;
+            project = { ...project, outputDir: 'dist' };
+            hasStaticEntry = true;
+            recoveredViaVite = true;
+          }
+        } catch (_) {
+          // Fall through to the normal error below if this also fails.
+        }
+      }
+      if (!recoveredViaVite) {
+        const htmlList = allHtmlFiles.map(f => path.relative(finalSrcDir, f)).join(', ') || 'none';
+        log(`\x1b[31m[error] No HTML entry file found in output directory\x1b[0m`);
+        log(`\x1b[33m[hint] Ensure your project has at least one .html file, or check your outputDir setting.\x1b[0m`);
+        log(`\x1b[33m[hint] HTML files found: ${htmlList}\x1b[0m`);
+        throw new Error('Static deploy validation failed: no HTML entry file found in output directory');
+      }
     }
   }
 
