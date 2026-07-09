@@ -4166,9 +4166,26 @@ async function runBuildCommandInContainer({ projectRoot, nodeImage, envObj, node
   const normalizedCommand = normalizeInstallLikeCommand(command, projectRoot);
   const commandWithCorepack = `corepack enable >/dev/null 2>&1 || true; ${normalizedCommand}`;
   log(`\x1b[90m[docker-build] ${nodeImage} :: ${normalizedCommand}\x1b[0m`);
+  // [FIX] Docker's --memory flag bounds the container's total cgroup memory,
+  // but Node/V8's own heap size limit is a SEPARATE thing that doesn't
+  // automatically respect that cgroup limit reliably -- V8 auto-detects
+  // available memory in a way that can be inaccurate inside a container,
+  // leading to "JavaScript heap out of memory" crashes (identifiable by
+  // Node-internal stack frames like ModuleWrap/ModuleJob.run/ModuleLoader)
+  // even when the container-level memory limit alone should have been
+  // enough. This is exactly what was happening with Vite builds even after
+  // bumping the container's own memory limit. Explicitly setting
+  // --max-old-space-size via NODE_OPTIONS, safely below the container's
+  // actual memory ceiling (leaving headroom for the Node binary itself,
+  // native addons, and non-heap memory), fixes this at the source instead
+  // of hoping V8's auto-detection gets it right inside a container.
+  const BUILD_CONTAINER_MEMORY = process.env.BUILD_CONTAINER_MEMORY || '2048m';
+  const _memMb = parseInt(BUILD_CONTAINER_MEMORY, 10) || 2048;
+  const _nodeHeapMb = Math.max(512, Math.round(_memMb * 0.75));
   const envArgs = [
     '-e', `CI=false`,
     '-e', `NODE_ENV=${nodeEnv}`,
+    '-e', `NODE_OPTIONS=--max-old-space-size=${_nodeHeapMb}`,
     ...Object.entries(envObj || {}).flatMap(([k, v]) => ['-e', `${k}=${String(v ?? '')}`]),
   ];
   // [FIX] These containers run with `--rm`, so without an explicit cache
@@ -4204,14 +4221,12 @@ async function runBuildCommandInContainer({ projectRoot, nodeImage, envObj, node
   // overridable via env vars -- this isn't removing the protection against
   // a runaway build, just setting a more realistic default for what a
   // normal modern frontend build actually needs.
-  const BUILD_CONTAINER_MEMORY = process.env.BUILD_CONTAINER_MEMORY || '2048m';
   const BUILD_CONTAINER_SWAP_CUSHION = process.env.BUILD_CONTAINER_SWAP_CUSHION || '512m';
   const BUILD_CONTAINER_CPUS   = process.env.BUILD_CONTAINER_CPUS   || '1.5';
   // Hard ceiling on a single install/build step so a hung command (e.g.
   // waiting on a prompt, or an infinite loop in a postinstall script)
   // can't occupy a build slot indefinitely.
   const BUILD_STEP_TIMEOUT_SECONDS = Number(process.env.BUILD_STEP_TIMEOUT_SECONDS || 900);
-  const _memMb = parseInt(BUILD_CONTAINER_MEMORY, 10) || 2048;
   const _swapMb = parseInt(BUILD_CONTAINER_SWAP_CUSHION, 10) || 512;
   const BUILD_CONTAINER_MEMORY_SWAP = `${_memMb + _swapMb}m`;
   await exec('docker', [
