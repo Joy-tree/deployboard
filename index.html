@@ -12786,6 +12786,16 @@ document.addEventListener('keydown', function(e){
       <div id="adminLookupResult"></div>
 
       <div style="margin-top:36px;">
+        <h3 style="margin:0 0 10px;font-size:1rem;">Debug duplicate account records</h3>
+        <div style="color:var(--text-3);font-size:0.8rem;margin-bottom:10px;">Checks for two separate internal records sharing the same email — useful if someone's login shows the right identity but wrong/missing project data.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <input id="adminDebugEmailInput" type="text" placeholder="Their email…" style="flex:1;min-width:200px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:0.88rem;">
+          <button class="btn btn-primary" onclick="adminDebugAccount()">Check</button>
+        </div>
+        <pre id="adminDebugResult" style="margin-top:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:0.78rem;color:var(--text-2);white-space:pre-wrap;word-break:break-all;display:none;"></pre>
+      </div>
+
+      <div style="margin-top:36px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <h3 style="margin:0;font-size:1rem;">Impersonation history</h3>
           <button class="btn btn-ghost btn-sm" onclick="adminLoadImpersonationLog()">Refresh</button>
@@ -12796,6 +12806,22 @@ document.addEventListener('keydown', function(e){
 
     <script>
     (function() {
+      window.adminDebugAccount = async function() {
+        const input = document.getElementById('adminDebugEmailInput');
+        const resultEl = document.getElementById('adminDebugResult');
+        const email = (input?.value || '').trim();
+        if (!email) return toast('Enter an email.', 'error');
+        resultEl.style.display = 'block';
+        resultEl.textContent = 'Checking…';
+        try {
+          const res = await apiFetch('/api/admin/debug-account?email=' + encodeURIComponent(email));
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Check failed');
+          resultEl.textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+          resultEl.textContent = 'Error: ' + (e.message || 'Check failed');
+        }
+      };
       window.adminLookupUser = async function() {
         const input = document.getElementById('adminLookupInput');
         const resultEl = document.getElementById('adminLookupResult');
