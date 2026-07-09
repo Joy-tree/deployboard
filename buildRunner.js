@@ -3055,7 +3055,10 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
     try {
       await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'production', command: buildCmd, log });
     } catch (e) {
-      if (/missing script|npm ERR!.*build|yarn.*command not found.*build|pnpm.*command not found.*build/i.test(String(e.message || ''))) {
+      if (isNativeBindingNpmBug(e.message)) {
+        const _installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
+        await recoverFromNativeBindingBugAndRetry({ projectRoot, nodeImage, envObj: env, installCmd: _installCmd, buildCmd, nodeEnvBuild: 'production', log });
+      } else if (/missing script|npm ERR!.*build|yarn.*command not found.*build|pnpm.*command not found.*build/i.test(String(e.message || ''))) {
         log(`\x1b[33m[Joytree] No build script found in your project — automatically skipping build step.\x1b[0m`);
         log(`\x1b[33m[Joytree] ℹ Tip: if you intended to run a build, add a "build" script to your package.json, or set the build command to "echo skip" to suppress this message.\x1b[0m`);
         log(`\x1b[32m[Joytree] ✓ Continuing deployment by serving project root directly.\x1b[0m`);
@@ -3374,7 +3377,10 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     try {
       await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'production', command: buildCmd, log });
     } catch (e) {
-      if (/missing script|npm ERR!.*build|yarn.*command not found.*build|pnpm.*command not found.*build/i.test(String(e.message || ''))) {
+      if (isNativeBindingNpmBug(e.message)) {
+        const _installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
+        await recoverFromNativeBindingBugAndRetry({ projectRoot, nodeImage, envObj: env, installCmd: _installCmd, buildCmd, nodeEnvBuild: 'production', log });
+      } else if (/missing script|npm ERR!.*build|yarn.*command not found.*build|pnpm.*command not found.*build/i.test(String(e.message || ''))) {
         log(`\x1b[33m[Joytree] No build script found in your project — automatically skipping build step.\x1b[0m`);
         log(`\x1b[33m[Joytree] ℹ Tip: add a "build" script to package.json, or set build command to "echo skip".\x1b[0m`);
         log(`\x1b[32m[Joytree] ✓ Continuing deployment without build step.\x1b[0m`);
@@ -4161,6 +4167,33 @@ function withDeployedAppRuntimeDefaults(envObj, project, baseDomain) {
   return env;
 }
 
+// Detects the documented npm optional-dependencies bug (npm/cli#4828) that
+// commonly hits native-binary packages (@tailwindcss/oxide, esbuild, sharp,
+// swc, etc.) when package-lock.json was generated on a different OS/platform
+// than the one actually running `npm install` -- npm fails to resolve the
+// correct platform-specific optional dependency, and the resulting build
+// fails with "Cannot find native binding" even though install itself
+// reported success.
+function isNativeBindingNpmBug(errMsg) {
+  const s = String(errMsg || '');
+  return /cannot find native binding/i.test(s) && /npm has a bug related to optional dependencies/i.test(s);
+}
+
+// The documented workaround, straight from npm's own error message: delete
+// node_modules and the lockfile, then reinstall fresh so npm re-resolves
+// optional dependencies correctly for the actual build platform, and retry
+// the build once. Not a loop -- if it fails again after this, the real
+// error is surfaced normally rather than retrying forever.
+async function recoverFromNativeBindingBugAndRetry({ projectRoot, nodeImage, envObj, installCmd, buildCmd, nodeEnvBuild = 'production', log }) {
+  log(`\x1b[33m[Joytree] Detected a known npm bug (native binary optional dependencies, see https://github.com/npm/cli/issues/4828) -- this happens when package-lock.json was generated on a different OS than this Linux build environment. Automatically retrying with a clean reinstall...\x1b[0m`);
+  try { fs.rmSync(path.join(projectRoot, 'node_modules'), { recursive: true, force: true }); } catch (_) {}
+  try { fs.rmSync(path.join(projectRoot, 'package-lock.json'), { force: true }); } catch (_) {}
+  log(`\x1b[90m$ ${installCmd} (clean reinstall)\x1b[0m`);
+  await runBuildCommandInContainer({ projectRoot, nodeImage, envObj, nodeEnv: 'development', command: installCmd, log });
+  log(`\x1b[90m$ ${buildCmd} (retry)\x1b[0m`);
+  await runBuildCommandInContainer({ projectRoot, nodeImage, envObj, nodeEnv: nodeEnvBuild, command: buildCmd, log });
+}
+
 async function runBuildCommandInContainer({ projectRoot, nodeImage, envObj, nodeEnv = 'development', command, log }) {
   try { await exec('docker', ['pull', nodeImage], {}, () => {}); } catch(e) {}
   const normalizedCommand = normalizeInstallLikeCommand(command, projectRoot);
@@ -4615,7 +4648,7 @@ function exec(cmd, args, options, logFn) {
         }
       }
       lastLines.push(line);
-      if (lastLines.length > 10) lastLines.shift();
+      if (lastLines.length > 40) lastLines.shift();
     };
 
     let outBuf = '', errBuf = '';
@@ -4643,7 +4676,7 @@ function exec(cmd, args, options, logFn) {
       clearTimeout(hardTimeout);
       if (stoppedByLogFn) { reject(stoppedByLogFn); return; }
       if (code === 0) resolve();
-      else reject(new Error(`"${cmd} ${args.slice(0,3).join(' ')}…" failed (exit ${code}).\n${lastLines.slice(-5).join('\n')}`));
+      else reject(new Error(`"${cmd} ${args.slice(0,3).join(' ')}…" failed (exit ${code}).\n${lastLines.slice(-40).join('\n')}`));
     });
   });
 }
@@ -4957,7 +4990,10 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
     try {
       await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'production', command: buildCmd, log });
     } catch (e) {
-      if (/missing script|npm ERR!.*build|yarn.*command not found.*build|pnpm.*command not found.*build/i.test(String(e.message || ''))) {
+      if (isNativeBindingNpmBug(e.message)) {
+        const _installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
+        await recoverFromNativeBindingBugAndRetry({ projectRoot, nodeImage, envObj: env, installCmd: _installCmd, buildCmd, nodeEnvBuild: 'production', log });
+      } else if (/missing script|npm ERR!.*build|yarn.*command not found.*build|pnpm.*command not found.*build/i.test(String(e.message || ''))) {
         log(`\x1b[33m[Joytree]\x1b[0m No build script found — automatically skipping build step.`);
         log(`\x1b[33m[Joytree]\x1b[0m ℹ Tip: add a "build" script to package.json, or set build command to "echo skip" to suppress this message.`);
         log(`\x1b[32m[Joytree]\x1b[0m ✓ Continuing deployment by serving project root directly.`);
@@ -5146,7 +5182,17 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
     try {
       await exec(buildParts[0], buildParts[1], { cwd: projectRoot }, log);
     } catch (e) {
-      if (/missing script|npm ERR!.*build|yarn.*command not found.*build|pnpm.*command not found.*build/i.test(String(e.message || ''))) {
+      if (isNativeBindingNpmBug(e.message)) {
+        log(`\x1b[33m[Joytree] Detected a known npm bug (native binary optional dependencies, see https://github.com/npm/cli/issues/4828) -- this happens when package-lock.json was generated on a different OS than this build environment. Automatically retrying with a clean reinstall...\x1b[0m`);
+        try { fs.rmSync(path.join(projectRoot, 'node_modules'), { recursive: true, force: true }); } catch (_) {}
+        try { fs.rmSync(path.join(projectRoot, 'package-lock.json'), { force: true }); } catch (_) {}
+        const _installCmd = project.installCmd || 'npm install';
+        const _installParts = splitCmd(_installCmd);
+        log(`\x1b[90m$ ${_installCmd} (clean reinstall)\x1b[0m`);
+        await exec(_installParts[0], _installParts[1], { cwd: projectRoot }, log);
+        log(`\x1b[90m$ ${buildCmd} (retry)\x1b[0m`);
+        await exec(buildParts[0], buildParts[1], { cwd: projectRoot }, log);
+      } else if (/missing script|npm ERR!.*build|yarn.*command not found.*build|pnpm.*command not found.*build/i.test(String(e.message || ''))) {
         log(`\x1b[33m[Joytree]\x1b[0m No build script found in your project — automatically skipping build step.`);
         log(`\x1b[33m[Joytree]\x1b[0m ℹ Tip: if you intended to run a build, add a "build" script to your package.json, or set the build command to "echo skip" to suppress this message.`);
         log(`\x1b[32m[Joytree]\x1b[0m ✓ Continuing deployment without build step.`);
