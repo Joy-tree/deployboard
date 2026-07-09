@@ -21490,10 +21490,19 @@ async function sendAdminBroadcastEmail() {
 // SIDEBAR
 // ══════════════════════════════════════════════════════════════════
 // ══ Theme system ══════════════════════════════════════════════════════════
-// Three modes: 'system' (site default), 'dark' (pure black), 'light' (white)
-// Stored in localStorage so it persists across sessions.
+// Three modes: 'system' (no data-theme attribute, falls back to base CSS),
+// 'dark' (pure black), 'light' (white). Stored in localStorage so it
+// persists across sessions.
+// [FIX] Was defaulting to 'system' whenever nothing was saved yet -- on
+// Mac/Safari specifically, localStorage can get cleared more aggressively
+// (Safari's tracking-prevention settings), silently reverting back to this
+// ambiguous default and showing the base/light styling regardless of
+// whatever the person had actually picked before. Defaulting to 'dark'
+// instead means even if the saved preference is ever lost, the site falls
+// back to the actual intended default look rather than an inconsistent,
+// platform-dependent one.
 (function _initTheme() {
-  const saved = localStorage.getItem('jt_theme') || 'system';
+  const saved = localStorage.getItem('jt_theme') || 'dark';
   _applyTheme(saved);
 })();
 
@@ -24623,7 +24632,7 @@ function initSocket() {
 window.onload = function() {
   initSocket();
   // Re-apply theme to update icon now that DOM is fully ready
-  _applyTheme(localStorage.getItem('jt_theme') || 'system');
+  _applyTheme(localStorage.getItem('jt_theme') || 'dark');
   // Loader visibility is controlled by auth/bootstrap lifecycle.
 };
 
