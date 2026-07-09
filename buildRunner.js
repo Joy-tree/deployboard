@@ -4192,16 +4192,32 @@ async function runBuildCommandInContainer({ projectRoot, nodeImage, envObj, node
   // generous enough for normal frontend builds but prevent one runaway
   // build from taking down the whole host. Override via env vars if a
   // specific project genuinely needs more.
-  const BUILD_CONTAINER_MEMORY = process.env.BUILD_CONTAINER_MEMORY || '1536m';
+  // [FIX] 1536m with zero swap headroom (memory-swap == memory) was too
+  // tight for Vite/webpack/esbuild-based builds -- bundling + minification
+  // (esbuild, rollup, terser workers, plus Node's own overhead) can
+  // genuinely exceed 1.5GB on anything beyond a small project, and with
+  // zero swap cushion, even a brief spike gets OOM-killed instantly rather
+  // than just slowing down. Bumped the default to 2048m, and added a 512m
+  // swap cushion on top (memory-swap = memory + swap, not equal to it) so
+  // a short-lived spike above the hard memory limit gets slowed down by
+  // swap instead of immediately killing the build. Still bounded and still
+  // overridable via env vars -- this isn't removing the protection against
+  // a runaway build, just setting a more realistic default for what a
+  // normal modern frontend build actually needs.
+  const BUILD_CONTAINER_MEMORY = process.env.BUILD_CONTAINER_MEMORY || '2048m';
+  const BUILD_CONTAINER_SWAP_CUSHION = process.env.BUILD_CONTAINER_SWAP_CUSHION || '512m';
   const BUILD_CONTAINER_CPUS   = process.env.BUILD_CONTAINER_CPUS   || '1.5';
   // Hard ceiling on a single install/build step so a hung command (e.g.
   // waiting on a prompt, or an infinite loop in a postinstall script)
   // can't occupy a build slot indefinitely.
   const BUILD_STEP_TIMEOUT_SECONDS = Number(process.env.BUILD_STEP_TIMEOUT_SECONDS || 900);
+  const _memMb = parseInt(BUILD_CONTAINER_MEMORY, 10) || 2048;
+  const _swapMb = parseInt(BUILD_CONTAINER_SWAP_CUSHION, 10) || 512;
+  const BUILD_CONTAINER_MEMORY_SWAP = `${_memMb + _swapMb}m`;
   await exec('docker', [
     'run', '--rm',
     '--memory', BUILD_CONTAINER_MEMORY,
-    '--memory-swap', BUILD_CONTAINER_MEMORY,
+    '--memory-swap', BUILD_CONTAINER_MEMORY_SWAP,
     '--cpus', BUILD_CONTAINER_CPUS,
     '--init', // ensure signals/zombies inside the build container are reaped
     ...envArgs,
