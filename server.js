@@ -2900,14 +2900,21 @@ async function findUserForAdminLookup(query) {
   }
 
   // Not a direct email match -- search every workspace's projects for a
-  // matching id/subdomain/name, then resolve back to the owning account.
+  // matching id/subdomain. Deliberately NOT matching on project name: names
+  // are a free-text label the user chose, not enforced unique anywhere --
+  // two completely unrelated users can easily both have a project called
+  // "portfolio" or "test". Matching on name risked silently resolving to
+  // the WRONG account entirely whenever there was a name collision (this
+  // was reproduced live -- an admin looked up one user's account and ended
+  // up viewing a different, unrelated one). id and subdomain are both
+  // genuinely globally unique (subdomain maps to a real DNS hostname that
+  // can't collide across accounts), so those are the only safe match keys.
   const allWs = await fetchAllWorkspaces();
   for (const [key, ws] of Object.entries(allWs || {})) {
     const projects = Array.isArray(ws?.projects) ? ws.projects : [];
     const match = projects.find(p =>
       String(p.id || '').toLowerCase() === q ||
-      String(p.subdomain || '').toLowerCase() === q ||
-      String(p.name || '').toLowerCase() === q
+      String(p.subdomain || '').toLowerCase() === q
     );
     if (!match) continue;
     const owner = localAuth.users.find(u => firebaseWorkspaceKey(u) === key);
