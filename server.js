@@ -2416,13 +2416,41 @@ async function getAuthUser(req) {
     const session = await Session.findOne({ token, expiresAt: { $gt: new Date() } }).lean();
     if (!session) return null;
     const u = await User.findById(session.userId);
-    if (u && session.impersonatedBy) u._impersonatedBy = session.impersonatedBy;
+    // [FIX] Was `u._impersonatedBy = session.impersonatedBy` -- u here is
+    // the actual persistent user document, not a per-request copy.
+    // Mutating it directly meant the flag stuck around on that shared
+    // object afterward -- so the TARGET user's own normal session (which
+    // resolves to this exact same underlying record) would also see
+    // impersonating:true on their own /api/auth/me from then on, since it's
+    // literally the same object in memory, not "sometimes" but
+    // deterministically, until the process restarts. Returning a plain
+    // object copy with the flag added (instead of mutating u itself) scopes
+    // it to this one request/response only -- every use of req.user
+    // elsewhere in this codebase only ever does property reads, never
+    // Mongoose-specific instance methods, so a plain object is sufficient.
+    if (u && session.impersonatedBy) return { ...(u.toObject ? u.toObject() : u), _impersonatedBy: session.impersonatedBy };
+    // Self-healing: if the old bug already persisted a stale
+    // _impersonatedBy onto this record (via a since-fixed direct mutation),
+    // strip it here so it can't keep leaking into this account's own normal
+    // sessions indefinitely.
+    if (u && u._impersonatedBy) { const clean = { ...(u.toObject ? u.toObject() : u) }; delete clean._impersonatedBy; return clean; }
     return u;
   }
   const session = localAuth.sessions.find(s => s.token === token && new Date(s.expiresAt) > new Date());
   if (!session) return null;
   const u = localAuth.users.find(u => u.id === session.userId) || null;
-  if (u && session.impersonatedBy) u._impersonatedBy = session.impersonatedBy;
+  // Same fix as above -- localAuth.users entries are shared, persistent
+  // objects (this is the branch actually used on this Firebase-only setup,
+  // and where the reported leak was reproduced). Return a copy, never
+  // mutate the original.
+  if (u && session.impersonatedBy) return { ...u, _impersonatedBy: session.impersonatedBy };
+  // Self-healing: if the old bug already persisted a stale _impersonatedBy
+  // directly onto this localAuth.users[] entry (before this fix), strip it
+  // here so it stops leaking into this account's own normal sessions. Since
+  // u is the actual shared array entry, deleting the property here also
+  // corrects it in memory going forward for every future request, not just
+  // this one.
+  if (u && u._impersonatedBy) { delete u._impersonatedBy; saveLocalAuth(); }
   return u;
 }
 
