@@ -21217,6 +21217,16 @@ async function bootstrapSession(){
       envStore = wsD.envStore && typeof wsD.envStore === 'object' ? wsD.envStore : {};
       settings = Object.assign({ baseDomain: 'joytree.site' }, wsD.settings || {});
       _save();
+      // [FIX] Apply the account's server-persisted theme (if set) so it's
+      // correct even on a brand-new device/browser or after a local storage
+      // wipe -- also write it back to localStorage so _initTheme()'s
+      // synchronous, pre-fetch check on the NEXT page load already has the
+      // right value instead of briefly flashing the wrong theme before this
+      // async fetch resolves.
+      if (settings.theme && typeof _applyTheme === 'function') {
+        localStorage.setItem('jt_theme', settings.theme);
+        _applyTheme(settings.theme);
+      }
       // Preload uploadedProjects from Firebase on every login so the upload
       // page shows the correct list on ANY device without needing a manual refresh
       if (Array.isArray(wsD.uploadedProjects) && wsD.uploadedProjects.length > 0) {
@@ -21532,6 +21542,16 @@ function _applyTheme(t) {
 function themeSet(t) {
   localStorage.setItem('jt_theme', t);
   _applyTheme(t);
+  // [FIX] Was only ever saved to localStorage -- on Mac/Safari specifically,
+  // localStorage can get cleared more aggressively than other browsers,
+  // silently losing the choice. Also persisting it as part of the same
+  // settings object already synced to the account via queueWorkspaceSync()
+  // (the same mechanism used for aiKeys, billingPlan, etc.) means the
+  // preference survives a local storage wipe, a new device, or a different
+  // browser entirely -- it's now a real account setting, not just a
+  // browser-local one.
+  settings.theme = t;
+  if (typeof queueWorkspaceSync === 'function') queueWorkspaceSync();
   themePickerClose();
 }
 
