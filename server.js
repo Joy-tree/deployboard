@@ -2755,6 +2755,7 @@ app.post('/api/auth/signup', async (req, res) => {
       localAuth.users.push(user); saveLocalAuth();
     }
     const pendingToken = await issueEmailVerification(user);
+    console.log(`[Auth] Signup: email=${email} userId=${user._id || user.id} githubUsername="${user.githubUsername || ''}" (should always be blank for a brand-new signup)`);
     res.json({ requiresVerification: true, pendingToken, user: { id: user._id || user.id, email: user.email, name: user.name } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -2773,6 +2774,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.get('/api/auth/me', requireAuth, async (req, res) => {
+  console.log(`[Auth] /me resolved: sessionUser.email=${req.user?.email || 'n/a'} sessionUser.id=${req.user?._id || req.user?.id || 'n/a'} githubUsername="${req.user?.githubUsername || ''}" impersonatedBy=${req.user?._impersonatedBy || 'none'}`);
   res.json({ user: { id: req.user._id || req.user.id, email: req.user.email, name: req.user.name, githubUsername: req.user.githubUsername, githubAvatarUrl: req.user.githubAvatarUrl || '', googleAvatarUrl: req.user.googleAvatarUrl || '', firebaseUid: req.user.firebaseUid || '', isAdmin: isRootEmailAdmin(req.user), impersonating: !!req.user._impersonatedBy ? { by: req.user._impersonatedBy } : null } });
 });
 
@@ -3570,6 +3572,7 @@ app.post('/api/auth/verify-email', async (req, res) => {
     if (isDbReady()) await Session.create({ token, userId: rec.userId, expiresAt });
     else { localAuth.sessions.push({ token, userId: rec.userId, expiresAt }); saveLocalAuth(); }
     const user = isDbReady() ? await User.findById(rec.userId) : localAuth.users.find(u => u.id === rec.userId);
+    console.log(`[Auth] Verify-email resolved: pendingUserId=${rec.userId} -> user.email=${user?.email || 'NOT FOUND'} user.githubUsername="${user?.githubUsername || ''}" user.id=${user?._id || user?.id || 'n/a'}`);
 
     // STABILITY FIX: After login, check if workspace data exists under the stable
     // email key. If not, try the old firebaseUid key and migrate it automatically.
