@@ -2748,6 +2748,109 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
   res.json({ user: { id: req.user._id || req.user.id, email: req.user.email, name: req.user.name, githubUsername: req.user.githubUsername, githubAvatarUrl: req.user.githubAvatarUrl || '', googleAvatarUrl: req.user.googleAvatarUrl || '', firebaseUid: req.user.firebaseUid || '', isAdmin: isRootEmailAdmin(req.user), impersonating: !!req.user._impersonatedBy ? { by: req.user._impersonatedBy } : null } });
 });
 
+// ── Referral system ───────────────────────────────────────────────────────────
+// Each user gets a unique code + link. Every completed signup that arrived via
+// that link earns the referrer a fixed build-minutes bonus; reaching 10 total
+// referrals earns a permanent +1 project slot on top of whatever their plan
+// already allows (wired into both project-count checks above).
+const REFERRAL_BUILD_MINUTES_PER_REFERRAL = 30;
+const REFERRAL_PROJECT_BONUS_MILESTONE = 10;
+const REFERRAL_PROJECT_BONUS_AMOUNT = 1;
+
+function generateReferralCode() {
+  return crypto.randomBytes(4).toString('hex'); // 8 chars, e.g. "a1b2c3d4"
+}
+
+// Finds which user's workspace owns a given referral code, by scanning all
+// workspaces (same fetchAllWorkspaces() pattern already used for Remix and
+// the admin panel -- there's no separate index for codes, and this dataset
+// is small enough that a full scan on the rare "claim" event is fine).
+async function findWorkspaceByReferralCode(code) {
+  const allWs = await fetchAllWorkspaces();
+  for (const [key, ws] of Object.entries(allWs || {})) {
+    if (ws?.referral?.code === code) return { key, ws };
+  }
+  return null;
+}
+
+app.get('/api/referral/me', requireAuth, async (req, res) => {
+  try {
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    ws.referral = ws.referral || {};
+    let changed = false;
+    if (!ws.referral.code) {
+      ws.referral.code = generateReferralCode();
+      changed = true;
+    }
+    ws.referral.referralCount = ws.referral.referralCount || 0;
+    ws.referral.buildMinutesBonus = ws.referral.buildMinutesBonus || 0;
+    ws.referral.bonusMaxProjects = ws.referral.bonusMaxProjects || 0;
+    ws.referral.milestonesReached = Array.isArray(ws.referral.milestonesReached) ? ws.referral.milestonesReached : [];
+    if (changed) await writeWorkspaceToFirebase(req.user, ws);
+    const nextMilestone = ws.referral.milestonesReached.includes(REFERRAL_PROJECT_BONUS_MILESTONE) ? null : REFERRAL_PROJECT_BONUS_MILESTONE;
+    res.json({
+      ok: true,
+      code: ws.referral.code,
+      link: `https://${BASE_DOMAIN}/?ref=${ws.referral.code}`,
+      referralCount: ws.referral.referralCount,
+      buildMinutesBonus: ws.referral.buildMinutesBonus,
+      bonusMaxProjects: ws.referral.bonusMaxProjects,
+      nextMilestone,
+      progressToNextMilestone: nextMilestone ? Math.min(ws.referral.referralCount, nextMilestone) : null,
+      buildMinutesPerReferral: REFERRAL_BUILD_MINUTES_PER_REFERRAL
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Idempotent by design -- safe to call every time someone logs in, regardless
+// of which signup method they used (email, GitHub, Google). Only actually
+// does anything the FIRST time it's called for a given account (checked via
+// ws.referral.referredBy already being set), so there's no need to hook this
+// into every individual signup code path separately.
+app.post('/api/referral/claim', requireAuth, async (req, res) => {
+  try {
+    const code = String(req.body?.code || '').trim();
+    if (!code) return res.json({ ok: true, claimed: false, reason: 'no_code' });
+
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    if (ws.referral?.referredBy) return res.json({ ok: true, claimed: false, reason: 'already_claimed' });
+
+    const ownWs = ws;
+    if (ownWs.referral?.code === code) return res.json({ ok: true, claimed: false, reason: 'self_referral' });
+
+    const found = await findWorkspaceByReferralCode(code);
+    if (!found) return res.json({ ok: true, claimed: false, reason: 'invalid_code' });
+
+    // Guard against the referrer's own account being the one calling this
+    // (shouldn't normally happen since we already check ownWs.referral.code,
+    // but the key comparison is a stronger, unambiguous second check).
+    const ownKey = firebaseWorkspaceKey(req.user);
+    if (found.key === ownKey) return res.json({ ok: true, claimed: false, reason: 'self_referral' });
+
+    // Mark the new account as referred (prevents claiming twice).
+    ws.referral = ws.referral || {};
+    ws.referral.referredBy = code;
+    ws.referral.referredAt = new Date().toISOString();
+    await writeWorkspaceToFirebase(req.user, ws);
+
+    // Reward the referrer.
+    const referrerWs = found.ws;
+    referrerWs.referral = referrerWs.referral || {};
+    referrerWs.referral.referralCount = (referrerWs.referral.referralCount || 0) + 1;
+    referrerWs.referral.buildMinutesBonus = (referrerWs.referral.buildMinutesBonus || 0) + REFERRAL_BUILD_MINUTES_PER_REFERRAL;
+    referrerWs.referral.milestonesReached = Array.isArray(referrerWs.referral.milestonesReached) ? referrerWs.referral.milestonesReached : [];
+    let milestoneJustReached = false;
+    if (referrerWs.referral.referralCount >= REFERRAL_PROJECT_BONUS_MILESTONE && !referrerWs.referral.milestonesReached.includes(REFERRAL_PROJECT_BONUS_MILESTONE)) {
+      referrerWs.referral.milestonesReached.push(REFERRAL_PROJECT_BONUS_MILESTONE);
+      referrerWs.referral.bonusMaxProjects = (referrerWs.referral.bonusMaxProjects || 0) + REFERRAL_PROJECT_BONUS_AMOUNT;
+      milestoneJustReached = true;
+    }
+    await writeWorkspaceByKnownKey(found.key, referrerWs);
+
+    res.json({ ok: true, claimed: true, referrerReward: { buildMinutes: REFERRAL_BUILD_MINUTES_PER_REFERRAL, milestoneJustReached } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 function isRootEmailAdmin(user = {}) {
   const email = String(user?.email || '').trim().toLowerCase();
   return email === JOYTREE_V3_ADMIN_EMAIL;
@@ -9339,12 +9442,15 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   const isExistingGithubProject = !!existingBySub;
   if (!isExistingGithubProject) {
     const ownedProjectCount = deployWsProjects.length; // already scoped to this user's own workspace
-    if (Number.isFinite(githubPlanLimits.maxProjects) && ownedProjectCount >= githubPlanLimits.maxProjects) {
+    const effectiveMaxProjects = Number.isFinite(githubPlanLimits.maxProjects)
+      ? githubPlanLimits.maxProjects + (deployWs.referral?.bonusMaxProjects || 0)
+      : githubPlanLimits.maxProjects;
+    if (Number.isFinite(effectiveMaxProjects) && ownedProjectCount >= effectiveMaxProjects) {
       return res.status(403).json({
-        error: `Project limit reached for ${planKey} plan (${githubPlanLimits.maxProjects} max). Upgrade your plan to deploy more projects.`,
+        error: `Project limit reached for ${planKey} plan (${effectiveMaxProjects} max${deployWs.referral?.bonusMaxProjects ? ', including your referral bonus' : ''}). Upgrade your plan or refer more friends to deploy more projects.`,
         limitReached: true,
         plan: planKey,
-        maxProjects: githubPlanLimits.maxProjects,
+        maxProjects: effectiveMaxProjects,
         currentCount: ownedProjectCount
       });
     }
@@ -10377,12 +10483,15 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
   const isExistingUploadProject = uploadDeployWsProjects.some(p => p.subdomain === cleanSub);
   if (!isExistingUploadProject) {
     const ownedProjectCount = uploadDeployWsProjects.length; // already scoped to this user's own workspace
-    if (Number.isFinite(uploadPlanLimits.maxProjects) && ownedProjectCount >= uploadPlanLimits.maxProjects) {
+    const effectiveMaxProjects = Number.isFinite(uploadPlanLimits.maxProjects)
+      ? uploadPlanLimits.maxProjects + (uploadDeployWs.referral?.bonusMaxProjects || 0)
+      : uploadPlanLimits.maxProjects;
+    if (Number.isFinite(effectiveMaxProjects) && ownedProjectCount >= effectiveMaxProjects) {
       return res.status(403).json({
-        error: `Project limit reached for ${planKey} plan (${uploadPlanLimits.maxProjects} max). Upgrade your plan to deploy more projects.`,
+        error: `Project limit reached for ${planKey} plan (${effectiveMaxProjects} max${uploadDeployWs.referral?.bonusMaxProjects ? ', including your referral bonus' : ''}). Upgrade your plan or refer more friends to deploy more projects.`,
         limitReached: true,
         plan: planKey,
-        maxProjects: uploadPlanLimits.maxProjects,
+        maxProjects: effectiveMaxProjects,
         currentCount: ownedProjectCount
       });
     }

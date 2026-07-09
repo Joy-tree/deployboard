@@ -10538,6 +10538,7 @@ document.addEventListener('keydown', function(e){
         <div class="tab" id="settingsGithubTabBtn" onclick="switchSettingsTab('github',this)">GitHub</div>
         <div class="tab" onclick="switchSettingsTab('domain',this)">Domain</div>
         <div class="tab" onclick="switchSettingsTab('account',this)">Account</div>
+        <div class="tab" onclick="switchSettingsTab('referrals',this)">Referrals</div>
       </div>
 
       <div id="settingsTabGeneral">
@@ -10966,6 +10967,41 @@ document.addEventListener('keydown', function(e){
               </div>
             </div>
 
+          </div>
+        </div>
+      </div>
+
+      <div id="settingsTabReferrals" style="display:none;">
+        <div class="card" style="max-width:640px;">
+          <div class="card-header">
+            <div class="card-title">Refer friends, earn build minutes</div>
+            <div class="card-subtitle">Share your link. Every friend who signs up through it earns you <span id="refBuildMinutesPerReferral">30</span> bonus build minutes. Reach 10 referrals and you permanently unlock one extra project slot on top of your plan.</div>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <label class="field-label">Your referral link</label>
+              <div style="display:flex;gap:8px;">
+                <input class="input input-mono" id="referralLinkInput" readonly value="Loading…" style="flex:1;">
+                <button class="btn btn-primary" onclick="copyReferralLink()">Copy</button>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;">
+              <div style="flex:1;min-width:140px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+                <div style="font-size:1.6rem;font-weight:800;color:var(--text);" id="refStatCount">0</div>
+                <div style="font-size:0.78rem;color:var(--text-3);">Friends referred</div>
+              </div>
+              <div style="flex:1;min-width:140px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+                <div style="font-size:1.6rem;font-weight:800;color:var(--text);" id="refStatMinutes">0</div>
+                <div style="font-size:0.78rem;color:var(--text-3);">Bonus build minutes earned</div>
+              </div>
+              <div style="flex:1;min-width:140px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+                <div style="font-size:1.6rem;font-weight:800;color:var(--text);" id="refStatBonusProjects">0</div>
+                <div style="font-size:0.78rem;color:var(--text-3);">Extra project slots unlocked</div>
+              </div>
+            </div>
+
+            <div id="refMilestoneProgress" style="margin-top:20px;"></div>
           </div>
         </div>
       </div>
@@ -21125,6 +21161,7 @@ async function bootstrapSession(){
     }
     applyUserProfile(meD.user);
     if (typeof adminShowImpersonationBannerIfNeeded === 'function') adminShowImpersonationBannerIfNeeded(meD.user);
+    if (typeof claimPendingReferralIfAny === 'function') claimPendingReferralIfAny();
     let wsD = null;
     const wsR = await apiFetch('/api/workspace', { signal: AbortSignal.timeout(5000) });
     const localWs = await wsR.json();
@@ -25249,18 +25286,85 @@ function switchSettingsTab(tab, el) {
   const isWebhookAdmin = meEmail === adminEmail;
   if (tab === 'general' && !isWebhookAdmin) tab = 'account';
   if (tab === 'github' && !isWebhookAdmin) tab = 'account';
-  ['general','github','domain','account'].forEach(t => {
+  ['general','github','domain','account','referrals'].forEach(t => {
     const p = document.getElementById('settingsTab' + t.charAt(0).toUpperCase() + t.slice(1));
     if (p) p.style.display = t === tab ? '' : 'none';
   });
   document.querySelectorAll('#settingsTabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
   else {
-    const idx = { general:0, github:1, domain:2, account:3 }[tab];
+    const idx = { general:0, github:1, domain:2, account:3, referrals:4 }[tab];
     const tabEl = document.querySelectorAll('#settingsTabs .tab')[idx];
     if (tabEl) tabEl.classList.add('active');
   }
+  if (tab === 'referrals' && typeof loadReferralSettings === 'function') loadReferralSettings();
 }
+async function loadReferralSettings() {
+  try {
+    const res = await apiFetch('/api/referral/me');
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load referral info');
+    const linkInput = document.getElementById('referralLinkInput');
+    if (linkInput) linkInput.value = data.link;
+    const minsEl = document.getElementById('refBuildMinutesPerReferral');
+    if (minsEl) minsEl.textContent = data.buildMinutesPerReferral;
+    document.getElementById('refStatCount').textContent = data.referralCount;
+    document.getElementById('refStatMinutes').textContent = data.buildMinutesBonus;
+    document.getElementById('refStatBonusProjects').textContent = data.bonusMaxProjects;
+    const progressEl = document.getElementById('refMilestoneProgress');
+    if (progressEl) {
+      if (data.nextMilestone) {
+        const pct = Math.min(100, Math.round((data.progressToNextMilestone / data.nextMilestone) * 100));
+        progressEl.innerHTML = `
+          <div style="font-size:0.8rem;color:var(--text-2);margin-bottom:6px;">${data.progressToNextMilestone}/${data.nextMilestone} referrals to unlock +1 project slot</div>
+          <div style="background:var(--bg-2);border-radius:999px;height:8px;overflow:hidden;">
+            <div style="background:var(--primary);height:100%;width:${pct}%;border-radius:999px;"></div>
+          </div>`;
+      } else {
+        progressEl.innerHTML = `<div style="font-size:0.8rem;color:var(--primary);">🎉 You've unlocked the extra project slot milestone!</div>`;
+      }
+    }
+  } catch (e) {
+    toast(e.message || 'Could not load referral info', 'error');
+  }
+}
+
+function copyReferralLink() {
+  const input = document.getElementById('referralLinkInput');
+  if (!input || !input.value || input.value === 'Loading…') return;
+  navigator.clipboard.writeText(input.value).then(() => toast('Referral link copied!', 'success'));
+}
+
+// Capture ?ref=CODE from the URL on any page load (landing page, signup,
+// wherever a shared link lands someone) and stash it for later -- the
+// actual claim happens once the person is logged in, decoupled from
+// whichever signup method they use (email, GitHub, Google), so this
+// doesn't need to be wired into every individual signup code path.
+(function captureReferralCodeFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) localStorage.setItem('db_pending_referral_code', ref);
+  } catch (_) {}
+})();
+
+async function claimPendingReferralIfAny() {
+  try {
+    const code = localStorage.getItem('db_pending_referral_code');
+    if (!code) return;
+    const res = await apiFetch('/api/referral/claim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json().catch(() => ({}));
+    // Whatever the outcome (claimed, already claimed, self-referral,
+    // invalid code), this only ever needs to be attempted once per browser.
+    localStorage.removeItem('db_pending_referral_code');
+    if (data.claimed) toast('Welcome! Your referrer just earned a build-minutes bonus 🎉', 'success', 6000);
+  } catch (_) {}
+}
+
 function saveSettings() {
   settings.platformName = document.getElementById('settingsPlatformName').value;
   settings.runnerMode   = document.getElementById('settingsRunnerMode').value;
