@@ -5109,6 +5109,31 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
       }
     }
   }
+  if (!fs.existsSync(srcDist)) {
+    // [FIX] Same fallback as the GitHub static build path: before falling
+    // back to copying the raw project root (which would silently serve
+    // node_modules/source files instead of a real build), check if this is
+    // unambiguously a Vite project (has a vite.config.*) whose configured
+    // build script just isn't actually invoking Vite -- a common cause
+    // being a placeholder like `"build": "echo done"` left over from a
+    // template. If so, try the real build command directly.
+    const viteConfigFileUp = ['vite.config.js', 'vite.config.ts', 'vite.config.mjs', 'vite.config.cjs']
+      .map(f => path.join(projectRoot, f)).find(f => fs.existsSync(f));
+    if (viteConfigFileUp) {
+      log(`\x1b[33m[Joytree]\x1b[0m Found ${path.basename(viteConfigFileUp)} but no build output — your configured build script may not actually be running Vite. Trying \`npx vite build\` directly...\x1b[0m`);
+      try {
+        await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'production', command: 'npx vite build', log });
+        const viteDistPath = path.join(projectRoot, 'dist');
+        if (fs.existsSync(viteDistPath) && fs.readdirSync(viteDistPath).length > 0) {
+          log(`\x1b[32m[Joytree]\x1b[0m \`npx vite build\` succeeded — using its output. Consider fixing your package.json "build" script to say "vite build" so this runs automatically next time.\x1b[0m`);
+          srcDist = viteDistPath;
+          resolvedOutputDir = 'dist';
+        }
+      } catch (_) {
+        // Fall through to the existing "copy project root" fallback below if this also fails.
+      }
+    }
+  }
   const destDist = path.join(sitesDir, cleanSub, 'dist');
   // Always wipe destDist first so stale files from a previous deploy never cause "Not found"
   try { fs.rmSync(destDist, { recursive: true, force: true }); } catch(_) {}
@@ -5158,8 +5183,41 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
       }
     }
     if (!hasStaticEntry) {
-      log(`\x1b[31m[error]\x1b[0m No HTML entry file found. Ensure your upload contains at least one .html file.\x1b[0m`);
-      throw new Error('Upload deploy failed: no HTML entry file found in upload');
+      // [FIX] Same fallback as above and as the GitHub static build path:
+      // try a direct `npx vite build` if this is clearly a Vite project,
+      // before giving up. Since destDist was already populated from
+      // whatever (non-Vite) output existed, a successful retry here needs
+      // to wipe and re-copy destDist from the fresh dist/ output.
+      let recoveredViaViteUp = false;
+      const viteConfigFileUp2 = ['vite.config.js', 'vite.config.ts', 'vite.config.mjs', 'vite.config.cjs']
+        .map(f => path.join(projectRoot, f)).find(f => fs.existsSync(f));
+      if (viteConfigFileUp2) {
+        log(`\x1b[33m[Joytree]\x1b[0m Found ${path.basename(viteConfigFileUp2)} but no HTML output — your configured build script may not actually be running Vite. Trying \`npx vite build\` directly...\x1b[0m`);
+        try {
+          await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'production', command: 'npx vite build', log });
+          const viteDistPath2 = path.join(projectRoot, 'dist');
+          const freshHtmlUp = fs.existsSync(viteDistPath2) ? findHtmlFiles(viteDistPath2, 0) : [];
+          if (freshHtmlUp.length > 0) {
+            log(`\x1b[32m[Joytree]\x1b[0m \`npx vite build\` succeeded — using its output. Consider fixing your package.json "build" script to say "vite build" so this runs automatically next time.\x1b[0m`);
+            try { fs.rmSync(destDist, { recursive: true, force: true }); } catch (_) {}
+            fs.mkdirSync(destDist, { recursive: true });
+            copyDir(viteDistPath2, destDist);
+            hasStaticEntry = fs.existsSync(path.join(destDist, 'index.html'));
+            if (!hasStaticEntry) {
+              const rootHtmlUp = freshHtmlUp.filter(f => path.dirname(f) === viteDistPath2);
+              const chosenUp = rootHtmlUp.length > 0 ? rootHtmlUp[0] : freshHtmlUp[0];
+              try { fs.copyFileSync(path.join(destDist, path.relative(viteDistPath2, chosenUp)), path.join(destDist, 'index.html')); hasStaticEntry = true; } catch (_) {}
+            }
+            recoveredViaViteUp = hasStaticEntry;
+          }
+        } catch (_) {
+          // Fall through to the normal error below if this also fails.
+        }
+      }
+      if (!recoveredViaViteUp) {
+        log(`\x1b[31m[error]\x1b[0m No HTML entry file found. Ensure your upload contains at least one .html file.\x1b[0m`);
+        throw new Error('Upload deploy failed: no HTML entry file found in upload');
+      }
     }
   }
 
