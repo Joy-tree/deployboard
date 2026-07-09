@@ -3018,6 +3018,42 @@ app.get('/api/admin/impersonation-log', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Recovery tool for accounts affected by the impersonation identity-linking
+// bug (fixed above via blockIfImpersonating) -- clears an account's GitHub
+// connection fields. Does not and cannot restore whatever GitHub account
+// was connected before it got overwritten (that data is gone), but at least
+// un-sticks the account from showing the admin's own GitHub, so the real
+// owner can reconnect their own.
+app.post('/api/admin/disconnect-github', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const query = String(req.body?.query || '').trim();
+    if (!query) return res.status(400).json({ error: 'query (email, project id, or subdomain) is required' });
+    const target = await findUserForAdminLookup(query);
+    if (!target) return res.status(404).json({ error: 'No matching account found' });
+
+    const previousGithubUsername = target.githubUsername || '';
+    if (isDbReady()) {
+      const doc = await User.findById(target._id || target.id);
+      if (!doc) return res.status(404).json({ error: 'Account not found' });
+      doc.githubUsername = '';
+      doc.githubAccessToken = '';
+      doc.githubId = '';
+      doc.githubAvatarUrl = '';
+      await doc.save();
+    } else {
+      const u = localAuth.users.find(x => String(x.id || x._id || '') === String(target.id || target._id || ''));
+      if (!u) return res.status(404).json({ error: 'Account not found' });
+      u.githubUsername = '';
+      u.githubAccessToken = '';
+      u.githubId = '';
+      u.githubAvatarUrl = '';
+      saveLocalAuth();
+    }
+    res.json({ ok: true, previousGithubUsername });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 function collectEmailsDeep(input, out = new Set()) {
   if (!input) return out;
   if (typeof input === 'string') {

@@ -12814,12 +12814,32 @@ document.addEventListener('keydown', function(e){
               <div style="color:var(--text-3);font-size:0.85rem;margin-bottom:12px;">${escapeHtml(u.email)}${u.githubUsername ? ' · GitHub: ' + escapeHtml(u.githubUsername) : ''}</div>
               <div style="font-size:0.8rem;color:var(--text-2);margin-bottom:8px;">${data.projectCount} project${data.projectCount === 1 ? '' : 's'}</div>
               ${data.projects.map(p => `<div class="admin-project-row"><span>${escapeHtml(p.name || p.subdomain)}</span><span style="color:var(--text-3);">${escapeHtml(p.status || '')}</span></div>`).join('')}
-              <div style="margin-top:16px;">
+              <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
                 <button class="btn btn-primary" onclick="adminImpersonate()">View dashboard as this user (1 hour)</button>
+                ${u.githubUsername ? `<button class="btn btn-ghost" style="color:#f87171;border-color:rgba(239,68,68,.3);" onclick="adminDisconnectGithub()">Disconnect GitHub (${escapeHtml(u.githubUsername)})</button>` : ''}
               </div>
             </div>`;
         } catch (e) {
           resultEl.innerHTML = `<div style="padding:20px;color:var(--text-3);">${escapeHtml(e.message)}</div>`;
+        }
+      };
+
+      window.adminDisconnectGithub = async function() {
+        const query = window._adminLastLookupQuery;
+        if (!query) return toast('Look up an account first.', 'error');
+        if (!confirm('This clears the GitHub connection on this account. They will need to reconnect their own GitHub afterward. Continue?')) return;
+        try {
+          const res = await apiFetch('/api/admin/disconnect-github', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not disconnect GitHub');
+          toast(`Disconnected (was: ${data.previousGithubUsername}). Re-run lookup to confirm.`, 'success', 6000);
+          adminLookupUser();
+        } catch (e) {
+          toast(e.message || 'Could not disconnect GitHub', 'error');
         }
       };
 
