@@ -20973,6 +20973,7 @@ async function ensureBackendSessionFromFirebase() {
     const d = await r.json();
     if (!r.ok || !d.token) return false;
     authToken = d.token;
+    if (typeof resetWorkspaceState === 'function') resetWorkspaceState();
     localStorage.setItem('db_auth_token', d.token);
     applyUserProfile(d.user || null);
     return true;
@@ -26036,6 +26037,7 @@ function statusBadge(status) {
         toast('Verification code sent to your email.', 'info');
       } else if (d.token) {
         authToken = d.token;
+        if (typeof resetWorkspaceState === 'function') resetWorkspaceState();
         localStorage.setItem('db_auth_token', d.token);
         const clean = window.location.origin + window.location.pathname;
         window.history.replaceState({}, '', clean);
@@ -26076,6 +26078,7 @@ function statusBadge(status) {
           toast('Verification code sent to your email.', 'info');
         } else if (d.token) {
           authToken = d.token;
+          if (typeof resetWorkspaceState === 'function') resetWorkspaceState();
           localStorage.setItem('db_auth_token', d.token);
           applyUserProfile(d.user || null);
           toast('Signed in with Google successfully!', 'success');
@@ -26202,6 +26205,7 @@ async function submitAuth(){
       toast('Verification code sent to your email.', 'info');
     } else if (d.token) {
       authToken = d.token;
+      if (typeof resetWorkspaceState === 'function') resetWorkspaceState();
       localStorage.setItem('db_auth_token', d.token);
       applyUserProfile(d.user || null);
       toast('Welcome! Account ready.', 'success');
@@ -26243,6 +26247,15 @@ async function submitEmailVerification(){
     return toast(d.error || 'Verification failed', 'error');
   }
   authToken = d.token;
+  // [FIX] Reproduced: signing up as a brand-new account on a browser that
+  // had previously been used for a DIFFERENT account (without an explicit
+  // Logout click in between -- e.g. just closing/reopening the tab) could
+  // inherit that previous account's cached data, including GitHub
+  // connection info. resetWorkspaceState() already does exactly this
+  // clearing on explicit logout; calling it here too means a fresh
+  // verified signup is guaranteed a clean slate regardless of how the
+  // browser got to this point.
+  if (typeof resetWorkspaceState === 'function') resetWorkspaceState();
   localStorage.setItem('db_auth_token', d.token);
   applyUserProfile(d.user || null);
   // Pull canonical workspace immediately so we don't render/overwrite with stale local state.
