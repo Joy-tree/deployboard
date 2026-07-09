@@ -3013,15 +3013,8 @@ app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
     <tr><td align="center">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;">
         <tr>
-          <td style="padding:24px 32px 0;">
-            <table role="presentation" width="100%"><tr>
-              <td style="width:64px;vertical-align:middle;">
-                <img src="${logoUrl}" alt="JoyTree" width="64" height="64" style="width:64px;height:64px;border-radius:12px;display:block;object-fit:contain;">
-              </td>
-              <td style="vertical-align:middle;padding-left:14px;">
-                <span style="font-size:17px;font-weight:700;color:#202124;">JoyTree</span>
-              </td>
-            </tr></table>
+          <td style="background:#0a0f0a;">
+            <img src="${logoUrl}" alt="JoyTree" width="560" style="width:100%;max-width:560px;height:auto;display:block;">
           </td>
         </tr>
         <tr><td style="padding:24px 32px 4px;">
