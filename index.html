@@ -12843,6 +12843,29 @@ document.addEventListener('keydown', function(e){
         }
       };
 
+      // [FIX] This whole app caches per-account data (projects, deployments,
+      // env vars, settings, webhooks, team invites, activity, secrets,
+      // cronjobs...) under a fixed set of localStorage keys with no
+      // per-user namespacing at all -- just one shared slot per key,
+      // regardless of who's logged in. Reproduced live: after impersonating
+      // a user, their GitHub repos showed correctly (fetched fresh from a
+      // live API call) but projects/deployments showed a DIFFERENT user's
+      // data -- because that data was never cleared, so the page loaded
+      // straight from whatever was already sitting in localStorage from
+      // this browser's previous session, before/instead of being freshly
+      // fetched for the new identity. Clearing every one of these keys on
+      // every impersonation switch (both directions) guarantees a clean
+      // slate that MUST be freshly fetched from the server, with no
+      // possibility of stale cross-identity data surviving the switch.
+      const IDENTITY_SCOPED_CACHE_KEYS = [
+        'db_settings', 'db_projects', 'db_deployments', 'db_envstore',
+        'db_webhooks', 'db_team_invites', 'db_activity', 'db_notif_seen_at',
+        'db_global_secrets', 'db_cronjobs', 'db_cron_execs'
+      ];
+      function clearIdentityScopedCache() {
+        IDENTITY_SCOPED_CACHE_KEYS.forEach(k => localStorage.removeItem(k));
+      }
+
       window.adminImpersonate = async function() {
         // [FIX] Was onclick="adminImpersonate(${JSON.stringify(query)})" --
         // JSON.stringify wraps the string in double quotes, which collided
@@ -12865,6 +12888,7 @@ document.addEventListener('keydown', function(e){
           // Stash the admin's own token so "Exit impersonation" can restore it,
           // then swap the active session to the target user's token and reload.
           localStorage.setItem('db_admin_own_token', authToken);
+          clearIdentityScopedCache();
           localStorage.setItem('db_auth_token', data.token);
           toast(`Now viewing as ${data.targetUser.email}…`, 'success', 4000);
           setTimeout(() => window.location.reload(), 600);
@@ -12875,6 +12899,7 @@ document.addEventListener('keydown', function(e){
 
       window.adminExitImpersonation = function() {
         const ownToken = localStorage.getItem('db_admin_own_token');
+        clearIdentityScopedCache();
         if (!ownToken) { window.location.reload(); return; }
         localStorage.setItem('db_auth_token', ownToken);
         localStorage.removeItem('db_admin_own_token');
