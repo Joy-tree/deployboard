@@ -9464,12 +9464,25 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     // actually blocked anyone. Sum from the real Firebase deployment history
     // instead.
     const deployWsDeployments = Array.isArray(deployWs.deployments) ? deployWs.deployments : [];
+    // [FIX] Was Number(d.durationSeconds) -- the actual persisted field on
+    // every deployment record (see syncDeploymentProjectToFirebase /
+    // saveDeployStatus) is called `duration`, not `durationSeconds`. This
+    // meant usedSeconds always computed to 0 regardless of real usage --
+    // the monthly build-time quota has never actually blocked anyone,
+    // despite this code looking like a working enforcement check.
     const usedSeconds = deployWsDeployments
       .filter(d => d.status === 'success' && d.startedAt && new Date(d.startedAt) >= monthStart)
-      .reduce((sum, d) => sum + (Number(d.durationSeconds) || 0), 0);
-    if (usedSeconds >= githubPlanLimits.monthlyBuildSeconds) {
+      .reduce((sum, d) => sum + (Number(d.duration) || 0), 0);
+    // Referral reward: 30 bonus build-minutes per successful referral,
+    // added on top of the plan's own monthly allowance (see
+    // /api/referral/claim). This is what actually makes that reward mean
+    // something -- without this, "bonus build minutes" was just a number
+    // on a settings page with nothing behind it.
+    const referralBonusSeconds = (deployWs.referral?.buildMinutesBonus || 0) * 60;
+    const effectiveQuotaSeconds = githubPlanLimits.monthlyBuildSeconds + referralBonusSeconds;
+    if (usedSeconds >= effectiveQuotaSeconds) {
       return res.status(403).json({
-        error: `Monthly build-time quota reached (${usedSeconds}s / ${githubPlanLimits.monthlyBuildSeconds}s). Resets at the start of next month.`,
+        error: `Monthly build-time quota reached (${usedSeconds}s / ${effectiveQuotaSeconds}s${referralBonusSeconds ? ` including your ${referralBonusSeconds}s referral bonus` : ''}). Resets at the start of next month.`,
         buildQuotaReached: true
       });
     }
@@ -10499,15 +10512,24 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
 
   // ── Monthly build-time quota check ────────────────────────────────────────
   if (Number.isFinite(uploadPlanLimits.monthlyBuildSeconds) && uploadPlanLimits.monthlyBuildSeconds > 0) {
-    const ownerId = String(req.user?._id || req.user?.id || '');
     const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,1,0);
-    const usedSeconds = await Deployment.aggregate([
-      { $match: { ownerUserId: ownerId, startedAt: { $gte: monthStart }, status: 'success' } },
-      { $group: { _id: null, total: { $sum: '$durationSeconds' } } }
-    ]).then(r => r[0]?.total || 0).catch(() => 0);
-    if (usedSeconds >= uploadPlanLimits.monthlyBuildSeconds) {
+    // [FIX] This was still using Deployment.aggregate() against MongoDB --
+    // the exact same bug already fixed for the GitHub deploy path's copy of
+    // this check, just never applied here too. On this (and any) Mongo-less
+    // Firebase-only setup, that aggregate always silently resolves to 0 via
+    // its own .catch(() => 0), so `0 >= 300` was never true -- the monthly
+    // build-time quota has never actually been enforced for a single
+    // upload-based deploy. Reading from the real Firebase deployment
+    // history instead, same as the GitHub path.
+    const uploadWsDeployments = Array.isArray(uploadDeployWs.deployments) ? uploadDeployWs.deployments : [];
+    const usedSeconds = uploadWsDeployments
+      .filter(d => d.status === 'success' && d.startedAt && new Date(d.startedAt) >= monthStart)
+      .reduce((sum, d) => sum + (Number(d.duration) || 0), 0);
+    const referralBonusSeconds = (uploadDeployWs.referral?.buildMinutesBonus || 0) * 60;
+    const effectiveQuotaSeconds = uploadPlanLimits.monthlyBuildSeconds + referralBonusSeconds;
+    if (usedSeconds >= effectiveQuotaSeconds) {
       return res.status(403).json({
-        error: `Monthly build-time quota reached (${usedSeconds}s / ${uploadPlanLimits.monthlyBuildSeconds}s). Resets at the start of next month.`,
+        error: `Monthly build-time quota reached (${usedSeconds}s / ${effectiveQuotaSeconds}s${referralBonusSeconds ? ` including your ${referralBonusSeconds}s referral bonus` : ''}). Resets at the start of next month.`,
         buildQuotaReached: true
       });
     }
