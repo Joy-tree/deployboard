@@ -3030,6 +3030,25 @@ app.get('/api/admin/impersonation-log', requireAuth, async (req, res) => {
 // username (e.g. the admin's own) -- to get a definitive count/list of how
 // widespread the impersonation GitHub-corruption issue actually is, instead
 // of checking one account at a time.
+// Diagnostic: checks for duplicate localAuth.users records sharing the same
+// email -- would explain "disconnect succeeds but the account still shows
+// the old value," if the admin tools and the person's actual login session
+// are resolving to two DIFFERENT records for what should be one account.
+app.get('/api/admin/debug-account', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const email = String(req.query.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'email query param is required' });
+    const matches = (localAuth.users || [])
+      .filter(u => String(u.email || '').trim().toLowerCase() === email)
+      .map(u => ({ id: u.id, email: u.email, githubUsername: u.githubUsername || '', githubId: u.githubId || '', firebaseUid: u.firebaseUid || '' }));
+    const sessionsForThese = (localAuth.sessions || [])
+      .filter(s => matches.some(m => m.id === s.userId))
+      .map(s => ({ userId: s.userId, expiresAt: s.expiresAt, impersonatedBy: s.impersonatedBy || null }));
+    res.json({ ok: true, matchCount: matches.length, records: matches, activeSessions: sessionsForThese });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/admin/audit-github-links', requireAuth, async (req, res) => {
   try {
     if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
