@@ -3049,6 +3049,28 @@ app.get('/api/admin/debug-account', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Force-expires EVERY session for a given account's email -- including any
+// leftover impersonation sessions that shouldn't still be valid, and any
+// stale device sessions. Gives a guaranteed clean slate: every device
+// logged into this account (the real owner's, or an admin's leftover
+// impersonation token) has to log in fresh afterward.
+app.post('/api/admin/revoke-sessions', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'email is required' });
+    const matchIds = new Set((localAuth.users || [])
+      .filter(u => String(u.email || '').trim().toLowerCase() === email)
+      .map(u => u.id));
+    if (!matchIds.size) return res.status(404).json({ error: 'No matching account found' });
+    const before = localAuth.sessions.length;
+    localAuth.sessions = localAuth.sessions.filter(s => !matchIds.has(s.userId));
+    const revoked = before - localAuth.sessions.length;
+    saveLocalAuth();
+    res.json({ ok: true, revoked });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/admin/audit-github-links', requireAuth, async (req, res) => {
   try {
     if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });

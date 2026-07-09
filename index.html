@@ -12791,6 +12791,7 @@ document.addEventListener('keydown', function(e){
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <input id="adminDebugEmailInput" type="text" placeholder="Their email…" style="flex:1;min-width:200px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:0.88rem;">
           <button class="btn btn-primary" onclick="adminDebugAccount()">Check</button>
+          <button class="btn btn-ghost" style="color:#f87171;border-color:rgba(239,68,68,.3);" onclick="adminRevokeSessions()">Revoke all sessions</button>
         </div>
         <pre id="adminDebugResult" style="margin-top:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:0.78rem;color:var(--text-2);white-space:pre-wrap;word-break:break-all;display:none;"></pre>
       </div>
@@ -12806,6 +12807,25 @@ document.addEventListener('keydown', function(e){
 
     <script>
     (function() {
+      window.adminRevokeSessions = async function() {
+        const input = document.getElementById('adminDebugEmailInput');
+        const email = (input?.value || '').trim();
+        if (!email) return toast('Enter an email.', 'error');
+        if (!confirm('This logs out every device currently signed into this account, including any leftover impersonation sessions. Continue?')) return;
+        try {
+          const res = await apiFetch('/api/admin/revoke-sessions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not revoke sessions');
+          toast(`Revoked ${data.revoked} session(s). Everyone on this account needs to log in fresh now.`, 'success', 6000);
+        } catch (e) {
+          toast(e.message || 'Could not revoke sessions', 'error');
+        }
+      };
+
       window.adminDebugAccount = async function() {
         const input = document.getElementById('adminDebugEmailInput');
         const resultEl = document.getElementById('adminDebugResult');
