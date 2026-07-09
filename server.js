@@ -3026,6 +3026,22 @@ app.get('/api/admin/impersonation-log', requireAuth, async (req, res) => {
 // was connected before it got overwritten (that data is gone), but at least
 // un-sticks the account from showing the admin's own GitHub, so the real
 // owner can reconnect their own.
+// Diagnostic: lists every account currently showing a specific GitHub
+// username (e.g. the admin's own) -- to get a definitive count/list of how
+// widespread the impersonation GitHub-corruption issue actually is, instead
+// of checking one account at a time.
+app.get('/api/admin/audit-github-links', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const targetUsername = String(req.query.username || '').trim().toLowerCase();
+    if (!targetUsername) return res.status(400).json({ error: 'username query param is required' });
+    const matches = (localAuth.users || [])
+      .filter(u => String(u.githubUsername || '').toLowerCase() === targetUsername)
+      .map(u => ({ email: u.email, id: u.id, name: u.name || '' }));
+    res.json({ ok: true, count: matches.length, accounts: matches });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/api/admin/disconnect-github', requireAuth, async (req, res) => {
   try {
     if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
