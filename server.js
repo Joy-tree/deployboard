@@ -3108,7 +3108,10 @@ app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
     // "ADMIN BROADCAST" eyebrow label is the one intentional visual
     // difference, everything else (borderless card, fonts, text colors)
     // matches the other four exactly.
-    const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
+    // Admin broadcasts use a dedicated banner illustration instead of the
+    // plain logo -- a deliberate, one-off request distinct from the small
+    // logo treatment used in the other four (per-user) email templates.
+    const adminBannerUrl = `https://${BASE_DOMAIN}/icons/admin-broadcast-banner.png`;
     const safeMessage = message.replace(/\n/g, '<br>');
     const html = `<!doctype html>
 <html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
@@ -3117,7 +3120,7 @@ app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;">
         <tr>
           <td style="background:#0a0f0a;">
-            <img src="${logoUrl}" alt="JoyTree" width="560" style="width:100%;max-width:560px;height:auto;display:block;">
+            <img src="${adminBannerUrl}" alt="JoyTree" width="560" style="width:100%;max-width:560px;height:auto;display:block;">
           </td>
         </tr>
         <tr><td style="padding:24px 32px 4px;">
