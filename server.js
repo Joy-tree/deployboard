@@ -3309,9 +3309,30 @@ app.post('/api/auth/github/exchange', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// [FIX] Reproduced live, exactly as designed here: while impersonating,
+// req.user resolves to the TARGET account, but any OAuth-connect action
+// (GitHub/Google) authenticates with whoever's browser is actually
+// performing it -- the admin's own real GitHub/Google login. The callback
+// then wrote the admin's own external identity onto req.user, which was
+// the target user's account -- silently overwriting (and in this case,
+// replacing) the target's own GitHub connection with the admin's.
+// Impersonation was built to let support view/fix a dashboard as the
+// customer, not to let identity-linking actions leak the admin's own
+// external accounts onto a customer's record. Block any such action
+// outright while impersonating, rather than trying to guess which ones
+// are "safe enough" to allow.
+function blockIfImpersonating(req, res) {
+  if (req.user?._impersonatedBy) {
+    res.status(403).json({ error: 'Connecting external accounts (GitHub/Google) is disabled while viewing a dashboard as another user via admin impersonation, to prevent your own account from being linked onto theirs. Exit impersonation first.' });
+    return true;
+  }
+  return false;
+}
+
 // Link GitHub to an already-logged-in email account (keeps existing session)
 app.post('/api/auth/github/link-account', requireAuth, async (req, res) => {
   try {
+    if (blockIfImpersonating(req, res)) return;
     if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
       return res.status(400).json({ error: 'GitHub OAuth is not configured on this server.' });
     }
@@ -3459,6 +3480,7 @@ app.post('/api/auth/google/exchange', async (req, res) => {
 // POST /api/auth/google/link-account — link Google to an already-logged-in account
 app.post('/api/auth/google/link-account', requireAuth, async (req, res) => {
   try {
+    if (blockIfImpersonating(req, res)) return;
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) return res.status(400).json({ error: 'Google OAuth is not configured on this server.' });
     const code = String(req.body.code || '').trim();
     if (!code) return res.status(400).json({ error: 'Missing Google OAuth code' });
