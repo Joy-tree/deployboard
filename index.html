@@ -19790,7 +19790,7 @@ ORDER BY TABLE_NAME;')">
           <div class="field">
             <label class="field-label">Message body</label>
             <textarea id="emailMessage" class="input" rows="10" placeholder="Write your announcement here..." oninput="renderEmailPreview()"></textarea>
-            <div style="font-size:0.74rem;color:var(--text-3);margin-top:6px;">Leave a blank line between paragraphs — each one is sent as its own paragraph, not one run-on block.</div>
+            <div style="font-size:0.74rem;color:var(--text-3);margin-top:6px;">Leave a blank line between paragraphs — each one is sent as its own paragraph, not one run-on block. Write <code>[link text](https://example.com)</code> anywhere in the intro or body to turn it into a real clickable hyperlink.</div>
           </div>
 
           <div class="field">
@@ -19812,6 +19812,20 @@ ORDER BY TABLE_NAME;')">
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="emailImagePosition" value="footer" onchange="renderEmailPreview()"> Small footer graphic</label>
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="emailImagePosition" value="none" onchange="renderEmailPreview()"> No image</label>
             </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Buttons (optional, up to 3)</label>
+            <div style="font-size:0.74rem;color:var(--text-3);margin-bottom:8px;">Solid green call-to-action buttons, like "Open dashboard" — shown centered below the message.</div>
+            <div id="emailButtonsList"></div>
+            <button type="button" class="btn btn-ghost" id="emailAddButtonBtn" onclick="addEmailCtaButton()">+ Add button</button>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Quick links (optional, up to 6)</label>
+            <div style="font-size:0.74rem;color:var(--text-3);margin-bottom:8px;">Small text links in a row, like "Create a deployment · Documentation · Support" — shown below the buttons.</div>
+            <div id="emailQuickLinksList"></div>
+            <button type="button" class="btn btn-ghost" id="emailAddQuickLinkBtn" onclick="addEmailQuickLink()">+ Add link</button>
           </div>
 
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -21227,6 +21241,8 @@ function initEmailsPage() {
   if (senderEl && !senderEl.value.trim()) {
     senderEl.value = String(currentUser?.name || currentUser?.githubUsername || settings.name || '').trim();
   }
+  renderEmailButtonsList();
+  renderEmailQuickLinksList();
   renderEmailPreview();
 }
 
@@ -21275,10 +21291,80 @@ function getEmailImagePosition() {
   return checked ? checked.value : 'top';
 }
 
+// ── Admin broadcast: CTA buttons + quick links ──────────────────────────────
+let emailCtaButtons = [];
+let emailQuickLinks = [];
+
+function renderEmailButtonsList() {
+  const list = document.getElementById('emailButtonsList');
+  const addBtn = document.getElementById('emailAddButtonBtn');
+  if (!list) return;
+  list.innerHTML = emailCtaButtons.map((b, i) => `
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap;">
+      <input class="input" style="flex:1;min-width:140px;" placeholder="Button text, e.g. Open dashboard" value="${escapeEmailPreviewHtml(b.label)}" oninput="emailCtaButtons[${i}].label=this.value;renderEmailPreview();">
+      <input class="input" style="flex:1.4;min-width:180px;" placeholder="https://joytree.site/dashboard" value="${escapeEmailPreviewHtml(b.url)}" oninput="emailCtaButtons[${i}].url=this.value;renderEmailPreview();">
+      <button type="button" class="btn btn-ghost" onclick="removeEmailCtaButton(${i})" title="Remove">✕</button>
+    </div>
+  `).join('');
+  if (addBtn) addBtn.style.display = emailCtaButtons.length >= 3 ? 'none' : '';
+}
+
+function addEmailCtaButton() {
+  if (emailCtaButtons.length >= 3) return;
+  emailCtaButtons.push({ label: '', url: '' });
+  renderEmailButtonsList();
+  renderEmailPreview();
+}
+
+function removeEmailCtaButton(i) {
+  emailCtaButtons.splice(i, 1);
+  renderEmailButtonsList();
+  renderEmailPreview();
+}
+
+function renderEmailQuickLinksList() {
+  const list = document.getElementById('emailQuickLinksList');
+  const addBtn = document.getElementById('emailAddQuickLinkBtn');
+  if (!list) return;
+  list.innerHTML = emailQuickLinks.map((l, i) => `
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap;">
+      <input class="input" style="flex:1;min-width:140px;" placeholder="Link text, e.g. Documentation" value="${escapeEmailPreviewHtml(l.label)}" oninput="emailQuickLinks[${i}].label=this.value;renderEmailPreview();">
+      <input class="input" style="flex:1.4;min-width:180px;" placeholder="https://docs.joytree.site" value="${escapeEmailPreviewHtml(l.url)}" oninput="emailQuickLinks[${i}].url=this.value;renderEmailPreview();">
+      <button type="button" class="btn btn-ghost" onclick="removeEmailQuickLink(${i})" title="Remove">✕</button>
+    </div>
+  `).join('');
+  if (addBtn) addBtn.style.display = emailQuickLinks.length >= 6 ? 'none' : '';
+}
+
+function addEmailQuickLink() {
+  if (emailQuickLinks.length >= 6) return;
+  emailQuickLinks.push({ label: '', url: '' });
+  renderEmailQuickLinksList();
+  renderEmailPreview();
+}
+
+function removeEmailQuickLink(i) {
+  emailQuickLinks.splice(i, 1);
+  renderEmailQuickLinksList();
+  renderEmailPreview();
+}
+
 function escapeEmailPreviewHtml(str) {
   return String(str || '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Mirrors the server's renderInlineLinks() so [label](url) shows as a real
+// styled link in the preview too, not just in the sent email.
+function renderInlineLinksPreview(rawText) {
+  const tokens = [];
+  const withPlaceholders = String(rawText || '').replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g, (m, label, url) => {
+    const idx = tokens.length;
+    tokens.push(`<a href="${escapeEmailPreviewHtml(url)}" style="color:#059669;text-decoration:underline;font-weight:600;">${escapeEmailPreviewHtml(label)}</a>`);
+    return `\u0000LINK${idx}\u0000`;
+  });
+  return escapeEmailPreviewHtml(withPlaceholders).replace(/\u0000LINK(\d+)\u0000/g, (m, idx) => tokens[Number(idx)] || '');
 }
 
 // Mirrors the server-side template in /api/admin/emails/broadcast closely
@@ -21298,10 +21384,10 @@ function renderEmailPreview() {
   const img = emailImageDataUrl || fallbackImg;
 
   const paragraphsHtml = message.split(/\n{2,}/).map(p => p.trim()).filter(Boolean)
-    .map(p => `<p style="margin:0 0 14px;font-size:15px;line-height:1.7;color:#3c4043;">${escapeEmailPreviewHtml(p).replace(/\n/g,'<br>')}</p>`).join('');
+    .map(p => `<p style="margin:0 0 14px;font-size:15px;line-height:1.7;color:#3c4043;">${renderInlineLinksPreview(p).replace(/\n/g,'<br>')}</p>`).join('');
   const headingHtml = heading ? `<h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;font-weight:700;color:#202124;">${escapeEmailPreviewHtml(heading)}</h1>` : '';
   const subheadingHtml = subheading ? `<h2 style="margin:0 0 16px;font-size:15px;line-height:1.5;font-weight:700;color:#202124;">${escapeEmailPreviewHtml(subheading)}</h2>` : '';
-  const introHtml = intro ? `<p style="margin:0 0 14px;font-size:14px;color:#202124;line-height:1.6;">${escapeEmailPreviewHtml(intro)}</p>` : '';
+  const introHtml = intro ? `<p style="margin:0 0 14px;font-size:14px;color:#202124;line-height:1.6;">${renderInlineLinksPreview(intro)}</p>` : '';
 
   const topBanner = position === 'top' ? `<div style="background:#0a0f0a;"><img src="${img}" style="width:100%;display:block;"></div>` : '';
   const leftLockup = position === 'left' ? `
@@ -21312,12 +21398,25 @@ function renderEmailPreview() {
   const footerImg = position === 'footer' ? `<div style="text-align:center;padding:0 24px 14px;"><img src="${img}" style="max-width:130px;width:100%;display:block;margin:0 auto;"></div>` : '';
   const bodyHeading = position === 'left' ? subheadingHtml : (headingHtml + subheadingHtml);
 
+  const buttonsPreview = emailCtaButtons.filter(b => b.label && b.url).length
+    ? `<div style="text-align:center;padding:6px 24px 4px;">` +
+      emailCtaButtons.filter(b => b.label && b.url).map(b => `<a href="${escapeEmailPreviewHtml(b.url)}" style="display:inline-block;margin:4px 4px;background:#10b981;color:#fff;font-weight:700;font-size:14px;padding:10px 22px;border-radius:8px;text-decoration:none;">${escapeEmailPreviewHtml(b.label)}</a>`).join('') +
+      `</div>`
+    : '';
+  const quickLinksPreview = emailQuickLinks.filter(l => l.label && l.url).length
+    ? `<div style="text-align:center;padding:4px 24px 4px;font-size:12px;">` +
+      emailQuickLinks.filter(l => l.label && l.url).map((l, i) => `${i > 0 ? '<span style="color:#9aa0a6;"> &middot; </span>' : ''}<a href="${escapeEmailPreviewHtml(l.url)}" style="color:#059669;text-decoration:none;font-weight:600;">${escapeEmailPreviewHtml(l.label)}</a>`).join('') +
+      `</div>`
+    : '';
+
   box.innerHTML = `
     ${topBanner}
     ${leftLockup}
     <div style="padding:${position === 'left' ? '14px' : '20px'} 24px 4px;">
       ${bodyHeading || introHtml || paragraphsHtml ? (bodyHeading + introHtml + paragraphsHtml) : '<p style="margin:0;font-size:13px;color:#9aa0a6;">Your composed email will appear here as you type…</p>'}
     </div>
+    ${buttonsPreview}
+    ${quickLinksPreview}
     ${footerImg}
     <div style="padding:18px 24px 20px;"><hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 12px;"><p style="margin:0;color:#80868b;font-size:11px;line-height:1.5;">You received this update because you are a JoyTree user.</p></div>
   `;
@@ -21371,7 +21470,11 @@ async function sendAdminBroadcastEmail() {
     const r = await apiFetch('/api/admin/emails/broadcast', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ senderName, subject, preheader, heading, subheading, intro, message, imageUrl, imagePosition })
+      body: JSON.stringify({
+        senderName, subject, preheader, heading, subheading, intro, message, imageUrl, imagePosition,
+        ctaButtons: emailCtaButtons.filter(b => b.label && b.url),
+        quickLinks: emailQuickLinks.filter(l => l.label && l.url)
+      })
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || 'Could not send emails');

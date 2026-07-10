@@ -3218,6 +3218,35 @@ function escapeEmailHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+// Only allow http(s)/mailto links in admin-composed emails — blocks
+// javascript: and other unsafe schemes from ever reaching an <a href>.
+function sanitizeEmailUrl(url) {
+  const u = String(url == null ? '' : url).trim();
+  if (/^https?:\/\//i.test(u) || /^mailto:/i.test(u)) return u;
+  return '';
+}
+
+// Lets the admin write "[label](https://...)" in any text field and get a
+// real, styled hyperlink in the sent email — the same lightweight syntax
+// used in markdown, so the admin doesn't have to write raw HTML. Links are
+// pulled out and rendered separately before the surrounding text is
+// escaped, then spliced back in, so a malicious label/url can't break out
+// of the link markup.
+function renderInlineLinks(rawText) {
+  const tokens = [];
+  const withPlaceholders = String(rawText == null ? '' : rawText).replace(
+    /\[([^\]]+)\]\(([^)\s]+)\)/g,
+    (m, label, url) => {
+      const safeUrl = sanitizeEmailUrl(url);
+      if (!safeUrl) return m; // not a recognized link scheme — leave the raw text as-is
+      const idx = tokens.length;
+      tokens.push(`<a href="${escapeEmailHtml(safeUrl)}" style="color:#059669;text-decoration:underline;font-weight:600;">${escapeEmailHtml(label)}</a>`);
+      return `\u0000LINK${idx}\u0000`;
+    }
+  );
+  return escapeEmailHtml(withPlaceholders).replace(/\u0000LINK(\d+)\u0000/g, (m, idx) => tokens[Number(idx)] || '');
+}
+
 app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
   try {
     if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
@@ -3234,6 +3263,18 @@ app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
     let imagePosition = String(req.body?.imagePosition || '').trim().toLowerCase();
     if (!['top', 'left', 'footer', 'none'].includes(imagePosition)) imagePosition = 'top';
     if (!senderName || !subject || !message) return res.status(400).json({ error: 'senderName, subject and message are required' });
+
+    // Up to 3 CTA buttons (e.g. "Open dashboard") and up to 6 small inline
+    // quick-links (e.g. "Create a deployment · Documentation · Support"),
+    // mirroring the layout of JoyTree's other transactional emails.
+    const ctaButtons = (Array.isArray(req.body?.ctaButtons) ? req.body.ctaButtons : [])
+      .map(b => ({ label: String(b?.label || '').trim(), url: sanitizeEmailUrl(b?.url) }))
+      .filter(b => b.label && b.url)
+      .slice(0, 3);
+    const quickLinks = (Array.isArray(req.body?.quickLinks) ? req.body.quickLinks : [])
+      .map(l => ({ label: String(l?.label || '').trim(), url: sanitizeEmailUrl(l?.url) }))
+      .filter(l => l.label && l.url)
+      .slice(0, 6);
 
     const records = isDbReady() ? await User.find({}).select('email').lean() : (localAuth.users || []);
     const dbEmails = records.map(u => String(u?.email || '').trim().toLowerCase()).filter(Boolean);
@@ -3258,16 +3299,34 @@ app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
     // solid, near-black paragraph text — not one flat grey wall of text.
     // Blank-line-separated blocks in the textarea now become real <p> tags,
     // and the copy color moved from #5f6368 to a much more readable #3c4043.
+    // Paragraphs (and the intro line) also now support "[label](https://...)"
+    // inline links, rendered as real styled <a> tags instead of raw text.
     const paragraphsHtml = message
       .split(/\n{2,}/)
       .map(p => p.trim())
       .filter(Boolean)
-      .map(p => `<p style="margin:0 0 14px;font-size:15px;line-height:1.7;color:#3c4043;">${escapeEmailHtml(p).replace(/\n/g, '<br>')}</p>`)
+      .map(p => `<p style="margin:0 0 14px;font-size:15px;line-height:1.7;color:#3c4043;">${renderInlineLinks(p).replace(/\n/g, '<br>')}</p>`)
       .join('');
 
     const headingHtml    = heading    ? `<h1 style="margin:0 0 8px;font-size:24px;line-height:1.3;font-weight:700;color:#202124;font-family:Arial,Helvetica,sans-serif;">${escapeEmailHtml(heading)}</h1>` : '';
     const subheadingHtml = subheading ? `<h2 style="margin:0 0 18px;font-size:16px;line-height:1.5;font-weight:700;color:#202124;font-family:Arial,Helvetica,sans-serif;">${escapeEmailHtml(subheading)}</h2>` : '';
-    const introHtml       = intro     ? `<p style="margin:0 0 14px;font-size:15px;color:#202124;line-height:1.6;">${escapeEmailHtml(intro)}</p>` : '';
+    const introHtml       = intro     ? `<p style="margin:0 0 14px;font-size:15px;color:#202124;line-height:1.6;">${renderInlineLinks(intro)}</p>` : '';
+
+    // One or more solid CTA buttons (e.g. "Open dashboard"), stacked and
+    // centered, sitting right after the body copy.
+    const ctaButtonsHtml = ctaButtons.length
+      ? `<tr><td align="center" style="padding:10px 32px 4px;">` +
+        ctaButtons.map(b => `<a href="${escapeEmailHtml(b.url)}" style="display:inline-block;margin:6px 6px;background:#10b981;color:#ffffff;font-weight:700;font-size:15px;padding:12px 28px;border-radius:8px;text-decoration:none;font-family:Arial,Helvetica,sans-serif;">${escapeEmailHtml(b.label)}</a>`).join('') +
+        `</td></tr>`
+      : '';
+
+    // Small inline text links row (e.g. "Create a deployment · Documentation · Support").
+    const quickLinksHtml = quickLinks.length
+      ? `<tr><td align="center" style="padding:6px 32px 4px;font-size:13px;">` +
+        quickLinks.map((l, i) => `${i > 0 ? '<span style="color:#9aa0a6;"> &middot; </span>' : ''}<a href="${escapeEmailHtml(l.url)}" style="color:#059669;text-decoration:none;font-weight:600;">${escapeEmailHtml(l.label)}</a>`).join('') +
+        `</td></tr>`
+      : '';
+
 
     // Full-width top banner (default placement, and the old always-on behavior).
     const topBannerRow = imagePosition === 'top'
@@ -3312,6 +3371,8 @@ app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
           ${paragraphsHtml}
           <p style="margin:22px 0 0;font-size:13px;color:#5f6368;">— ${escapeEmailHtml(senderName)}<br>JoyTree Team</p>
         </td></tr>
+        ${ctaButtonsHtml}
+        ${quickLinksHtml}
         ${footerImageRow}
         <tr><td style="padding:24px 32px 24px;">
           <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 16px;">
@@ -3323,6 +3384,8 @@ app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
 </body></html>`;
 
     const textParts = [heading, subheading, intro, message].filter(Boolean);
+    if (ctaButtons.length) textParts.push(ctaButtons.map(b => `${b.label}: ${b.url}`).join('\n'));
+    if (quickLinks.length) textParts.push(quickLinks.map(l => `${l.label}: ${l.url}`).join('\n'));
     const text = `${textParts.join('\n\n')}\n\n— ${senderName}\nJOYTREE Team`;
 
     let sent = 0; let failed = 0;
