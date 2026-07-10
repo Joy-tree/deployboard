@@ -6146,13 +6146,9 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   }
 
   var maxDist = 1, leaves = [];
-  var running = false;
   var cycleTimers = [];
+  var hasRevealed = false;
 
-  function clearTimers(){
-    cycleTimers.forEach(function(t){ clearTimeout(t); });
-    cycleTimers = [];
-  }
   function after(ms, fn){ cycleTimers.push(setTimeout(fn, ms)); }
 
   function computeMaxDist(items){
@@ -6177,45 +6173,21 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     }
   }
 
-  function gatherLeaves(tiles){
-    var items = buildLeaves(tiles);
-    var maxD = computeMaxDist(items);
-    for (var i = 0; i < items.length; i++) {
-      var item = items[i];
-      var restRot = item.restRot || 0;
-      var gatherStartRot = restRot + Math.floor(rand(-32, 32));
-      item.el.style.setProperty('--gather-start-rot', gatherStartRot + 'deg');
-      item.el.style.setProperty('--gather-x', Math.round(rand(-22, 22)) + 'px');
-      item.el.style.setProperty('--rest-rot', restRot + 'deg');
-      var delay = (item.dist / maxD) * 0.6 + Math.random() * 0.14;
-      var dur = rand(1.9, 2.5);
-      item.el.style.animationDelay = delay.toFixed(2) + 's';
-      item.el.style.animationDuration = dur.toFixed(2) + 's';
-      item.el.classList.add('jt-wl-gathering', pickVariant());
-    }
-    return items;
-  }
-
-  function runCycle(){
-    if (!running) return;
-    clearTimers();
-
-    // Only build a brand-new curtain if nothing is currently sitting there
-    // (i.e. this is the very first run). On every later loop iteration, the
-    // leaves left over from the previous cycle's gather phase are already
-    // sitting correctly in place — reusing them instead of swapping in a
-    // fresh random arrangement is what fixes the visible "jump" that used
-    // to happen right before each reveal.
-    if (!leaves.length) {
-      var tiles = tileGrid();
-      leaves = buildLeaves(tiles);
-    }
+  // [FIX] This used to loop forever: clear the leaves, hold, gather them
+  // back over the text, then rebuild the whole grid and do it all again —
+  // every ~11.5s, for as long as the banner was in view. Rebuilding upward
+  // of a hundred leaf elements on a repeating timer is what caused the
+  // occasional lag, and because an IntersectionObserver tore everything
+  // down on scroll-away and rebuilt from scratch on scroll-back, leaving
+  // and returning to the banner always replayed the whole reveal from the
+  // start. Real "welcome" reveals only need to happen once: play the
+  // curtain-clear a single time, then leave it settled with the leaves
+  // gone and the text showing — no rebuild, no re-cover, no repeat timer.
+  function revealOnce(){
+    var tiles = tileGrid();
+    leaves = buildLeaves(tiles);
     maxDist = computeMaxDist(leaves);
 
-    // covered pause, then the text quietly turns on UNDERNEATH the leaves
-    // (which now sit above it in stacking order) at the same moment the
-    // leaves start clearing — so what you actually see is leaf motion
-    // uncovering the message, not a text fade racing the leaves separately
     after(900, function(){
       clearLeaves(leaves, maxDist);
       textEl.classList.add('jt-wl-text-visible');
@@ -6224,45 +6196,22 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       flareEl.classList.add('jt-wl-flare-burst');
     });
     after(4300, function(){
+      // Leaves have finished clearing — drop them from the DOM for good.
+      // Nothing rebuilds them and nothing hides the text again.
       leavesContainer.innerHTML = '';
       leaves = [];
     });
-
-    // long calm hold, then hide the text and let the leaves gather back over
-    // it shortly after — again, motion and text stay connected
-    after(7800, function(){
-      textEl.classList.remove('jt-wl-text-visible');
-    });
-    after(8100, function(){
-      var freshTiles = tileGrid();
-      leaves = gatherLeaves(freshTiles); // keep for reuse by the next cycle
-    });
-    after(11500, function(){
-      runCycle(); // loop
-    });
   }
 
-  function start(){
-    if (running) return;
-    running = true;
-    runCycle();
-  }
-  function stop(){
-    running = false;
-    clearTimers();
-    // Reset to a clean slate rather than leaving leaves mid-transition —
-    // CSS animations keep running in the background even while our JS
-    // timers are paused, so anything mid-flight when we stop could be in
-    // an inconsistent state by the time the banner scrolls back into view.
-    leavesContainer.innerHTML = '';
-    leaves = [];
-    textEl.classList.remove('jt-wl-text-visible');
-  }
-
-  // Only animate while the banner is actually on screen.
+  // Reveal once, the first time the banner is actually on screen, then
+  // disconnect — no ongoing observation, no re-triggering on later scrolls.
   var io = new IntersectionObserver(function(entries){
     entries.forEach(function(entry){
-      if (entry.isIntersecting) start(); else stop();
+      if (entry.isIntersecting && !hasRevealed) {
+        hasRevealed = true;
+        revealOnce();
+        io.disconnect();
+      }
     });
   }, {threshold:0.35});
   io.observe(root);
