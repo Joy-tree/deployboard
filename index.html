@@ -6275,368 +6275,90 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 <!-- ═══════════════ /Joytree welcome loop ═══════════════ -->
 
 <section class="hero live-border">
-  <div class="hero-cosmic-grid"></div>
-  <div class="hero-orb one"></div>
-  <div class="hero-orb two"></div>
-  <div class="hero-orb three"></div>
-  <div class="hero-aurora"></div>
   <div class="hero-glow"></div>
   <div class="hero-glow-2"></div>
 
-<!-- ═══ Atmospheric scene: real photo background + light firefly overlay ═══ -->
   <style>
-    .hero{ position:relative; overflow:hidden; }
-
-    .jt-scene{
-      position:absolute;
-      inset:0;
-      z-index:0;
-      pointer-events:none;
-      overflow:hidden;
-      background-image:
-        linear-gradient(180deg, rgba(3,8,6,.55) 0%, rgba(3,8,6,.25) 15%, rgba(3,8,6,.35) 55%, rgba(3,8,6,.7) 100%),
-        url('assets/hero/hero-scenery.jpg');
-      background-size:cover;
-      background-position:center top;
-      background-repeat:no-repeat;
+    /* ── New hero: clean, single-focus, no background photo ── */
+    .hero-chip{
+      display:inline-flex;flex-direction:column;align-items:center;gap:2px;
+      margin:0 auto 30px;padding:10px 22px;
+      background:rgba(16,185,129,0.06);
+      border:1px solid rgba(16,185,129,0.22);
+      border-radius:14px;
+      animation:fadeUp 0.6s 0.15s ease both;
     }
-    .jt-scene-svg{ position:absolute; inset:0; display:block; width:100%; height:100%; }
-
-    .jt-scene-firefly{
-      fill:#a7f3d0;
-      filter:drop-shadow(0 0 3px rgba(167,243,208,.95)) drop-shadow(0 0 7px rgba(16,185,129,.6));
-      animation:jtSceneFireflyBlink var(--fdur) ease-in-out infinite;
-      animation-delay:var(--fdelay);
+    .hero-chip-label{
+      font-size:0.68rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+      color:var(--text-3);
     }
-    @keyframes jtSceneFireflyBlink{
-      0%,100%{ opacity:.15; }
-      50%{ opacity:.9; }
+    .hero-chip-word{
+      font-size:1.05rem;font-weight:700;letter-spacing:-0.01em;
+      background:linear-gradient(96deg,#10b981 0%,#06b6d4 60%,#22d3ee 100%);
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+      transition:opacity .3s ease;
     }
-
-    .hero-headline-stack, .jt-flow-wrap, .hero-actions{
+    .hero-preview{
+      width:100%;max-width:640px;margin:56px auto 0;
+      border-radius:16px;overflow:hidden;
+      background:var(--bg-2);
+      border:1px solid var(--border);
+      box-shadow:0 24px 60px -20px rgba(0,0,0,0.55);
+      text-align:left;
+      animation:fadeUp 0.6s 0.3s ease both;
+    }
+    .hero-preview-bar{
+      display:flex;align-items:center;gap:8px;
+      padding:12px 16px;border-bottom:1px solid var(--border);
+    }
+    .hero-preview-bar span:not(.hero-preview-url){
+      width:9px;height:9px;border-radius:50%;background:var(--border-h);
+    }
+    .hero-preview-url{
+      margin-left:8px;font-size:0.78rem;color:var(--text-3);font-family:var(--font-mono,monospace);
+    }
+    .hero-preview-body{padding:18px 20px;display:grid;gap:12px;}
+    .hero-preview-row{
+      display:flex;align-items:center;gap:12px;
+      font-size:0.86rem;color:var(--text-2);
+    }
+    .hero-preview-row i{
+      width:16px;height:16px;flex-shrink:0;border-radius:50%;
+      background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.4);
       position:relative;
-      z-index:1;
     }
-
-    .jt-headline-glow{
-      position:absolute;
-      left:50%; top:50%;
-      width:130%;
-      aspect-ratio:1.6/1;
-      transform:translate(-50%,-50%);
-      background:radial-gradient(ellipse at center,rgba(16,185,129,.22),rgba(52,211,153,.08) 45%,transparent 72%);
-      filter:blur(18px);
-      pointer-events:none;
-      z-index:0;
-      animation:jtHeadlineGlowPulse 5s ease-in-out infinite;
+    .hero-preview-row i::after{
+      content:'';position:absolute;left:4px;top:2px;width:4px;height:8px;
+      border-right:2px solid #10b981;border-bottom:2px solid #10b981;
+      transform:rotate(45deg);
     }
-    @keyframes jtHeadlineGlowPulse{
-      0%,100%{ opacity:.8; }
-      50%{ opacity:1; }
+    .hero-preview-row b{color:var(--text);font-weight:600;flex:1;}
+    .hero-preview-row span{color:var(--text-3);font-size:0.78rem;font-family:var(--font-mono,monospace);}
+    .hero-preview-row.is-live i{background:rgba(16,185,129,0.22);animation:pulse 2s infinite;}
+    .hero-preview-footer{
+      display:flex;gap:20px;flex-wrap:wrap;
+      padding:14px 20px;border-top:1px solid var(--border);
+      background:rgba(255,255,255,0.015);
     }
-    .hero-headline-stack{ position:relative; }
-    .hero-headline-stack > *{ position:relative; z-index:1; }
-
-    @media (prefers-reduced-motion: reduce){
-      .jt-scene-firefly, .jt-headline-glow{ animation:none; }
+    .hero-preview-footer span{font-size:0.76rem;color:var(--text-3);font-weight:600;}
+    .hero-preview-footer span b{color:var(--primary);font-weight:700;}
+    @media(max-width:640px){
+      .hero-preview{margin-top:40px;}
+      .hero-preview-body{padding:16px;}
+      .hero-preview-row span{display:none;}
     }
   </style>
 
-  <div class="jt-scene" aria-hidden="true">
-    <svg class="jt-scene-svg" viewBox="0 0 600 1800" preserveAspectRatio="none">
-      <circle class="jt-scene-firefly" cx="159" cy="925" r="1.9" style="--fdur:4.1s;--fdelay:3.1s"/><circle class="jt-scene-firefly" cx="65" cy="81" r="2.6" style="--fdur:3.4s;--fdelay:1.2s"/><circle class="jt-scene-firefly" cx="568" cy="808" r="2.6" style="--fdur:3.8s;--fdelay:3.2s"/><circle class="jt-scene-firefly" cx="111" cy="1069" r="2.6" style="--fdur:4.0s;--fdelay:3.7s"/><circle class="jt-scene-firefly" cx="393" cy="162" r="2.5" style="--fdur:4.1s;--fdelay:1.5s"/><circle class="jt-scene-firefly" cx="47" cy="1436" r="2.1" style="--fdur:4.4s;--fdelay:4.4s"/><circle class="jt-scene-firefly" cx="416" cy="1525" r="2.0" style="--fdur:4.6s;--fdelay:2.2s"/><circle class="jt-scene-firefly" cx="535" cy="1457" r="1.5" style="--fdur:3.1s;--fdelay:1.1s"/><circle class="jt-scene-firefly" cx="551" cy="753" r="2.3" style="--fdur:3.5s;--fdelay:2.5s"/><circle class="jt-scene-firefly" cx="238" cy="618" r="2.2" style="--fdur:4.1s;--fdelay:4.5s"/><circle class="jt-scene-firefly" cx="398" cy="1537" r="2.6" style="--fdur:5.0s;--fdelay:3.4s"/><circle class="jt-scene-firefly" cx="118" cy="1428" r="2.8" style="--fdur:4.8s;--fdelay:2.8s"/>
-    </svg>
-  </div>
-  <!-- ═══ /Atmospheric scene ═══ -->
-  <style>
-    .hero-h1{
-      background:linear-gradient(180deg,#ffffff 0%,#eafff5 45%,#a7f3d0 100%) !important;
-      -webkit-background-clip:text !important;
-      -webkit-text-fill-color:transparent !important;
-      background-clip:text !important;
-      color:transparent !important;
-      filter:drop-shadow(0 0 18px rgba(167,243,208,.45)) drop-shadow(0 0 42px rgba(16,185,129,.3));
-      animation:fadeUp .6s .1s ease both, jtHeroTextGlow 4.5s ease-in-out infinite;
-    }
-    @keyframes jtHeroTextGlow{
-      0%,100%{ filter:drop-shadow(0 0 18px rgba(167,243,208,.45)) drop-shadow(0 0 42px rgba(16,185,129,.3)); }
-      50%{ filter:drop-shadow(0 0 30px rgba(167,243,208,.75)) drop-shadow(0 0 62px rgba(16,185,129,.55)); }
-    }
+  <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>&nbsp;AI-Powered Deployment Platform</div>
 
-    .hero-h1 .accent{
-      background:linear-gradient(120deg,#34d399 0%,#6ee7b7 30%,#22d3ee 65%,#34d399 100%) !important;
-      background-size:200% auto;
-      -webkit-background-clip:text !important;
-      -webkit-text-fill-color:transparent !important;
-      background-clip:text !important;
-      filter:drop-shadow(0 0 16px rgba(52,211,153,.65)) drop-shadow(0 0 36px rgba(34,211,238,.4)) !important;
-      animation:jtAccentShimmer 5s linear infinite;
-    }
-    @keyframes jtAccentShimmer{
-      0%{ background-position:0% center; }
-      100%{ background-position:200% center; }
-    }
+  <h1 class="hero-h1">Deploy apps. Build APIs.<br><span class="accent">Run databases.</span> Ship anything.</h1>
 
-    .hero-typewriter-wrap{
-      width:100% !important;
-      max-width:480px;
-      margin:0 auto 32px !important;
-      background:rgba(6,20,14,.42);
-      border:1px solid rgba(110,231,183,.32);
-      border-radius:22px;
-      padding:14px 22px;
-      box-shadow:0 0 24px rgba(16,185,129,.22), inset 0 0 20px rgba(16,185,129,.07);
-      animation:fadeUp .6s .15s ease both, jtChipPulse 4s ease-in-out infinite;
-    }
-    @keyframes jtChipPulse{
-      0%,100%{ box-shadow:0 0 24px rgba(16,185,129,.22), inset 0 0 20px rgba(16,185,129,.07); }
-      50%{ box-shadow:0 0 36px rgba(16,185,129,.38), inset 0 0 26px rgba(16,185,129,.13); }
-    }
-
-    .hero-typewriter-label{
-      letter-spacing:.14em !important;
-      text-transform:uppercase;
-      font-size:.42em !important;
-      font-weight:700 !important;
-      color:#a7f3d0 !important;
-      opacity:.85;
-      margin-bottom:2px;
-    }
-
-    @media (max-width:768px){
-      .hero-typewriter-wrap{ padding:12px 18px; border-radius:18px; }
-    }
-
-    @media (prefers-reduced-motion: reduce){
-      .hero-h1, .hero-h1 .accent, .hero-typewriter-wrap{ animation:none !important; }
-    }
-  </style>
-
-
-  <div class="hero-headline-stack">
-    <div class="jt-headline-glow"></div>
-      <h1 class="hero-h1">Deploy apps. Build APIs.<br><span class="accent">Run databases.</span> Ship anything.</h1>
-    <div class="hero-typewriter-wrap">
-      <div class="hero-typewriter-label">Built for</div>
-      <div class="hero-typewriter-line"><span class="hero-typewriter" id="typewriter">Modern Web Teams</span></div>
-    </div>
+  <div class="hero-chip">
+    <span class="hero-chip-label">Built for</span>
+    <span class="hero-chip-word" id="typewriter">AI API Platform Builders</span>
   </div>
 
-<!-- ═══ Animated flow diagram, replaces the old hero-sub paragraph ═══ -->
-
-<style>
-  .jt-flow-wrap{
-    position:relative;
-    max-width:600px;
-    margin:8px auto 0;
-  }
-  .jt-flow-svg{ display:block; overflow:visible; }
-
-  .jt-flow-leaf{
-    opacity:.16;
-    animation:jtFlowLeafSway 7s ease-in-out infinite;
-  }
-  @keyframes jtFlowLeafSway{
-    0%,100%{ transform:rotate(calc(var(--rot) - 4deg)); }
-    50%{ transform:rotate(calc(var(--rot) + 4deg)); }
-  }
-
-  .jt-flow-path{
-    stroke:#10b981;
-    stroke-width:1.6;
-    stroke-linecap:round;
-    opacity:.32;
-    filter:drop-shadow(0 0 6px rgba(16,185,129,.55));
-  }
-
-  .jt-flow-particle{
-    fill:#a7f3d0;
-    filter:drop-shadow(0 0 5px rgba(167,243,208,1)) drop-shadow(0 0 12px rgba(16,185,129,.85));
-  }
-  .jt-flow-particle.p2{ fill:#6ee7b7; }
-  .jt-flow-particle.p3{ fill:#34d399; }
-
-  .jt-flow-node{
-    opacity:0;
-    transform-box:fill-box;
-    transform-origin:center;
-    animation:jtFlowNodeIn .8s ease forwards;
-    animation-delay:var(--d);
-  }
-  @keyframes jtFlowNodeIn{
-    from{ opacity:0; transform:scale(.7); }
-    to{ opacity:1; transform:scale(1); }
-  }
-  .jt-flow-halo{
-    fill:#10b981;
-    opacity:.16;
-    filter:blur(9px);
-    animation:jtFlowHaloPulse 3.4s ease-in-out infinite;
-    animation-delay:var(--d);
-  }
-  @keyframes jtFlowHaloPulse{
-    0%,100%{ opacity:.14; r:28; }
-    50%{ opacity:.28; r:33; }
-  }
-  .jt-flow-ring{
-    stroke:#6ee7b7;
-    opacity:.55;
-    animation:jtFlowRingPulse 3.4s ease-in-out infinite;
-    animation-delay:var(--d);
-  }
-  @keyframes jtFlowRingPulse{
-    0%,100%{ r:20; opacity:.4; }
-    50%{ r:23; opacity:.75; }
-  }
-  .jt-flow-core{
-    fill:#052e22;
-    stroke:#10b981;
-    stroke-width:1.4;
-  }
-  .jt-flow-icon{
-    color:#6ee7b7;
-    filter:drop-shadow(0 0 3px rgba(110,231,183,.8));
-  }
-
-  .jt-flow-label{
-    opacity:0;
-    animation:jtFlowLabelIn .8s ease forwards;
-    animation-delay:calc(var(--d) + .15s);
-  }
-  @keyframes jtFlowLabelIn{
-    from{ opacity:0; transform:translateY(6px); }
-    to{ opacity:1; transform:translateY(0); }
-  }
-  .jt-flow-title{
-    font-family:var(--font-ui);
-    font-size:15px;
-    font-weight:700;
-    fill:#e2f8ee;
-  }
-  .jt-flow-sub{
-    font-family:var(--font-ui);
-    font-size:11.5px;
-    fill:#94a3b8;
-  }
-
-  @media (max-width:600px){
-    .jt-flow-title{ font-size:13.5px; }
-    .jt-flow-sub{ font-size:10.5px; }
-  }
-
-  @media (prefers-reduced-motion: reduce){
-    .jt-flow-particle{ display:none; }
-    .jt-flow-leaf, .jt-flow-halo, .jt-flow-ring{ animation:none; }
-    .jt-flow-node, .jt-flow-label{ animation:none; opacity:1; }
-  }
-</style>
-
-<div class="jt-flow-wrap">
-<svg class="jt-flow-svg" viewBox="0 0 600 1230" width="100%" role="img" aria-label="How JoyTree works: describe an API, get a live URL in seconds, deploy from GitHub or a ZIP, self-healing builds, managed databases, one dashboard">
-  <defs>
-    <filter id="jtFlowGlow" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="6" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
-
-  <g transform="translate(40,60)"><use href="#jt-leaf-a" x="-17.0" y="-17.0" width="34" height="34" class="jt-flow-leaf" style="color:#14532d;--rot:-15deg" /></g><g transform="translate(540,180)"><use href="#jt-leaf-b1" x="-15.0" y="-15.0" width="30" height="30" class="jt-flow-leaf" style="color:#14532d;--rot:20deg" /></g><g transform="translate(30,340)"><use href="#jt-leaf-c2" x="-13.0" y="-13.0" width="26" height="26" class="jt-flow-leaf" style="color:#14532d;--rot:10deg" /></g><g transform="translate(520,560)"><use href="#jt-leaf-b2" x="-16.0" y="-16.0" width="32" height="32" class="jt-flow-leaf" style="color:#14532d;--rot:-25deg" /></g><g transform="translate(60,780)"><use href="#jt-leaf-a" x="-14.0" y="-14.0" width="28" height="28" class="jt-flow-leaf" style="color:#14532d;--rot:15deg" /></g><g transform="translate(540,1010)"><use href="#jt-leaf-c1" x="-15.0" y="-15.0" width="30" height="30" class="jt-flow-leaf" style="color:#14532d;--rot:-10deg" /></g><g transform="translate(200,1150)"><use href="#jt-leaf-b1" x="-13.0" y="-13.0" width="26" height="26" class="jt-flow-leaf" style="color:#14532d;--rot:20deg" /></g>
-
-  <path class="jt-flow-path" d="M 300,90 C 300,194.5 470,175.5 470,280 C 470,384.5 130,365.5 130,470 C 130,596.5 470,573.5 470,700 C 470,810.0 130,790.0 130,900 C 130,1004.5 300,985.5 300,1090" fill="none"/>
-
-  <circle class="jt-flow-particle p1" r="4"><animateMotion dur="9s" repeatCount="indefinite" path="M 300,90 C 300,194.5 470,175.5 470,280 C 470,384.5 130,365.5 130,470 C 130,596.5 470,573.5 470,700 C 470,810.0 130,790.0 130,900 C 130,1004.5 300,985.5 300,1090"/></circle>
-  <circle class="jt-flow-particle p2" r="3.2"><animateMotion dur="9s" begin="-3s" repeatCount="indefinite" path="M 300,90 C 300,194.5 470,175.5 470,280 C 470,384.5 130,365.5 130,470 C 130,596.5 470,573.5 470,700 C 470,810.0 130,790.0 130,900 C 130,1004.5 300,985.5 300,1090"/></circle>
-  <circle class="jt-flow-particle p3" r="3.2"><animateMotion dur="9s" begin="-6s" repeatCount="indefinite" path="M 300,90 C 300,194.5 470,175.5 470,280 C 470,384.5 130,365.5 130,470 C 130,596.5 470,573.5 470,700 C 470,810.0 130,790.0 130,900 C 130,1004.5 300,985.5 300,1090"/></circle>
-
-  
-      <g transform="translate(300,90)">
-        <g class="jt-flow-node" style="--d:0.0s">
-          <circle class="jt-flow-halo" r="30"/>
-          <circle class="jt-flow-ring" r="21" fill="none" stroke-width="1"/>
-          <circle class="jt-flow-core" r="16"/>
-          <g class="jt-flow-icon"><path d="M-9,-6 L9,-6 A4,4 0 0 1 13,-2 L13,4 A4,4 0 0 1 9,8 L-2,8 L-9,13 L-8,8 A4,4 0 0 1 -13,4 L-13,-2 A4,4 0 0 1 -9,-6 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="-5" cy="1" r="1.1" fill="currentColor"/><circle cx="0" cy="1" r="1.1" fill="currentColor"/><circle cx="5" cy="1" r="1.1" fill="currentColor"/></g>
-        </g>
-      </g>
-      <g transform="translate(470,280)">
-        <g class="jt-flow-node" style="--d:0.4s">
-          <circle class="jt-flow-halo" r="30"/>
-          <circle class="jt-flow-ring" r="21" fill="none" stroke-width="1"/>
-          <circle class="jt-flow-core" r="16"/>
-          <g class="jt-flow-icon"><path d="M0,-13 C6,-9 8,-2 6,5 L-6,5 C-8,-2 -6,-9 0,-13 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="0" cy="-4" r="2.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M-6,5 L-9,13 M6,5 L9,13 M-3,6 L-4,13 M3,6 L4,13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></g>
-        </g>
-      </g>
-      <g transform="translate(130,470)">
-        <g class="jt-flow-node" style="--d:0.8s">
-          <circle class="jt-flow-halo" r="30"/>
-          <circle class="jt-flow-ring" r="21" fill="none" stroke-width="1"/>
-          <circle class="jt-flow-core" r="16"/>
-          <g class="jt-flow-icon"><path d="M0,-13 A13,13 0 1 0 0.1,-13" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M-4,-2 L-4,10 M4,-2 L4,10 M-4,3 Q0,7 4,3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="-4" cy="-4" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="4" cy="-4" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/></g>
-        </g>
-      </g>
-      <g transform="translate(470,700)">
-        <g class="jt-flow-node" style="--d:1.2s">
-          <circle class="jt-flow-halo" r="30"/>
-          <circle class="jt-flow-ring" r="21" fill="none" stroke-width="1"/>
-          <circle class="jt-flow-core" r="16"/>
-          <g class="jt-flow-icon"><path d="M-9,-2 A9,9 0 1 1 -7,6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M-7,6 L-11,4 M-7,6 L-9,10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M-3,-1 L-1,1.5 L3,-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></g>
-        </g>
-      </g>
-      <g transform="translate(130,900)">
-        <g class="jt-flow-node" style="--d:1.6s">
-          <circle class="jt-flow-halo" r="30"/>
-          <circle class="jt-flow-ring" r="21" fill="none" stroke-width="1"/>
-          <circle class="jt-flow-core" r="16"/>
-          <g class="jt-flow-icon"><ellipse cx="0" cy="-7" rx="9" ry="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M-9,-7 L-9,7 A9,3.2 0 0 0 9,7 L9,-7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M-9,0 A9,3.2 0 0 0 9,0" fill="none" stroke="currentColor" stroke-width="1.6"/></g>
-        </g>
-      </g>
-      <g transform="translate(300,1090)">
-        <g class="jt-flow-node" style="--d:2.0s">
-          <circle class="jt-flow-halo" r="30"/>
-          <circle class="jt-flow-ring" r="21" fill="none" stroke-width="1"/>
-          <circle class="jt-flow-core" r="16"/>
-          <g class="jt-flow-icon"><rect x="-11" y="-11" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="2" y="-11" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="-11" y="2" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="2" y="2" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></g>
-        </g>
-      </g>
-  
-      <g transform="translate(300,90)">
-        <g class="jt-flow-label" style="--d:0.0s">
-          <text class="jt-flow-title" x="0" y="-6" text-anchor="middle">Describe it</text>
-          <text class="jt-flow-sub" x="0" y="14" text-anchor="middle">Plain English → REST API</text>
-        </g>
-      </g>
-      <g transform="translate(430,280)">
-        <g class="jt-flow-label" style="--d:0.4s">
-          <text class="jt-flow-title" x="0" y="-6" text-anchor="end">Live in seconds</text>
-          <text class="jt-flow-sub" x="0" y="14" text-anchor="end">Built, hosted, shipped</text>
-        </g>
-      </g>
-      <g transform="translate(170,470)">
-        <g class="jt-flow-label" style="--d:0.8s">
-          <text class="jt-flow-title" x="0" y="-6" text-anchor="start">GitHub or ZIP</text>
-          <text class="jt-flow-sub" x="0" y="14" text-anchor="start">Deploy either way</text>
-        </g>
-      </g>
-      <g transform="translate(430,700)">
-        <g class="jt-flow-label" style="--d:1.2s">
-          <text class="jt-flow-title" x="0" y="-6" text-anchor="end">Self-healing builds</text>
-          <text class="jt-flow-sub" x="0" y="14" text-anchor="end">AI fixes failed builds & opens a PR</text>
-        </g>
-      </g>
-      <g transform="translate(170,900)">
-        <g class="jt-flow-label" style="--d:1.6s">
-          <text class="jt-flow-title" x="0" y="-6" text-anchor="start">Managed databases</text>
-          <text class="jt-flow-sub" x="0" y="14" text-anchor="start">Spin up in one click</text>
-        </g>
-      </g>
-      <g transform="translate(300,1090)">
-        <g class="jt-flow-label" style="--d:2.0s">
-          <text class="jt-flow-title" x="0" y="-6" text-anchor="middle">One dashboard</text>
-          <text class="jt-flow-sub" x="0" y="14" text-anchor="middle">No DevOps experience required</text>
-        </g>
-      </g>
-</svg>
-</div>
-<!-- ═══ /Animated flow diagram ═══ -->
+  <p class="hero-sub">Describe an API in plain English and JoyTree generates a live, hosted REST endpoint in seconds. Deploy from GitHub or a ZIP — and when a build fails, AI diagnoses it, opens a fix, and redeploys automatically.</p>
 
   <div class="hero-actions">
     <a href="#" onclick="showDashboard();return false;" class="btn-hero-primary">
@@ -6647,45 +6369,6 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       See how it works
     </a>
-  </div>
-
-  <div class="hero-grid-shell reveal">
-    <div class="hero-core-panel neon-beam-border">
-      <div class="hero-core-top">
-        <span class="hero-core-badge">Release Command Deck</span>
-        <span class="hero-core-status">SYSTEM HEALTH: OPTIMAL</span>
-      </div>
-      <div class="hero-core-title">Every deployment, fully visible from commit to live.</div>
-      <div class="hero-core-sub">Queue depth, stage timing, runtime health, and rollback posture — all in one place.</div>
-      <div class="hero-core-timeline">
-        <div class="hero-core-step"><i></i><b>Source sync + dependency scan</b><span>00:02s</span></div>
-        <div class="hero-core-step"><i></i><b>Build graph + artifact sealing</b><span>00:21s</span></div>
-        <div class="hero-core-step"><i></i><b>Edge rollout + live verification</b><span>00:37s</span></div>
-      </div>
-    </div>
-    <div class="hero-side-stack">
-      <div class="hero-side-card neon-beam-border">
-        <h6>Reliability</h6>
-        <p>Every deployment ships with health checks, rollback readiness, and zero-downtime routing.</p>
-        <div class="hero-side-kpi">
-          <div><b>99.98%</b><span>Uptime</span></div>
-          <div><b>&lt;60s</b><span>Deploy time</span></div>
-          <div><b>24/7</b><span>Monitoring</span></div>
-          <div><b>1 Click</b><span>Rollback</span></div>
-        </div>
-      </div>
-      <div class="hero-side-card neon-beam-border">
-        <h6>Built different</h6>
-        <p>Fast shipping, full visibility, and instant recovery — without touching a server or writing config files.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="hero-rail reveal">
-    <div class="hero-rail-card neon-beam-border"><b>Smart Builds</b><span>Auto-detects your framework and configures the build pipeline for you.</span></div>
-    <div class="hero-rail-card neon-beam-border"><b>Live Logs</b><span>Watch every build step in real time from your browser.</span></div>
-    <div class="hero-rail-card neon-beam-border"><b>One-click Rollback</b><span>Instantly restore any previous deployment when things go wrong.</span></div>
-    <div class="hero-rail-card neon-beam-border"><b>Secure Edge</b><span>SSL, secrets management, and domain routing built in from day one.</span></div>
   </div>
 
   <div class="hero-trust">
@@ -6705,8 +6388,24 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     </span>
   </div>
 
-
+  <div class="hero-preview reveal">
+    <div class="hero-preview-bar">
+      <span></span><span></span><span></span>
+      <span class="hero-preview-url">your-project.joytree.site</span>
+    </div>
+    <div class="hero-preview-body">
+      <div class="hero-preview-row"><i></i><b>Source sync + dependency scan</b><span>00:02s</span></div>
+      <div class="hero-preview-row"><i></i><b>Build graph + artifact sealing</b><span>00:21s</span></div>
+      <div class="hero-preview-row is-live"><i></i><b>Edge rollout + live verification</b><span>00:37s</span></div>
+    </div>
+    <div class="hero-preview-footer">
+      <span><b>99.98%</b> uptime</span>
+      <span><b>&lt;60s</b> deploy time</span>
+      <span><b>1-click</b> rollback</span>
+    </div>
+  </div>
 </section>
+
 
 <!-- ═══════════════ Joytree onboarding story ═══════════════ -->
 <section class="section reveal jt-story-section" id="story" aria-label="How developers discover JoyTree">
