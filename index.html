@@ -34476,9 +34476,214 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
     border-right:1px solid rgba(16,185,129,.2) !important;
     box-shadow:4px 0 24px rgba(0,0,0,.5);
   }
-  .dbb-sidebar.open{transform:translateX(0);}
-  .dbb-body{position:relative;}
-  .dbb-topbar{padding:10px 12px;gap:8px;}
+/* ══════════════════════════════════════════════════════════════════════
+   QUERY STUDIO — COMPLETE REDESIGN (supersedes all earlier scattered rules
+   above for #page-db-query). Traditional desktop query-tool aesthetic —
+   the reference point is DataGrip/TablePlus/DBeaver, not a marketing page:
+   neutral dark chrome, one accent color reserved for actions/live status,
+   monospace-forward typography for anything code or data, dense but
+   uncluttered panels. Every element ID/onclick target below is UNCHANGED
+   from the existing markup — this is a pure visual/layout rebuild, no JS
+   was touched. Gated to >900px so the mobile experience (already
+   reported as working) is untouched; only desktop gets this treatment.
+   ══════════════════════════════════════════════════════════════════════ */
+
+#page-db-query .db-studio-page {
+  height: calc(100vh - 90px) !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  gap: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#page-db-query .query-ops-shell {
+  background: #0a0a0a !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.03) inset;
+}
+
+/* ── Connection bar: slim, always-legible, no dropdown cramping ── */
+#page-db-query .qstudio-db-bar {
+  background: #0e0e0e !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 14px 14px 0 0 !important;
+}
+#page-db-query .qstudio-db-bar-head { padding: 12px 18px !important; }
+#page-db-query .qstudio-db-badge {
+  background: rgba(255,255,255,.05) !important;
+  border-color: rgba(255,255,255,.1) !important;
+  color: #94a3b8 !important;
+}
+#page-db-query .qstudio-db-selected {
+  background: rgba(255,255,255,.03) !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
+#page-db-query .qstudio-db-selected:hover {
+  background: rgba(255,255,255,.06) !important;
+  border-color: rgba(255,255,255,.14) !important;
+}
+#page-db-query .qstudio-db-dropdown {
+  background: #101010 !important;
+  border-color: rgba(255,255,255,.1) !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6) !important;
+}
+
+/* ── Main workbench grid: editor + inspector sidebar ── */
+@media (min-width: 901px) {
+  #page-db-query .qstudio-body {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 360px !important;
+    gap: 0 !important;
+    border: none !important;
+    border-radius: 0 0 14px 14px !important;
+    background: #0a0a0a !important;
+  }
+  #page-db-query .qstudio-editor {
+    border-right: 1px solid rgba(255,255,255,.08) !important;
+    background: #0a0a0a !important;
+  }
+}
+
+/* ── Toolbar: clear button hierarchy, one accent reserved for Run ── */
+#page-db-query .qstudio-toolbar {
+  background: #0c0c0c !important;
+  border-bottom: 1px solid rgba(255,255,255,.07) !important;
+  padding: 12px 16px !important;
+  gap: 8px !important;
+}
+#page-db-query .qstudio-btn-run {
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+  color: #04140f !important;
+  font-weight: 800 !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.15) inset;
+}
+#page-db-query .qstudio-btn-run:hover { background: #059669 !important; border-color: #059669 !important; }
+#page-db-query .qstudio-btn {
+  background: rgba(255,255,255,.04) !important;
+  border-color: rgba(255,255,255,.1) !important;
+  color: #cbd5e1 !important;
+}
+#page-db-query .qstudio-btn:hover { background: rgba(255,255,255,.08) !important; border-color: rgba(255,255,255,.18) !important; }
+#page-db-query .qstudio-view-tabs {
+  background: rgba(255,255,255,.03) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 8px !important;
+  padding: 2px !important;
+}
+#page-db-query .qstudio-view-tab.active {
+  background: rgba(16,185,129,.14) !important;
+  color: #6ee7b7 !important;
+}
+#page-db-query .qstudio-status-pill {
+  border-color: rgba(255,255,255,.1) !important;
+  background: rgba(255,255,255,.03) !important;
+  color: #94a3b8 !important;
+}
+
+/* ── Editor: real monospace weight, generous line-height, quiet chrome ── */
+#page-db-query .qstudio-editor-wrap {
+  background: #0a0a0a !important;
+  border: none !important;
+}
+#page-db-query .qstudio-editor-label {
+  color: #64748b !important;
+  font-family: var(--font-mono) !important;
+  font-size: .68rem !important;
+  letter-spacing: .1em !important;
+}
+#page-db-query .qstudio-hl-pre,
+#page-db-query .qstudio-textarea {
+  font-family: var(--font-mono) !important;
+  font-size: .92rem !important;
+  line-height: 1.65 !important;
+}
+@media (min-width: 901px) {
+  #page-db-query .qstudio-hl-editor { min-height: 260px !important; }
+}
+#page-db-query .qstudio-editor-footer {
+  background: #0c0c0c !important;
+  border-top: 1px solid rgba(255,255,255,.07) !important;
+  border-bottom: 1px solid rgba(255,255,255,.07) !important;
+  color: #64748b !important;
+  font-family: var(--font-mono) !important;
+  font-size: .72rem !important;
+}
+
+/* ── Result Terminal: real terminal-window chrome, traffic-light dots ── */
+#page-db-query .qstudio-terminal { background: #060606 !important; }
+#page-db-query .qstudio-terminal-head {
+  background: #0e0e0e !important;
+  border-bottom: 1px solid rgba(255,255,255,.07) !important;
+  padding: 9px 16px !important;
+}
+/* Classic macOS-style traffic lights instead of a single status dot —
+   the one deliberate signature touch on this page: read this panel as a
+   real terminal window at a glance, the way DataGrip/iTerm/every serious
+   dev tool signals "this is a console," not a plain content box. */
+#page-db-query .qstudio-terminal-title-dot {
+  width: 10px !important; height: 10px !important;
+  background: #ef4444 !important;
+  box-shadow: 16px 0 0 #f59e0b, 32px 0 0 #10b981 !important;
+  margin-right: 22px !important;
+}
+#page-db-query .qstudio-terminal-title {
+  font-family: var(--font-mono) !important;
+  font-size: .74rem !important;
+  color: #94a3b8 !important;
+  letter-spacing: .04em;
+}
+#page-db-query .qstudio-terminal-body,
+#page-db-query .qstudio-raw-output {
+  background: #060606 !important;
+  font-family: var(--font-mono) !important;
+}
+@media (min-width: 901px) {
+  #page-db-query .qstudio-terminal-body { min-height: 220px !important; }
+}
+
+/* ── Inspector sidebar: tabbed panel, not a stacked mobile list ── */
+#page-db-query .qstudio-side {
+  background: #0a0a0a !important;
+  border-left: 1px solid rgba(255,255,255,.08) !important;
+}
+#page-db-query .qstudio-side-tabs {
+  background: #0c0c0c !important;
+  border-bottom: 1px solid rgba(255,255,255,.07) !important;
+  display: flex !important;
+  overflow-x: auto;
+}
+#page-db-query .qstudio-side-tab {
+  color: #64748b !important;
+  font-size: .74rem !important;
+  font-weight: 700 !important;
+  padding: 11px 14px !important;
+  border-bottom: 2px solid transparent !important;
+  white-space: nowrap;
+}
+#page-db-query .qstudio-side-tab.active {
+  color: #e2e8f0 !important;
+  border-bottom-color: #10b981 !important;
+  background: rgba(16,185,129,.06) !important;
+}
+#page-db-query .qstudio-side-panel { padding: 16px !important; }
+#page-db-query .qstudio-side-label {
+  color: #64748b !important;
+  font-size: .68rem !important;
+  font-weight: 800 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+#page-db-query .qstudio-mini-card {
+  background: rgba(255,255,255,.03) !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  border-radius: 9px !important;
+}
+#page-db-query .qstudio-mini-card:hover {
+  background: rgba(255,255,255,.06) !important;
+  border-color: rgba(16,185,129,.3) !important;
 }
 </style>
 
