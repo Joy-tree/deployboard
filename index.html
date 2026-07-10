@@ -6147,7 +6147,7 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 
   var maxDist = 1, leaves = [];
   var cycleTimers = [];
-  var hasRevealed = false;
+  var hasStarted = false;
 
   function after(ms, fn){ cycleTimers.push(setTimeout(fn, ms)); }
 
@@ -6173,19 +6173,43 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     }
   }
 
-  // [FIX] This used to loop forever: clear the leaves, hold, gather them
-  // back over the text, then rebuild the whole grid and do it all again —
-  // every ~11.5s, for as long as the banner was in view. Rebuilding upward
-  // of a hundred leaf elements on a repeating timer is what caused the
-  // occasional lag, and because an IntersectionObserver tore everything
-  // down on scroll-away and rebuilt from scratch on scroll-back, leaving
-  // and returning to the banner always replayed the whole reveal from the
-  // start. Real "welcome" reveals only need to happen once: play the
-  // curtain-clear a single time, then leave it settled with the leaves
-  // gone and the text showing — no rebuild, no re-cover, no repeat timer.
-  function revealOnce(){
-    var tiles = tileGrid();
-    leaves = buildLeaves(tiles);
+  function gatherLeaves(tiles){
+    var items = buildLeaves(tiles);
+    var maxD = computeMaxDist(items);
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var restRot = item.restRot || 0;
+      var gatherStartRot = restRot + Math.floor(rand(-32, 32));
+      item.el.style.setProperty('--gather-start-rot', gatherStartRot + 'deg');
+      item.el.style.setProperty('--gather-x', Math.round(rand(-22, 22)) + 'px');
+      item.el.style.setProperty('--rest-rot', restRot + 'deg');
+      var delay = (item.dist / maxD) * 0.6 + Math.random() * 0.14;
+      var dur = rand(1.9, 2.5);
+      item.el.style.animationDelay = delay.toFixed(2) + 's';
+      item.el.style.animationDuration = dur.toFixed(2) + 's';
+      item.el.classList.add('jt-wl-gathering', pickVariant());
+    }
+    return items;
+  }
+
+  // [FIX] The actual bug: an IntersectionObserver used to tear the banner
+  // down (wipe the leaves, hide the text) the instant it scrolled out of
+  // view, then rebuild it from a blank "covered" state on scroll back --
+  // so scrolling down a little mid-reveal and quickly back up would snap
+  // straight back to covered and restart the whole thing. The loop itself
+  // isn't the problem and should keep running indefinitely; what needed to
+  // change is that it should never be paused/reset by scroll position at
+  // all. So: use the observer only to lazily fire the very first start
+  // (no point animating a banner that's never been scrolled to), then
+  // disconnect it for good. From then on the cycle is driven purely by its
+  // own timers -- nothing here ever looks at scroll position again, so
+  // leaving and returning to the banner mid-reveal just shows it exactly
+  // where it actually is, never covered-and-restarted.
+  function runCycle(){
+    if (!leaves.length) {
+      var tiles = tileGrid();
+      leaves = buildLeaves(tiles);
+    }
     maxDist = computeMaxDist(leaves);
 
     after(900, function(){
@@ -6196,20 +6220,34 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       flareEl.classList.add('jt-wl-flare-burst');
     });
     after(4300, function(){
-      // Leaves have finished clearing — drop them from the DOM for good.
-      // Nothing rebuilds them and nothing hides the text again.
       leavesContainer.innerHTML = '';
       leaves = [];
     });
+    after(7800, function(){
+      textEl.classList.remove('jt-wl-text-visible');
+    });
+    after(8100, function(){
+      var freshTiles = tileGrid();
+      leaves = gatherLeaves(freshTiles); // kept for reuse by the next cycle
+    });
+    after(11500, function(){
+      runCycle(); // loop — this is intentional and permanent, not a bug
+    });
   }
 
-  // Reveal once, the first time the banner is actually on screen, then
-  // disconnect — no ongoing observation, no re-triggering on later scrolls.
+  function start(){
+    if (hasStarted) return;
+    hasStarted = true;
+    runCycle();
+  }
+
+  // Lazily trigger the very first play once the banner is actually on
+  // screen, then stop watching entirely — no further visibility checks,
+  // ever, so nothing can pause/reset the loop based on scroll again.
   var io = new IntersectionObserver(function(entries){
     entries.forEach(function(entry){
-      if (entry.isIntersecting && !hasRevealed) {
-        hasRevealed = true;
-        revealOnce();
+      if (entry.isIntersecting && !hasStarted) {
+        start();
         io.disconnect();
       }
     });
