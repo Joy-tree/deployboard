@@ -687,6 +687,7 @@ function sendProxyError(req, res, status, type, subdomain, baseDomain) {
 app.use((req, res, next) => {
   // Skip express.json for multipart upload routes — raw stream needed for parseMultipart
   if (req.path === '/api/upload-project') return next();
+  if (req.path === '/api/admin/emails/upload-image') return next();
   express.json({ verify: (req, _res, buf) => { req.rawBody = Buffer.from(buf || ''); } })(req, res, next);
 });
 app.use((req, res, next) => {
@@ -3205,16 +3206,33 @@ async function collectFirebaseAuthEmails() {
   return Array.from(emails);
 }
 
+// Minimal HTML-escaping for admin-supplied text before it's interpolated into
+// the broadcast template — this content goes out to every signed-up user, so
+// it needs to be safe HTML even though only a trusted root admin can send it.
+function escapeEmailHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
   try {
     if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
     if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return res.status(500).json({ error: 'Resend is not configured on server' });
 
-    const senderName = String(req.body?.senderName || '').trim();
-    const subject = String(req.body?.subject || '').trim();
-    const preheader = String(req.body?.preheader || '').trim();
-    const intro = String(req.body?.intro || '').trim();
-    const message = String(req.body?.message || '').trim();
+    const senderName  = String(req.body?.senderName  || '').trim();
+    const subject     = String(req.body?.subject     || '').trim();
+    const preheader   = String(req.body?.preheader   || '').trim();
+    const heading     = String(req.body?.heading     || '').trim();
+    const subheading  = String(req.body?.subheading  || '').trim();
+    const intro       = String(req.body?.intro       || '').trim();
+    const message     = String(req.body?.message     || '').trim();
+    const imageUrl    = String(req.body?.imageUrl    || '').trim();
+    let imagePosition = String(req.body?.imagePosition || '').trim().toLowerCase();
+    if (!['top', 'left', 'footer', 'none'].includes(imagePosition)) imagePosition = 'top';
     if (!senderName || !subject || !message) return res.status(400).json({ error: 'senderName, subject and message are required' });
 
     const records = isDbReady() ? await User.find({}).select('email').lean() : (localAuth.users || []);
@@ -3226,59 +3244,136 @@ app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
     const recipients = Array.from(new Set([...dbEmails, ...firebaseAuthEmails, ...firebaseRtdbEmails]));
     if (!recipients.length) return res.status(400).json({ error: 'No users found to receive email' });
 
-    // [FIX] This template was never touched by the earlier consistency pass
-    // across the other four emails -- still had the old bordered/rounded
-    // card, a different font stack (Inter vs Arial), a different color
-    // palette (slate blues vs the Google-style greys used everywhere else),
-    // and a hardcoded logo URL different from every other template's
-    // RESEND_LOGO_URL fallback. Aligned all of that here, plus per request:
-    // the logo shown larger and uncropped (64px, not squeezed into a tiny
-    // 36px icon) since this is the one email variant meant to feel a
-    // deliberate step above the standard user-facing ones -- an amber
-    // "ADMIN BROADCAST" eyebrow label is the one intentional visual
-    // difference, everything else (borderless card, fonts, text colors)
-    // matches the other four exactly.
-    // Admin broadcasts use a dedicated banner illustration instead of the
-    // plain logo -- a deliberate, one-off request distinct from the small
-    // logo treatment used in the other four (per-user) email templates.
+    // Admin broadcasts use a dedicated banner illustration by default, but the
+    // admin can now upload their own image and place it as a full-width top
+    // banner, a small lockup icon beside the heading, a small footer graphic,
+    // or skip an image entirely.
     const adminBannerUrl = `https://${BASE_DOMAIN}/icons/admin-broadcast-banner.png`;
-    const safeMessage = message.replace(/\n/g, '<br>');
+    const pickedImage = imageUrl || adminBannerUrl;
+
+    // [FIX] Body copy used to be one un-styled <br>-joined blob in a light
+    // #5f6368 grey — hard to read and with no visual hierarchy at all. Real
+    // marketing/product emails (e.g. Daytona's launch-week emails) always
+    // have a bold, larger headline, an optional bold sub-line, and then
+    // solid, near-black paragraph text — not one flat grey wall of text.
+    // Blank-line-separated blocks in the textarea now become real <p> tags,
+    // and the copy color moved from #5f6368 to a much more readable #3c4043.
+    const paragraphsHtml = message
+      .split(/\n{2,}/)
+      .map(p => p.trim())
+      .filter(Boolean)
+      .map(p => `<p style="margin:0 0 14px;font-size:15px;line-height:1.7;color:#3c4043;">${escapeEmailHtml(p).replace(/\n/g, '<br>')}</p>`)
+      .join('');
+
+    const headingHtml    = heading    ? `<h1 style="margin:0 0 8px;font-size:24px;line-height:1.3;font-weight:700;color:#202124;font-family:Arial,Helvetica,sans-serif;">${escapeEmailHtml(heading)}</h1>` : '';
+    const subheadingHtml = subheading ? `<h2 style="margin:0 0 18px;font-size:16px;line-height:1.5;font-weight:700;color:#202124;font-family:Arial,Helvetica,sans-serif;">${escapeEmailHtml(subheading)}</h2>` : '';
+    const introHtml       = intro     ? `<p style="margin:0 0 14px;font-size:15px;color:#202124;line-height:1.6;">${escapeEmailHtml(intro)}</p>` : '';
+
+    // Full-width top banner (default placement, and the old always-on behavior).
+    const topBannerRow = imagePosition === 'top'
+      ? `<tr><td style="background:#0a0f0a;"><img src="${escapeEmailHtml(pickedImage)}" alt="JoyTree" width="560" style="width:100%;max-width:560px;height:auto;display:block;"></td></tr>`
+      : '';
+
+    // Small icon-and-title lockup, mirroring the small-left icon treatment
+    // JoyTree's other transactional emails (e.g. "Welcome to JoyTree") use.
+    const leftLockupRow = imagePosition === 'left'
+      ? `<tr><td style="padding:28px 32px 0;">
+          <table role="presentation" cellspacing="0" cellpadding="0"><tr>
+            <td style="width:44px;padding-right:12px;vertical-align:middle;">
+              <img src="${escapeEmailHtml(pickedImage)}" alt="" width="44" height="44" style="width:44px;height:44px;border-radius:10px;display:block;object-fit:cover;">
+            </td>
+            <td style="vertical-align:middle;">
+              <span style="font-size:20px;font-weight:700;color:#202124;font-family:Arial,Helvetica,sans-serif;">${escapeEmailHtml(heading || subject)}</span>
+            </td>
+          </tr></table>
+        </td></tr>`
+      : '';
+
+    // Small graphic sitting above the footer disclaimer line.
+    const footerImageRow = imagePosition === 'footer'
+      ? `<tr><td align="center" style="padding:0 32px 18px;"><img src="${escapeEmailHtml(pickedImage)}" alt="" style="max-width:160px;width:100%;height:auto;display:block;"></td></tr>`
+      : '';
+
+    // When the icon+title lockup is already showing the heading, don't repeat
+    // it again in the body — but the subheading (a second, smaller line) still
+    // belongs in the body either way.
+    const bodyHeadingHtml = imagePosition === 'left' ? subheadingHtml : (headingHtml + subheadingHtml);
+
     const html = `<!doctype html>
 <html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
     <tr><td align="center">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;">
-        <tr>
-          <td style="background:#0a0f0a;">
-            <img src="${adminBannerUrl}" alt="JoyTree" width="560" style="width:100%;max-width:560px;height:auto;display:block;">
-          </td>
-        </tr>
-        <tr><td style="padding:24px 32px 4px;">
-          ${intro ? `<p style="margin:0 0 14px;font-size:15px;color:#202124;line-height:1.6;">${intro}</p>` : ''}
-          <div style="font-size:14px;line-height:1.7;color:#5f6368;">${safeMessage}</div>
-          <p style="margin:22px 0 0;font-size:13px;color:#5f6368;">— ${senderName}<br>JoyTree Team</p>
+        ${topBannerRow}
+        ${leftLockupRow}
+        <tr><td style="padding:${imagePosition === 'left' ? '18px' : '24px'} 32px 4px;">
+          ${bodyHeadingHtml}
+          ${introHtml}
+          ${paragraphsHtml}
+          <p style="margin:22px 0 0;font-size:13px;color:#5f6368;">— ${escapeEmailHtml(senderName)}<br>JoyTree Team</p>
         </td></tr>
+        ${footerImageRow}
         <tr><td style="padding:24px 32px 24px;">
           <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 16px;">
-          <p style="margin:0;color:#80868b;font-size:12px;line-height:1.6;">${preheader || 'You received this update because you are a JoyTree user.'}</p>
+          <p style="margin:0;color:#80868b;font-size:12px;line-height:1.6;">${preheader ? escapeEmailHtml(preheader) : 'You received this update because you are a JoyTree user.'}</p>
         </td></tr>
       </table>
     </td></tr>
   </table>
 </body></html>`;
 
+    const textParts = [heading, subheading, intro, message].filter(Boolean);
+    const text = `${textParts.join('\n\n')}\n\n— ${senderName}\nJOYTREE Team`;
+
     let sent = 0; let failed = 0;
     for (const to of recipients) {
       const r = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: RESEND_FROM_EMAIL, to: [to], subject, html, text: `${intro ? intro + '\n\n' : ''}${message}\n\n— ${senderName}\nJOYTREE Team` })
+        body: JSON.stringify({ from: RESEND_FROM_EMAIL, to: [to], subject, html, text })
       });
       if (r.ok) sent += 1; else failed += 1;
     }
     res.json({ ok: true, sent, failed, total: recipients.length });
   } catch (e) {
     res.status(500).json({ error: e.message || 'Could not broadcast email' });
+  }
+});
+
+// ── Admin broadcast email: image upload ────────────────────────────────────
+// Lets the admin attach their own image to a broadcast (top banner, small
+// left-aligned lockup icon, or footer graphic) instead of always using the
+// fixed admin-broadcast-banner.png illustration. Saved to a plain folder
+// under the project root, which the existing catch-all express.static
+// middleware already serves publicly — no extra serving route needed.
+const EMAIL_ASSETS_DIR = path.join(__dirname, 'email-assets');
+app.post('/api/admin/emails/upload-image', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const ct = req.headers['content-type'] || '';
+    if (!ct.includes('multipart/form-data')) return res.status(400).json({ error: 'multipart/form-data required' });
+
+    let parsed;
+    try { parsed = await parseMultipart(req); }
+    catch (e) { return res.status(400).json({ error: 'Failed to parse upload: ' + e.message }); }
+
+    const { fileBuffer, fileName } = parsed;
+    if (!fileBuffer || !fileBuffer.length) return res.status(400).json({ error: 'No image received' });
+
+    const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB is plenty for an email graphic and keeps sends fast
+    if (fileBuffer.length > MAX_IMAGE_BYTES) return res.status(400).json({ error: 'Image must be under 5MB' });
+
+    const ext = (path.extname(fileName || '').toLowerCase() || '.png').replace(/[^.a-z0-9]/g, '') || '.png';
+    const allowedExt = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+    if (!allowedExt.includes(ext)) return res.status(400).json({ error: 'Only PNG, JPG, GIF, or WEBP images are supported' });
+
+    fs.mkdirSync(EMAIL_ASSETS_DIR, { recursive: true });
+    const safeName = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
+    fs.writeFileSync(path.join(EMAIL_ASSETS_DIR, safeName), fileBuffer);
+
+    res.json({ ok: true, url: `https://${BASE_DOMAIN}/email-assets/${safeName}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not upload image' });
   }
 });
 
