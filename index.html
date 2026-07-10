@@ -6002,39 +6002,49 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     filter:drop-shadow(0 0 22px rgba(16,185,129,.22)) drop-shadow(0 0 46px rgba(6,182,212,.12));
   }
 
-  /* [FIX] These used to be plain blurred circles (a solid dot buried under
-     four stacked box-shadow blooms) -- a glow blob, not a star. Real
-     sparkle/twinkle highlights (see any lens-flare or night-sky photo)
-     read as a bright point with a few thin crossed rays, not a fuzzy
-     ball. Rebuilt each spark as an actual 4-point star out of two thin
-     tapered bars, with only a soft (not blown-out) glow behind it.
-     Colored green (white-hot core fading through green, like real
-     green-sparkle photography) instead of plain white, and there are
-     now roughly twice as many scattered across a wider area. */
+  /* [FIX] These were flat CSS crossed-bars -- reads as "a glow effect",
+     not an actual star. Real sparkle/star-field photography (per the
+     reference images) has two ingredients: sharp star shapes with real
+     points/rays, and a scattering of small soft glowing orbs ("planets")
+     of varying size. .jt-wl-spark now renders a real 4-point star SVG
+     (green-white, with a tight glow instead of a blown-out blur), and
+     .jt-wl-planet renders a small round glowing orb with a faint halo
+     ring instead -- the two mixed together across the scatter. */
   .jt-wl-sparks{ position:absolute; inset:-30px -50px; pointer-events:none; z-index:1; }
   .jt-wl-spark{
     position:absolute;
-    width:16px; height:16px;
+    width:18px; height:18px;
     opacity:0;
   }
-  .jt-wl-spark-sm{ width:10px; height:10px; }
-  .jt-wl-spark::before,
-  .jt-wl-spark::after{
-    content:'';
-    position:absolute; top:50%; left:50%;
-    background:linear-gradient(90deg, rgba(34,197,94,0) 0%, #4ade80 32%, #ecfdf5 50%, #4ade80 68%, rgba(34,197,94,0) 100%);
-    box-shadow:0 0 6px rgba(74,222,128,.65), 0 0 12px rgba(34,197,94,.35);
+  .jt-wl-spark-sm{ width:11px; height:11px; }
+  .jt-wl-spark svg{
+    display:block; width:100%; height:100%;
+    filter:drop-shadow(0 0 3px rgba(74,222,128,.9)) drop-shadow(0 0 8px rgba(34,197,94,.55));
   }
-  .jt-wl-spark::before{ width:16px; height:1.5px; transform:translate(-50%,-50%); }
-  .jt-wl-spark::after{  width:1.5px; height:16px; transform:translate(-50%,-50%); }
-  .jt-wl-spark-sm::before{ width:10px; height:1.2px; }
-  .jt-wl-spark-sm::after{  width:1.2px; height:10px; }
+  .jt-wl-planet{
+    border-radius:50%;
+    background:radial-gradient(circle at 34% 30%, #ecfdf5 0%, #4ade80 40%, #15803d 78%, transparent 100%);
+    box-shadow:0 0 7px rgba(74,222,128,.6), 0 0 15px rgba(34,197,94,.32);
+  }
+  .jt-wl-planet::after{
+    content:'';
+    position:absolute; inset:-45%;
+    border-radius:50%;
+    border:1px solid rgba(74,222,128,.3);
+  }
   .jt-wl-text.jt-wl-text-visible .jt-wl-spark{
     animation:jtWlSparkTwinkle 2.6s ease-in-out infinite;
   }
   @keyframes jtWlSparkTwinkle{
     0%,100%{ opacity:0;   transform:scale(.35) rotate(0deg); }
     50%{     opacity:.95; transform:scale(1) rotate(10deg); }
+  }
+  .jt-wl-text.jt-wl-text-visible .jt-wl-planet{
+    animation-name:jtWlPlanetTwinkle;
+  }
+  @keyframes jtWlPlanetTwinkle{
+    0%,100%{ opacity:0;   transform:scale(.5); }
+    50%{     opacity:.85; transform:scale(1); }
   }
 
   @media (max-width:600px){
@@ -6062,24 +6072,33 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   var flareEl = document.getElementById('jtWlFlare');
 
   // Build the sparkle points once — they just twinkle in/out with the text.
+  // [FIX] Sparkles were flat CSS crossed-bars, which reads as a generic
+  // "glow effect" rather than an actual star. Real sparkle/star-field
+  // photography (what was asked for) has two ingredients: sharp 4-point
+  // star shapes with real rays, and a scattering of small soft glowing
+  // orbs (distant "planets") of varying size. Built both here: most points
+  // render an actual star SVG (crisp rays + a tiny glow, not a blur blob),
+  // and a handful render as small round glowing planet dots instead.
+  var STAR_SVG = '<svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="#eafff5" d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>';
   (function buildSparks(){
     var POS = [
       {top:'4%', left:'6%'}, {top:'68%', left:'2%'}, {top:'8%', left:'92%'},
       {top:'74%', left:'94%'}, {top:'-8%', left:'40%'}, {top:'100%', left:'58%'},
-      {top:'36%', left:'-4%'}, {top:'30%', left:'102%'}, {top:'-2%', left:'18%'},
-      {top:'92%', left:'22%'}, {top:'50%', left:'96%'}, {top:'56%', left:'-2%'},
+      {top:'36%', left:'-4%', planet:true}, {top:'30%', left:'102%'}, {top:'-2%', left:'18%'},
+      {top:'92%', left:'22%', planet:true}, {top:'50%', left:'96%'}, {top:'56%', left:'-2%'},
       {top:'16%', left:'30%', sm:true}, {top:'82%', left:'38%', sm:true},
-      {top:'22%', left:'66%', sm:true}, {top:'86%', left:'70%', sm:true},
-      {top:'46%', left:'12%', sm:true}, {top:'42%', left:'86%', sm:true},
+      {top:'22%', left:'66%', sm:true, planet:true}, {top:'86%', left:'70%', sm:true},
+      {top:'46%', left:'12%', sm:true}, {top:'42%', left:'86%', sm:true, planet:true},
       {top:'-4%', left:'76%', sm:true}, {top:'104%', left:'10%', sm:true},
-      {top:'14%', left:'50%'}, {top:'78%', left:'54%'},
+      {top:'14%', left:'50%'}, {top:'78%', left:'54%', planet:true},
       {top:'62%', left:'106%', sm:true}, {top:'26%', left:'-8%', sm:true}
     ];
     var wrap = document.createElement('div');
     wrap.className = 'jt-wl-sparks';
     POS.forEach(function(pos, i){
       var s = document.createElement('span');
-      s.className = 'jt-wl-spark' + (pos.sm ? ' jt-wl-spark-sm' : '');
+      s.className = 'jt-wl-spark' + (pos.sm ? ' jt-wl-spark-sm' : '') + (pos.planet ? ' jt-wl-planet' : '');
+      if (!pos.planet) s.innerHTML = STAR_SVG;
       s.style.top = pos.top;
       s.style.left = pos.left;
       s.style.animationDelay = (i * 0.16).toFixed(2) + 's';
@@ -6109,7 +6128,11 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   function tileGrid(){
     var w = root.clientWidth || 800;
     var h = root.clientHeight || 200;
-    var size = Math.max(46, Math.min(90, w / 11));
+    // [FIX] Fewer, slightly bigger tiles -- combined with never rebuilding
+    // this grid again after the first build, this keeps the number of
+    // simultaneously-animating elements down without visibly thinning the
+    // leaf coverage.
+    var size = Math.max(54, Math.min(100, w / 9));
     var cols = Math.ceil(w / (size * 0.72)) + 1;
     var rows = Math.ceil(h / (size * 0.72)) + 1;
     var cx = cols / 2, cy = rows / 2;
@@ -6183,9 +6206,18 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     }
   }
 
-  function gatherLeaves(tiles){
-    var items = buildLeaves(tiles);
-    var maxD = computeMaxDist(items);
+  function gatherLeaves(items, maxD){
+    // [FIX] This used to call buildLeaves(tiles) here, which wipes the
+    // container and creates a brand-new set of leaf elements (each with
+    // its own inline SVG) from scratch. That happened on every single loop
+    // iteration, forever, for as long as the banner had ever been started
+    // -- destroying and recreating ~100 DOM nodes every ~11.5s is exactly
+    // the kind of repeating layout/paint cost that reads as "the site
+    // lags sometimes". The leaves never actually need to be destroyed:
+    // animation-fill-mode:forwards already leaves them sitting invisible
+    // in place once they finish clearing, so "gathering" them back is just
+    // re-triggering the SAME elements' gather animation from scratch --
+    // no new nodes, no innerHTML reset, ever, after the very first build.
     for (var i = 0; i < items.length; i++) {
       var item = items[i];
       var restRot = item.restRot || 0;
@@ -6197,9 +6229,10 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       var dur = rand(1.9, 2.5);
       item.el.style.animationDelay = delay.toFixed(2) + 's';
       item.el.style.animationDuration = dur.toFixed(2) + 's';
+      item.el.classList.remove('jt-wl-clearing', 'v1', 'v2', 'v3');
+      void item.el.offsetWidth; // force a reflow so the animation restarts cleanly on the reused element
       item.el.classList.add('jt-wl-gathering', pickVariant());
     }
-    return items;
   }
 
   // [FIX] The actual bug: an IntersectionObserver used to tear the banner
@@ -6218,9 +6251,9 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   function runCycle(){
     if (!leaves.length) {
       var tiles = tileGrid();
-      leaves = buildLeaves(tiles);
+      leaves = buildLeaves(tiles); // only ever runs once, the very first time
+      maxDist = computeMaxDist(leaves);
     }
-    maxDist = computeMaxDist(leaves);
 
     after(900, function(){
       clearLeaves(leaves, maxDist);
@@ -6229,16 +6262,11 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       void flareEl.offsetWidth;
       flareEl.classList.add('jt-wl-flare-burst');
     });
-    after(4300, function(){
-      leavesContainer.innerHTML = '';
-      leaves = [];
-    });
     after(7800, function(){
       textEl.classList.remove('jt-wl-text-visible');
     });
     after(8100, function(){
-      var freshTiles = tileGrid();
-      leaves = gatherLeaves(freshTiles); // kept for reuse by the next cycle
+      gatherLeaves(leaves, maxDist); // same elements every time -- nothing rebuilt
     });
     after(11500, function(){
       runCycle(); // loop — this is intentional and permanent, not a bug
@@ -6340,20 +6368,69 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       .hero-preview-body{padding:16px;}
       .hero-preview-row span{display:none;}
     }
+
+    /* ── Hero entrance: a bespoke "light-sweep" reveal for the headline,
+       instead of an ordinary character-by-character typewriter, followed
+       by the rest of the hero cascading in behind it. Runs once,
+       automatically, on load — no scroll-trigger needed since the hero is
+       always the first thing on screen. ── */
+    .hero-h1-line{
+      position:relative; display:inline-block;
+      clip-path:inset(0 100% 0 0);
+      animation:heroLineWipe 1.05s cubic-bezier(.19,1,.22,1) forwards;
+      will-change:clip-path;
+    }
+    .hero-h1-line::after{
+      content:'';
+      position:absolute; top:-6%; bottom:-6%; left:-16%; width:16%;
+      background:linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(167,243,208,.95) 45%, rgba(103,232,249,.95) 58%, rgba(16,185,129,0) 100%);
+      filter:blur(2.5px);
+      opacity:0;
+      animation:heroLineSweep 1.05s cubic-bezier(.19,1,.22,1) forwards;
+      pointer-events:none;
+    }
+    .hero-h1-line-1{ animation-delay:.2s; }
+    .hero-h1-line-1::after{ animation-delay:.2s; }
+    .hero-h1-line-2{ animation-delay:.95s; }
+    .hero-h1-line-2::after{ animation-delay:.95s; }
+    @keyframes heroLineWipe{
+      from{ clip-path:inset(0 100% 0 0); }
+      to{   clip-path:inset(0 0 0 0); }
+    }
+    @keyframes heroLineSweep{
+      0%{   left:-16%; opacity:0; }
+      8%{   opacity:1; }
+      80%{  opacity:1; }
+      100%{ left:100%; opacity:0; }
+    }
+
+    .hero-cascade{ opacity:0; transform:translateY(14px); animation:heroCascadeIn .7s ease forwards; }
+    .hero-eyebrow.hero-cascade{ animation-delay:.05s; }
+    .hero-chip.hero-cascade{ animation-delay:1.55s; }
+    .hero-sub.hero-cascade{ animation-delay:1.75s; }
+    .hero-actions.hero-cascade{ animation-delay:1.95s; }
+    .hero-trust.hero-cascade{ animation-delay:2.15s; }
+    @keyframes heroCascadeIn{ to{ opacity:1; transform:translateY(0); } }
+
+    @media (prefers-reduced-motion: reduce){
+      .hero-h1-line{ clip-path:none!important; animation:none!important; }
+      .hero-h1-line::after{ display:none!important; }
+      .hero-cascade{ opacity:1!important; transform:none!important; animation:none!important; }
+    }
   </style>
 
-  <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>&nbsp;AI-Powered Deployment Platform</div>
+  <div class="hero-eyebrow hero-cascade"><span class="hero-eyebrow-dot"></span>&nbsp;AI-Powered Deployment Platform</div>
 
-  <h1 class="hero-h1">Deploy apps. Build APIs.<br><span class="accent">Run databases.</span> Ship anything.</h1>
+  <h1 class="hero-h1"><span class="hero-h1-line hero-h1-line-1">Deploy apps. Build APIs.</span><br><span class="hero-h1-line hero-h1-line-2"><span class="accent">Run databases.</span> Ship anything.</span></h1>
 
-  <div class="hero-chip">
+  <div class="hero-chip hero-cascade">
     <span class="hero-chip-label">Built for</span>
     <span class="hero-chip-word" id="typewriter">AI API Platform Builders</span>
   </div>
 
-  <p class="hero-sub">Describe an API in plain English and JoyTree generates a live, hosted REST endpoint in seconds. Deploy from GitHub or a ZIP — and when a build fails, AI diagnoses it, opens a fix, and redeploys automatically.</p>
+  <p class="hero-sub hero-cascade">Describe an API in plain English and JoyTree generates a live, hosted REST endpoint in seconds. Deploy from GitHub or a ZIP — and when a build fails, AI diagnoses it, opens a fix, and redeploys automatically.</p>
 
-  <div class="hero-actions">
+  <div class="hero-actions hero-cascade">
     <a href="#" onclick="showDashboard();return false;" class="btn-hero-primary">
       Get Started — It's Free
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -6364,7 +6441,7 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     </a>
   </div>
 
-  <div class="hero-trust">
+  <div class="hero-trust hero-cascade">
     <span class="hero-trust-item">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
       No credit card required
