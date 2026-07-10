@@ -6495,6 +6495,78 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   </div>
 </section>
 
+<!-- ═══════════════ Supported languages + databases marquee ═══════════════ -->
+<section class="platform-marquee-wrap reveal" aria-label="Supported languages and databases">
+  <style>
+    .platform-marquee-wrap{ padding:34px 0 38px; background:var(--bg-2); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+    .platform-marquee-label{ text-align:center; font-size:0.72rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--text-3); margin-bottom:18px; }
+    .marquee-row{
+      overflow:hidden; position:relative; padding:6px 0;
+      -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
+      mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
+    }
+    .marquee-row + .marquee-row{ margin-top:14px; }
+    .marquee-track{ display:flex; width:max-content; gap:12px; animation:marqueeScrollL 34s linear infinite; }
+    .marquee-track.reverse{ animation-name:marqueeScrollR; animation-duration:38s; }
+    .marquee-row:hover .marquee-track{ animation-play-state:paused; }
+    .marquee-item{
+      display:flex; align-items:center; gap:9px; flex-shrink:0;
+      padding:9px 18px; border:1px solid var(--border); border-radius:11px;
+      background:var(--bg); white-space:nowrap;
+    }
+    .marquee-item img{ width:22px; height:22px; object-fit:contain; flex-shrink:0; }
+    .marquee-item span{ font-weight:600; font-size:0.86rem; color:var(--text-2); }
+    @keyframes marqueeScrollL{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+    @keyframes marqueeScrollR{ from{ transform:translateX(-50%); } to{ transform:translateX(0); } }
+    @media (prefers-reduced-motion: reduce){ .marquee-track{ animation:none; } }
+  </style>
+
+  <div class="platform-marquee-label">Every language and database, ready to go</div>
+
+  <div class="marquee-row">
+    <div class="marquee-track" id="marqueeLangTrack"></div>
+  </div>
+  <div class="marquee-row">
+    <div class="marquee-track reverse" id="marqueeDbTrack"></div>
+  </div>
+</section>
+<script>
+  (function(){
+    var LANGS = [
+      ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg', 'Node.js'],
+      ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-original.svg', 'Ruby'],
+      ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg', 'Python'],
+      ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg', 'Java'],
+      ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg', 'PHP'],
+      ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg', 'Go'],
+      ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/scala/scala-original.svg', 'Scala'],
+      ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/clojure/clojure-original.svg', 'Clojure'],
+      ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg', '.NET']
+    ];
+    var DBS = [
+      ['/icons/mongodb.svg', 'MongoDB'],
+      ['/icons/mysql.svg', 'MySQL'],
+      ['/icons/postgresql.svg', 'PostgreSQL'],
+      ['/icons/redis.svg', 'Redis'],
+      ['/icons/mariadb.svg', 'MariaDB'],
+      ['/icons/firebase.svg', 'Firebase'],
+      ['/icons/supabase.svg', 'Supabase']
+    ];
+    function renderTrack(id, items){
+      var el = document.getElementById(id);
+      if (!el) return;
+      // Rendered twice back-to-back so the 0%->-50% scroll loops seamlessly
+      // with no visible seam or jump.
+      var html = items.concat(items).map(function(item){
+        return '<span class="marquee-item"><img src="' + item[0] + '" alt="' + item[1] + '" loading="lazy"><span>' + item[1] + '</span></span>';
+      }).join('');
+      el.innerHTML = html;
+    }
+    renderTrack('marqueeLangTrack', LANGS);
+    renderTrack('marqueeDbTrack', DBS);
+  })();
+</script>
+
 
 <!-- ═══════════════ Joytree onboarding story ═══════════════ -->
 <section class="section reveal jt-story-section" id="story" aria-label="How developers discover JoyTree">
@@ -7050,78 +7122,6 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       <div class="feature-desc">An Xterm.js-powered terminal streams every line of your build as it happens — install, compile, copy, live. No waiting, no polling, no refresh. Pure transparency from first byte to deployment.</div>
       <span class="feature-tag" style="background:rgba(34,197,94,0.1);color:var(--primary);">Socket.io + Xterm.js</span>
     </div>
-
-    <!-- Supported platforms marquee (replaces the old subdomain-routing card) -->
-    <div class="platform-marquee-wrap reveal" style="grid-column:1/-1;">
-      <style>
-        .platform-marquee-wrap{ padding:28px 0 30px; background:var(--bg-2); }
-        .platform-marquee-label{ text-align:center; font-size:0.72rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--text-3); margin-bottom:16px; }
-        .marquee-row{
-          overflow:hidden; position:relative; padding:6px 0;
-          -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
-          mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
-        }
-        .marquee-row + .marquee-row{ margin-top:14px; }
-        .marquee-track{ display:flex; width:max-content; gap:12px; animation:marqueeScrollL 34s linear infinite; }
-        .marquee-track.reverse{ animation-name:marqueeScrollR; animation-duration:38s; }
-        .marquee-row:hover .marquee-track{ animation-play-state:paused; }
-        .marquee-item{
-          display:flex; align-items:center; gap:9px; flex-shrink:0;
-          padding:9px 18px; border:1px solid var(--border); border-radius:11px;
-          background:var(--bg); white-space:nowrap;
-        }
-        .marquee-item img{ width:22px; height:22px; object-fit:contain; flex-shrink:0; }
-        .marquee-item span{ font-weight:600; font-size:0.86rem; color:var(--text-2); }
-        @keyframes marqueeScrollL{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
-        @keyframes marqueeScrollR{ from{ transform:translateX(-50%); } to{ transform:translateX(0); } }
-        @media (prefers-reduced-motion: reduce){ .marquee-track{ animation:none; } }
-      </style>
-
-      <div class="platform-marquee-label">Every language and database, ready to go</div>
-
-      <div class="marquee-row">
-        <div class="marquee-track" id="marqueeLangTrack"></div>
-      </div>
-      <div class="marquee-row">
-        <div class="marquee-track reverse" id="marqueeDbTrack"></div>
-      </div>
-    </div>
-    <script>
-      (function(){
-        var LANGS = [
-          ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg', 'Node.js'],
-          ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-original.svg', 'Ruby'],
-          ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg', 'Python'],
-          ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg', 'Java'],
-          ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg', 'PHP'],
-          ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg', 'Go'],
-          ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/scala/scala-original.svg', 'Scala'],
-          ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/clojure/clojure-original.svg', 'Clojure'],
-          ['https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg', '.NET']
-        ];
-        var DBS = [
-          ['/icons/mongodb.svg', 'MongoDB'],
-          ['/icons/mysql.svg', 'MySQL'],
-          ['/icons/postgresql.svg', 'PostgreSQL'],
-          ['/icons/redis.svg', 'Redis'],
-          ['/icons/mariadb.svg', 'MariaDB'],
-          ['/icons/firebase.svg', 'Firebase'],
-          ['/icons/supabase.svg', 'Supabase']
-        ];
-        function renderTrack(id, items){
-          var el = document.getElementById(id);
-          if (!el) return;
-          // Rendered twice back-to-back so the 0%->-50% scroll loops seamlessly
-          // with no visible seam or jump.
-          var html = items.concat(items).map(function(item){
-            return '<span class="marquee-item"><img src="' + item[0] + '" alt="' + item[1] + '" loading="lazy"><span>' + item[1] + '</span></span>';
-          }).join('');
-          el.innerHTML = html;
-        }
-        renderTrack('marqueeLangTrack', LANGS);
-        renderTrack('marqueeDbTrack', DBS);
-      })();
-    </script>
 
     <!-- Docker isolation -->
     <div class="feature-card reveal">
