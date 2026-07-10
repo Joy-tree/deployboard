@@ -19790,7 +19790,7 @@ ORDER BY TABLE_NAME;')">
           <div class="field">
             <label class="field-label">Message body</label>
             <textarea id="emailMessage" class="input" rows="10" placeholder="Write your announcement here..." oninput="renderEmailPreview()"></textarea>
-            <div style="font-size:0.74rem;color:var(--text-3);margin-top:6px;">Leave a blank line between paragraphs — each one is sent as its own paragraph, not one run-on block. Write <code>[link text](https://example.com)</code> anywhere in the intro or body to turn it into a real clickable hyperlink.</div>
+            <div style="font-size:0.74rem;color:var(--text-3);margin-top:6px;">Leave a blank line between paragraphs — each one is sent as its own paragraph, not one run-on block. Any <code>https://...</code> link you paste in becomes clickable automatically — or write <code>[link text](https://example.com)</code> to control what the clickable text says.</div>
           </div>
 
           <div class="field">
@@ -21355,16 +21355,27 @@ function escapeEmailPreviewHtml(str) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-// Mirrors the server's renderInlineLinks() so [label](url) shows as a real
-// styled link in the preview too, not just in the sent email.
+// Mirrors the server's renderInlineLinks() so [label](url) AND bare
+// https://... URLs typed with no brackets both show as real links in the
+// preview too, not just in the sent email.
 function renderInlineLinksPreview(rawText) {
   const tokens = [];
-  const withPlaceholders = String(rawText || '').replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g, (m, label, url) => {
+  let text = String(rawText || '');
+  text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g, (m, label, url) => {
     const idx = tokens.length;
     tokens.push(`<a href="${escapeEmailPreviewHtml(url)}" style="color:#059669;text-decoration:underline;font-weight:600;">${escapeEmailPreviewHtml(label)}</a>`);
     return `\u0000LINK${idx}\u0000`;
   });
-  return escapeEmailPreviewHtml(withPlaceholders).replace(/\u0000LINK(\d+)\u0000/g, (m, idx) => tokens[Number(idx)] || '');
+  text = text.replace(/\bhttps?:\/\/[^\s<>()"']+/g, (m) => {
+    const trailingMatch = m.match(/[.,!?;:]+$/);
+    const trailing = trailingMatch ? trailingMatch[0] : '';
+    const url = trailing ? m.slice(0, -trailing.length) : m;
+    if (!url) return m;
+    const idx = tokens.length;
+    tokens.push(`<a href="${escapeEmailPreviewHtml(url)}" style="color:#059669;text-decoration:underline;font-weight:600;">${escapeEmailPreviewHtml(url)}</a>`);
+    return `\u0000LINK${idx}\u0000${trailing}`;
+  });
+  return escapeEmailPreviewHtml(text).replace(/\u0000LINK(\d+)\u0000/g, (m, idx) => tokens[Number(idx)] || '');
 }
 
 // Mirrors the server-side template in /api/admin/emails/broadcast closely

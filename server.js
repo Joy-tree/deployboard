@@ -3228,23 +3228,38 @@ function sanitizeEmailUrl(url) {
 
 // Lets the admin write "[label](https://...)" in any text field and get a
 // real, styled hyperlink in the sent email — the same lightweight syntax
-// used in markdown, so the admin doesn't have to write raw HTML. Links are
-// pulled out and rendered separately before the surrounding text is
-// escaped, then spliced back in, so a malicious label/url can't break out
-// of the link markup.
+// used in markdown, so the admin doesn't have to write raw HTML. Also
+// auto-linkifies any bare "https://..." typed directly with no brackets,
+// since that's what a standard email composer (Gmail, Outlook, etc.) does
+// automatically — most people won't remember or bother with special
+// syntax otherwise. Links are pulled out and rendered separately before
+// the surrounding text is escaped, then spliced back in, so a malicious
+// label/url can't break out of the link markup.
 function renderInlineLinks(rawText) {
   const tokens = [];
-  const withPlaceholders = String(rawText == null ? '' : rawText).replace(
-    /\[([^\]]+)\]\(([^)\s]+)\)/g,
-    (m, label, url) => {
-      const safeUrl = sanitizeEmailUrl(url);
-      if (!safeUrl) return m; // not a recognized link scheme — leave the raw text as-is
-      const idx = tokens.length;
-      tokens.push(`<a href="${escapeEmailHtml(safeUrl)}" style="color:#059669;text-decoration:underline;font-weight:600;">${escapeEmailHtml(label)}</a>`);
-      return `\u0000LINK${idx}\u0000`;
-    }
-  );
-  return escapeEmailHtml(withPlaceholders).replace(/\u0000LINK(\d+)\u0000/g, (m, idx) => tokens[Number(idx)] || '');
+  let text = String(rawText == null ? '' : rawText);
+
+  // 1) explicit [label](url) links
+  text = text.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, label, url) => {
+    const safeUrl = sanitizeEmailUrl(url);
+    if (!safeUrl) return m; // not a recognized link scheme — leave the raw text as-is
+    const idx = tokens.length;
+    tokens.push(`<a href="${escapeEmailHtml(safeUrl)}" style="color:#059669;text-decoration:underline;font-weight:600;">${escapeEmailHtml(label)}</a>`);
+    return `\u0000LINK${idx}\u0000`;
+  });
+
+  // 2) bare URLs typed with no brackets at all
+  text = text.replace(/\bhttps?:\/\/[^\s<>()"']+/g, (m) => {
+    const trailingMatch = m.match(/[.,!?;:]+$/);
+    const trailing = trailingMatch ? trailingMatch[0] : '';
+    const url = trailing ? m.slice(0, -trailing.length) : m;
+    if (!url) return m;
+    const idx = tokens.length;
+    tokens.push(`<a href="${escapeEmailHtml(url)}" style="color:#059669;text-decoration:underline;font-weight:600;">${escapeEmailHtml(url)}</a>`);
+    return `\u0000LINK${idx}\u0000${trailing}`;
+  });
+
+  return escapeEmailHtml(text).replace(/\u0000LINK(\d+)\u0000/g, (m, idx) => tokens[Number(idx)] || '');
 }
 
 app.post('/api/admin/emails/broadcast', requireAuth, async (req, res) => {
