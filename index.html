@@ -6007,22 +6007,28 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
      sparkle/twinkle highlights (see any lens-flare or night-sky photo)
      read as a bright point with a few thin crossed rays, not a fuzzy
      ball. Rebuilt each spark as an actual 4-point star out of two thin
-     tapered bars, with only a soft (not blown-out) glow behind it. */
+     tapered bars, with only a soft (not blown-out) glow behind it.
+     Colored green (white-hot core fading through green, like real
+     green-sparkle photography) instead of plain white, and there are
+     now roughly twice as many scattered across a wider area. */
   .jt-wl-sparks{ position:absolute; inset:-30px -50px; pointer-events:none; z-index:1; }
   .jt-wl-spark{
     position:absolute;
     width:16px; height:16px;
     opacity:0;
   }
+  .jt-wl-spark-sm{ width:10px; height:10px; }
   .jt-wl-spark::before,
   .jt-wl-spark::after{
     content:'';
     position:absolute; top:50%; left:50%;
-    background:linear-gradient(90deg, rgba(236,253,245,0) 0%, #ecfdf5 40%, #ffffff 50%, #ecfdf5 60%, rgba(236,253,245,0) 100%);
-    box-shadow:0 0 5px rgba(255,255,255,.55);
+    background:linear-gradient(90deg, rgba(34,197,94,0) 0%, #4ade80 32%, #ecfdf5 50%, #4ade80 68%, rgba(34,197,94,0) 100%);
+    box-shadow:0 0 6px rgba(74,222,128,.65), 0 0 12px rgba(34,197,94,.35);
   }
   .jt-wl-spark::before{ width:16px; height:1.5px; transform:translate(-50%,-50%); }
   .jt-wl-spark::after{  width:1.5px; height:16px; transform:translate(-50%,-50%); }
+  .jt-wl-spark-sm::before{ width:10px; height:1.2px; }
+  .jt-wl-spark-sm::after{  width:1.2px; height:10px; }
   .jt-wl-text.jt-wl-text-visible .jt-wl-spark{
     animation:jtWlSparkTwinkle 2.6s ease-in-out infinite;
   }
@@ -6061,16 +6067,22 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
       {top:'4%', left:'6%'}, {top:'68%', left:'2%'}, {top:'8%', left:'92%'},
       {top:'74%', left:'94%'}, {top:'-8%', left:'40%'}, {top:'100%', left:'58%'},
       {top:'36%', left:'-4%'}, {top:'30%', left:'102%'}, {top:'-2%', left:'18%'},
-      {top:'92%', left:'22%'}, {top:'50%', left:'96%'}, {top:'56%', left:'-2%'}
+      {top:'92%', left:'22%'}, {top:'50%', left:'96%'}, {top:'56%', left:'-2%'},
+      {top:'16%', left:'30%', sm:true}, {top:'82%', left:'38%', sm:true},
+      {top:'22%', left:'66%', sm:true}, {top:'86%', left:'70%', sm:true},
+      {top:'46%', left:'12%', sm:true}, {top:'42%', left:'86%', sm:true},
+      {top:'-4%', left:'76%', sm:true}, {top:'104%', left:'10%', sm:true},
+      {top:'14%', left:'50%'}, {top:'78%', left:'54%'},
+      {top:'62%', left:'106%', sm:true}, {top:'26%', left:'-8%', sm:true}
     ];
     var wrap = document.createElement('div');
     wrap.className = 'jt-wl-sparks';
     POS.forEach(function(pos, i){
       var s = document.createElement('span');
-      s.className = 'jt-wl-spark';
+      s.className = 'jt-wl-spark' + (pos.sm ? ' jt-wl-spark-sm' : '');
       s.style.top = pos.top;
       s.style.left = pos.left;
-      s.style.animationDelay = (i * 0.22).toFixed(2) + 's';
+      s.style.animationDelay = (i * 0.16).toFixed(2) + 's';
       wrap.appendChild(s);
     });
     textEl.appendChild(wrap);
