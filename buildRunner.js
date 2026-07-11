@@ -538,7 +538,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
   log(`\x1b[90m[install] cwd: ${relativeProjectRoot}\x1b[0m`);
   log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-  await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'production', command: installCmd, log });
+  await runInstallStepWithRecovery({ projectRoot, nodeImage, envObj: env, installCmd, log, nodeEnv: 'production' });
   emitStep(emit, 'install', 'done');
 
   // Step 3: Build
@@ -3069,7 +3069,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   if (hasPackageJson) {
     const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
     log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-    await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: installCmd, log });
+    await runInstallStepWithRecovery({ projectRoot, nodeImage, envObj: env, installCmd, log });
   } else {
     log(`\x1b[90m[install] No package.json found — skipping install for plain static files\x1b[0m`);
   }
@@ -3448,7 +3448,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
   log(`\x1b[90m[install] cwd: ${relativeProjectRoot}\x1b[0m`);
   log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-  await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: installCmd, log });
+  await runInstallStepWithRecovery({ projectRoot, nodeImage, envObj: env, installCmd, log });
   emitStep(emit, 'install', 'done');
 
   // ── Step 3: Build ──────────────────────────────────────────────────────────
@@ -4249,6 +4249,96 @@ function withDeployedAppRuntimeDefaults(envObj, project, baseDomain) {
     setDefault('PUBLIC_URL', publicOrigin);
   }
   return env;
+}
+
+// ── Known, auto-fixable install-time failure patterns ──────────────────────
+// Each of these is a genuine, common, well-documented class of failure with
+// one correct, known fix -- not a guess dressed up as a fix. All of them are
+// retried exactly ONCE; if the retry fails too, the real underlying error is
+// surfaced normally instead of looping forever.
+
+// `npm ci` refuses to install at all when package.json and package-lock.json
+// have drifted apart (very common after manually editing package.json, or
+// bumping a dependency without re-running install locally before pushing).
+function isLockfileOutOfSyncError(errMsg) {
+  const s = String(errMsg || '');
+  return /npm ci\b/i.test(s) && (
+    /in sync/i.test(s) ||
+    /can only install packages when your package\.json and package-lock\.json/i.test(s) ||
+    /Missing:.*from lock file/i.test(s)
+  );
+}
+
+// npm 7+ enforces peer dependency ranges strictly by default. A very common
+// real case: a dependency's peerDependencies range hasn't caught up with a
+// newer major version of some other package yet (e.g. a library still
+// declaring "react": "^18" once a project has moved to React 19).
+function isPeerDependencyConflictError(errMsg) {
+  const s = String(errMsg || '');
+  return /ERESOLVE/i.test(s) && /(could not resolve|unable to resolve dependency tree)/i.test(s);
+}
+
+// husky's own "prepare" script (added automatically by every modern husky
+// setup) assumes it's running inside a real git checkout with git
+// installed. Neither is true in this build container: repos are copied in
+// as plain files rather than a full git clone, and the build images don't
+// have git tooling installed. husky provides no value during a deployment
+// build anyway (it's a local dev-only git-hooks tool).
+function isHuskyPrepareScriptError(errMsg) {
+  const s = String(errMsg || '');
+  if (!/husky/i.test(s)) return false;
+  return /not found/i.test(s) || /\.git can.?t be found/i.test(s) || /not a git repository/i.test(s) || /command not found/i.test(s);
+}
+
+// Corepack verifies package-manager tarball signatures against a bundled
+// key set. When npm's registry rotates signing keys faster than a given
+// Node/corepack release's bundled keys, every yarn/pnpm invocation fails
+// with "Cannot find matching keyid" even though nothing is wrong with the
+// project itself. This is corepack's own documented env-var workaround.
+function isCorepackSignatureError(errMsg) {
+  const s = String(errMsg || '');
+  return /corepack/i.test(s) && (/cannot find matching keyid/i.test(s) || /signature/i.test(s));
+}
+
+// Runs the install command, and if it fails with one of the known,
+// well-documented, auto-fixable error classes above, applies the correct
+// fix and retries ONCE. Anything else (or a repeat failure after the retry)
+// is thrown normally so it surfaces as a real build error.
+async function runInstallStepWithRecovery({ projectRoot, nodeImage, envObj, installCmd, log, nodeEnv = 'development' }) {
+  try {
+    await runBuildCommandInContainer({ projectRoot, nodeImage, envObj, nodeEnv, command: installCmd, log });
+  } catch (e) {
+    const msg = String(e.message || '');
+
+    if (isLockfileOutOfSyncError(msg)) {
+      log(`\x1b[33m[Joytree] Detected an out-of-sync package-lock.json -- "npm ci" refuses to run when package.json and the lockfile disagree. Falling back to "npm install" to resync the lockfile and continue...\x1b[0m`);
+      const fallbackCmd = installCmd.replace(/\bnpm ci\b/, 'npm install');
+      await runBuildCommandInContainer({ projectRoot, nodeImage, envObj, nodeEnv, command: fallbackCmd, log });
+      return;
+    }
+
+    if (isPeerDependencyConflictError(msg)) {
+      log(`\x1b[33m[Joytree] Detected a peer dependency conflict (ERESOLVE) -- retrying install with --legacy-peer-deps, npm's own documented workaround for peer ranges that haven't caught up with a newer major version yet...\x1b[0m`);
+      const fallbackCmd = /--legacy-peer-deps/.test(installCmd) ? installCmd : `${installCmd} --legacy-peer-deps`;
+      await runBuildCommandInContainer({ projectRoot, nodeImage, envObj, nodeEnv, command: fallbackCmd, log });
+      return;
+    }
+
+    if (isHuskyPrepareScriptError(msg)) {
+      log(`\x1b[33m[Joytree] Detected a husky git-hooks setup failure (this build environment has no .git directory -- husky is a local dev tool and isn't needed for a deployment build). Retrying install with lifecycle scripts skipped...\x1b[0m`);
+      const fallbackCmd = /--ignore-scripts/.test(installCmd) ? installCmd : `${installCmd} --ignore-scripts`;
+      await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: { ...envObj, HUSKY: '0' }, nodeEnv, command: fallbackCmd, log });
+      return;
+    }
+
+    if (isCorepackSignatureError(msg)) {
+      log(`\x1b[33m[Joytree] Detected a corepack signature-verification failure (a known corepack/registry key-rotation issue, unrelated to your project) -- retrying with signature verification disabled...\x1b[0m`);
+      await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: { ...envObj, COREPACK_INTEGRITY_KEYS: '0' }, nodeEnv, command: installCmd, log });
+      return;
+    }
+
+    throw e;
+  }
 }
 
 // Detects the documented npm optional-dependencies bug (npm/cli#4828) that
@@ -5091,7 +5181,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
   if (!isPlainStatic) {
     const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
     log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-    await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: env, nodeEnv: 'development', command: installCmd, log });
+    await runInstallStepWithRecovery({ projectRoot, nodeImage, envObj: env, installCmd, log });
   }
   // Plain static: serve project root directly
   if (isPlainStatic && (!project.outputDir || project.outputDir === 'dist')) {
