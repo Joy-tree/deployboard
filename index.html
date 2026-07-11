@@ -29155,7 +29155,7 @@ html.app-mode #jtContactBtn,html.app-mode #jtContactModal,html.app-mode #jtConta
       <div class="jt-welcome-bubble">👋 Hi there! We're the <strong>Joytree</strong> team.<br>Have a question or feedback? Drop us a message — we read everything.</div>
       <form id="jtContactForm" onsubmit="jtSendMessage(event)">
         <div class="jt-form-group"><input type="text" name="name" placeholder="Your name" required autocomplete="name"></div>
-        <div class="jt-form-group"><input type="email" name="email" placeholder="Your email" required autocomplete="email"></div>
+        <div class="jt-form-group"><input type="email" name="email" placeholder="Your email (optional)" autocomplete="email"></div>
         <div class="jt-form-group"><textarea name="message" placeholder="Your message..." required></textarea></div>
         <button type="submit" class="jt-send-btn" id="jtSendBtn">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -29205,7 +29205,7 @@ async function jtSendMessage(e){
   const name    = form.querySelector('[name="name"]').value.trim();
   const email   = form.querySelector('[name="email"]').value.trim();
   const message = form.querySelector('[name="message"]').value.trim();
-  if (!name || !email || !message) return;
+  if (!name || !message) return;
   btn.disabled = true;
   btn.textContent = 'Sending...';
   try {

@@ -2674,8 +2674,8 @@ app.post('/api/support/message', async (req, res) => {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const message = String(req.body?.message || '').trim();
     const page = String(req.body?.page || '').trim();
-    if (!name || !email || !message) return res.status(400).json({ error: 'name, email, and message are required' });
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'invalid email' });
+    if (!name || !message) return res.status(400).json({ error: 'name and message are required' });
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'invalid email' });
 
     const toEmail = process.env.SUPPORT_TO_EMAIL || 'projectvpn89@gmail.com';
     const smtpHost = String(process.env.SMTP_HOST || '').trim();
@@ -2701,9 +2701,9 @@ app.post('/api/support/message', async (req, res) => {
     await transporter.sendMail({
       from: process.env.SUPPORT_FROM_EMAIL || smtpUser,
       to: toEmail,
-      replyTo: email,
+      ...(email ? { replyTo: email } : {}),
       subject: `[JOYTREE] New support message from ${name}`,
-      text: `From: ${name} <${email}>\nPage: ${page || 'unknown'}\nIP: ${req.ip || 'unknown'}\n\nMessage:\n${message}`
+      text: `From: ${name}${email ? ` <${email}>` : ' (no email provided)'}\nPage: ${page || 'unknown'}\nIP: ${req.ip || 'unknown'}\n\nMessage:\n${message}`
     });
     res.json({ ok: true });
   } catch (e) {
