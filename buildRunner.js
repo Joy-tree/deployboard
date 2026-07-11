@@ -121,21 +121,51 @@ function getCacheDir(sub) {
 // Supported engine strings: '>=20', '^22', '20.x', '20', etc.
 function detectRequiredNodeVersion(projectRoot) {
   try {
+    let bestMajor = null;
+    const consider = (engineStr) => {
+      const s = engineStr ? String(engineStr).trim() : '';
+      if (!s) return;
+      const m = s.match(/(\d+)/);
+      if (!m) return;
+      const major = Number(m[1]);
+      if (Number.isInteger(major) && major >= 14 && (bestMajor === null || major > bestMajor)) bestMajor = major;
+    };
+
     const pkgPath = path.join(projectRoot, 'package.json');
-    if (!fs.existsSync(pkgPath)) return null;
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-    const engineStr = (pkg.engines && pkg.engines.node) ? String(pkg.engines.node).trim() : '';
-    if (!engineStr) return null;
-    // Extract the first numeric major version from the engine range
-    const m = engineStr.match(/(\d+)/);
-    if (!m) return null;
-    const major = Number(m[1]);
-    if (!Number.isInteger(major) || major < 14) return null;
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+      consider(pkg.engines && pkg.engines.node);
+    }
+
+    // [FIX] A project's own package.json very often has no engines field at
+    // all, even though a dependency it pulls in does -- almost always a
+    // native-binary package (@tailwindcss/oxide, esbuild, sharp, @swc/core,
+    // etc.) whose engines.node requirement is higher than whatever Node
+    // image this build would otherwise use. When that mismatch happens, npm
+    // silently skips installing the correct platform-specific optional
+    // dependency (the documented npm/cli#4828 behavior), and the build
+    // fails with "Cannot find native binding" -- an error that reads like a
+    // corrupted lockfile, but isn't; reinstalling on the same too-old Node
+    // image reproduces it every time. package-lock.json already records
+    // every installed package's own engines field, so scanning it catches
+    // this class of bug before the build even starts, instead of relying on
+    // a same-image reinstall to fix what's actually a Node-version problem.
+    const lockPath = path.join(projectRoot, 'package-lock.json');
+    if (fs.existsSync(lockPath)) {
+      const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+      const pkgs = lock.packages || {};
+      for (const key of Object.keys(pkgs)) {
+        const entry = pkgs[key];
+        if (entry && entry.engines) consider(entry.engines.node);
+      }
+    }
+
+    if (bestMajor === null) return null;
     // Map to a supported Docker image version
-    if (major >= 22) return '22';
-    if (major >= 20) return '20';
-    if (major >= 18) return '18';
-    if (major >= 16) return '16';
+    if (bestMajor >= 22) return '22';
+    if (bestMajor >= 20) return '20';
+    if (bestMajor >= 18) return '18';
+    if (bestMajor >= 16) return '16';
     return '18'; // default safe fallback
   } catch (_) {
     return null;
@@ -4228,9 +4258,35 @@ function withDeployedAppRuntimeDefaults(envObj, project, baseDomain) {
 // correct platform-specific optional dependency, and the resulting build
 // fails with "Cannot find native binding" even though install itself
 // reported success.
+//
+// [FIX] This error message is misleading in one specific, common case: when
+// a native-binary package's own engines.node requirement (e.g.
+// @tailwindcss/oxide-linux-x64-gnu requiring Node >=20) is simply higher
+// than the Node image this build is running on. npm silently skips
+// installing that optional dependency because the running Node doesn't
+// satisfy its engines field -- nothing about the lockfile or platform is
+// actually wrong. The previous recovery here (delete lockfile + node_modules,
+// reinstall, retry once) is the fix for the genuine cross-platform-lockfile
+// case, but does nothing for the version-gated case: retrying the identical
+// install on the identical too-old Node image reproduces the exact same
+// failure every time, which is exactly what was happening here. See the
+// Node-version bump below.
 function isNativeBindingNpmBug(errMsg) {
   const s = String(errMsg || '');
   return /cannot find native binding/i.test(s) && /npm has a bug related to optional dependencies/i.test(s);
+}
+
+// Given a node image string like "node:18" or "node:18-alpine", bump it to
+// a modern LTS (22) if it's currently older than that -- used as a fallback
+// when a native-binding install failure survives a clean reinstall on the
+// original image, which means the real problem was the Node version itself.
+function bumpNodeImageForRecovery(nodeImage) {
+  const m = String(nodeImage || '').match(/^node:(\d+)(.*)$/);
+  if (!m) return 'node:22';
+  const major = Number(m[1]);
+  const suffix = m[2] || '';
+  if (!Number.isInteger(major) || major >= 20) return nodeImage; // already modern enough
+  return `node:22${suffix}`;
 }
 
 // The documented workaround, straight from npm's own error message: delete
@@ -4238,14 +4294,27 @@ function isNativeBindingNpmBug(errMsg) {
 // optional dependencies correctly for the actual build platform, and retry
 // the build once. Not a loop -- if it fails again after this, the real
 // error is surfaced normally rather than retrying forever.
+//
+// [FIX] Also bump the Node image on this retry if it's currently older than
+// Node 20. A same-image reinstall only fixes the cross-platform-lockfile
+// variant of this bug; it does nothing when the actual cause is a native
+// binary's engines.node requirement being higher than this image (the
+// reinstall will just skip the same optional dependency again, for the
+// same reason, and fail identically). Bumping to a modern LTS on the retry
+// covers both causes with one recovery path instead of only the first.
 async function recoverFromNativeBindingBugAndRetry({ projectRoot, nodeImage, envObj, installCmd, buildCmd, nodeEnvBuild = 'production', log }) {
-  log(`\x1b[33m[Joytree] Detected a known npm bug (native binary optional dependencies, see https://github.com/npm/cli/issues/4828) -- this happens when package-lock.json was generated on a different OS than this Linux build environment. Automatically retrying with a clean reinstall...\x1b[0m`);
+  const recoveryImage = bumpNodeImageForRecovery(nodeImage);
+  if (recoveryImage !== nodeImage) {
+    log(`\x1b[33m[Joytree] Detected a native-binding install failure (see https://github.com/npm/cli/issues/4828). This can happen when a dependency's own required Node version is newer than ${nodeImage} -- retrying with a clean reinstall on ${recoveryImage} as well as a fresh lockfile...\x1b[0m`);
+  } else {
+    log(`\x1b[33m[Joytree] Detected a known npm bug (native binary optional dependencies, see https://github.com/npm/cli/issues/4828) -- this happens when package-lock.json was generated on a different OS than this Linux build environment. Automatically retrying with a clean reinstall...\x1b[0m`);
+  }
   try { fs.rmSync(path.join(projectRoot, 'node_modules'), { recursive: true, force: true }); } catch (_) {}
   try { fs.rmSync(path.join(projectRoot, 'package-lock.json'), { force: true }); } catch (_) {}
-  log(`\x1b[90m$ ${installCmd} (clean reinstall)\x1b[0m`);
-  await runBuildCommandInContainer({ projectRoot, nodeImage, envObj, nodeEnv: 'development', command: installCmd, log });
+  log(`\x1b[90m$ ${installCmd} (clean reinstall${recoveryImage !== nodeImage ? ' on ' + recoveryImage : ''})\x1b[0m`);
+  await runBuildCommandInContainer({ projectRoot, nodeImage: recoveryImage, envObj, nodeEnv: 'development', command: installCmd, log });
   log(`\x1b[90m$ ${buildCmd} (retry)\x1b[0m`);
-  await runBuildCommandInContainer({ projectRoot, nodeImage, envObj, nodeEnv: nodeEnvBuild, command: buildCmd, log });
+  await runBuildCommandInContainer({ projectRoot, nodeImage: recoveryImage, envObj, nodeEnv: nodeEnvBuild, command: buildCmd, log });
 }
 
 async function runBuildCommandInContainer({ projectRoot, nodeImage, envObj, nodeEnv = 'development', command, log }) {
