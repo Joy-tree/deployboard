@@ -16483,29 +16483,63 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
     <div class="page" id="page-db-query">
       <style>
-        /* [FIX] The old page opened with a full decorative hero (kicker +
-           title + subtitle + status pill + a button row) before any actual
-           query tool appeared at all -- on mobile that pushed the real
-           toolbar and editor below the fold entirely. A real SQL client
-           (Navicat, SSMS, etc.) has essentially zero decorative chrome: the
-           toolbar sits right at the top and everything else is workspace.
-           Collapsing the "Back" link down to a slim inline one instead of
-           its own full margin-bottom row buys back the rest of that space. */
+        /* ═══════════ Query Studio v2 — real SQL-client layout ═══════════
+           Full rebuild: no decorative hero, no permanent side-drawer of
+           tutorial content -- just a dense top bar, a live table/collection
+           tree, one editor, one results grid, and one status line. This is
+           the shape every real desktop SQL client (Navicat, SSMS, DataGrip)
+           actually uses; the previous version had a hero header eating the
+           top of the page and a giant always-open tabbed sidebar
+           (Templates/History/Saved/Schema/Relations/Lab) that no reference
+           tool has visible by default. */
         #page-db-query .page-back{ margin-bottom:8px; }
+        .qs2-shell{
+          display:flex;flex-direction:column;min-height:0;
+          border:1px solid rgba(16,185,129,.18);border-radius:16px;overflow:hidden;background:#0d0d0d;
+        }
+        .qs2-topbar{
+          display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+          padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.07);
+        }
+        .qs2-topbar-sep{ width:1px;align-self:stretch;background:rgba(255,255,255,.08);margin:2px 2px; }
+        .qs2-actions{ display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1; }
+        .qs2-main{ display:grid;grid-template-columns:220px minmax(0,1fr);min-height:0;flex:1; }
+        @media(max-width:900px){ .qs2-main{ grid-template-columns:1fr; } }
+        .qs2-workspace{ display:flex;flex-direction:column;min-height:0;border-left:1px solid rgba(255,255,255,.06); }
+        @media(max-width:900px){ .qs2-workspace{ border-left:none; } }
+        .qs2-tabbar{ display:flex;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0; }
+        .qs2-tab{
+          padding:8px 16px;font-size:.78rem;font-weight:700;color:#e2e8f0;
+          background:rgba(255,255,255,.03);border-right:1px solid rgba(255,255,255,.06);
+          display:flex;align-items:center;gap:6px;
+        }
+        .qs2-tab svg{ color:#10b981; }
+        .qs2-results-head{
+          display:flex;align-items:center;justify-content:space-between;
+          padding:6px 12px;border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06);
+          background:rgba(255,255,255,.02);flex-shrink:0;
+        }
+        .qs2-results-head-label{ font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#64748b; }
+        .qs2-results-body{ flex:1;min-height:160px;overflow:auto; }
+        .qs2-statusbar{
+          display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+          padding:7px 14px;border-top:1px solid rgba(255,255,255,.07);background:#0a0a0a;
+          font-size:.72rem;color:#94a3b8;font-family:var(--font-mono);flex-shrink:0;
+        }
+        .qs2-statusbar-left{ display:flex;align-items:center;gap:14px;flex-wrap:wrap; }
+        .qs2-status-dot{ width:8px;height:8px;border-radius:50%;background:#475569;display:inline-block;margin-right:6px; }
+        .qs2-status-dot.ok{ background:#10b981; }
+        .qs2-status-dot.err{ background:#f87171; }
+        .qs2-status-dot.running{ background:#fbbf24;animation:pulse 1s infinite; }
       </style>
       <button class="page-back" onclick="showPage('databases')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Databases</button>
-      <div class="db-studio-page">
 
-        <!-- Main Query Shell -->
-        <div class="query-ops-shell">
+      <div class="qs2-shell">
 
-          <!-- ══ DATABASE ACCESS — Dropdown ══ -->
-          <div class="qstudio-db-bar" id="qstudioDbBar">
-            <div class="qstudio-db-bar-head" onclick="toggleQStudioDbDropdown()">
-              <div class="qstudio-db-badge">
-                <div class="qstudio-db-badge-dot"></div>
-                Database Access
-              </div>
+        <!-- ══ Top bar: connection + primary actions ══ -->
+        <div class="qs2-topbar">
+          <div class="qstudio-db-bar" id="qstudioDbBar" style="border:none;border-radius:0;background:transparent;flex-shrink:0;">
+            <div class="qstudio-db-bar-head" onclick="toggleQStudioDbDropdown()" style="padding:4px 8px;">
               <div id="qstudioDbSelectedBtn" class="qstudio-db-selected">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" width="14" height="14"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4.03 3-9 3S3 13.66 3 12"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/></svg>
                 <span id="qstudioDbSelectedName" class="qstudio-db-selected-name">No database selected</span>
@@ -16513,18 +16547,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                 <svg class="qstudio-db-chevron" id="qstudioDbChevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
               </div>
               <div class="qstudio-db-metrics" id="qstudioDbMetrics"></div>
-              <div style="display:flex;gap:6px;margin-left:auto;" onclick="event.stopPropagation();">
-                <button class="qstudio-btn" onclick="openCreateTableModal()" title="Create a new table visually" style="padding:6px 10px;">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
-                  <span class="qs-btn-label-full">Create Table</span>
-                </button>
-                <button class="qstudio-btn" onclick="openBusinessSchemaSetup()" title="Scaffold all 5 business tables at once" style="padding:6px 10px;color:#a78bfa;border-color:rgba(167,139,250,.3);">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" width="12" height="12"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-                  <span class="qs-btn-label-full">Business Schema Setup</span>
-                </button>
-              </div>
             </div>
-            <!-- Dropdown list -->
             <div class="qstudio-db-dropdown" id="qstudioDbDropdown">
               <div class="qstudio-db-dropdown-head">
                 <span class="qstudio-db-dropdown-title">Select Database Instance</span>
@@ -16534,381 +16557,123 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
             </div>
           </div>
 
-          <!-- ══ Studio Body ══ -->
-          <div class="qstudio-body">
+          <div class="qs2-topbar-sep"></div>
 
-            <!-- Table/Collection Explorer (Navicat/SSMS-style tree) -->
-            <div class="qs-tree" id="qsTree">
-              <div class="qs-tree-head">
-                <span id="qsTreeDbLabel">No database selected</span>
-                <button class="qs-tree-refresh" onclick="qsLoadTableTree(true)" title="Refresh">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                </button>
-              </div>
-              <div class="qs-tree-body" id="qsTreeBody">
-                <div class="qs-tree-empty">Select a database above to browse its tables/collections.</div>
+          <div class="qs2-actions">
+            <button class="qstudio-btn-run" id="queryRunBtn" onclick="runEditorQuery()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Run
+            </button>
+            <button class="qstudio-btn" onclick="runEditorQuery(true)" title="Run and save to history">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+              <span class="qs-btn-label-full">Save &amp; Run</span>
+            </button>
+            <div class="qstudio-toolbar-sep"></div>
+            <button class="qstudio-btn" onclick="formatCurrentQuery()" title="Format / prettify query">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
+              <span class="qs-btn-label-full">Format</span>
+            </button>
+            <button class="qstudio-btn" onclick="copyCurrentQuery()" title="Copy query">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span class="qs-btn-label-full">Copy</span>
+            </button>
+            <button class="qstudio-btn" onclick="clearQueryEditor()" title="Clear editor">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+              <span class="qs-btn-label-full">Clear</span>
+            </button>
+            <div class="qstudio-toolbar-sep"></div>
+            <button class="qstudio-btn" onclick="exportEditorResults('csv')" title="Export as CSV">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              CSV
+            </button>
+            <button class="qstudio-btn" onclick="exportEditorResults('xlsx')" title="Export as Excel">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Excel
+            </button>
+            <button class="qstudio-btn" onclick="document.getElementById('dbImportFile').click()" title="Import CSV">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span class="qs-btn-label-full">Import</span>
+            </button>
+            <div class="qstudio-toolbar-sep"></div>
+            <button class="qstudio-btn" onclick="openCreateTableModal()" title="Create a new table visually">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+              <span class="qs-btn-label-full">New Table</span>
+            </button>
+            <button class="qstudio-btn" onclick="openBusinessSchemaSetup()" title="Scaffold all 5 business tables at once" style="color:#a78bfa;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" width="12" height="12"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              <span class="qs-btn-label-full">Schema Setup</span>
+            </button>
+            <button class="qstudio-btn" onclick="openAiQueryHelper()" title="AI Query Assistant" style="margin-left:auto;color:#94a3b8;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              AI
+            </button>
+          </div>
+        </div>
+
+        <!-- ══ Main: table tree + editor/results ══ -->
+        <div class="qs2-main">
+
+          <!-- Table/Collection Explorer -->
+          <div class="qs-tree" id="qsTree" style="position:relative;">
+            <div class="qs-tree-head">
+              <span id="qsTreeDbLabel">No database selected</span>
+              <button class="qs-tree-refresh" onclick="qsLoadTableTree(true)" title="Refresh">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              </button>
+            </div>
+            <div class="qs-tree-body" id="qsTreeBody">
+              <div class="qs-tree-empty">Select a database above to browse its tables/collections.</div>
+            </div>
+          </div>
+
+          <div class="qs2-workspace">
+            <div class="qs2-tabbar">
+              <div class="qs2-tab">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Query
               </div>
             </div>
 
-            <!-- LEFT: Editor + Terminal -->
-            <div class="qstudio-editor">
-
-              <!-- Toolbar -->
-              <div class="qstudio-toolbar">
-                <button class="qstudio-btn qs-mobile-only" onclick="toggleQsTree()" title="Browse tables/collections">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 3h18v18H3z"/><path d="M9 3v18"/></svg>
-                  Tables
-                </button>
-                <button class="qstudio-btn-run" id="queryRunBtn" onclick="runEditorQuery()">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  Run Query
-                </button>
-                <button class="qstudio-btn" onclick="runEditorQuery(true)" title="Run and save to history">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
-                  Save & Run
-                </button>
-                <div class="qstudio-toolbar-sep"></div>
-                <div class="qstudio-view-tabs" id="qstudioViewTabs">
-                  <button class="qstudio-view-tab active" onclick="switchQStudioResultView('table',this)">Table</button>
-                  <button class="qstudio-view-tab" onclick="switchQStudioResultView('raw',this)">Raw JSON</button>
-                </div>
-                <div class="qstudio-toolbar-sep"></div>
-                <button class="qstudio-btn" onclick="formatCurrentQuery()" title="Format / prettify query">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
-                  Format
-                </button>
-                <button class="qstudio-btn" onclick="copyCurrentQuery()" title="Copy query">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  Copy
-                </button>
-                <button class="qstudio-btn" onclick="clearQueryEditor()" title="Clear editor">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-                  Clear
-                </button>
-                <div class="qstudio-toolbar-sep"></div>
-                <button class="qstudio-btn" onclick="exportEditorResults('csv')" title="Export as CSV">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  CSV
-                </button>
-                <button class="qstudio-btn" onclick="exportEditorResults('xlsx')" title="Export as Excel">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Excel
-                </button>
-                <button class="qstudio-btn" onclick="document.getElementById('dbImportFile').click()" title="Import CSV">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  Import
-                </button>
-                <div class="qstudio-toolbar-sep"></div>
-                <!-- AI Query Assistant — inline in toolbar -->
-                <button class="qstudio-btn qstudio-ai-inline-btn" onclick="openAiQueryHelper()" title="AI Query Assistant" style="color:#94a3b8;border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.04);">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                  AI
-                </button>
-                <button class="qstudio-btn" onclick="toggleQsToolsDrawer()" title="Templates, history, saved queries, schema & relations">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                  Tools
-                </button>
-                <span class="qstudio-status-pill" id="queryLiveStatus">
-                  <span class="qstudio-status-dot" style="animation:none;"></span>
-                  idle
-                </span>
+            <!-- Editor -->
+            <div class="qstudio-editor-wrap" id="qstudioEditorWrap" style="flex:0 0 auto;max-height:38vh;">
+              <div class="qstudio-editor-label" id="qstudioEditorLabel">SQL</div>
+              <div class="qstudio-hl-editor" id="qstudioHlEditor">
+                <pre class="qstudio-hl-pre" id="qstudioHlPre" aria-hidden="true"><code class="qstudio-hl-code" id="qstudioHlCode"></code></pre>
+                <textarea class="qstudio-textarea qstudio-textarea-hl" id="dbQueryInput"
+                  placeholder="-- Write your query here&#10;-- Ctrl+Enter to run&#10;SELECT * FROM your_table LIMIT 50;"
+                  spellcheck="false"
+                  autocomplete="off"
+                  autocorrect="off"
+                  autocapitalize="off"></textarea>
               </div>
-              <input type="file" id="dbImportFile" accept=".csv" style="display:none" onchange="importIntoDatabase(this.files[0])">
+            </div>
 
-              <!-- Code Editor — Syntax Highlighted -->
-              <div class="qstudio-editor-wrap" id="qstudioEditorWrap">
-                <div class="qstudio-editor-label" id="qstudioEditorLabel">SQL</div>
-                <div class="qstudio-hl-editor" id="qstudioHlEditor">
-                  <pre class="qstudio-hl-pre" id="qstudioHlPre" aria-hidden="true"><code class="qstudio-hl-code" id="qstudioHlCode"></code></pre>
-                  <textarea class="qstudio-textarea qstudio-textarea-hl" id="dbQueryInput"
-                    placeholder="-- Write your query here&#10;-- Ctrl+Enter to run&#10;SELECT * FROM your_table LIMIT 50;"
-                    spellcheck="false"
-                    autocomplete="off"
-                    autocorrect="off"
-                    autocapitalize="off"></textarea>
-                </div>
-              </div>
-              <div class="qstudio-editor-footer">
-                <div class="qstudio-editor-footer-stat">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  <span id="queryExecutionMeta">No query executed yet.</span>
-                </div>
-                <div style="display:flex;gap:12px;">
-                  <div class="qstudio-editor-footer-stat">Rows: <b id="queryRowCount">0</b></div>
-                  <div class="qstudio-editor-footer-stat" id="qstudioEngineLabel" style="color:var(--text-3);">Engine: —</div>
-                </div>
-              </div>
-
-              <!-- ── Terminal / Results ── -->
-              <div class="qstudio-terminal" id="queryResultTerminal">
-                <div class="qstudio-terminal-head" onclick="toggleQueryResultTerminal()">
-                  <div class="qstudio-terminal-title">
-                    <div class="qstudio-terminal-title-dot" id="qstudioTerminalDot"></div>
-                    Result Terminal
-                  </div>
-                  <span class="qstudio-terminal-meta" id="qstudioTerminalMeta"></span>
-                  <button class="qstudio-terminal-toggle-btn" id="qstudioTerminalToggleBtn">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="18 15 12 9 6 15"/></svg>
-                    Collapse
-                  </button>
-                  <button class="qstudio-terminal-fullscreen-btn" onclick="openTerminalFullscreen()" title="View fullscreen">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-                    Full
-                  </button>
-                </div>
-                <div class="qstudio-terminal-body" id="dbEditorResults">
-                  <div class="qstudio-raw-output"><span class="dim">-- Awaiting query execution...</span><br><span class="dim">-- Select a database and run a query above.</span></div>
-                </div>
-              </div>
-
-            </div><!-- /qstudio-editor -->
-
-            <!-- RIGHT: Sidebar (now a toggleable drawer — see .qstudio-side CSS) -->
-            <div class="qstudio-side" id="qstudioSideDrawer">
-              <button class="qs-drawer-close" onclick="toggleQsToolsDrawer()">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                Close
+            <!-- Results grid -->
+            <div class="qs2-results-head">
+              <span class="qs2-results-head-label">Result</span>
+              <button class="qs-tree-refresh" onclick="openTerminalFullscreen()" title="View fullscreen">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
               </button>
-              <div class="qstudio-side-tabs">
-                <button class="qstudio-side-tab active" onclick="switchQStudioSideTab('templates',this)">Templates</button>
-                <button class="qstudio-side-tab" onclick="switchQStudioSideTab('history',this)">History</button>
-                <button class="qstudio-side-tab" onclick="switchQStudioSideTab('saved',this)">Saved</button>
-                <button class="qstudio-side-tab" onclick="switchQStudioSideTab('schema',this)">Schema</button>
-                <button class="qstudio-side-tab" onclick="switchQStudioSideTab('relations',this)">Relations</button>
-                <button class="qstudio-side-tab" onclick="switchQStudioSideTab('labguide',this)" style="color:#f59e0b;font-weight:700;">Lab</button>
+            </div>
+            <div class="qs2-results-body" id="dbEditorResults">
+              <div class="qstudio-raw-output"><span class="dim">-- Awaiting query execution...</span><br><span class="dim">-- Select a database and run a query above.</span></div>
+            </div>
+
+            <!-- Status bar -->
+            <div class="qs2-statusbar">
+              <div class="qs2-statusbar-left">
+                <span><span class="qs2-status-dot" id="qstudioTerminalDot"></span><span id="queryExecutionMeta">No query executed yet.</span></span>
+                <span>Rows: <b id="queryRowCount" style="color:#e2e8f0;">0</b></span>
+                <span id="qstudioEngineLabel">Engine: —</span>
               </div>
+              <span class="qstudio-status-pill" id="queryLiveStatus" style="display:none;"><span class="qstudio-status-dot" style="animation:none;"></span>idle</span>
+              <span id="qstudioTerminalMeta" style="display:none;"></span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-              <!-- Templates Panel -->
-              <div class="qstudio-side-panel active" id="qstudioPanelTemplates">
-                <div class="qstudio-ai-btn" onclick="openAiQueryHelper()">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-                  AI Query Assistant
-                </div>
-                <div class="qstudio-side-section">
-                  <div class="qstudio-side-label">Quick Templates</div>
-                  <div id="queryTemplateList"></div>
-                </div>
-                <div class="qstudio-side-section">
-                  <div class="qstudio-side-label">Common Patterns</div>
-                  <div id="qstudioCommonTemplates"></div>
-                </div>
-              </div>
-
-              <!-- History Panel -->
-              <div class="qstudio-side-panel" id="qstudioPanelHistory">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                  <div class="qstudio-side-label" style="margin-bottom:0;">Recent Queries</div>
-                  <button class="qstudio-btn" style="font-size:.62rem;min-height:24px;padding:0 8px;" onclick="clearQueryHistory()">Clear</button>
-                </div>
-                <div id="queryHistoryList"></div>
-              </div>
-
-              <!-- Saved Panel -->
-              <div class="qstudio-side-panel" id="qstudioPanelSaved">
-                <div class="qstudio-side-label">Saved Queries</div>
-                <div id="qstudioSavedList"></div>
-              </div>
-
-              <!-- Schema Panel -->
-              <div class="qstudio-side-panel" id="qstudioPanelSchema">
-                <div class="qstudio-side-label">DB Schema</div>
-                <div id="qstudioSchemaQuick"></div>
-              </div>
-
-              <!-- Relations Panel -->
-              <div class="qstudio-side-panel" id="qstudioPanelRelations">
-                <div class="qstudio-side-label">Table Relationships</div>
-                <div style="font-size:.72rem;color:var(--text-3);margin-bottom:10px;">Visual FK map. Define FKs in Create Table to see them here, or use the SQL query below.</div>
-                <div id="qstudioRelationsMap" style="display:flex;flex-direction:column;gap:8px;"></div>
-                <div style="margin-top:12px;">
-                  <div class="qstudio-side-label" style="margin-bottom:6px;">Quick FK Queries</div>
-                  <div id="qstudioFkTemplates"></div>
-                </div>
-              </div>
-
-              <!-- Beginner Guide Panel -->
-              <div class="qstudio-side-panel" id="qstudioPanelLabguide">
-
-                <!-- Header -->
-                <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:10px 12px;margin-bottom:12px;">
-                  <div style="font-size:.78rem;font-weight:800;color:#f59e0b;margin-bottom:3px;">Beginner SQL Guide</div>
-                  <div style="font-size:.68rem;color:#94a3b8;line-height:1.5;">Click any query to load it into the editor. Edit the table/column names to match your own database, then press Run Query.</div>
-                </div>
-
-                <!-- STEP 1: Create your database structure -->
-                <div class="qstudio-side-label" style="margin-top:4px;">Step 1 &mdash; See what exists</div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('SHOW TABLES;')">
-                  <div class="qstudio-mini-card-name">List all tables in my database</div>
-                  <code>SHOW TABLES;</code>
-                </div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('DESCRIBE your_table;  -- replace your_table with your actual table name')">
-                  <div class="qstudio-mini-card-name">See columns &amp; types of a table</div>
-                  <code>DESCRIBE your_table;</code>
-                </div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('SELECT TABLE_NAME, TABLE_ROWS
-FROM information_schema.TABLES
-WHERE TABLE_SCHEMA = DATABASE()
-ORDER BY TABLE_NAME;')">
-                  <div class="qstudio-mini-card-name">See all tables with row counts</div>
-                  <code>SELECT FROM information_schema.TABLES</code>
-                </div>
-
-                <!-- STEP 2: Create a table -->
-                <div class="qstudio-side-label" style="margin-top:10px;">Step 2 &mdash; Create a table</div>
-                <div style="font-size:.67rem;color:#94a3b8;margin-bottom:6px;">Tip: Use the green Create Table button above for a visual builder &mdash; no SQL needed.</div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('CREATE TABLE IF NOT EXISTS your_table (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  name        VARCHAR(100) NOT NULL,
-  email       VARCHAR(100) UNIQUE,
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
-);')">
-                  <div class="qstudio-mini-card-name">Create a basic table (edit names)</div>
-                  <code>CREATE TABLE IF NOT EXISTS your_table (...)</code>
-                </div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('CREATE TABLE IF NOT EXISTS child_table (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  parent_id   INT NOT NULL,
-  value       VARCHAR(200),
-  FOREIGN KEY (parent_id) REFERENCES parent_table(id) ON DELETE CASCADE
-);')">
-                  <div class="qstudio-mini-card-name">Create a table with a foreign key</div>
-                  <code>CREATE TABLE with FOREIGN KEY reference</code>
-                </div>
-
-                <!-- STEP 3: Add data -->
-                <div class="qstudio-side-label" style="margin-top:10px;">Step 3 &mdash; Add data (INSERT)</div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('INSERT INTO your_table (name, email)
-VALUES
-  ('Alice', 'alice@example.com'),
-  ('Bob',   'bob@example.com'),
-  ('Carol', 'carol@example.com');')">
-                  <div class="qstudio-mini-card-name">Insert multiple rows at once</div>
-                  <code>INSERT INTO your_table ... VALUES (...),(...);</code>
-                </div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('INSERT IGNORE INTO your_table (name, email)
-VALUES ('Dave', 'dave@example.com');
--- INSERT IGNORE skips the row if a duplicate exists')">
-                  <div class="qstudio-mini-card-name">Insert safely (skip duplicates)</div>
-                  <code>INSERT IGNORE INTO your_table ...</code>
-                </div>
-
-                <!-- STEP 4: Read data -->
-                <div class="qstudio-side-label" style="margin-top:10px;">Step 4 &mdash; Read data (SELECT)</div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('SELECT * FROM your_table
-LIMIT 50;')">
-                  <div class="qstudio-mini-card-name">See all rows in a table</div>
-                  <code>SELECT * FROM your_table LIMIT 50;</code>
-                </div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('SELECT column1, column2
-FROM your_table
-WHERE column1 = 'some_value'
-ORDER BY column2 DESC
-LIMIT 20;')">
-                  <div class="qstudio-mini-card-name">Filter, sort and limit results</div>
-                  <code>SELECT ... WHERE ... ORDER BY ... LIMIT</code>
-                </div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('SELECT COUNT(*) AS total_rows FROM your_table;
--- Change COUNT(*) to SUM(column) or AVG(column) as needed')">
-                  <div class="qstudio-mini-card-name">Count rows in a table</div>
-                  <code>SELECT COUNT(*) FROM your_table;</code>
-                </div>
-
-                <!-- STEP 5: Join tables -->
-                <div class="qstudio-side-label" style="margin-top:10px;">Step 5 &mdash; Join two tables</div>
-                <div style="font-size:.67rem;color:#94a3b8;margin-bottom:6px;">Use a JOIN when data is spread across multiple tables linked by an ID.</div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('SELECT a.id, a.name, b.value
-FROM table_a a
-JOIN table_b b ON a.id = b.table_a_id
-ORDER BY a.id
-LIMIT 50;
--- Replace table_a, table_b, and column names with yours')">
-                  <div class="qstudio-mini-card-name">JOIN two tables together</div>
-                  <code>SELECT a.*, b.col FROM a JOIN b ON a.id = b.a_id</code>
-                </div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('SELECT a.id, a.name,
-  COUNT(b.id) AS total
-FROM table_a a
-LEFT JOIN table_b b ON a.id = b.table_a_id
-GROUP BY a.id, a.name
-ORDER BY total DESC;')">
-                  <div class="qstudio-mini-card-name">Count related rows per parent</div>
-                  <code>LEFT JOIN + GROUP BY + COUNT</code>
-                </div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('SELECT a.name,
-  ROUND(AVG(b.score), 2) AS avg_score
-FROM table_a a
-JOIN table_b b ON a.id = b.table_a_id
-GROUP BY a.name
-ORDER BY avg_score DESC;')">
-                  <div class="qstudio-mini-card-name">Average value per group</div>
-                  <code>JOIN + GROUP BY + AVG(score)</code>
-                </div>
-
-                <!-- STEP 6: Update and delete -->
-                <div class="qstudio-side-label" style="margin-top:10px;">Step 6 &mdash; Update &amp; Delete</div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('UPDATE your_table
-SET column1 = 'new_value'
-WHERE id = 1;
--- Always use WHERE or every row will be updated!')">
-                  <div class="qstudio-mini-card-name">Update a row</div>
-                  <code>UPDATE your_table SET col = val WHERE id = ?</code>
-                </div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('DELETE FROM your_table
-WHERE id = 1;
--- Always use WHERE or every row will be deleted!')">
-                  <div class="qstudio-mini-card-name">Delete a row</div>
-                  <code>DELETE FROM your_table WHERE id = ?</code>
-                </div>
-
-                <!-- STEP 7: Inspect relationships -->
-                <div class="qstudio-side-label" style="margin-top:10px;">Step 7 &mdash; Check relationships</div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('SELECT TABLE_NAME, COLUMN_NAME,
-  REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
-FROM information_schema.KEY_COLUMN_USAGE
-WHERE TABLE_SCHEMA = DATABASE()
-  AND REFERENCED_TABLE_NAME IS NOT NULL
-ORDER BY TABLE_NAME;')">
-                  <div class="qstudio-mini-card-name">Show all foreign keys in database</div>
-                  <code>SELECT FROM KEY_COLUMN_USAGE WHERE REFERENCED...</code>
-                </div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('SELECT TABLE_NAME, COLUMN_NAME,
-  CONSTRAINT_NAME, CONSTRAINT_TYPE
-FROM information_schema.TABLE_CONSTRAINTS tc
-JOIN information_schema.KEY_COLUMN_USAGE kcu
-  USING (CONSTRAINT_NAME, TABLE_NAME)
-WHERE tc.TABLE_SCHEMA = DATABASE()
-ORDER BY TABLE_NAME;')">
-                  <div class="qstudio-mini-card-name">Show all constraints (PK, FK, UQ)</div>
-                  <code>SELECT FROM TABLE_CONSTRAINTS JOIN KEY_COLUMN_USAGE</code>
-                </div>
-
-                <!-- STEP 8: Verify everything -->
-                <div class="qstudio-side-label" style="margin-top:10px;">Step 8 &mdash; Verify your work</div>
-                <div class="qstudio-mini-card" onclick="labBuildRowCount()">
-                  <div class="qstudio-mini-card-name">Count rows in ALL my tables</div>
-                  <code>Auto-generates UNION ALL COUNT(*) for every table</code>
-                </div>
-                <div class="qstudio-mini-card" onclick="labLoadQuery('SHOW TABLES;
--- Then run DESCRIBE on each table you see')">
-                  <div class="qstudio-mini-card-name">Quick full review checklist</div>
-                  <code>SHOW TABLES then DESCRIBE each one</code>
-                </div>
-
-                <!-- PHP integration -->
-                <div class="qstudio-side-label" style="margin-top:10px;">PHP Integration Snippets</div>
-                <div style="font-size:.67rem;color:#94a3b8;margin-bottom:6px;">Copy these into your XAMPP/WAMP project. Edit the table and column names to match yours.</div>
-                <div class="qstudio-mini-card" onclick="labShowPhp('connect')"><div class="qstudio-mini-card-name">Connect PHP to your database</div><code>db_connect.php &mdash; include in every page</code></div>
-                <div class="qstudio-mini-card" onclick="labShowPhp('insert')"><div class="qstudio-mini-card-name">Insert a form submission</div><code>INSERT from $_POST form data</code></div>
-                <div class="qstudio-mini-card" onclick="labShowPhp('select')"><div class="qstudio-mini-card-name">Fetch and display rows</div><code>SELECT + while loop + HTML table</code></div>
-                <div class="qstudio-mini-card" onclick="labShowPhp('login')"><div class="qstudio-mini-card-name">User login with session</div><code>SELECT + password_verify + $_SESSION</code></div>
-                <div class="qstudio-mini-card" onclick="labShowPhp('update')"><div class="qstudio-mini-card-name">Update a row from a form</div><code>UPDATE your_table SET ... WHERE id=?</code></div>
-                <div class="qstudio-mini-card" onclick="labShowPhp('delete')"><div class="qstudio-mini-card-name">Delete a row by ID</div><code>DELETE FROM your_table WHERE id=?</code></div>
-              </div>
-
-            </div><!-- /qstudio-side -->
-          </div><!-- /qstudio-body -->
-        </div><!-- /query-ops-shell -->
-      </div><!-- /db-studio-page -->
+      <input type="file" id="dbImportFile" accept=".csv" style="display:none" onchange="importIntoDatabase(this.files[0])">
 
       <!-- ══ Create Table Modal ══ -->
       <div class="qstudio-create-table-modal" id="createTableModal" onclick="if(event.target===this)closeCreateTableModal()">
@@ -17005,7 +16770,6 @@ ORDER BY TABLE_NAME;')">
         </div>
       </div>
 
-    <div class="qs-drawer-backdrop" id="qsDrawerBackdrop" onclick="closeAllQsDrawers()"></div>
     </div><!-- /page-db-query -->
 
       <!-- ══ Terminal Fullscreen Overlay ══ -->
