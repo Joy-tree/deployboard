@@ -13340,53 +13340,58 @@ document.addEventListener('DOMContentLoaded', function() {
   box-shadow:0 0 0 1px rgba(16,185,129,.05), 0 14px 44px rgba(0,0,0,.28);
 }
 .diff-hero-kicker{ font-family:var(--font-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#86efac;margin-bottom:8px; }
-.diff-hero-title{ font-size:1.6rem;font-weight:800;color:var(--text);margin-bottom:8px; }
-.diff-hero-sub{ font-size:.92rem;color:var(--text-2);max-width:640px;line-height:1.55; }
+.diff-hero-title{ font-family:var(--font-ui);font-weight:800;font-size:clamp(1.4rem,2.6vw,2.1rem);letter-spacing:-.03em;color:#f8fafc;line-height:1.15;margin-bottom:10px; }
+.diff-hero-sub{ color:#94a3b8;font-size:.95rem;max-width:640px;line-height:1.55; }
 .diff-cols{ display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:start;margin-bottom:24px; }
 @media(max-width:860px){ .diff-cols{ grid-template-columns:1fr; } .diff-vs{ display:none; } }
-.diff-card{ background:var(--bg-2);border:1px solid var(--border);border-radius:16px;padding:20px; }
-.diff-card-label{ font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:14px; }
-.diff-vs{ display:flex;align-items:center;justify-content:center;height:100%;padding-top:40px;color:#4ade80;font-weight:800;font-size:.85rem;letter-spacing:.06em; }
+.diff-card{ background:#111;border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:24px; }
+.diff-card-label{ font-family:var(--font-ui);font-weight:700;font-size:1.05rem;color:#f1f5f9;margin-bottom:14px; }
+.diff-vs{ display:flex;align-items:center;justify-content:center;height:100%;padding-top:40px;color:#10b981;font-weight:800;font-size:.85rem;letter-spacing:.06em; }
 .diff-source-opts{ display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px; }
 .diff-source-opt{
   font-size:.74rem;font-weight:600;text-align:center;padding:8px 4px;border-radius:9px;cursor:pointer;
-  border:1px solid var(--border);color:var(--text-2);background:var(--bg);transition:all .15s;
+  border:1.5px solid rgba(255,255,255,.08);color:#94a3b8;background:#0b0b0b;transition:border-color .15s,background .15s;
 }
-.diff-source-opt.active{ border-color:#22c55e;color:#86efac;background:rgba(34,197,94,.1); }
-.diff-field{ margin-bottom:12px; }
-.diff-field label{ display:block;font-size:.78rem;font-weight:600;color:var(--text-2);margin-bottom:6px; }
+.diff-source-opt:hover{ border-color:rgba(16,185,129,.28); }
+.diff-source-opt.active{ border-color:#10b981;color:#e2e8f0;background:rgba(16,185,129,.08);box-shadow:0 0 0 1px rgba(16,185,129,.15) inset; }
+.diff-field{ margin-bottom:16px; }
+.diff-field label{ display:block;font-size:.78rem;font-weight:600;color:#94a3b8;margin-bottom:7px;letter-spacing:.02em; }
 .diff-select,.diff-input{
-  width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--border);
-  background:var(--bg);color:var(--text);font-size:.86rem;
+  width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.09);
+  background:#0b0b0b;color:#f1f5f9;font-size:.92rem;font-family:var(--font-ui);transition:border-color .15s;outline:none;
 }
-.diff-help{ font-size:.72rem;color:var(--text-3);margin-top:5px;line-height:1.4; }
+.diff-select:focus,.diff-input:focus{ border-color:rgba(16,185,129,.55); }
+.diff-input::placeholder{ color:#4b5563; }
+.diff-help{ font-size:.74rem;color:#64748b;margin-top:6px;line-height:1.4; }
 .diff-run-btn{
-  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
-  padding:13px;border-radius:11px;border:none;font-weight:700;font-size:.94rem;cursor:pointer;
-  background:linear-gradient(135deg,#22c55e,#10b981);color:#04140d;
+  display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  padding:15px;border-radius:14px;border:none;font-family:var(--font-ui);font-weight:800;font-size:.98rem;cursor:pointer;
+  background:linear-gradient(135deg,#10b981,#059669);color:#04140d;
+  box-shadow:0 8px 26px rgba(16,185,129,.28);transition:transform .15s,box-shadow .15s;
 }
-.diff-run-btn:disabled{ opacity:.6;cursor:not-allowed; }
+.diff-run-btn:hover{ transform:translateY(-2px);box-shadow:0 12px 34px rgba(16,185,129,.4); }
+.diff-run-btn:disabled{ opacity:.5;cursor:not-allowed;transform:none; }
 .diff-summary{ display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px; }
 @media(max-width:640px){ .diff-summary{ grid-template-columns:repeat(2,1fr); } }
-.diff-stat{ background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center; }
+.diff-stat{ background:#111;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;text-align:center; }
 .diff-stat b{ display:block;font-size:1.5rem;font-weight:800; }
-.diff-stat span{ font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em; }
-.diff-stat.added b{ color:#4ade80; } .diff-stat.removed b{ color:#f87171; } .diff-stat.changed b{ color:#fbbf24; } .diff-stat.unchanged b{ color:var(--text-2); }
-.diff-collection{ background:var(--bg-2);border:1px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden; }
+.diff-stat span{ font-size:.72rem;color:#64748b;text-transform:uppercase;letter-spacing:.05em; }
+.diff-stat.added b{ color:#4ade80; } .diff-stat.removed b{ color:#f87171; } .diff-stat.changed b{ color:#fbbf24; } .diff-stat.unchanged b{ color:#94a3b8; }
+.diff-collection{ background:#111;border:1px solid rgba(255,255,255,.07);border-radius:14px;margin-bottom:12px;overflow:hidden; }
 .diff-collection-head{ display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer; }
 .diff-collection-head:hover{ background:rgba(255,255,255,.02); }
-.diff-collection-name{ font-weight:700;font-size:.92rem; }
+.diff-collection-name{ font-weight:700;font-size:.92rem;color:#f1f5f9; }
 .diff-collection-counts{ display:flex;gap:10px;font-size:.76rem;font-weight:600; }
-.diff-collection-body{ display:none;padding:0 18px 16px;border-top:1px solid var(--border); }
+.diff-collection-body{ display:none;padding:0 18px 16px;border-top:1px solid rgba(255,255,255,.07); }
 .diff-collection.open .diff-collection-body{ display:block; }
 .diff-row-group{ margin-top:14px; }
 .diff-row-group-label{ font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px; }
-.diff-row-item{ background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:6px;font-size:.8rem;font-family:var(--font-mono); }
+.diff-row-item{ background:#0b0b0b;border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:10px 12px;margin-bottom:6px;font-size:.8rem;font-family:var(--font-mono); }
 .diff-field-change{ display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;padding-left:10px; }
-.diff-field-change b{ color:var(--text-2); }
+.diff-field-change b{ color:#94a3b8; }
 .diff-field-change .before{ color:#f87171;text-decoration:line-through;opacity:.8; }
 .diff-field-change .after{ color:#4ade80; }
-.diff-empty{ text-align:center;padding:40px;color:var(--text-3);font-size:.86rem; }
+.diff-empty{ text-align:center;padding:40px;color:#64748b;font-size:.86rem; }
     </style>
 
     <div class="diff-hero">
@@ -14225,7 +14230,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 /* ── Main Studio Layout ── */
 .qstudio-body{
   display:grid;
-  grid-template-columns:minmax(0,1fr) 310px;
+  grid-template-columns:220px minmax(0,1fr);
   gap:0;
   min-height:0;
   flex:1;
@@ -14235,6 +14240,52 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
   overflow:hidden;
   background:#0d0d0d;
 }
+
+/* ── New: left table/collection tree (Navicat/SSMS-style explorer) ── */
+.qs-tree{
+  display:flex;flex-direction:column;min-height:0;
+  background:#0a0a0a;border-right:1px solid rgba(255,255,255,.07);
+  overflow-y:auto;
+}
+.qs-tree-head{
+  padding:10px 12px;font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:#64748b;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.qs-tree-refresh{ background:none;border:none;color:#64748b;cursor:pointer;display:flex;padding:2px; }
+.qs-tree-refresh:hover{ color:#10b981; }
+.qs-tree-body{ padding:6px;flex:1; }
+.qs-tree-empty{ padding:16px 10px;font-size:.74rem;color:#64748b;line-height:1.5; }
+.qs-tree-item{
+  display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:7px;cursor:pointer;
+  font-size:.8rem;color:#cbd5e1;transition:background .12s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.qs-tree-item svg{ flex-shrink:0;color:#10b981; }
+.qs-tree-item:hover{ background:rgba(255,255,255,.05); }
+.qs-tree-item.active{ background:rgba(16,185,129,.12);color:#e2e8f0; }
+@media(max-width:900px){
+  .qstudio-body{ grid-template-columns:1fr; }
+  .qs-tree{
+    position:fixed;top:var(--topbar-h,58px);left:0;bottom:0;width:260px;max-width:80vw;
+    z-index:420;transform:translateX(-100%);transition:transform .22s ease;
+    box-shadow:20px 0 50px rgba(0,0,0,.5);
+  }
+  .qs-tree.qs-tree-open{ transform:translateX(0); }
+}
+
+/* Mobile-only backdrop shared by the tree drawer and the tools drawer below */
+.qs-drawer-backdrop{
+  display:none;position:fixed;inset:0;top:var(--topbar-h,58px);background:rgba(0,0,0,.5);z-index:410;
+}
+.qs-drawer-backdrop.qs-open{ display:block; }
+.qs-mobile-only{ display:none; }
+@media(max-width:900px){ .qs-mobile-only{ display:inline-flex; } }
+.qs-drawer-close{
+  display:none;align-items:center;justify-content:center;gap:6px;
+  padding:8px 12px;margin:8px 8px 0;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04);color:#94a3b8;font-size:.72rem;font-weight:700;cursor:pointer;flex-shrink:0;
+}
+.qstudio-side .qs-drawer-close{ display:flex; }
 
 /* ── Left: Query Editor Panel ── */
 .qstudio-editor{display:flex;flex-direction:column;min-height:0;border-right:1px solid rgba(255,255,255,.06);}
@@ -14623,7 +14674,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 .qstudio-terminal-overlay-close:hover{color:#fff;border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.12);}
 
 /* Results table */
-.qstudio-results-table-wrap{overflow:auto;max-height:280px;}
+.qstudio-results-table-wrap{overflow:auto;max-height:280px;border:1px solid rgba(255,255,255,.06);border-radius:8px;margin:2px;}
 .qstudio-results-table{width:100%;border-collapse:collapse;font-size:.76rem;}
 .qstudio-results-table th{
   text-align:left;padding:8px 14px;
@@ -14638,7 +14689,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
   color:var(--text);font-family:var(--font-mono);font-size:.75rem;
   max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.qstudio-results-table tr:hover td{background:rgba(255,255,255,.03);}
+.qstudio-results-table tbody tr:nth-child(even) td{background:rgba(255,255,255,.012);}
+.qstudio-results-table tr:hover td{background:rgba(16,185,129,.05);}
 .qstudio-results-null{color:var(--text-3);font-style:italic;}
 
 /* Raw terminal output */
@@ -14658,7 +14710,19 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
   min-height:0;overflow:hidden;
   background:#0d0d0d;
   border-left:1px solid rgba(255,255,255,.06);
+  /* [FIX] This used to be a plain grid column, always occupying 310px of
+     permanent width next to the editor -- which is what made the page feel
+     cramped/inconsistent with a real SQL client layout, and (combined with
+     its own internal scroll area) was implicated in content overlapping the
+     site's fixed topbar on some viewport widths. It's now a fixed, off-canvas
+     drawer explicitly anchored BELOW the topbar (top:var(--topbar-h)), toggled
+     open only when the user asks for it via the "Tools" button, so none of
+     its content can ever occupy space the topbar needs. */
+  position:fixed;top:var(--topbar-h,58px);right:-380px;bottom:0;width:360px;max-width:88vw;
+  z-index:430;transition:right .22s ease;box-shadow:-20px 0 50px rgba(0,0,0,.5);
+  border-radius:0;
 }
+.qstudio-side.qs-drawer-open{ right:0; }
 .qstudio-side-tabs{
   display:flex;border-bottom:1px solid rgba(255,255,255,.06);
   flex-shrink:0;
@@ -16471,11 +16535,28 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           <!-- ══ Studio Body ══ -->
           <div class="qstudio-body">
 
+            <!-- Table/Collection Explorer (Navicat/SSMS-style tree) -->
+            <div class="qs-tree" id="qsTree">
+              <div class="qs-tree-head">
+                <span id="qsTreeDbLabel">No database selected</span>
+                <button class="qs-tree-refresh" onclick="qsLoadTableTree(true)" title="Refresh">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                </button>
+              </div>
+              <div class="qs-tree-body" id="qsTreeBody">
+                <div class="qs-tree-empty">Select a database above to browse its tables/collections.</div>
+              </div>
+            </div>
+
             <!-- LEFT: Editor + Terminal -->
             <div class="qstudio-editor">
 
               <!-- Toolbar -->
               <div class="qstudio-toolbar">
+                <button class="qstudio-btn qs-mobile-only" onclick="toggleQsTree()" title="Browse tables/collections">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 3h18v18H3z"/><path d="M9 3v18"/></svg>
+                  Tables
+                </button>
                 <button class="qstudio-btn-run" id="queryRunBtn" onclick="runEditorQuery()">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                   Run Query
@@ -16520,6 +16601,10 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                 <button class="qstudio-btn qstudio-ai-inline-btn" onclick="openAiQueryHelper()" title="AI Query Assistant" style="color:#94a3b8;border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.04);">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                   AI
+                </button>
+                <button class="qstudio-btn" onclick="toggleQsToolsDrawer()" title="Templates, history, saved queries, schema & relations">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                  Tools
                 </button>
                 <span class="qstudio-status-pill" id="queryLiveStatus">
                   <span class="qstudio-status-dot" style="animation:none;"></span>
@@ -16576,8 +16661,12 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
             </div><!-- /qstudio-editor -->
 
-            <!-- RIGHT: Sidebar -->
-            <div class="qstudio-side">
+            <!-- RIGHT: Sidebar (now a toggleable drawer — see .qstudio-side CSS) -->
+            <div class="qstudio-side" id="qstudioSideDrawer">
+              <button class="qs-drawer-close" onclick="toggleQsToolsDrawer()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                Close
+              </button>
               <div class="qstudio-side-tabs">
                 <button class="qstudio-side-tab active" onclick="switchQStudioSideTab('templates',this)">Templates</button>
                 <button class="qstudio-side-tab" onclick="switchQStudioSideTab('history',this)">History</button>
@@ -16914,6 +17003,7 @@ ORDER BY TABLE_NAME;')">
         </div>
       </div>
 
+    <div class="qs-drawer-backdrop" id="qsDrawerBackdrop" onclick="closeAllQsDrawers()"></div>
     </div><!-- /page-db-query -->
 
       <!-- ══ Terminal Fullscreen Overlay ══ -->
@@ -31165,7 +31255,115 @@ function selectEditorDb(id) {
     updateEditorSchemaPanel();
     updateEditorSdkPanel();
     renderQStudioSchemaQuick();
+    qsLoadTableTree();
   }
+}
+
+// ── Table/Collection Explorer (left tree) ───────────────────────────────
+// A real, live tree of the selected database's tables/collections/keys —
+// click one to instantly browse it (SELECT * / find / GET, engine-
+// appropriate), the way any real SQL client's object browser works. Runs
+// the listing query silently in the background rather than through the
+// visible editor/terminal, so it doesn't clobber whatever the user is
+// currently writing.
+let _qsTreeLoading = false;
+function qsListQueryForEngine(engine) {
+  if (engine === 'mongodb') return '{ "listCollections": 1 }';
+  if (engine === 'redis') return 'KEYS *';
+  if (engine === 'mysql' || engine === 'mariadb') return 'SHOW TABLES;';
+  return `SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY table_name;`;
+}
+function qsExtractNames(rows, engine) {
+  if (!Array.isArray(rows)) return [];
+  return rows.map(r => {
+    if (r == null) return null;
+    if (typeof r === 'string') return r;
+    if (typeof r === 'object') {
+      if (engine === 'mongodb' && r.name) return r.name;
+      const vals = Object.values(r);
+      return vals.length ? String(vals[0]) : null;
+    }
+    return String(r);
+  }).filter(Boolean);
+}
+async function qsLoadTableTree(forceRefresh) {
+  const labelEl = document.getElementById('qsTreeDbLabel');
+  const bodyEl = document.getElementById('qsTreeBody');
+  if (!bodyEl) return;
+  const db = _editorSelectedDb;
+  if (!db) {
+    if (labelEl) labelEl.textContent = 'No database selected';
+    bodyEl.innerHTML = `<div class="qs-tree-empty">Select a database above to browse its tables/collections.</div>`;
+    return;
+  }
+  if (labelEl) labelEl.textContent = `${db.name} (${db.engine})`;
+  if ((db.status || '').toLowerCase() !== 'running') {
+    bodyEl.innerHTML = `<div class="qs-tree-empty">Database is ${db.status || 'not running'} — start it to browse tables.</div>`;
+    return;
+  }
+  if (_qsTreeLoading && !forceRefresh) return;
+  _qsTreeLoading = true;
+  bodyEl.innerHTML = `<div class="qs-tree-empty">Loading…</div>`;
+  try {
+    const r = await apiFetch(`/api/databases/${db.id}/query`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: qsListQueryForEngine(db.engine) }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Could not list tables');
+    const rows = Array.isArray(d.rows) ? d.rows : Array.isArray(d.result) ? d.result : [];
+    const names = qsExtractNames(rows, db.engine).filter(n => db.engine !== 'mysql' && db.engine !== 'mariadb' ? true : !/^information_schema|^performance_schema|^mysql$|^sys$/.test(n));
+    if (!names.length) {
+      bodyEl.innerHTML = `<div class="qs-tree-empty">No ${db.engine === 'redis' ? 'keys' : db.engine === 'mongodb' ? 'collections' : 'tables'} yet.</div>`;
+      return;
+    }
+    const icon = db.engine === 'redis'
+      ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h5"/><path d="M22 19l-3-3-3 3M19 22v-6"/></svg>'
+      : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>';
+    bodyEl.innerHTML = names.map(n => `<div class="qs-tree-item" onclick="qsInsertTableQuery(${JSON.stringify(n)}, this)">${icon}<span>${String(n).replace(/</g,'&lt;')}</span></div>`).join('');
+  } catch (e) {
+    bodyEl.innerHTML = `<div class="qs-tree-empty">Could not load list: ${(e.message||'').replace(/</g,'&lt;')}</div>`;
+  } finally {
+    _qsTreeLoading = false;
+  }
+}
+function qsBuildBrowseQuery(name, engine) {
+  if (engine === 'mongodb') return JSON.stringify({ find: name, limit: 100 });
+  if (engine === 'redis') return `GET ${name}`;
+  const safeName = /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name) ? name : `"${name}"`;
+  return `SELECT * FROM ${safeName} LIMIT 100;`;
+}
+function qsInsertTableQuery(name, el) {
+  document.querySelectorAll('.qs-tree-item.active').forEach(x => x.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const q = document.getElementById('dbQueryInput');
+  if (!q || !_editorSelectedDb) return;
+  q.value = qsBuildBrowseQuery(name, _editorSelectedDb.engine);
+  if (typeof qlRefreshHighlight === 'function') qlRefreshHighlight();
+  runEditorQuery();
+  closeAllQsDrawers();
+}
+
+// ── Drawer toggles (table tree on mobile, tools panel everywhere) ──────
+function toggleQsTree() {
+  const tree = document.getElementById('qsTree');
+  const backdrop = document.getElementById('qsDrawerBackdrop');
+  if (!tree) return;
+  const opening = !tree.classList.contains('qs-tree-open');
+  document.getElementById('qstudioSideDrawer')?.classList.remove('qs-drawer-open');
+  tree.classList.toggle('qs-tree-open', opening);
+  if (backdrop) backdrop.classList.toggle('qs-open', opening);
+}
+function toggleQsToolsDrawer() {
+  const drawer = document.getElementById('qstudioSideDrawer');
+  const backdrop = document.getElementById('qsDrawerBackdrop');
+  if (!drawer) return;
+  const opening = !drawer.classList.contains('qs-drawer-open');
+  document.getElementById('qsTree')?.classList.remove('qs-tree-open');
+  drawer.classList.toggle('qs-drawer-open', opening);
+  if (backdrop) backdrop.classList.toggle('qs-open', opening);
+}
+function closeAllQsDrawers() {
+  document.getElementById('qsTree')?.classList.remove('qs-tree-open');
+  document.getElementById('qstudioSideDrawer')?.classList.remove('qs-drawer-open');
+  document.getElementById('qsDrawerBackdrop')?.classList.remove('qs-open');
 }
 
 function getDefaultQueryForEngine(engine='postgres'){
