@@ -23,6 +23,7 @@ const { MongoClient } = require('mongodb');
 const https = require('https');
 const http = require('http');
 const { URL } = require('url');
+const crypto = require('crypto');
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -418,4 +419,136 @@ async function runMigration(source, destination, onLog) {
   return { collections: collections.length, rows: totalRows };
 }
 
-module.exports = { runMigration, readSource, writeDestination };
+// ── Cross-engine database diff ──────────────────────────────────────────────
+// Compares two databases and reports exactly what's different, collection by
+// collection, row by row -- even when the two sides are completely different
+// engines (a MongoDB collection vs. a Postgres table vs. a Redis keyspace).
+// This works at all because readSource() already normalizes every engine
+// down to the same shape ({ name, rows: [...] }); the diff logic below never
+// needs to know which engine either side actually is.
+//
+// No mainstream database offers this: comparing two live databases for
+// exactly what changed is something people currently do per-engine at best
+// (e.g. Postgres-to-Postgres schema/data diff tools), and never across
+// fundamentally different data models. Because JoyTree already treats
+// "a database" as an engine-agnostic concept (see the migration engine
+// above), this is a natural, low-risk extension rather than new
+// infrastructure -- and it's something no other database platform can offer
+// today, since none of them manage multiple heterogeneous engines under one
+// roof the way JoyTree does.
+
+// Deterministic stringify: object keys are sorted recursively so two
+// objects with the same data in a different key order still compare equal.
+function stableStringify(value) {
+  if (value === null || value === undefined) return 'null';
+  if (typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return '[' + value.map(stableStringify).join(',') + ']';
+  const keys = Object.keys(value).sort();
+  return '{' + keys.map(k => JSON.stringify(k) + ':' + stableStringify(value[k])).join(',') + '}';
+}
+
+function stableHash(value) {
+  return crypto.createHash('sha1').update(stableStringify(value)).digest('hex');
+}
+
+// Rows are matched across the two sides by identity, not position -- so
+// reordered/reinserted rows still match correctly. Tries common id-like
+// fields first (works across engines: Mongo's _id, a SQL primary key
+// commonly named id, JoyTree's own _jt_row_id namespaced PK); falls back to
+// a content hash of the whole row so even schemaless/keyless data (e.g. a
+// Redis value with no id concept at all) can still be matched by what it
+// actually contains rather than being reported as 100% added+removed.
+const ROW_ID_FIELDS = ['_id', 'id', 'ID', '_jt_row_id', 'uuid', 'key'];
+function rowIdentity(row) {
+  if (row && typeof row === 'object') {
+    for (const f of ROW_ID_FIELDS) {
+      if (row[f] !== undefined && row[f] !== null && row[f] !== '') return `${f}:${String(row[f])}`;
+    }
+  }
+  return `hash:${stableHash(row)}`;
+}
+
+// Field-level diff between two rows that matched (same identity). Skips the
+// field that was actually used to match them (comparing it again is always
+// a no-op) plus a couple of engine-internal bookkeeping fields that aren't
+// meaningful to show as "changed" data.
+const DIFF_IGNORE_FIELDS = new Set(['_jt_row_id']);
+function diffFields(rowA, rowB) {
+  const a = rowA && typeof rowA === 'object' ? rowA : {};
+  const b = rowB && typeof rowB === 'object' ? rowB : {};
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  const changes = [];
+  for (const key of keys) {
+    if (DIFF_IGNORE_FIELDS.has(key)) continue;
+    const va = a[key], vb = b[key];
+    if (stableStringify(va) !== stableStringify(vb)) {
+      changes.push({ field: key, before: va === undefined ? null : va, after: vb === undefined ? null : vb });
+    }
+  }
+  return changes;
+}
+
+/**
+ * Compares two databases (each described the same way a migration source is:
+ * { kind: 'joytree'|'mongo'|'firebase'|'sql'|'redis', ... }, already resolved
+ * to real connection info) and returns a structured report of exactly what
+ * differs between them, collection by collection.
+ *
+ * `sampleLimit` caps how many example rows are returned per added/removed/
+ * changed bucket in each collection (counts are always exact; this only
+ * bounds how much example data comes back in the response).
+ */
+async function diffDatabases(sourceA, sourceB, { sampleLimit = 200 } = {}) {
+  const [collectionsA, collectionsB] = await Promise.all([readSource(sourceA), readSource(sourceB)]);
+  const byNameA = new Map(collectionsA.map(c => [c.name, c]));
+  const byNameB = new Map(collectionsB.map(c => [c.name, c]));
+  const allNames = [...new Set([...byNameA.keys(), ...byNameB.keys()])].sort();
+
+  const report = {
+    collectionsOnlyInA: [],
+    collectionsOnlyInB: [],
+    collections: [],
+    summary: { collectionsCompared: 0, rowsAdded: 0, rowsRemoved: 0, rowsChanged: 0, rowsUnchanged: 0 },
+  };
+
+  for (const name of allNames) {
+    const colA = byNameA.get(name);
+    const colB = byNameB.get(name);
+    if (!colB) { report.collectionsOnlyInA.push(name); continue; }
+    if (!colA) { report.collectionsOnlyInB.push(name); continue; }
+
+    const mapA = new Map(colA.rows.map(r => [rowIdentity(r), r]));
+    const mapB = new Map(colB.rows.map(r => [rowIdentity(r), r]));
+
+    const added = [], removed = [], changed = [];
+    let unchanged = 0;
+
+    for (const [key, rowA] of mapA) {
+      if (!mapB.has(key)) { removed.push(rowA); continue; }
+      const rowB = mapB.get(key);
+      const fieldChanges = diffFields(rowA, rowB);
+      if (fieldChanges.length) changed.push({ identity: key, before: rowA, after: rowB, fieldChanges });
+      else unchanged++;
+    }
+    for (const [key, rowB] of mapB) {
+      if (!mapA.has(key)) added.push(rowB);
+    }
+
+    report.collections.push({
+      name,
+      addedCount: added.length, removedCount: removed.length, changedCount: changed.length, unchangedCount: unchanged,
+      added: added.slice(0, sampleLimit),
+      removed: removed.slice(0, sampleLimit),
+      changed: changed.slice(0, sampleLimit),
+    });
+    report.summary.collectionsCompared++;
+    report.summary.rowsAdded += added.length;
+    report.summary.rowsRemoved += removed.length;
+    report.summary.rowsChanged += changed.length;
+    report.summary.rowsUnchanged += unchanged;
+  }
+
+  return report;
+}
+
+module.exports = { runMigration, readSource, writeDestination, diffDatabases };

@@ -13566,7 +13566,7 @@ v1.use((req, res, next) => {
   next();
 });
 
-const { runMigration } = require('./migration-engine');
+const { runMigration, diffDatabases } = require('./migration-engine');
 const migrationJobs = new Map(); // in-memory job registry for this process; persisted summary lives in Firebase (below) so history survives restarts
 
 async function resolveJoyTreeDbAsEndpoint(user, databaseId) {
@@ -13738,6 +13738,34 @@ async function migrationsClearAllHandler(req, res) {
 }
 
 app.post('/api/migrations', requireAuth, migrationsCreateHandler);
+
+// ── POST /api/databases/diff -- compare two databases, any engines ─────────
+// A genuinely novel feature: compares two databases collection-by-collection
+// and row-by-row, and reports exactly what's added/removed/changed --
+// even when the two sides are completely different engines (a JoyTree
+// MongoDB instance vs. an external Postgres, say). Reuses the exact same
+// `source` shape and resolver as /api/migrations (kind: joytree/mongo/
+// firebase/sql/redis) so the two features share one connection-resolution
+// path rather than duplicating it.
+async function databasesDiffHandler(req, res) {
+  try {
+    const { sourceA, sourceB } = req.body || {};
+    if (!sourceA || !sourceA.kind) return res.status(400).json({ ok: false, error: 'sourceA.kind is required (joytree | mongo | firebase | sql | redis)' });
+    if (!sourceB || !sourceB.kind) return res.status(400).json({ ok: false, error: 'sourceB.kind is required (joytree | mongo | firebase | sql | redis)' });
+
+    const [resolvedA, resolvedB] = await Promise.all([
+      resolveMigrationSource(req.user, sourceA),
+      resolveMigrationSource(req.user, sourceB),
+    ]);
+
+    const report = await diffDatabases(resolvedA, resolvedB);
+    res.json({ ok: true, report });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+}
+app.post('/api/databases/diff', requireAuth, databasesDiffHandler);
+v1.post('/databases/diff', requirePersonalApiKey, databasesDiffHandler);
 app.get('/api/migrations', requireAuth, migrationsListHandler);
 app.get('/api/migrations/:id', requireAuth, migrationsGetHandler);
 app.delete('/api/migrations/:id', requireAuth, migrationsDeleteOneHandler);
