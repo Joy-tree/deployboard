@@ -26998,7 +26998,7 @@ async function renderDomains() {
   const cdList = document.getElementById('customDomainsList');
   if (!cdList) return;
   try {
-    const r  = await fetch('/api/domains');
+    const r  = await apiFetch('/api/domains');
     const ds = await r.json();
     const heroCustom = document.getElementById('domainHeroCustom'); if (heroCustom) heroCustom.textContent = Array.isArray(ds) ? ds.length : 0;
     if (!Array.isArray(ds) || !ds.length) {
@@ -27086,7 +27086,7 @@ async function startExternalImport() {
   if (btn) { btn.disabled=true; btn.innerHTML='<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;margin-right:6px;"></span>Verifying & activating...'; }
   if (banner) banner.style.display='none';
   try {
-    var r = await fetch('/api/domains/proxy-import', {
+    var r = await apiFetch('/api/domains/proxy-import', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ subdomain: subdomain, externalUrl: externalUrl })
     });
@@ -27124,7 +27124,7 @@ async function renderExternalProxies() {
   var listEl = document.getElementById('externalProxyList');
   if (!listEl) return;
   try {
-    var r = await fetch('/api/domains/proxy-imports');
+    var r = await apiFetch('/api/domains/proxy-imports');
     var d = await r.json();
     var proxies = d.proxies||[];
     if (!proxies.length) {
@@ -27156,7 +27156,7 @@ async function renderExternalProxies() {
 async function deleteExternalProxy(subdomain) {
   if (!confirm('Remove external import for '+subdomain+'? Traffic will go back to the project own deployment.')) return;
   try {
-    await fetch('/api/domains/proxy-import/'+encodeURIComponent(subdomain), {method:'DELETE'});
+    await apiFetch('/api/domains/proxy-import/'+encodeURIComponent(subdomain), {method:'DELETE'});
     toast('Import removed','success');
     renderExternalProxies();
   } catch(e) { toast('Failed to remove import','error'); }
@@ -27344,7 +27344,7 @@ function startDomainTransfer() {
     logLines.appendChild(line); logLines.scrollTop=logLines.scrollHeight;
     if (type==='step') { _cdProgressStep=Math.min(_cdProgressStep+18,85); if(progressBar) progressBar.style.width=_cdProgressStep+'%'; }
   }
-  const url='/api/domains/transfer?domain='+encodeURIComponent(domain)+'&subdomain='+encodeURIComponent(subdomain);
+  const url='/api/domains/transfer?domain='+encodeURIComponent(domain)+'&subdomain='+encodeURIComponent(subdomain)+(authToken?'&token='+encodeURIComponent(authToken):'');
   const es=new EventSource(url);
   es.onmessage=(e)=>{
     let data; try { data=JSON.parse(e.data); } catch(_) { return; }
@@ -27507,7 +27507,7 @@ function dmDnsRunTransfer() {
     lines.appendChild(line); lines.scrollTop=lines.scrollHeight;
     if(type==='step'){ _dmDnsTransferStep=Math.min(_dmDnsTransferStep+18,85); if(progress) progress.style.width=_dmDnsTransferStep+'%'; }
   }
-  const url='/api/domains/transfer?domain='+encodeURIComponent(_dmCurrentDomain.domain)+'&subdomain='+encodeURIComponent(_dmCurrentDomain.subdomain);
+  const url='/api/domains/transfer?domain='+encodeURIComponent(_dmCurrentDomain.domain)+'&subdomain='+encodeURIComponent(_dmCurrentDomain.subdomain)+(authToken?'&token='+encodeURIComponent(authToken):'');
   const es=new EventSource(url);
   es.onmessage=(e)=>{
     let data; try { data=JSON.parse(e.data); } catch(_){ return; }
@@ -27624,7 +27624,7 @@ async function dmReassign() {
   if(progress) progress.style.width='20%'; _dmReassignStep=20;
 
   // Step 2: stream the transfer to the new project
-  const url='/api/domains/transfer?domain='+encodeURIComponent(_dmCurrentDomain.domain)+'&subdomain='+encodeURIComponent(newSub);
+  const url='/api/domains/transfer?domain='+encodeURIComponent(_dmCurrentDomain.domain)+'&subdomain='+encodeURIComponent(newSub)+(authToken?'&token='+encodeURIComponent(authToken):'');
   const es=new EventSource(url);
   es.onmessage=(e)=>{
     let data; try { data=JSON.parse(e.data); } catch(_){ return; }
@@ -27765,7 +27765,7 @@ async function renderUsage() {
 
   // Custom domains count
   try {
-    const cr = await fetch('/api/domains');
+    const cr = await apiFetch('/api/domains');
     if (cr.ok) {
       const cd = await cr.json();
       if (el('usageCustomDomains')) el('usageCustomDomains').textContent = Array.isArray(cd) ? cd.length : '0';

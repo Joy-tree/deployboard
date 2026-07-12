@@ -728,7 +728,13 @@ let _cdCacheRefreshing = false; // [FIX] prevents concurrent Firebase stampede w
 const CD_CACHE_TTL_MS = 120 * 1000; // [FIX] raised 30s→120s — reduces Firebase stampede on every subdomain request
 
 // ── External URL Proxy cache ──────────────────────────────────────────────
-const _epCache = new Map();
+const _epCache = new Map();   // subdomain -> externalUrl  (GLOBAL by design: the
+                              // proxy/routing layer must resolve any subdomain
+                              // regardless of who is logged in)
+const _epMeta  = new Map();   // subdomain -> { ownerKey, externalUrl, createdAt }
+                              // (ownership metadata, used ONLY to scope the
+                              // dashboard listing per-user so imports stop
+                              // leaking across accounts)
 let _epCacheLastRefresh = 0;
 let _epCacheRefreshing = false;
 const EP_CACHE_TTL_MS = 60_000;
@@ -741,10 +747,17 @@ async function refreshExternalProxyCache() {
       if (r.ok) {
         const data = await r.json().catch(() => ({}));
         _epCache.clear();
+        _epMeta.clear();
         if (data && typeof data === 'object') {
           for (const entry of Object.values(data)) {
             if (entry && entry.subdomain && entry.externalUrl) {
-              _epCache.set(String(entry.subdomain).toLowerCase(), String(entry.externalUrl));
+              const sub = String(entry.subdomain).toLowerCase();
+              _epCache.set(sub, String(entry.externalUrl));
+              _epMeta.set(sub, {
+                ownerKey: entry.ownerKey || null,
+                externalUrl: String(entry.externalUrl),
+                createdAt: entry.createdAt || null
+              });
             }
           }
         }
@@ -4848,9 +4861,24 @@ async function getAllCustomDomains() {
   return Array.from(map.values());
 }
 
-app.get('/api/domains', async (req, res) => {
-  try { res.json(await getAllCustomDomains()); }
-  catch(e) { res.json(memDomains); }
+app.get('/api/domains', attachAuthIfPresent, async (req, res) => {
+  // [FIX] Was unauthenticated and returned every account's custom domains,
+  // so a newly signed-in user saw domains other users had attached. Now the
+  // list is scoped to the caller's ownerKey (admins see all; legacy entries
+  // with no recorded owner are shown to admins only, so they stop leaking
+  // but aren't lost).
+  try {
+    const all = await getAllCustomDomains();
+    const list = Array.isArray(all) ? all : [];
+    if (!req.user) return res.json([]); // unauthenticated => leak nothing
+    const myKey = firebaseWorkspaceKey(req.user);
+    const admin = isRootEmailAdmin(req.user);
+    const filtered = list.filter(d => {
+      const owner = (d && d.ownerKey) || null;
+      return admin || (owner && owner === myKey);
+    });
+    res.json(filtered);
+  } catch(e) { res.json([]); }
 });
 
 app.post('/api/domains', async (req, res) => {
@@ -5008,7 +5036,7 @@ app.delete('/api/domains/:domain', requireAuth, async (req, res) => {
 });
 
 // ── Real domain transfer with SSE progress logs ───────────────────
-app.get('/api/domains/transfer', async (req, res) => {
+app.get('/api/domains/transfer', attachAuthIfPresent, async (req, res) => {
   const domain    = normalizeHostHeader(String(req.query.domain || '').trim());
   const subdomain = String(req.query.subdomain || '').trim();
 
@@ -5142,7 +5170,10 @@ app.get('/api/domains/transfer', async (req, res) => {
 
     // 4. Save/upsert the domain mapping — Firebase only
     send('log', 'Saving domain → project mapping…');
-    const domainEntry = { domain, subdomain, verified: dnsResult.verified, updatedAt: new Date().toISOString() };
+    // [FIX] Attribute this custom domain to the account that created it, so
+    // it only appears in that user's dashboard (see GET /api/domains filter).
+    const ownerKey = req.user ? firebaseWorkspaceKey(req.user) : null;
+    const domainEntry = { domain, subdomain, ownerKey, verified: dnsResult.verified, updatedAt: new Date().toISOString() };
     let savedToFirebase = false;
     if (FIREBASE_RTDB_URL) {
       try {
@@ -5826,16 +5857,32 @@ app.post('/api/domains/dns/delete', requireAuth, async (req, res) => {
 });
 
 // ── Update nameservers ────────────────────────────────────────────
-// GET /api/domains/proxy-imports — list all external proxy mappings
-app.get('/api/domains/proxy-imports', async (req, res) => {
+// GET /api/domains/proxy-imports — list THIS user's external proxy mappings only.
+// [FIX] Was unauthenticated and returned the entire global cache, so every
+// account saw imports created by every other account. Now scoped by ownerKey.
+app.get('/api/domains/proxy-imports', requireAuth, async (req, res) => {
   try {
-    const list = Array.from(_epCache.entries()).map(([subdomain, externalUrl]) => ({ subdomain, externalUrl }));
+    const myKey = firebaseWorkspaceKey(req.user);
+    const admin = isRootEmailAdmin(req.user);
+    const list = [];
+    for (const [subdomain, externalUrl] of _epCache.entries()) {
+      const owner = (_epMeta.get(subdomain) || {}).ownerKey || null;
+      // Admins see everything. Everyone else sees only what they created.
+      // Legacy entries with no recorded owner (created before this fix) are
+      // shown only to admins -- so they stop leaking into every dashboard,
+      // but aren't silently lost and can be reviewed/cleaned up.
+      if (admin || (owner && owner === myKey)) {
+        list.push({ subdomain, externalUrl });
+      }
+    }
     res.json({ ok: true, proxies: list });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 // POST /api/domains/proxy-import — save a new external proxy mapping
-app.post('/api/domains/proxy-import', async (req, res) => {
+// [FIX] Now requires auth and records ownerKey so the entry belongs to the
+// creating account instead of being an anonymous global mapping.
+app.post('/api/domains/proxy-import', requireAuth, async (req, res) => {
   try {
     let { subdomain, externalUrl } = req.body || {};
     if (!subdomain || !externalUrl) return res.status(400).json({ error: 'subdomain and externalUrl are required' });
@@ -5853,7 +5900,8 @@ app.post('/api/domains/proxy-import', async (req, res) => {
     } catch(e) {
       return res.status(400).json({ error: 'Could not reach external URL: ' + e.message });
     }
-    const entry = { subdomain, externalUrl, createdAt: new Date().toISOString() };
+    const ownerKey = firebaseWorkspaceKey(req.user);
+    const entry = { subdomain, externalUrl, ownerKey, createdAt: new Date().toISOString() };
     if (FIREBASE_RTDB_URL) {
       const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
       const key = subdomain.replace(/[.#$[\]]/g, '_');
@@ -5864,6 +5912,7 @@ app.post('/api/domains/proxy-import', async (req, res) => {
       });
     }
     _epCache.set(subdomain, externalUrl);
+    _epMeta.set(subdomain, { ownerKey, externalUrl, createdAt: entry.createdAt });
     if (typeof addActivity === 'function') addActivity('domain', `External proxy set: ${subdomain} → ${externalUrl}`);
     res.json({ ok: true, entry });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -5873,7 +5922,15 @@ app.post('/api/domains/proxy-import', async (req, res) => {
 app.delete('/api/domains/proxy-import/:subdomain', requireAuth, async (req, res) => {
   try {
     const subdomain = String(req.params.subdomain).trim().toLowerCase();
+    // [FIX] Ownership check -- a user may only remove their own imports.
+    // Legacy no-owner entries are removable by admins only.
+    const owner = (_epMeta.get(subdomain) || {}).ownerKey || null;
+    const myKey = firebaseWorkspaceKey(req.user);
+    if (!isRootEmailAdmin(req.user) && owner !== myKey) {
+      return res.status(403).json({ error: 'This external import belongs to another account.' });
+    }
     _epCache.delete(subdomain);
+    _epMeta.delete(subdomain);
     if (FIREBASE_RTDB_URL) {
       const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
       const key = subdomain.replace(/[.#$[\]]/g, '_');
