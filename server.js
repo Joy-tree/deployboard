@@ -4174,48 +4174,46 @@ app.get('/api/projects', attachAuthIfPresent, async (req, res) => {
   try {
     const mineOnly = String(req.query.mine || '') === '1';
     if (mineOnly && !req.user) return res.status(401).json({ error: 'Unauthorized' });
-    const mongoUserId = String(req.user?._id || req.user?.id || '');
 
-    let filter = mineOnly ? { ownerUserId: mongoUserId } : {};
-    if (!isDbReady()) {
-      const ws = (await readWorkspaceFromFirebase(req.user || {})) || {};
-      const projects = Array.isArray(ws.projects) ? ws.projects : [];
-      return res.json(projects.map(p => ({ ...p, id: String(p.id || p._id || '') })));
-    }
-    let projects = await Project.find(filter).sort({ createdAt: -1 });
+    // [FIX] This used to read from MongoDB whenever it was reachable, and
+    // only fall back to Firebase if Mongo was down. But Firebase is what
+    // every write path (deploy, delete, rename, etc. -- see
+    // writeWorkspaceToFirebase callers throughout this file) actually
+    // treats as the real source of truth; Mongo is a legacy/best-effort
+    // mirror at best. Whenever Mongo happened to be reachable, this
+    // endpoint would show MONGO's list instead of Firebase's: a project
+    // just deleted from Firebase could still be sitting in Mongo (delete's
+    // own Mongo cleanup is explicitly best-effort) and would reappear on
+    // reload, while a project that was just deployed (written to Firebase
+    // only) simply wasn't in Mongo yet and would seem to vanish. That's
+    // exactly the "delete a project, deploy a new one, reload, and the
+    // deleted one is back while the new one is gone" symptom this fixes.
+    // Firebase is now unconditionally the source for the actual project
+    // list; Mongo is only consulted afterward, best-effort, to enrich
+    // matching projects with lastDeployStatus/lastDeployDuration -- it can
+    // no longer override which projects are shown at all.
+    const ws = (await readWorkspaceFromFirebase(req.user || {})) || {};
+    let projects = (Array.isArray(ws.projects) ? ws.projects : [])
+      .map(p => ({ ...p, id: String(p.id || p._id || '') }));
 
-    // ORPHAN RECOVERY FIX: If the user has few or no projects in MongoDB under their current _id,
-    // also search via Firebase workspace to find subdomains that belong to them,
-    // then surface any MongoDB projects by those subdomains (even if ownerUserId doesn't match).
-    if (mineOnly && projects.length === 0) {
+    if (isDbReady() && projects.length) {
       try {
-        const fbWs = await readWorkspaceFromFirebase(req.user);
-        const wsSubdomains = Array.isArray(fbWs?.projects)
-          ? fbWs.projects.map(p => String(p.subdomain || '')).filter(Boolean)
-          : [];
-        if (wsSubdomains.length > 0) {
-          const orphaned = await Project.find({ subdomain: { $in: wsSubdomains } }).sort({ createdAt: -1 });
-          if (orphaned.length > 0) {
-            // Reclaim these orphans by updating their ownerUserId
-            await Project.updateMany(
-              { subdomain: { $in: wsSubdomains } },
-              { $set: { ownerUserId: mongoUserId } }
-            ).catch(() => {});
-            projects = orphaned;
+        const subdomains = projects.map(p => p.subdomain).filter(Boolean);
+        const mongoMatches = await Project.find({ subdomain: { $in: subdomains } }).select('_id subdomain');
+        const mongoIdBySubdomain = new Map(mongoMatches.map(mp => [mp.subdomain, mp._id]));
+        await Promise.all(projects.map(async p => {
+          const mongoId = mongoIdBySubdomain.get(p.subdomain);
+          if (!mongoId) return;
+          const last = await Deployment.findOne({ projectId: mongoId }).sort({ startedAt: -1 }).select('status duration');
+          if (last) {
+            p.lastDeployStatus = last.status || null;
+            p.lastDeployDuration = last.duration || null;
           }
-        }
-      } catch (_) {}
+        }));
+      } catch (_) { /* enrichment is best-effort only -- never blocks the real list */ }
     }
 
-    const enriched  = await Promise.all(projects.map(async p => {
-      const last = await Deployment.findOne({ projectId: p._id }).sort({ startedAt: -1 }).select('status duration endedAt');
-      const obj  = p.toObject();
-      obj.id = String(p._id);
-      obj.lastDeployStatus   = last?.status   || null;
-      obj.lastDeployDuration = last?.duration || null;
-      return obj;
-    }));
-    res.json(enriched);
+    res.json(projects);
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
