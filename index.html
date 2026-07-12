@@ -41054,15 +41054,35 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   }
 
   function placeSpotlight(navEl){
-    navEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(function(){
+    // [FIX] Use an INSTANT scroll, then measure once the element's position
+    // has actually settled -- instead of a smooth scroll measured after a
+    // fixed 220ms guess. Smooth scrolling has no reliable cross-browser
+    // completion event, and inside the mobile sidebar drawer it regularly
+    // took longer than 220ms, so the old code measured mid-scroll and
+    // stranded the ring near the top of the list while the real target
+    // (e.g. "Domains") was still scrolling into view further down.
+    try { navEl.scrollIntoView({ block: 'center', inline: 'nearest' }); }
+    catch(_) { try { navEl.scrollIntoView(); } catch(__){} }
+    // Poll a few frames until the rect stops moving -- this covers BOTH the
+    // scroll and the drawer's open/transform transition -- then lock the
+    // ring to the final, correct position.
+    var last = null, tries = 0;
+    (function settle(){
       var r = navEl.getBoundingClientRect();
-      spotlight.style.top = (r.top - 6) + 'px';
-      spotlight.style.left = (r.left - 6) + 'px';
-      spotlight.style.width = (r.width + 12) + 'px';
-      spotlight.style.height = (r.height + 12) + 'px';
-      spotlight.classList.add('open');
-    }, 220);
+      var stable = last &&
+        Math.abs(r.top - last.top) < 0.5 &&
+        Math.abs(r.left - last.left) < 0.5;
+      if (stable || tries >= 24) {
+        spotlight.style.top = (r.top - 6) + 'px';
+        spotlight.style.left = (r.left - 6) + 'px';
+        spotlight.style.width = (r.width + 12) + 'px';
+        spotlight.style.height = (r.height + 12) + 'px';
+        spotlight.classList.add('open');
+        return;
+      }
+      last = r; tries++;
+      requestAnimationFrame(settle);
+    })();
   }
 
   function placeCardBesideNav(navEl){
