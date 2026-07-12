@@ -1896,12 +1896,21 @@ async function writeWorkspaceToFirebase(user, workspace) {
       try {
         const uid = String(user?._id || user?.id || '');
         const uemail = String(user?.email || '').trim().toLowerCase();
-        const localUser = localAuth.users.find(u =>
+        // [FIX] Sync EVERY local record that resolves to this account, not
+        // just the first match. Admin impersonation can mint a second
+        // localAuth.users record for the same email, and the autodeploy
+        // poller iterates ALL of them. If only the first twin's cache were
+        // synced here, the stale twin would keep PUTting an outdated
+        // workspace (deleted projects still present, new ones absent) back
+        // to the same email-keyed Firebase node on its next poll tick --
+        // the deterministic "delete comes back / new deploy vanishes on
+        // reload" bug. Syncing all matches keeps every twin consistent.
+        const localMatches = localAuth.users.filter(u =>
           (uid && String(u.id || u._id || '') === uid) ||
           (uemail && String(u.email || '').trim().toLowerCase() === uemail)
         );
-        if (localUser) {
-          localUser.workspace = payload;
+        if (localMatches.length) {
+          for (const lu of localMatches) lu.workspace = payload;
           saveLocalAuth();
         }
       } catch (sy) {
@@ -15630,10 +15639,20 @@ async function checkAndAutoDeployProjects() {
       // Refreshing from Firebase here, right before using it, closes that
       // gap: the poller (and everything it calls) now always operates on
       // live data instead of a potentially-stale disk snapshot.
+      let refreshOk = false;
       try {
         const freshWs = await readWorkspaceFromFirebase(user);
-        if (freshWs && typeof freshWs === 'object') user.workspace = freshWs;
+        if (freshWs && typeof freshWs === 'object') { user.workspace = freshWs; refreshOk = true; }
       } catch (_) {}
+      // [FIX] If we could NOT confirm a fresh read from Firebase (network
+      // blip, timeout, or a genuinely empty/null node), do not proceed with
+      // this user this tick. Every status patch below funnels through
+      // updateLocalWorkspaceProject(), which PUTs the ENTIRE cached
+      // workspace back to Firebase. Writing a stale snapshot here is exactly
+      // what resurrected just-deleted projects and dropped freshly-deployed
+      // ones on reload. A user with no reachable/real workspace has nothing
+      // to autodeploy anyway, so skipping until the next tick is safe.
+      if (!refreshOk) continue;
       const workspaceProjects = Array.isArray(user?.workspace?.projects) ? user.workspace.projects : [];
       for (const raw of workspaceProjects) {
         const project = normalizeWorkspaceAutoDeployProject(raw, raw?.id || raw?._id || raw?.subdomain);
