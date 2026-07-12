@@ -16514,23 +16514,41 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           display:flex;align-items:center;gap:6px;
         }
         .qs2-tab svg{ color:#10b981; }
+        /* ── Side-by-side split: editor left, results right (PopSQL-style) ── */
+        .qs2-split{ display:flex;flex:1;min-height:0; }
+        .qs2-editor-col{ flex:1.15;min-width:0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.06); }
+        .qs2-results-col{ flex:1;min-width:0;display:flex;flex-direction:column; }
+        @media(max-width:900px){
+          .qs2-split{ flex-direction:column; }
+          .qs2-editor-col{ border-right:none;border-bottom:1px solid rgba(255,255,255,.06);flex:0 0 auto;max-height:38vh; }
+          .qs2-results-col{ flex:1; }
+        }
         .qs2-results-head{
           display:flex;align-items:center;justify-content:space-between;
-          padding:6px 12px;border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06);
+          padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.06);
           background:rgba(255,255,255,.02);flex-shrink:0;
         }
         .qs2-results-head-label{ font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#64748b; }
         .qs2-results-body{ flex:1;min-height:160px;overflow:auto; }
+        /* ── Line-number gutter ── */
+        .qstudio-gutter{
+          flex-shrink:0;width:38px;padding:14px 8px 14px 0;text-align:right;
+          font-family:var(--font-mono);font-size:.82rem;line-height:1.7;color:#475569;
+          background:rgba(255,255,255,.015);border-right:1px solid rgba(255,255,255,.06);
+          white-space:pre;overflow:hidden;user-select:none;-webkit-user-select:none;
+        }
+        @media(max-width:700px){ .qstudio-gutter{ display:none; } }
+        .qstudio-hl-inner{ position:relative;flex:1;min-width:0; }
+        .qs2-status-dot{ width:8px;height:8px;border-radius:50%;background:#475569;display:inline-block;margin-right:6px; }
+        .qs2-status-dot.ok{ background:#10b981; }
+        .qs2-status-dot.err{ background:#f87171; }
+        .qs2-status-dot.running{ background:#fbbf24;animation:pulse 1s infinite; }
         .qs2-statusbar{
           display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
           padding:7px 14px;border-top:1px solid rgba(255,255,255,.07);background:#0a0a0a;
           font-size:.72rem;color:#94a3b8;font-family:var(--font-mono);flex-shrink:0;
         }
         .qs2-statusbar-left{ display:flex;align-items:center;gap:14px;flex-wrap:wrap; }
-        .qs2-status-dot{ width:8px;height:8px;border-radius:50%;background:#475569;display:inline-block;margin-right:6px; }
-        .qs2-status-dot.ok{ background:#10b981; }
-        .qs2-status-dot.err{ background:#f87171; }
-        .qs2-status-dot.running{ background:#fbbf24;animation:pulse 1s infinite; }
       </style>
       <button class="page-back" onclick="showPage('databases')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Databases</button>
 
@@ -16635,29 +16653,38 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
               </div>
             </div>
 
-            <!-- Editor -->
-            <div class="qstudio-editor-wrap" id="qstudioEditorWrap" style="flex:0 0 auto;max-height:38vh;">
-              <div class="qstudio-editor-label" id="qstudioEditorLabel">SQL</div>
-              <div class="qstudio-hl-editor" id="qstudioHlEditor">
-                <pre class="qstudio-hl-pre" id="qstudioHlPre" aria-hidden="true"><code class="qstudio-hl-code" id="qstudioHlCode"></code></pre>
-                <textarea class="qstudio-textarea qstudio-textarea-hl" id="dbQueryInput"
-                  placeholder="-- Write your query here&#10;-- Ctrl+Enter to run&#10;SELECT * FROM your_table LIMIT 50;"
-                  spellcheck="false"
-                  autocomplete="off"
-                  autocorrect="off"
-                  autocapitalize="off"></textarea>
+            <div class="qs2-split">
+              <!-- Editor (left) -->
+              <div class="qs2-editor-col">
+                <div class="qstudio-editor-wrap" id="qstudioEditorWrap">
+                  <div class="qstudio-editor-label" id="qstudioEditorLabel">SQL</div>
+                  <div class="qstudio-hl-editor" id="qstudioHlEditor">
+                    <div class="qstudio-gutter" id="qstudioGutter" aria-hidden="true">1</div>
+                    <div class="qstudio-hl-inner">
+                      <pre class="qstudio-hl-pre" id="qstudioHlPre" aria-hidden="true"><code class="qstudio-hl-code" id="qstudioHlCode"></code></pre>
+                      <textarea class="qstudio-textarea qstudio-textarea-hl" id="dbQueryInput"
+                        placeholder="-- Write your query here&#10;-- Ctrl+Enter to run&#10;SELECT * FROM your_table LIMIT 50;"
+                        spellcheck="false"
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"></textarea>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <!-- Results grid -->
-            <div class="qs2-results-head">
-              <span class="qs2-results-head-label">Result</span>
-              <button class="qs-tree-refresh" onclick="openTerminalFullscreen()" title="View fullscreen">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-              </button>
-            </div>
-            <div class="qs2-results-body" id="dbEditorResults">
-              <div class="qstudio-raw-output"><span class="dim">-- Awaiting query execution...</span><br><span class="dim">-- Select a database and run a query above.</span></div>
+              <!-- Results (right, like PopSQL's SQL/Data/Chart pane) -->
+              <div class="qs2-results-col">
+                <div class="qs2-results-head">
+                  <span class="qs2-results-head-label">Result</span>
+                  <button class="qs-tree-refresh" onclick="openTerminalFullscreen()" title="View fullscreen">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                  </button>
+                </div>
+                <div class="qs2-results-body" id="dbEditorResults">
+                  <div class="qstudio-raw-output"><span class="dim">-- Awaiting query execution...</span><br><span class="dim">-- Select a database and run a query above.</span></div>
+                </div>
+              </div>
             </div>
 
             <!-- Status bar -->
@@ -32370,12 +32397,36 @@ function qlRefreshHighlight() {
   // Sync height
   const h = ta.offsetHeight;
   if (h) pre.style.height = h + 'px';
+  qsUpdateGutter();
+}
+
+// Real line-number gutter (PopSQL/Navicat-style) -- rebuilds the number
+// list only when the line count actually changes, and keeps it scrolled
+// in sync with the textarea otherwise. Desktop-only, same as the syntax
+// highlight overlay it sits next to (qlRefreshHighlight already early-
+// returns on narrow screens, and the gutter is hidden there via CSS too).
+let _qsGutterLines = 0;
+function qsUpdateGutter() {
+  const ta = document.getElementById('dbQueryInput');
+  const gutter = document.getElementById('qstudioGutter');
+  if (!ta || !gutter) return;
+  const lineCount = (ta.value || '').split('\n').length;
+  if (lineCount !== _qsGutterLines) {
+    _qsGutterLines = lineCount;
+    let out = '';
+    for (let i = 1; i <= lineCount; i++) out += i + '\n';
+    gutter.textContent = out.slice(0, -1);
+  }
+  gutter.scrollTop = ta.scrollTop;
+  const h = ta.offsetHeight;
+  if (h) gutter.style.height = h + 'px';
 }
 
 function qlSyncScroll() {
   const ta  = document.getElementById('dbQueryInput');
   const pre = document.getElementById('qstudioHlPre');
   if (ta && pre) { pre.scrollTop = ta.scrollTop; pre.scrollLeft = ta.scrollLeft; }
+  qsUpdateGutter();
 }
 
 function qlUpdateEngine(engine) {
