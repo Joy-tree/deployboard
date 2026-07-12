@@ -34891,6 +34891,17 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
     border-right:1px solid rgba(16,185,129,.2) !important;
     box-shadow:4px 0 24px rgba(0,0,0,.5);
   }
+  /* [FIX] The toggle button (dbbToggleSidebar) only ever did
+     sb.classList.toggle('open') -- there was no CSS rule anywhere for
+     ".dbb-sidebar.open", so adding/removing that class had zero visual
+     effect and the sidebar stayed permanently off-screen at this width.
+     This is also why the block below was never closing: without it, this
+     whole @media(max-width:700px) query stayed open and silently swallowed
+     the entire next CSS section (a since-superseded Query Studio redesign
+     block, now dead code targeting removed class names either way), which
+     was written assuming it applied at >900px. */
+  .dbb-sidebar.open{ transform:translateX(0); }
+}
 /* ══════════════════════════════════════════════════════════════════════
    QUERY STUDIO — COMPLETE REDESIGN (supersedes all earlier scattered rules
    above for #page-db-query). Traditional desktop query-tool aesthetic —
