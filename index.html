@@ -16494,7 +16494,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
            tool has visible by default. */
         #page-db-query .page-back{ margin-bottom:8px; }
         .qs2-shell{
-          display:flex;flex-direction:column;min-height:0;
+          display:flex;flex-direction:column;min-height:0;flex:1;
           border:1px solid rgba(16,185,129,.18);border-radius:16px;overflow:hidden;background:#0d0d0d;
         }
         .qs2-topbar{
@@ -16534,6 +16534,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       </style>
       <button class="page-back" onclick="showPage('databases')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Databases</button>
 
+      <div class="db-studio-page">
       <div class="qs2-shell">
 
         <!-- ══ Top bar: connection + primary actions ══ -->
@@ -16672,6 +16673,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           </div>
         </div>
       </div>
+      </div><!-- /db-studio-page -->
 
       <input type="file" id="dbImportFile" accept=".csv" style="display:none" onchange="importIntoDatabase(this.files[0])">
 
