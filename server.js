@@ -1,5 +1,15 @@
 'use strict';
 
+// [FIX] Prefer IPv4 (A records) over IPv6 (AAAA) for ALL outbound DNS in this
+// process. This VPS's IPv6 egress is unreliable, so when a database or API
+// host is dual-stacked, Node 17+'s default "verbatim" resolution order can
+// return an IPv6 address first -- the connection then hangs until it times
+// out (e.g. the "Connection terminated due to connection timeout" seen when
+// comparing against an external Postgres). This is the process-wide
+// equivalent of the `family: 4` already forced on Mongo connections, and it
+// only changes PREFERENCE: a host with no A record still falls back to IPv6.
+try { require('dns').setDefaultResultOrder('ipv4first'); } catch (_) {}
+
 // ===== CRASH GUARD =====
 // [FIX] This used to log-and-continue forever on ANY uncaught error. That's
 // an anti-pattern Node's own docs warn against: after an uncaughtException,
@@ -13825,7 +13835,16 @@ async function databasesDiffHandler(req, res) {
     const report = await diffDatabases(resolvedA, resolvedB);
     res.json({ ok: true, report });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    let msg = (e && e.message) || 'Comparison failed';
+    // [FIX] The raw driver error for an unreachable DB ("Connection
+    // terminated due to connection timeout", ETIMEDOUT, etc.) tells the user
+    // nothing about what to do. Add concrete guidance for the common causes.
+    if (/connection timeout|timed? ?out|ETIMEDOUT|ECONNREFUSED|ENOTFOUND|EHOSTUNREACH|ENETUNREACH/i.test(msg)) {
+      msg += ' — JoyTree could not reach that database within the time limit. '
+           + 'Check the host and port are correct and reachable from the server, and that the DB allows external connections. '
+           + 'Note: some providers (e.g. Supabase) hand out an IPv6-only "direct" connection string — use their IPv4 / connection-pooler string instead.';
+    }
+    res.status(500).json({ ok: false, error: msg });
   }
 }
 app.post('/api/databases/diff', requireAuth, databasesDiffHandler);
