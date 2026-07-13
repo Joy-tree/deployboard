@@ -1,5 +1,5 @@
-const CACHE_NAME = 'joytree-shell-v1';
-const CORE_ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/favicon_256.png'];
+const CACHE_NAME = 'joytree-shell-v2';
+const CORE_ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/favicon_256.png', '/favicon_192.png', '/favicon_512.png', '/favicon_512_maskable.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)).then(() => self.skipWaiting()));
