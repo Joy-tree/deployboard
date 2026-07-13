@@ -467,15 +467,16 @@ img{max-width:100%;}
   pointer-events:none;
 }
 .hero-eyebrow{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:6px 14px;
-  background:rgba(16,185,129,0.08);
-  border:1px solid rgba(16,185,129,0.2);
-  border-radius:99px;
-  font-size:0.78rem;font-weight:600;color:var(--primary);
-  letter-spacing:0.04em;text-transform:uppercase;
-  margin-bottom:28px;
+  display:inline-flex;align-items:center;gap:10px;
+  padding:0;background:none;border:none;border-radius:0;
+  font-size:0.74rem;font-weight:700;color:var(--primary);
+  letter-spacing:0.2em;text-transform:uppercase;
+  margin-bottom:26px;
   animation:fadeUp 0.6s ease both;
+}
+.hero-eyebrow::before{
+  content:"";display:inline-block;width:28px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--primary));
 }
 .hero-eyebrow-dot{width:6px;height:6px;background:#10b981;border-radius:50%;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
@@ -6322,19 +6323,18 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   <style>
     /* ── New hero: clean, single-focus, no background photo ── */
     .hero-chip{
-      display:inline-flex;flex-direction:column;align-items:center;gap:2px;
-      margin:0 auto 30px;padding:10px 22px;
-      background:rgba(16,185,129,0.06);
-      border:1px solid rgba(16,185,129,0.22);
-      border-radius:14px;
+      display:inline-flex;flex-direction:column;align-items:center;gap:4px;
+      margin:0 auto 30px;padding:0;
+      background:none;border:none;border-radius:0;
       animation:fadeUp 0.6s 0.15s ease both;
     }
     .hero-chip-label{
-      font-size:0.68rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+      font-size:0.66rem;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;
       color:var(--text-3);
     }
     .hero-chip-word{
-      font-size:1.05rem;font-weight:700;letter-spacing:-0.01em;
+      font-size:1.15rem;font-weight:800;letter-spacing:-0.01em;
+      padding-bottom:5px;
       background:linear-gradient(96deg,#10b981 0%,#06b6d4 60%,#22d3ee 100%);
       -webkit-background-clip:text;background-clip:text;color:transparent;
       transition:opacity .3s ease;
