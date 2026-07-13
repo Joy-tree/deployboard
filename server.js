@@ -5814,7 +5814,7 @@ app.get('/api/domains/mine', requireAuth, async (req, res) => {
 // ── Attach domain to a project (set DNS CNAME → project subdomain) ─
 app.post('/api/domains/attach', requireAuth, async (req, res) => {
   try {
-    const { domain, projectId } = req.body || {};
+    const { domain, projectId, byo } = req.body || {};
     if (!domain || !projectId) return res.status(400).json({ error: 'domain and projectId required' });
 
     const ws = (await readWorkspaceFromFirebase(req.user)) || {};
@@ -5824,20 +5824,44 @@ app.post('/api/domains/attach', requireAuth, async (req, res) => {
     const targetHost = subdomain ? `${subdomain}.${BASE_DOMAIN}` : null;
     if (!targetHost) return res.status(400).json({ error: 'Project has no subdomain' });
 
-    // Update in Firebase
+    // Mark a JoyTree-registered domain as attached in the user's workspace.
     ws.registeredDomains = Array.isArray(ws.registeredDomains) ? ws.registeredDomains : [];
     const rec = ws.registeredDomains.find(d => d.domain === domain);
     if (rec) { rec.projectId = projectId; rec.attachedAt = new Date().toISOString(); }
     await writeWorkspaceToFirebase(req.user, ws);
 
-    // Add CNAME via NameSilo if API key available
-    if (NAMESILO_API_KEY) {
+    const isRegistered = !!rec;
+    // JoyTree (NameSilo-managed) domain → auto-create the CNAME for the user.
+    if (isRegistered && NAMESILO_API_KEY) {
       await namesiloCall('dnsAddRecord', {
         domain, rrtype: 'CNAME', rrhost: '@', rrvalue: targetHost, rrttl: 3600
       }).catch(e => console.warn('[DomainStore] CNAME add warn:', e.message));
     }
 
-    res.json({ ok: true, domain, projectId, targetHost });
+    // [DOMAIN STARTUP] Register the host in the custom-domain routing store so
+    // the proxy serves it from the project's subdomain. Required for
+    // bring-your-own domains (not in registeredDomains); the user must add a
+    // CNAME (domain → targetHost) at their own registrar. NOTE: valid HTTPS for
+    // a BYO host needs Cloudflare for SaaS (Phase 2) — until then it routes but
+    // may show a certificate warning over HTTPS.
+    const isByo = !!byo || !isRegistered;
+    if (isByo) {
+      const ownerKey = firebaseWorkspaceKey(req.user);
+      const entry = { domain, subdomain, ownerKey, projectId, verified: false, byo: true, updatedAt: new Date().toISOString() };
+      if (FIREBASE_RTDB_URL) {
+        try {
+          const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+          const domainKey = String(domain).replace(/[^a-z0-9_-]/g, '_');
+          await fetch(`${FIREBASE_RTDB_URL}/deployboard_custom_domains/${domainKey}.json${authQuery}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(entry)
+          });
+        } catch(e) { console.warn('[DomainStartup] custom-domain write warn:', e.message); }
+      }
+      upsertCustomDomainCache(domain, subdomain);
+    }
+
+    res.json({ ok: true, domain, projectId, targetHost, byo: isByo });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 

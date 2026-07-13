@@ -8294,6 +8294,29 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <div class="field-hint">Preview: <span class="td-mono" id="subdomainPreview">—</span></div>
                 <div class="field-hint" id="subdomainAvailability">Status: enter a subdomain</div>
               </div>
+
+              <!-- ── DOMAIN STARTUP: deploy onto a custom domain (only shown when launched from the Domain Startup card) ── -->
+              <div class="field" id="domainStartupField" style="display:none;">
+                <div style="border:1px solid rgba(16,185,129,.22);border-radius:14px;padding:16px;background:rgba(16,185,129,.05);">
+                  <label class="field-label" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.8 5.6 3.8 9S14.5 18.4 12 21C9.5 18.4 8.2 15.4 8.2 12S9.5 5.6 12 3z"/></svg>
+                    Deploy to your own domain
+                  </label>
+                  <div class="field-hint" style="margin-bottom:12px;">Serve this project on your domain instead of a joytree.site subdomain. It still deploys to your subdomain first, then we point your domain at it.</div>
+                  <div style="display:flex;gap:8px;margin-bottom:12px;">
+                    <button type="button" class="btn btn-primary btn-sm" id="dsSourceJoytreeBtn" onclick="dsSetSource('joytree')">From JoyTree</button>
+                    <button type="button" class="btn btn-ghost btn-sm" id="dsSourceByoBtn" onclick="dsSetSource('byo')">I own the domain</button>
+                  </div>
+                  <div id="dsJoytreePane">
+                    <select class="input input-mono" id="dsDomainSelect"><option value="">Loading your domains…</option></select>
+                    <div class="field-hint">Domains you registered through JoyTree. We configure DNS and SSL for you automatically.</div>
+                  </div>
+                  <div id="dsByoPane" style="display:none;">
+                    <input class="input input-mono" id="dsByoDomain" placeholder="app.yourdomain.com" autocomplete="off">
+                    <div class="field-hint" id="dsByoHint">Use a subdomain such as <code style="font-family:var(--font-mono)">app.</code> or <code style="font-family:var(--font-mono)">www.</code> — after deploy you'll add one CNAME record at your registrar. Root/apex domains and automatic HTTPS need Cloudflare for SaaS (coming soon).</div>
+                  </div>
+                </div>
+              </div>
               <div class="field" id="deployRepoField">
                 <label class="field-label">GitHub Repository URL</label>
                 <input class="input input-mono" id="deployRepoUrl" placeholder="https://github.com/username/repo" autocomplete="off">
@@ -19716,14 +19739,19 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       </div>
       <div class="resource-section-label">Deploy</div>
       <div id="resourceGrid" class="resource-grid">
-        <div class="resource-card" data-tags="static html react vite nextjs deploy" onclick="showPage('new-deploy')">
+        <div class="resource-card" data-tags="static html react vite nextjs deploy" onclick="disableDomainStartup();showPage('new-deploy')">
           <div class="resource-icon"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" alt="React"></div>
           <div class="resource-card-copy"><div class="resource-card-title">Static Site</div><div class="resource-card-desc">React, Vite, Next.js export, plain HTML and SPAs.</div><div class="resource-card-tags"><span>CDN ready</span><span>dist/out</span><span>SSL</span></div></div>
           <div class="resource-arrow">›</div>
         </div>
-        <div class="resource-card" data-tags="node server express nextjs api deploy web service" onclick="showPage('new-deploy');csSetValue('deploySiteType','server');">
+        <div class="resource-card" data-tags="node server express nextjs api deploy web service" onclick="disableDomainStartup();showPage('new-deploy');csSetValue('deploySiteType','server');">
           <div class="resource-icon"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js"></div>
           <div class="resource-card-copy"><div class="resource-card-title">Web Service</div><div class="resource-card-desc">Node.js, Express, NestJS, APIs and persistent web servers.</div><div class="resource-card-tags"><span>PORT aware</span><span>runtime</span><span>proxy</span></div></div>
+          <div class="resource-arrow">›</div>
+        </div>
+        <div class="resource-card" data-tags="domain custom byo bring your own domain deploy dns ssl startup" onclick="disableDomainStartup();showPage('new-deploy');enableDomainStartup();">
+          <div class="resource-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.8 5.6 3.8 9S14.5 18.4 12 21C9.5 18.4 8.2 15.4 8.2 12S9.5 5.6 12 3z"/></svg></div>
+          <div class="resource-card-copy"><div class="resource-card-title">Domain Startup</div><div class="resource-card-desc">Deploy a project onto your own domain — bought from JoyTree or elsewhere — instead of a joytree.site subdomain.</div><div class="resource-card-tags"><span>custom domain</span><span>DNS</span><span>SSL</span></div></div>
           <div class="resource-arrow">›</div>
         </div>
         <div class="resource-card" data-tags="dockerfile docker container deploy" onclick="showPage('dockerfile-deploy')">
@@ -23412,6 +23440,7 @@ function initDeployForm() {
   renderReposPage().catch(() => {});
 }
 function resetDeployForm() {
+  disableDomainStartup();
   const defaults = {
     deployProjectName:'', deploySubdomain:'', deployRepoUrl:'', deployBranch:'main',
     deployInstallCmd:'npm install', deployBuildCmd:'npm run build',
@@ -23737,6 +23766,81 @@ function setDeployLaunchUI(active=true) {
 // ══════════════════════════════════════════════════════════════════
 // DEPLOYMENT TRIGGER
 // ══════════════════════════════════════════════════════════════════
+// ── Domain Startup: deploy a project onto a custom domain ────────────────
+let _domainStartupMode = false;
+let _dsSource = 'joytree';
+function enableDomainStartup(){
+  _domainStartupMode = true;
+  _dsSource = 'joytree';
+  const f = document.getElementById('domainStartupField');
+  if (f) f.style.display = '';
+  dsSetSource('joytree');
+  loadMyDomainsForStartup();
+}
+function disableDomainStartup(){
+  _domainStartupMode = false;
+  const f = document.getElementById('domainStartupField');
+  if (f) f.style.display = 'none';
+}
+function dsSetSource(src){
+  _dsSource = src;
+  const jt = document.getElementById('dsJoytreePane');
+  const byo = document.getElementById('dsByoPane');
+  const jtBtn = document.getElementById('dsSourceJoytreeBtn');
+  const byoBtn = document.getElementById('dsSourceByoBtn');
+  if (jt)  jt.style.display  = src === 'joytree' ? '' : 'none';
+  if (byo) byo.style.display = src === 'byo' ? '' : 'none';
+  if (jtBtn)  jtBtn.className  = 'btn btn-sm ' + (src === 'joytree' ? 'btn-primary' : 'btn-ghost');
+  if (byoBtn) byoBtn.className = 'btn btn-sm ' + (src === 'byo' ? 'btn-primary' : 'btn-ghost');
+}
+async function loadMyDomainsForStartup(){
+  const sel = document.getElementById('dsDomainSelect');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Loading your domains…</option>';
+  const esc = s => String(s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+  try {
+    const r = await apiFetch('/api/domains/mine');
+    const data = await r.json();
+    const domains = (data && data.domains) || [];
+    const available = domains.filter(d => d && d.domain && !d.projectId);
+    if (!available.length){
+      sel.innerHTML = '<option value="">No unassigned JoyTree domains — buy one in the Domain Store, or use “I own the domain”.</option>';
+      return;
+    }
+    sel.innerHTML = '<option value="">Select a domain…</option>' +
+      available.map(d => `<option value="${esc(d.domain)}">${esc(d.domain)}</option>`).join('');
+  } catch(e){
+    sel.innerHTML = '<option value="">Could not load your domains — try again.</option>';
+  }
+}
+// The chosen custom domain for this deploy (or '' if none / not in domain mode).
+function getDomainStartupSelection(){
+  if (!_domainStartupMode) return '';
+  if (_dsSource === 'byo'){
+    return (document.getElementById('dsByoDomain')?.value || '').trim().toLowerCase();
+  }
+  return (document.getElementById('dsDomainSelect')?.value || '').trim().toLowerCase();
+}
+// Called after a successful deploy to point the chosen domain at the new project.
+async function attachDomainAfterDeploy(domain, projectId, source){
+  try {
+    toast(`Attaching ${domain} to your project…`, 'info');
+    const r = await apiFetch('/api/domains/attach', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ domain, projectId, byo: source === 'byo' })
+    });
+    const data = await r.json().catch(()=>({}));
+    if (!r.ok || data.error) throw new Error(data.error || 'Attach failed');
+    if (source === 'byo'){
+      toast(`Add a CNAME: ${domain} → ${data.targetHost} at your registrar. It goes live once DNS propagates.`, 'info');
+    } else {
+      toast(`${domain} is now pointed at your project.`, 'success');
+    }
+  } catch(e){
+    toast(`Couldn't attach ${domain}: ${e.message}`, 'error');
+  }
+}
+
 async function startDeployment() {
   // ── Upload-from-IDE mode: use /api/upload-deploy but match GitHub flow exactly ──
   if (_uploadProjectId) {
@@ -28717,6 +28821,12 @@ async function showDeploySuccess(liveUrl, projectId, buildDuration) {
   const gridEl    = document.getElementById('dssInfoGrid');
 
   if (!overlay) return;
+
+  // ── Domain Startup: point the chosen custom domain at the new project ──
+  if (_domainStartupMode && projectId) {
+    const chosenDomain = getDomainStartupSelection();
+    if (chosenDomain) attachDomainAfterDeploy(chosenDomain, projectId, _dsSource);
+  }
 
   // ── Set URL ──────────────────────────────────────────────────────
   if (urlEl)  { urlEl.href = liveUrl; urlEl.textContent = liveUrl; }
