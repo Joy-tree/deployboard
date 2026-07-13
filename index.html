@@ -26786,15 +26786,11 @@ function showDashboard(defaultPage = 'dashboard') {
 }
 
 function showPublicDocs() {
-  const verify = document.getElementById('verifyEmailPage'); if (verify) verify.style.display = 'none';
-  document.getElementById('auth-view').classList.remove('active');
-  document.documentElement.classList.add('app-mode');
-  if (typeof io !== 'undefined' && (!socket || !socket.connected) && hasAuthToken()) initSocket();
-  if (!window._dashboardInited) {
-    window._dashboardInited = true;
-  }
-  window.history.pushState({view:'app', page:'docs'}, '', '/dashboard/docs');
-  showPage('docs', null, true);
+  // Docs now live on the separately hosted docs site. Send visitors straight
+  // there instead of the old in-app docs page. Covers every entry point that
+  // calls this (landing nav link, drawer "Docs & Snippets", footer, and the
+  // /dashboard/docs deep link).
+  window.location.href = 'https://docs.joytree.site';
 }
 function showPublicFounders() {
   const verify = document.getElementById('verifyEmailPage'); if (verify) verify.style.display = 'none';
