@@ -29438,7 +29438,7 @@ function maybeShowInstallPromptCard(force = false){
 
 async function triggerInstallPromptFlow(){
   if (!deferredInstallPrompt) {
-    toast('Install prompt is not available yet in this browser session.', 'info');
+    showManualInstallHelp();
     return false;
   }
   deferredInstallPrompt.prompt();
@@ -29451,6 +29451,55 @@ async function triggerInstallPromptFlow(){
   if (accepted) setInstallPromptState('downloaded');
   return accepted;
 }
+
+function showManualInstallHelp(){
+  // Shown when the browser has not given us a deferred install prompt --
+  // either because it already fired and was consumed/installed, or because
+  // this browser never fires beforeinstallprompt (iOS Safari, Firefox).
+  if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
+    toast('JoyTree is already installed on this device.', 'success');
+    return;
+  }
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isFirefox = /Firefox/i.test(ua);
+  let msg;
+  if (isIOS) {
+    msg = 'To install JoyTree: tap the Share button, then choose "Add to Home Screen".';
+  } else if (isFirefox) {
+    msg = 'To install JoyTree: open your browser menu, then choose "Install" or "Add to Home screen".';
+  } else {
+    msg = 'To install JoyTree: open the browser menu (\u22EE) and choose "Install app" / "Add to Home screen". If you don\u2019t see it, the app may already be installed.';
+  }
+  toast(msg, 'info');
+}
+
+// [FIX] Capture beforeinstallprompt at PARSE TIME (inline script runs before
+// DOMContentLoaded) and, crucially, ALWAYS keep the event -- even if the user
+// previously dismissed the card ("never") or marked it downloaded. Previously
+// the handler both lived inside a DOMContentLoaded init (so an early event was
+// missed) AND returned without storing the event when the saved state was
+// never/downloaded -- so once dismissed, deferredInstallPrompt stayed null and
+// the "Show Download Popup" button always dead-ended with "not available yet".
+// Saved state now governs only whether we AUTO-show the card, not whether we
+// retain the prompt for a manual trigger.
+(function registerInstallPromptCapture(){
+  window.addEventListener('beforeinstallprompt', (e)=>{
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return;
+    const st = getInstallPromptState();
+    if (st === 'never' || st === 'downloaded') return; // keep prompt, just don't auto-show
+    setTimeout(()=> maybeShowInstallPromptCard(false), 700);
+  });
+  window.addEventListener('appinstalled', ()=>{
+    deferredInstallPrompt = null;
+    setInstallPromptState('downloaded');
+    const card = document.getElementById('installPromptCard');
+    if (card) card.classList.remove('show');
+  });
+})();
 
 function initPWAInstallPrompt(){
   if ('serviceWorker' in navigator) {
@@ -29471,15 +29520,10 @@ function initPWAInstallPrompt(){
     if (accepted) toast('Install request accepted.', 'success');
     hide();
   });
-  window.addEventListener('beforeinstallprompt', (e)=>{
-    e.preventDefault();
-    if (window.matchMedia('(display-mode: standalone)').matches) return;
-    if (getInstallPromptState() === 'never' || getInstallPromptState() === 'downloaded') return;
-    deferredInstallPrompt = e;
-    setTimeout(()=> maybeShowInstallPromptCard(false), 700);
-  });
-  window.addEventListener('appinstalled', ()=> { setInstallPromptState('downloaded'); hide(); });
-  // For "remind me later", show on every reload/visit.
+  // beforeinstallprompt / appinstalled are captured at parse time in
+  // registerInstallPromptCapture() above, so the event is never missed and is
+  // retained even after a prior dismissal. Here we only decide whether to
+  // surface the card on this particular visit.
   setTimeout(()=> maybeShowInstallPromptCard(false), 1500);
 }
 
