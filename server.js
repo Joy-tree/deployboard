@@ -2655,27 +2655,63 @@ async function verifyTurnstileToken(token, remoteIp='') {
   return { enforced: true, success: !!d.success, details: d };
 }
 
-app.get('/api/health', async (req, res) => {
-  let runningContainers = '—';
-  let diskUsed = '—';
+// Cached, non-blocking health metrics.
+// [FIX] Previously /api/health shelled out to `du -sh /var/www/user-sites`
+// (a recursive scan that grows with every deployed app) plus `docker ps` on
+// EVERY request. As the disk filled, these ran past the dashboard's fetch
+// timeout, so the health check appeared to fail and flipped BOTH "API Server"
+// and "Database" to Offline even though the server was fine. Metrics are now
+// computed in the background and served from cache, so the endpoint returns
+// instantly. The datastore status also now reflects Firebase (the real store)
+// instead of Mongo, which this platform no longer uses.
+let _healthCache = {
+  runningContainers: '—',
+  diskUsed: '—',
+  firebaseOk: !!FIREBASE_RTDB_URL, // optimistic until the first probe completes
+  ts: 0
+};
+let _healthRefreshing = false;
+async function refreshHealthCache() {
+  if (_healthRefreshing) return;
+  _healthRefreshing = true;
+  const next = { ..._healthCache };
   try {
-    // [FIX] async — execSync here blocked the event loop (and thus the
-    // proxy for every deployed app) for as long as `docker ps` took.
     const containers = await execP("docker ps --filter 'name=db-' --format '{{.Names}}' 2>/dev/null || echo ''");
-    runningContainers = containers ? containers.split('\n').filter(Boolean).length : 0;
-  } catch(e) {}
+    next.runningContainers = containers ? containers.split('\n').filter(Boolean).length : 0;
+  } catch(_) {}
   try {
-    // [FIX] async — `du -sh` on /var/www/user-sites recursively scans every
-    // deployed project's files and gets slower as more apps are deployed;
-    // running it synchronously froze all tenant traffic for its duration.
     const du = await execP('du -sh /var/www/user-sites 2>/dev/null || echo "N/A"');
-    diskUsed = du.split('\t')[0];
-  } catch(e) {}
+    next.diskUsed = du.split('\t')[0];
+  } catch(_) {}
+  if (FIREBASE_RTDB_URL) {
+    // Cheap shallow root read to confirm the datastore is reachable.
+    try {
+      const q = FIREBASE_RTDB_SECRET
+        ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}&shallow=true`
+        : '?shallow=true';
+      const fr = await fetch(`${FIREBASE_RTDB_URL}/.json${q}`, { signal: AbortSignal.timeout(4000) });
+      next.firebaseOk = fr.ok;
+    } catch(_) { next.firebaseOk = false; }
+  }
+  next.ts = Date.now();
+  _healthCache = next;
+  _healthRefreshing = false;
+}
+refreshHealthCache(); // prime at startup
+try { setInterval(refreshHealthCache, 60_000).unref(); } catch(_) {}
+
+app.get('/api/health', (req, res) => {
+  // Fast path: never blocks on shell or network. Kick a background refresh
+  // if the cache is stale, but always respond immediately.
+  if (Date.now() - _healthCache.ts > 60_000) refreshHealthCache();
   res.json({
-    ok: true, baseDomain: BASE_DOMAIN,
-    db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    ok: true,
+    baseDomain: BASE_DOMAIN,
+    datastore: 'firebase',
+    db: _healthCache.firebaseOk ? 'connected' : 'disconnected',
     uptime: Math.round(process.uptime()) + 's',
-    runningContainers, diskUsed
+    runningContainers: _healthCache.runningContainers,
+    diskUsed: _healthCache.diskUsed
   });
 });
 

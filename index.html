@@ -26194,19 +26194,32 @@ function copyNginxConfig() {
   navigator.clipboard.writeText(el.innerText).then(() => toast('Nginx config copied!', 'success'));
 }
 async function checkSystemStatus() {
-  // Check API
+  const apiEl = document.getElementById('statusApi');
+  const dbEl  = document.getElementById('statusDb');
+  const setBadge = (el, cls, label) => {
+    if (!el) return;
+    el.className = 'badge ' + cls;
+    el.innerHTML = '<span class="badge-dot"></span>' + label;
+  };
   try {
-    const r = await fetch(API + '/api/health', { signal: AbortSignal.timeout(3000) });
+    const r = await fetch(API + '/api/health', { signal: AbortSignal.timeout(8000) });
     const online = r.ok;
-    document.getElementById('statusApi').className = online ? 'badge badge-success' : 'badge badge-error';
-    document.getElementById('statusApi').innerHTML = '<span class="badge-dot"></span>' + (online ? 'Online' : 'Offline');
-    document.getElementById('statusDb').className  = online ? 'badge badge-success' : 'badge badge-error';
-    document.getElementById('statusDb').innerHTML  = '<span class="badge-dot"></span>' + (online ? 'Connected' : 'Offline');
+    let data = {};
+    try { data = await r.json(); } catch(_) {}
+    // API Server
+    setBadge(apiEl, online ? 'badge-success' : 'badge-error', online ? 'Online' : 'Offline');
+    // Database — reflects the actual datastore (Firebase), reported by the
+    // server, rather than mirroring the API result or checking Mongo.
+    if (!online) {
+      setBadge(dbEl, 'badge-error', 'Offline');
+    } else if (data.db === 'connected') {
+      setBadge(dbEl, 'badge-success', 'Connected');
+    } else {
+      setBadge(dbEl, 'badge-pending', 'Unreachable');
+    }
   } catch(e) {
-    ['statusApi','statusDb'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.className = 'badge badge-error'; el.innerHTML = '<span class="badge-dot"></span>Offline'; }
-    });
+    setBadge(apiEl, 'badge-error', 'Offline');
+    setBadge(dbEl, 'badge-error', 'Offline');
   }
 }
 
