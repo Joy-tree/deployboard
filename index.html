@@ -23846,14 +23846,61 @@ async function attachDomainAfterDeploy(domain, projectId, source){
     });
     const data = await r.json().catch(()=>({}));
     if (!r.ok || data.error) throw new Error(data.error || 'Attach failed');
-    if (source === 'byo'){
-      toast(`Add a CNAME: ${domain} → ${data.targetHost} at your registrar. It goes live once DNS propagates.`, 'info');
-    } else {
+    if (source !== 'byo'){
       toast(`${domain} is now pointed at your project.`, 'success');
+      return;
+    }
+    const saas = data.saas;
+    if (saas && saas.ok){
+      showByoDnsInstructions(domain, saas);           // real cert via Cloudflare for SaaS
+    } else if (saas && saas.skipped){
+      toast(`Add a CNAME: ${domain} → ${data.targetHost}. (Automatic HTTPS needs Cloudflare for SaaS configured.)`, 'info');
+    } else {
+      toast(`${domain} routes to your project, but SSL setup failed: ${saas && saas.error ? saas.error : 'unknown'}. It works over HTTP for now.`, 'error');
     }
   } catch(e){
     toast(`Couldn't attach ${domain}: ${e.message}`, 'error');
   }
+}
+// Record field shapes differ between plain-DV (txt) and DCV delegation (cname),
+// so render whatever Cloudflare returned rather than assuming one shape.
+function showByoDnsInstructions(domain, saas){
+  const esc = s => String(s == null ? '' : s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+  const rowStyle = 'padding:10px 0;border-top:1px solid rgba(148,163,184,.15);';
+  const codeStyle = 'font-family:var(--font-mono);font-size:.8rem;color:var(--primary);word-break:break-all;';
+  const noteStyle = 'font-size:.72rem;color:var(--text-3);margin-top:4px;';
+  const rows = [];
+  rows.push(`<div style="${rowStyle}"><b style="font-size:.7rem;color:var(--text-3);">CNAME</b><div style="${codeStyle}">${esc(domain)} → ${esc(saas.routingTarget)}</div><div style="${noteStyle}">Points your domain at JoyTree.</div></div>`);
+  (saas.validation || []).forEach(v => {
+    const name  = v.txt_name || v.cname || v.cname_name || v.name || ('_acme-challenge.' + domain);
+    const type  = v.txt_name ? 'TXT' : 'CNAME';
+    const value = v.txt_value || v.cname_target || v.value || v.target || '';
+    rows.push(`<div style="${rowStyle}"><b style="font-size:.7rem;color:var(--text-3);">${type}</b><div style="${codeStyle}">${esc(name)} → ${esc(value)}</div><div style="${noteStyle}">Proves ownership so Cloudflare can issue the SSL certificate.</div></div>`);
+  });
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;';
+  wrap.innerHTML = `
+    <div style="background:var(--bg-2,#0b1221);border:1px solid rgba(16,185,129,.3);border-radius:16px;max-width:520px;width:100%;max-height:88vh;overflow:auto;padding:20px;">
+      <div style="font-size:1.05rem;font-weight:800;color:var(--text);">Finish connecting ${esc(domain)}</div>
+      <div style="font-size:.82rem;color:var(--text-2);margin:8px 0 4px;">Add these records at your domain registrar. Your site goes live with HTTPS once they propagate and the certificate issues (usually minutes, up to a few hours).</div>
+      ${rows.join('')}
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+        <button class="btn btn-ghost btn-sm" onclick="this.closest('div[style*=fixed]').remove()">Close</button>
+        <button class="btn btn-primary btn-sm" onclick="checkByoSsl('${esc(domain)}')">Check SSL status</button>
+      </div>
+      <div id="dsSslStatus" style="font-size:.75rem;color:var(--text-3);margin-top:10px;text-align:right;"></div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+async function checkByoSsl(domain){
+  const el = document.getElementById('dsSslStatus');
+  if (el) el.textContent = 'Checking…';
+  try {
+    const r = await apiFetch('/api/domains/ssl-status?domain=' + encodeURIComponent(domain));
+    const d = await r.json();
+    if (!d.configured){ if (el) el.textContent = 'Cloudflare for SaaS not configured on the server yet.'; return; }
+    if (el) el.textContent = `Hostname: ${d.hostnameStatus || '—'} · SSL: ${d.sslStatus || '—'}`;
+  } catch(e){ if (el) el.textContent = 'Could not check status.'; }
 }
 
 async function startDeployment() {

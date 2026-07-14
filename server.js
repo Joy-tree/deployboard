@@ -116,6 +116,12 @@ const CF_API_TOKEN  = process.env.CF_API_TOKEN  || '';
 const CF_ZONE_ID    = process.env.CF_ZONE_ID    || '';
 const CF_TUNNEL_ID  = process.env.CF_TUNNEL_ID  || '';
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || '';
+// Cloudflare for SaaS (Custom Hostnames / BYO-domain SSL). Kept as a SEPARATE
+// token from CF_API_TOKEN (which handles zone DNS) so the two don't conflict;
+// this one needs "SSL and Certificates: Edit" + "Zone: Read" on the zone.
+const CF_SAAS_API_TOKEN = process.env.CF_SAAS_API_TOKEN || '';
+// Hostname in your zone that BYO domains CNAME to (the proxied Fallback Origin).
+const CF_SAAS_FALLBACK_ORIGIN = process.env.CF_SAAS_FALLBACK_ORIGIN || `fallback.${BASE_DOMAIN}`;
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || process.env.GITHUB_OAUTH_CLIENT_ID || process.env.GH_CLIENT_ID || '';
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || process.env.GITHUB_OAUTH_CLIENT_SECRET || process.env.GH_CLIENT_SECRET || '';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -5811,6 +5817,57 @@ app.get('/api/domains/mine', requireAuth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Cloudflare for SaaS: create or look up a Custom Hostname for a BYO domain.
+// Idempotent: if the hostname already exists we return it instead of erroring.
+// Returns the routing target + the validation record(s) the domain owner must
+// add at their registrar so Cloudflare can issue a real SSL cert. Requires
+// CF_SAAS_API_TOKEN (SSL & Certificates: Edit). If unset, we skip gracefully so
+// the BYO domain still routes (over HTTP / with a cert warning) as in Phase 1.
+async function cfCreateCustomHostname(hostname) {
+  if (!CF_SAAS_API_TOKEN || !CF_ZONE_ID) {
+    return { ok: false, skipped: true, reason: 'CF_SAAS_API_TOKEN or CF_ZONE_ID not set' };
+  }
+  const h = { 'Authorization': `Bearer ${CF_SAAS_API_TOKEN}`, 'Content-Type': 'application/json' };
+  const base = `https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/custom_hostnames`;
+  try {
+    let record = null;
+    const existing = await fetch(`${base}?hostname=${encodeURIComponent(hostname)}`, { headers: h })
+      .then(r => r.json()).catch(() => null);
+    if (existing && existing.success && Array.isArray(existing.result) && existing.result.length) {
+      record = existing.result[0];
+    }
+    if (!record) {
+      const create = await fetch(base, {
+        method: 'POST', headers: h,
+        body: JSON.stringify({
+          hostname,
+          ssl: { method: 'txt', type: 'dv', settings: { min_tls_version: '1.2' } }
+        })
+      }).then(r => r.json());
+      if (!create.success) {
+        return { ok: false, error: (create.errors && create.errors[0] && create.errors[0].message) || 'Custom hostname create failed', raw: create };
+      }
+      record = create.result;
+    }
+    const ssl = record.ssl || {};
+    return {
+      ok: true,
+      id: record.id,
+      hostname: record.hostname,
+      hostnameStatus: record.status || null,        // routing status: pending → active
+      sslStatus: ssl.status || null,                // cert status: pending_validation → active
+      // Records the owner must add. Field shapes vary (txt vs DCV-delegation
+      // CNAME), so pass through whatever Cloudflare returns for the UI to render.
+      validation: ssl.validation_records || ssl.dcv_delegation_records || [],
+      ownership: record.ownership_verification || null,
+      routingTarget: CF_SAAS_FALLBACK_ORIGIN,       // CNAME their host → this
+      raw: record
+    };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
 // ── Attach domain to a project (set DNS CNAME → project subdomain) ─
 app.post('/api/domains/attach', requireAuth, async (req, res) => {
   try {
@@ -5845,6 +5902,7 @@ app.post('/api/domains/attach', requireAuth, async (req, res) => {
     // a BYO host needs Cloudflare for SaaS (Phase 2) — until then it routes but
     // may show a certificate warning over HTTPS.
     const isByo = !!byo || !isRegistered;
+    let saas = null;
     if (isByo) {
       const ownerKey = firebaseWorkspaceKey(req.user);
       const entry = { domain, subdomain, ownerKey, projectId, verified: false, byo: true, updatedAt: new Date().toISOString() };
@@ -5859,9 +5917,29 @@ app.post('/api/domains/attach', requireAuth, async (req, res) => {
         } catch(e) { console.warn('[DomainStartup] custom-domain write warn:', e.message); }
       }
       upsertCustomDomainCache(domain, subdomain);
+      // Cloudflare for SaaS: register the host and kick off SSL issuance so the
+      // BYO domain gets a real certificate (fixes the Phase-1 HTTPS gap and
+      // enables apex domains). Skips gracefully if CF_SAAS_API_TOKEN isn't set.
+      saas = await cfCreateCustomHostname(domain);
     }
 
-    res.json({ ok: true, domain, projectId, targetHost, byo: isByo });
+    res.json({ ok: true, domain, projectId, targetHost, byo: isByo, saas });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Poll SSL/cert status for a BYO custom domain (Cloudflare for SaaS) ─
+app.get('/api/domains/ssl-status', requireAuth, async (req, res) => {
+  try {
+    const domain = String(req.query.domain || '').trim().toLowerCase();
+    if (!domain) return res.status(400).json({ error: 'domain required' });
+    const r = await cfCreateCustomHostname(domain); // idempotent lookup
+    if (r.skipped) return res.json({ ok: true, configured: false, reason: r.reason });
+    if (!r.ok) return res.status(502).json({ error: r.error || 'lookup failed' });
+    res.json({
+      ok: true, configured: true, hostname: r.hostname,
+      hostnameStatus: r.hostnameStatus, sslStatus: r.sslStatus,
+      validation: r.validation, ownership: r.ownership, routingTarget: r.routingTarget
+    });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
