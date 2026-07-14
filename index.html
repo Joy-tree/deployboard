@@ -8285,7 +8285,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <div class="field-hint">Used as part of your subdomain. Lowercase letters, numbers and hyphens only.</div>
                 <div class="field-hint" id="projectNameAvailability">Status: enter a project name</div>
               </div>
-              <div class="field">
+              <div class="field" id="deploySubdomainField">
                 <label class="field-label">Subdomain</label>
                 <div class="input-group">
                   <input class="input input-mono" id="deploySubdomain" placeholder="my-app" autocomplete="off" oninput="updateSubdomainPreview()">
@@ -8302,7 +8302,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.8 5.6 3.8 9S14.5 18.4 12 21C9.5 18.4 8.2 15.4 8.2 12S9.5 5.6 12 3z"/></svg>
                     Deploy to your own domain
                   </label>
-                  <div class="field-hint" style="margin-bottom:12px;">Serve this project on your domain instead of a joytree.site subdomain. It still deploys to your subdomain first, then we point your domain at it.</div>
+                  <div class="field-hint" style="margin-bottom:12px;">Your project will be served on your own domain. We handle the internal routing automatically — no joytree.site subdomain to manage.</div>
                   <div style="display:flex;gap:8px;margin-bottom:12px;">
                     <button type="button" class="btn btn-primary btn-sm" id="dsSourceJoytreeBtn" onclick="dsSetSource('joytree')">From JoyTree</button>
                     <button type="button" class="btn btn-ghost btn-sm" id="dsSourceByoBtn" onclick="dsSetSource('byo')">I own the domain</button>
@@ -23774,6 +23774,17 @@ function enableDomainStartup(){
   _dsSource = 'joytree';
   const f = document.getElementById('domainStartupField');
   if (f) f.style.display = '';
+  // The custom domain is the public URL, so hide the subdomain field. The
+  // tunnel still routes by an internal subdomain, so generate a unique hidden
+  // one and lock it (manuallyEdited) so the project-name coupling won't touch it.
+  const subField = document.getElementById('deploySubdomainField');
+  if (subField) subField.style.display = 'none';
+  const sub = document.getElementById('deploySubdomain');
+  if (sub) {
+    sub.value = 'app-' + Math.random().toString(36).slice(2, 8);
+    sub.dataset.manuallyEdited = '1';
+    if (typeof updateSubdomainPreview === 'function') updateSubdomainPreview();
+  }
   dsSetSource('joytree');
   loadMyDomainsForStartup();
 }
@@ -23781,6 +23792,10 @@ function disableDomainStartup(){
   _domainStartupMode = false;
   const f = document.getElementById('domainStartupField');
   if (f) f.style.display = 'none';
+  const subField = document.getElementById('deploySubdomainField');
+  if (subField) subField.style.display = '';
+  const sub = document.getElementById('deploySubdomain');
+  if (sub) delete sub.dataset.manuallyEdited;
 }
 function dsSetSource(src){
   _dsSource = src;
@@ -28832,6 +28847,19 @@ async function showDeploySuccess(liveUrl, projectId, buildDuration) {
   if (urlEl)  { urlEl.href = liveUrl; urlEl.textContent = liveUrl; }
   if (visitBtn){ visitBtn.href = liveUrl; }
   window._deploySuccessUrl = liveUrl;
+
+  // ── Domain Startup: show the user's OWN domain as the live URL, not the
+  // internal subdomain. (Subdomain still works as a fallback; the domain goes
+  // live once DNS propagates — for BYO, after they add the CNAME.) ──
+  if (_domainStartupMode) {
+    const dsDomain = getDomainStartupSelection();
+    if (dsDomain) {
+      const dsUrl = 'https://' + dsDomain;
+      if (urlEl)  { urlEl.href = dsUrl; urlEl.textContent = dsDomain; }
+      if (visitBtn){ visitBtn.href = dsUrl; }
+      window._deploySuccessUrl = dsUrl;
+    }
+  }
 
   // ── Reset screenshot to fresh loading state ───────────────────────
   // Remove every child except the loading div so no stale image shows
