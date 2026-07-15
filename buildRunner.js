@@ -3812,6 +3812,42 @@ async function detectLivePort(containerName, preferredPort, startupTimeoutSecond
   } catch (_) {}
 
   for (let attempt = 1; attempt <= startupTimeoutSeconds; attempt++) {
+    // [FIX] Previously this loop only ever probed HTTP ports for the full
+    // startupTimeoutSeconds, with no check on whether the container itself
+    // was even still alive. If the resolved start command failed instantly
+    // (most commonly: "npm start" with no "start" script in package.json --
+    // exactly what happens when a user picks Web Service for a project that
+    // doesn't actually define one), the container exited in under a second,
+    // but the deploy kept silently polling a dead container for the entire
+    // timeout before finally reporting a vague "Readiness gate failed after
+    // Ns" -- indistinguishable from a slow-starting app, and with no hint of
+    // the actual cause. Checking liveness first means a crash-on-start is
+    // caught almost immediately with the real reason attached.
+    if (attempt === 1 || attempt % 2 === 0) {
+      let stateOut = '';
+      try {
+        await exec('docker', ['inspect', '-f', '{{.State.Running}} {{.State.ExitCode}}', containerName], {}, (line) => { stateOut += line; });
+      } catch (_) {
+        // Container gone entirely (removed/never created) — same dead-end as exited.
+        stateOut = 'MISSING';
+      }
+      const isRunning = /^true\b/.test(stateOut.trim());
+      if (!isRunning) {
+        const exitCodeMatch = stateOut.trim().match(/^false\s+(-?\d+)/);
+        const exitCode = exitCodeMatch ? exitCodeMatch[1] : 'unknown';
+        let tail = [];
+        try { await exec('docker', ['logs', '--tail', '20', containerName], {}, (line) => tail.push(line)); } catch (_) {}
+        const tailText = tail.join('\n').trim();
+        log(`\x1b[31m[docker] Container exited (code ${exitCode}) before the app ever came up.\x1b[0m`);
+        if (tailText) log(`\x1b[90m[docker] Last output:\n${tailText}\x1b[0m`);
+        const looksLikeMissingScript = /missing script[:\s]*["']?start/i.test(tailText) || /npm error missing script/i.test(tailText);
+        const hint = looksLikeMissingScript
+          ? 'This repository has no "start" script (and no server.js/app.js/index.js). Add a Start Command in Joytree, add a "start" script to package.json, or deploy this as a Static Site instead if it has no server to run.'
+          : 'The start command exited immediately instead of staying up as a server. Check the log output above and your configured Start Command.';
+        throw new Error(`Container exited (code ${exitCode}) before becoming reachable. ${hint}`);
+      }
+    }
+
     // Rescan every 5s to pick up ports the app binds after a slow startup.
     if (attempt % 5 === 0) {
       try {
