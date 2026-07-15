@@ -8483,7 +8483,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                     <div class="cs-option" data-value="16" onclick="csSelect(this)">Node.js 16</div>
                     <div class="cs-option" data-value="14" onclick="csSelect(this)">Node.js 14</div>
                   </div>
-                  <input type="hidden" id="deployNodeVersion" value="18">
+                  <input type="hidden" id="deployNodeVersion" value="20">
                 </div>
               </div>
               <div class="field" id="pythonVersionField" style="display:none;">
@@ -22057,7 +22057,7 @@ function restartActiveDeployment() {
   document.getElementById('deployBuildCmd').value = p.buildCmd || 'npm run build';
   document.getElementById('deployStartCmd').value = p.startCmd || '';
   document.getElementById('deployOutputDir').value = p.outputDir || 'dist';
-  document.getElementById('deployNodeVersion').value    = p.nodeVer    || '18';
+  document.getElementById('deployNodeVersion').value    = p.nodeVer    || '20';
   if (document.getElementById('deployGoVersion'))     document.getElementById('deployGoVersion').value     = p.goVer     || '1.22';
   if (document.getElementById('deployPhpVersion'))    document.getElementById('deployPhpVersion').value    = p.phpVer    || '8.2';
   if (document.getElementById('deployRubyVersion'))   document.getElementById('deployRubyVersion').value   = p.rubyVer   || '3.2';
@@ -22396,7 +22396,7 @@ function openRedeployFormFromAi() {  const deployment = activeBuildId ? deployme
   document.getElementById('deployInstallCmd').value  = project.installCmd || 'npm install';
   document.getElementById('deployBuildCmd').value    = project.buildCmd || 'npm run build';
   document.getElementById('deployOutputDir').value   = project.outputDir || 'dist';
-  document.getElementById('deployNodeVersion').value    = project.nodeVer    || '18';
+  document.getElementById('deployNodeVersion').value    = project.nodeVer    || '20';
   if (document.getElementById('deployGoVersion'))     document.getElementById('deployGoVersion').value     = project.goVer     || '1.22';
   if (document.getElementById('deployPhpVersion'))    document.getElementById('deployPhpVersion').value    = project.phpVer    || '8.2';
   if (document.getElementById('deployRubyVersion'))   document.getElementById('deployRubyVersion').value   = project.rubyVer   || '3.2';
@@ -23472,7 +23472,7 @@ function updateSummary() {
   const name   = document.getElementById('deployProjectName')?.value || '—';
   const sub    = document.getElementById('deploySubdomain')?.value   || '—';
   const branch = document.getElementById('deployBranch')?.value      || 'main';
-  const node   = document.getElementById('deployNodeVersion')?.value || '18';
+  const node   = document.getElementById('deployNodeVersion')?.value || '20';
   const base   = settings.baseDomain || 'joytree.site';
   document.getElementById('summaryName').textContent   = name;
   document.getElementById('summaryUrl').textContent    = sub !== '—' ? sub + '.' + base : '—';
@@ -24084,7 +24084,7 @@ async function startDeployment() {
   const buildCmd  = document.getElementById('deployBuildCmd').value.trim()   || 'npm run build';
   const startCmd  = (document.getElementById('deployStartCmd')?.value || '').trim();
   const outputDir = document.getElementById('deployOutputDir').value.trim()  || 'dist';
-  const nodeVer    = document.getElementById('deployNodeVersion')?.value   || '18';
+  const nodeVer    = document.getElementById('deployNodeVersion')?.value   || '20';
   const pythonVer  = document.getElementById('deployPythonVersion')?.value  || '3.11';
   const goVer      = document.getElementById('deployGoVersion')?.value      || '1.22';
   const phpVer     = document.getElementById('deployPhpVersion')?.value     || '8.2';

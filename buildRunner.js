@@ -375,7 +375,7 @@ async function _runBuildDispatch({ deployId, project, sitesDir, tmpDir, githubTo
   const hasStartCmd  = !!String(project.startCmd || '').trim();
 
   if (explicitType === 'static') {
-    return runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken, emit, onLog });
+    return runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken, emit, onLog, appPort, baseDomain });
   }
   if (explicitType === 'server' || hasStartCmd) {
     return runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain });
@@ -3028,7 +3028,7 @@ function findFileRoot(buildDir, markers, log, globMatch = false) {
 }
 
 // ── STATIC BUILD ──────────────────────────────────────────────────────────────
-async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken, emit, onLog }) {
+async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken, emit, onLog, appPort, baseDomain }) {
   const buildDir = path.join(tmpDir, deployId);
   const destDir  = path.join(sitesDir, project.subdomain, 'dist');
 
@@ -3048,6 +3048,43 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const hasPackageJson = fs.existsSync(path.join(projectRoot, 'package.json'));
   const profile = detectProjectProfile(projectRoot);
   log(`\x1b[90m[detect] Static project type: ${profile.kind}${profile.framework ? ' · framework: ' + profile.framework : ''}\x1b[0m`);
+
+  // [FIX] Nitro-based SSR meta-frameworks (TanStack Start, and anything else
+  // built on Nitro) compile to a SERVER bundle (.output/server/index.mjs) —
+  // there is no static HTML at all, by design. Deploying these as "static"
+  // always failed with "no HTML entry file found", no matter how the build
+  // itself went (confirmed: a real TanStack Start / Lovable-scaffolded repo
+  // builds fine but produces zero .html files anywhere in .output). Detect
+  // this up front from package.json and redirect into the server pipeline,
+  // the same way runServerBuild already redirects composer.json → PHP,
+  // go.mod → Go, etc. `appPort` is only present when called from the primary
+  // dispatcher (never from runServerBuild's own static-fallback below), so
+  // this can't create a static <-> server redirect loop.
+  if (hasPackageJson && typeof appPort !== 'undefined') {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
+      const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+      const isNitroSsrProject = !!(
+        allDeps['@tanstack/react-start'] || allDeps['@tanstack/start'] ||
+        allDeps['nitropack'] || allDeps['nitro']
+      );
+      if (isNitroSsrProject) {
+        log(`\x1b[33m[Joytree]\x1b[0m Detected a Nitro-based SSR framework (TanStack Start or similar) in package.json — this builds a server bundle, not static HTML. Switching this deploy to Web Service automatically.`);
+        log(`\x1b[90m[Joytree]\x1b[0m Forcing NITRO_PRESET=node-server so the build targets a portable Node server (many scaffolds default Nitro to a Cloudflare Workers target, which this platform can't run directly).`);
+        const currentEnv = resolveEnvVars(project.envVars);
+        return runServerBuild({
+          deployId,
+          project: {
+            ...project,
+            siteType: 'server',
+            startCmd: (project.startCmd || '').trim() || 'node .output/server/index.mjs',
+            envVars: { ...currentEnv, NITRO_PRESET: currentEnv.NITRO_PRESET || 'node-server' },
+          },
+          sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain,
+        });
+      }
+    } catch (_) { /* malformed package.json — fall through to the normal static flow */ }
+  }
 
   // ── Auto-detect Node.js version from engines field ─────────────────────────
   const configuredNodeVer = String(project.nodeVer || '20');
