@@ -3384,7 +3384,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, baseDomain }) {
   const buildDir  = path.join(tmpDir, deployId);
   const appDir    = path.join(sitesDir, project.subdomain, 'app');
-  const startCmd  = (project.startCmd || '').trim();
+  let startCmd  = (project.startCmd || '').trim();
   const containerName = `db-${project.subdomain}`;
   const candidateContainerName = `${containerName}-cand-${safeDockerToken(deployId, 'build').slice(0,20)}`;
   const expectedPort = normalizePort(appPort, 3000);
@@ -3404,6 +3404,46 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const projectRoot = findProjectRoot(buildDir, log, project);
   const relativeProjectRoot = path.relative(buildDir, projectRoot) || '.';
   log(`\x1b[90m[deploy] Server app root: ${relativeProjectRoot} — install, build, and start all use this same directory.\x1b[0m`);
+
+  // [FIX] Nitro-based SSR meta-frameworks (TanStack Start, etc.) need two
+  // corrections that generic detection can't infer, and this needs to run
+  // here too -- not just in runStaticBuild's redirect -- because a user
+  // picking "Web Service" directly (or leaving site type blank/auto) reaches
+  // THIS function straight away, bypassing that other check entirely:
+  //  1. Many scaffolds (this one via @lovable.dev/vite-tanstack-config)
+  //     default their Nitro preset to a Cloudflare Workers target. Under
+  //     that preset, STATIC ASSETS (images, etc.) are meant to be served by
+  //     Cloudflare's platform, not by the worker code itself -- so running
+  //     that same bundle under plain Node serves pages/API routes fine but
+  //     returns 404 for every image, since nothing in the process serves
+  //     `.output/public`. Forcing NITRO_PRESET=node-server makes Nitro
+  //     generate its own static-file-serving middleware instead.
+  //  2. getDefaultStartCmd() has no idea what Nitro/TanStack Start is, so
+  //     for a project with a "preview" script but no "start" script (exactly
+  //     this scaffold's shape) it would pick "npm run preview" (vite
+  //     preview) -- an entirely different, wrong server that doesn't serve
+  //     the actual SSR output or its assets at all.
+  if (fs.existsSync(path.join(projectRoot, 'package.json'))) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
+      const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+      const isNitroSsrProject = !!(
+        allDeps['@tanstack/react-start'] || allDeps['@tanstack/start'] ||
+        allDeps['nitropack'] || allDeps['nitro']
+      );
+      if (isNitroSsrProject) {
+        log(`\x1b[33m[Joytree]\x1b[0m Detected a Nitro-based SSR framework (TanStack Start or similar) in package.json.`);
+        if (!env.NITRO_PRESET) {
+          env.NITRO_PRESET = 'node-server';
+          log(`\x1b[90m[Joytree]\x1b[0m Forcing NITRO_PRESET=node-server so the build serves its own static assets under plain Node (many scaffolds default to a Cloudflare Workers target, which handles assets differently and would 404 on images here).`);
+        }
+        if (!startCmd) {
+          startCmd = 'node .output/server/index.mjs';
+          log(`\x1b[90m[Joytree]\x1b[0m No Start Command set — defaulting to "${startCmd}" (Nitro's standard server entry), instead of an auto-detected script like "preview" that wouldn't serve the real SSR output.`);
+        }
+      }
+    } catch (_) { /* malformed package.json — proceed with normal detection below */ }
+  }
 
   // ── Auto-detect Node.js version from engines field ─────────────────────────
   const configuredNodeVer = String(project.nodeVer || '20');
