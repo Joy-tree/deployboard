@@ -704,7 +704,18 @@ app.use((req, res, next) => {
   // Skip express.json for multipart upload routes — raw stream needed for parseMultipart
   if (req.path === '/api/upload-project') return next();
   if (req.path === '/api/admin/emails/upload-image') return next();
-  express.json({ verify: (req, _res, buf) => { req.rawBody = Buffer.from(buf || ''); } })(req, res, next);
+  // [FIX] This middleware runs for EVERY request, including proxied traffic to
+  // every deployed app's own container (see the proxy code below, which
+  // forwards req.rawBody -- captured right here via `verify` -- to the
+  // container). The previous unset limit defaulted to Express's own 100kb,
+  // which silently 413'd any deployed app's JSON body over ~100kb (e.g. a
+  // base64-encoded photo upload -- base64 adds ~33% overhead, so even a
+  // modest ~75KB image blew past this) REGARDLESS of whatever limit that
+  // app's own server.js was configured with, since this outer layer rejected
+  // the request before it ever reached the container. Raised to match
+  // nginx's already-configured 50mb client_max_body_size (nginx/deployboard.conf)
+  // so the two layers agree and neither is the silent bottleneck.
+  express.json({ limit: '50mb', verify: (req, _res, buf) => { req.rawBody = Buffer.from(buf || ''); } })(req, res, next);
 });
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin',  '*');
