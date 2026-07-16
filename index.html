@@ -21878,19 +21878,17 @@ async function sendAdminBroadcastEmail() {
 // SIDEBAR
 // ══════════════════════════════════════════════════════════════════
 // ══ Theme system ══════════════════════════════════════════════════════════
-// Three modes: 'system' (no data-theme attribute, falls back to base CSS),
-// 'dark' (pure black), 'light' (white). Stored in localStorage so it
-// persists across sessions.
-// [FIX] Was defaulting to 'system' whenever nothing was saved yet -- on
-// Mac/Safari specifically, localStorage can get cleared more aggressively
-// (Safari's tracking-prevention settings), silently reverting back to this
-// ambiguous default and showing the base/light styling regardless of
-// whatever the person had actually picked before. Defaulting to 'dark'
-// instead means even if the saved preference is ever lost, the site falls
-// back to the actual intended default look rather than an inconsistent,
-// platform-dependent one.
+// Three modes: 'system' (no data-theme attribute, falls back to base CSS --
+// this is the site's actual default/intended theme, and it already renders
+// dark and consistent, since the base :root tokens are dark by design), 'dark'
+// (explicit pure-black override), 'light' (removed entirely, see below).
+// Stored in localStorage so it persists across sessions.
+// NOTE: 'system' is NOT an ambiguous/fallback state -- confirmed it's the
+// correct, intended default. Do not silently change this fallback to 'dark'
+// again without checking first; a previous edit did exactly that based on a
+// mistaken assumption and was reverted.
 (function _initTheme() {
-  const saved = localStorage.getItem('jt_theme') || 'dark';
+  const saved = localStorage.getItem('jt_theme') || 'system';
   _applyTheme(saved);
 })();
 
@@ -25172,7 +25170,7 @@ function initSocket() {
 window.onload = function() {
   initSocket();
   // Re-apply theme to update icon now that DOM is fully ready
-  _applyTheme(localStorage.getItem('jt_theme') || 'dark');
+  _applyTheme(localStorage.getItem('jt_theme') || 'system');
   // Loader visibility is controlled by auth/bootstrap lifecycle.
 };
 
