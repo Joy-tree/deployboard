@@ -21890,7 +21890,7 @@ async function sendAdminBroadcastEmail() {
 // back to the actual intended default look rather than an inconsistent,
 // platform-dependent one.
 (function _initTheme() {
-  const saved = localStorage.getItem('jt_theme') || 'system';
+  const saved = localStorage.getItem('jt_theme') || 'dark';
   _applyTheme(saved);
 })();
 
@@ -25172,7 +25172,7 @@ function initSocket() {
 window.onload = function() {
   initSocket();
   // Re-apply theme to update icon now that DOM is fully ready
-  _applyTheme(localStorage.getItem('jt_theme') || 'system');
+  _applyTheme(localStorage.getItem('jt_theme') || 'dark');
   // Loader visibility is controlled by auth/bootstrap lifecycle.
 };
 
