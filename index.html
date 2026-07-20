@@ -24030,11 +24030,21 @@ async function startDeployment() {
     if (startRow) startRow.style.display = siteType === 'server' && startCmd ? '' : 'none';
 
     const token = authToken || localStorage.getItem('db_auth_token') || '';
+    // [FIX] This request body never included envVars at all -- whatever the
+    // user typed into the composer's Environment Variables section (even
+    // once correctly restored/displayed there) was silently discarded on
+    // submit for upload-based deploys, unlike the GitHub deploy path just
+    // below in this same function, which already merges existing project
+    // vars + envStore + the current form state correctly. Same merge here.
+    const _uploadExistingProject = projects.find(p => String(p.subdomain || '') === String(subdomain || ''));
+    const _uploadExistingEnvVars = _uploadExistingProject && _uploadExistingProject.envVars && typeof _uploadExistingProject.envVars === 'object' ? _uploadExistingProject.envVars : {};
+    const _uploadStoredEnvVars = (_uploadExistingProject && (envStore[_uploadExistingProject.id] || envStore[_uploadExistingProject._id])) || {};
+    const envVars = Object.assign({}, _uploadExistingEnvVars, _uploadStoredEnvVars, getEnvVars());
     try {
       const res = await fetch('/api/upload-deploy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}) },
-        body: JSON.stringify({ projectId: _uploadProjectId, name, subdomain, siteType, buildCmd, installCmd, startCmd, outputDir, nodeVer })
+        body: JSON.stringify({ projectId: _uploadProjectId, name, subdomain, siteType, buildCmd, installCmd, startCmd, outputDir, nodeVer, envVars })
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({ error: 'Deploy failed' }));
