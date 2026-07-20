@@ -5628,6 +5628,11 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   const nodeVer = String(project.nodeVer || '20');
   const expectedPort = appPort || 3000;
   const envObj = withDeployedAppRuntimeDefaults(resolveEnvVars(project.envVars), project, baseDomain);
+  // [DIAGNOSTIC] Shows exactly which env vars this container is about to be
+  // launched with. Compare against the "[upload-deploy] received envVars
+  // keys" server log for this same deploy to see whether the value made it
+  // this far, or was lost somewhere between receipt and container launch.
+  log(`\x1b[90m[diagnostic] Injecting env vars into container: [${Object.keys(envObj).filter(k => !['PORT','HOST','HOSTNAME'].includes(k)).join(', ')}]\x1b[0m`);
   const startCmdResolved = resolveRuntimeStartCommand({ projectRoot: appDir, startCmd: project.startCmd, expectedPort });
   const networkName = 'deployboard-net';
   const hostAppDir = appDir.replace('/var/www/user-sites', '/var/lib/docker/volumes/deployboard_sites-data/_data');

@@ -11073,6 +11073,9 @@ app.post('/api/upload-save-file', requireAuth, async (req, res) => {
 app.post('/api/upload-deploy', requireAuth, async (req, res) => {
   const userId = String(req.user?._id || req.user?.id || 'anon');
   const { projectId, name, subdomain, siteType, buildCmd, installCmd, startCmd, outputDir, nodeVer, envVars } = req.body;
+  // [DIAGNOSTIC] Confirms whether the frontend actually sent envVars at all.
+  // Key names only -- never log values, they may be secrets.
+  console.log(`[upload-deploy] subdomain=${subdomain} received envVars keys: [${Object.keys(envVars || {}).join(', ')}]`);
 
   if (!projectId || !name || !subdomain) {
     return res.status(400).json({ error: 'projectId, name, and subdomain are required' });
