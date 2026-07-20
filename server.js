@@ -6199,33 +6199,58 @@ app.post('/api/projects/:id/env', requireAuth, async (req, res) => {
     if (!key) return res.status(400).json({ error: 'key required' });
     const { project: p, source } = await resolveEnvProject(req);
     if (!p) return res.status(404).json({ error: 'Project not found' });
-    if (!p.envVars) p.envVars = {};
-    p.envVars[key] = value || '';
+
     if (source === 'db') {
+      if (!p.envVars) p.envVars = {};
+      p.envVars[key] = value || '';
       p.markModified('envVars');
       p.updatedAt = new Date();
       await p.save();
-    } else {
-      updateLocalWorkspaceProject(req.user, String(p.id || p._id || req.params.id), { envVars: p.envVars });
-    }
-
-    // ALSO write to ws.envStore so the var is picked up by the deployment
-    // pipeline which reads envStore as its primary source
-    try {
-      const liveWs = await readWorkspaceFromFirebase(req.user).catch(() => null);
-      if (liveWs) {
+      // Mirror into Firebase's envStore too. No race here — nothing else
+      // touches this user's Firebase workspace within this request for the
+      // db-sourced case.
+      try {
+        const liveWs = (await readWorkspaceFromFirebase(req.user)) || {};
         liveWs.envStore = liveWs.envStore || {};
         const pid = String(p.id || p._id || req.params.id);
-        liveWs.envStore[pid] = liveWs.envStore[pid] || {};
-        liveWs.envStore[pid][key] = value || '';
-        // Also key by subdomain
-        if (p.subdomain) {
-          liveWs.envStore[p.subdomain] = liveWs.envStore[p.subdomain] || {};
-          liveWs.envStore[p.subdomain][key] = value || '';
-        }
-        await writeWorkspaceToFirebase(req.user, liveWs).catch(() => {});
-      }
-    } catch (_) {}
+        liveWs.envStore[pid] = { ...(liveWs.envStore[pid] || {}), [key]: value || '' };
+        if (p.subdomain) liveWs.envStore[p.subdomain] = { ...(liveWs.envStore[p.subdomain] || {}), [key]: value || '' };
+        await writeWorkspaceToFirebase(req.user, liveWs);
+      } catch (_) {}
+    } else {
+      // [FIX] Previously this did TWO separate, uncoordinated read-modify-
+      // write cycles against the SAME Firebase workspace: updateLocalWorkspaceProject()
+      // fires an un-awaited (`void`) Firebase write for project.envVars,
+      // then this handler immediately did its OWN separate read + write for
+      // envStore. Because the first write was never awaited, the second
+      // read could race ahead of it, read a Firebase snapshot that didn't
+      // yet include the envVars change, and then overwrite Firebase wholesale
+      // with that stale snapshot — silently reverting the just-saved value
+      // depending on which write happened to land last. This is exactly what
+      // was reported: a saved env var randomly disappearing on reload.
+      // Fixed by doing ONE read, applying BOTH changes to the SAME snapshot,
+      // and writing back ONCE, properly awaited — no race possible.
+      const liveWs = (await readWorkspaceFromFirebase(req.user)) || {};
+      liveWs.projects = Array.isArray(liveWs.projects) ? liveWs.projects : [];
+      const pid = String(p.id || p._id || req.params.id);
+      const idx = liveWs.projects.findIndex(x => String(x.id || x._id || '') === pid || (p.subdomain && x.subdomain === p.subdomain));
+      const currentEnvVars = (idx >= 0 ? liveWs.projects[idx].envVars : p.envVars) || {};
+      const newEnvVars = { ...currentEnvVars, [key]: value || '' };
+      if (idx >= 0) liveWs.projects[idx] = { ...liveWs.projects[idx], envVars: newEnvVars };
+
+      liveWs.envStore = liveWs.envStore || {};
+      liveWs.envStore[pid] = { ...(liveWs.envStore[pid] || {}), [key]: value || '' };
+      if (p.subdomain) liveWs.envStore[p.subdomain] = { ...(liveWs.envStore[p.subdomain] || {}), [key]: value || '' };
+
+      await writeWorkspaceToFirebase(req.user, liveWs);
+
+      // Keep the local disk-cache mirror in sync too, WITHOUT going through
+      // updateLocalWorkspaceProject() (which would fire off yet another
+      // un-awaited Firebase write and reintroduce the exact race).
+      const uid = String(req.user?._id || req.user?.id || '');
+      const localUser = localAuth.users.find(u => String(u.id || u._id || '') === uid);
+      if (localUser) { localUser.workspace = liveWs; saveLocalAuth(); }
+    }
 
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -6235,27 +6260,44 @@ app.delete('/api/projects/:id/env/:key', requireAuth, async (req, res) => {
   try {
     const { project: p, source } = await resolveEnvProject(req);
     if (!p) return res.status(404).json({ error: 'Project not found' });
-    if (p.envVars) {
-      delete p.envVars[req.params.key];
-      if (source === 'db') {
+
+    if (source === 'db') {
+      if (p.envVars) {
+        delete p.envVars[req.params.key];
         p.markModified('envVars');
         p.updatedAt = new Date();
         await p.save();
-      } else {
-        updateLocalWorkspaceProject(req.user, String(p.id || p._id || req.params.id), { envVars: p.envVars });
       }
-    }
-
-    // Also remove from ws.envStore
-    try {
-      const liveWs = await readWorkspaceFromFirebase(req.user).catch(() => null);
-      if (liveWs && liveWs.envStore) {
+      try {
+        const liveWs = (await readWorkspaceFromFirebase(req.user)) || {};
         const pid = String(p.id || p._id || req.params.id);
-        if (liveWs.envStore[pid]) { delete liveWs.envStore[pid][req.params.key]; }
-        if (p.subdomain && liveWs.envStore[p.subdomain]) { delete liveWs.envStore[p.subdomain][req.params.key]; }
-        await writeWorkspaceToFirebase(req.user, liveWs).catch(() => {});
+        if (liveWs.envStore) {
+          if (liveWs.envStore[pid]) delete liveWs.envStore[pid][req.params.key];
+          if (p.subdomain && liveWs.envStore[p.subdomain]) delete liveWs.envStore[p.subdomain][req.params.key];
+        }
+        await writeWorkspaceToFirebase(req.user, liveWs);
+      } catch (_) {}
+    } else {
+      // [FIX] Same race as POST above — consolidated into one atomic read,
+      // both deletions applied, one awaited write.
+      const liveWs = (await readWorkspaceFromFirebase(req.user)) || {};
+      liveWs.projects = Array.isArray(liveWs.projects) ? liveWs.projects : [];
+      const pid = String(p.id || p._id || req.params.id);
+      const idx = liveWs.projects.findIndex(x => String(x.id || x._id || '') === pid || (p.subdomain && x.subdomain === p.subdomain));
+      if (idx >= 0) {
+        const currentEnvVars = { ...(liveWs.projects[idx].envVars || {}) };
+        delete currentEnvVars[req.params.key];
+        liveWs.projects[idx] = { ...liveWs.projects[idx], envVars: currentEnvVars };
       }
-    } catch (_) {}
+      if (liveWs.envStore) {
+        if (liveWs.envStore[pid]) delete liveWs.envStore[pid][req.params.key];
+        if (p.subdomain && liveWs.envStore[p.subdomain]) delete liveWs.envStore[p.subdomain][req.params.key];
+      }
+      await writeWorkspaceToFirebase(req.user, liveWs);
+      const uid = String(req.user?._id || req.user?.id || '');
+      const localUser = localAuth.users.find(u => String(u.id || u._id || '') === uid);
+      if (localUser) { localUser.workspace = liveWs; saveLocalAuth(); }
+    }
 
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -6267,14 +6309,25 @@ app.put('/api/projects/:id/env', requireAuth, async (req, res) => {
     const vars = req.body && typeof req.body === 'object' ? req.body : {};
     const { project: p, source } = await resolveEnvProject(req);
     if (!p) return res.status(404).json({ error: 'Project not found' });
-    // Replace entire envVars map
-    p.envVars = vars;
     if (source === 'db') {
+      p.envVars = vars;
       p.markModified('envVars');
       p.updatedAt = new Date();
       await p.save();
     } else {
-      updateLocalWorkspaceProject(req.user, String(p.id || p._id || req.params.id), { envVars: p.envVars });
+      // [FIX] updateLocalWorkspaceProject() fires an un-awaited Firebase
+      // write, so this endpoint could respond ok:true before the save
+      // actually persisted -- an immediate GET/redeploy right after could
+      // still see the old values. Awaited read-modify-write instead.
+      const liveWs = (await readWorkspaceFromFirebase(req.user)) || {};
+      liveWs.projects = Array.isArray(liveWs.projects) ? liveWs.projects : [];
+      const pid = String(p.id || p._id || req.params.id);
+      const idx = liveWs.projects.findIndex(x => String(x.id || x._id || '') === pid || (p.subdomain && x.subdomain === p.subdomain));
+      if (idx >= 0) liveWs.projects[idx] = { ...liveWs.projects[idx], envVars: vars };
+      await writeWorkspaceToFirebase(req.user, liveWs);
+      const uid = String(req.user?._id || req.user?.id || '');
+      const localUser = localAuth.users.find(u => String(u.id || u._id || '') === uid);
+      if (localUser) { localUser.workspace = liveWs; saveLocalAuth(); }
     }
     res.json({ ok: true, count: Object.keys(vars).length });
   } catch(e) { res.status(500).json({ error: e.message }); }
