@@ -278,7 +278,24 @@ async function runBuild(args) {
   }
 }
 
-async function _runBuildDispatch({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, isDockerfileDeploy, isWorker, baseDomain }) {
+async function _runBuildDispatch({ deployId, project, sitesDir, tmpDir, githubToken, appPort, emit, onLog, isDockerfileDeploy, isWorker, baseDomain, envVars }) {
+  // [FIX] The caller (server.js) computes resolvedEnvVars by merging the
+  // project's own stored envVars, Firebase's ws.envStore (what the "Env
+  // Variables" dashboard page actually saves to), and any request-level
+  // overrides -- and even logs "Injecting N environment variables" to the
+  // user as confirmation. But this merged value was never actually passed
+  // down: every build function below (runServerBuild, runUploadServerBuild,
+  // runStaticBuild, runDockerfileBuild) only ever reads project.envVars
+  // directly via resolveEnvVars(project.envVars). A var saved only into
+  // envStore (the dashboard's real storage) and not yet mirrored onto the
+  // bare project.envVars field never reached the deployed container, no
+  // matter how many times the project was redeployed -- while the build log
+  // misleadingly implied it had been injected. Baking the merged value into
+  // project.envVars here, once, fixes every downstream deploy path at once.
+  if (envVars && typeof envVars === 'object' && Object.keys(envVars).length) {
+    project = { ...project, envVars: { ...(project.envVars || {}), ...envVars } };
+  }
+
   // [FIX] Initialize the persistent build-cache root for this build. Lives
   // under sitesDir (the durable volume), so package-manager caches survive
   // across deploys and dashboard restarts. See getCacheDir() above.

@@ -11472,8 +11472,9 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
 
   const userForFirebase = await enrichAuthUser(req.user);
   let project = null;
+  let ws = {};
   try {
-    const ws = (await readWorkspaceFromFirebase(userForFirebase)) || {};
+    ws = (await readWorkspaceFromFirebase(userForFirebase)) || {};
     project = (ws.projects || []).find(p => p.id === projectId || p.subdomain === projectId || String(p._id||'') === projectId);
   } catch(_) {}
   if (!project) {
@@ -11481,6 +11482,20 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
     project = ((localUser?.workspace?.projects) || []).find(p => p.id === projectId || p.subdomain === projectId);
   }
   if (!project) return res.status(404).json({ error: 'Project not found' });
+  // [FIX] The "Env Variables" dashboard page saves into ws.envStore (keyed
+  // by project id AND subdomain, per the established pattern already used
+  // by several other read endpoints — see buildProjectSnapshot and others).
+  // This redeploy handler previously only ever read project.envVars
+  // directly, so a var saved via that page but never separately mirrored
+  // onto project.envVars never reached a redeploy, no matter how many times
+  // it ran — while the dashboard UI, which DOES read envStore, correctly
+  // displayed it as saved, making it look like a platform bug in the
+  // deployed app rather than in the redeploy pipeline itself.
+  const envStore = ws.envStore && typeof ws.envStore === 'object' ? ws.envStore : {};
+  const storeVars = envStore[projectId] || envStore[project.subdomain] || envStore[String(project.id || project._id || '')] || {};
+  if (Object.keys(storeVars).length) {
+    project = { ...project, envVars: { ...(project.envVars || {}), ...storeVars } };
+  }
   if (project.source !== 'upload' && !String(project.repoUrl||'').startsWith('upload://')) {
     return res.status(400).json({ error: 'This endpoint is only for upload-source projects.' });
   }
