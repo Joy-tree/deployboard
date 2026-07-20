@@ -22062,6 +22062,7 @@ function restartActiveDeployment() {
   if (document.getElementById('deployJavaVersion'))   document.getElementById('deployJavaVersion').value   = p.javaVer   || '17';
   if (document.getElementById('deployDotnetVersion')) document.getElementById('deployDotnetVersion').value = p.dotnetVer || '8.0';
   if (document.getElementById('deploySiteType')) document.getElementById('deploySiteType').value = p.siteType || 'static';
+  populateEnvRowsFromProject(p);
   updateSubdomainPreview();
   updateSummary();
   toast('Restarting deployment with current project settings…', 'info');
@@ -22406,6 +22407,7 @@ function openRedeployFormFromAi() {  const deployment = activeBuildId ? deployme
     onSiteTypeChange();
   }
   if (document.getElementById('deployStartCmd')) document.getElementById('deployStartCmd').value = project.startCmd || '';
+  populateEnvRowsFromProject(project);
   deployFormPrefillMode = true;
   deployFormContext = 'redeploy';
   showPage('new-deploy');
@@ -23439,6 +23441,15 @@ function initDeployForm() {
 }
 function resetDeployForm() {
   disableDomainStartup();
+  // [FIX] Was never cleared here, so opening "New Deployment" right after
+  // viewing an existing project's redeploy (which now correctly populates
+  // these rows) could leak that project's env vars into an unrelated new
+  // project's form.
+  const envContainer = document.getElementById('envVarsContainer');
+  if (envContainer) envContainer.innerHTML = '';
+  envRows = [];
+  const envEmpty = document.getElementById('envEmptyState');
+  if (envEmpty) envEmpty.style.display = '';
   const defaults = {
     deployProjectName:'', deploySubdomain:'', deployRepoUrl:'', deployBranch:'main',
     deployInstallCmd:'npm install', deployBuildCmd:'npm run build',
@@ -23591,6 +23602,30 @@ function getEnvVars() {
     if (k) result[k] = v;
   });
   return result;
+}
+// [FIX] Every place that reopens the deploy composer for an EXISTING project
+// (redeploy, restart, "adjust and redeploy from AI fix", etc.) already
+// restores every other setting -- name, repo, branch, node version, start
+// command -- from that project's saved config, EXCEPT environment variables,
+// which were never restored at all. The composer always showed "No
+// environment variables added" even for a project that genuinely had one
+// saved (e.g. via the Project Detail page), making it look like the value
+// had silently disappeared. Call this from every redeploy-entry point,
+// right after `deployFormContext = 'redeploy'` is set, to fix that.
+function populateEnvRowsFromProject(project) {
+  const container = document.getElementById('envVarsContainer');
+  if (container) container.innerHTML = '';
+  envRows = [];
+  const vars = project?.envVars instanceof Map ? Object.fromEntries(project.envVars)
+    : (project?.envVars && typeof project.envVars === 'object' ? project.envVars : {});
+  const keys = Object.keys(vars);
+  const empty = document.getElementById('envEmptyState');
+  if (keys.length) {
+    if (empty) empty.style.display = 'none';
+    keys.forEach(k => addEnvRow(k, vars[k]));
+  } else if (empty) {
+    empty.style.display = '';
+  }
 }
 
 function normalizeWorkingDir(dir) {
@@ -24348,6 +24383,7 @@ async function redeploy(projectId) {
   setVal('deployStartCmd',    p.startCmd   || '');
   if (typeof csSetValue === 'function') csSetValue('deploySiteType', p.siteType || 'static');
   if (typeof onSiteTypeChange === 'function') onSiteTypeChange();
+  populateEnvRowsFromProject(p);
 
   deployFormPrefillMode = true;
   deployFormContext = 'redeploy';
@@ -24472,6 +24508,7 @@ function _triggerNewVersionUploadFlowEditable(existingProject) {
   setVal('deployOutputDir',  existingProject.outputDir  || 'dist');
   if (typeof csSetValue === 'function') csSetValue('deploySiteType', existingProject.siteType || 'static');
   if (typeof onSiteTypeChange === 'function') onSiteTypeChange();
+  populateEnvRowsFromProject(existingProject);
 
   deployFormPrefillMode = true;
   deployFormContext = 'redeploy';
@@ -38911,6 +38948,7 @@ async function deployFormHandleFile(file) {
       // Re-enforce values in case user accidentally cleared them
       if (nameEl2 && !nameEl2.value.trim()) nameEl2.value = _uploadNewVersionFor.name || _uploadNewVersionFor.subdomain || '';
       if (subEl2  && !subEl2.value.trim())  subEl2.value  = _uploadNewVersionFor.subdomain || '';
+      if (!envRows.length) populateEnvRowsFromProject(_uploadNewVersionFor);
       setAvailabilityText('projectNameAvailability', 'Status: existing project (uploading new version)', true);
       setAvailabilityText('subdomainAvailability',   'Status: existing project (uploading new version)', true);
     }
@@ -38961,6 +38999,7 @@ function _triggerNewVersionUploadFlow(existingProject) {
   if (outputEl)  outputEl.value  = existingProject.outputDir  || 'dist';
   if (typeof csSetValue === 'function') csSetValue('deploySiteType', existingProject.siteType || 'static');
   if (typeof onSiteTypeChange === 'function') onSiteTypeChange();
+  populateEnvRowsFromProject(existingProject);
 
   // Mark as redeploy — this suppresses the availability check completely
   deployFormPrefillMode = true;
