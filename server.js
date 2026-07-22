@@ -6176,15 +6176,32 @@ app.get('/api/projects/:id/env', attachAuthIfPresent, async (req, res) => {
     // ALSO merge from ws.envStore — this is where vars set during
     // deployment form are stored. They are used at deploy time but
     // were previously invisible on the project detail page.
+    // [FIX] Also merge in ws.projects[...].envVars from Firebase, not just
+    // envStore. Firebase's project record is synced with the exact
+    // resolved/injected env var set on every deploy (see
+    // syncDeploymentProjectToFirebase), so even if the `vars` object above
+    // (read moments earlier via resolveEnvProject's own separate workspace
+    // read) is ever missing something due to a read race, this re-read
+    // catches it.
     try {
       if (req.user) {
         const liveWs = await readWorkspaceFromFirebase(req.user).catch(() => null);
-        if (liveWs && liveWs.envStore && typeof liveWs.envStore === 'object') {
+        if (liveWs) {
           const projectId = String(req.params.id || '');
           const subdomain = String(p.subdomain || '');
-          const storeVars = liveWs.envStore[projectId] || liveWs.envStore[subdomain]
-            || liveWs.envStore[String(p.id || p._id || '')] || {};
-          if (typeof storeVars === 'object') Object.assign(vars, storeVars);
+          if (Array.isArray(liveWs.projects)) {
+            const fbProj = liveWs.projects.find(x =>
+              String(x.id || x._id || '') === projectId ||
+              (subdomain && x.subdomain === subdomain) ||
+              String(x.id || x._id || '') === String(p.id || p._id || '')
+            );
+            if (fbProj?.envVars && typeof fbProj.envVars === 'object') Object.assign(vars, fbProj.envVars);
+          }
+          if (liveWs.envStore && typeof liveWs.envStore === 'object') {
+            const storeVars = liveWs.envStore[projectId] || liveWs.envStore[subdomain]
+              || liveWs.envStore[String(p.id || p._id || '')] || {};
+            if (typeof storeVars === 'object') Object.assign(vars, storeVars);
+          }
         }
       }
     } catch (_) {}
