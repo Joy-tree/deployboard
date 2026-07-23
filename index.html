@@ -30132,6 +30132,35 @@ async function dbAction(action, id) {
   }
 }
 
+// [NEW] Admin-only: set a database's memory to any value, ignoring the
+// per-plan cap that applies to regular database creation. Only rendered in
+// the UI when isAdminEmail() is true, and the server independently enforces
+// the same check (isRootEmailAdmin) — so this is defense in depth, not the
+// only gate. Recreates the container to actually apply the new limit
+// (see /api/databases/:id/memory), preserving the existing data volume.
+async function promptEditDbMemory(id, name, currentMemory) {
+  const input = prompt(`Set memory for "${name}" (e.g. 512m, 2g, 16g):`, currentMemory || '512m');
+  if (input === null) return; // cancelled
+  const val = input.trim().toLowerCase();
+  if (!/^\d+(\.\d+)?[mg]$/.test(val)) {
+    toast('Invalid format — use a number followed by "m" or "g" (e.g. 2g)', 'error');
+    return;
+  }
+  try {
+    toast(`Resizing "${name}" to ${val}… this recreates the container (data is kept)`, 'info');
+    const r = await apiFetch(`/api/databases/${id}/memory`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memory: val })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Resize failed');
+    toast(`"${name}" memory set to ${val} — restarting now…`, 'success');
+    await loadDatabases();
+  } catch (e) {
+    toast(e.message || 'Resize failed', 'error');
+  }
+}
+
 function confirmDbDelete(id, name) {
   const modal = document.getElementById('dbDeleteModal');
   const title = document.getElementById('dbDeleteModalName');
@@ -30719,6 +30748,10 @@ function openDbDetail(id) {
         <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(255,255,255,.04);font-size:.72rem;color:#94a3b8;">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"/></svg>
           ${db.memory||'512m'} RAM
+          ${isAdminEmail() ? `
+          <button onclick="promptEditDbMemory('${db.id}','${db.name}','${db.memory||'512m'}')" title="Admin: set any memory limit" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:2px;padding:0;border:none;background:none;color:#94a3b8;cursor:pointer;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+          </button>` : ''}
         </div>
         <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(255,255,255,.04);font-size:.72rem;color:#94a3b8;">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -30755,7 +30788,7 @@ function openDbDetail(id) {
         ].map(([k,v]) => `
         <div class="db-detail-row">
           <span class="db-detail-key">${k}</span>
-          <span class="db-detail-val" style="${k==='Status'&&db.status==='running'?'color:#34d399;':''}">${v}</span>
+          <span class="db-detail-val" style="${k==='Status'&&db.status==='running'?'color:#34d399;':''}">${v}${k==='Memory'&&isAdminEmail() ? ` <button onclick="promptEditDbMemory('${db.id}','${db.name}','${db.memory||'512m'}')" title="Admin: set any memory limit" style="display:inline-flex;vertical-align:middle;align-items:center;justify-content:center;width:16px;height:16px;padding:0;margin-left:4px;border:none;background:none;color:#94a3b8;cursor:pointer;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>` : ''}</span>
         </div>`).join('')}
         ${db.errorMessage ? `<div class="db-detail-row"><span class="db-detail-key" style="color:#f87171;">Error</span><span class="db-detail-val" style="color:#f87171;">${db.errorMessage}</span></div>` : ''}
       </div>

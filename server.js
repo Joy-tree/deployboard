@@ -12978,6 +12978,89 @@ app.post('/api/databases/:id/recreate', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── POST /api/databases/:id/memory ──────────────────────────────────────────
+// [NEW] Lets the platform admin (JOYTREE_V3_ADMIN_EMAIL) set a database's
+// container memory limit to any value, bypassing the per-plan
+// maxDbMemoryBytes cap and the host-wide memory budget check that normal
+// database creation enforces (see PLAN_DB_API_LIMITS / getDbMemoryBudgetBytes
+// above) -- those exist to protect the VPS from a regular user
+// over-provisioning, not to limit what the admin can do with their own infra.
+//
+// Applying a new memory value requires recreating the container (same
+// approach as /recreate above), because some engines bake a memory-derived
+// setting into their startup args -- e.g. MongoDB's --wiredTigerCacheSizeGB
+// (see provisionDbContainer/cfg.startArgs) -- which only takes effect at
+// container start, not via a live `docker update --memory`. Unlike
+// /recreate, this never wipes the data volume: it's a resize, not a reset.
+app.post('/api/databases/:id/memory', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) {
+      return res.status(403).json({ error: 'Only the admin account can set a custom database memory limit.' });
+    }
+
+    const dbs = await loadUserDatabases(req.user);
+    const db = dbs.find(d => d.id === req.params.id);
+    if (!db) return res.status(404).json({ error: 'Not found' });
+    if (!db.containerName) return res.status(400).json({ error: 'Container not provisioned yet — nothing to resize' });
+
+    const requested = String(req.body?.memory || '').trim().toLowerCase();
+    const bytes = parseMemToBytes(requested);
+    if (!bytes) return res.status(400).json({ error: 'Invalid memory value. Use e.g. "512m", "2g", "16g".' });
+
+    // Soft warning only — never block the admin, just let them know if this
+    // exceeds the host's total physical RAM so it's not a silent surprise
+    // when the container gets OOM-killed.
+    const hostTotal = getHostTotalMemoryBytes();
+    if (hostTotal && bytes > hostTotal) {
+      const toGb = b => (b / (1024 * 1024 * 1024)).toFixed(1);
+      addActivity('database', `⚠ Admin set "${db.name}" memory to ${requested} — that's above this VPS's total RAM (${toGb(hostTotal)}GB). It may fail to start or get OOM-killed.`);
+    }
+
+    addActivity('database', `⚙ Admin resizing database "${db.name}" memory to ${requested}…`);
+
+    const oldHostPort = Number(db.internalPort) || null;
+    db.memory = requested;
+    db.status = 'provisioning';
+    db.updatedAt = new Date().toISOString();
+    await persistDb(req.user, db);
+    const _uid = String(req.user?._id || req.user?.id || '');
+    (_uid ? io.to('user:' + _uid) : io).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'provisioning' });
+
+    res.json({ ok: true, status: 'provisioning', memory: requested });
+
+    // Recreate in background, preserving the existing data volume (this is
+    // a resize, not a wipe — unlike /recreate, there's no wipeData option).
+    setImmediate(async () => {
+      try {
+        await runDocker(`docker stop ${db.containerName} 2>/dev/null || true`);
+        await runDocker(`docker rm -f ${db.containerName} 2>/dev/null || true`);
+
+        const { containerName, hostPort } = await provisionDbContainer(
+          { ...db, _id: db.id },
+          { hostPort: oldHostPort }
+        );
+
+        const realConn = buildDbConnStr(db.engine, db.user, db.pass, db.dbName, 'localhost', hostPort);
+        const updated = { ...db, containerName, internalPort: hostPort, connStr: realConn, status: 'running', updatedAt: new Date().toISOString() };
+        await persistDb(req.user, updated);
+
+        const extConn = externalDbConnStr(updated);
+        (_uid ? io.to('user:' + _uid) : io).emit('db:status', {
+          id: db.id, name: db.name, engine: db.engine, status: 'running', connStr: extConn || realConn
+        });
+        addActivity('database', `✅ Database "${db.name}" resized to ${requested} RAM and back online on port ${hostPort}`);
+        console.log(`[DB] Resized ${db.engine} container "${containerName}" to ${requested}`);
+      } catch (e) {
+        const updated = { ...db, status: 'error', updatedAt: new Date().toISOString() };
+        await persistDb(req.user, updated).catch(() => {});
+        (_uid ? io.to('user:' + _uid) : io).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'error' });
+        addActivity('database', `❌ Failed to resize database "${db.name}": ${e.message}`);
+        console.error(`[DB] Memory resize failed for "${db.name}":`, e.message);
+      }
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── POST /api/databases/:id/delete ───────────────────────────────────────────
 app.post('/api/databases/:id/delete', requireAuth, async (req, res) => {
   try {
