@@ -12576,6 +12576,27 @@ app.get('/api/databases', requireAuth, async (req, res) => {
     let dbs = await loadUserDatabases(req.user);
     // Sync live Docker status for each
     for (const db of dbs) {
+      // [FIX] Don't let this live sync stomp on 'provisioning' with a false
+      // 'error'. Any recreate/resize (see /recreate, /memory) removes the
+      // old container *then* pulls the image and starts the new one — for
+      // that whole window `containerStatus()` correctly reports 'missing'
+      // (→ 'error'), even though nothing has actually failed yet. Since the
+      // background job itself flips status to 'running' or 'error' via
+      // persistDb() the moment it actually finishes, we can just trust it
+      // and skip the live check while a provision is legitimately in
+      // flight — this only defers detection of a *genuinely* stuck/failed
+      // container by however long that operation naturally takes, not
+      // indefinitely.
+      if (db.status === 'provisioning') {
+        // Safety valve: if it's been "provisioning" for more than 3 minutes,
+        // whatever job was supposed to finish it (e.g. the server process
+        // itself restarting mid-recreate) almost certainly isn't coming
+        // back to update it — fall through to the live check instead of
+        // leaving it stuck forever.
+        const updatedMs = db.updatedAt ? new Date(db.updatedAt).getTime() : 0;
+        const staleMs = updatedMs ? Date.now() - updatedMs : Infinity;
+        if (staleMs < 3 * 60 * 1000) continue;
+      }
       if (db.containerName) {
         const liveStatus = await containerStatus(db.containerName);
         if (liveStatus !== db.status) {
