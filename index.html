@@ -8614,10 +8614,21 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                     <div class="env-settings-title">Environment Variables</div>
                     <div class="env-settings-subtitle">Injected into the build environment</div>
                   </div>
-                  <button class="btn btn-ghost btn-sm" type="button" onclick="addEnvRow()">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Add Variable
-                  </button>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn btn-ghost btn-sm" type="button" onclick="addEnvRow()">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Add Variable
+                    </button>
+                    <!-- [NEW] Lets users persist env vars typed here immediately (via the
+                         same /api/projects/:id/env endpoint the Env Manager page uses),
+                         without needing to run a full deploy first. Only works once the
+                         project actually exists server-side (i.e. it's been deployed at
+                         least once) -- see saveEnvVarsFromComposer(). -->
+                    <button class="btn btn-primary btn-sm" type="button" id="envSaveNowBtn" onclick="saveEnvVarsFromComposer()">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                      Save Now
+                    </button>
+                  </div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;">
                   <div style="font-size:0.72rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;">Name</div>
@@ -8629,6 +8640,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                     <div style="font-size:0.82rem;color:var(--text-3);">No environment variables added.</div>
                   </div>
                 </div>
+                <div id="envSaveNowStatus" style="display:none;font-size:0.78rem;margin-top:10px;padding:8px 12px;border-radius:10px;"></div>
               </div>
             </div>
           </details>
@@ -23607,6 +23619,76 @@ function getEnvVars() {
     if (k) result[k] = v;
   });
   return result;
+}
+
+// [NEW] "Save Now" button in the deploy composer's Environment Variables
+// panel. Previously the only way to persist a var typed here was to run a
+// full deploy — this saves it immediately through the exact same
+// POST /api/projects/:id/env endpoint the (already-working) Env Manager
+// page uses, so it shows up there right away and is available to inject
+// on the next deploy without requiring one first.
+//
+// Only works for a project that already exists server-side (i.e. has been
+// deployed at least once) — a brand-new project has no id to attach the
+// vars to until its first deploy creates the record, so we just tell the
+// user that plainly rather than fail silently or invent a fake save.
+async function saveEnvVarsFromComposer() {
+  const statusEl = document.getElementById('envSaveNowStatus');
+  const showStatus = (msg, kind) => {
+    if (!statusEl) return;
+    statusEl.style.display = '';
+    statusEl.textContent = msg;
+    statusEl.style.background = kind === 'error' ? 'rgba(239,68,68,.1)' : kind === 'info' ? 'rgba(148,163,184,.12)' : 'rgba(16,185,129,.1)';
+    statusEl.style.color = kind === 'error' ? '#fca5a5' : kind === 'info' ? '#cbd5e1' : '#6ee7b7';
+  };
+
+  const vars = getEnvVars();
+  const keys = Object.keys(vars);
+  if (!keys.length) { toast('Add at least one variable first', 'error'); return; }
+
+  const subdomain = (document.getElementById('deploySubdomain')?.value || '').trim().toLowerCase();
+  const existingProject = projects.find(p => String(p.subdomain || '') === subdomain) || _uploadNewVersionFor || null;
+
+  if (!existingProject) {
+    showStatus('This project hasn\'t been deployed yet, so there\'s nowhere to save these to yet — they\'ll be used automatically on your first deploy, and you can save/edit them here or in Env Variables afterward.', 'info');
+    return;
+  }
+
+  const projectId = String(existingProject._id || existingProject.id || '');
+  const btn = document.getElementById('envSaveNowBtn');
+  const originalHtml = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Saving…'; }
+  if (statusEl) statusEl.style.display = 'none';
+
+  try {
+    for (const k of keys) {
+      const r = await apiFetch('/api/projects/' + projectId + '/env', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: k, value: vars[k] })
+      });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.error || ('Failed to save "' + k + '"'));
+      }
+    }
+    // Mirror into local caches immediately (same as saveEnvVar/pdSaveEnvVar)
+    // so the Env Variables page and this composer both reflect it right away,
+    // without waiting for a page reload.
+    existingProject.envVars = { ...(existingProject.envVars || {}), ...vars };
+    envStore[projectId] = { ...(envStore[projectId] || {}), ...vars };
+    if (existingProject.subdomain) {
+      envStore[existingProject.subdomain] = { ...(envStore[existingProject.subdomain] || {}), ...vars };
+    }
+    save();
+    logActivity?.('settings', 'Env vars saved from deploy composer: ' + keys.join(', ') + ' on project ' + projectId);
+    showStatus('Saved ✓ — visible on the Env Variables page now, and will be injected on your next deploy.', 'success');
+    toast(keys.length > 1 ? keys.length + ' variables saved ✓' : '"' + keys[0] + '" saved ✓', 'success');
+  } catch (e) {
+    showStatus(e.message || 'Save failed', 'error');
+    toast(e.message || 'Save failed', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+  }
 }
 // [FIX] Every place that reopens the deploy composer for an EXISTING project
 // (redeploy, restart, "adjust and redeploy from AI fix", etc.) already
