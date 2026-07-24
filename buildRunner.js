@@ -3450,6 +3450,20 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
       );
       if (isNitroSsrProject) {
         log(`\x1b[33m[Joytree]\x1b[0m Detected a Nitro-based SSR framework (TanStack Start or similar) in package.json.`);
+        // [FIX] These scaffolds (Lovable's TanStack Start template in
+        // particular) ship a bun.lock, not a package-lock.json -- the ONLY
+        // lockfile format detectRequiredNodeVersion() actually scans for
+        // dependency engines fields. So the generic auto-detection above
+        // never fires for these projects, and the build silently runs on
+        // whatever Node version was otherwise configured (previously 20),
+        // which is confirmed insufficient: @lovable.dev/vite-tanstack-config
+        // fails to resolve under Node 20 with ERR_MODULE_NOT_FOUND /
+        // UNRESOLVED_IMPORT, and builds cleanly under Node 22+. Force it
+        // directly here since we already know this ecosystem's requirement.
+        if (Number(String(project.nodeVer || '0').match(/\d+/)?.[0] || 0) < 22) {
+          log(`\x1b[90m[Joytree]\x1b[0m Forcing Node.js 22 (TanStack Start's own dependencies require it; its bun.lock isn't scanned by the generic engines-field auto-detection).`);
+          project = { ...project, nodeVer: '22' };
+        }
         if (!env.NITRO_PRESET) {
           env.NITRO_PRESET = 'node-server';
           log(`\x1b[90m[Joytree]\x1b[0m Forcing NITRO_PRESET=node-server so the build serves its own static assets under plain Node (many scaffolds default to a Cloudflare Workers target, which handles assets differently and would 404 on images here).`);
@@ -5291,10 +5305,10 @@ async function _runUploadBuildInner({ deployId, project, sitesDir, tmpDir, appPo
   if (isServerApp) {
     return runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPort, emit, onLog, uploadFilesDir, log, cleanSub, baseDomain });
   }
-  return runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit, onLog, uploadFilesDir, log, cleanSub });
+  return runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit, onLog, uploadFilesDir, log, cleanSub, appPort, baseDomain });
 }
 
-async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit, onLog, uploadFilesDir, log, cleanSub }) {
+async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit, onLog, uploadFilesDir, log, cleanSub, appPort, baseDomain }) {
   const buildDir = path.join(tmpDir, deployId + '_upload');
   if (fs.existsSync(buildDir)) fs.rmSync(buildDir, { recursive: true, force: true });
   fs.mkdirSync(buildDir, { recursive: true });
@@ -5309,6 +5323,35 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
   emitStep(emit, 'clone', 'done');
 
   const projectRoot = findProjectRoot(buildDir, log, project);
+
+  // [FIX] Nitro-based SSR meta-frameworks (TanStack Start, etc.) compile to
+  // a SERVER bundle (.output/server/index.mjs) with no static HTML at all —
+  // deploying them through this static pipeline always failed, either with
+  // a build error (Node too old for the framework's own dependencies, as
+  // confirmed here — see runUploadServerBuild's matching fix for why) or,
+  // if the build somehow succeeded, "no HTML entry file found" since none
+  // exists by design. Redirect to the server pipeline instead, same as the
+  // GitHub static build already does. Only fires when appPort is present
+  // (i.e. called from the primary dispatcher above, never in a way that
+  // could create a static<->server redirect loop).
+  if (typeof appPort !== 'undefined' && fs.existsSync(path.join(projectRoot, 'package.json'))) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
+      const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+      const isNitroSsrProject = !!(
+        allDeps['@tanstack/react-start'] || allDeps['@tanstack/start'] ||
+        allDeps['@tanstack/solid-start'] || allDeps['solid-start'] ||
+        allDeps['@analogjs/platform'] ||
+        allDeps['nitropack'] || allDeps['nitro'] || allDeps['vinxi']
+      );
+      if (isNitroSsrProject) {
+        log(`\x1b[33m[Joytree]\x1b[0m Detected a Nitro-based SSR framework (TanStack Start or similar) in package.json — this builds a server bundle, not static HTML. Switching this deploy to Web Service automatically.`);
+        return runUploadServerBuild({
+          deployId, project, sitesDir, tmpDir, appPort, emit, onLog, uploadFilesDir, log, cleanSub, baseDomain
+        });
+      }
+    } catch (_) { /* malformed package.json — fall through to the normal static flow */ }
+  }
 
   // Resolve Node.js image — same logic as GitHub static/server builds
   const configuredNodeVer = String(project.nodeVer || '20');
@@ -5610,6 +5653,16 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
       );
       if (isNitroSsrProject) {
         log(`\x1b[33m[Joytree]\x1b[0m Detected a Nitro-based SSR framework (TanStack Start or similar) in package.json.`);
+        // [FIX] Same reasoning as the GitHub server-build path: these
+        // scaffolds ship a bun.lock, which nothing in this build pipeline
+        // scans for engines requirements, so nodeVer here (read a few lines
+        // below as `project.nodeVer || '20'`) would otherwise stay at
+        // whatever was configured -- confirmed insufficient for
+        // @lovable.dev/vite-tanstack-config, which needs Node 22+.
+        if (Number(String(project.nodeVer || '0').match(/\d+/)?.[0] || 0) < 22) {
+          log(`\x1b[90m[Joytree]\x1b[0m Forcing Node.js 22 (TanStack Start's own dependencies require it).`);
+          project = { ...project, nodeVer: '22' };
+        }
         if (!process.env.NITRO_PRESET) {
           nitroBuildEnv = { ...process.env, NITRO_PRESET: 'node-server' };
           log(`\x1b[90m[Joytree]\x1b[0m Forcing NITRO_PRESET=node-server so the build serves its own static assets under plain Node (many scaffolds default to a Cloudflare Workers target, which handles assets differently and would 404 on images here).`);
