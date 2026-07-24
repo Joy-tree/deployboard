@@ -5131,7 +5131,15 @@ function autoDetectUploadServerApp(uploadFilesDir, startCmdHint, log) {
       }
 
       const allDeps = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies });
-      const serverFrameworks = ['express','fastify','koa','hapi','nestjs','@nestjs/core','next','nuxt','remix','sveltekit','@sveltejs/kit','strapi','keystone','feathers','moleculer','loopback','socket.io','ws','http-server','serve'];
+      // [FIX] Nitro-based SSR meta-frameworks (TanStack Start, Nuxt, SolidStart,
+      // Analog) build a real server (.output/server/index.mjs) that has to be
+      // *run*, not served as static HTML — but they typically have no "start"
+      // script (just dev/build/preview), and their package name doesn't match
+      // any of the plain server-framework deps below either. Without these,
+      // autoDetectUploadServerApp falls through to the static path, which
+      // builds fine (vite build succeeds) then fails at the end looking for
+      // an index.html that Nitro never generates for a server-rendered app.
+      const serverFrameworks = ['express','fastify','koa','hapi','nestjs','@nestjs/core','next','nuxt','remix','sveltekit','@sveltejs/kit','strapi','keystone','feathers','moleculer','loopback','socket.io','ws','http-server','serve','@tanstack/react-start','@tanstack/start','@tanstack/solid-start','solid-start','nitropack','nitro','vinxi','@analogjs/platform'];
       const matchedFramework = allDeps.find(d => serverFrameworks.some(f => d === f || d.startsWith(f + '/')));
       if (matchedFramework) {
         log(`\x1b[36m[Joytree]\x1b[0m Auto-detected server app: found server framework dependency: "${matchedFramework}"`);
@@ -5555,6 +5563,42 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   const relativeProjectRoot = path.relative(buildDir, projectRoot) || '.';
   log(`\x1b[90m[deploy] Server app root: ${relativeProjectRoot} — install, build, and start all use this same directory.\x1b[0m`);
 
+  // [FIX] Same Nitro/TanStack Start correction as runServerBuild (GitHub
+  // path) — previously only applied there, so an uploaded Nitro-based SSR
+  // project (TanStack Start, Nuxt, SolidStart, Analog) would build fine but
+  // either default its preset to Cloudflare Workers (no .output/server/
+  // static-asset serving under plain Node → images 404) or pick "npm run
+  // preview" as the start command (an entirely different, non-SSR server).
+  // Two corrections:
+  //  1. Force NITRO_PRESET=node-server for the install/build exec calls below.
+  //  2. Default the start command to Nitro's standard server entry instead of
+  //     whatever getDefaultStartCmd()/resolveRuntimeStartCommand() would
+  //     otherwise guess from package.json scripts.
+  let nitroBuildEnv = null;
+  if (fs.existsSync(path.join(projectRoot, 'package.json'))) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
+      const allNitroDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+      const isNitroSsrProject = !!(
+        allNitroDeps['@tanstack/react-start'] || allNitroDeps['@tanstack/start'] ||
+        allNitroDeps['@tanstack/solid-start'] || allNitroDeps['solid-start'] ||
+        allNitroDeps['@analogjs/platform'] ||
+        allNitroDeps['nitropack'] || allNitroDeps['nitro'] || allNitroDeps['vinxi']
+      );
+      if (isNitroSsrProject) {
+        log(`\x1b[33m[Joytree]\x1b[0m Detected a Nitro-based SSR framework (TanStack Start or similar) in package.json.`);
+        if (!process.env.NITRO_PRESET) {
+          nitroBuildEnv = { ...process.env, NITRO_PRESET: 'node-server' };
+          log(`\x1b[90m[Joytree]\x1b[0m Forcing NITRO_PRESET=node-server so the build serves its own static assets under plain Node (many scaffolds default to a Cloudflare Workers target, which handles assets differently and would 404 on images here).`);
+        }
+        if (!String(project.startCmd || '').trim()) {
+          project = { ...project, startCmd: 'node .output/server/index.mjs' };
+          log(`\x1b[90m[Joytree]\x1b[0m No Start Command set — defaulting to "node .output/server/index.mjs" (Nitro's standard server entry), instead of an auto-detected script like "preview" that wouldn't serve the real SSR output.`);
+        }
+      }
+    } catch (_) { /* malformed package.json — proceed with normal detection below */ }
+  }
+
   // Step 2: Install
   emitStep(emit, 'install', 'active');
   log('\n\x1b[36m━━━ Step 2/5 — Install ━━━\x1b[0m');
@@ -5564,7 +5608,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
     const installParts = splitCmd(installCmd);
     log(`\x1b[90m[install] cwd: ${relativeProjectRoot}\x1b[0m`);
     log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-    await exec(installParts[0], installParts[1], { cwd: projectRoot }, log);
+    await exec(installParts[0], installParts[1], { cwd: projectRoot, env: nitroBuildEnv || process.env }, log);
   } else {
     log('\x1b[90m[install] No package.json found — skipping install\x1b[0m');
   }
@@ -5581,7 +5625,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
     log(`\x1b[90m[build] cwd: ${relativeProjectRoot}\x1b[0m`);
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
     try {
-      await exec(buildParts[0], buildParts[1], { cwd: projectRoot }, log);
+      await exec(buildParts[0], buildParts[1], { cwd: projectRoot, env: nitroBuildEnv || process.env }, log);
     } catch (e) {
       if (isNativeBindingNpmBug(e.message)) {
         log(`\x1b[33m[Joytree] Detected a known npm bug (native binary optional dependencies, see https://github.com/npm/cli/issues/4828) -- this happens when package-lock.json was generated on a different OS than this build environment. Automatically retrying with a clean reinstall...\x1b[0m`);
@@ -5590,9 +5634,9 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
         const _installCmd = project.installCmd || 'npm install';
         const _installParts = splitCmd(_installCmd);
         log(`\x1b[90m$ ${_installCmd} (clean reinstall)\x1b[0m`);
-        await exec(_installParts[0], _installParts[1], { cwd: projectRoot }, log);
+        await exec(_installParts[0], _installParts[1], { cwd: projectRoot, env: nitroBuildEnv || process.env }, log);
         log(`\x1b[90m$ ${buildCmd} (retry)\x1b[0m`);
-        await exec(buildParts[0], buildParts[1], { cwd: projectRoot }, log);
+        await exec(buildParts[0], buildParts[1], { cwd: projectRoot, env: nitroBuildEnv || process.env }, log);
       } else if (/missing script|npm ERR!.*build|yarn.*command not found.*build|pnpm.*command not found.*build/i.test(String(e.message || ''))) {
         log(`\x1b[33m[Joytree]\x1b[0m No build script found in your project — automatically skipping build step.`);
         log(`\x1b[33m[Joytree]\x1b[0m ℹ Tip: if you intended to run a build, add a "build" script to your package.json, or set the build command to "echo skip" to suppress this message.`);
