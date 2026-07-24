@@ -5641,11 +5641,12 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   //     whatever getDefaultStartCmd()/resolveRuntimeStartCommand() would
   //     otherwise guess from package.json scripts.
   let nitroBuildEnv = null;
+  let isNitroSsrProject = false;
   if (fs.existsSync(path.join(projectRoot, 'package.json'))) {
     try {
       const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
       const allNitroDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
-      const isNitroSsrProject = !!(
+      isNitroSsrProject = !!(
         allNitroDeps['@tanstack/react-start'] || allNitroDeps['@tanstack/start'] ||
         allNitroDeps['@tanstack/solid-start'] || allNitroDeps['solid-start'] ||
         allNitroDeps['@analogjs/platform'] ||
@@ -5681,10 +5682,34 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   const hasPackageJson = fs.existsSync(path.join(projectRoot, 'package.json'));
   if (hasPackageJson) {
     const installCmd = project.installCmd || 'npm install';
-    const installParts = splitCmd(installCmd);
-    log(`\x1b[90m[install] cwd: ${relativeProjectRoot}\x1b[0m`);
-    log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-    await exec(installParts[0], installParts[1], { cwd: projectRoot, env: nitroBuildEnv || process.env }, log);
+    if (isNitroSsrProject) {
+      // [FIX] Every install/build step in this function previously ran
+      // directly on the VPS HOST via exec() — no Docker, no per-project
+      // Node image — using whatever Node happens to be globally installed
+      // on the server (confirmed: v20.20.2). That's fine for most simple
+      // Node/Express uploads, but Nitro/TanStack Start's own dependencies
+      // need Node 22+ (see the detection block above), and the host's
+      // system Node can't be swapped per-deploy. Route ONLY this
+      // (Nitro-detected) case through a proper Docker container with the
+      // correct image, matching how the GitHub deploy path already builds
+      // — leaving every other (non-Nitro) upload on the existing,
+      // unchanged host-exec path below.
+      const nodeImage = `node:${project.nodeVer || '22'}`;
+      // Minimal, explicit env for the container -- NOT nitroBuildEnv's
+      // {...process.env} spread, which is safe for a host child-process
+      // (it just inherits the parent's env) but would leak every one of
+      // this platform's own secrets as -e flags if passed to `docker run`.
+      const nitroEnvObj = { ...resolveEnvVars(project.envVars), NITRO_PRESET: 'node-server' };
+      log(`\x1b[90m[install] Running in a Docker container (${nodeImage}) — this project needs a specific Node version the VPS host's own Node install may not match.\x1b[0m`);
+      log(`\x1b[90m[install] cwd: ${relativeProjectRoot}\x1b[0m`);
+      log(`\x1b[90m$ ${installCmd}\x1b[0m`);
+      await runInstallStepWithRecovery({ projectRoot, nodeImage, envObj: nitroEnvObj, installCmd, log, nodeEnv: 'production' });
+    } else {
+      const installParts = splitCmd(installCmd);
+      log(`\x1b[90m[install] cwd: ${relativeProjectRoot}\x1b[0m`);
+      log(`\x1b[90m$ ${installCmd}\x1b[0m`);
+      await exec(installParts[0], installParts[1], { cwd: projectRoot, env: nitroBuildEnv || process.env }, log);
+    }
   } else {
     log('\x1b[90m[install] No package.json found — skipping install\x1b[0m');
   }
@@ -5696,6 +5721,19 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   const buildCmd = hasPackageJson ? (String(project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot)) : 'echo skip';
   if (buildCmd === 'echo skip') {
     log('\x1b[90m(no build step)\x1b[0m');
+  } else if (isNitroSsrProject) {
+    // [FIX] Same Docker-based build as Step 2 above, for the same reason —
+    // Nitro/TanStack Start needs Node 22+, which the host's own installed
+    // Node (v20.20.2) doesn't satisfy. This is exactly the "npm run build"
+    // → "vite build" → UNRESOLVED_IMPORT failure for
+    // @lovable.dev/vite-tanstack-config that was being reproduced every
+    // time on the host's fixed Node version.
+    const nodeImage = `node:${project.nodeVer || '22'}`;
+    const nitroEnvObj = { ...resolveEnvVars(project.envVars), NITRO_PRESET: 'node-server' };
+    log(`\x1b[90m[build] Running in a Docker container (${nodeImage})\x1b[0m`);
+    log(`\x1b[90m[build] cwd: ${relativeProjectRoot}\x1b[0m`);
+    log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
+    await runBuildCommandInContainer({ projectRoot, nodeImage, envObj: nitroEnvObj, nodeEnv: 'production', command: buildCmd, log });
   } else {
     const buildParts = splitCmd(buildCmd);
     log(`\x1b[90m[build] cwd: ${relativeProjectRoot}\x1b[0m`);
