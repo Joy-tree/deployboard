@@ -5101,7 +5101,7 @@ module.exports = { runBuild, runUploadBuild, getPlanRuntimeProfile, normalizeMem
 // decide: if there's a package.json with a "start" script, OR known server
 // framework deps, OR a server entry file with .listen()/createServer() etc.,
 // treat it as a server app so it gets npm start + a Docker container.
-function autoDetectUploadServerApp(uploadFilesDir, startCmdHint, log) {
+function autoDetectUploadServerApp(uploadFilesDir, startCmdHint, log, strictDepsOnly = false) {
   if (startCmdHint) return true;
 
   let root = uploadFilesDir;
@@ -5156,6 +5156,14 @@ function autoDetectUploadServerApp(uploadFilesDir, startCmdHint, log) {
       }
     } catch(_) {}
   }
+
+  // The source-file-scanning heuristic below is much fuzzier (any file that
+  // happens to contain ".listen(" or "createServer(") than the package.json
+  // checks above, so it's skipped when strictDepsOnly is set -- i.e. when
+  // re-checking a project already (possibly wrongly) classified 'static',
+  // we only want the unambiguous signal, not a guess that could flip a
+  // genuinely static project.
+  if (strictDepsOnly) return false;
 
   const candidateFiles = ['server.js','server.ts','app.js','app.ts','index.js','index.ts','main.js','main.ts'];
   for (const fname of candidateFiles) {
@@ -5232,10 +5240,25 @@ async function _runUploadBuildInner({ deployId, project, sitesDir, tmpDir, appPo
 
   // ── Step 2: Node / generic routing ────────────────────────────────────────
   let isServerApp = siteType === 'server';
-  if (!isServerApp && siteType !== 'static') {
-    isServerApp = autoDetectUploadServerApp(uploadFilesDir, startCmd, log);
+  if (!isServerApp) {
+    // [FIX] Previously this whole block was skipped whenever siteType was
+    // already 'static' -- which meant a project that got misclassified as
+    // static by an earlier bug (e.g. Nitro/TanStack Start not being
+    // recognized before) would stay stuck failing the same way on every
+    // future deploy, since nothing ever re-checked it. A package.json with
+    // an unambiguous server-framework dependency should always win over a
+    // stale/previous 'static' classification -- so when siteType is
+    // already 'static', still re-check, but only using the strict
+    // dependency-based signal (strictDepsOnly), not the fuzzier
+    // source-file-scanning heuristic that could wrongly flip a genuinely
+    // static project just because some file happens to mention ".listen(".
+    isServerApp = autoDetectUploadServerApp(uploadFilesDir, startCmd, log, siteType === 'static');
     if (isServerApp) {
-      log(`\x1b[33m[Joytree]\x1b[0m ℹ Tip: set Site Type = "Server App" in project settings to skip auto-detection next time.`);
+      if (siteType === 'static') {
+        log(`\x1b[33m[Joytree]\x1b[0m This project was previously classified as a static site, but its package.json shows an unambiguous server-framework dependency — switching to Server App for this and future deploys.`);
+      } else {
+        log(`\x1b[33m[Joytree]\x1b[0m ℹ Tip: set Site Type = "Server App" in project settings to skip auto-detection next time.`);
+      }
     }
   }
 
