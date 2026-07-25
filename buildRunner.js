@@ -5126,7 +5126,17 @@ module.exports = { runBuild, runUploadBuild, getPlanRuntimeProfile, normalizeMem
 // framework deps, OR a server entry file with .listen()/createServer() etc.,
 // treat it as a server app so it gets npm start + a Docker container.
 function autoDetectUploadServerApp(uploadFilesDir, startCmdHint, log, strictDepsOnly = false) {
-  if (startCmdHint) return true;
+  // [FIX] strictDepsOnly mode exists precisely so a stale/previous 'static'
+  // classification only gets flipped by an unambiguous package.json signal
+  // (start script or known server-framework dependency) — not by a fuzzy
+  // guess. A leftover startCmd saved on the project from before it was
+  // reconfigured to static is exactly that kind of fuzzy, stale signal, not
+  // fresh evidence from the current upload, so it must not short-circuit
+  // this function ahead of the strictDepsOnly check. Confirmed live: a
+  // genuinely static project (vitafresh, plain HTML/CSS/JS, no package.json)
+  // kept redeploying as a server app solely because an old startCmd was
+  // still stored on the project record.
+  if (startCmdHint && !strictDepsOnly) return true;
 
   let root = uploadFilesDir;
   const findRoot = (dir, depth) => {
