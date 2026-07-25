@@ -11033,6 +11033,24 @@ document.addEventListener('keydown', function(e){
             </div>
           </div>
         </div>
+
+        <div class="card env-command-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Paste from .env</div>
+              <div class="card-subtitle">Paste multiple KEY=VALUE lines at once — same format as a .env file. Blank lines and # comments are skipped.</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <textarea class="input input-mono" id="envBulkPaste" rows="6" style="width:100%;resize:vertical;font-size:0.8rem;" placeholder="MONGO_URI=mongodb://user:pass@host:port/db&#10;R2_ACCOUNT_ID=abc123&#10;R2_BUCKET=my-bucket"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <button class="btn btn-primary" onclick="saveEnvVarsBulk()">Import All</button>
+              <span id="envBulkStatus" style="font-size:0.78rem;color:var(--text-3);"></span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -25414,6 +25432,75 @@ async function saveEnvVar() {
   document.getElementById('envVal').value = '';
   toast('Variable "' + k + '" saved ✓ Will be injected on next deploy', 'success');
   logActivity('settings', 'Env var set: ' + k + ' on project ' + projectId);
+  loadEnvForProject();
+}
+
+// Parses standard KEY=VALUE lines (same format as a .env file) and saves
+// each one through the exact same, already-proven single-key endpoint
+// saveEnvVar() uses — sequentially, so each save completes (and is
+// correctly persisted) before the next starts. This deliberately does NOT
+// use the bulk-replace PUT endpoint, since that overwrites the entire set
+// and would silently wipe out any existing variables not included in this
+// paste; going one key at a time via the safe merge-based POST endpoint
+// means pasting a partial list can never delete anything by accident.
+async function saveEnvVarsBulk() {
+  const projectId = document.getElementById('envProjectSelect').value;
+  const raw = document.getElementById('envBulkPaste').value || '';
+  const statusEl = document.getElementById('envBulkStatus');
+  if (!projectId) { toast('Select a project first', 'error'); return; }
+
+  const lines = raw.split('\n')
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith('#'));
+
+  const parsed = [];
+  const skipped = [];
+  for (const line of lines) {
+    const eq = line.indexOf('=');
+    if (eq <= 0) { skipped.push(line); continue; }
+    const k = line.slice(0, eq).trim().toUpperCase().replace(/\s/g, '_');
+    const v = line.slice(eq + 1).trim();
+    if (!k) { skipped.push(line); continue; }
+    parsed.push([k, v]);
+  }
+
+  if (!parsed.length) {
+    toast('No valid KEY=VALUE lines found', 'error');
+    return;
+  }
+
+  let done = 0, failed = 0;
+  for (const [k, v] of parsed) {
+    statusEl.textContent = `Importing ${done + failed + 1} of ${parsed.length}… (${k})`;
+    try {
+      const r = await apiFetch('/api/projects/' + projectId + '/env', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: k, value: v })
+      });
+      if (r.ok) {
+        done++;
+        const localProj = projects.find(p => (p._id || p.id) === projectId);
+        if (localProj) { localProj.envVars = localProj.envVars || {}; localProj.envVars[k] = v; }
+        envStore[projectId] = envStore[projectId] || {};
+        envStore[projectId][k] = v;
+      } else {
+        failed++;
+      }
+    } catch (e) {
+      failed++;
+    }
+  }
+  save();
+
+  statusEl.textContent = '';
+  const skippedNote = skipped.length ? ` (${skipped.length} line${skipped.length > 1 ? 's' : ''} skipped — no "=" found)` : '';
+  if (failed === 0) {
+    toast(`Imported ${done} variable${done > 1 ? 's' : ''} ✓ Will be injected on next deploy${skippedNote}`, 'success');
+    document.getElementById('envBulkPaste').value = '';
+  } else {
+    toast(`Imported ${done}, ${failed} failed — check and retry the failed ones${skippedNote}`, 'error');
+  }
+  logActivity('settings', `Bulk env import: ${done} saved, ${failed} failed on project ${projectId}`);
   loadEnvForProject();
 }
 
