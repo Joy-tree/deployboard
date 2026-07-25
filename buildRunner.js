@@ -4463,6 +4463,16 @@ async function runInstallStepWithRecovery({ projectRoot, nodeImage, envObj, inst
 
     if (isPeerDependencyConflictError(msg)) {
       log(`\x1b[33m[Joytree] Detected a peer dependency conflict (ERESOLVE) -- retrying install with --legacy-peer-deps, npm's own documented workaround for peer ranges that haven't caught up with a newer major version yet...\x1b[0m`);
+      // [FIX] The first (aborted) install attempt can leave node_modules
+      // partially populated before npm hits the ERESOLVE error and stops.
+      // Retrying in that same directory makes npm do an INCREMENTAL install
+      // on top of that partial state rather than a genuinely clean one --
+      // confirmed directly: a live retry here installed only 249 packages,
+      // missing `vite` entirely (`sh: 1: vite: not found` at build time),
+      // while a truly clean --legacy-peer-deps install of the same project
+      // correctly installs all 415 packages including vite. Wipe first.
+      try { fs.rmSync(path.join(projectRoot, 'node_modules'), { recursive: true, force: true }); } catch (_) {}
+      try { fs.rmSync(path.join(projectRoot, 'package-lock.json'), { force: true }); } catch (_) {}
       const fallbackCmd = /--legacy-peer-deps/.test(installCmd) ? installCmd : `${installCmd} --legacy-peer-deps`;
       await runBuildCommandInContainer({ projectRoot, nodeImage, envObj, nodeEnv, command: fallbackCmd, log });
       return;
