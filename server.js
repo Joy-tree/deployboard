@@ -11584,7 +11584,16 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
     });
   }
 
-  const isServerApp = project.siteType === 'server' || !!String(project.startCmd||'').trim();
+  // [FIX] Previously this was `siteType === 'server' || !!startCmd`, which meant
+  // an explicit siteType:'static' was silently overridden by any leftover
+  // startCmd still saved on the project record (e.g. from before the project
+  // was reconfigured from server -> static in settings). buildRunner.js's own
+  // dispatcher correctly treats an explicit 'static' as final, so this
+  // redeploy endpoint now matches that: 'static' always wins, regardless of
+  // whatever startCmd happens to still be stored.
+  const explicitSiteType = String(project.siteType || '').trim().toLowerCase();
+  const isServerApp = explicitSiteType === 'server'
+    || (explicitSiteType !== 'static' && !!String(project.startCmd || '').trim());
   let appPort = 0;
   if (isServerApp) {
     try { appPort = getOrAssignPort(cleanSub); } catch(e) { return res.status(500).json({ error: e.message }); }
