@@ -3153,6 +3153,101 @@ app.get('/api/admin/impersonation-log', requireAuth, async (req, res) => {
 // email -- would explain "disconnect succeeds but the account still shows
 // the old value," if the admin tools and the person's actual login session
 // are resolving to two DIFFERENT records for what should be one account.
+// ── Admin: list every user with their plan, current build-time usage this
+// month, and effective quota (plan default + referral bonus + any admin
+// override) -- powers the admin "all users" panel used to grant individual
+// users a higher build-time allowance than their plan alone provides.
+app.get('/api/admin/users', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+
+    const rawUsers = isDbReady()
+      ? await User.find({}).select('email name githubUsername planKey').lean().catch(() => [])
+      : (localAuth.users || []);
+
+    const allWs = await fetchAllWorkspaces().catch(() => ({}));
+    const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 1, 0);
+
+    const rows = await Promise.all(rawUsers.map(async (u) => {
+      const email = String(u.email || '').trim().toLowerCase();
+      const key = firebaseWorkspaceKey(u);
+      const ws = allWs[key] || {};
+      const planKey = (await getUserPlanKey(u).catch(() => null)) || ws.planKey || 'free';
+      const planLimits = PLAN_DB_API_LIMITS[planKey] || PLAN_DB_API_LIMITS.free;
+
+      const deployments = Array.isArray(ws.deployments) ? ws.deployments : [];
+      const usedSeconds = deployments
+        .filter(d => d.status === 'success' && d.startedAt && new Date(d.startedAt) >= monthStart)
+        .reduce((sum, d) => sum + (Number(d.duration) || 0), 0);
+
+      const referralBonusSeconds = (ws.referral?.buildMinutesBonus || 0) * 60;
+      const adminOverrideSeconds = Number.isFinite(ws.adminQuotaOverrideSeconds) ? ws.adminQuotaOverrideSeconds : null;
+      const effectiveQuotaSeconds = adminOverrideSeconds != null
+        ? adminOverrideSeconds
+        : planLimits.monthlyBuildSeconds + referralBonusSeconds;
+
+      return {
+        email,
+        name: u.name || '',
+        isAdmin: email === JOYTREE_V3_ADMIN_EMAIL,
+        planKey,
+        projectCount: Array.isArray(ws.projects) ? ws.projects.length : 0,
+        usedSeconds,
+        planDefaultSeconds: planLimits.monthlyBuildSeconds,
+        referralBonusSeconds,
+        adminOverrideSeconds,
+        effectiveQuotaSeconds,
+      };
+    }));
+
+    rows.sort((a, b) => b.usedSeconds - a.usedSeconds);
+    res.json({ ok: true, users: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Admin: set (or clear, with overrideSeconds: null) a specific user's
+// build-time quota override. When set, this REPLACES the plan-default +
+// referral-bonus calculation entirely for that user -- so an admin can
+// grant "anything", not just add a bonus on top of the plan ceiling.
+// Written directly to that user's own Firebase workspace record via one
+// atomic read-modify-write (same discipline as the env-var save endpoints
+// fixed earlier -- avoids the exact race-condition class of bug that
+// caused saved values to silently revert there).
+app.post('/api/admin/users/:email/quota', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+
+    const targetEmail = String(req.params.email || '').trim().toLowerCase();
+    if (!targetEmail) return res.status(400).json({ error: 'email is required' });
+
+    const { overrideSeconds } = req.body || {};
+    if (overrideSeconds !== null && !Number.isFinite(overrideSeconds)) {
+      return res.status(400).json({ error: 'overrideSeconds must be a number of seconds, or null to clear the override' });
+    }
+    if (overrideSeconds !== null && overrideSeconds < 0) {
+      return res.status(400).json({ error: 'overrideSeconds cannot be negative' });
+    }
+
+    const target = isDbReady()
+      ? await User.findOne({ email: targetEmail }).catch(() => null)
+      : localAuth.users.find(u => String(u.email || '').toLowerCase() === targetEmail);
+    if (!target) return res.status(404).json({ error: 'No account found for that email' });
+
+    const key = firebaseWorkspaceKey(target);
+    const ws = (await readWorkspaceFromFirebase(target)) || {};
+    if (overrideSeconds === null) {
+      delete ws.adminQuotaOverrideSeconds;
+    } else {
+      ws.adminQuotaOverrideSeconds = overrideSeconds;
+    }
+    const wrote = await writeWorkspaceByKnownKey(key, ws);
+    if (!wrote) return res.status(500).json({ error: 'Failed to persist quota override to Firebase' });
+
+    console.log(`[Admin] ${req.user.email} set build-quota override for ${targetEmail}: ${overrideSeconds === null ? 'cleared' : overrideSeconds + 's'}`);
+    res.json({ ok: true, email: targetEmail, adminOverrideSeconds: overrideSeconds });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/admin/debug-account', requireAuth, async (req, res) => {
   try {
     if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
@@ -10159,7 +10254,13 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     // something -- without this, "bonus build minutes" was just a number
     // on a settings page with nothing behind it.
     const referralBonusSeconds = (deployWs.referral?.buildMinutesBonus || 0) * 60;
-    const effectiveQuotaSeconds = githubPlanLimits.monthlyBuildSeconds + referralBonusSeconds;
+    // [FIX] An admin-set override, when present, replaces the plan+referral
+    // calculation entirely rather than adding to it -- see
+    // POST /api/admin/users/:email/quota.
+    const adminOverrideSeconds = Number.isFinite(deployWs.adminQuotaOverrideSeconds) ? deployWs.adminQuotaOverrideSeconds : null;
+    const effectiveQuotaSeconds = adminOverrideSeconds != null
+      ? adminOverrideSeconds
+      : githubPlanLimits.monthlyBuildSeconds + referralBonusSeconds;
     if (usedSeconds >= effectiveQuotaSeconds) {
       deployLock.release();
       return res.status(403).json({
@@ -11221,7 +11322,13 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
       .filter(d => d.status === 'success' && d.startedAt && new Date(d.startedAt) >= monthStart)
       .reduce((sum, d) => sum + (Number(d.duration) || 0), 0);
     const referralBonusSeconds = (uploadDeployWs.referral?.buildMinutesBonus || 0) * 60;
-    const effectiveQuotaSeconds = uploadPlanLimits.monthlyBuildSeconds + referralBonusSeconds;
+    // [FIX] An admin-set override, when present, replaces the plan+referral
+    // calculation entirely rather than adding to it -- see
+    // POST /api/admin/users/:email/quota.
+    const uploadAdminOverrideSeconds = Number.isFinite(uploadDeployWs.adminQuotaOverrideSeconds) ? uploadDeployWs.adminQuotaOverrideSeconds : null;
+    const effectiveQuotaSeconds = uploadAdminOverrideSeconds != null
+      ? uploadAdminOverrideSeconds
+      : uploadPlanLimits.monthlyBuildSeconds + referralBonusSeconds;
     if (usedSeconds >= effectiveQuotaSeconds) {
       deployLock.release();
       return res.status(403).json({

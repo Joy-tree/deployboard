@@ -12702,6 +12702,17 @@ document.addEventListener('keydown', function(e){
         </div>
         <div id="adminImpersonationLog" style="margin-top:12px;color:var(--text-3);font-size:0.85rem;">Click Refresh to load.</div>
       </div>
+
+      <div style="margin-top:36px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <h3 style="margin:0;font-size:1rem;">All users &amp; build-time quotas</h3>
+            <div style="color:var(--text-3);font-size:0.8rem;margin-top:4px;">Every account's plan, usage this month, and current effective build-time allowance. Set a custom quota to override a user's plan default — this replaces the plan+referral calculation entirely, so you can grant any amount, not just a bonus on top of it.</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="adminLoadAllUsers()">Refresh</button>
+        </div>
+        <div id="adminUsersList" style="margin-top:14px;color:var(--text-3);font-size:0.85rem;">Click Refresh to load.</div>
+      </div>
     </div>
 
     <script>
@@ -12866,6 +12877,88 @@ document.addEventListener('keydown', function(e){
             </div>`).join('');
         } catch (e) {
           el.textContent = e.message || 'Could not load log';
+        }
+      };
+
+      function fmtBuildSeconds(s) {
+        if (!Number.isFinite(s)) return '—';
+        const m = Math.round(s / 60);
+        return m >= 60 ? `${(m/60).toFixed(1)}h` : `${m}m`;
+      }
+
+      window.adminLoadAllUsers = async function() {
+        const el = document.getElementById('adminUsersList');
+        el.textContent = 'Loading…';
+        try {
+          const res = await apiFetch('/api/admin/users');
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load users');
+          if (!data.users.length) { el.textContent = 'No users found.'; return; }
+          el.innerHTML = `
+            <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+              <thead><tr style="text-align:left;color:var(--text-3);border-bottom:1px solid var(--border);">
+                <th style="padding:8px 10px;">Email</th>
+                <th style="padding:8px 10px;">Plan</th>
+                <th style="padding:8px 10px;">Projects</th>
+                <th style="padding:8px 10px;">Used / Quota (this month)</th>
+                <th style="padding:8px 10px;">Override</th>
+                <th style="padding:8px 10px;"></th>
+              </tr></thead>
+              <tbody>
+                ${data.users.map(u => `
+                  <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:8px 10px;">${escapeHtml(u.email)}${u.isAdmin ? ' <span style="color:var(--accent);font-size:0.72rem;">(admin)</span>' : ''}</td>
+                    <td style="padding:8px 10px;text-transform:capitalize;">${escapeHtml(u.planKey)}</td>
+                    <td style="padding:8px 10px;">${u.projectCount}</td>
+                    <td style="padding:8px 10px;">${fmtBuildSeconds(u.usedSeconds)} / ${fmtBuildSeconds(u.effectiveQuotaSeconds)}</td>
+                    <td style="padding:8px 10px;">${u.adminOverrideSeconds != null ? `<span style="color:var(--accent);font-weight:600;">${fmtBuildSeconds(u.adminOverrideSeconds)}</span>` : '<span style="color:var(--text-3);">plan default</span>'}</td>
+                    <td style="padding:8px 10px;text-align:right;">
+                      <button class="btn btn-ghost btn-sm" onclick="adminSetUserQuota('${escapeHtml(u.email)}', ${u.adminOverrideSeconds})">Set quota</button>
+                      ${u.adminOverrideSeconds != null ? `<button class="btn btn-ghost btn-sm" style="color:#f87171;" onclick="adminClearUserQuota('${escapeHtml(u.email)}')">Clear</button>` : ''}
+                    </td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+            </div>`;
+        } catch (e) {
+          el.textContent = e.message || 'Could not load users';
+        }
+      };
+
+      window.adminSetUserQuota = async function(email, currentOverrideSeconds) {
+        const currentMinutes = Number.isFinite(currentOverrideSeconds) ? Math.round(currentOverrideSeconds / 60) : '';
+        const input = prompt(`Set build-time quota for ${email}, in minutes (this REPLACES their plan default entirely — e.g. 300 for 5 hours, 6000 for 100 hours). Leave blank to cancel.`, currentMinutes);
+        if (input === null || input.trim() === '') return;
+        const minutes = Number(input);
+        if (!Number.isFinite(minutes) || minutes < 0) return toast('Enter a valid, non-negative number of minutes.', 'error');
+        try {
+          const res = await apiFetch(`/api/admin/users/${encodeURIComponent(email)}/quota`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ overrideSeconds: Math.round(minutes * 60) })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not set quota');
+          toast(`Quota for ${email} set to ${minutes} minutes/month`, 'success');
+          adminLoadAllUsers();
+        } catch (e) {
+          toast(e.message || 'Could not set quota', 'error');
+        }
+      };
+
+      window.adminClearUserQuota = async function(email) {
+        if (!confirm(`Clear the custom quota for ${email}? They'll revert to their plan's default allowance.`)) return;
+        try {
+          const res = await apiFetch(`/api/admin/users/${encodeURIComponent(email)}/quota`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ overrideSeconds: null })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not clear quota');
+          toast(`Quota override cleared for ${email}`, 'success');
+          adminLoadAllUsers();
+        } catch (e) {
+          toast(e.message || 'Could not clear quota', 'error');
         }
       };
 
