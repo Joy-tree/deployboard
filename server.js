@@ -110,6 +110,39 @@ const PORT        = process.env.PORT        || 3001;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/deployboard';
 const SITES_DIR   = process.env.SITES_DIR   || '/var/www/user-sites';
 const TMP_DIR     = process.env.TMP_DIR     || '/tmp/deployboard-builds';
+
+// [FIX] Concurrent-deploy guard for the SAME project/subdomain. Confirmed
+// live on brabeto-app: two overlapping deploys for the same project raced
+// on the container archive/promote step -- one process renamed the stable
+// container to an archived name and promoted its candidate successfully,
+// while the OTHER process's own archive step then tried to rename the
+// (already-renamed-away) stable container and failed with "No such
+// container", with both processes' logs interleaved into one confusing
+// stream that looked like a single failed deploy even though the site was
+// actually live. The autoDeployState Map further down only guards the
+// auto-deploy poller against re-triggering itself -- it was never checked
+// by the manual /api/deploy, /api/upload-deploy, or
+// /api/projects/:id/redeploy-upload endpoints, so nothing prevented a
+// second manual (or poller-triggered) deploy from starting while a first
+// one -- which can easily take 10+ minutes -- was still running.
+//
+// Keyed by subdomain (the one identifier shared across every deploy path
+// and the actual container name), not project id, since that's what the
+// container/port-registry promotion step actually collides on.
+const DEPLOY_LOCK_MAX_AGE_MS = 25 * 60 * 1000; // stale-lock safety net, in case a process crashes without releasing
+const activeDeployLocks = new Map(); // subdomain -> { startedAt }
+
+function acquireDeployLock(subdomain) {
+  const key = String(subdomain || '').toLowerCase();
+  if (!key) return { ok: true, release: () => {} }; // no subdomain yet (shouldn't happen) -- don't block
+  const existing = activeDeployLocks.get(key);
+  if (existing && (Date.now() - existing.startedAt) < DEPLOY_LOCK_MAX_AGE_MS) {
+    return { ok: false, message: `A deploy for "${key}" is already in progress (started ${Math.round((Date.now() - existing.startedAt)/1000)}s ago). Please wait for it to finish before starting another -- running two deploys for the same project at once can corrupt the live container swap.` };
+  }
+  activeDeployLocks.set(key, { startedAt: Date.now() });
+  return { ok: true, release: () => { activeDeployLocks.delete(key); } };
+}
+
 const GITHUB_TOKEN= process.env.GITHUB_TOKEN|| '';
 const BASE_DOMAIN = normalizeBaseDomain(process.env.BASE_DOMAIN || 'localhost');
 const CF_API_TOKEN  = process.env.CF_API_TOKEN  || '';
@@ -10035,6 +10068,11 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'Working directory must be a relative path inside the repository.' });
   }
 
+  // [FIX] Same concurrent-deploy guard as the upload paths -- see
+  // acquireDeployLock's own comment near its definition for the full story.
+  const deployLock = acquireDeployLock(cleanSub);
+  if (!deployLock.ok) return res.status(409).json({ error: deployLock.message });
+
   // Respect explicit site type first so static deployments are not forced into
   // server mode when UI/default data still contains a start command.
   const explicitType = String(siteType || '').trim().toLowerCase();
@@ -10059,9 +10097,11 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   const existingBySubId = existingBySub?.id || '';
   const existingByNameId = existingByName?.id || '';
   if (existingByName && existingBySubId && existingByNameId !== existingBySubId) {
+    deployLock.release();
     return res.status(409).json({ error: 'Project name is unavailable. Please choose another name.' });
   }
   if (existingBySub && existingByName && existingBySubId !== existingByNameId) {
+    deployLock.release();
     return res.status(409).json({ error: 'Subdomain is unavailable. Please choose another subdomain.' });
   }
 
@@ -10069,7 +10109,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   let appPort = 0;
   if (isServerApp) {
     try { appPort = getOrAssignPort(cleanSub); }
-    catch(e) { return res.status(500).json({ error: e.message }); }
+    catch(e) { deployLock.release(); return res.status(500).json({ error: e.message }); }
   }
 
   const planKey = await getUserPlanKey(req.user);
@@ -10085,6 +10125,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       ? githubPlanLimits.maxProjects + (deployWs.referral?.bonusMaxProjects || 0)
       : githubPlanLimits.maxProjects;
     if (Number.isFinite(effectiveMaxProjects) && ownedProjectCount >= effectiveMaxProjects) {
+      deployLock.release();
       return res.status(403).json({
         error: `Project limit reached for ${planKey} plan (${effectiveMaxProjects} max${deployWs.referral?.bonusMaxProjects ? ', including your referral bonus' : ''}). Upgrade your plan or refer more friends to deploy more projects.`,
         limitReached: true,
@@ -10120,6 +10161,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     const referralBonusSeconds = (deployWs.referral?.buildMinutesBonus || 0) * 60;
     const effectiveQuotaSeconds = githubPlanLimits.monthlyBuildSeconds + referralBonusSeconds;
     if (usedSeconds >= effectiveQuotaSeconds) {
+      deployLock.release();
       return res.status(403).json({
         error: `Monthly build-time quota reached (${usedSeconds}s / ${effectiveQuotaSeconds}s${referralBonusSeconds ? ` including your ${referralBonusSeconds}s referral bonus` : ''}). Resets at the start of next month.`,
         buildQuotaReached: true
@@ -10130,7 +10172,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   // ── Disk quota check ──────────────────────────────────────────────────────
   const ownerIdForDisk = String(req.user?._id || req.user?.id || '');
   const diskCheck = await checkDiskQuota(ownerIdForDisk, planKey);
-  if (!diskCheck.ok) return res.status(403).json({ error: diskCheck.error });
+  if (!diskCheck.ok) { deployLock.release(); return res.status(403).json({ error: diskCheck.error }); }
 
   // Upsert project
   let project;
@@ -10208,6 +10250,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
           subdomain: cleanSub,
           projectName: name
         });
+        deployLock.release();
         return res.json({
           ok: true,
           deployId: String(active._id),
@@ -10677,6 +10720,8 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     emit('build:done', { status: wasStopped ? 'canceled' : 'failed', duration });
     console.error(`[Deploy] FAILED ${name}:`, sanitizeSecrets(buildErr.message));
     deployStopRequests.delete(deployId);
+  } finally {
+    deployLock.release();
   }
 });
 
@@ -11099,8 +11144,15 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
   }
 
   const cleanSub = subdomain.toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
+
+  // [FIX] Same concurrent-deploy guard as redeploy-upload -- see
+  // acquireDeployLock's own comment near its definition for the full story.
+  const deployLock = acquireDeployLock(cleanSub);
+  if (!deployLock.ok) return res.status(409).json({ error: deployLock.message });
+
   const filesDir = path.join(UPLOADS_DIR, userId, projectId, 'files');
   if (!fs.existsSync(filesDir)) {
+    deployLock.release();
     return res.status(404).json({ error: 'Project files not found. Please extract the archive first.' });
   }
 
@@ -11110,7 +11162,7 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
 
   let appPort = 0;
   if (isServerApp) {
-    try { appPort = getOrAssignPort(cleanSub); } catch(e) { return res.status(500).json({ error: e.message }); }
+    try { appPort = getOrAssignPort(cleanSub); } catch(e) { deployLock.release(); return res.status(500).json({ error: e.message }); }
   }
 
   const planKey = await getUserPlanKey(req.user);
@@ -11142,6 +11194,7 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
       ? uploadPlanLimits.maxProjects + (uploadDeployWs.referral?.bonusMaxProjects || 0)
       : uploadPlanLimits.maxProjects;
     if (Number.isFinite(effectiveMaxProjects) && ownedProjectCount >= effectiveMaxProjects) {
+      deployLock.release();
       return res.status(403).json({
         error: `Project limit reached for ${planKey} plan (${effectiveMaxProjects} max${uploadDeployWs.referral?.bonusMaxProjects ? ', including your referral bonus' : ''}). Upgrade your plan or refer more friends to deploy more projects.`,
         limitReached: true,
@@ -11170,6 +11223,7 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
     const referralBonusSeconds = (uploadDeployWs.referral?.buildMinutesBonus || 0) * 60;
     const effectiveQuotaSeconds = uploadPlanLimits.monthlyBuildSeconds + referralBonusSeconds;
     if (usedSeconds >= effectiveQuotaSeconds) {
+      deployLock.release();
       return res.status(403).json({
         error: `Monthly build-time quota reached (${usedSeconds}s / ${effectiveQuotaSeconds}s${referralBonusSeconds ? ` including your ${referralBonusSeconds}s referral bonus` : ''}). Resets at the start of next month.`,
         buildQuotaReached: true
@@ -11423,6 +11477,8 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
       }
 
       emit('build:done', { status: 'failed', duration });
+    } finally {
+      deployLock.release();
     }
   })();
 });
@@ -11574,10 +11630,18 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
   }
 
   const cleanSub = project.subdomain || projectId;
+
+  // [FIX] Reject a second concurrent deploy for the same subdomain instead
+  // of letting it race the container archive/promote step of one already
+  // in progress. See acquireDeployLock's own comment for the full story.
+  const deployLock = acquireDeployLock(cleanSub);
+  if (!deployLock.ok) return res.status(409).json({ error: deployLock.message });
+
   const storedProjectId = project.uploadProjectId || cleanSub;
   const filesDir = project.uploadFilesDir || path.join(UPLOADS_DIR, userId, storedProjectId, 'files');
 
   if (!fs.existsSync(filesDir)) {
+    deployLock.release();
     return res.status(404).json({
       error: 'Stored project files not found. Please upload a new archive.',
       filesNotFound: true
@@ -11596,7 +11660,7 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
     || (explicitSiteType !== 'static' && !!String(project.startCmd || '').trim());
   let appPort = 0;
   if (isServerApp) {
-    try { appPort = getOrAssignPort(cleanSub); } catch(e) { return res.status(500).json({ error: e.message }); }
+    try { appPort = getOrAssignPort(cleanSub); } catch(e) { deployLock.release(); return res.status(500).json({ error: e.message }); }
   }
 
   const planKey = await getUserPlanKey(req.user);
@@ -11710,6 +11774,8 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
       emit('build:log', { line: `\x1b[31m[Joytree]\x1b[0m Build failed: ${safeErr}` });
       await saveRedeployStatus('failed', { duration, endedAt: new Date().toISOString(), error: safeErr });
       emit('build:done', { status: 'failed', duration });
+    } finally {
+      deployLock.release();
     }
   })();
 });
