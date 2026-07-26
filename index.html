@@ -20952,6 +20952,7 @@ const API = window.location.origin; // same-origin API
 let projects     = JSON.parse(localStorage.getItem('db_projects')     || '[]');
 let deployments  = JSON.parse(localStorage.getItem('db_deployments')  || '[]');
 let envStore     = JSON.parse(localStorage.getItem('db_envstore')     || '{}');
+let adminQuotaOverrideSeconds = null; // set from /api/workspace response; null = no override, use plan default
 // Merge stored settings with defaults so baseDomain is always correct
 // even for users who never opened the Settings page
 const _storedSettings = JSON.parse(localStorage.getItem('db_settings') || '{}');
@@ -21041,7 +21042,19 @@ function canUseClaudeFixing() {
       && String(settings.subscriptionStatus || '').toLowerCase() === 'active';
 }
 function getCurrentPlanLimits() {
-  return PLAN_LIMITS[getCurrentPlanKey()];
+  const base = PLAN_LIMITS[getCurrentPlanKey()];
+  // [FIX] An admin-granted build-time quota override (see the Admin panel's
+  // "All users & build-time quotas" section) previously only affected the
+  // actual deploy-blocking checks server-side -- it was never reflected
+  // here, so a user whose limit had genuinely been raised would still see
+  // their OLD plan default everywhere on their own dashboard (e.g. showing
+  // "313/300" even though 313 was already correctly allowed through).
+  // Mirrors the server-side logic exactly: an override REPLACES
+  // monthlyBuildSeconds entirely, it isn't added on top of the plan default.
+  if (Number.isFinite(adminQuotaOverrideSeconds)) {
+    return { ...base, monthlyBuildSeconds: adminQuotaOverrideSeconds };
+  }
+  return base;
 }
 function getMonthlyBuildSecondsUsed(now = new Date()) {
   const y = now.getUTCFullYear();
@@ -21493,6 +21506,7 @@ async function bootstrapSession(){
       projects = Array.isArray(wsD.projects) ? wsD.projects : [];
       deployments = Array.isArray(wsD.deployments) ? wsD.deployments : [];
       envStore = wsD.envStore && typeof wsD.envStore === 'object' ? wsD.envStore : {};
+      adminQuotaOverrideSeconds = Number.isFinite(wsD.adminQuotaOverrideSeconds) ? wsD.adminQuotaOverrideSeconds : null;
       settings = Object.assign({ baseDomain: 'joytree.site' }, wsD.settings || {});
       _save();
       // [FIX] Apply the account's server-persisted theme (if set) so it's

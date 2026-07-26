@@ -4111,7 +4111,14 @@ app.get('/api/workspace', requireAuth, async (req, res) => {
     deployments: Array.isArray(ws.deployments) ? ws.deployments : [],
     envStore: ws.envStore && typeof ws.envStore === 'object' ? ws.envStore : {},
     settings: { ...wsSettings, ...serverSettings },
-    uploadedProjects: Array.isArray(ws.uploadedProjects) ? ws.uploadedProjects : []
+    uploadedProjects: Array.isArray(ws.uploadedProjects) ? ws.uploadedProjects : [],
+    // [FIX] Was never included here, so an admin-granted build-time quota
+    // override (set via /api/admin/users/:email/quota) took effect for the
+    // actual deploy-blocking checks but never showed up in the user's own
+    // dashboard/settings usage bar, which computed everything from the
+    // static plan table alone -- correctly enforced, but confusingly still
+    // displayed as e.g. "313/300" even after being raised.
+    adminQuotaOverrideSeconds: Number.isFinite(ws.adminQuotaOverrideSeconds) ? ws.adminQuotaOverrideSeconds : null
   });
 });
 
