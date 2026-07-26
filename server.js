@@ -11499,11 +11499,27 @@ async function extractUploadedArchive(archivePath, destDir) {
 
   await new Promise((resolve, reject) => {
     const { spawn } = require('child_process');
+    // [FIX] spawn() resolves a bare command name via the Node process's own
+    // inherited PATH -- which can differ from what a fresh `docker exec sh`
+    // session sees, even though the binary genuinely exists on disk.
+    // Confirmed directly: `docker exec deployboard which unzip` found it at
+    // /usr/bin/unzip, but spawn('unzip', ...) here was failing anyway --
+    // every zip-based upload broken while single-HTML uploads (which never
+    // touch this code path) kept working fine. Resolve an absolute path
+    // explicitly instead of trusting PATH lookup, falling back to the bare
+    // command name only if none of the known locations exist (so this
+    // can't make things worse anywhere PATH resolution already works).
+    function resolveBin(name, knownPaths) {
+      for (const p of knownPaths) { if (fs.existsSync(p)) return p; }
+      return name; // fall back to PATH-based resolution
+    }
     let cmd, args;
     if (isZip) {
-      cmd = 'unzip'; args = ['-o', '-q', archivePath, '-d', destDir];
+      cmd = resolveBin('unzip', ['/usr/bin/unzip', '/bin/unzip']);
+      args = ['-o', '-q', archivePath, '-d', destDir];
     } else {
-      cmd = 'tar'; args = ['xzf', archivePath, '-C', destDir, '--strip-components=0'];
+      cmd = resolveBin('tar', ['/bin/tar', '/usr/bin/tar']);
+      args = ['xzf', archivePath, '-C', destDir, '--strip-components=0'];
     }
     const child = spawn(cmd, args, { stdio: 'pipe' });
     let stderr = '';
