@@ -3240,6 +3240,10 @@ app.post('/api/admin/users/:email/quota', requireAuth, async (req, res) => {
     } else {
       ws.adminQuotaOverrideSeconds = overrideSeconds;
     }
+    // [DIAGNOSTIC] Shows exactly which Firebase key this write targets and
+    // what value/type is actually being stored, to compare directly against
+    // the [quota-check] read log for the same account at deploy time.
+    console.log(`[admin-quota SAVE] targetEmail=${targetEmail} firebaseKey=${key} value=${overrideSeconds} valueType=${typeof overrideSeconds}`);
     const wrote = await writeWorkspaceByKnownKey(key, ws);
     if (!wrote) return res.status(500).json({ error: 'Failed to persist quota override to Firebase' });
 
@@ -10258,6 +10262,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     // calculation entirely rather than adding to it -- see
     // POST /api/admin/users/:email/quota.
     const adminOverrideSeconds = Number.isFinite(deployWs.adminQuotaOverrideSeconds) ? deployWs.adminQuotaOverrideSeconds : null;
+    console.log(`[quota-check GITHUB] email=${req.user.email} firebaseKey=${firebaseWorkspaceKey(req.user)} rawStoredValue=${deployWs.adminQuotaOverrideSeconds} rawType=${typeof deployWs.adminQuotaOverrideSeconds} resolvedOverride=${adminOverrideSeconds}`);
     const effectiveQuotaSeconds = adminOverrideSeconds != null
       ? adminOverrideSeconds
       : githubPlanLimits.monthlyBuildSeconds + referralBonusSeconds;
@@ -11326,6 +11331,7 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
     // calculation entirely rather than adding to it -- see
     // POST /api/admin/users/:email/quota.
     const uploadAdminOverrideSeconds = Number.isFinite(uploadDeployWs.adminQuotaOverrideSeconds) ? uploadDeployWs.adminQuotaOverrideSeconds : null;
+    console.log(`[quota-check UPLOAD] email=${req.user.email} firebaseKey=${firebaseWorkspaceKey(req.user)} rawStoredValue=${uploadDeployWs.adminQuotaOverrideSeconds} rawType=${typeof uploadDeployWs.adminQuotaOverrideSeconds} resolvedOverride=${uploadAdminOverrideSeconds}`);
     const effectiveQuotaSeconds = uploadAdminOverrideSeconds != null
       ? uploadAdminOverrideSeconds
       : uploadPlanLimits.monthlyBuildSeconds + referralBonusSeconds;
