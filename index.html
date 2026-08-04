@@ -24109,18 +24109,62 @@ async function attachDomainAfterDeploy(domain, projectId, source){
 }
 // Record field shapes differ between plain-DV (txt) and DCV delegation (cname),
 // so render whatever Cloudflare returned rather than assuming one shape.
+//
+// IMPORTANT: we show the full FQDN for each record (e.g. "wabottree.dpdns.org"),
+// but most DNS panels' "Name/Host" field only wants the label RELATIVE TO THE
+// ZONE ROOT and auto-appends the zone as you type. Some providers (e.g. free
+// dynamic-DNS services like dpdns.org) delegate the user their own zone at
+// that exact subdomain, in which case the zone root IS the full domain and
+// "@" must be entered instead — typing the subdomain again duplicates it
+// (e.g. becomes "wabottree.wabottree.dpdns.org"). We can't know which case
+// applies for an arbitrary registrar, so we spell out both explicitly.
 function showByoDnsInstructions(domain, saas){
   const esc = s => String(s == null ? '' : s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
   const rowStyle = 'padding:10px 0;border-top:1px solid rgba(148,163,184,.15);';
   const codeStyle = 'font-family:var(--font-mono);font-size:.8rem;color:var(--primary);word-break:break-all;';
   const noteStyle = 'font-size:.72rem;color:var(--text-3);margin-top:4px;';
+  const hintStyle = 'font-size:.72rem;color:var(--text-2);margin-top:6px;padding:8px 10px;background:rgba(148,163,184,.08);border-radius:8px;';
+
+  // labelParts: everything before the "zone" — used to compute the relative
+  // name if the user's zone is one level up from the full domain.
+  const domainParts = String(domain).split('.');
+
+  // Given a full record name (e.g. "_acme-challenge.wabottree.dpdns.org"),
+  // return the relative form assuming the zone root == `domain` itself.
+  const relativeToDomain = (fullName) => {
+    const suffix = '.' + domain;
+    if (fullName === domain) return '@';
+    if (fullName.endsWith(suffix)) {
+      const rel = fullName.slice(0, -suffix.length);
+      return rel || '@';
+    }
+    return fullName;
+  };
+  // Relative form assuming the zone root is one level up (e.g. "dpdns.org"),
+  // so the subdomain label itself is still part of the Name field.
+  const relativeToParent = (fullName) => {
+    const parentSuffix = '.' + domainParts.slice(1).join('.');
+    if (domainParts.length < 3) return fullName; // no meaningful "parent zone" case
+    if (fullName.endsWith(parentSuffix)) return fullName.slice(0, -parentSuffix.length);
+    return fullName;
+  };
+
   const rows = [];
-  rows.push(`<div style="${rowStyle}"><b style="font-size:.7rem;color:var(--text-3);">CNAME</b><div style="${codeStyle}">${esc(domain)} → ${esc(saas.routingTarget)}</div><div style="${noteStyle}">Points your domain at JoyTree.</div></div>`);
+  const buildRow = (type, fullName, value, note) => {
+    const relDomain = esc(relativeToDomain(fullName));
+    const relParent = domainParts.length >= 3 ? esc(relativeToParent(fullName)) : null;
+    const hint = relParent && relParent !== fullName
+      ? `Name/Host field: enter <b>${relDomain}</b> if your DNS zone is exactly <code>${esc(domain)}</code>, or <b>${relParent}</b> if your zone is <code>${esc(domainParts.slice(1).join('.'))}</code>. Check what your panel shows as the zone/root domain — entering the full name shown above will duplicate it.`
+      : `Name/Host field: enter <b>${relDomain}</b> (relative to your zone root), or the full name shown above if your panel asks for that instead.`;
+    rows.push(`<div style="${rowStyle}"><b style="font-size:.7rem;color:var(--text-3);">${type}</b><div style="${codeStyle}">${esc(fullName)} → ${esc(value)}</div><div style="${noteStyle}">${note}</div><div style="${hintStyle}">${hint}</div></div>`);
+  };
+
+  buildRow('CNAME', domain, saas.routingTarget, 'Points your domain at JoyTree.');
   (saas.validation || []).forEach(v => {
     const name  = v.txt_name || v.cname || v.cname_name || v.name || ('_acme-challenge.' + domain);
     const type  = v.txt_name ? 'TXT' : 'CNAME';
     const value = v.txt_value || v.cname_target || v.value || v.target || '';
-    rows.push(`<div style="${rowStyle}"><b style="font-size:.7rem;color:var(--text-3);">${type}</b><div style="${codeStyle}">${esc(name)} → ${esc(value)}</div><div style="${noteStyle}">Proves ownership so Cloudflare can issue the SSL certificate.</div></div>`);
+    buildRow(type, name, value, 'Proves ownership so Cloudflare can issue the SSL certificate.');
   });
   const wrap = document.createElement('div');
   wrap.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;';
