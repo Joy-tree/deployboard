@@ -6078,18 +6078,45 @@ app.post('/api/domains/attach', requireAuth, async (req, res) => {
     // may show a certificate warning over HTTPS.
     const isByo = !!byo || !isRegistered;
     let saas = null;
+    let customDomainPersisted = null; // null = not applicable (not BYO), true/false once attempted
     if (isByo) {
       const ownerKey = firebaseWorkspaceKey(req.user);
       const entry = { domain, subdomain, ownerKey, projectId, verified: false, byo: true, updatedAt: new Date().toISOString() };
       if (FIREBASE_RTDB_URL) {
-        try {
-          const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
-          const domainKey = String(domain).replace(/[^a-z0-9_-]/g, '_');
-          await fetch(`${FIREBASE_RTDB_URL}/deployboard_custom_domains/${domainKey}.json${authQuery}`, {
-            method: 'PUT', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(entry)
-          });
-        } catch(e) { console.warn('[DomainStartup] custom-domain write warn:', e.message); }
+        const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+        const domainKey = String(domain).replace(/[^a-z0-9_-]/g, '_');
+        const writeUrl = `${FIREBASE_RTDB_URL}/deployboard_custom_domains/${domainKey}.json${authQuery}`;
+        // [FIX] fetch() only rejects on network-level failures, never on HTTP
+        // error statuses — a rejected write (bad auth, malformed rules, etc.)
+        // previously fell through silently: no exception, no log, and the
+        // endpoint still returned ok:true, leaving the mapping only in this
+        // process's in-memory cache. A later restart would then 404 the
+        // domain with zero trace of what went wrong. Now: check the status,
+        // retry once for transient failures, log loudly, and report the
+        // outcome back to the caller so the UI can warn the user.
+        let writeOk = false;
+        for (let attempt = 1; attempt <= 2 && !writeOk; attempt++) {
+          try {
+            const wr = await fetch(writeUrl, {
+              method: 'PUT', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(entry)
+            });
+            if (wr.ok) {
+              writeOk = true;
+            } else {
+              const body = await wr.text().catch(() => '');
+              console.warn(`[DomainStartup] custom-domain write failed (attempt ${attempt}) for ${domain}: HTTP ${wr.status} ${body}`);
+            }
+          } catch (e) {
+            console.warn(`[DomainStartup] custom-domain write error (attempt ${attempt}) for ${domain}:`, e.message);
+          }
+        }
+        customDomainPersisted = writeOk;
+        if (!writeOk) {
+          console.error(`[DomainStartup] PERSISTENT FAILURE: ${domain} -> ${subdomain} was NOT saved to Firebase. It will only work until this server process restarts.`);
+        }
+      } else {
+        customDomainPersisted = false;
       }
       upsertCustomDomainCache(domain, subdomain);
       // Cloudflare for SaaS: register the host and kick off SSL issuance so the
@@ -6098,7 +6125,7 @@ app.post('/api/domains/attach', requireAuth, async (req, res) => {
       saas = await cfCreateCustomHostname(domain);
     }
 
-    res.json({ ok: true, domain, projectId, targetHost, byo: isByo, saas });
+    res.json({ ok: true, domain, projectId, targetHost, byo: isByo, saas, customDomainPersisted });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 

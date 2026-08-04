@@ -24095,6 +24095,9 @@ async function attachDomainAfterDeploy(domain, projectId, source){
       toast(`${domain} is now pointed at your project.`, 'success');
       return;
     }
+    if (data.customDomainPersisted === false){
+      toast(`Warning: ${domain} could not be saved to the domain store. It may work now but will stop routing after the next server restart — try attaching again, or contact support if this repeats.`, 'error');
+    }
     const saas = data.saas;
     if (saas && saas.ok){
       showByoDnsInstructions(domain, saas);           // real cert via Cloudflare for SaaS
