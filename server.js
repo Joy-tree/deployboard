@@ -927,7 +927,32 @@ app.use(async (req, res, next) => {
         .finally(() => { _cdCacheRefreshing = false; });
     }
 
-    const cachedSubdomain = _cdCache.get(host);
+    let cachedSubdomain = _cdCache.get(host);
+    // [FIX] Cache-miss fallback: the in-memory _cdCache is only populated by
+    // the periodic refreshCustomDomainCache(), which is fired-and-forgotten
+    // (not awaited) above. That leaves a real gap right after a server
+    // restart/redeploy — the first request for a freshly-attached BYO domain
+    // arrives while the cache is still empty, the refresh hasn't resolved
+    // yet, and we'd otherwise give up and fall through to Express's default
+    // 404 ("Cannot GET /") even though the mapping already exists in
+    // Firebase. Do one fast, targeted single-key lookup (not a full
+    // collection scan) before conceding the host isn't a custom domain.
+    if (!cachedSubdomain && FIREBASE_RTDB_URL) {
+      try {
+        const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+        const domainKey = host.replace(/[^a-z0-9_-]/g, '_');
+        const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_custom_domains/${domainKey}.json${authQuery}`);
+        if (r.ok) {
+          const entry = await r.json().catch(() => null);
+          if (entry && entry.domain && entry.subdomain && String(entry.domain).toLowerCase() === host) {
+            cachedSubdomain = String(entry.subdomain);
+            upsertCustomDomainCache(host, cachedSubdomain); // warm the cache so subsequent requests hit it directly
+          }
+        }
+      } catch (e) {
+        console.warn('[CustomDomain] targeted lookup warn:', e.message);
+      }
+    }
     // If this host is a *.BASE_DOMAIN subdomain AND is NOT in the custom domain
     // cache, fall through to the normal subdomain router below.
     if (!cachedSubdomain) return next();
