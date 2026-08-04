@@ -24073,13 +24073,28 @@ async function loadMyDomainsForStartup(){
     sel.innerHTML = '<option value="">Could not load your domains — try again.</option>';
   }
 }
+// Strip a pasted protocol/path/trailing slash from a domain the user typed
+// or pasted (e.g. "https://wabottree.dpdns.org/" -> "wabottree.dpdns.org").
+// Without this, ":" and "/" reach Cloudflare's Custom Hostname API, which
+// rejects them as invalid characters — but only AFTER DNS/routing already
+// half-succeeded using other code paths, producing a confusing partial state.
+function sanitizeDomainInput(raw){
+  return String(raw || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^[a-z][a-z0-9+.-]*:\/\//, '') // strip leading scheme://
+    .split('/')[0]                          // drop any path
+    .split('?')[0]                          // drop any query string
+    .replace(/:[0-9]+$/, '')                // drop a trailing :port
+    .replace(/\.+$/, '');                   // drop trailing dot(s)
+}
 // The chosen custom domain for this deploy (or '' if none / not in domain mode).
 function getDomainStartupSelection(){
   if (!_domainStartupMode) return '';
   if (_dsSource === 'byo'){
-    return (document.getElementById('dsByoDomain')?.value || '').trim().toLowerCase();
+    return sanitizeDomainInput(document.getElementById('dsByoDomain')?.value);
   }
-  return (document.getElementById('dsDomainSelect')?.value || '').trim().toLowerCase();
+  return sanitizeDomainInput(document.getElementById('dsDomainSelect')?.value);
 }
 // Called after a successful deploy to point the chosen domain at the new project.
 async function attachDomainAfterDeploy(domain, projectId, source){

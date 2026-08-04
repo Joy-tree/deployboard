@@ -6046,7 +6046,15 @@ async function cfCreateCustomHostname(hostname) {
 // ── Attach domain to a project (set DNS CNAME → project subdomain) ─
 app.post('/api/domains/attach', requireAuth, async (req, res) => {
   try {
-    const { domain, projectId, byo } = req.body || {};
+    const { projectId, byo } = req.body || {};
+    // [FIX] Sanitize defensively on the server too — don't rely solely on the
+    // frontend having stripped a pasted "https://" prefix or trailing path.
+    // A raw scheme/path reaching Cloudflare's Custom Hostname API fails
+    // validation (":" and "/" are disallowed hostname characters), which is
+    // exactly the "Invalid custom hostname" error users were hitting.
+    // Reuses the same normalization used for incoming Host headers so both
+    // sides of the domain-matching logic agree on one canonical form.
+    const domain = normalizeHostHeader(req.body?.domain);
     if (!domain || !projectId) return res.status(400).json({ error: 'domain and projectId required' });
 
     const ws = (await readWorkspaceFromFirebase(req.user)) || {};
