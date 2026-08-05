@@ -912,18 +912,6 @@ app.use(async (req, res, next) => {
     ''
   );
 
-  // [TEMP DEBUG] Trace exactly what header Cloudflare's SaaS fallback origin
-  // actually forwards for non-BASE_DOMAIN hosts. If Cloudflare (or anything
-  // in front of this origin) rewrites the Host header back to the fallback
-  // origin's own hostname instead of preserving the original custom
-  // hostname's SNI, `host` here will show that rewritten value instead of
-  // the real custom domain -- which would explain a correct-looking domain
-  // mapping still 404ing: the match against _cdCache simply never fires.
-  // Safe to remove once the custom-domain 404 investigation is resolved.
-  if (host !== BASE_DOMAIN && host !== 'localhost' && host) {
-    console.log(`[HostDebug] raw host="${req.headers.host}" x-forwarded-host="${req.headers['x-forwarded-host']}" normalized="${host}" path="${req.path}"`);
-  }
-
   // Skip bare base domain and localhost
   if (!host || host === BASE_DOMAIN || host === 'localhost') return next();
 
@@ -5221,6 +5209,19 @@ async function verifyDomainDns(domain) {
   const cnames = records.cname.map(v => String(v).toLowerCase().replace(/\.$/, ''));
   const cnameMatch = cnames.some(c => expected.some(t => c === t || c.endsWith('.' + t) || c.includes(t)));
   const proxiedCloudflare = records.a.some(isCloudflareIpv4) || records.aaaa.some(isCloudflareIpv6);
+  // [FIX] A proxied record resolving to Cloudflare anycast IPs was being
+  // treated as unconditionally "verified" — but for Cloudflare for SaaS
+  // Custom Hostnames specifically, a record that's PROXIED ON THE
+  // CUSTOMER'S OWN CLOUDFLARE ZONE is actually broken, not just "hidden."
+  // When the customer's domain is also on Cloudflare, a proxied CNAME
+  // means THEIR zone terminates and serves the request using their own
+  // zone's settings, bypassing our Custom Hostname routing entirely —
+  // ownership verification (TXT records) can succeed and show "Active"
+  // while zero real traffic ever reaches us. This cost real time to find
+  // because the diagnostic previously called this state "accepted."
+  // We can't distinguish "proxied on our fallback origin's zone" (fine)
+  // from "proxied on the customer's own zone" (broken) from DNS alone, so
+  // surface it as a caveat rather than a silent green light.
   return {
     verified: cnameMatch || proxiedCloudflare,
     method: cnameMatch ? 'cname' : (proxiedCloudflare ? 'cloudflare-proxy' : 'pending'),
@@ -5229,8 +5230,11 @@ async function verifyDomainDns(domain) {
     reason: cnameMatch
       ? 'CNAME points to the expected DeployBoard target.'
       : (proxiedCloudflare
-        ? 'Cloudflare proxy detected. Proxied records hide the CNAME publicly, so this is accepted.'
-        : 'No matching CNAME or Cloudflare-proxied DNS record was detected yet.')
+        ? 'Cloudflare proxy detected on this hostname — CNAME target is hidden, so this alone cannot confirm real traffic is routing correctly.'
+        : 'No matching CNAME or Cloudflare-proxied DNS record was detected yet.'),
+    proxyWarning: (!cnameMatch && proxiedCloudflare)
+      ? 'If this domain is on YOUR OWN Cloudflare account, its CNAME record must be set to "DNS only" (grey cloud), not proxied (orange cloud). A proxied record on your own zone intercepts the request there and never hands it off to our Custom Hostname routing, even though SSL/ownership verification can still show Active.'
+      : null
   };
 }
 

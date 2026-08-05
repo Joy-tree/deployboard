@@ -24187,7 +24187,7 @@ function showByoDnsInstructions(domain, saas){
     rows.push(`<div style="${rowStyle}"><b style="font-size:.7rem;color:var(--text-3);">${type}</b><div style="${codeStyle}">${esc(fullName)} → ${esc(value)}</div><div style="${noteStyle}">${note}</div><div style="${hintStyle}">${hint}</div></div>`);
   };
 
-  buildRow('CNAME', domain, saas.routingTarget, 'Points your domain at JoyTree.');
+  buildRow('CNAME', domain, saas.routingTarget, 'Points your domain at JoyTree. IMPORTANT: if this domain is on your own Cloudflare account, its Proxy status must be set to "DNS only" (grey cloud) — NOT proxied (orange cloud). A proxied record here intercepts the request on your own zone and it never reaches JoyTree, even though SSL/ownership verification can still show Active.');
   (saas.validation || []).forEach(v => {
     const name  = v.txt_name || v.cname || v.cname_name || v.name || ('_acme-challenge.' + domain);
     const type  = v.txt_name ? 'TXT' : 'CNAME';
