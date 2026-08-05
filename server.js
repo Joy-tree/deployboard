@@ -912,6 +912,18 @@ app.use(async (req, res, next) => {
     ''
   );
 
+  // [TEMP DEBUG] Trace exactly what header Cloudflare's SaaS fallback origin
+  // actually forwards for non-BASE_DOMAIN hosts. If Cloudflare (or anything
+  // in front of this origin) rewrites the Host header back to the fallback
+  // origin's own hostname instead of preserving the original custom
+  // hostname's SNI, `host` here will show that rewritten value instead of
+  // the real custom domain -- which would explain a correct-looking domain
+  // mapping still 404ing: the match against _cdCache simply never fires.
+  // Safe to remove once the custom-domain 404 investigation is resolved.
+  if (host !== BASE_DOMAIN && host !== 'localhost' && host) {
+    console.log(`[HostDebug] raw host="${req.headers.host}" x-forwarded-host="${req.headers['x-forwarded-host']}" normalized="${host}" path="${req.path}"`);
+  }
+
   // Skip bare base domain and localhost
   if (!host || host === BASE_DOMAIN || host === 'localhost') return next();
 
