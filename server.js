@@ -5262,6 +5262,99 @@ app.delete('/api/domains/:domain', requireAuth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── [NEW] Diagnostic + cleanup for a custom domain ──────────────────────
+// Pulls together everything that can go wrong for a BYO domain in one
+// place: every Cloudflare Custom Hostname object that even loosely
+// matches (catches dirty leftovers like "https://domain" from before the
+// input-sanitization fix, and duplicates from repeated failed attempts),
+// the live DNS records, the Firebase mapping, and the in-memory routing
+// cache state. GET is read-only; POST /cleanup removes stale/dirty
+// Cloudflare custom hostname objects and re-registers one clean one.
+async function listMatchingCustomHostnames(domain) {
+  if (!CF_SAAS_API_TOKEN || !CF_ZONE_ID) return { ok: false, reason: 'CF_SAAS_API_TOKEN or CF_ZONE_ID not set', matches: [] };
+  const h = { 'Authorization': `Bearer ${CF_SAAS_API_TOKEN}`, 'Content-Type': 'application/json' };
+  const matches = [];
+  try {
+    let page = 1;
+    for (;;) {
+      const r = await fetch(`https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/custom_hostnames?per_page=50&page=${page}`, { headers: h });
+      const j = await r.json().catch(() => null);
+      if (!j || !j.success || !Array.isArray(j.result)) break;
+      for (const rec of j.result) {
+        const hn = String(rec.hostname || '');
+        if (hn.includes(domain) || domain.includes(hn)) matches.push(rec);
+      }
+      const info = j.result_info || {};
+      if (!info.total_pages || page >= info.total_pages) break;
+      page++;
+    }
+    return { ok: true, matches };
+  } catch (e) {
+    return { ok: false, reason: e.message, matches };
+  }
+}
+
+app.get('/api/domains/:domain/debug', requireAuth, async (req, res) => {
+  try {
+    const domain = normalizeHostHeader(req.params.domain);
+    if (!domain) return res.status(400).json({ error: 'Invalid domain' });
+
+    const [cfHostnames, dns] = await Promise.all([
+      listMatchingCustomHostnames(domain),
+      verifyDomainDns(domain).catch(e => ({ error: e.message }))
+    ]);
+
+    let firebaseEntry = null;
+    if (FIREBASE_RTDB_URL) {
+      try {
+        const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+        const domainKey = domain.replace(/[^a-z0-9_-]/g, '_');
+        const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_custom_domains/${domainKey}.json${authQuery}`);
+        if (r.ok) firebaseEntry = await r.json().catch(() => null);
+      } catch (_) {}
+    }
+
+    res.json({
+      ok: true,
+      domain,
+      cloudflareCustomHostnames: cfHostnames.matches.map(m => ({
+        id: m.id, hostname: m.hostname, status: m.status,
+        sslStatus: m.ssl && m.ssl.status, sslMethod: m.ssl && m.ssl.method,
+        isCleanMatch: m.hostname === domain
+      })),
+      cloudflareLookupError: cfHostnames.ok ? null : cfHostnames.reason,
+      dns,
+      firebaseEntry,
+      inMemoryCacheEntry: _cdCache.get(domain) || null
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/domains/:domain/cleanup', requireAuth, async (req, res) => {
+  try {
+    const domain = normalizeHostHeader(req.params.domain);
+    if (!domain) return res.status(400).json({ error: 'Invalid domain' });
+    if (!CF_SAAS_API_TOKEN || !CF_ZONE_ID) return res.status(400).json({ error: 'CF_SAAS_API_TOKEN or CF_ZONE_ID not set' });
+
+    const h = { 'Authorization': `Bearer ${CF_SAAS_API_TOKEN}`, 'Content-Type': 'application/json' };
+    const { matches } = await listMatchingCustomHostnames(domain);
+    const removed = [];
+    // Delete every matching object except one that's ALREADY an exact,
+    // active match — no point tearing down something that already works.
+    const keepId = (matches.find(m => m.hostname === domain && m.status === 'active' && m.ssl && m.ssl.status === 'active') || {}).id;
+    for (const m of matches) {
+      if (m.id === keepId) continue;
+      try {
+        await fetch(`https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/custom_hostnames/${m.id}`, { method: 'DELETE', headers: h });
+        removed.push(m.hostname);
+      } catch (e) { /* best-effort */ }
+    }
+    let recreated = null;
+    if (!keepId) recreated = await cfCreateCustomHostname(domain);
+    res.json({ ok: true, removed, kept: keepId ? domain : null, recreated });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Real domain transfer with SSE progress logs ───────────────────
 app.get('/api/domains/transfer', attachAuthIfPresent, async (req, res) => {
   const domain    = normalizeHostHeader(String(req.query.domain || '').trim());
