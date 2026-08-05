@@ -912,6 +912,17 @@ app.use(async (req, res, next) => {
     ''
   );
 
+  // [TEMP DEBUG round 2] Re-added after ruling out the proxied-CNAME theory
+  // (it turned out to be a false lead -- apex CNAME flattening always shows
+  // Cloudflare IPs here regardless of proxy toggle, since the target itself
+  // is proxied). Now testing with DNS properly configured (confirmed DNS
+  // only) whether the request even reaches this process at all, and
+  // whether it's found in _cdCache at that exact moment. Remove once
+  // resolved.
+  if (host !== BASE_DOMAIN && host !== 'localhost' && host) {
+    console.log(`[HostDebug2] host="${host}" inCache=${_cdCache.has(host)} cacheVal=${_cdCache.get(host) || 'none'} path="${req.path}" ip="${req.ip}" xff="${req.headers['x-forwarded-for'] || ''}"`);
+  }
+
   // Skip bare base domain and localhost
   if (!host || host === BASE_DOMAIN || host === 'localhost') return next();
 
