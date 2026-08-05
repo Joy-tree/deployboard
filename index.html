@@ -19395,6 +19395,16 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         </div>
       </div>
       <div id="dmPane-danger" style="display:none;">
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-header"><div class="card-title">SSL / Routing Diagnostics</div><div class="card-subtitle">See the real Cloudflare + DNS state, and clear out anything stale</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-secondary" style="font-size:.8rem;" onclick="dmRunDiagnostics()">Run Diagnostics</button>
+              <button class="btn" style="font-size:.8rem;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:var(--amber);" onclick="dmRunCleanup()">Clean Up Cloudflare Records</button>
+            </div>
+            <pre id="dmDiagnosticsOutput" style="display:none;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px 14px;font-family:var(--font-mono);font-size:0.72rem;line-height:1.6;max-height:340px;overflow:auto;white-space:pre-wrap;word-break:break-all;color:var(--text-2);"></pre>
+          </div>
+        </div>
         <div class="card" style="margin-bottom:14px;border-color:rgba(239,68,68,0.2);">
           <div class="card-header"><div class="card-title" style="color:var(--red);">Danger Zone</div><div class="card-subtitle">These actions are permanent and cannot be undone</div></div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
@@ -28237,6 +28247,38 @@ async function dmRemove() {
     await fetch('/api/domains/'+encodeURIComponent(_dmCurrentDomain.domain),{method:'DELETE'});
     toast('Domain removed','success'); showPage('domains'); renderDomains();
   } catch(e) { toast('Failed to remove domain','error'); }
+}
+
+async function dmRunDiagnostics() {
+  if (!_dmCurrentDomain) return;
+  const out = document.getElementById('dmDiagnosticsOutput');
+  if (out) { out.style.display='block'; out.textContent = 'Running…'; }
+  try {
+    const r = await apiFetch('/api/domains/'+encodeURIComponent(_dmCurrentDomain.domain)+'/debug');
+    const data = await r.json().catch(()=>({}));
+    if (out) out.textContent = JSON.stringify(data, null, 2);
+    if (!r.ok || data.error) toast(data.error || 'Diagnostics failed', 'error');
+  } catch(e) {
+    if (out) out.textContent = 'Error: ' + e.message;
+    toast('Diagnostics failed', 'error');
+  }
+}
+
+async function dmRunCleanup() {
+  if (!_dmCurrentDomain) return;
+  if (!confirm('This removes any stale/duplicate Cloudflare SSL records for '+_dmCurrentDomain.domain+' and re-registers a clean one. Continue?')) return;
+  const out = document.getElementById('dmDiagnosticsOutput');
+  if (out) { out.style.display='block'; out.textContent = 'Cleaning up…'; }
+  try {
+    const r = await apiFetch('/api/domains/'+encodeURIComponent(_dmCurrentDomain.domain)+'/cleanup', { method:'POST' });
+    const data = await r.json().catch(()=>({}));
+    if (out) out.textContent = JSON.stringify(data, null, 2);
+    if (!r.ok || data.error) toast(data.error || 'Cleanup failed', 'error');
+    else toast('Cleanup done — re-run Diagnostics to confirm, then re-check the site in a couple minutes', 'success');
+  } catch(e) {
+    if (out) out.textContent = 'Error: ' + e.message;
+    toast('Cleanup failed', 'error');
+  }
 }
 
 

@@ -5330,7 +5330,7 @@ app.get('/api/domains/:domain/debug', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/domains/:domain/cleanup', requireAuth, async (req, res) => {
+async function handleDomainCleanup(req, res) {
   try {
     const domain = normalizeHostHeader(req.params.domain);
     if (!domain) return res.status(400).json({ error: 'Invalid domain' });
@@ -5353,7 +5353,14 @@ app.post('/api/domains/:domain/cleanup', requireAuth, async (req, res) => {
     if (!keepId) recreated = await cfCreateCustomHostname(domain);
     res.json({ ok: true, removed, kept: keepId ? domain : null, recreated });
   } catch (e) { res.status(500).json({ error: e.message }); }
-});
+}
+// [FIX] Also reachable via GET — a mobile browser's address bar can only
+// ever issue GET requests, and this is meant to be usable by pasting a
+// URL in, not just from JS. requireAuth already supports ?token=... for
+// exactly this kind of case (see getAuthUser), so no separate mechanism
+// is needed — just don't restrict the verb.
+app.get('/api/domains/:domain/cleanup', requireAuth, handleDomainCleanup);
+app.post('/api/domains/:domain/cleanup', requireAuth, handleDomainCleanup);
 
 // ── Real domain transfer with SSE progress logs ───────────────────
 app.get('/api/domains/transfer', attachAuthIfPresent, async (req, res) => {
