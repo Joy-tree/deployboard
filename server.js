@@ -5442,6 +5442,34 @@ app.get('/api/domains/transfer', attachAuthIfPresent, async (req, res) => {
     send('step', `✓ Mapping saved: ${domain} → ${subdomain}`);
     await new Promise(r => setTimeout(r, 200));
 
+    // 4b. Register with Cloudflare for SaaS so the domain actually gets a
+    // real certificate. [FIX] This endpoint previously never called
+    // cfCreateCustomHostname() at all — it only wired up a legacy Cloudflare
+    // Tunnel ingress rule (step 5 below), which expects the domain's CNAME
+    // to point at "{tunnelId}.cfargotunnel.com". But the DNS instructions
+    // shown elsewhere in the app (and the ones users actually add — a CNAME
+    // to CF_SAAS_FALLBACK_ORIGIN plus ACME TXT records) are for the SaaS
+    // Custom Hostname mechanism instead. The two never lined up, so a domain
+    // "transferred" through this wizard had no working path to HTTPS and,
+    // if the tunnel env vars weren't set, no working path to the origin at
+    // all — this is the actual source of the persistent 404s. Registering
+    // here brings this flow in line with /api/domains/attach.
+    let saas = null;
+    send('log', 'Registering custom hostname with Cloudflare for SaaS…');
+    try {
+      saas = await cfCreateCustomHostname(domain);
+      if (saas && saas.ok) {
+        send('step', `✓ Custom hostname registered (SSL: ${saas.sslStatus || 'pending'})`);
+      } else if (saas && saas.skipped) {
+        send('warn', `⚠ Cloudflare for SaaS not configured (${saas.reason}) — HTTPS will not work until it is`);
+      } else {
+        send('warn', `⚠ Custom hostname registration failed: ${(saas && saas.error) || 'unknown error'} — routing saved, but HTTPS needs manual attention`);
+      }
+    } catch (saasErr) {
+      send('warn', `⚠ Custom hostname registration error: ${saasErr.message}`);
+    }
+    await new Promise(r => setTimeout(r, 150));
+
     // 5. Cloudflare tunnel route (if configured)
     if (CF_API_TOKEN && CF_ACCOUNT_ID && CF_TUNNEL_ID) {
       send('log', 'Registering tunnel ingress rule with Cloudflare…');
@@ -5492,7 +5520,7 @@ app.get('/api/domains/transfer', attachAuthIfPresent, async (req, res) => {
       dnsResult.verified
         ? `${domain} is live and pointing to your project!`
         : `${domain} saved — waiting for DNS propagation. Once your CNAME record propagates, the domain will go live automatically.`,
-      { verified: dnsResult.verified, domain, subdomain, elapsed: parseFloat(elapsed) }
+      { verified: dnsResult.verified, domain, subdomain, elapsed: parseFloat(elapsed), saas }
     );
   } catch (err) {
     console.error('[CustomDomain/transfer] error:', err.message);

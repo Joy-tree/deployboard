@@ -27935,7 +27935,7 @@ function startDomainTransfer() {
   const es=new EventSource(url);
   es.onmessage=(e)=>{
     let data; try { data=JSON.parse(e.data); } catch(_) { return; }
-    const {type,message,verified,elapsed}=data;
+    const {type,message,verified,elapsed,saas}=data;
     appendLog(type,message);
     if (type==='done'||type==='error') {
       es.close(); clearInterval(_cdElapsedTimer); _cdTransferActive=false;
@@ -27949,6 +27949,12 @@ function startDomainTransfer() {
           resultBanner.style.color=iv?'var(--green)':'var(--amber)';
           resultBanner.innerHTML=(iv?'✓ ':'⚠ ')+escHtml(message)+(elapsed?'<span style="float:right;font-size:0.75rem;opacity:0.7;">'+elapsed+'s</span>':'');
           toast(iv?'Domain transfer complete!':'Domain saved - DNS pending',iv?'success':'info');
+          // [FIX] Show the REAL DNS records (CNAME -> fallback origin + ACME
+          // TXT records) from the Cloudflare for SaaS registration this flow
+          // now performs. Previously this wizard only ever showed a CNAME to
+          // a Cloudflare Tunnel ID that this flow doesn't actually depend on
+          // — users would add records that matched neither mechanism.
+          if (saas && saas.ok) showByoDnsInstructions(domain, saas);
           if (iv) setTimeout(()=>{showPage('domains');renderDomains();},2200); else renderDomains();
         } else {
           resultBanner.style.background='rgba(239,68,68,0.1)'; resultBanner.style.border='1px solid rgba(239,68,68,0.25)'; resultBanner.style.color='var(--red)';
