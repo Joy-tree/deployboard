@@ -5314,6 +5314,24 @@ app.get('/api/domains/:domain/debug', requireAuth, async (req, res) => {
       } catch (_) {}
     }
 
+    // [FIX] The domain->subdomain mapping can be perfectly correct while the
+    // TARGET PROJECT itself has nothing actually running/built — this shows
+    // up as the app's own "Project not found or not deployed yet." 404, easy
+    // to mistake for a routing bug. Report the project's real serving state
+    // directly so this is visible without guessing.
+    const mappedSubdomain = (firebaseEntry && firebaseEntry.subdomain) || _cdCache.get(domain) || null;
+    let targetProject = null;
+    if (mappedSubdomain) {
+      const distDir = path.join(SITES_DIR, mappedSubdomain, 'dist');
+      targetProject = {
+        subdomain: mappedSubdomain,
+        hasRunningContainer: !!portRegistry[mappedSubdomain],
+        portRegistryEntry: portRegistry[mappedSubdomain] || null,
+        hasStaticBuild: fs.existsSync(distDir),
+        distDirChecked: distDir
+      };
+    }
+
     res.json({
       ok: true,
       domain,
@@ -5325,7 +5343,8 @@ app.get('/api/domains/:domain/debug', requireAuth, async (req, res) => {
       cloudflareLookupError: cfHostnames.ok ? null : cfHostnames.reason,
       dns,
       firebaseEntry,
-      inMemoryCacheEntry: _cdCache.get(domain) || null
+      inMemoryCacheEntry: _cdCache.get(domain) || null,
+      targetProject
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
