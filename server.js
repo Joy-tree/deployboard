@@ -203,24 +203,30 @@ const OPENAI_MODEL   = String(process.env.OPENAI_MODEL   || 'gpt-4o-mini').trim(
 // Add ANTHROPIC_API_KEY to your .env to enable Claude in the JoyTree AI Agent
 const ANTHROPIC_API_KEY = String(process.env.ANTHROPIC_API_KEY || '').trim();
 const ANTHROPIC_MODEL   = String(process.env.ANTHROPIC_MODEL   || 'claude-sonnet-4-6').trim();
-// Joytree API v3 — DeepSeek (OpenAI-compatible high-reasoning AI)
+// Joytree API v3 — high-reasoning AI (OpenAI-compatible). Originally built
+// specifically for DeepSeek, hence the internal DEEPSEEK_* variable names
+// below — but since v3 can point at ANY OpenAI-compatible provider now
+// (see DEEPSEEK_BASE_URL), the env vars a person actually sets are named
+// generically (AI_V3_*) so it's not confusing to configure v3 with a
+// different provider. The old DEEPSEEK_* env var names still work as a
+// fallback so existing setups don't break.
 const JOYTREE_V3_ADMIN_EMAIL = String(process.env.JOYTREE_V3_ADMIN_EMAIL || 'projectvpn89@gmail.com').trim().toLowerCase();
-const DEEPSEEK_API_KEY = String(process.env.DEEPSEEK_API_KEY || '').trim();
+const DEEPSEEK_API_KEY = String(process.env.AI_V3_API_KEY || process.env.DEEPSEEK_API_KEY || '').trim();
 // [FIX] Base URL was hardcoded to api.deepseek.com, so v3 could only ever
 // talk to DeepSeek's own API. Making it configurable lets v3 point at any
 // OpenAI-compatible endpoint (a proxy/relay to GPT, a custom worker, etc.)
 // just by setting env vars — no code change needed to swap providers.
-const DEEPSEEK_BASE_URL = String(process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com').trim().replace(/\/+$/, '');
+const DEEPSEEK_BASE_URL = String(process.env.AI_V3_BASE_URL || process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com').trim().replace(/\/+$/, '');
 // DeepSeek-specific request fields (thinking/reasoning_effort) are only
 // sent when actually talking to DeepSeek's own domain — an arbitrary
 // OpenAI-compatible relay may reject unrecognized fields outright.
 const DEEPSEEK_IS_NATIVE = /(^|\.)deepseek\.com$/i.test(String(DEEPSEEK_BASE_URL).replace(/^https?:\/\//, '').split('/')[0]);
-const DEEPSEEK_MODEL = String(process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro').trim();
-const DEEPSEEK_MODEL_FALLBACK = String(process.env.DEEPSEEK_MODEL_FALLBACK || 'deepseek-v4-flash').trim();
-const DEEPSEEK_FLOW_TIMEOUT_MS = Number(process.env.DEEPSEEK_FLOW_TIMEOUT_MS || 180000);
-const DEEPSEEK_CHUNK_TIMEOUT_MS = Number(process.env.DEEPSEEK_CHUNK_TIMEOUT_MS || 120000);
-const DEEPSEEK_FLOW_MAX_TOKENS = Number(process.env.DEEPSEEK_FLOW_MAX_TOKENS || 8192);
-const DEEPSEEK_CHUNK_MAX_TOKENS = Number(process.env.DEEPSEEK_CHUNK_MAX_TOKENS || 4096);
+const DEEPSEEK_MODEL = String(process.env.AI_V3_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro').trim();
+const DEEPSEEK_MODEL_FALLBACK = String(process.env.AI_V3_MODEL_FALLBACK || process.env.DEEPSEEK_MODEL_FALLBACK || 'deepseek-v4-flash').trim();
+const DEEPSEEK_FLOW_TIMEOUT_MS = Number(process.env.AI_V3_FLOW_TIMEOUT_MS || process.env.DEEPSEEK_FLOW_TIMEOUT_MS || 180000);
+const DEEPSEEK_CHUNK_TIMEOUT_MS = Number(process.env.AI_V3_CHUNK_TIMEOUT_MS || process.env.DEEPSEEK_CHUNK_TIMEOUT_MS || 120000);
+const DEEPSEEK_FLOW_MAX_TOKENS = Number(process.env.AI_V3_FLOW_MAX_TOKENS || process.env.DEEPSEEK_FLOW_MAX_TOKENS || 8192);
+const DEEPSEEK_CHUNK_MAX_TOKENS = Number(process.env.AI_V3_CHUNK_MAX_TOKENS || process.env.DEEPSEEK_CHUNK_MAX_TOKENS || 4096);
 const JOYTREE_WEB_SEARCH_URL = String(process.env.JOYTREE_WEB_SEARCH_URL || '').trim().replace(/\/+$/, '');
 const JOYTREE_WEB_SEARCH_ENABLED = String(process.env.JOYTREE_WEB_SEARCH_ENABLED || 'false').toLowerCase() !== 'false';
 
@@ -7034,7 +7040,7 @@ function getDeepSeekAttemptProfiles() {
 }
 
 async function callDeepSeekChat({ messages, maxTokens = DEEPSEEK_FLOW_MAX_TOKENS, timeoutMs = DEEPSEEK_FLOW_TIMEOUT_MS, temperature = 0.3, model = DEEPSEEK_MODEL, thinkingEnabled = true, reasoningEffort = 'high' } = {}) {
-  if (!DEEPSEEK_API_KEY) throw new Error('DEEPSEEK_API_KEY is not configured.');
+  if (!DEEPSEEK_API_KEY) throw new Error('AI_V3_API_KEY is not configured.');
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -7658,7 +7664,7 @@ async function buildFlowWithGroq({ prompt = '', sourceText = '', fileName = '' }
 }
 
 async function buildFlowWithDeepSeek({ prompt = '', sourceText = '', fileName = '' } = {}) {
-  if (!DEEPSEEK_API_KEY) throw new Error('DEEPSEEK_API_KEY is not configured. Add it to your .env file.');
+  if (!DEEPSEEK_API_KEY) throw new Error('AI_V3_API_KEY is not configured. Add it to your .env file.');
   const userInput = `PROMPT:
 ${String(prompt || '').slice(0, 20000)}
 
@@ -7778,7 +7784,7 @@ async function buildFlowWithAI({ prompt = '', sourceText = '', fileBase64 = '', 
         console.warn('[Joytree API v3] xAI fallback failed:', e.message);
       }
     }
-    throw new Error('Joytree API v3 returned an empty response. Last error: ' + ((lastError && lastError.message) || 'Check DEEPSEEK_API_KEY.'));
+    throw new Error('Joytree API v3 returned an empty response. Last error: ' + ((lastError && lastError.message) || 'Check AI_V3_API_KEY.'));
   }
   // Joy AI v1 — Groq only (fails if Groq fails)
   if (aiVersion === 'v1') {
@@ -7948,7 +7954,7 @@ app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
   const flowId = `flow_${Date.now()}`;
   if (selectedAiVersion === 'v4' && !GROQ_API_KEY && !XAI_API_KEY) return res.status(503).json({ error: 'Joytree API v4 is not configured. Add GROQ_API_KEY or XAI_API_KEY to your .env file.' });
   if (selectedAiVersion !== 'v3' && selectedAiVersion !== 'v4' && !GROQ_API_KEY) return res.status(503).json({ error: 'Joytree AI is not configured. Add GROQ_API_KEY to your server .env file and restart.' });
-  if (selectedAiVersion === 'v3' && !DEEPSEEK_API_KEY) return res.status(503).json({ error: 'Joytree API v3 is not configured. Add DEEPSEEK_API_KEY to your server .env file and restart.' });
+  if (selectedAiVersion === 'v3' && !DEEPSEEK_API_KEY) return res.status(503).json({ error: 'Joytree API v3 is not configured. Add AI_V3_API_KEY to your server .env file and restart.' });
   const providerRequested = 'auto';
   const fileContextNote = (fileName && fileMime && !String(fileMime).startsWith('text/') && fileMime !== 'application/json')
     ? `\n[Uploaded file: ${fileName} (${fileMime}) — use this file context to generate API content]`
