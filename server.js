@@ -8299,12 +8299,18 @@ function getAgentProvider(preferredProvider, userKeys = {}) {
   if (preferredProvider === 'groq'    && has('groq',   GROQ_API_KEY))      return 'groq';
   if (preferredProvider === 'xai'     && has('xai',    XAI_API_KEY))       return 'xai';
   if (preferredProvider === 'openai'  && has('openai', OPENAI_API_KEY))    return 'openai';
+  // v3 — same AI_V3_* provider used by the API builder's "Joytree AI v3"
+  // (OpenAI-compatible; can point at DeepSeek, a GPT relay, a self-hosted
+  // model via vLLM, etc. depending on AI_V3_BASE_URL). Sharing one config
+  // means switching providers for API generation also switches it here.
+  if (preferredProvider === 'v3'      && has('v3',     DEEPSEEK_API_KEY))  return 'v3';
   // Auto-select when no explicit choice: prefer the FREE/cheap providers first
   // so the default never silently burns paid credit. Groq (Llama) is free.
   if (has('groq',   GROQ_API_KEY))      return 'groq';
   if (has('xai',    XAI_API_KEY))       return 'xai';
   if (has('openai', OPENAI_API_KEY))    return 'openai';
   if (has('claude', ANTHROPIC_API_KEY)) return 'claude';
+  if (has('v3',     DEEPSEEK_API_KEY))  return 'v3';
   return null;
 }
 
@@ -8312,6 +8318,7 @@ function getAgentProviderLabel(provider) {
   if (provider === 'claude') return `Claude (${ANTHROPIC_MODEL})`;
   if (provider === 'xai')    return `Grok (${XAI_MODEL})`;
   if (provider === 'openai') return `GPT (${OPENAI_MODEL})`;
+  if (provider === 'v3')     return `Joytree AI v3 (${DEEPSEEK_MODEL})`;
   return `Llama (${GROQ_MODEL})`;
 }
 
@@ -8696,19 +8703,23 @@ async function callAgentLLM({ provider, messages, tools, temperature = 0.2, maxT
     };
   }
 
-  // ── Groq / xAI / OpenAI — OpenAI-compatible ───────────────────────────
+  // ── Groq / xAI / OpenAI / v3 — OpenAI-compatible ──────────────────────
   const apiUrl = provider === 'xai'
     ? 'https://api.x.ai/v1/chat/completions'
     : provider === 'openai'
     ? 'https://api.openai.com/v1/chat/completions'
+    : provider === 'v3'
+    ? `${DEEPSEEK_BASE_URL}/chat/completions`
     : 'https://api.groq.com/openai/v1/chat/completions';
   // BYOK: prefer the user's own key for this provider, fall back to the shared key.
   const apiKey = provider === 'xai'
     ? ((userKeys && userKeys.xai) || XAI_API_KEY)
     : provider === 'openai'
     ? ((userKeys && userKeys.openai) || OPENAI_API_KEY)
+    : provider === 'v3'
+    ? ((userKeys && userKeys.v3) || DEEPSEEK_API_KEY)
     : ((userKeys && userKeys.groq) || GROQ_API_KEY);
-  const model  = provider === 'xai' ? XAI_MODEL : provider === 'openai' ? OPENAI_MODEL : GROQ_MODEL;
+  const model  = provider === 'xai' ? XAI_MODEL : provider === 'openai' ? OPENAI_MODEL : provider === 'v3' ? DEEPSEEK_MODEL : GROQ_MODEL;
 
   if (!apiKey) throw new Error(`${provider.toUpperCase()}_API_KEY not configured`);
 
@@ -9704,7 +9715,8 @@ app.get('/api/ai/agent/providers', requireAuth, async (req, res) => {
       { id: 'groq',   label: `Llama (${GROQ_MODEL})`,       available: avail('groq', GROQ_API_KEY),      best: true,  byok: !!(uk && uk.groq),   description: 'Free & fast — great for most fixes. Recommended default.' },
       { id: 'openai', label: `GPT (${OPENAI_MODEL})`,       available: avail('openai', OPENAI_API_KEY),  best: false, byok: !!(uk && uk.openai), description: 'OpenAI GPT — solid all-round coding model.' },
       { id: 'claude', label: `Claude (${ANTHROPIC_MODEL})`, available: avail('claude', ANTHROPIC_API_KEY), best: false, byok: !!(uk && uk.claude), description: 'Premium — best for complex fixes.' },
-      { id: 'xai',    label: `Grok (${XAI_MODEL})`,         available: avail('xai', XAI_API_KEY),        best: false, byok: !!(uk && uk.xai),    description: 'xAI Grok — strong reasoning.' }
+      { id: 'xai',    label: `Grok (${XAI_MODEL})`,         available: avail('xai', XAI_API_KEY),        best: false, byok: !!(uk && uk.xai),    description: 'xAI Grok — strong reasoning.' },
+      { id: 'v3',     label: `Joytree AI v3 (${DEEPSEEK_MODEL})`, available: avail('v3', DEEPSEEK_API_KEY), best: false, byok: !!(uk && uk.v3), description: 'Same provider used by the API builder\'s Joytree AI v3.' }
     ],
     recommended: getAgentProvider(null, uk)
   });

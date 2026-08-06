@@ -7736,7 +7736,6 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     <div class="nav-item" id="navJoytreeAI" data-page="joytree-ai" onclick="showPage('joytree-ai',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
       JoyTree AI
-      <span id="navAIBadge" style="margin-left:auto;font-size:.58rem;font-weight:800;padding:2px 6px;border-radius:5px;background:rgba(139,92,246,0.25);color:#c4b5fd;border:1px solid rgba(139,92,246,0.35);letter-spacing:.04em;">BETA</span>
     </div>
     <div class="nav-item" data-page="env-manager" onclick="showPage('env-manager',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -9651,6 +9650,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                   <div class="jai-model-dd-item active" onclick="pickJaiModel('llama','Llama 3.3',this)"><span>Llama 3.3</span><span class="jai-model-dd-badge">Active</span></div>
                   <div class="jai-model-dd-item" onclick="pickJaiModel('grok','Grok',this)"><span>Grok</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
                   <div class="jai-model-dd-item" onclick="pickJaiModel('claude','Claude',this)"><span>Claude</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+                  <div class="jai-model-dd-item" onclick="pickJaiModel('v3','Joytree AI v3',this)"><span>Joytree AI v3</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></div>
                 </div>
               </div>
               <!-- GitHub repo picker — truncated label -->
@@ -9806,6 +9806,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                     <div class="jai-model-dd-item active" onclick="pickJaiModel2('llama','Llama 3.3',this)"><span>Llama 3.3</span><span class="jai-model-dd-badge">Active</span></div>
                     <div class="jai-model-dd-item" onclick="pickJaiModel2('grok','Grok',this)"><span>Grok</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
                     <div class="jai-model-dd-item" onclick="pickJaiModel2('claude','Claude',this)"><span>Claude</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+                    <div class="jai-model-dd-item" onclick="pickJaiModel2('v3','Joytree AI v3',this)"><span>Joytree AI v3</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></div>
                   </div>
                 </button>
               </div>
@@ -39822,7 +39823,7 @@ function _jaiRenderProviderBtns() {
              border:1px solid ${p.id===jaiSelectedProv?'rgba(16,185,129,.4)':'rgba(255,255,255,.08)'};
              background:${p.id===jaiSelectedProv?'rgba(16,185,129,.12)':'rgba(255,255,255,.03)'};
              color:${p.id===jaiSelectedProv?'#10b981':'#64748b'};">
-      ${p.id==='claude'?'✦ ':p.id==='xai'?'⚡ ':p.id==='openai'?'◆ ':''}${p.id==='claude'?'Claude':p.id==='xai'?'Grok':p.id==='openai'?'GPT':'Llama'}
+      ${p.id==='claude'?'✦ ':p.id==='xai'?'⚡ ':p.id==='openai'?'◆ ':p.id==='v3'?'◈ ':''}${p.id==='claude'?'Claude':p.id==='xai'?'Grok':p.id==='openai'?'GPT':p.id==='v3'?'Joytree v3':'Llama'}
       ${p.best?'<span style="font-size:.55rem;background:rgba(16,185,129,.15);color:#10b981;padding:1px 4px;border-radius:3px;margin-left:3px;">BEST</span>':''}
     </button>`).join('');
 }
@@ -39909,7 +39910,7 @@ function _jaiProceedFromError(provId) {
 }
 
 function _jaiProviderShortLabel(id) {
-  return id === 'claude' ? 'Claude' : id === 'xai' ? 'Grok' : id === 'openai' ? 'GPT' : 'Llama 3.3';
+  return id === 'claude' ? 'Claude' : id === 'xai' ? 'Grok' : id === 'openai' ? 'GPT' : id === 'v3' ? 'Joytree AI v3' : 'Llama 3.3';
 }
 
 // ── Model picker modal (shown before a "Fix with AI" session starts) ──
@@ -39970,12 +39971,14 @@ async function _jaiShowModelPicker() {
     openai: '<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M22.28 9.82a5.98 5.98 0 0 0-.52-4.91 6.05 6.05 0 0 0-6.51-2.9A6 6 0 0 0 4.98 4.18a5.98 5.98 0 0 0-4 2.9 6.05 6.05 0 0 0 .74 7.1 5.98 5.98 0 0 0 .51 4.9 6.05 6.05 0 0 0 6.52 2.9A6 6 0 0 0 19.02 19.8a5.98 5.98 0 0 0 4-2.9 6.05 6.05 0 0 0-.74-7.09zM12.6 21.3a4.5 4.5 0 0 1-2.88-1.04l.14-.08 4.78-2.76a.78.78 0 0 0 .39-.68v-6.74l2.02 1.17a.07.07 0 0 1 .04.06v5.58a4.5 4.5 0 0 1-4.5 4.49zM2.94 17.17a4.48 4.48 0 0 1-.54-3.02l.14.09 4.78 2.76a.78.78 0 0 0 .78 0l5.84-3.37v2.33a.08.08 0 0 1-.03.07l-4.83 2.79a4.5 4.5 0 0 1-6.14-1.65zM1.68 6.96a4.48 4.48 0 0 1 2.35-1.97v5.68a.77.77 0 0 0 .39.68l5.81 3.35-2.02 1.17a.08.08 0 0 1-.07 0L3.3 13.08a4.5 4.5 0 0 1-1.62-6.12zm16.6 3.86l-5.84-3.38 2.02-1.16a.08.08 0 0 1 .07 0l4.83 2.78a4.5 4.5 0 0 1-.68 8.11v-5.68a.77.77 0 0 0-.4-.67zm2.01-3.03l-.14-.09-4.77-2.78a.78.78 0 0 0-.79 0L8.76 8.3V5.96a.07.07 0 0 1 .03-.06l4.83-2.79a4.5 4.5 0 0 1 6.68 4.66zM7.66 11.95l-2.02-1.16a.08.08 0 0 1-.04-.06V5.16a4.5 4.5 0 0 1 7.38-3.45l-.14.08L8.05 4.55a.78.78 0 0 0-.4.68zm1.1-2.37L11.36 8l2.6 1.5v3l-2.6 1.5-2.6-1.5z"/></svg>',
     claude: '<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M4.71 15.2l4.42-2.48.07-.21-.07-.12h-.21l-.72-.04-2.45-.07-2.12-.09-2.06-.11-.52-.11L0 11.23l.05-.32.43-.29.62.05 1.37.1 2.05.14 1.49.09 2.2.23h.35l.05-.14-.12-.09-.09-.09L6.31 9.6 4.13 8.16l-1.14-.83-.62-.42-.31-.4-.13-.86.56-.62.75.05.19.05.76.59 1.63 1.26 2.13 1.57.31.26.13-.09.01-.06-.14-.24L8.1 6.26l-1.24-2.14-.55-.88-.15-.53a2.55 2.55 0 0 1-.09-.64l.64-.87L6.71 1l.85.11.36.31.53 1.21 1.06 2.36 1.65 3.21.48.96.26.88.1.27h.17v-.15l.14-1.85.26-2.27.25-2.92.09-.82.41-1L14.5.96l.64.31.53.76-.07.49-.32 2.07-.62 3.22-.4 2.16h.23l.27-.27 1.09-1.44 1.83-2.29.81-.91.94-1 .61-.48h1.14l.84 1.25-.38 1.29-1.17 1.49-.98 1.27-1.4 1.88-.87 1.51.08.12.21-.02 3.18-.68 1.72-.31 2.05-.35.93.43.1.44-.37.9-2.19.54-2.57.51-3.83.91-.05.03.05.07 1.73.16.74.04h1.81l3.37.25.88.58.53.71-.09.54-1.36.69-1.83-.43-4.28-1.02-1.47-.37h-.2v.12l1.22 1.2 2.24 2.03 2.81 2.6.14.65-.36.51-.38-.05-2.46-1.85-.95-.83-2.15-1.81h-.14v.19l.49.73 2.62 3.94.14 1.21-.19.39-.68.24-.75-.14-1.55-2.17-1.59-2.44-1.29-2.19-.16.09-.76 8.18-.36.42-.82.31-.69-.52-.36-.84.36-1.66.44-2.16.36-1.72.32-2.13.19-.71-.01-.05-.16.02-1.62 2.22-2.46 3.33-1.95 2.08-.47.19-.81-.42.08-.75.45-.67 2.7-3.42 1.63-2.13 1.05-1.23-.01-.18h-.06l-7.2 4.68-1.28.16-.55-.52.07-.84.26-.27 2.16-1.49z"/></svg>',
     xai:    '<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M3.005 8.858l8.783 12.544h3.904L6.908 8.858zm6.74 0l8.784 12.544h3.904L13.65 8.858zM2.4 2.598l5.474 7.82L9.83 8.46 4.954 2.598zm14.71 0l-7.49 10.696 1.954 2.79L21.79 2.598z"/></svg>',
+    v3:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>',
   };
   const meta = {
     groq:   { name: 'Llama 3.3',  by: 'Groq · open-source',  tag: 'Free · Fast', accent: '#10b981' },
     openai: { name: 'GPT',        by: 'OpenAI',              tag: 'All-round coding', accent: '#10a37f' },
     claude: { name: 'Claude',     by: 'Anthropic',           tag: 'Best for code', accent: '#d97757' },
     xai:    { name: 'Grok',       by: 'xAI',                 tag: 'Strong reasoning', accent: '#e5e7eb' },
+    v3:     { name: 'Joytree AI v3', by: 'Same provider as the API builder', tag: 'High-reasoning', accent: '#8b5cf6' },
   };
 
   const claudeAllowed = canUseClaudeFixing();
