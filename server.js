@@ -206,6 +206,15 @@ const ANTHROPIC_MODEL   = String(process.env.ANTHROPIC_MODEL   || 'claude-sonnet
 // Joytree API v3 — DeepSeek (OpenAI-compatible high-reasoning AI)
 const JOYTREE_V3_ADMIN_EMAIL = String(process.env.JOYTREE_V3_ADMIN_EMAIL || 'projectvpn89@gmail.com').trim().toLowerCase();
 const DEEPSEEK_API_KEY = String(process.env.DEEPSEEK_API_KEY || '').trim();
+// [FIX] Base URL was hardcoded to api.deepseek.com, so v3 could only ever
+// talk to DeepSeek's own API. Making it configurable lets v3 point at any
+// OpenAI-compatible endpoint (a proxy/relay to GPT, a custom worker, etc.)
+// just by setting env vars — no code change needed to swap providers.
+const DEEPSEEK_BASE_URL = String(process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com').trim().replace(/\/+$/, '');
+// DeepSeek-specific request fields (thinking/reasoning_effort) are only
+// sent when actually talking to DeepSeek's own domain — an arbitrary
+// OpenAI-compatible relay may reject unrecognized fields outright.
+const DEEPSEEK_IS_NATIVE = /(^|\.)deepseek\.com$/i.test(String(DEEPSEEK_BASE_URL).replace(/^https?:\/\//, '').split('/')[0]);
 const DEEPSEEK_MODEL = String(process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro').trim();
 const DEEPSEEK_MODEL_FALLBACK = String(process.env.DEEPSEEK_MODEL_FALLBACK || 'deepseek-v4-flash').trim();
 const DEEPSEEK_FLOW_TIMEOUT_MS = Number(process.env.DEEPSEEK_FLOW_TIMEOUT_MS || 180000);
@@ -911,17 +920,6 @@ app.use(async (req, res, next) => {
     req.headers.host ||
     ''
   );
-
-  // [TEMP DEBUG round 2] Re-added after ruling out the proxied-CNAME theory
-  // (it turned out to be a false lead -- apex CNAME flattening always shows
-  // Cloudflare IPs here regardless of proxy toggle, since the target itself
-  // is proxied). Now testing with DNS properly configured (confirmed DNS
-  // only) whether the request even reaches this process at all, and
-  // whether it's found in _cdCache at that exact moment. Remove once
-  // resolved.
-  if (host !== BASE_DOMAIN && host !== 'localhost' && host) {
-    console.log(`[HostDebug2] host="${host}" inCache=${_cdCache.has(host)} cacheVal=${_cdCache.get(host) || 'none'} path="${req.path}" ip="${req.ip}" xff="${req.headers['x-forwarded-for'] || ''}"`);
-  }
 
   // Skip bare base domain and localhost
   if (!host || host === BASE_DOMAIN || host === 'localhost') return next();
@@ -7044,17 +7042,23 @@ async function callDeepSeekChat({ messages, maxTokens = DEEPSEEK_FLOW_MAX_TOKENS
       model: model || DEEPSEEK_MODEL,
       messages: messages,
       max_tokens: maxTokens,
-      thinking: { type: thinkingEnabled ? 'enabled' : 'disabled' },
       stream: false
     };
-    if (thinkingEnabled) {
-      body.reasoning_effort = reasoningEffort || 'high';
-      // Official DeepSeek docs say thinking mode ignores temperature/top_p.
-      // Omitting them keeps v3 closer to DeepSeek's expected thinking-mode shape.
+    if (DEEPSEEK_IS_NATIVE) {
+      body.thinking = { type: thinkingEnabled ? 'enabled' : 'disabled' };
+      if (thinkingEnabled) {
+        body.reasoning_effort = reasoningEffort || 'high';
+        // Official DeepSeek docs say thinking mode ignores temperature/top_p.
+        // Omitting them keeps v3 closer to DeepSeek's expected thinking-mode shape.
+      } else {
+        body.temperature = Math.min(2, Math.max(0, temperature));
+      }
     } else {
+      // Generic OpenAI-compatible endpoint: plain temperature, no
+      // DeepSeek-only fields that a third-party relay wouldn't recognize.
       body.temperature = Math.min(2, Math.max(0, temperature));
     }
-    const r = await fetch('https://api.deepseek.com/chat/completions', {
+    const r = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
       method: 'POST',
       signal: controller.signal,
       headers: {
@@ -7067,7 +7071,7 @@ async function callDeepSeekChat({ messages, maxTokens = DEEPSEEK_FLOW_MAX_TOKENS
       const errText = await r.text().catch(function(){ return ''; });
       const errJson = (function(){ try { return JSON.parse(errText); } catch(x){ return null; } })();
       const msg = (errJson && (errJson.error && errJson.error.message || errJson.message)) || errText.slice(0, 300) || ('HTTP ' + r.status);
-      console.error('[DeepSeek] API error', r.status, '(' + body.model + ', thinking=' + body.thinking.type + '):', msg);
+      console.error('[DeepSeek] API error', r.status, '(' + body.model + (body.thinking ? ', thinking=' + body.thinking.type : '') + '):', msg);
       throw new Error('DeepSeek HTTP ' + r.status + ': ' + msg);
     }
     const data = await r.json().catch(function(){ return {}; });
