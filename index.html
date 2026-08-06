@@ -5404,6 +5404,7 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 .rlc-steps { display:flex; flex-direction:column; gap:0; margin-bottom:18px; }
 .rlc-step { display:flex; align-items:flex-start; gap:10px; padding:8px 0; opacity:.32; transition:opacity .25s ease; }
 .rlc-step.rlc-done { opacity:1; }
+.rlc-step.rlc-error { opacity:1; }
 .rlc-step.rlc-current { opacity:1; }
 .rlc-step-dot { width:18px; height:18px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(148,163,184,.12); border:1.5px solid rgba(148,163,184,.3); margin-top:1px; }
 .rlc-step.rlc-done .rlc-step-dot { background:var(--primary); border-color:var(--primary); }
@@ -28950,7 +28951,7 @@ async function openRequestLifecycleModal(url, method, onDone) {
     { text: 'Browser receives and reassembles the response' }
   ];
 
-  const stepHtml = (i, s) =>
+  const stepHtml = (s, i) =>
     '<div class="rlc-step" id="rlcStep' + i + '">' +
       '<div class="rlc-step-dot"></div>' +
       '<div><div class="rlc-step-text">' + escHtml(s.text) + '</div>' +
