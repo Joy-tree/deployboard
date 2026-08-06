@@ -5381,6 +5381,47 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 
 /* ══ END AGGRESSIVE DARK OVERRIDE ══════════════════════════════ */
 
+/* ── Request Lifecycle Visualizer (cron "Test" / "Run Now") ── */
+.rlc-overlay { position:fixed; inset:0; background:rgba(0,0,0,.72); backdrop-filter:blur(4px); z-index:9999; display:flex; align-items:center; justify-content:center; padding:16px; animation: rlc-fade-in .18s ease; }
+@keyframes rlc-fade-in { from{opacity:0;} to{opacity:1;} }
+.rlc-card { width:min(94vw,460px); max-height:88vh; overflow-y:auto; background:#0d0d0d; border:1px solid rgba(255,255,255,.09); border-radius:18px; padding:24px 22px; box-shadow:0 24px 80px rgba(0,0,0,.7); }
+.rlc-title { font-size:1rem; font-weight:800; color:var(--text); margin-bottom:2px; }
+.rlc-subtitle { font-size:.75rem; color:var(--text-2); font-family:var(--font-mono); word-break:break-all; margin-bottom:18px; }
+.rlc-diagram { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:20px; position:relative; }
+.rlc-node { display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; width:64px; }
+.rlc-node-icon { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:rgba(148,163,184,.08); border:1px solid rgba(148,163,184,.18); color:var(--text-2); transition:all .25s ease; }
+.rlc-node-icon.rlc-active { border-color:var(--primary); color:var(--primary); background:rgba(16,185,129,.1); box-shadow:0 0 0 4px rgba(16,185,129,.08); }
+.rlc-node-icon.rlc-error { border-color:var(--red); color:var(--red); background:rgba(239,68,68,.1); box-shadow:0 0 0 4px rgba(239,68,68,.08); }
+.rlc-node-label { font-size:.65rem; color:var(--text-3); font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
+.rlc-wire { flex:1; height:2px; background:rgba(148,163,184,.15); position:relative; margin:0 4px; margin-top:23px; border-radius:2px; overflow:visible; }
+.rlc-wire-fill { position:absolute; top:0; left:0; height:100%; width:0%; background:var(--primary); border-radius:2px; transition:width .3s ease; }
+.rlc-wire-fill.rlc-error { background:var(--red); }
+.rlc-packet { position:absolute; top:50%; width:9px; height:9px; border-radius:50%; background:var(--primary); transform:translate(-50%,-50%); box-shadow:0 0 8px rgba(16,185,129,.7); opacity:0; }
+.rlc-packet.rlc-fly { animation: rlc-travel 0.9s ease-in-out; }
+.rlc-packet.rlc-fly-back { animation: rlc-travel-back 0.9s ease-in-out; }
+@keyframes rlc-travel { 0%{ left:0%; opacity:0; } 8%{ opacity:1; } 92%{ opacity:1; } 100%{ left:100%; opacity:0; } }
+@keyframes rlc-travel-back { 0%{ left:100%; opacity:0; } 8%{ opacity:1; } 92%{ opacity:1; } 100%{ left:0%; opacity:0; } }
+.rlc-steps { display:flex; flex-direction:column; gap:0; margin-bottom:18px; }
+.rlc-step { display:flex; align-items:flex-start; gap:10px; padding:8px 0; opacity:.32; transition:opacity .25s ease; }
+.rlc-step.rlc-done { opacity:1; }
+.rlc-step.rlc-current { opacity:1; }
+.rlc-step-dot { width:18px; height:18px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(148,163,184,.12); border:1.5px solid rgba(148,163,184,.3); margin-top:1px; }
+.rlc-step.rlc-done .rlc-step-dot { background:var(--primary); border-color:var(--primary); }
+.rlc-step.rlc-error .rlc-step-dot { background:var(--red); border-color:var(--red); }
+.rlc-step.rlc-current .rlc-step-dot { border-color:var(--primary); }
+.rlc-step.rlc-current .rlc-step-dot::after { content:''; width:8px; height:8px; border-radius:50%; background:var(--primary); animation:rlc-pulse 1s ease-in-out infinite; }
+@keyframes rlc-pulse { 0%,100%{ opacity:.4; transform:scale(.7); } 50%{ opacity:1; transform:scale(1); } }
+.rlc-step-text { font-size:.8rem; color:var(--text); line-height:1.4; padding-top:1px; }
+.rlc-step-detail { font-size:.7rem; color:var(--text-3); font-family:var(--font-mono); margin-top:2px; }
+.rlc-result { margin-top:4px; padding:14px 16px; border-radius:12px; display:flex; align-items:center; gap:12px; }
+.rlc-result.rlc-ok { background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.25); }
+.rlc-result.rlc-fail { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.25); }
+.rlc-result-code { font-family:var(--font-mono); font-weight:800; font-size:1.1rem; }
+.rlc-result.rlc-ok .rlc-result-code { color:var(--green); }
+.rlc-result.rlc-fail .rlc-result-code { color:var(--red); }
+.rlc-result-text { font-size:.78rem; color:var(--text-2); }
+.rlc-close-btn { width:100%; margin-top:16px; padding:11px; border-radius:10px; background:rgba(148,163,184,.08); border:1px solid rgba(148,163,184,.18); color:var(--text-2); font-size:.82rem; font-weight:700; cursor:pointer; }
+
 </style>
   <script type="application/ld+json">
   {
@@ -28879,22 +28920,144 @@ function updateCronHint(expr) {
   }
 }
 
-async function testCronUrl() {
+// ── Request Lifecycle Visualizer ────────────────────────────────────────────
+// Instead of a plain "testing... / 200 OK" wait, this animates the actual
+// client→server→client round trip step by step (DNS, TLS, packets, server
+// processing, response) so people using the site — many of them students —
+// can see what "checking a URL" actually involves under the hood, not just
+// the final pass/fail.
+function rlcDelay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function closeRequestLifecycleModal() {
+  const el = document.getElementById('rlcOverlay');
+  if (el) el.remove();
+}
+
+async function openRequestLifecycleModal(url, method, onDone) {
+  closeRequestLifecycleModal();
+  method = (method || 'GET').toUpperCase();
+  let host = url;
+  try { host = new URL(url).host; } catch (_) {}
+
+  const steps = [
+    { text: 'Browser assembles the HTTP request', detail: method + ' ' + url },
+    { text: "DNS lookup resolves the server's IP address", detail: host },
+    { text: 'TLS handshake secures the connection', detail: 'HTTPS — encrypts everything that follows' },
+    { text: 'Request is broken into packets and sent', detail: 'Each packet travels independently across the network' },
+    { text: 'Server receives the packets and reassembles the request' },
+    { text: 'Server processes the request…', detail: 'Running code, querying data, building a response' },
+    { text: 'Server sends the response back as packets' },
+    { text: 'Browser receives and reassembles the response' }
+  ];
+
+  const stepHtml = (i, s) =>
+    '<div class="rlc-step" id="rlcStep' + i + '">' +
+      '<div class="rlc-step-dot"></div>' +
+      '<div><div class="rlc-step-text">' + escHtml(s.text) + '</div>' +
+      (s.detail ? '<div class="rlc-step-detail">' + escHtml(s.detail) + '</div>' : '') +
+      '</div></div>';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'rlc-overlay';
+  overlay.id = 'rlcOverlay';
+  overlay.onclick = function (e) { if (e.target === overlay) closeRequestLifecycleModal(); };
+  overlay.innerHTML =
+    '<div class="rlc-card">' +
+      '<div class="rlc-title">Request Lifecycle</div>' +
+      '<div class="rlc-subtitle">' + escHtml(method + ' ' + url) + '</div>' +
+      '<div class="rlc-diagram">' +
+        '<div class="rlc-node"><div class="rlc-node-icon" id="rlcClientIcon">' +
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>' +
+        '</div><div class="rlc-node-label">Browser</div></div>' +
+        '<div class="rlc-wire" id="rlcWire"><div class="rlc-wire-fill" id="rlcWireFill"></div><div class="rlc-packet" id="rlcPacket"></div></div>' +
+        '<div class="rlc-node"><div class="rlc-node-icon" id="rlcServerIcon">' +
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>' +
+        '</div><div class="rlc-node-label">Server</div></div>' +
+      '</div>' +
+      '<div class="rlc-steps" id="rlcSteps">' + steps.map(stepHtml).join('') + '</div>' +
+      '<div id="rlcResult"></div>' +
+      '<button class="rlc-close-btn" onclick="closeRequestLifecycleModal()">Close</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+
+  const setStep = function (i, cls) { const el = document.getElementById('rlcStep' + i); if (el) el.classList.add(cls); };
+  const unsetCurrent = function (i) { const el = document.getElementById('rlcStep' + i); if (el) el.classList.remove('rlc-current'); };
+
+  // Kick off the REAL request concurrently with the animation — the
+  // animation's pacing is illustrative, but the final result is real.
+  const started = Date.now();
+  const realRequest = fetch('/api/proxy-test', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: url, method: method })
+  }).then(function (r) { return r.json(); }).catch(function (e) { return { ok: false, status: null, error: e.message }; });
+
+  // Steps 0-2: client-side prep (DNS/TLS) — fixed pacing so it's readable
+  for (let i = 0; i < 3; i++) {
+    setStep(i, 'rlc-current');
+    await rlcDelay(420);
+    setStep(i, 'rlc-done'); unsetCurrent(i);
+  }
+
+  // Step 3: packet flies client -> server
+  setStep(3, 'rlc-current');
+  const clientIcon = document.getElementById('rlcClientIcon');
+  const serverIcon = document.getElementById('rlcServerIcon');
+  const packet = document.getElementById('rlcPacket');
+  const wireFill = document.getElementById('rlcWireFill');
+  if (clientIcon) clientIcon.classList.add('rlc-active');
+  if (packet) packet.classList.add('rlc-fly');
+  await rlcDelay(900);
+  if (packet) packet.classList.remove('rlc-fly');
+  if (wireFill) wireFill.style.width = '100%';
+  setStep(3, 'rlc-done'); unsetCurrent(3);
+
+  // Step 4: server receives
+  if (serverIcon) serverIcon.classList.add('rlc-active');
+  setStep(4, 'rlc-current');
+  await rlcDelay(350);
+  setStep(4, 'rlc-done'); unsetCurrent(4);
+
+  // Step 5: server processes — this is the ONE step that waits for the
+  // real network round trip, since we genuinely don't know how long it
+  // takes. Everything else is fixed-pace for readability.
+  setStep(5, 'rlc-current');
+  const result = await realRequest;
+  setStep(5, 'rlc-done'); unsetCurrent(5);
+
+  const ok = !!result.ok;
+
+  // Step 6: response flies back
+  setStep(6, 'rlc-current');
+  if (wireFill) wireFill.classList.toggle('rlc-error', !ok);
+  if (packet) { packet.style.background = ok ? '' : 'var(--red)'; packet.classList.add('rlc-fly-back'); }
+  if (serverIcon) serverIcon.classList.remove('rlc-active');
+  await rlcDelay(900);
+  if (packet) packet.classList.remove('rlc-fly-back');
+  if (wireFill) wireFill.style.width = '0%';
+  setStep(6, ok ? 'rlc-done' : 'rlc-error'); unsetCurrent(6);
+
+  // Step 7: browser receives final result
+  if (clientIcon) { clientIcon.classList.remove('rlc-active'); if (!ok) clientIcon.classList.add('rlc-error'); }
+  setStep(7, ok ? 'rlc-done' : 'rlc-error');
+
+  const duration = Date.now() - started;
+  const resEl = document.getElementById('rlcResult');
+  if (resEl) {
+    resEl.innerHTML =
+      '<div class="rlc-result ' + (ok ? 'rlc-ok' : 'rlc-fail') + '">' +
+        '<div class="rlc-result-code">' + escHtml(String(result.status != null ? result.status : 'ERR')) + '</div>' +
+        '<div class="rlc-result-text">' + escHtml(ok ? 'Response received successfully' : (result.error || 'Request failed')) + ' · ' + duration + 'ms round trip</div>' +
+      '</div>';
+  }
+
+  if (typeof onDone === 'function') onDone({ ok: ok, status: result.status, duration: duration, error: result.error });
+}
+
+function testCronUrl() {
   const url = (document.getElementById('cronUrl').value || '').trim();
   if (!url) { toast('Enter a URL first', 'error'); return; }
-  toast('Testing ' + url + '…', 'info');
-  try {
-    const r = await fetch('/api/proxy-test', {
-      method: 'POST', headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ url })
-    });
-    const d = await r.json();
-    if (d.ok) toast('✓ URL responded with ' + d.status, 'success');
-    else toast('URL returned ' + d.status, 'error');
-  } catch(e) {
-    // Fallback - just show ok since we can't proxy from frontend
-    toast('URL saved (server-side test will run on first execution)', 'info');
-  }
+  const method = document.getElementById('cronMethod')?.value || 'GET';
+  openRequestLifecycleModal(url, method);
 }
 
 function saveCronJob() {
@@ -28914,6 +29077,20 @@ function saveCronJob() {
   toast('Cron job "' + name + '" created!', 'success');
   logActivity('cron', 'Cron job created: ' + name + ' (' + expr + ')');
   showPage('cronjobs');
+}
+
+function runCronJobNow(id) {
+  const job = cronJobs.find(j => j.id === id);
+  if (!job) return;
+  openRequestLifecycleModal(job.url, job.method, function (result) {
+    const exec = { jobId: job.id, jobName: job.name, status: result.ok ? 'success' : 'error', statusCode: result.status, duration: result.duration, time: new Date().toISOString() };
+    cronExecutions.unshift(exec);
+    const ji = cronJobs.findIndex(j => j.id === job.id);
+    if (ji > -1) { cronJobs[ji].lastRun = exec.time; cronJobs[ji].lastStatus = exec.status; }
+    saveCronData();
+    renderCronJobs();
+    renderCronExecutions();
+  });
 }
 
 function scheduleCronJob(job) {
@@ -28973,6 +29150,7 @@ function renderCronJobs() {
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
         ${badge}
+        <button data-id="${j.id}" onclick="runCronJobNow(${j.id})" style="font-size:0.72rem;padding:4px 8px;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.18);color:var(--text-2);border-radius:6px;cursor:pointer;">Run Now</button>
         ${toggle}
         <button data-id="${j.id}" onclick="deleteCronJob(${j.id})" style="font-size:0.72rem;padding:4px 8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--red);border-radius:6px;cursor:pointer;">Delete</button>
       </div>
