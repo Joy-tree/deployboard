@@ -7983,17 +7983,78 @@ app.post('/api/developer/flows/from-text', requireAuth, (req, res) => {
     : await fetchWebSearchContext(`${prompt}\n${sourceText}`).catch(() => '');
   const combinedSourceText = `${sourceText}${fileContextNote}\n${scrapedContext}${webSearchContext ? `\n\n${webSearchContext}` : ''}`;
 
+// [FIX] v3's "chunking" (25 items per call, 65s wait between calls) exists
+// specifically because it was tuned for Groq's per-minute rate limits.
+// Now that v3 can point at any OpenAI-compatible provider (including a
+// full GPT-class model), forcing that same throttled batching wastes the
+// model's real capacity for no reason -- a single completion can produce
+// far more than 25 items at once. v3 now generates the full requested
+// count in one call instead of going through the chunked/batched path.
+async function generateQuestionsSingleShotV3({ prompt = '', total = 25 } = {}) {
+  const userMsg = 'Topic/context: ' + prompt + '\n\nGenerate EXACTLY ' + total + ' items.\n\n' +
+    'Return ONLY a valid JSON array of {question, answer} objects. No explanation, no markdown, no code fences.';
+  const messages = [
+    { role: 'system', content: AI_CHUNK_INSTRUCTION },
+    { role: 'user', content: userMsg }
+  ];
+  let lastErr = null;
+  for (const profile of getDeepSeekAttemptProfiles()) {
+    try {
+      const text = await callDeepSeekChat({
+        messages: messages,
+        temperature: 0.7,
+        maxTokens: DEEPSEEK_FLOW_MAX_TOKENS,
+        timeoutMs: DEEPSEEK_FLOW_TIMEOUT_MS,
+        model: profile.model,
+        thinkingEnabled: profile.thinkingEnabled
+      });
+      const arr = extractChunkArray(text);
+      if (arr && arr.length > 0) return arr;
+      lastErr = new Error('v3 returned an unparseable response. Raw: ' + (text || '').slice(0, 160));
+      console.warn('[v3 single-shot] ' + profile.label + ' returned unparseable response:', (text || '').slice(0, 300));
+    } catch (e) {
+      lastErr = e;
+      console.warn('[v3 single-shot] ' + profile.label + ' failed:', e.message);
+    }
+  }
+  throw lastErr || new Error('v3 single-shot generation returned no valid items.');
+}
+
   // ── Detect if this is a large quiz/riddle request that needs chunking ──────
   const isQuiz = /quiz|question|mcq|exam|riddle/i.test(String(prompt||'') + ' ' + String(sourceText||''));
   const requestedCount = isQuiz ? detectRequestedCount(String(prompt||'')) : 0;
   const effectiveChunkSize = CHUNK_SIZE; // Same for all versions now
-  const useChunking = isQuiz && requestedCount > effectiveChunkSize;
+  // v3 skips the throttled chunked path entirely -- see generateQuestionsSingleShotV3 above.
+  const useV3SingleShot = isQuiz && requestedCount > effectiveChunkSize && selectedAiVersion === 'v3';
+  const useChunking = isQuiz && requestedCount > effectiveChunkSize && selectedAiVersion !== 'v3';
 
   let aiSpec = null;
   let aiError = null;
   let chunkedQuestions = [];
 
-  if (useChunking) {
+  if (useV3SingleShot) {
+    // ── v3 SINGLE-SHOT PATH: one full-power call, no batching/throttling ─────
+    console.log(`[v3 single-shot] Large request detected: ${requestedCount} items. Generating in one call (no chunking).`);
+    try {
+      chunkedQuestions = await generateQuestionsSingleShotV3({ prompt: String(prompt||''), total: requestedCount });
+    } catch (e) {
+      aiError = e.message || String(e);
+    }
+    if (!chunkedQuestions.length) {
+      return res.status(502).json({ error: aiError || 'v3 generation returned no questions. Try rephrasing your prompt, or a smaller count if this one was very large — a single completion has a real output limit (AI_V3_FLOW_MAX_TOKENS).' });
+    }
+    aiSpec = {
+      routePath: '/quiz',
+      method: 'GET',
+      responseTemplate: {
+        ok: true,
+        total: chunkedQuestions.length,
+        questions: chunkedQuestions.slice(0, 3).map(q => ({ question: q.question, answer: q.answer })),
+        note: `Call GET /api/live/${flowId} to get all questions`
+      },
+      seedQuestions: chunkedQuestions
+    };
+  } else if (useChunking) {
     // ── CHUNKED PATH: generate questions in batches ───────────────────────────
     console.log(`[Chunker] Large request detected: ${requestedCount} items. Splitting into chunks of ${effectiveChunkSize} (${initialAiVersion}).`);
     try {
