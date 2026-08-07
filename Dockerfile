@@ -5,8 +5,10 @@
 
 FROM node:20-alpine
 
-# git for cloning repos, docker CLI for spawning app containers
-RUN apk add --no-cache git docker-cli curl rsync bind-tools
+# git for cloning repos, docker CLI for spawning app containers, zip for
+# packaging AI-agent build/fix output for download (was missing entirely —
+# every "zip -r" call in server.js was silently failing on this image before).
+RUN apk add --no-cache git docker-cli curl rsync bind-tools zip
 
 WORKDIR /app
 

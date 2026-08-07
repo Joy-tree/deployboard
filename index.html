@@ -40322,6 +40322,28 @@ async function initJoytreeAIPage() {
     return;
   }
 
+  // [FIX] Previously this unconditionally nulled jaiSessionId and forced the
+  // idle "What do you want to fix today?" screen on EVERY visit to this page
+  // — including simply tapping to another page and back seconds later. The
+  // conversation DOM (#jaiMessages) was still sitting there untouched (this
+  // is an SPA, pages are hidden not destroyed), so the user's whole thread
+  // was invisible even though nothing was actually lost server-side. Now:
+  // if a session is still live/was left open, just re-show it instead of
+  // resetting to idle. Starting a genuinely new fix goes through
+  // jaiResetToIdle() (the explicit "back"/"new fix" action), which still
+  // clears everything as before.
+  const sessionScreenWasVisible = document.getElementById('jaiSessionScreen')?.classList.contains('visible');
+  if (jaiSessionId || sessionScreenWasVisible) {
+    gate.style.display = 'none';
+    document.getElementById('jaiIdleScreen').style.display = 'none';
+    document.getElementById('jaiSessionScreen').classList.add('visible');
+    _jaiLoadProviders().catch(() => {});
+    // If a run was still actively streaming and the connection got dropped
+    // by navigating away, reconnect from where we left off.
+    if (jaiRunning && jaiSessionId && !jaiSSE) _jaiOpenSSE(jaiSessionId, _jaiEventIdx);
+    return;
+  }
+
   // Normal entry — show idle screen immediately (sidebar closes, page is usable right away)
   // [FIX] Clear stale session state so follow-up logic doesn't fire from the idle screen
   // after the user navigates away and back. jaiRunning must also be false so the send

@@ -9257,13 +9257,20 @@ COMMAND SAFETY:
 - NEVER: npm start, node server.js, python app.py, flask run, nodemon — these run forever.
 - Use command_type: "bash" for shell commands.
 
+DO NOT RUSH TO "DONE" — VERIFY BEFORE YOU SUMMARIZE:
+- Finishing quickly is not the goal; finishing CORRECTLY is. Before you write your final summary, go back through every file you created and actually check it: do the IDs/classes referenced in JS match what's in the HTML, do the CSS selectors match the actual markup, are all functions you call actually defined, do all asset paths (images, fonts, scripts) point at files that really exist in the project?
+- If the project has any interactive logic (a game, a form, a calculator, anything with state), trace through at least one full interaction by reading your own code path-by-path — don't just assume it works because it looks plausible.
+- If you find a mismatch or a gap during this check, fix it before finishing. A summary that says something is done when it hasn't actually been verified is worse than taking one more iteration to confirm it.
+- Only write your final summary once you've actually done this pass — not as a formality, as a real check.
+
 WORKFLOW:
 1. Think through the request properly first (see above) — what is really being asked, what design direction fits it, what files/assets it needs.
 2. create_tasks — plan out every file and feature the finished project needs
 3. create_file — build out the full project, file by file, with real complete content
 4. execute_command — run a build/install step if the stack needs one, to confirm it actually works
-5. update_tasks — mark each step complete
-6. Summarize what you built, the design direction you chose and why, and how to run/deploy it
+5. Verify your own work (see above) — re-check that everything actually connects and works, don't just assume
+6. update_tasks — mark each step complete
+7. Summarize what you built, the design direction you chose and why, and how to run/deploy it
 
 Remember: the user is trusting you to deliver a genuinely complete, working, well-thought-out project in one pass — not a rough draft they have to finish themselves, and not another generic AI-template look-alike.`;
   }
@@ -9305,6 +9312,10 @@ SEARCH STRATEGY:
 - search_files with context_lines: 3 to see surrounding code context.
 - search_files with pattern_type: "regex" for complex patterns.
 
+DO NOT RUSH TO "DONE" — VERIFY BEFORE YOU SUMMARIZE:
+- Before writing your final summary, re-check every file you touched: do references you added (IDs, functions, imports, asset paths) actually resolve against what's really in the codebase, not just what you intended to put there? Did fixing one thing quietly break an assumption something else in the file relied on?
+- Only declare the fix complete once you've actually verified this — a fast answer that turns out to still be broken costs the user more time than one more iteration to confirm it now.
+
 WORKFLOW for fixing a deployment error:
 1. create_tasks — plan the fix steps
 2. list_files — understand the project structure
@@ -9312,8 +9323,9 @@ WORKFLOW for fixing a deployment error:
 4. read_file — read affected files fully
 5. edit_file or create_file — apply a genuinely complete fix (see above — not a stub)
 6. execute_command — run tests if available (npm test, python -m pytest, etc.)
-7. update_tasks — mark each step complete
-8. Summarize exactly what you changed and why
+7. Verify your own change (see above) before moving on
+8. update_tasks — mark each step complete
+9. Summarize exactly what you changed and why
 
 All file paths must be absolute starting with: ${tmpDir}`;
 }
@@ -9382,7 +9394,11 @@ async function finalizeAgentRun(session, push, { tmpDir, provider, isUpload, isS
       push('status', { text: `Done! Pushed to ${repoData.full_name} ✓`, phase: 'done' });
       // [FIX] Give the user both a live repo AND a zip they can grab immediately,
       // instead of making them choose one or the other.
-      await packageAsZip(repoData.full_name.split('/')[1] || repoNameHint).catch(() => {});
+      try {
+        await packageAsZip(repoData.full_name.split('/')[1] || repoNameHint);
+      } catch (e) {
+        push('status', { text: `(Repo pushed successfully — zip packaging failed: ${String(e.message||e).slice(0,150)})`, phase: 'done' });
+      }
     } else {
       // No GitHub connection — package the whole build as a zip instead.
       push('status', { text: 'Packaging your project…', phase: 'commit' });
@@ -9525,7 +9541,12 @@ async function completeGithubPush(session, push, { target, newBranchName }) {
       files: Array.isArray(session._fileChanges) ? session._fileChanges : [],
       provider, providerLabel: getAgentProviderLabel(provider)
     });
-  } catch (_) { /* GitHub push already succeeded either way — zip is a bonus */ }
+  } catch (e) {
+    // GitHub push already succeeded either way — zip is a bonus, but the
+    // failure should still be visible instead of silently disappearing
+    // (this is exactly how the missing 'zip' binary bug went unnoticed).
+    push('status', { text: `(Push succeeded — zip packaging failed: ${String(e.message||e).slice(0,150)})`, phase: 'done' });
+  }
 
   session._pendingFinalize = null;
 }
