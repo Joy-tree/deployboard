@@ -1934,6 +1934,16 @@ tr:hover td { background: var(--bg-hover); }
 .btn-primary { background:var(--primary); color:#fff; border-color:var(--primary); }
 .btn-primary:hover { background:var(--primary-d); border-color:var(--primary-d); }
 .btn-ghost { background:transparent; color:var(--text-2); border-color:var(--border); }
+
+/* Simple toggle switch, used by the CDN enable/disable control */
+.switch { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch-slider { position: absolute; cursor: pointer; inset: 0; background: var(--border); border-radius: 999px; transition: background-color 0.15s ease; }
+.switch-slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.15s ease; }
+.switch input:checked + .switch-slider { background: var(--accent); }
+.switch input:checked + .switch-slider::before { transform: translateX(18px); }
+.switch input:focus-visible + .switch-slider { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 .btn-ghost:hover { background:var(--bg-hover); border-color:var(--border-hi); color:var(--text); }
 .btn-danger { background:rgba(239,68,68,0.1); color:var(--red); border-color:rgba(239,68,68,0.25); }
 .btn-danger:hover { background:rgba(239,68,68,0.18); border-color:rgba(239,68,68,0.4); }
@@ -11069,6 +11079,28 @@ document.addEventListener('keydown', function(e){
                 <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
                 Starting deployment pipeline…
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card env-command-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">CDN</div>
+              <div class="card-subtitle">Uses the same project selected above. When enabled, static assets are cached at Cloudflare's edge for up to a year (hashed/versioned filenames) or a day (plain JS/CSS) instead of 5 minutes — much faster repeat loads worldwide. HTML always stays fresh either way.</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <label class="switch">
+                <input type="checkbox" id="cdnEnabledToggle" onchange="toggleProjectCdn(this.checked)">
+                <span class="switch-slider"></span>
+              </label>
+              <span id="cdnStatusLabel" style="font-size:0.85rem;color:var(--text-3);">Select a project above to manage its CDN setting.</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">
+              <button class="btn btn-ghost btn-sm" onclick="purgeProjectCdn()">Purge Cache</button>
+              <span id="cdnPurgeStatus" style="font-size:0.78rem;color:var(--text-3);align-self:center;"></span>
             </div>
           </div>
         </div>
@@ -25387,6 +25419,7 @@ function toggleEnvVisibility(el) { el.type = el.type === 'password' ? 'text' : '
 
 async function loadEnvForProject() {
   const projectId = document.getElementById('envProjectSelect').value;
+  loadCdnStatusForProject(projectId);
   const display   = document.getElementById('envVarsDisplay');
   if (!display) return;
   try {
@@ -25425,6 +25458,72 @@ async function loadEnvForProject() {
   } catch (err) {
     console.warn('[env] render failed:', err?.message || err);
     display.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:0.82rem;">Could not load environment variables. Tap refresh.</div>';
+  }
+}
+
+async function loadCdnStatusForProject(projectId) {
+  const toggle = document.getElementById('cdnEnabledToggle');
+  const label  = document.getElementById('cdnStatusLabel');
+  if (!toggle || !label) return;
+  if (!projectId) {
+    toggle.checked = false;
+    toggle.disabled = true;
+    label.textContent = 'Select a project above to manage its CDN setting.';
+    return;
+  }
+  toggle.disabled = false;
+  label.textContent = 'Loading…';
+  try {
+    const r = await apiFetch('/api/projects/' + projectId + '/cdn/status');
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'Could not load CDN status');
+    toggle.checked = !!data.enabled;
+    label.textContent = toggle.checked
+      ? 'CDN enabled — assets cached aggressively at Cloudflare\'s edge.'
+      : 'CDN disabled — using standard short-lived caching.';
+  } catch (e) {
+    label.textContent = 'Could not load CDN status.';
+  }
+}
+
+async function toggleProjectCdn(enabled) {
+  const projectId = document.getElementById('envProjectSelect').value;
+  const label = document.getElementById('cdnStatusLabel');
+  if (!projectId) { toast('Select a project first', 'error'); document.getElementById('cdnEnabledToggle').checked = false; return; }
+  label.textContent = 'Saving…';
+  try {
+    const r = await apiFetch('/api/projects/' + projectId + '/cdn/toggle', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled })
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'Could not update CDN setting');
+    label.textContent = enabled
+      ? 'CDN enabled — assets cached aggressively at Cloudflare\'s edge.'
+      : 'CDN disabled — using standard short-lived caching.';
+    toast(enabled ? 'CDN enabled for this project' : 'CDN disabled for this project', 'success');
+  } catch (e) {
+    document.getElementById('cdnEnabledToggle').checked = !enabled;
+    label.textContent = 'Could not save — try again.';
+    toast(e.message || 'Could not update CDN setting', 'error');
+  }
+}
+
+async function purgeProjectCdn() {
+  const projectId = document.getElementById('envProjectSelect').value;
+  const status = document.getElementById('cdnPurgeStatus');
+  if (!projectId) { toast('Select a project first', 'error'); return; }
+  status.textContent = 'Purging…';
+  try {
+    const r = await apiFetch('/api/projects/' + projectId + '/cdn/purge', { method: 'POST' });
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'Purge failed');
+    status.textContent = 'Purged ✓';
+    toast('Cache purged for ' + data.purged, 'success');
+    setTimeout(() => { status.textContent = ''; }, 4000);
+  } catch (e) {
+    status.textContent = '';
+    toast(e.message || 'Purge failed', 'error');
   }
 }
 

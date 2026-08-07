@@ -774,8 +774,56 @@ app.use((req, res, next) => {
 });
 
 // ── Static file helper ────────────────────────────────────────────────────────
+// [FEATURE] CDN: smart cache headers, tuned differently depending on whether
+// the project has CDN explicitly enabled (see isCdnEnabledForSubdomain).
+// Subdomain is derived from distDir's own construction (always
+// SITES_DIR/<subdomain>/dist across every caller) rather than adding a new
+// parameter to this function's callers — this routing middleware has been
+// through many careful, narrow fixes tonight, and threading a new argument
+// through each call site risked disturbing logic unrelated to this feature.
+function subdomainFromDistDir(distDir) {
+  const rel = path.relative(SITES_DIR, distDir);
+  return rel.split(path.sep)[0] || '';
+}
+
+function applyCacheHeaders(res, filePath, cdnEnabled) {
+  const ext = path.extname(filePath).toLowerCase();
+  const base = path.basename(filePath);
+  // Build tools commonly emit a content hash into the filename itself
+  // (e.g. app.3f9a2c1d.js, chunk-8b91e.css) — these are safe to cache
+  // forever, since a real content change always produces a new filename.
+  const looksHashed = /[.\-_][a-f0-9]{6,}\./i.test(base) || /[.\-_][a-f0-9]{6,}$/i.test(base.replace(ext, ''));
+
+  if (ext === '.html' || base === '') {
+    // Always revalidate HTML — it's what references the (possibly
+    // newly-hashed) asset filenames, so it must never be served stale.
+    res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    return;
+  }
+  if (!cdnEnabled) {
+    // Conservative default (current/previous behavior, effectively) — short
+    // cache, safe for projects that haven't opted into aggressive caching.
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return;
+  }
+  if (looksHashed) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  } else if (['.js', '.css', '.mjs'].includes(ext)) {
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day — not hash-versioned, so not safe to treat as immutable
+  } else if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot'].includes(ext)) {
+    res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 days — media/fonts change less often even unhashed
+  } else {
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+  }
+}
+
 function serveStatic(req, res, distDir) {
-  const mw = express.static(distDir, { index: 'index.html' });
+  const subdomain = subdomainFromDistDir(distDir);
+  const cdnEnabled = isCdnEnabledForSubdomain(subdomain);
+  const mw = express.static(distDir, {
+    index: 'index.html',
+    setHeaders: (res, filePath) => applyCacheHeaders(res, filePath, cdnEnabled),
+  });
   mw(req, res, () => {
     if (requestLooksProgrammatic(req)) {
       return res.status(404).json({
@@ -785,7 +833,10 @@ function serveStatic(req, res, distDir) {
       });
     }
     const idx = path.join(distDir, 'index.html');
-    if (fs.existsSync(idx)) return res.sendFile(idx);
+    if (fs.existsSync(idx)) {
+      applyCacheHeaders(res, idx, cdnEnabled);
+      return res.sendFile(idx);
+    }
     res.status(404).send('Not found');
   });
 }
@@ -799,6 +850,48 @@ function serveStatic(req, res, distDir) {
 // This avoids a Firebase round-trip on every HTTP request while staying up to date.
 const _cdCache = new Map(); // host → subdomain
 let _cdCacheLastRefresh = 0;
+
+// [FEATURE] Per-project CDN toggle. Stored in a dedicated flat Firebase node
+// (deployboard_cdn_settings, subdomain -> {enabled, updatedAt}) rather than
+// nested inside each user's workspace projects array, specifically so this
+// cache can refresh with one small, fast Firebase fetch -- matching
+// _cdCache's own reasoning exactly, avoiding a full fetchAllWorkspaces()
+// scan on every stale-cache refresh, which would be a needless full-account
+// scan for a lookup this hot (checked on every single static file request
+// when serving a deployed project).
+const _cdnCache = new Map(); // subdomain -> boolean (CDN enabled)
+let _cdnCacheLastRefresh = 0;
+let _cdnCacheRefreshing = false;
+const CDN_CACHE_TTL_MS = 120 * 1000; // same TTL as _cdCache, same tradeoff reasoning
+
+async function refreshCdnCache() {
+  try {
+    if (!FIREBASE_RTDB_URL) return;
+    const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+    const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_cdn_settings.json${authQuery}`);
+    if (!r.ok) return;
+    const data = await r.json().catch(() => ({}));
+    if (data && typeof data === 'object') {
+      const fresh = new Map();
+      for (const [subdomain, entry] of Object.entries(data)) {
+        if (entry && entry.enabled) fresh.set(subdomain, true);
+      }
+      _cdnCache.clear();
+      for (const [k, v] of fresh) _cdnCache.set(k, v);
+    }
+    _cdnCacheLastRefresh = Date.now();
+  } catch (_) { /* keep serving from whatever's already cached */ }
+}
+
+function isCdnEnabledForSubdomain(subdomain) {
+  if (Date.now() - _cdnCacheLastRefresh > CDN_CACHE_TTL_MS && !_cdnCacheRefreshing) {
+    _cdnCacheRefreshing = true;
+    _cdnCacheLastRefresh = Date.now(); // optimistic, same reasoning as _cdCache
+    refreshCdnCache().catch(() => {}).finally(() => { _cdnCacheRefreshing = false; });
+  }
+  return _cdnCache.get(String(subdomain || '').toLowerCase()) === true;
+}
+
 let _cdCacheRefreshing = false; // [FIX] prevents concurrent Firebase stampede when cache is stale
 const CD_CACHE_TTL_MS = 120 * 1000; // [FIX] raised 30s→120s — reduces Firebase stampede on every subdomain request
 
@@ -6391,6 +6484,72 @@ app.get('/api/projects/:id/env', attachAuthIfPresent, async (req, res) => {
 
     res.json(vars);
   } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── CDN: check current status for a project ──────────────────────────────────
+app.get('/api/projects/:id/cdn/status', requireAuth, async (req, res) => {
+  try {
+    const { project: p } = await resolveEnvProject(req);
+    if (!p) return res.status(404).json({ error: 'Project not found' });
+    const subdomain = String(p.subdomain || '').toLowerCase();
+    if (!subdomain) return res.json({ ok: true, enabled: false });
+
+    if (!FIREBASE_RTDB_URL) return res.json({ ok: true, enabled: false });
+    const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+    const url = `${FIREBASE_RTDB_URL}/deployboard_cdn_settings/${subdomain}.json${authQuery}`;
+    const r = await fetch(url);
+    const data = r.ok ? await r.json().catch(() => null) : null;
+    res.json({ ok: true, enabled: !!(data && data.enabled) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── CDN: enable/disable per-project aggressive caching ──────────────────────
+app.post('/api/projects/:id/cdn/toggle', requireAuth, async (req, res) => {
+  try {
+    const { project: p } = await resolveEnvProject(req);
+    if (!p) return res.status(404).json({ error: 'Project not found' });
+    const subdomain = String(p.subdomain || '').toLowerCase();
+    if (!subdomain) return res.status(400).json({ error: 'Project has no subdomain yet' });
+
+    const enabled = !!(req.body && req.body.enabled);
+    if (!FIREBASE_RTDB_URL) return res.status(500).json({ error: 'CDN settings require Firebase to be configured' });
+    const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+    const url = `${FIREBASE_RTDB_URL}/deployboard_cdn_settings/${subdomain}.json${authQuery}`;
+    const body = enabled ? JSON.stringify({ enabled: true, updatedAt: new Date().toISOString() }) : 'null';
+    const r = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body });
+    if (!r.ok) return res.status(500).json({ error: 'Failed to save CDN setting' });
+
+    // Update the in-memory cache immediately rather than waiting up to
+    // CDN_CACHE_TTL_MS (120s) for the next stale-while-revalidate refresh —
+    // toggling this should take effect on the very next request.
+    if (enabled) _cdnCache.set(subdomain, true); else _cdnCache.delete(subdomain);
+
+    res.json({ ok: true, subdomain, enabled });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── CDN: purge Cloudflare's edge cache for this project's subdomain ─────────
+app.post('/api/projects/:id/cdn/purge', requireAuth, async (req, res) => {
+  try {
+    const { project: p } = await resolveEnvProject(req);
+    if (!p) return res.status(404).json({ error: 'Project not found' });
+    const subdomain = String(p.subdomain || '').toLowerCase();
+    if (!subdomain) return res.status(400).json({ error: 'Project has no subdomain yet' });
+    if (!CF_API_TOKEN || !CF_ZONE_ID) return res.status(500).json({ error: 'Cloudflare is not configured on this server' });
+
+    const host = `${subdomain}.${BASE_DOMAIN}`;
+    const r = await fetch(`https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/purge_cache`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${CF_API_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hosts: [host] }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data.success) {
+      const msg = data?.errors?.[0]?.message || 'Cloudflare rejected the purge request';
+      return res.status(502).json({ error: msg });
+    }
+    res.json({ ok: true, purged: host });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/projects/:id/env', requireAuth, async (req, res) => {
