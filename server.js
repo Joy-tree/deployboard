@@ -2072,6 +2072,29 @@ async function writeWorkspaceByKnownKey(key, workspace) {
   } catch (_) { return false; }
 }
 
+// [FIX] Requested platform fix: project names (which directly become the
+// subdomain) were never checked for uniqueness across DIFFERENT users --
+// only within a single user's own project list (see the existingBySub /
+// existingByName checks in /api/deploy, which only ever scanned that one
+// user's deployWsProjects). Two different users could create a project
+// named e.g. "docs", and whichever one deployed most recently would
+// silently take over the other's live subdomain and container -- the
+// second deploy doesn't error, it just overwrites. This checks across
+// EVERY user's workspace, not just the current one's.
+async function isSubdomainTakenByAnotherUser(subdomain, currentUserKey) {
+  const clean = String(subdomain || '').trim().toLowerCase();
+  if (!clean) return false;
+  const allWs = await fetchAllWorkspaces().catch(() => ({}));
+  for (const [key, ws] of Object.entries(allWs || {})) {
+    if (key === currentUserKey) continue; // a user redeploying their own existing project is fine
+    const projects = Array.isArray(ws?.projects) ? ws.projects : [];
+    if (projects.some(p => String(p?.subdomain || '').trim().toLowerCase() === clean)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 async function syncDeploymentProjectToFirebase(user, { project, deployment, status, liveUrl = '', envVars = null }) {
   try {
     const userForFirebase = await enrichAuthUser(user);
@@ -10311,6 +10334,19 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     return res.status(409).json({ error: 'Subdomain is unavailable. Please choose another subdomain.' });
   }
 
+  // [FIX] The checks above only ever protected against THIS user reusing
+  // their own name/subdomain inconsistently -- they never checked whether
+  // a DIFFERENT user already owns this exact subdomain. Without this, two
+  // different users could both deploy a project named "docs", and whoever
+  // deployed most recently would silently take over the other's live site.
+  if (!existingBySub) {
+    const takenElsewhere = await isSubdomainTakenByAnotherUser(cleanSub, firebaseWorkspaceKey(req.user)).catch(() => false);
+    if (takenElsewhere) {
+      deployLock.release();
+      return res.status(409).json({ error: `The subdomain "${cleanSub}" is already in use by another project. Please choose a different project name.` });
+    }
+  }
+
   // Assign port for server apps
   let appPort = 0;
   if (isServerApp) {
@@ -11362,6 +11398,18 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
   // acquireDeployLock's own comment near its definition for the full story.
   const deployLock = acquireDeployLock(cleanSub);
   if (!deployLock.ok) return res.status(409).json({ error: deployLock.message });
+
+  // [FIX] This endpoint had NO subdomain uniqueness check of any kind before
+  // this -- not even within the same user's own projects, let alone across
+  // different users. Two different users uploading a project with the same
+  // name/subdomain would silently overwrite each other's live site,
+  // whoever deployed most recently winning. See isSubdomainTakenByAnotherUser's
+  // own comment for the full story (same fix applied to /api/deploy).
+  const takenElsewhere = await isSubdomainTakenByAnotherUser(cleanSub, firebaseWorkspaceKey(req.user)).catch(() => false);
+  if (takenElsewhere) {
+    deployLock.release();
+    return res.status(409).json({ error: `The subdomain "${cleanSub}" is already in use by another project. Please choose a different project name.` });
+  }
 
   const filesDir = path.join(UPLOADS_DIR, userId, projectId, 'files');
   if (!fs.existsSync(filesDir)) {
