@@ -2037,6 +2037,40 @@ async function writeWorkspaceToFirebase(user, workspace) {
   }
 }
 
+// [FIX] Restored 2026-08 — this and writeWorkspaceByKnownKey right below it
+// were originally defined only inside the "Remix" feature's code, and were
+// accidentally deleted along with it when that feature was later removed
+// entirely, even though three OTHER, unrelated endpoints depend on them:
+// the admin panel's "list all users" and "set quota" endpoints, and the
+// impersonation-log endpoint. None of those are Remix-related; they just
+// happened to reuse a utility that was defined in the wrong place. Placed
+// here permanently, alongside the other core Firebase read/write helpers,
+// specifically so a future removal of any ONE feature can't silently take
+// this down for every other feature that depends on it too.
+async function fetchAllWorkspaces() {
+  if (!FIREBASE_RTDB_URL) return {};
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_workspaces.json${authQuery}`);
+  return (await r.json().catch(() => ({}))) || {};
+}
+
+// Writes directly to an already-known Firebase key (as returned by
+// fetchAllWorkspaces, keyed by firebaseWorkspaceKey) rather than re-deriving
+// the key from a user object -- avoids re-sanitizing an already-sanitized
+// key, and does its own localAuth cache sync keyed off the real key instead
+// of relying on a synthetic/fabricated user object to match correctly.
+async function writeWorkspaceByKnownKey(key, workspace) {
+  if (!FIREBASE_RTDB_URL || !key) return false;
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  const url = `${FIREBASE_RTDB_URL}/deployboard_workspaces/${key}.json${authQuery}`;
+  try {
+    const r = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(workspace) });
+    if (!r.ok) return false;
+    const localUser = localAuth.users.find(u => firebaseWorkspaceKey(u) === key);
+    if (localUser) { localUser.workspace = workspace; saveLocalAuth(); }
+    return true;
+  } catch (_) { return false; }
+}
 
 async function syncDeploymentProjectToFirebase(user, { project, deployment, status, liveUrl = '', envVars = null }) {
   try {
