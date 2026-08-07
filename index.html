@@ -40003,6 +40003,16 @@ async function saveJaiHistory(entry) {
     downloadUrl: entry.downloadUrl || '',
     zipName:     entry.zipName || '',
     subdomain:   entry.subdomain || '',
+    // [FIX] sessionId was never persisted, so every history card's follow-up
+    // silently skipped the "continue this session" path and always fell through
+    // to a brand-new /agent/start (fresh clone off main, new branch, new PR).
+    // Saving it lets openJaiHistoryItem() actually resume the live server
+    // session when it's still alive.
+    sessionId: entry.sessionId || jaiSessionId || _jaiPausedSessionId || '',
+    // [FIX] Keep the full turn-by-turn transcript (not just the 600-char
+    // summary) so reopening a history item can show the real conversation
+    // instead of a one-line recap.
+    transcript: (Array.isArray(entry.transcript) ? entry.transcript : _jaiTranscript).slice(-60),
     createdAt: Date.now(),
   };
   const localId = 'ls_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
@@ -40142,6 +40152,7 @@ function openJaiHistoryItem(index) {
   window.jaiLastRepoSlug = it.repoSlug || '';
   window.jaiLastBranch = it.branch || null;
   window.jaiLastPrUrl  = it.prUrl || null;
+  window.jaiLastPrNumber = it.prNumber || null;
 
   if (isUpload) {
     // Re-establish the upload context so follow-up fixes still work on stored files,
@@ -40169,16 +40180,27 @@ function openJaiHistoryItem(index) {
   switchJaiMainTab('convo');
   _jaiSetupContext && _jaiSetupContext();
 
-  // Seed the conversation with a recap so the user has context
+  // Seed the conversation. [FIX] Previously this always discarded the real
+  // thread and showed only a 1-line recap built from the 600-char summary —
+  // so every reopened history item looked like a blank new chat. Now replay
+  // the actual saved transcript when we have one, and only fall back to a
+  // recap for older entries saved before transcripts were persisted.
   const msgs = document.getElementById('jaiMessages');
   if (msgs) {
     msgs.innerHTML = '';
     _jaiTaskEl = null;
-    let recap = `<strong>Resuming ${isUpload ? 'upload fix' : 'session'} for ${escHtml(it.repoSlug || it.subdomain || 'project')}</strong>`;
-    if (it.summary) recap += `<br><br>${escHtml(it.summary)}`;
-    if (it.prUrl)  recap += `<br><br>Previous PR: <a href="${escHtml(it.prUrl)}" target="_blank" rel="noopener" style="color:#6ee7b7;">${escHtml(it.prUrl)}</a>`;
-    recap += `<br><br>What would you like to change or follow up on?`;
-    _jaiPushMsg('agent', recap);
+    _jaiTranscript = [];
+    if (Array.isArray(it.transcript) && it.transcript.length) {
+      for (const m of it.transcript) _jaiPushMsg(m.role, m.html);
+      const cont = `<br><br>What would you like to change or follow up on?`;
+      _jaiPushMsg('agent', cont);
+    } else {
+      let recap = `<strong>Resuming ${isUpload ? 'upload fix' : 'session'} for ${escHtml(it.repoSlug || it.subdomain || 'project')}</strong>`;
+      if (it.summary) recap += `<br><br>${escHtml(it.summary)}`;
+      if (it.prUrl)  recap += `<br><br>Previous PR: <a href="${escHtml(it.prUrl)}" target="_blank" rel="noopener" style="color:#6ee7b7;">${escHtml(it.prUrl)}</a>`;
+      recap += `<br><br>What would you like to change or follow up on?`;
+      _jaiPushMsg('agent', recap);
+    }
   }
   // For upload fixes with a still-valid download, re-show the download/deploy card
   if (isUpload && it.downloadUrl) {
@@ -40430,7 +40452,14 @@ function sendJaiMessage() {
   const repoMatch  = text.match(/([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)/);
   const repoSlug   = (repoMatch ? repoMatch[1] : '') || jaiActiveRepo || (jaiFromError?.repoSlug || '') || _jaiSelectedRepo || '';
   if (!repoSlug) { _jaiPushMsg('agent', 'I need a GitHub repo to work with. Mention it like <strong>username/repo-name</strong> and I\'ll take it from there.'); return; }
-  _jaiLaunchAgent(repoSlug, text, 'manual');
+  // [FIX] No live sessionId (e.g. reopened from an older history entry saved
+  // before sessionId persistence, or the entry was already server-expired),
+  // but we still know its branch/PR from history — continue on that branch
+  // instead of silently branching fresh off main again.
+  const continueOpts = (repoSlug === (jaiActiveRepo || '') && window.jaiLastBranch)
+    ? { continueBranch: window.jaiLastBranch, continuePrNumber: window.jaiLastPrNumber || null }
+    : undefined;
+  _jaiLaunchAgent(repoSlug, text, 'manual', undefined, continueOpts);
 }
 
 // Continue an existing session with a new instruction (true follow-up).
@@ -40448,13 +40477,23 @@ async function _jaiFollowUp(sessionId, userPrompt) {
     const d = await r.json();
     if (d.error) {
       if (['expired','workspace_gone','not_followable'].includes(d.error)) {
-        // [FIX] Do NOT silently launch _jaiLaunchAgent here — that created a brand-new
-        // server session saved to Firebase history, showing as an independent session on
-        // the main page. Inform the user so they can re-submit intentionally.
-        jaiRunning = false; jaiSessionId = null;
+        // [FIX] The old workspace is gone, but we still know which branch/PR
+        // this session was on (window.jaiLastBranch / jaiLastPrNumber, restored
+        // from history in openJaiHistoryItem or set on the last pr_created).
+        // Automatically re-clone AT that branch and continue the same PR
+        // instead of forcing the user to resend blind into a fresh clone off
+        // main (which is what was silently overwriting/orphaning branches).
+        jaiSessionId = null;
+        const rs = jaiActiveRepo || window.jaiLastRepoSlug || (jaiFromError?.repoSlug) || '';
+        const continueBranch = window.jaiLastBranch || '';
+        if (rs && continueBranch) {
+          _jaiPushMsg('agent', `⚠️ The previous workspace expired, so I'm re-cloning <strong>${escHtml(rs)}</strong> at branch <code>${escHtml(continueBranch)}</code> to continue where we left off (not main).`);
+          _jaiLaunchAgent(rs, userPrompt, 'manual', undefined, { continueBranch, continuePrNumber: window.jaiLastPrNumber || null });
+          return;
+        }
+        jaiRunning = false;
         document.getElementById('jaiSendBtn').disabled = false;
         document.getElementById('jaiStatusDot').className = 'jai-status-dot';
-        const rs = jaiActiveRepo || window.jaiLastRepoSlug || (jaiFromError?.repoSlug) || '';
         const hint = rs
           ? ` Send your request again and I'll start a new fix for <strong>${escHtml(rs)}</strong>.`
           : " Tell me the repo (username/repo-name) and I'll start a fresh fix.";
@@ -40473,10 +40512,13 @@ async function _jaiFollowUp(sessionId, userPrompt) {
 }
 
 // ── Launch agent ──────────────────────────────────────────────────
-async function _jaiLaunchAgent(repoSlug, userPrompt, mode, forceSourceType) {
+async function _jaiLaunchAgent(repoSlug, userPrompt, mode, forceSourceType, continueOpts) {
   if (jaiRunning) return;
   jaiActiveRepo = repoSlug || jaiActiveRepo;  // remember repo for follow-up messages in this session
   jaiRunning = true; jaiFileChanges = []; jaiFileTree = ''; jaiFullLog = []; _jaiTaskEl = null;
+  // [FIX] Don't wipe the transcript when this launch is actually a continuation
+  // of a history session (continueOpts set) — keep the replayed thread visible.
+  if (!continueOpts) _jaiTranscript = [];
   window.jaiLastPrUrl = null;
   // Always switch to Conversation so user sees the live process
   switchJaiMainTab('convo');
@@ -40500,6 +40542,10 @@ async function _jaiLaunchAgent(repoSlug, userPrompt, mode, forceSourceType) {
       sourceType:      forceSourceType || jaiFromError?.sourceType || 'github',
       uploadProjectId: jaiFromError?.uploadProjectId || '',
       uploadSubdomain: jaiFromError?.uploadSubdomain || '',
+      // [FIX] Continue an existing branch/PR (see _jaiFollowUp's expired handler
+      // and openJaiHistoryItem) instead of always branching fresh off main.
+      continueBranch:     continueOpts?.continueBranch || '',
+      continuePrNumber:   continueOpts?.continuePrNumber || null,
     };
     const r = await apiFetch('/api/ai/agent/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
     const d = await r.json();
@@ -40690,13 +40736,16 @@ function _jaiHandleEvent(type, payload) {
   }
   else if (type === 'pr_created')    {
     // Remember the AI-created branch + repo so the Redeploy button can
-    // auto-select the branch the agent pushed the fix to.
+    // auto-select the branch the agent pushed the fix to, and so a follow-up
+    // that has to start a fresh session can still target the same branch/PR.
     window.jaiLastBranch = payload.branch || null;
+    window.jaiLastPrNumber = payload.number || null;
     window.jaiLastRepoSlug = (jaiFromError && jaiFromError.repoSlug) || _jaiSelectedRepo || window.jaiLastRepoSlug || '';
     // Stash the fix details so they get saved to history when the run finishes.
     _jaiPendingHistory = {
       repoSlug: window.jaiLastRepoSlug || jaiActiveRepo || '',
       branch:   payload.branch || '',
+      prNumber: payload.number || null,
       prUrl:    payload.url || payload.prUrl || '',
       prNumber: payload.number || null,
       summary:  payload.summary || '',
@@ -40867,13 +40916,23 @@ async function jaiResumeAgent() {
   }
 }
 
-function _jaiPushMsg(role, html) {
+// [FIX] Running buffer of every message shown in the current session, so the
+// full thread (not just a 1-line summary) can be saved to history and replayed
+// when the user reopens this fix later. Reset per session in _jaiLaunchAgent /
+// openJaiHistoryItem.
+let _jaiTranscript = [];
+
+function _jaiPushMsg(role, html, opts) {
   const msgs = document.getElementById('jaiMessages');
   if (!msgs) return;
   const div = document.createElement('div');
   div.className = `jai-msg jai-msg-${role}`;
   div.innerHTML = `<div class="jai-bubble">${html}</div>`;
   msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+  if (!opts || !opts.skipTranscript) {
+    _jaiTranscript.push({ role, html, ts: Date.now() });
+    if (_jaiTranscript.length > 80) _jaiTranscript = _jaiTranscript.slice(-80);
+  }
 }
 
 /* Status line — spinning or done with bold text */
