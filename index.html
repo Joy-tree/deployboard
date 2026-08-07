@@ -9639,7 +9639,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                   Help &amp; examples
                 </div>
               </div>
-              <input type="file" id="jaiFileInput" style="display:none;" accept=".txt,.md,.json,.log,.env,.js,.ts,.py,.php,.html,.css" onchange="handleJaiFileAttach(this)">
+              <input type="file" id="jaiFileInput" style="display:none;" accept=".txt,.md,.json,.log,.env,.js,.ts,.py,.php,.html,.css,image/png,image/jpeg,image/gif,image/webp" onchange="handleJaiFileAttach(this,'jaiPromptInput')">
             </div>
 
             <div class="jai-slim-left">
@@ -9799,9 +9799,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,140)+'px'"></textarea>
             <div class="jai-slim-bar">
               <div class="jai-slim-left">
-                <button class="jai-icon-btn" title="Attach file" onclick="void(0)">
+                <button class="jai-icon-btn" id="jaiSlimAttachBtn" title="Attach file or image" onclick="document.getElementById('jaiSlimFileInput').click()">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="19" height="19" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 </button>
+                <input type="file" id="jaiSlimFileInput" style="display:none;" accept=".txt,.md,.json,.log,.env,.js,.ts,.py,.php,.html,.css,image/png,image/jpeg,image/gif,image/webp" onchange="handleJaiFileAttach(this,'jaiInput')">
                 <button class="jai-icon-btn jai-mode-toggle" id="jaiModeBtn" title="Mode: Build" onclick="cycleJaiMode()">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="17" height="17" stroke-linecap="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
                   <span class="jai-mode-label" id="jaiModeLabelSlim">Build</span>
@@ -10149,21 +10150,91 @@ document.addEventListener('click', function(e){
 });
 
 /* ── File attach handler ── */
-function handleJaiFileAttach(input){
+// [FIX] Previously this read EVERY file (including images) with
+// readAsText(), so attaching a screenshot pasted raw PNG/JPEG binary bytes
+// into the prompt as garbled text and never actually uploaded the image.
+// Images now get staged as real files via /api/ai/agent/attach-image and
+// shown as a small chip; only genuine text/code files still get inlined
+// into the prompt the way this always worked for e.g. a .env or .log file.
+let jaiPendingAttachments = [];  // [{attachmentId, fileName, mime}, ...] — cleared after each send
+
+function handleJaiFileAttach(input, targetTextareaId){
   const file = input.files && input.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e){
-    const content = e.target.result;
-    const ta = document.getElementById('jaiPromptInput');
-    if (ta) {
-      ta.value = (ta.value ? ta.value + '\n\n' : '') + '--- ' + file.name + ' ---\n' + content.slice(0,2000) + (content.length>2000?'\n[truncated…]':'');
-      ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,200)+'px';
-      ta.focus();
-    }
-  };
-  reader.readAsText(file);
+  const isImage = /^image\/(png|jpe?g|gif|webp)$/i.test(file.type);
+
+  if (isImage) {
+    const reader = new FileReader();
+    reader.onload = async function(e){
+      const dataUrl = e.target.result;
+      const chipId = 'jaiAtt_' + Date.now();
+      _jaiShowAttachmentChip(chipId, file.name, 'Uploading…');
+      try {
+        const r = await apiFetch('/api/ai/agent/attach-image', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataUrl, fileName: file.name })
+        });
+        const d = await r.json();
+        if (d.error) throw new Error(d.error);
+        jaiPendingAttachments.push({ attachmentId: d.attachmentId, fileName: d.fileName, mime: d.mime });
+        _jaiShowAttachmentChip(chipId, d.fileName, 'Attached ✓', true);
+      } catch (err) {
+        _jaiShowAttachmentChip(chipId, file.name, 'Failed to attach: ' + err.message, false, true);
+      }
+    };
+    reader.readAsDataURL(file);
+  } else {
+    // Genuine text/code file — keep the existing "inline into the prompt" behavior.
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const content = e.target.result;
+      const ta = document.getElementById(targetTextareaId || 'jaiPromptInput');
+      if (ta) {
+        ta.value = (ta.value ? ta.value + '\n\n' : '') + '--- ' + file.name + ' ---\n' + content.slice(0,2000) + (content.length>2000?'\n[truncated…]':'');
+        ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,200)+'px';
+        ta.focus();
+      }
+    };
+    reader.readAsText(file);
+  }
   input.value='';
+}
+
+// Small dismissible chip shown above the input while an image attachment
+// uploads/attaches, so the user can see (and remove) what's queued to send.
+function _jaiShowAttachmentChip(id, fileName, statusText, success, failed){
+  let bar = document.getElementById('jaiAttachmentBar');
+  if (!bar) {
+    // Insert right above whichever input area is currently visible.
+    const wrap = document.getElementById('jaiInputWrap') || document.getElementById('jaiPromptWrap');
+    if (!wrap) return;
+    bar = document.createElement('div');
+    bar.id = 'jaiAttachmentBar';
+    bar.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;padding:0 8px 6px;';
+    wrap.parentNode.insertBefore(bar, wrap);
+  }
+  let chip = document.getElementById(id);
+  if (!chip) {
+    chip = document.createElement('div');
+    chip.id = id;
+    chip.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 8px;font-size:.72rem;color:#94a3b8;';
+    bar.appendChild(chip);
+  }
+  const color = failed ? '#f87171' : (success ? '#34d399' : '#94a3b8');
+  chip.innerHTML = `<span style="color:${color};">${success?'🖼️':'⏳'}</span><span>${escHtml(fileName)}</span><span style="opacity:.7;">${escHtml(statusText||'')}</span>` +
+    `<span onclick="_jaiRemoveAttachmentChip('${id}','${escHtml(fileName)}')" style="cursor:pointer;opacity:.6;padding-left:2px;">✕</span>`;
+}
+
+function _jaiRemoveAttachmentChip(id, fileName){
+  jaiPendingAttachments = jaiPendingAttachments.filter(a => a.fileName !== fileName);
+  const chip = document.getElementById(id);
+  if (chip) chip.remove();
+}
+
+function _jaiClearAttachments(){
+  jaiPendingAttachments = [];
+  const bar = document.getElementById('jaiAttachmentBar');
+  if (bar) bar.innerHTML = '';
 }
 
 /* ── Enhance prompt ── */
@@ -40469,10 +40540,12 @@ async function _jaiFollowUp(sessionId, userPrompt) {
   document.getElementById('jaiSendBtn').disabled = true;
   document.getElementById('jaiStatusDot').className = 'jai-status-dot active';
   _jaiPushStatus('Working on your follow-up…', true);
+  const attachments = jaiPendingAttachments.slice();
+  _jaiClearAttachments();
   try {
     const r = await apiFetch(`/api/ai/agent/followup/${sessionId}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userPrompt })
+      body: JSON.stringify({ userPrompt, attachments })
     });
     const d = await r.json();
     if (d.error) {
@@ -40511,6 +40584,42 @@ async function _jaiFollowUp(sessionId, userPrompt) {
   }
 }
 
+// [NEW] Handles a tap on one of the push_target_prompt buttons: disables the
+// buttons, asks for a branch name if "new" was picked, posts the choice, and
+// resumes the SSE stream so the rest of the push/PR/zip flow plays out live.
+async function _jaiChoosePushTarget(btnEl, target) {
+  const group = btnEl.closest('.jai-bubble');
+  if (group) group.querySelectorAll('.jai-push-target-btn').forEach(b => { b.disabled = true; b.style.opacity = '.5'; b.style.cursor = 'default'; });
+
+  let newBranchName = '';
+  if (target === 'new') {
+    newBranchName = (window.prompt('New branch name:', '') || '').trim();
+    if (!newBranchName) {
+      if (group) group.querySelectorAll('.jai-push-target-btn').forEach(b => { b.disabled = false; b.style.opacity = '1'; b.style.cursor = 'pointer'; });
+      return;
+    }
+  }
+
+  jaiRunning = true;
+  document.getElementById('jaiSendBtn').disabled = true;
+  document.getElementById('jaiStatusDot').className = 'jai-status-dot active';
+  _jaiPushStatus(target === 'main' ? 'Pushing to main…' : target === 'new' ? `Pushing to new branch "${newBranchName}"…` : 'Pushing…', true);
+
+  try {
+    const r = await apiFetch(`/api/ai/agent/push-target/${jaiSessionId}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target, newBranchName })
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    _jaiOpenSSE(jaiSessionId, d.eventIndex || _jaiEventIdx);
+  } catch (e) {
+    jaiRunning = false;
+    document.getElementById('jaiSendBtn').disabled = false;
+    _jaiPushMsg('agent', `⚠️ Couldn't push: ${escHtml(e.message)}`);
+  }
+}
+
 // ── Launch agent ──────────────────────────────────────────────────
 async function _jaiLaunchAgent(repoSlug, userPrompt, mode, forceSourceType, continueOpts) {
   if (jaiRunning) return;
@@ -40546,7 +40655,11 @@ async function _jaiLaunchAgent(repoSlug, userPrompt, mode, forceSourceType, cont
       // and openJaiHistoryItem) instead of always branching fresh off main.
       continueBranch:     continueOpts?.continueBranch || '',
       continuePrNumber:   continueOpts?.continuePrNumber || null,
+      // [FIX] Real staged image attachments (see handleJaiFileAttach) — copied
+      // into the project as assets / sent as vision input, not garbled text.
+      attachments: jaiPendingAttachments.slice(),
     };
+    _jaiClearAttachments();
     const r = await apiFetch('/api/ai/agent/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
     const d = await r.json();
     if (d.error === 'claude_locked') {
@@ -40733,6 +40846,34 @@ function _jaiHandleEvent(type, payload) {
       '<a href="' + escHtml(payload.url || '#') + '" target="_blank" rel="noopener" style="color:var(--primary);font-weight:700;">' + escHtml(payload.repoSlug || payload.url || 'repository') + '</a>' +
       (payload.summary ? '<br><span style="opacity:.85;">' + escHtml(payload.summary) + '</span>' : '')
     );
+  }
+  else if (type === 'push_target_prompt') {
+    // [NEW] The agent finished and is asking where to push instead of assuming.
+    // Render tappable buttons; the choice posts to /api/ai/agent/push-target/:id
+    // and the SSE stream continues from there (same mechanism as follow-up).
+    const msgs = document.getElementById('jaiMessages');
+    if (msgs) {
+      const div = document.createElement('div');
+      div.className = 'jai-msg jai-msg-agent';
+      const btns = (payload.options || []).map(o =>
+        `<button class="jai-push-target-btn" data-target="${escHtml(o.id)}" onclick="_jaiChoosePushTarget(this,'${escHtml(o.id)}')" style="display:block;width:100%;text-align:left;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px 12px;margin-top:6px;color:#e2e8f0;font-size:.82rem;cursor:pointer;">${escHtml(o.label)}</button>`
+      ).join('');
+      div.innerHTML = `<div class="jai-bubble"><strong>Where should I push this?</strong>${btns}</div>`;
+      msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+      _jaiTranscript.push({ role: 'agent', html: div.querySelector('.jai-bubble').innerHTML, ts: Date.now() });
+    }
+    document.getElementById('jaiSendBtn').disabled = true;
+  }
+  else if (type === 'pushed_main') {
+    _jaiPushMsg('agent', `✅ Pushed straight to <strong>main</strong> on ${escHtml(payload.repoSlug || '')}. ${escHtml(payload.summary || '')}`);
+    window.jaiLastBranch = 'main'; window.jaiLastPrNumber = null;
+    _jaiPendingHistory = {
+      repoSlug: jaiActiveRepo || window.jaiLastRepoSlug || (jaiFromError && jaiFromError.repoSlug) || '',
+      branch: 'main', prUrl: '', prNumber: null,
+      summary: payload.summary || 'Pushed straight to main.',
+      diffStat: payload.diffStat || '', files: Array.isArray(jaiFileChanges) ? jaiFileChanges.map(f => ({ file: f.file, action: f.action })) : [],
+      status: 'main_push',
+    };
   }
   else if (type === 'pr_created')    {
     // Remember the AI-created branch + repo so the Redeploy button can

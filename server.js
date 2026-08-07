@@ -9225,6 +9225,21 @@ function buildAgentSystemPrompt(provider, repoSlug, projectName, deploymentId, t
 
 You are building a BRAND NEW project from scratch based on the user's request. There is no existing codebase — you start from an empty directory at: ${tmpDir}
 
+THINK BEFORE YOU BUILD — EVEN FOR SIMPLE-SOUNDING REQUESTS:
+- Before calling create_tasks, spend real reasoning effort on what's actually being asked, not just the literal words. A one-line prompt like "build me a bakery site" still implies: what pages, what tone/audience, what makes it feel like a real bakery instead of a generic template, what content it needs, how it should look distinct from every other AI-generated site.
+- Do not pattern-match the first idea that comes to mind and start generating. Consider 2-3 concrete directions (layout, visual style, content angle) and deliberately pick the one that best fits the specific request, then commit to it fully and consistently across every file.
+- Treat ambiguity as a design decision to make well, not an excuse to default to the blandest possible interpretation.
+
+DESIGN RULES — BUILD SOMETHING THAT LOOKS REAL, NOT "AI-GENERATED":
+- Do NOT default to purple/blue gradient hero sections, generic rounded-card grids, stock "Inter font + soft shadows + gradient blob" aesthetics, or interchangeable SaaS-template layouts. That look is an instant tell that a site was AI-generated and it should be actively avoided unless the user specifically asked for that style.
+- Pick a genuine visual point of view for THIS project: real typography choices (not just a default system font stack), a considered color palette grounded in the subject matter (a bakery site shouldn't look like a crypto dashboard), intentional spacing/layout rhythm, and at least one distinctive structural choice that isn't the generic centered-hero-then-3-column-features template.
+- Favor solid colors, real photography-style imagery references, and purposeful contrast over gradients-as-decoration. If a gradient is used, it should be subtle and justified by the brand, not the default "make it look techy" move.
+- Every project should look like it was designed for its specific subject, not reskinned from the same template with different text.
+
+USING PROVIDED IMAGES AS REAL ASSETS:
+- If the user has attached image files, they are real assets, not just something to describe. Copy them into the project (e.g. an /assets or /images folder) and actually reference them from the HTML/CSS (img src, background-image, etc.) so they render in the finished site — do not substitute a placeholder or a description of the image instead of using the real file.
+- If an attached image is a screenshot of an error, UI bug, or broken layout rather than a content asset, use it as diagnostic evidence: read what it shows and let it inform what you build/fix, the same way you'd use a stack trace.
+
 CRITICAL RULES — BUILD THE REAL, COMPLETE THING:
 - Never produce a skeleton, placeholder, or "starter" version. Build the actual, working, complete project the user described — full markup, full styling, full functionality, real content (not "Lorem ipsum" or "TODO" placeholders unless the user explicitly asked for a template).
 - For a website: build EVERY page/section implied by the request, with real CSS (not just inline bare-bones styling), responsive layout, and working interactivity where relevant. A single bare index.html with empty <head></head> and <body></body> is a FAILURE, not a valid answer.
@@ -9243,13 +9258,14 @@ COMMAND SAFETY:
 - Use command_type: "bash" for shell commands.
 
 WORKFLOW:
-1. create_tasks — plan out every file and feature the finished project needs
-2. create_file — build out the full project, file by file, with real complete content
-3. execute_command — run a build/install step if the stack needs one, to confirm it actually works
-4. update_tasks — mark each step complete
-5. Summarize what you built and how to run/deploy it
+1. Think through the request properly first (see above) — what is really being asked, what design direction fits it, what files/assets it needs.
+2. create_tasks — plan out every file and feature the finished project needs
+3. create_file — build out the full project, file by file, with real complete content
+4. execute_command — run a build/install step if the stack needs one, to confirm it actually works
+5. update_tasks — mark each step complete
+6. Summarize what you built, the design direction you chose and why, and how to run/deploy it
 
-Remember: the user is trusting you to deliver a genuinely complete, working project in one pass — not a rough draft they have to finish themselves.`;
+Remember: the user is trusting you to deliver a genuinely complete, working, well-thought-out project in one pass — not a rough draft they have to finish themselves, and not another generic AI-template look-alike.`;
   }
 
   return `You are JoyTree AI, an expert autonomous coding agent powered by ${modelLabel}, deployed on the Joytree platform (joytree.site).
@@ -9263,6 +9279,11 @@ CRITICAL RULES:
 - For ANY fix request, you MUST use tools to read and edit actual files. NEVER provide text-only responses.
 - Start with list_files to understand the project, then search_files to locate the error.
 - Use create_tasks at the start to plan your work. Update tasks as you progress.
+
+THINK BEFORE YOU ACT — EVEN FOR SIMPLE-SOUNDING REQUESTS:
+- Do not jump straight to the first plausible edit. Even a short prompt like "fix the login bug" deserves real reasoning: what are the plausible root causes, which files are actually involved, what else in the codebase depends on the thing you're about to change. Form a real hypothesis from evidence (the error, the code, the file structure) before editing anything.
+- A short or vague user prompt is not permission to do a shallow fix — if anything it means you have to do more of the thinking yourself, since the user hasn't spelled it out. Infer intent carefully from context (repo structure, existing conventions, the actual error) rather than guessing at the laziest interpretation.
+- If the user attached an image (a screenshot of a broken UI, a visual bug, an error dialog), treat it as primary evidence — read what it actually shows and let it drive your diagnosis, the same way you'd read a stack trace. If it's a content asset instead (a logo, product photo, etc.), it should end up referenced as a real file in the project, not just described in your summary.
 
 FIX THE ROOT CAUSE COMPLETELY — DO NOT PATCH AROUND IT:
 - [FIX] Previous guidance told you to make "precise, minimal" edits. That produced fixes that were technically not wrong but incomplete — e.g. told a file was missing, you'd create it with just an empty <head></head> and <body></body> and stop there. That is NOT a fix. If a file is missing, create the REAL, COMPLETE file: full markup, real CSS (not a single inline style), the actual content/functionality implied by the rest of the project — not a bare skeleton that merely stops the immediate error.
@@ -9359,6 +9380,9 @@ async function finalizeAgentRun(session, push, { tmpDir, provider, isUpload, isS
         summary: finalSummary, provider, providerLabel: getAgentProviderLabel(provider)
       });
       push('status', { text: `Done! Pushed to ${repoData.full_name} ✓`, phase: 'done' });
+      // [FIX] Give the user both a live repo AND a zip they can grab immediately,
+      // instead of making them choose one or the other.
+      await packageAsZip(repoData.full_name.split('/')[1] || repoNameHint).catch(() => {});
     } else {
       // No GitHub connection — package the whole build as a zip instead.
       push('status', { text: 'Packaging your project…', phase: 'commit' });
@@ -9392,41 +9416,25 @@ async function finalizeAgentRun(session, push, { tmpDir, provider, isUpload, isS
       push('status', { text: 'Committing fixes…', phase: 'commit' });
       const commitMsg = `fix: JoyTree AI (${getAgentProviderLabel(provider)}) [${deploymentId ? deploymentId.slice(-8) : 'manual'}] - ${finalSummary.slice(0, 200).replace(/"/g, "'").replace(/\n/g, ' ')}`;
       await execAsync(`cd "${tmpDir}" && git add -A && git commit -m "${commitMsg}" 2>&1`, { timeout: 20000 });
-      push('status', { text: `Pushing to "${branchName}"…`, phase: 'push' });
-      const cloneUrl = `https://x-access-token:${githubToken}@github.com/${repoSlug}.git`;
-      await execAsync(`cd "${tmpDir}" && git remote set-url origin "${cloneUrl}" && git push origin "${branchName}" 2>&1`, { timeout: 30000 });
 
-      // [FIX] If this run is continuing a known PR (branch reused from history/
-      // a previous session), don't open a duplicate PR — the push above already
-      // updated it. Just fetch the current PR data for the event/history entry.
-      let prData = null;
-      let isPrUpdate = false;
-      if (session.continuePrNumber) {
-        prData = await getGithubPRByNumber({ repoSlug, prNumber: session.continuePrNumber, githubToken });
-        isPrUpdate = !!prData;
-      }
-      if (!prData) {
-        push('status', { text: isPrUpdate ? 'Updating Pull Request…' : 'Creating Pull Request…', phase: 'pr' });
-        prData = await createGithubPR({
-          repoSlug, branchName, githubToken,
-          title: `🤖 JoyTree AI: Auto-fix${projectName ? ' for ' + projectName : ''}`,
-          body: [
-            '## JoyTree AI Agent Auto-Fix',
-            `> Powered by **${getAgentProviderLabel(provider)}** via [JoyTree](https://joytree.site)`,
-            '', '### Error', '```', (errorText || 'See deployment logs').slice(0, 1500), '```',
-            '', '### What Changed', finalSummary.slice(0, 2000),
-            '', '### Diff Stats', '```', diffStat.trim(), '```',
-            '', `---\n*Generated by JoyTree AI Agent · ${getAgentProviderLabel(provider)}*`
-          ].join('\n')
-        });
-      }
-      session.prUrl = prData.html_url; session.prNumber = prData.number; session.status = 'done';
-      // [FIX] Remember this branch/PR on the session so the NEXT follow-up in
-      // the same live session keeps building on it (finalize doesn't reset
-      // branchName, and /agent/followup reuses session.tmpDir + branchName as-is).
-      session.continuePrNumber = prData.number;
-      push('pr_created', { url: prData.html_url, branch: branchName, number: prData.number, diffStat: diffStat.trim(), title: prData.title, provider, providerLabel: getAgentProviderLabel(provider), updated: isPrUpdate });
-      push('status', { text: isPrUpdate ? 'Done! Pull Request updated ✓' : 'Done! Pull Request created ✓', phase: 'done' });
+      // [FIX] Don't assume where this should go. Pause here and ask the user
+      // to choose: continue on the current/previous branch, push straight to
+      // main, or start a different new branch — then push-target endpoint
+      // below finishes the job with that choice, exactly once per run.
+      session.status = 'awaiting_push_target';
+      session._pendingFinalize = { tmpDir, provider, ctx, finalSummary, branchName, diffStat: diffStat.trim(), sessionId };
+      const continuing = !!(session.isContinuation || session.continuePrNumber);
+      push('push_target_prompt', {
+        branch: branchName,
+        continuing,
+        options: [
+          { id: 'current', label: continuing ? `Push to "${branchName}" (updates the existing PR)` : `Push to "${branchName}" (opens a PR)` },
+          { id: 'main',    label: 'Push straight to main (no PR)' },
+          { id: 'new',     label: 'Create a different new branch' }
+        ]
+      });
+      push('status', { text: 'Where should I push this?', phase: 'push' });
+      return; // wait for POST /api/ai/agent/push-target/:sessionId
     } else {
       session.status = 'done_no_changes';
       push('no_changes', { summary: finalSummary });
@@ -9435,7 +9443,94 @@ async function finalizeAgentRun(session, push, { tmpDir, provider, isUpload, isS
   }
 }
 
-async function runAgentSession(sessionId, { repoSlug, githubToken, errorText, deploymentId, projectName, userPrompt, mode, preferredProvider, analysisContext, sourceType, uploadProjectId, uploadSubdomain, userId, userKeys, isContinuation, continueBranch }) {
+// [NEW] Completes a paused finalizeAgentRun once the user has chosen where to
+// push (see push_target_prompt above): the branch it was already working on
+// (continuing an existing PR when there is one), straight to main, or a fresh
+// branch. Always also packages a zip afterward so the user gets both a live
+// GitHub push AND a downloadable copy, instead of having to pick one.
+async function completeGithubPush(session, push, { target, newBranchName }) {
+  const pf = session._pendingFinalize;
+  if (!pf) throw new Error('Nothing pending to push for this session.');
+  const { tmpDir, provider, ctx, finalSummary, diffStat, sessionId } = pf;
+  const { repoSlug, projectName, errorText, githubToken, userId } = ctx;
+  let branchName = pf.branchName;
+
+  if (target === 'main') {
+    push('status', { text: 'Pushing straight to main…', phase: 'push' });
+    const cloneUrl = `https://x-access-token:${githubToken}@github.com/${repoSlug}.git`;
+    await execAsync(`cd "${tmpDir}" && git remote set-url origin "${cloneUrl}" 2>&1`, { timeout: 10000 });
+    try {
+      await execAsync(`cd "${tmpDir}" && git push origin HEAD:main 2>&1`, { timeout: 30000 });
+    } catch (e) {
+      push('error', { message: `Direct push to main failed (usually means main moved and this isn't a fast-forward): ${String(e.message||e).slice(0,300)}. Try "push to a branch" instead so it can open a PR.` });
+      session.status = 'error';
+      session._pendingFinalize = null;
+      return;
+    }
+    session.status = 'done';
+    session.prUrl = null; session.prNumber = null; session.continuePrNumber = null;
+    push('pushed_main', { repoSlug, diffStat, summary: finalSummary });
+    push('status', { text: 'Done! Pushed straight to main ✓', phase: 'done' });
+  } else {
+    if (target === 'new') {
+      const nb = String(newBranchName || '').trim().replace(/[^a-zA-Z0-9/_.-]/g, '-').slice(0, 80) || `joytree-ai-fix-${String(sessionId).slice(-10)}`;
+      await execAsync(`cd "${tmpDir}" && git checkout -b "${nb}" 2>&1`, { timeout: 15000 });
+      branchName = nb;
+      session.branchName = nb;
+      session.continuePrNumber = null; // a fresh branch has no PR to continue
+    }
+    push('status', { text: `Pushing to "${branchName}"…`, phase: 'push' });
+    const cloneUrl = `https://x-access-token:${githubToken}@github.com/${repoSlug}.git`;
+    await execAsync(`cd "${tmpDir}" && git remote set-url origin "${cloneUrl}" && git push origin "${branchName}" 2>&1`, { timeout: 30000 });
+
+    // Reuse an existing open PR for this branch instead of opening a duplicate.
+    let prData = null, isPrUpdate = false;
+    if (session.continuePrNumber) {
+      prData = await getGithubPRByNumber({ repoSlug, prNumber: session.continuePrNumber, githubToken });
+      isPrUpdate = !!prData;
+    }
+    if (!prData) {
+      push('status', { text: isPrUpdate ? 'Updating Pull Request…' : 'Creating Pull Request…', phase: 'pr' });
+      prData = await createGithubPR({
+        repoSlug, branchName, githubToken,
+        title: `🤖 JoyTree AI: Auto-fix${projectName ? ' for ' + projectName : ''}`,
+        body: [
+          '## JoyTree AI Agent Auto-Fix',
+          `> Powered by **${getAgentProviderLabel(provider)}** via [JoyTree](https://joytree.site)`,
+          '', '### Error', '```', (errorText || 'See deployment logs').slice(0, 1500), '```',
+          '', '### What Changed', finalSummary.slice(0, 2000),
+          '', '### Diff Stats', '```', diffStat, '```',
+          '', `---\n*Generated by JoyTree AI Agent · ${getAgentProviderLabel(provider)}*`
+        ].join('\n')
+      });
+    }
+    session.prUrl = prData.html_url; session.prNumber = prData.number; session.status = 'done';
+    session.continuePrNumber = prData.number;
+    push('pr_created', { url: prData.html_url, branch: branchName, number: prData.number, diffStat, title: prData.title, provider, providerLabel: getAgentProviderLabel(provider), updated: isPrUpdate });
+    push('status', { text: isPrUpdate ? 'Done! Pull Request updated ✓' : 'Done! Pull Request created ✓', phase: 'done' });
+  }
+
+  // [FIX] Always also hand back a zip, whichever push target was chosen —
+  // "should both push to GitHub and package it as a zip", not one or the other.
+  try {
+    const zipDir = path.join(UPLOADS_DIR, userId, '_ai_fixes');
+    fs.mkdirSync(zipDir, { recursive: true });
+    const zipName = `joytree-ai-${(projectName || 'project').replace(/[^a-zA-Z0-9_-]/g,'_')}-${String(sessionId).slice(-6)}.zip`;
+    const zipPath = path.join(zipDir, zipName);
+    await execAsync(`cd "${tmpDir}" && zip -r -q "${zipPath}" . -x '*.git*' -x '*/node_modules/*' -x '*/dist/*' 2>&1`, { timeout: 120000 });
+    session.zipPath = zipPath; session.zipName = zipName;
+    push('fix_zip_ready', {
+      downloadUrl: `/api/ai/agent/download/${sessionId}`, zipName,
+      summary: finalSummary, projectName: projectName || '',
+      files: Array.isArray(session._fileChanges) ? session._fileChanges : [],
+      provider, providerLabel: getAgentProviderLabel(provider)
+    });
+  } catch (_) { /* GitHub push already succeeded either way — zip is a bonus */ }
+
+  session._pendingFinalize = null;
+}
+
+async function runAgentSession(sessionId, { repoSlug, githubToken, errorText, deploymentId, projectName, userPrompt, mode, preferredProvider, analysisContext, sourceType, uploadProjectId, uploadSubdomain, userId, userKeys, isContinuation, continueBranch, attachments }) {
   const isUpload  = sourceType === 'upload';
   const isScratch = sourceType === 'scratch';
   // [FIX] Normalize once up front — the frontend may pass a full GitHub URL.
@@ -9564,6 +9659,41 @@ async function runAgentSession(sessionId, { repoSlug, githubToken, errorText, de
       push('status', { text: `Repository cloned. Starting ${getAgentProviderLabel(provider)} agent…`, phase: 'analyze' });
     }
 
+    // [FIX] Real image attachments (from /api/ai/agent/attach-image) — copy them
+    // into the project as actual asset files so the agent can reference them
+    // (img src, background-image, etc.), instead of the old behavior of pasting
+    // raw binary bytes into the prompt text as garbage.
+    let attachmentNote = '';
+    const claudeImageBlocks = [];
+    if (Array.isArray(attachments) && attachments.length) {
+      const assetsDir = path.join(tmpDir, 'assets');
+      fs.mkdirSync(assetsDir, { recursive: true });
+      const copied = [];
+      for (const att of attachments) {
+        try {
+          const destName = att.fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
+          fs.copyFileSync(att.absPath, path.join(assetsDir, destName));
+          copied.push({ relPath: `assets/${destName}`, mime: att.mime, absPath: att.absPath });
+        } catch (_) { /* skip attachments that fail to copy rather than failing the whole run */ }
+      }
+      if (copied.length) {
+        push('status', { text: `Added ${copied.length} attached image${copied.length>1?'s':''} to the project…`, phase: 'clone' });
+        attachmentNote = `\n\nAttached image file(s) have been copied into the project at: ${copied.map(c=>c.relPath).join(', ')}. ` +
+          `If they're content assets (logo, product photo, etc.), reference the REAL file (e.g. <img src="${copied[0].relPath}">) — do not use a placeholder instead. ` +
+          `If instead they're screenshots of an error or a broken UI, use them as diagnostic evidence for what's wrong.`;
+        // Claude can actually see images — attach them as real vision content blocks
+        // so it can diagnose a screenshot instead of only knowing its file path.
+        if (provider === 'claude') {
+          for (const c of copied) {
+            try {
+              const b64 = fs.readFileSync(c.absPath).toString('base64');
+              claudeImageBlocks.push({ type: 'image', source: { type: 'base64', media_type: c.mime, data: b64 } });
+            } catch (_) {}
+          }
+        }
+      }
+    }
+
     // Initial file tree for context
     const { stdout: rawTree } = await execAsync(
       `find "${tmpDir}" -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/.next/*' -not -path '*/coverage/*' | head -120 2>&1`,
@@ -9574,6 +9704,10 @@ async function runAgentSession(sessionId, { repoSlug, githubToken, errorText, de
 
     // Build messages (common format — callAgentLLM converts for Claude internally)
     const systemPrompt = buildAgentSystemPrompt(provider, repoSlug, projectName, deploymentId, tmpDir, sourceType);
+    const initialUserText = (userPrompt
+      || (errorText
+        ? `Fix this deployment error:\n\n${String(errorText).slice(0, 6000)}`
+        : `Analyze the repository at ${tmpDir} for deployment issues and fix them.`)) + attachmentNote;
     const messages = [
       { role: 'system', content: systemPrompt },
       { role: 'system', content: `Repository file tree:\n${fileTree.slice(0, 8000)}` },
@@ -9586,10 +9720,12 @@ async function runAgentSession(sessionId, { repoSlug, githubToken, errorText, de
       }] : []),
       {
         role: 'user',
-        content: userPrompt
-          || (errorText
-            ? `Fix this deployment error:\n\n${String(errorText).slice(0, 6000)}`
-            : `Analyze the repository at ${tmpDir} for deployment issues and fix them.`)
+        // [FIX] When Claude is the provider and real images were attached, send
+        // them as actual vision content blocks (array) so Claude can literally
+        // see the screenshot/asset, not just read its file path. Other
+        // providers here aren't wired for vision, so they get the text note
+        // above describing where the asset landed instead.
+        content: claudeImageBlocks.length ? [{ type: 'text', text: initialUserText }, ...claudeImageBlocks] : initialUserText
       }
     ];
     // Persist the conversation + context on the session so a paused run
@@ -9917,6 +10053,57 @@ app.post('/api/ai/keys', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// POST /api/ai/agent/attach-image — stage an image attachment for the AI agent.
+// [FIX] Previously the frontend attach button read ANY file (including images)
+// with FileReader.readAsText() and pasted the raw bytes into the prompt text,
+// producing garbage like "PNG\x00IHDR..." instead of anything usable. Real
+// images are now uploaded here as base64, stored on disk, and referenced by id
+// — the agent run copies them into the project as real asset files and (for
+// vision-capable providers) can actually see them to diagnose visual bugs.
+const AI_ATTACHMENTS_DIR = () => path.join(UPLOADS_DIR, '_ai_attachments');
+app.post('/api/ai/agent/attach-image', requireAuth, async (req, res) => {
+  try {
+    const { dataUrl, fileName } = req.body || {};
+    if (!dataUrl || typeof dataUrl !== 'string') return res.status(400).json({ error: 'dataUrl required' });
+    const m = dataUrl.match(/^data:(image\/(?:png|jpe?g|gif|webp));base64,(.+)$/);
+    if (!m) return res.status(400).json({ error: 'Only PNG, JPG, GIF, or WEBP images are supported' });
+    const mime = m[1];
+    const buf = Buffer.from(m[2], 'base64');
+    const MAX_BYTES = 8 * 1024 * 1024;
+    if (buf.length > MAX_BYTES) return res.status(400).json({ error: 'Image must be under 8MB' });
+
+    const userId = String(req.user?._id || req.user?.id || 'anon');
+    const dir = path.join(AI_ATTACHMENTS_DIR(), userId);
+    fs.mkdirSync(dir, { recursive: true });
+    const ext = mime === 'image/png' ? '.png' : mime === 'image/gif' ? '.gif' : mime === 'image/webp' ? '.webp' : '.jpg';
+    const safeBase = String(fileName || 'image').replace(/[^a-zA-Z0-9_.-]/g, '_').replace(/\.[a-z0-9]+$/i, '').slice(0, 60) || 'image';
+    const id = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}`;
+    const storedName = `${id}-${safeBase}${ext}`;
+    fs.writeFileSync(path.join(dir, storedName), buf);
+
+    res.json({ ok: true, attachmentId: `${userId}/${storedName}`, fileName: `${safeBase}${ext}`, mime, bytes: buf.length });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not stage image' });
+  }
+});
+
+// Resolve staged attachment ids (from attach-image above) to real files on
+// disk, scoped to the requesting user so one user can't reference another's
+// staged upload just by guessing an id.
+function resolveAgentAttachments(userId, attachments) {
+  if (!Array.isArray(attachments) || !attachments.length) return [];
+  const out = [];
+  for (const a of attachments) {
+    const id = String(a?.attachmentId || a?.id || '').trim();
+    if (!id || !id.startsWith(`${userId}/`)) continue;
+    const abs = path.join(AI_ATTACHMENTS_DIR(), id);
+    if (!abs.startsWith(AI_ATTACHMENTS_DIR())) continue; // path traversal guard
+    if (!fs.existsSync(abs)) continue;
+    out.push({ absPath: abs, fileName: a.fileName || path.basename(abs), mime: a.mime || 'image/png' });
+  }
+  return out;
+}
+
 // POST /api/ai/agent/start
 app.post('/api/ai/agent/start', requireAuth, async (req, res) => {
   const { repoSlug, errorText, deploymentId, projectName, userPrompt, mode, preferredProvider, analysisContext,
@@ -9924,7 +10111,9 @@ app.post('/api/ai/agent/start', requireAuth, async (req, res) => {
           // [FIX] When set, the agent continues work on an existing branch/PR
           // (e.g. reopened from history after the previous in-memory session
           // expired) instead of re-cloning main and opening a brand-new PR.
-          continueBranch, continuePrNumber } = req.body || {};
+          continueBranch, continuePrNumber,
+          // [FIX] Real image attachments — ids returned by /agent/attach-image.
+          attachments } = req.body || {};
   const githubToken = req.user?.githubAccessToken || '';
   const isUpload = sourceType === 'upload';
   // [NEW] "scratch" = build a brand new project from a prompt, no existing
@@ -9995,9 +10184,11 @@ app.post('/api/ai/agent/start', requireAuth, async (req, res) => {
 
   res.json({ ok: true, sessionId, provider, providerLabel: getAgentProviderLabel(provider) });
 
+  const resolvedAttachments = resolveAgentAttachments(userId, attachments);
+
   runAgentSession(sessionId, { repoSlug, githubToken, errorText, deploymentId, projectName, userPrompt, mode, preferredProvider, analysisContext,
                                sourceType: resolvedSourceType, uploadProjectId: uploadProjectId || uploadSubdomain || '', uploadSubdomain: uploadSubdomain || '', userId, userKeys,
-                               isContinuation, continueBranch: branchName }).catch(e => {
+                               isContinuation, continueBranch: branchName, attachments: resolvedAttachments }).catch(e => {
     const s = agentSessions.get(sessionId);
     if (s) { s.status = 'error'; s.events.push({ type: 'error', payload: { message: e.message }, ts: Date.now() }); }
   });
@@ -10020,14 +10211,50 @@ app.post('/api/ai/agent/resume/:sessionId', requireAuth, async (req, res) => {
 // so the agent builds on prior work instead of re-cloning from scratch.
 app.post('/api/ai/agent/followup/:sessionId', requireAuth, async (req, res) => {
   const session = agentSessions.get(req.params.sessionId);
-  const { userPrompt } = req.body || {};
+  const { userPrompt, attachments } = req.body || {};
   if (!session) return res.status(404).json({ error: 'expired' });          // tell client to start fresh
   if (!session.messages || !session.runCtx) return res.status(409).json({ error: 'not_followable' });
   if (!session.tmpDir || !fs.existsSync(session.tmpDir)) return res.status(410).json({ error: 'workspace_gone' });
   if (!userPrompt || !userPrompt.trim()) return res.status(400).json({ error: 'userPrompt required' });
 
+  // [FIX] Same real-image handling as the initial run — copy attachments into
+  // the existing workspace as actual assets, and give Claude an actual vision
+  // block instead of pasted binary garbage.
+  const userId = String(req.user?._id || req.user?.id || 'anon');
+  const resolved = resolveAgentAttachments(userId, attachments);
+  let attachmentNote = '';
+  const claudeImageBlocks = [];
+  if (resolved.length) {
+    const assetsDir = path.join(session.tmpDir, 'assets');
+    fs.mkdirSync(assetsDir, { recursive: true });
+    const copied = [];
+    for (const att of resolved) {
+      try {
+        const destName = att.fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
+        fs.copyFileSync(att.absPath, path.join(assetsDir, destName));
+        copied.push({ relPath: `assets/${destName}`, mime: att.mime, absPath: att.absPath });
+      } catch (_) {}
+    }
+    if (copied.length) {
+      attachmentNote = `\n\nAttached image file(s) have been copied into the project at: ${copied.map(c=>c.relPath).join(', ')}. ` +
+        `If they're content assets, reference the REAL file — do not use a placeholder. If they're screenshots of an error or broken UI, use them as diagnostic evidence.`;
+      if (session.runCtx?.provider === 'claude') {
+        for (const c of copied) {
+          try {
+            const b64 = fs.readFileSync(c.absPath).toString('base64');
+            claudeImageBlocks.push({ type: 'image', source: { type: 'base64', media_type: c.mime, data: b64 } });
+          } catch (_) {}
+        }
+      }
+    }
+  }
+  const followupText = userPrompt + attachmentNote;
+
   // Append the new instruction to the existing conversation.
-  session.messages.push({ role: 'user', content: userPrompt });
+  session.messages.push({
+    role: 'user',
+    content: claudeImageBlocks.length ? [{ type: 'text', text: followupText }, ...claudeImageBlocks] : followupText
+  });
   // Reset per-run state for the new turn (keep workspace + conversation).
   session.paused = false;
   session._fileChanges = [];
@@ -10040,6 +10267,27 @@ app.post('/api/ai/agent/followup/:sessionId', requireAuth, async (req, res) => {
   resumeAgentSession(req.params.sessionId).catch(e => {
     const s = agentSessions.get(req.params.sessionId);
     if (s) { s.status = 'error'; s.events.push({ type: 'error', payload: { message: e.message }, ts: Date.now() }); }
+  });
+});
+
+// POST /api/ai/agent/push-target/:sessionId — the user's answer to
+// push_target_prompt (see finalizeAgentRun): push to the current/previous
+// branch, straight to main, or a new branch.
+app.post('/api/ai/agent/push-target/:sessionId', requireAuth, async (req, res) => {
+  const session = agentSessions.get(req.params.sessionId);
+  const { target, newBranchName } = req.body || {};
+  if (!session) return res.status(404).json({ error: 'expired' });
+  if (session.status !== 'awaiting_push_target' || !session._pendingFinalize) {
+    return res.status(409).json({ error: 'not_awaiting_push' });
+  }
+  if (!['current', 'main', 'new'].includes(target)) return res.status(400).json({ error: 'target must be current, main, or new' });
+
+  res.json({ ok: true, sessionId: req.params.sessionId, eventIndex: session.events.length });
+
+  const push = (type, payload) => session.events.push({ type, payload, ts: Date.now() });
+  completeGithubPush(session, push, { target, newBranchName }).catch(e => {
+    session.status = 'error';
+    push('error', { message: e.message });
   });
 });
 
