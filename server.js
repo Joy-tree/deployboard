@@ -8940,9 +8940,72 @@ async function createGithubPR({ repoSlug, branchName, githubToken, title, body }
   throw new Error('GitHub PR creation failed — check repo permissions and branch name.');
 }
 
+// [NEW] Creates a brand-new GitHub repo for a from-scratch agent build. Tries
+// the requested name, then name-2, name-3... if it's already taken, rather
+// than failing outright — a from-scratch build shouldn't die on a name clash.
+async function createGithubRepo({ name, githubToken, description }) {
+  const headers = { Authorization: `Bearer ${githubToken}`, 'Content-Type': 'application/json', 'User-Agent': 'JoyTree-AI-Agent/1.0' };
+  const base = String(name || 'joytree-project').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'joytree-project';
+  let lastErr = null;
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const tryName = attempt === 0 ? base : `${base}-${attempt + 1}`;
+    try {
+      const r = await fetch('https://api.github.com/user/repos', {
+        method: 'POST', headers,
+        body: JSON.stringify({ name: tryName, description: (description || 'Built by JoyTree AI').slice(0, 350), private: false, auto_init: false }),
+        signal: AbortSignal.timeout(20000)
+      });
+      if (r.ok) return r.json();
+      const err = await r.json().catch(() => ({}));
+      const msg = String(err?.message || '');
+      const isNameTaken = /already exists/i.test(msg) || (Array.isArray(err.errors) && err.errors.some(e => /already exists/i.test(String(e.message || ''))));
+      if (!isNameTaken) throw new Error(`GitHub repo creation failed: ${msg || 'HTTP ' + r.status}`);
+      lastErr = new Error(`Name "${tryName}" already taken`);
+    } catch (e) {
+      lastErr = e;
+      if (!/already taken/i.test(e.message)) throw e;
+    }
+  }
+  throw new Error(lastErr ? lastErr.message : 'Could not find an available repo name after several attempts.');
+}
+
 // ── Agent system prompt ───────────────────────────────────────────
-function buildAgentSystemPrompt(provider, repoSlug, projectName, deploymentId, tmpDir) {
+function buildAgentSystemPrompt(provider, repoSlug, projectName, deploymentId, tmpDir, sourceType) {
   const modelLabel = getAgentProviderLabel(provider);
+
+  if (sourceType === 'scratch') {
+    // [FIX] Building something new from a prompt — full project, not a stub.
+    return `You are JoyTree AI, an expert autonomous coding agent powered by ${modelLabel}, deployed on the Joytree platform (joytree.site).
+
+You are building a BRAND NEW project from scratch based on the user's request. There is no existing codebase — you start from an empty directory at: ${tmpDir}
+
+CRITICAL RULES — BUILD THE REAL, COMPLETE THING:
+- Never produce a skeleton, placeholder, or "starter" version. Build the actual, working, complete project the user described — full markup, full styling, full functionality, real content (not "Lorem ipsum" or "TODO" placeholders unless the user explicitly asked for a template).
+- For a website: build EVERY page/section implied by the request, with real CSS (not just inline bare-bones styling), responsive layout, and working interactivity where relevant. A single bare index.html with empty <head></head> and <body></body> is a FAILURE, not a valid answer.
+- For an app: implement the actual features requested, with real logic, not stub functions that just return placeholder values.
+- Think about what a real project needs beyond the literal ask: a README, sensible file/folder structure, a package.json if it's a Node project, basic error handling. Include these without being asked, the way a competent engineer would.
+- Use create_file for every file the project needs. Do not stop after one or two files if the project genuinely needs more — keep going until the thing is actually usable.
+
+FILE OPERATION RULES:
+- Use create_tasks at the start to plan every file/feature you'll build. Update tasks as you progress.
+- Check with list_files before creating a file, in case something already exists.
+- All file paths must be absolute starting with: ${tmpDir}
+
+COMMAND SAFETY:
+- Only execute_command for things that exit quickly (npm install, npm run build, node -e "...", etc.)
+- NEVER: npm start, node server.js, python app.py, flask run, nodemon — these run forever.
+- Use command_type: "bash" for shell commands.
+
+WORKFLOW:
+1. create_tasks — plan out every file and feature the finished project needs
+2. create_file — build out the full project, file by file, with real complete content
+3. execute_command — run a build/install step if the stack needs one, to confirm it actually works
+4. update_tasks — mark each step complete
+5. Summarize what you built and how to run/deploy it
+
+Remember: the user is trusting you to deliver a genuinely complete, working project in one pass — not a rough draft they have to finish themselves.`;
+  }
+
   return `You are JoyTree AI, an expert autonomous coding agent powered by ${modelLabel}, deployed on the Joytree platform (joytree.site).
 
 You have been given access to a cloned GitHub repository at: ${tmpDir}
@@ -8954,6 +9017,12 @@ CRITICAL RULES:
 - For ANY fix request, you MUST use tools to read and edit actual files. NEVER provide text-only responses.
 - Start with list_files to understand the project, then search_files to locate the error.
 - Use create_tasks at the start to plan your work. Update tasks as you progress.
+
+FIX THE ROOT CAUSE COMPLETELY — DO NOT PATCH AROUND IT:
+- [FIX] Previous guidance told you to make "precise, minimal" edits. That produced fixes that were technically not wrong but incomplete — e.g. told a file was missing, you'd create it with just an empty <head></head> and <body></body> and stop there. That is NOT a fix. If a file is missing, create the REAL, COMPLETE file: full markup, real CSS (not a single inline style), the actual content/functionality implied by the rest of the project — not a bare skeleton that merely stops the immediate error.
+- "Minimal" refers to not touching unrelated, unbroken code — it does NOT mean doing the least amount of work possible on the thing you ARE fixing. Once you've identified what needs to change, make that change complete and production-quality, not a stub that happens to stop the error message.
+- If fixing one file reveals it depends on other missing pieces (a missing CSS file it links to, a missing component it imports), create those too in the same pass rather than leaving a trail of new broken references.
+- Before finishing, mentally check: if a real user opened this in a browser right now, would it actually look/work right, or just technically not crash? If it's the latter, keep going.
 
 FILE OPERATION RULES:
 - ALWAYS read_file BEFORE edit_file — the validator will reject edits on unread files.
@@ -8974,7 +9043,7 @@ WORKFLOW for fixing a deployment error:
 2. list_files — understand the project structure
 3. search_files — locate where the error originates
 4. read_file — read affected files fully
-5. edit_file or create_file — apply precise, minimal fixes
+5. edit_file or create_file — apply a genuinely complete fix (see above — not a stub)
 6. execute_command — run tests if available (npm test, python -m pytest, etc.)
 7. update_tasks — mark each step complete
 8. Summarize exactly what you changed and why
@@ -8985,9 +9054,72 @@ All file paths must be absolute starting with: ${tmpDir}`;
 // ── Main agent runner ─────────────────────────────────────────────
 // ── Shared finalizer: commit+PR (GitHub) or zip-for-download (upload) ──
 // Used by both the initial run and a resumed run so the logic stays identical.
-async function finalizeAgentRun(session, push, { tmpDir, provider, isUpload, ctx, finalSummary, branchName }) {
-  const { repoSlug, projectName, deploymentId, githubToken, errorText, uploadProjectId, userId } = ctx;
+async function finalizeAgentRun(session, push, { tmpDir, provider, isUpload, isScratch, ctx, finalSummary, branchName }) {
+  const { repoSlug, projectName, deploymentId, githubToken, errorText, uploadProjectId, userId, userPrompt } = ctx;
   const sessionId = [...agentSessions.entries()].find(([,s]) => s === session)?.[0] || session._id || '';
+
+  // Shared zip-packaging helper — used by both upload-fix and scratch-build
+  // (scratch, when there's no GitHub token to push a new repo to).
+  const packageAsZip = async (nameHint) => {
+    const zipDir = path.join(UPLOADS_DIR, userId, '_ai_fixes');
+    fs.mkdirSync(zipDir, { recursive: true });
+    const zipName = `joytree-ai-${(nameHint || 'project').replace(/[^a-zA-Z0-9_-]/g,'_')}-${String(sessionId).slice(-6)}.zip`;
+    const zipPath = path.join(zipDir, zipName);
+    await execAsync(`cd "${tmpDir}" && zip -r -q "${zipPath}" . -x '*.git*' -x '*/node_modules/*' -x '*/dist/*' 2>&1`, { timeout: 120000 });
+    session.zipPath = zipPath; session.zipName = zipName; session.status = 'done';
+    push('fix_zip_ready', {
+      downloadUrl: `/api/ai/agent/download/${sessionId}`, zipName,
+      summary: finalSummary, subdomain: session.uploadProjectId || '', projectName: projectName || '',
+      files: Array.isArray(session._fileChanges) ? session._fileChanges : [],
+      provider, providerLabel: getAgentProviderLabel(provider)
+    });
+    push('status', { text: 'Done! Your project is ready to download ✓', phase: 'done' });
+  };
+
+  if (isScratch) {
+    push('status', { text: 'Checking what got built…', phase: 'commit' });
+    const { stdout: lsOut } = await execAsync(`find "${tmpDir}" -mindepth 1 -not -path '*/.git*' 2>&1`, { timeout: 15000 }).catch(() => ({ stdout: '' }));
+    const hasFiles = lsOut.trim().length > 0;
+    if (!hasFiles) {
+      session.status = 'done_no_changes';
+      push('no_changes', { summary: finalSummary || 'No files were created.' });
+      push('status', { text: 'Nothing was built — try describing the project in more detail.', phase: 'done' });
+      return;
+    }
+    if (githubToken) {
+      // GitHub connected: create a brand-new repo and push everything to it.
+      push('status', { text: 'Creating a new GitHub repository…', phase: 'push' });
+      const repoNameHint = (projectName || userPrompt || 'joytree-project').toString().slice(0, 60);
+      let repoData;
+      try {
+        repoData = await createGithubRepo({ name: repoNameHint, githubToken, description: (userPrompt || '').slice(0, 200) });
+      } catch (e) {
+        // Repo creation failed (permissions, rate limit, etc.) — fall back to
+        // zip so the user still gets their project instead of nothing.
+        push('status', { text: `Could not create a GitHub repo (${e.message}) — packaging as a zip instead…`, phase: 'commit' });
+        await packageAsZip(repoNameHint);
+        return;
+      }
+      push('status', { text: 'Committing and pushing your project…', phase: 'push' });
+      const commitMsg = `Initial commit — built by JoyTree AI (${getAgentProviderLabel(provider)})${userPrompt ? ': ' + userPrompt.slice(0, 150) : ''}`;
+      await execAsync(`cd "${tmpDir}" && git add -A && git commit -m "${commitMsg.replace(/"/g, "'")}" 2>&1`, { timeout: 20000 });
+      const cloneUrl = `https://x-access-token:${githubToken}@github.com/${repoData.full_name}.git`;
+      await execAsync(`cd "${tmpDir}" && git remote add origin "${cloneUrl}" 2>&1 || git remote set-url origin "${cloneUrl}"`, { timeout: 10000 });
+      await execAsync(`cd "${tmpDir}" && git push -u origin main 2>&1`, { timeout: 30000 });
+      session.newRepoUrl = repoData.html_url;
+      session.status = 'done';
+      push('repo_created', {
+        url: repoData.html_url, repoSlug: repoData.full_name,
+        summary: finalSummary, provider, providerLabel: getAgentProviderLabel(provider)
+      });
+      push('status', { text: `Done! Pushed to ${repoData.full_name} ✓`, phase: 'done' });
+    } else {
+      // No GitHub connection — package the whole build as a zip instead.
+      push('status', { text: 'Packaging your project…', phase: 'commit' });
+      await packageAsZip(projectName || userPrompt || 'project');
+    }
+    return;
+  }
 
   if (isUpload) {
     push('status', { text: 'Packaging your fixed project…', phase: 'commit' });
@@ -8999,19 +9131,7 @@ async function finalizeAgentRun(session, push, { tmpDir, provider, isUpload, ctx
     } catch (_) {}
     const hasChanges = changedCount > 0 || (Array.isArray(session._fileChanges) && session._fileChanges.length > 0);
     if (hasChanges) {
-      const zipDir = path.join(UPLOADS_DIR, userId, '_ai_fixes');
-      fs.mkdirSync(zipDir, { recursive: true });
-      const zipName = `joytree-ai-fix-${(projectName || uploadProjectId || 'project').replace(/[^a-zA-Z0-9_-]/g,'_')}-${String(sessionId).slice(-6)}.zip`;
-      const zipPath = path.join(zipDir, zipName);
-      await execAsync(`cd "${tmpDir}" && zip -r -q "${zipPath}" . -x '*.git*' -x '*/node_modules/*' -x '*/dist/*' 2>&1`, { timeout: 120000 });
-      session.zipPath = zipPath; session.zipName = zipName; session.status = 'done';
-      push('fix_zip_ready', {
-        downloadUrl: `/api/ai/agent/download/${sessionId}`, zipName,
-        summary: finalSummary, subdomain: session.uploadProjectId || '', projectName: projectName || '',
-        files: Array.isArray(session._fileChanges) ? session._fileChanges : [],
-        provider, providerLabel: getAgentProviderLabel(provider)
-      });
-      push('status', { text: 'Done! Your fixed project is ready to download ✓', phase: 'done' });
+      await packageAsZip(projectName || uploadProjectId || 'project');
     } else {
       session.status = 'done_no_changes';
       push('no_changes', { summary: finalSummary });
@@ -9054,10 +9174,11 @@ async function finalizeAgentRun(session, push, { tmpDir, provider, isUpload, ctx
 }
 
 async function runAgentSession(sessionId, { repoSlug, githubToken, errorText, deploymentId, projectName, userPrompt, mode, preferredProvider, analysisContext, sourceType, uploadProjectId, uploadSubdomain, userId, userKeys }) {
-  const isUpload = sourceType === 'upload';
+  const isUpload  = sourceType === 'upload';
+  const isScratch = sourceType === 'scratch';
   // [FIX] Normalize once up front — the frontend may pass a full GitHub URL.
-  // (Skipped for uploads, which have no GitHub slug.)
-  if (!isUpload) repoSlug = normalizeRepoSlug(repoSlug);
+  // (Skipped for uploads/scratch builds, which have no existing GitHub slug.)
+  if (!isUpload && !isScratch) repoSlug = normalizeRepoSlug(repoSlug);
 
   const session = agentSessions.get(sessionId);
   const push = (type, payload) => session.events.push({ type, payload, ts: Date.now() });
@@ -9145,6 +9266,13 @@ async function runAgentSession(sessionId, { repoSlug, githubToken, errorText, de
       await execAsync(`cp -a "${filesDir}/." "${tmpDir}/" 2>&1`, { timeout: 60000 });
       session.repoCloned = true;
       push('status', { text: `Files loaded. Starting ${getAgentProviderLabel(provider)} agent…`, phase: 'analyze' });
+    } else if (isScratch) {
+      // ── Scratch build: empty workspace, fresh git repo, no clone ──
+      push('status', { text: 'Setting up a fresh workspace…', phase: 'clone' });
+      await execAsync(`cd "${tmpDir}" && git init -q && git checkout -q -b main 2>&1`, { timeout: 15000 });
+      await execAsync(`cd "${tmpDir}" && git config user.email "ai@joytree.site" && git config user.name "JoyTree AI Agent"`, { timeout: 10000 });
+      session.repoCloned = true;
+      push('status', { text: `Workspace ready. ${getAgentProviderLabel(provider)} is building your project…`, phase: 'analyze' });
     } else {
       // ── GitHub project: clone the repo ──
       push('status', { text: 'Cloning repository…', phase: 'clone' });
@@ -9164,7 +9292,7 @@ async function runAgentSession(sessionId, { repoSlug, githubToken, errorText, de
     push('file_tree', { tree: fileTree });
 
     // Build messages (common format — callAgentLLM converts for Claude internally)
-    const systemPrompt = buildAgentSystemPrompt(provider, repoSlug, projectName, deploymentId, tmpDir);
+    const systemPrompt = buildAgentSystemPrompt(provider, repoSlug, projectName, deploymentId, tmpDir, sourceType);
     const messages = [
       { role: 'system', content: systemPrompt },
       { role: 'system', content: `Repository file tree:\n${fileTree.slice(0, 8000)}` },
@@ -9186,7 +9314,7 @@ async function runAgentSession(sessionId, { repoSlug, githubToken, errorText, de
     // Persist the conversation + context on the session so a paused run
     // (rate limit / 413) can RESUME from exactly here instead of restarting.
     session.messages = messages;
-    session.runCtx = { provider, repoSlug, projectName, deploymentId, githubToken, errorText, sourceType, uploadProjectId, userId, branchName: session.branchName, userKeys };
+    session.runCtx = { provider, repoSlug, projectName, deploymentId, githubToken, errorText, sourceType, uploadProjectId, userId, userPrompt, branchName: session.branchName, userKeys };
     session.iteration = 0;
 
     push('status', { text: `${getAgentProviderLabel(provider)} is thinking…`, phase: 'think' });
@@ -9297,8 +9425,8 @@ async function runAgentSession(sessionId, { repoSlug, githubToken, errorText, de
     }
 
     await finalizeAgentRun(session, push, {
-      tmpDir, provider, isUpload,
-      ctx: { repoSlug, projectName, deploymentId, githubToken, errorText, uploadProjectId, userId },
+      tmpDir, provider, isUpload, isScratch,
+      ctx: { repoSlug, projectName, deploymentId, githubToken, errorText, uploadProjectId, userId, userPrompt },
       finalSummary, branchName
     });
 
@@ -9353,6 +9481,7 @@ async function resumeAgentSession(sessionId) {
   const tmpDir = session.tmpDir;
   const provider = ctx.provider;
   const isUpload = ctx.sourceType === 'upload';
+  const isScratch = ctx.sourceType === 'scratch';
   const messages = session.messages;
   const branchName = ctx.branchName;
 
@@ -9418,8 +9547,8 @@ async function resumeAgentSession(sessionId) {
       }
     }
 
-    // Finalize — same commit/PR or zip logic via the shared finalizer
-    await finalizeAgentRun(session, push, { tmpDir, provider, isUpload, ctx, finalSummary, branchName });
+    // Finalize — same commit/PR, new-repo, or zip logic via the shared finalizer
+    await finalizeAgentRun(session, push, { tmpDir, provider, isUpload, isScratch, ctx, finalSummary, branchName });
   } catch (e) {
     session.status = 'error';
     const raw = e.message || String(e);
@@ -9513,6 +9642,10 @@ app.post('/api/ai/agent/start', requireAuth, async (req, res) => {
           sourceType, uploadProjectId, uploadSubdomain } = req.body || {};
   const githubToken = req.user?.githubAccessToken || '';
   const isUpload = sourceType === 'upload';
+  // [NEW] "scratch" = build a brand new project from a prompt, no existing
+  // repo or upload required. If GitHub is connected, the agent creates a
+  // new repo and pushes there; if not, it produces a downloadable zip.
+  const isScratch = sourceType === 'scratch';
 
   // BYOK: load the user's own API keys (if any) so they can use providers/models
   // with their own higher rate limits and billing.
@@ -9531,10 +9664,12 @@ app.post('/api/ai/agent/start', requireAuth, async (req, res) => {
     }
   }
 
-  // GitHub token only required for GitHub repos — upload fixes work on stored files.
-  if (!isUpload && !githubToken) return res.status(400).json({ error: 'No GitHub token — please sign in with GitHub to use the AI Agent.' });
-  if (!isUpload && !repoSlug)    return res.status(400).json({ error: 'repoSlug is required (e.g. username/my-app)' });
+  // GitHub token only required for GitHub repos — upload fixes work on stored files,
+  // and scratch builds work with no GitHub connection at all (zip fallback).
+  if (!isUpload && !isScratch && !githubToken) return res.status(400).json({ error: 'No GitHub token — please sign in with GitHub to use the AI Agent.' });
+  if (!isUpload && !isScratch && !repoSlug)    return res.status(400).json({ error: 'repoSlug is required (e.g. username/my-app)' });
   if (isUpload && !uploadProjectId && !uploadSubdomain) return res.status(400).json({ error: 'uploadProjectId or uploadSubdomain is required for an upload fix.' });
+  if (isScratch && !String(userPrompt || '').trim()) return res.status(400).json({ error: 'Describe what you want built.' });
 
   const userId = String(req.user?._id || req.user?.id || 'anon');
   if (mode === 'trial') {
@@ -9550,15 +9685,16 @@ app.post('/api/ai/agent/start', requireAuth, async (req, res) => {
 
   const sessionId  = 'agt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
   const branchName = `joytree-ai-fix-${sessionId.slice(-10)}`;
+  const resolvedSourceType = isScratch ? 'scratch' : (isUpload ? 'upload' : 'github');
 
   agentSessions.set(sessionId, {
     status: 'starting', provider,
     repoSlug, branchName, deploymentId, projectName,
-    sourceType: isUpload ? 'upload' : 'github',
+    sourceType: resolvedSourceType,
     uploadProjectId: uploadProjectId || uploadSubdomain || '',
     zipPath: null,
     userKeys,   // BYOK keys for this run (used by callAgentLLM)
-    events: [], prUrl: null, prNumber: null,
+    events: [], prUrl: null, prNumber: null, newRepoUrl: null,
     tmpDir: null, repoCloned: false,
     startedAt: new Date().toISOString()
   });
@@ -9566,7 +9702,7 @@ app.post('/api/ai/agent/start', requireAuth, async (req, res) => {
   res.json({ ok: true, sessionId, provider, providerLabel: getAgentProviderLabel(provider) });
 
   runAgentSession(sessionId, { repoSlug, githubToken, errorText, deploymentId, projectName, userPrompt, mode, preferredProvider, analysisContext,
-                               sourceType: isUpload ? 'upload' : 'github', uploadProjectId: uploadProjectId || uploadSubdomain || '', uploadSubdomain: uploadSubdomain || '', userId, userKeys }).catch(e => {
+                               sourceType: resolvedSourceType, uploadProjectId: uploadProjectId || uploadSubdomain || '', uploadSubdomain: uploadSubdomain || '', userId, userKeys }).catch(e => {
     const s = agentSessions.get(sessionId);
     if (s) { s.status = 'error'; s.events.push({ type: 'error', payload: { message: e.message }, ts: Date.now() }); }
   });

@@ -9499,6 +9499,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 .jai-hist-rail { width:4px; flex-shrink:0; background:var(--jai-green); }
 .jai-hist-rail.pr   { background:linear-gradient(180deg,#10b981,#34d399); }
 .jai-hist-rail.zip  { background:linear-gradient(180deg,#10b981,#6ee7b7); }
+.jai-hist-rail.new_repo { background:linear-gradient(180deg,#8b5cf6,#a78bfa); }
 .jai-hist-rail.none { background:#475569; }
 .jai-hist-rail.err  { background:var(--jai-red); }
 .jai-hist-body { flex:1; min-width:0; padding:13px 15px; }
@@ -9515,6 +9516,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 }
 .jai-hist-status-chip.pr   { background:rgba(16,185,129,.12); color:#34d399; border:1px solid rgba(16,185,129,.25); }
 .jai-hist-status-chip.zip  { background:rgba(16,185,129,.1); color:#6ee7b7; border:1px solid rgba(16,185,129,.22); }
+.jai-hist-status-chip.new_repo { background:rgba(139,92,246,.12); color:#a78bfa; border:1px solid rgba(139,92,246,.28); }
 .jai-hist-status-chip.none { background:rgba(71,85,105,.18); color:#94a3b8; border:1px solid rgba(71,85,105,.3); }
 .jai-hist-status-chip.err  { background:rgba(239,68,68,.1); color:#f87171; border:1px solid rgba(239,68,68,.25); }
 .jai-hist-summary {
@@ -39977,14 +39979,16 @@ function renderJaiHistory(items) {
     const slug   = it.repoSlug || 'unknown/repo';
     const owner  = slug.split('/')[0] || '';
     const name   = slug.split('/')[1] || slug;
-    const st     = it.status === 'none' ? 'none' : it.status === 'err' ? 'err' : it.status === 'zip' ? 'zip' : 'pr';
-    const stLabel = st === 'pr' ? 'PR Opened' : st === 'none' ? 'No changes' : st === 'err' ? 'Failed' : 'Fix Ready';
+    const st     = it.status === 'none' ? 'none' : it.status === 'err' ? 'err' : it.status === 'zip' ? 'zip' : it.status === 'new_repo' ? 'new_repo' : 'pr';
+    const stLabel = st === 'pr' ? 'PR Opened' : st === 'none' ? 'No changes' : st === 'err' ? 'Failed' : st === 'new_repo' ? 'New Repo' : 'Fix Ready';
     const stIcon = st === 'pr'
       ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="9" height="9"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>'
       : st === 'zip'
       ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="9" height="9"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
       : st === 'none'
       ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="9" height="9"><polyline points="20 6 9 17 4 12"/></svg>'
+      : st === 'new_repo'
+      ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="9" height="9"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>'
       : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="9" height="9"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     // diffStat e.g. "server.js | 11 +++++++++++ 1 file changed, 11 insertions(+)"
     let adds = '', dels = '';
@@ -40178,8 +40182,15 @@ function jaiStartFromPrompt() {
   const repoSlug  = repoMatch ? repoMatch[1]
                  : (_jaiSelectedRepo || (jaiFromError?.repoSlug || ''));
 
+  // [FIX] No repo mentioned or selected used to just block here with
+  // "I need a GitHub repo". That's wrong for "build me a website" style
+  // requests, which have no existing repo by definition — treat that as a
+  // from-scratch build instead: the agent builds the full project, then
+  // creates a new GitHub repo to push it to (if connected) or hands back
+  // a zip (if not).
   if (!repoSlug) {
-    _jaiPushMsg('agent', 'I need a GitHub repo to work with. Mention it like <strong>username/repo-name</strong>, or use the <strong>Repo</strong> button to pick one.');
+    _jaiPushMsg('agent', "No existing repo mentioned — I'll build this as a brand-new project instead.");
+    _jaiLaunchAgent('', text, 'manual', 'scratch');
     return;
   }
 
@@ -40363,7 +40374,7 @@ async function _jaiFollowUp(sessionId, userPrompt) {
 }
 
 // ── Launch agent ──────────────────────────────────────────────────
-async function _jaiLaunchAgent(repoSlug, userPrompt, mode) {
+async function _jaiLaunchAgent(repoSlug, userPrompt, mode, forceSourceType) {
   if (jaiRunning) return;
   jaiActiveRepo = repoSlug || jaiActiveRepo;  // remember repo for follow-up messages in this session
   jaiRunning = true; jaiFileChanges = []; jaiFileTree = ''; jaiFullLog = []; _jaiTaskEl = null;
@@ -40385,7 +40396,9 @@ async function _jaiLaunchAgent(repoSlug, userPrompt, mode) {
       projectName:     jaiFromError?.projectName     || '',
       analysisContext: jaiFromError?.analysisContext || '', // ← Groq pre-analysis forwarded to Claude
       // Upload-source fixes: tell the server to work on stored files instead of cloning.
-      sourceType:      jaiFromError?.sourceType      || 'github',
+      // Scratch builds (forceSourceType === 'scratch'): no existing repo/upload at all --
+      // the server builds a brand-new project and either pushes a new GitHub repo or zips it.
+      sourceType:      forceSourceType || jaiFromError?.sourceType || 'github',
       uploadProjectId: jaiFromError?.uploadProjectId || '',
       uploadSubdomain: jaiFromError?.uploadSubdomain || '',
     };
@@ -40554,6 +40567,27 @@ function _jaiHandleEvent(type, payload) {
       zipName:    payload.zipName || '',
       subdomain:  payload.subdomain || '',
     };
+  }
+  else if (type === 'repo_created')  {
+    // Scratch build pushed to a brand-new GitHub repo.
+    window.jaiLastRepoSlug = payload.repoSlug || window.jaiLastRepoSlug || '';
+    window.jaiLastBranch = 'main';
+    _jaiPendingHistory = {
+      repoSlug: payload.repoSlug || '',
+      branch:   'main',
+      prUrl:    payload.url || '',
+      prNumber: null,
+      summary:  payload.summary || '',
+      diffStat: '',
+      files:    Array.isArray(jaiFileChanges) ? jaiFileChanges.map(f => ({ file: f.file, action: f.action })) : [],
+      status:   'new_repo',
+      sourceType: 'scratch',
+    };
+    _jaiPushMsg('agent',
+      '🎉 Built your project and pushed it to a brand-new repo: ' +
+      '<a href="' + escHtml(payload.url || '#') + '" target="_blank" rel="noopener" style="color:var(--primary);font-weight:700;">' + escHtml(payload.repoSlug || payload.url || 'repository') + '</a>' +
+      (payload.summary ? '<br><span style="opacity:.85;">' + escHtml(payload.summary) + '</span>' : '')
+    );
   }
   else if (type === 'pr_created')    {
     // Remember the AI-created branch + repo so the Redeploy button can
