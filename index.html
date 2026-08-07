@@ -21617,6 +21617,17 @@ function showPage(id, navEl, _skipPush) {
   } else {
     document.documentElement.classList.remove('page-code-ide');
   }
+  // [FIX] The global "?" tour-guide FAB (#jtTourGuideBtn) is fixed at
+  // bottom:22px;right:22px — the exact same corner the JoyTree AI page's
+  // own round send button sits in, so the two overlapped and the FAB (being
+  // on top, z-index 9200) was swallowing taps meant for Send. Tag this page
+  // the same way db-query/db-sdk/code-ide already do so CSS can move the FAB
+  // out of the way only here, without touching it anywhere else in the app.
+  if (id === 'joytree-ai') {
+    document.documentElement.classList.add('page-joytree-ai');
+  } else {
+    document.documentElement.classList.remove('page-joytree-ai');
+  }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.getElementById('page-' + id);
   if (page) page.classList.add('active');
@@ -41888,6 +41899,11 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   #jtTourGuideBtn svg{ width:20px; height:20px; color:#34d399; }
   #jtTourGuideBtn{ display:none; }
   html.app-mode #jtTourGuideBtn{ display:flex; }
+  /* [FIX] On the JoyTree AI page this FAB sits directly on top of the
+     agent's own round Send button (both fixed to the same bottom-right
+     corner), silently eating taps meant for Send. Shift it up and out of
+     that corner only on this page rather than hiding it globally. */
+  html.app-mode.page-joytree-ai #jtTourGuideBtn{ bottom:96px; }
 </style>
 
 <div id="jtTourOverlay"></div>
