@@ -4662,18 +4662,61 @@ app.get('/api/projects/check-availability', async (req, res) => {
       return res.status(400).json({ error: 'name or subdomain query is required' });
     }
 
-    const query = [];
-    if (rawName) query.push({ name: rawName });
-    if (cleanSubdomain) query.push({ subdomain: cleanSubdomain });
+    // [FIX] This previously only queried the Mongo `Project` model, which is
+    // NOT the platform's real source of truth — projects live in Firebase
+    // under deployboard_workspaces (one record per user, each holding its own
+    // .projects[]). Querying only Mongo meant this check could never actually
+    // see another user's project, so two different users (or the same user
+    // twice) could pick the identical project name/subdomain and one would
+    // silently start overwriting/conflicting with the other's live site.
+    // Now scans every user's workspace in Firebase — the true global set.
+    let nameConflict = null, subdomainConflict = null;
 
-    const existing = await Project.findOne({ $or: query }).select('_id name subdomain').lean().maxTimeMS(5000);
-    const sameProject = !!(existing && rawProjectId && String(existing._id) === rawProjectId);
+    try {
+      const allWs = await fetchAllWorkspaces();
+      outer:
+      for (const wsKey of Object.keys(allWs || {})) {
+        const ws = allWs[wsKey];
+        const projs = Array.isArray(ws?.projects) ? ws.projects : [];
+        for (const p of projs) {
+          const pid = String(p?.id || p?._id || '');
+          const isSameProject = !!(rawProjectId && pid && pid === rawProjectId);
+          if (isSameProject) continue; // editing your own existing project — not a conflict with itself
+          if (rawName && !nameConflict && String(p?.name || '').trim().toLowerCase() === rawName.toLowerCase()) {
+            nameConflict = { id: pid, name: p.name, subdomain: p.subdomain, ownerKey: wsKey };
+          }
+          if (cleanSubdomain && !subdomainConflict && String(p?.subdomain || '').trim().toLowerCase() === cleanSubdomain) {
+            subdomainConflict = { id: pid, name: p.name, subdomain: p.subdomain, ownerKey: wsKey };
+          }
+          if (nameConflict && subdomainConflict) break outer;
+        }
+      }
+    } catch (_) { /* fall through to Mongo-only result below if Firebase read fails */ }
+
+    // Also check Mongo (some deploys still write here) so a collision there
+    // is still caught even though it's no longer the primary source.
+    let existing = null;
+    try {
+      const query = [];
+      if (rawName) query.push({ name: rawName });
+      if (cleanSubdomain) query.push({ subdomain: cleanSubdomain });
+      existing = await Project.findOne({ $or: query }).select('_id name subdomain').lean().maxTimeMS(5000);
+    } catch (_) {}
+    const sameProjectMongo = !!(existing && rawProjectId && String(existing._id) === rawProjectId);
+
+    const nameAvailable = rawName
+      ? !nameConflict && (sameProjectMongo || !(existing && existing.name === rawName))
+      : null;
+    const subdomainAvailable = cleanSubdomain
+      ? !subdomainConflict && (sameProjectMongo || !(existing && existing.subdomain === cleanSubdomain))
+      : null;
+
     res.json({
       name: rawName,
       subdomain: cleanSubdomain,
-      nameAvailable: rawName ? (sameProject ? true : !(existing && existing.name === rawName)) : null,
-      subdomainAvailable: cleanSubdomain ? (sameProject ? true : !(existing && existing.subdomain === cleanSubdomain)) : null,
-      existing: existing || null
+      nameAvailable,
+      subdomainAvailable,
+      existing: nameConflict || subdomainConflict || existing || null
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
