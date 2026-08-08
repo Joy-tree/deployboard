@@ -5878,33 +5878,21 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
   </div>
 </nav>
 <script>
-// [NEW] Landing-page-only theme preview toggle. The app's own theme system
-// (_applyTheme/themeSet) deliberately coerces any 'light' value back to
-// 'system' site-wide -- see the [FIX] comment near _applyTheme -- so this is
-// intentionally a separate, self-contained toggle scoped to the landing
-// page only, for previewing the new theme-override.css palette. It does
-// NOT touch jt_theme or the app's theme state.
-(function(){
-  var LANDING_THEME_KEY = 'jt_landing_theme_preview';
-  function applyLandingTheme(t){
-    document.documentElement.setAttribute('data-theme', t);
-    var icon = document.getElementById('landingThemeIcon');
-    if (icon) {
-      icon.innerHTML = t === 'light'
-        ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>'
-        : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-    }
-  }
-  window.landingToggleTheme = function(){
-    var current = document.documentElement.getAttribute('data-theme') || 'dark';
-    var next = current === 'light' ? 'dark' : 'light';
-    try { localStorage.setItem(LANDING_THEME_KEY, next); } catch(_){}
-    applyLandingTheme(next);
-  };
-  var saved = null;
-  try { saved = localStorage.getItem(LANDING_THEME_KEY); } catch(_){}
-  applyLandingTheme(saved === 'light' ? 'light' : 'dark');
-})();
+// [FIX] This used to be a fully separate theme mechanism (its own
+// localStorage key, its own apply function) because the real site-wide
+// theme system coerced 'light' away entirely. Now that light mode is a
+// real, working option in that system, this being separate was actively
+// harmful: _initTheme() (defined later in the page) runs unconditionally
+// on every load, including this one, and would silently overwrite whatever
+// this script set moments earlier with whatever's in the REAL 'jt_theme'
+// key -- two sources of truth fighting over the same data-theme attribute.
+// This button now just calls the real themeSet()/reads the real jt_theme
+// key, same as the dashboard's theme picker.
+window.landingToggleTheme = function(){
+  var current = localStorage.getItem('jt_theme') || 'system';
+  var next = current === 'light' ? 'dark' : 'light';
+  if (typeof themeSet === 'function') themeSet(next);
+};
 </script>
 
 <div id="landingDrawerOverlay" class="landing-drawer-overlay" onclick="closeLandingDrawer()"></div>
@@ -7972,6 +7960,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <button class="theme-picker-opt" data-theme="dark" onclick="themeSet('dark')">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             Dark
+          </button>
+          <button class="theme-picker-opt" data-theme="light" onclick="themeSet('light')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            Light
           </button>
         </div>
       </div>
@@ -22032,38 +22024,30 @@ async function sendAdminBroadcastEmail() {
 // ══════════════════════════════════════════════════════════════════
 // ══ Theme system ══════════════════════════════════════════════════════════
 // Three modes: 'system' (no data-theme attribute, falls back to base CSS --
-// this is the site's actual default/intended theme, and it already renders
-// dark and consistent, since the base :root tokens are dark by design), 'dark'
-// (explicit pure-black override), 'light' (removed entirely, see below).
+// dark by default), 'dark' (explicit pure-black override), 'light' (docs.
+// joytree.site palette, applied via theme-override.css).
 // Stored in localStorage so it persists across sessions.
-// NOTE: 'system' is NOT an ambiguous/fallback state -- confirmed it's the
-// correct, intended default. Do not silently change this fallback to 'dark'
-// again without checking first; a previous edit did exactly that based on a
-// mistaken assumption and was reverted.
 (function _initTheme() {
   const saved = localStorage.getItem('jt_theme') || 'system';
   _applyTheme(saved);
 })();
 
 function _applyTheme(t) {
-  // [FIX] Light theme was removed from the site entirely per explicit
-  // request -- no path should ever be able to render it, including a
-  // stale 'light' value saved (locally or synced to the account) from
-  // before this change. Treat it exactly like 'system' rather than
-  // trusting whatever was previously stored.
-  if (t === 'light') t = 'system';
   const html = document.documentElement;
-  if (t === 'dark')  { html.setAttribute('data-theme', 'dark'); }
-  else { html.removeAttribute('data-theme'); }
+  if (t === 'dark')       { html.setAttribute('data-theme', 'dark'); }
+  else if (t === 'light') { html.setAttribute('data-theme', 'light'); }
+  else                    { html.removeAttribute('data-theme'); }
 
   // Update icon
   const icon = document.getElementById('themeIcon');
-  if (!icon) return;
-  if (t === 'dark') {
-    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-  } else {
-    icon.innerHTML = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>';
-  }
+  const landingIcon = document.getElementById('landingThemeIcon');
+  const sunPath = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  const lightPath = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>';
+  const systemPath = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>';
+  const iconHtml = t === 'dark' ? sunPath : t === 'light' ? lightPath : systemPath;
+  if (icon) icon.innerHTML = iconHtml;
+  if (landingIcon) landingIcon.innerHTML = iconHtml;
+  if (!icon && !landingIcon) return;
 
   // Mark active option
   document.querySelectorAll('.theme-picker-opt').forEach(btn => {
@@ -22072,7 +22056,6 @@ function _applyTheme(t) {
 }
 
 function themeSet(t) {
-  if (t === 'light') t = 'system'; // Light theme removed from the site entirely
   localStorage.setItem('jt_theme', t);
   _applyTheme(t);
   // [FIX] Was only ever saved to localStorage -- on Mac/Safari specifically,
@@ -22090,7 +22073,7 @@ function themeSet(t) {
 
 function themeToggleOpen(e) {
   e.stopPropagation();
-  if (typeof toast === 'function') toast('Theme switching coming soon 🎨', 'info', 3000);
+  document.getElementById('themePicker')?.classList.toggle('open');
 }
 
 function themePickerClose() {
