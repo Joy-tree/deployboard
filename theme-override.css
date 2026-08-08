@@ -694,3 +694,250 @@ html[data-theme="light"] .toast-icon { background: var(--jt-bg-raised) !importan
 html[data-theme="light"] .tree-root-orb { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .tree-thumb-placeholder { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .webhook-event-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+/* ---------------------------------------------------------------------
+   9. CORRECT THE SITE'S OWN PRE-EXISTING LIGHT THEME TO ACTUALLY MATCH DOCS.
+   177 html[data-theme="light"] rules already exist in the site, but they
+   use a generic Tailwind-slate palette (#0f172a, #ffffff, #f8fafc,
+   #475569...) not docs.joytree.site warm green-tinted light palette
+   (#F6F8F4 bg, #16211B text, etc). This section corrects those specific
+   rules directly, property by property, to the matching docs token.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #app .app-hero-kicker,
+html[data-theme="light"] #app .db-hero-kicker,
+html[data-theme="light"] #app .resource-hero-kicker,
+html[data-theme="light"] #app .deploy-hero-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #app .app-hero-subtitle,
+html[data-theme="light"] #app .db-hero-sub,
+html[data-theme="light"] #app .resource-hero-sub,
+html[data-theme="light"] #app .deploy-hero-sub { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] #app .app-hero-title,
+html[data-theme="light"] #app .db-hero-title,
+html[data-theme="light"] #app .resource-hero-title,
+html[data-theme="light"] #app .deploy-hero-title { color: var(--jt-text) !important; }
+html[data-theme="light"] #app .build-step-desc { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] #app .build-step-name,
+html[data-theme="light"] #app .build-step-title { color: var(--jt-text) !important; }
+html[data-theme="light"] #app .build-steps-collapse:not(.quantum-build) { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #app .build-steps-toggle { color: var(--jt-text) !important; }
+html[data-theme="light"] #app .cron-preset { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app .cu-dropzone { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] #app .cu-dropzone-sub { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] #app .cu-dropzone-title { color: var(--jt-text) !important; }
+html[data-theme="light"] #app .cu-file-card { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app .custom-select-btn,
+html[data-theme="light"] #app .custom-select-menu,
+html[data-theme="light"] #app .px-plan,
+html[data-theme="light"] #app .co-form-card,
+html[data-theme="light"] #app .co-summary { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app .custom-select-dropdown,
+html[data-theme="light"] #app .btn-ghost { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app .db-btn { background: var(--jt-bg-sunken) !important; color: var(--jt-text-dim) !important; }
+html[data-theme="light"] #app .db-btn:hover { background: var(--jt-border) !important; }
+html[data-theme="light"] #app .db-conn-strip { background: var(--jt-bg-sunken) !important; color: var(--jt-text-dim) !important; }
+html[data-theme="light"] #app .db-detail-card { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app .db-detail-card-title { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] #app .db-toolbar { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #app .db-toolbar-title { color: var(--jt-text) !important; }
+html[data-theme="light"] #app .deploy-stepper-badge { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] #app .deploy-stepper-item { background: var(--jt-bg-sunken) !important; color: var(--jt-text-dim) !important; }
+html[data-theme="light"] #app .hero-metric-label,
+html[data-theme="light"] #app .db-stat-label,
+html[data-theme="light"] #app .db-stat-sub { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] #app .hero-metric-value,
+html[data-theme="light"] #app .db-stat-value { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #app .logs-chip { background: var(--jt-bg-sunken) !important; color: var(--jt-text-dim) !important; }
+html[data-theme="light"] #app .logs-hero-title { color: var(--jt-text) !important; }
+html[data-theme="light"] #app .modal { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app .pd-hero { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #app .pd-meta .chip { background: var(--jt-bg-sunken) !important; color: var(--jt-text-dim) !important; }
+html[data-theme="light"] #app .pd-meta .chip strong { color: var(--jt-text) !important; }
+html[data-theme="light"] #app .qstudio-db-bar,
+html[data-theme="light"] #app .qstudio-db-dropdown,
+html[data-theme="light"] #app .qstudio-side,
+html[data-theme="light"] #app .qstudio-ct-type-dropdown { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app .quantum-build { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #app .quantum-build .build-steps-body { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #app .quantum-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #app .quantum-title { color: var(--jt-text) !important; }
+html[data-theme="light"] #app .repo-card * { color: var(--jt-text) !important; }
+html[data-theme="light"] #app .repo-card .repo-stat,
+html[data-theme="light"] #app .repo-stat { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] #app .repo-card [class*="kicker"],
+html[data-theme="light"] #app .repo-card [class*="lang"] { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #app .repo-hero,
+html[data-theme="light"] #app .config-hero { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app .repo-metric { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] #app .repo-metric-label { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] #app .repo-metric-value { color: var(--jt-text) !important; }
+html[data-theme="light"] #app .repo-stat { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app .repo-stat-label { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] #app .repo-stat-value { color: var(--jt-text) !important; }
+html[data-theme="light"] #app .resource-card-desc { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] #app .resource-card-title { color: var(--jt-text) !important; }
+html[data-theme="light"] #app .schema-kpi-card,
+html[data-theme="light"] #app .schema-access-panel,
+html[data-theme="light"] #app .schema-main-panel { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app .sdk-env-panel { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #app .sdk-env-row { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] #app .sdk-env-subtitle { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] #app .sdk-env-title { color: var(--jt-text) !important; }
+html[data-theme="light"] #app .sdk-guide-item { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] #app .sdk-guide-trigger { color: var(--jt-text) !important; }
+html[data-theme="light"] #app [class*="lf-stat"],
+html[data-theme="light"] #app [class*="lf-meta"],
+html[data-theme="light"] #app [class*="lf-detail"],
+html[data-theme="light"] #app [class*="lf-card"],
+html[data-theme="light"] #app [class*="lf-endpoint"],
+html[data-theme="light"] #app [class*="lf-box"] { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app [id^="runtimeLogsOutput-"] { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] #app [style*="background:#0d0d0d"] input,
+html[data-theme="light"] #app [style*="background:#111"] input,
+html[data-theme="light"] #app [style*="background:#0a0a0a"] input { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app [style*="background:#111"],
+html[data-theme="light"] #app [style*="background: #111"],
+html[data-theme="light"] #app [style*="background:#0d0d0d"],
+html[data-theme="light"] #app [style*="background:#09090b"] { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #app [style*="background:#111"][style*="border-radius:16px"] { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #app input,
+html[data-theme="light"] #app select,
+html[data-theme="light"] #app textarea,
+html[data-theme="light"] #app .input { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app,
+html[data-theme="light"] #app [id^="page-"] { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #landing-view { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #landing-view .btn-nav { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #landing-view .btn-nav:hover { background: var(--jt-border) !important; }
+html[data-theme="light"] #landing-view .home-product-card,
+html[data-theme="light"] #landing-view .feature-card,
+html[data-theme="light"] #landing-view .how-card,
+html[data-theme="light"] #landing-view .flow-step,
+html[data-theme="light"] #landing-view .snippet-card,
+html[data-theme="light"] #landing-view .hero-core-panel,
+html[data-theme="light"] #landing-view .hero-side-card,
+html[data-theme="light"] #landing-view .hero-command-card,
+html[data-theme="light"] #landing-view .hero-core-step,
+html[data-theme="light"] #landing-view .hero-rail-card,
+html[data-theme="light"] #landing-view .hero-top-card { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #landing-view .nav-link,
+html[data-theme="light"] #landing-view .nav-logo-name,
+html[data-theme="light"] #landing-view a:not(.btn-nav-primary) { color: var(--jt-text) !important; }
+html[data-theme="light"] #landing-view .section,
+html[data-theme="light"] #landing-view .how-section,
+html[data-theme="light"] #landing-view .flow-section,
+html[data-theme="light"] #landing-view .snippet-section,
+html[data-theme="light"] #landing-view .cta-section { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] #landing-view .section-label,
+html[data-theme="light"] #landing-view .section-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #landing-view .section-sub,
+html[data-theme="light"] #landing-view .how-sub,
+html[data-theme="light"] #landing-view .flow-desc { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] #landing-view .section-title { color: var(--jt-text) !important; }
+html[data-theme="light"] #landing-view footer,
+html[data-theme="light"] #landing-view .footer-inner { background: var(--jt-bg-sunken) !important; color: var(--jt-text-dim) !important; }
+html[data-theme="light"] #landing-view h1,
+html[data-theme="light"] #landing-view h2,
+html[data-theme="light"] #landing-view h3,
+html[data-theme="light"] #landing-view h4,
+html[data-theme="light"] #landing-view p { color: var(--jt-text) !important; }
+html[data-theme="light"] #landing-view nav,
+html[data-theme="light"] #landing-view .landing-drawer { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #page-cronjobs #cronJobsList > div,
+html[data-theme="light"] #page-cronjobs #cronExecutionLog > div { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] #page-cronjobs .card { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #page-cronjobs .wizard-hero,
+html[data-theme="light"] #page-cron-create .wizard-hero { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #page-dashboard .card,
+html[data-theme="light"] #page-deployments .card,
+html[data-theme="light"] #page-env-manager .card,
+html[data-theme="light"] #page-webhooks .card { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #page-env-manager .custom-select-trigger,
+html[data-theme="light"] #page-env-manager .custom-select-dropdown,
+html[data-theme="light"] #page-cron-create .custom-select-trigger,
+html[data-theme="light"] #page-cron-create .input { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #page-joytree-ai { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] #page-joytree-ai [style*="background:var(--jai-bg)"],
+html[data-theme="light"] #page-joytree-ai [style*="background: var(--jai-bg)"] { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] #page-joytree-ai [style*="background:var(--jai-surface)"],
+html[data-theme="light"] #page-joytree-ai [style*="background: var(--jai-surface)"] { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #page-logs .card { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #page-realtime-api .app-hero { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #page-realtime-api .card { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #pageLoader { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] #sidebar { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #sidebar,
+html[data-theme="light"] .sidebar-logo,
+html[data-theme="light"] .sidebar-bottom { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #topbar { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] #topbar,
+html[data-theme="light"] .topbar-right { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] .app-hero { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] .auth-bg,
+html[data-theme="light"] .auth-wrap { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] .auth-feat-pill { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .auth-input { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .auth-tabs { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] .crumb-active { color: var(--jt-text) !important; }
+html[data-theme="light"] .dash-qa-btn { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] .deployment-table-shell tbody tr { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] .hero-metric { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] .hero-metric-label { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .hero-metric-value { color: var(--jt-text) !important; }
+html[data-theme="light"] .hero-status-pill { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .jt-modal-body { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .landing-drawer .ld-link { color: var(--jt-text) !important; }
+html[data-theme="light"] .ld-link { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .ld-link-icon { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] .ld-link:hover { color: var(--jt-text) !important; }
+html[data-theme="light"] .ld-section-label { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .modal { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .modal-subtitle { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .modal-title { color: var(--jt-text) !important; }
+html[data-theme="light"] .nav-item { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .nav-item,
+html[data-theme="light"] .sidebar-nav a,
+html[data-theme="light"] .sidebar-nav button { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .nav-item.active { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .nav-item.active,
+html[data-theme="light"] .sidebar-nav a.active,
+html[data-theme="light"] .sidebar-nav button.active { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .nav-item:hover { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .nav-item:hover,
+html[data-theme="light"] .sidebar-nav a:hover,
+html[data-theme="light"] .sidebar-nav button:hover { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .notif-panel { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .qstudio-create-table-box { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] .qstudio-create-table-foot { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] .qstudio-create-table-head { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .qstudio-ct-input,
+html[data-theme="light"] .qstudio-ct-select { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .qstudio-ct-select { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .qstudio-ct-sql-preview,
+html[data-theme="light"] #app [class*="ct-sql"] { background: var(--jt-bg-sunken) !important; color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .sidebar-section { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .sidebar-section,
+html[data-theme="light"] .sidebar-section-title { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .sshk-card { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] .sshk-card-title,
+html[data-theme="light"] .sshk-key-name,
+html[data-theme="light"] .sshk-hero-title { color: var(--jt-text) !important; }
+html[data-theme="light"] .sshk-card-title,
+html[data-theme="light"] .sshk-key-name { color: var(--jt-text) !important; }
+html[data-theme="light"] .sshk-hero-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .sshk-hero-kicker,
+html[data-theme="light"] .app-hero-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .sshk-hero-sub,
+html[data-theme="light"] .sshk-key-fp { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .sshk-hero-sub,
+html[data-theme="light"] .app-hero-subtitle { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .sshk-hero-title,
+html[data-theme="light"] .app-hero-title { color: var(--jt-text) !important; }
+html[data-theme="light"] .sshk-input { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .surface-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .table-shell tbody tr,
+html[data-theme="light"] .deployment-table-shell tbody tr { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .topbar-breadcrumb { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .topbar-btn,
+html[data-theme="light"] .topbar-icon-btn { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .vp-card { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] .vp-otp-box { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] body { background: var(--jt-bg-sunken) !important; }
