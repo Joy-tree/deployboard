@@ -1,0 +1,229 @@
+/* ==========================================================================
+   JoyTree — Site-wide theme override (theme-override.css)
+
+   This file does NOT replace the site's existing CSS. It loads LAST, after
+   everything else, and re-defines the same CSS custom properties the site
+   already uses (--bg, --bg-2, --bg-3, --bg-card, --text, --border, --primary,
+   etc. across the landing/app/dashboard variable systems) to
+   docs.joytree.site's exact palette — every element already using var(...)
+   picks this up automatically with zero markup changes.
+
+   It also targets the most common HARDCODED color values found scattered
+   through inline <style> blocks (e.g. background:#111, rgba(255,255,255,.07)
+   borders) that were bypassing the variable system entirely — which is the
+   actual reason dark/light switching looked inconsistent in some places.
+   These need !important because they're overriding literal values, not
+   variables, and some of them were already !important themselves.
+
+   Note: this is a high-coverage pass, not a byte-for-byte guarantee on every
+   one-off decorative color (glow shadows, etc.) in the codebase — flag any
+   spot that still doesn't switch and it can be added here directly.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------
+   1. CORE PALETTE — docs.joytree.site tokens, verbatim.
+   --------------------------------------------------------------------- */
+:root{
+  --jt-font-display: 'Sora', system-ui, sans-serif;
+  --jt-font-body: 'Inter', system-ui, sans-serif;
+  --jt-font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+  /* Light */
+  --jt-bg: #F6F8F4;
+  --jt-bg-raised: #FFFFFF;
+  --jt-bg-sunken: #EFF3EC;
+  --jt-border: #DCE3D8;
+  --jt-border-soft: #E7ECE4;
+  --jt-text: #16211B;
+  --jt-text-dim: #4A5A50;
+  --jt-text-faint: #7C8B80;
+  --jt-brand: #1F6E52;
+  --jt-brand-strong: #145A41;
+  --jt-brand-tint: #E4F1EA;
+  --jt-accent: #E0A429;
+  --jt-accent-strong: #C4881A;
+  --jt-accent-tint: #FBF1DC;
+  --jt-danger: #C1432E;
+  --jt-info: #2B6CB0;
+  --jt-code-bg: #101A15;
+  --jt-code-text: #DCEFE3;
+}
+html[data-theme="dark"]{
+  --jt-bg: #09090B;
+  --jt-bg-raised: #111113;
+  --jt-bg-sunken: #050506;
+  --jt-border: #1F1F23;
+  --jt-border-soft: #18181B;
+  --jt-text: #F3F4F6;
+  --jt-text-dim: #A1A1AA;
+  --jt-text-faint: #6B7280;
+  --jt-brand: #10B981;
+  --jt-brand-strong: #34D399;
+  --jt-brand-tint: #0A2E22;
+  --jt-accent: #E8B94A;
+  --jt-accent-strong: #F2CB6E;
+  --jt-accent-tint: #241D0F;
+  --jt-danger: #EF4444;
+  --jt-info: #3B82F6;
+  --jt-code-bg: #0A0A0C;
+  --jt-code-text: #D1FAE5;
+}
+/* Site currently defaults dark with no data-theme set on first load */
+:root:not([data-theme]), html:not([data-theme]){
+  --jt-bg: #09090B; --jt-bg-raised: #111113; --jt-bg-sunken: #050506;
+  --jt-border: #1F1F23; --jt-border-soft: #18181B;
+  --jt-text: #F3F4F6; --jt-text-dim: #A1A1AA; --jt-text-faint: #6B7280;
+  --jt-brand: #10B981; --jt-brand-strong: #34D399; --jt-brand-tint: #0A2E22;
+  --jt-accent: #E8B94A; --jt-accent-strong: #F2CB6E; --jt-accent-tint: #241D0F;
+  --jt-danger: #EF4444; --jt-info: #3B82F6;
+  --jt-code-bg: #0A0A0C; --jt-code-text: #D1FAE5;
+}
+
+/* ---------------------------------------------------------------------
+   2. REMAP EVERY EXISTING VARIABLE SYSTEM ON THE SITE TO THE PALETTE ABOVE.
+   Same variable names the site already uses — nothing else has to change.
+   --------------------------------------------------------------------- */
+
+/* App shell (:root at the top of the file — --bg/--bg-2/--bg-3/--text/--border/--primary) */
+:root{
+  --bg: var(--jt-bg);
+  --bg-2: var(--jt-bg-sunken);
+  --bg-3: var(--jt-bg-raised);
+  --text: var(--jt-text);
+  --text-2: var(--jt-text-dim);
+  --text-3: var(--jt-text-faint);
+  --border: var(--jt-border);
+  --border-h: var(--jt-brand);
+  --primary: var(--jt-brand);
+  --primary-d: var(--jt-brand-strong);
+
+  /* Landing page system (--green/--cyan/--purple/--amber/--red/--font-ui) */
+  --green: var(--jt-brand);
+  --cyan: var(--jt-info);
+  --purple: var(--jt-accent-strong);
+  --amber: var(--jt-accent);
+  --red: var(--jt-danger);
+  --font-ui: var(--jt-font-body);
+  --font-hd: var(--jt-font-display);
+  --font-head: var(--jt-font-display);
+  --font-mono: var(--jt-font-mono);
+
+  /* Dashboard system (--bg-card/--bg-hover/--border-hi) */
+  --bg-card: var(--jt-bg-raised);
+  --bg-hover: var(--jt-bg-sunken);
+  --border-hi: var(--jt-brand);
+}
+html[data-theme="dark"]{
+  --bg: var(--jt-bg); --bg-2: var(--jt-bg-sunken); --bg-3: var(--jt-bg-raised);
+  --bg-card: var(--jt-bg-raised); --bg-hover: var(--jt-bg-sunken);
+  --text: var(--jt-text); --text-2: var(--jt-text-dim); --text-3: var(--jt-text-faint);
+  --border: var(--jt-border); --border-hi: var(--jt-brand);
+}
+html[data-theme="light"]{
+  --bg: var(--jt-bg); --bg-2: var(--jt-bg-sunken); --bg-3: var(--jt-bg-raised);
+  --bg-card: var(--jt-bg-raised); --bg-hover: var(--jt-bg-sunken);
+  --text: var(--jt-text); --text-2: var(--jt-text-dim); --text-3: var(--jt-text-faint);
+  --border: var(--jt-border); --border-hi: var(--jt-brand);
+}
+
+/* ---------------------------------------------------------------------
+   3. PAGE / SHELL BACKGROUNDS — these were !important hex literals in the
+   original file (background:#09090b!important etc.), so they need
+   !important here too to actually win.
+   --------------------------------------------------------------------- */
+html, body, #landing-view, #app, #app-shell, .app-layout, [id^="page-"]{
+  background: var(--jt-bg) !important;
+}
+html[data-theme="light"] #landing-view,
+html[data-theme="light"] body{
+  background: var(--jt-bg) !important;
+}
+#sidebar, #topbar{ background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+.card, [class$="-card"], [class*="-card "]{ background: var(--jt-bg-raised); border-color: var(--jt-border); }
+
+/* ---------------------------------------------------------------------
+   4. COMMON HARDCODED DARK LITERALS — the actual reason light mode left
+   gaps: many components wrote the CURRENT dark value directly instead of
+   using var(), so they never picked up the light palette. Overriding the
+   literal values directly (with !important) catches those.
+   --------------------------------------------------------------------- */
+[style*="background:#111"], [style*="background: #111"],
+.card, .stat-card, .tree-project-node, .webhook-event-card, .env-command-card,
+.deployment-table-shell tbody tr, .dash-qa-btn, .sshk-card{
+  background: var(--jt-bg-raised) !important;
+}
+html[data-theme="light"] [style*="background:#111"],
+html[data-theme="light"] [style*="background: #111"]{
+  background: var(--jt-bg-raised) !important;
+}
+.hero-metric{ background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+.hero-metric-value{ color: var(--jt-text) !important; }
+.hero-metric-label{ color: var(--jt-text-faint) !important; }
+.hero-status-pill{
+  background: var(--jt-brand-tint) !important;
+  border-color: var(--jt-brand) !important;
+  color: var(--jt-brand-strong) !important;
+}
+.sidebar-section{ color: var(--jt-text-faint) !important; }
+.nav-item{ color: var(--jt-text-dim) !important; }
+.nav-item:hover{ background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
+.nav-item.active{ background: var(--jt-brand-tint) !important; color: var(--jt-brand-strong) !important; }
+.sshk-input{
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text) !important;
+}
+
+/* Generic border-color literals used throughout (rgba(255,255,255,.07/.14),
+   rgba(0,0,0,.08/.16)) — remap to the real border token in both themes. */
+*[style*="border-color:rgba(255,255,255"],
+*[style*="border-color: rgba(255,255,255"],
+*[style*="border-color:rgba(0,0,0"],
+*[style*="border-color: rgba(0,0,0"]{
+  border-color: var(--jt-border) !important;
+}
+
+::-webkit-scrollbar-thumb{ background: var(--jt-text-faint) !important; opacity: .5; }
+::selection{ background: var(--jt-accent-tint); color: var(--jt-text); }
+
+/* ---------------------------------------------------------------------
+   5. BUTTONS — every primary/ghost/CTA button on the site, remapped to the
+   docs button treatment: solid brand fill for primary, outline for ghost.
+   --------------------------------------------------------------------- */
+.btn-hero-primary, .btn-primary, button.primary, .dash-qa-btn.primary{
+  background: var(--jt-brand) !important;
+  border-color: var(--jt-brand) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+.btn-hero-primary:hover, .btn-primary:hover{
+  background: var(--jt-brand-strong) !important;
+  border-color: var(--jt-brand-strong) !important;
+}
+.btn-hero-ghost, .btn-ghost{
+  background: transparent !important;
+  border: 1px solid var(--jt-border) !important;
+  color: var(--jt-text) !important;
+}
+.btn-hero-ghost:hover, .btn-ghost:hover{
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-text-faint) !important;
+}
+.dash-qa-btn{
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text) !important;
+}
+.dash-qa-btn:hover{
+  background: var(--jt-brand-tint) !important;
+  border-color: var(--jt-brand) !important;
+}
+.btn-nav-menu{ color: var(--jt-text) !important; }
+
+/* ---------------------------------------------------------------------
+   6. LINKS / ACCENT TEXT — anything using the old accent green directly.
+   --------------------------------------------------------------------- */
+.accent, [style*="color:#10b981"], [style*="color: #10b981"],
+[style*="color:#22c55e"], [style*="color: #22c55e"]{
+  color: var(--jt-brand) !important;
+}
