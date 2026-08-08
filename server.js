@@ -4407,10 +4407,29 @@ app.post('/api/ai/history', requireAuth, async (req, res) => {
     const cur  = rGet && rGet.ok ? await rGet.json().catch(() => null) : null;
     let items  = Array.isArray(cur) ? cur : (cur && typeof cur === 'object' ? Object.values(cur) : []);
     items = items.filter(Boolean);
+    // [FIX] This used to unconditionally prepend a brand-new record every
+    // single time — including on every follow-up turn of an ALREADY-active
+    // conversation, since each turn calls saveJaiHistory() again. That made
+    // one ongoing chat balloon into a growing pile of separate-looking
+    // "Recent fixes" cards. Now: if this session already has a card, update
+    // it in place (and bump it to the top) instead of duplicating it. Only
+    // sessions genuinely seen for the first time get a new card.
+    const sid = String(entry.sessionId || '').trim();
+    if (sid) {
+      const existingIdx = items.findIndex(it => it && String(it.sessionId || '') === sid);
+      if (existingIdx !== -1) {
+        entry.createdAt = Date.now(); // bump to top of the list
+        items.splice(existingIdx, 1);
+      }
+    }
     items.unshift(entry);
-    // De-dupe by createdAt+repoSlug+status
+    // De-dupe by sessionId when present, else fall back to the old
+    // createdAt+repoSlug+status key (covers older entries with no sessionId).
     const seen = new Set();
-    items = items.filter(it => { const k = (it.createdAt||0)+'|'+(it.repoSlug||'')+'|'+(it.status||''); if (seen.has(k)) return false; seen.add(k); return true; });
+    items = items.filter(it => {
+      const k = it && it.sessionId ? ('sid:' + it.sessionId) : ((it&&it.createdAt||0)+'|'+(it&&it.repoSlug||'')+'|'+(it&&it.status||''));
+      if (seen.has(k)) return false; seen.add(k); return true;
+    });
     items = items.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0, 30);
     await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(items) }).catch(() => {});
     res.json({ ok: true, items });
@@ -9263,6 +9282,16 @@ DO NOT RUSH TO "DONE" — VERIFY BEFORE YOU SUMMARIZE:
 - If you find a mismatch or a gap during this check, fix it before finishing. A summary that says something is done when it hasn't actually been verified is worse than taking one more iteration to confirm it.
 - Only write your final summary once you've actually done this pass — not as a formality, as a real check.
 
+LAYOUT MUST ACTUALLY WORK — NOT JUST LOOK RIGHT IN ONE SCREENSHOT:
+- Build mobile-first, then verify it holds up wider: no element should overflow its container, overlap another element, or get clipped at common widths (~375px, ~768px, ~1440px). If you use a fixed/sticky header, nav overlay, or dropdown, explicitly account for what's underneath it (z-index, spacing, closing behavior) so it doesn't sit on top of content it should be pushing down or replacing.
+- Every interactive element (nav toggles, dropdowns, modals, carousels) needs real open/close logic, not just CSS that assumes a hover state that doesn't exist on touch devices. Mentally test the mobile nav/menu as a tap sequence: open → is content still reachable and not covered → close → does it actually close.
+- Don't let text collide with images, buttons overlap each other, or fixed-position elements block the content beneath them. Give every section real padding/margin rhythm instead of elements touching or crowding each other.
+- This is the same bar a professional coding agent (the kind of standard you'd expect from Claude Code or similar) holds itself to: not "it compiles," but "a real person could actually use this without hitting something broken."
+
+USE THE SAME STANDARD OF CARE AS A TOP-TIER CODING AGENT:
+- You have the same category of tools other serious coding agents have — read, write, edit, search, and execute. Use them the same way: read before you assume, search before you guess at a location, run a build/check step when one is available instead of hoping, and re-read your own output before calling it finished.
+- Don't cut corners because the prompt was short or the task seemed simple. Simple-sounding requests still deserve the full workflow below — planning, real implementation, and genuine verification — not a shortcut version.
+
 WORKFLOW:
 1. Think through the request properly first (see above) — what is really being asked, what design direction fits it, what files/assets it needs.
 2. create_tasks — plan out every file and feature the finished project needs
@@ -9347,7 +9376,7 @@ async function finalizeAgentRun(session, push, { tmpDir, provider, isUpload, isS
     await execAsync(`cd "${tmpDir}" && zip -r -q "${zipPath}" . -x '*.git*' -x '*/node_modules/*' -x '*/dist/*' 2>&1`, { timeout: 120000 });
     session.zipPath = zipPath; session.zipName = zipName; session.status = 'done';
     push('fix_zip_ready', {
-      downloadUrl: `/api/ai/agent/download/${sessionId}`, zipName,
+      downloadUrl: `/api/ai/agent/download/${sessionId}?zipName=${encodeURIComponent(zipName)}`, zipName,
       summary: finalSummary, subdomain: session.uploadProjectId || '', projectName: projectName || '',
       files: Array.isArray(session._fileChanges) ? session._fileChanges : [],
       provider, providerLabel: getAgentProviderLabel(provider)
@@ -9536,7 +9565,7 @@ async function completeGithubPush(session, push, { target, newBranchName }) {
     await execAsync(`cd "${tmpDir}" && zip -r -q "${zipPath}" . -x '*.git*' -x '*/node_modules/*' -x '*/dist/*' 2>&1`, { timeout: 120000 });
     session.zipPath = zipPath; session.zipName = zipName;
     push('fix_zip_ready', {
-      downloadUrl: `/api/ai/agent/download/${sessionId}`, zipName,
+      downloadUrl: `/api/ai/agent/download/${sessionId}?zipName=${encodeURIComponent(zipName)}`, zipName,
       summary: finalSummary, projectName: projectName || '',
       files: Array.isArray(session._fileChanges) ? session._fileChanges : [],
       provider, providerLabel: getAgentProviderLabel(provider)
@@ -10381,10 +10410,28 @@ app.get('/api/ai/agent/trial-status', requireAuth, (req, res) => {
 // GET /api/ai/agent/download/:sessionId — download the AI-fixed project zip (upload fixes)
 app.get('/api/ai/agent/download/:sessionId', requireAuth, (req, res) => {
   const session = agentSessions.get(req.params.sessionId);
-  if (!session || !session.zipPath) return res.status(404).json({ error: 'Fixed archive not found or expired. Re-run the fix to regenerate it.' });
-  if (!fs.existsSync(session.zipPath)) return res.status(404).json({ error: 'Fixed archive no longer available. Re-run the fix to regenerate it.' });
-  const fname = session.zipName || 'joytree-ai-fix.zip';
-  res.download(session.zipPath, fname, (err) => {
+  let zipPath, fname;
+  if (session && session.zipPath && fs.existsSync(session.zipPath)) {
+    zipPath = session.zipPath;
+    fname = session.zipName || 'joytree-ai-fix.zip';
+  } else {
+    // [FIX] The in-memory session is very often gone by the time someone
+    // clicks "download" from history — sessions live ~2h and are wiped on
+    // every server restart/redeploy, but the zip file itself is still
+    // sitting on disk. Previously this just 404'd ("expired") even though
+    // the file was right there. Fall back to a direct disk lookup, scoped
+    // to the requesting user, using the zipName the client already has
+    // saved in its history entry.
+    const userId = String(req.user?._id || req.user?.id || 'anon');
+    const zipNameParam = String(req.query.zipName || '').replace(/[^a-zA-Z0-9_.-]/g, '');
+    if (!zipNameParam) return res.status(404).json({ error: 'Fixed archive not found or expired. Re-run the fix to regenerate it.' });
+    const candidate = path.join(UPLOADS_DIR, userId, '_ai_fixes', zipNameParam);
+    if (!candidate.startsWith(path.join(UPLOADS_DIR, userId, '_ai_fixes')) || !fs.existsSync(candidate)) {
+      return res.status(404).json({ error: 'Fixed archive not found or expired. Re-run the fix to regenerate it.' });
+    }
+    zipPath = candidate; fname = zipNameParam;
+  }
+  res.download(zipPath, fname, (err) => {
     if (err && !res.headersSent) res.status(500).json({ error: 'Download failed.' });
   });
 });

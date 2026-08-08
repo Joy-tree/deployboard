@@ -9651,14 +9651,14 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <!-- AI Model -->
               <div class="jai-model-select" id="jaiModelSelectBtn" onclick="toggleJaiModelDd()" style="height:32px;padding:0 10px;">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                <span id="jaiModelLabel" class="jai-mode-label">Llama 3.3</span>
+                <span id="jaiModelLabel" class="jai-mode-label">Joytree AI v3</span>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="10" height="10"><polyline points="6 9 12 15 18 9"/></svg>
                 <div class="jai-model-dropdown" id="jaiModelDd">
                   <div class="jai-model-dd-label">AI Model</div>
-                  <div class="jai-model-dd-item active" onclick="pickJaiModel('llama','Llama 3.3',this)"><span>Llama 3.3</span><span class="jai-model-dd-badge">Active</span></div>
+                  <div class="jai-model-dd-item" onclick="pickJaiModel('llama','Llama 3.3',this)"><span>Llama 3.3</span></div>
                   <div class="jai-model-dd-item" onclick="pickJaiModel('grok','Grok',this)"><span>Grok</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
                   <div class="jai-model-dd-item" onclick="pickJaiModel('claude','Claude',this)"><span>Claude</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-                  <div class="jai-model-dd-item" onclick="pickJaiModel('v3','Joytree AI v3',this)"><span>Joytree AI v3</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></div>
+                  <div class="jai-model-dd-item active" onclick="pickJaiModel('v3','Joytree AI v3',this)"><span>Joytree AI v3</span><span class="jai-model-dd-badge">Active</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></div>
                 </div>
               </div>
               <!-- GitHub repo picker — truncated label -->
@@ -9809,13 +9809,13 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 </button>
                 <button class="jai-icon-btn jai-model-icon-btn" id="jaiModelSelectBtn2" title="AI Model" onclick="toggleJaiModelDd2()">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="17" height="17" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                  <span class="jai-mode-label" id="jaiModelLabel2">Llama 3.3</span>
+                  <span class="jai-mode-label" id="jaiModelLabel2">Joytree AI v3</span>
                   <div class="jai-model-dropdown" id="jaiModelDd2">
                     <div class="jai-model-dd-label">AI Model</div>
-                    <div class="jai-model-dd-item active" onclick="pickJaiModel2('llama','Llama 3.3',this)"><span>Llama 3.3</span><span class="jai-model-dd-badge">Active</span></div>
+                    <div class="jai-model-dd-item" onclick="pickJaiModel2('llama','Llama 3.3',this)"><span>Llama 3.3</span></div>
                     <div class="jai-model-dd-item" onclick="pickJaiModel2('grok','Grok',this)"><span>Grok</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
                     <div class="jai-model-dd-item" onclick="pickJaiModel2('claude','Claude',this)"><span>Claude</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-                    <div class="jai-model-dd-item" onclick="pickJaiModel2('v3','Joytree AI v3',this)"><span>Joytree AI v3</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></div>
+                    <div class="jai-model-dd-item active" onclick="pickJaiModel2('v3','Joytree AI v3',this)"><span>Joytree AI v3</span><span class="jai-model-dd-badge">Active</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></div>
                   </div>
                 </button>
               </div>
@@ -39707,7 +39707,7 @@ let jaiRunning        = false;
 let jaiFromError      = null;   // { errorText, deploymentId, projectName, repoSlug }
 let jaiActiveRepo     = '';     // repo slug for the CURRENT session — persists across follow-up runs
 let jaiProviders      = [];     // loaded from /api/ai/agent/providers
-let jaiSelectedProv   = 'groq';   // default to Groq/Llama 3.3 (free tier); updated by provider loader / model picker
+let jaiSelectedProv   = 'v3';     // [FIX] default to JoyTree AI v3 (strongest model) instead of the free-tier Llama 3.3; updated by provider loader / model picker
 let _jaiProvExplicit  = false;    // true once the user picks a model in the picker (don't auto-override)
 
 // ── Provider loader ───────────────────────────────────────────────
@@ -39716,11 +39716,11 @@ async function _jaiLoadProviders() {
     const r = await apiFetch('/api/ai/agent/providers');
     const d = await r.json();
     jaiProviders = d.providers || [];
-    // Default to Groq (Llama 3.3) — free tier for testing.
-    // If Groq isn't actually available on the server, fall back to the
-    // server's recommendation so we don't send an unusable provider.
-    const groqAvailable = jaiProviders.find(p => p.id === 'groq' && p.available);
-    if (!_jaiProvExplicit && jaiSelectedProv === 'groq' && !groqAvailable) {
+    // Default to JoyTree AI v3. If it isn't actually available on the server
+    // (e.g. no key configured), fall back to the server's recommendation so
+    // we don't send an unusable provider.
+    const v3Available = jaiProviders.find(p => p.id === 'v3' && p.available);
+    if (!_jaiProvExplicit && jaiSelectedProv === 'v3' && !v3Available) {
       jaiSelectedProv = d.recommended || jaiSelectedProv;
     }
     _jaiRenderProviderBtns();
@@ -40539,6 +40539,13 @@ function _jaiAutoStart() {
   _jaiLaunchAgent(isUpload ? (jaiFromError.uploadProjectId || jaiFromError.uploadSubdomain || '') : jaiFromError.repoSlug, msg, 'error');
 }
 
+// [FIX] Previously, sending while the agent was still busy showed a fake user
+// bubble + "will be addressed when it finishes" status, but the message (and
+// any attached image) was completely discarded — nothing was ever actually
+// queued or sent. Now it's genuinely queued and auto-delivered the moment the
+// current run finishes (see the 'done'/'paused' handling in _jaiHandleEvent).
+let _jaiQueuedMessage = null;  // { text, attachments } | null
+
 // ── Send message ──────────────────────────────────────────────────
 function sendJaiMessage() {
   const inp  = document.getElementById('jaiInput');
@@ -40546,7 +40553,12 @@ function sendJaiMessage() {
   if (!text) return;
   inp.value = ''; inp.style.height = 'auto';
   _jaiPushMsg('user', escHtml(text));
-  if (jaiRunning) { _jaiPushStatus('Agent is working — your message will be addressed when it finishes.'); return; }
+  if (jaiRunning) {
+    _jaiQueuedMessage = { text, attachments: jaiPendingAttachments.slice() };
+    _jaiClearAttachments();
+    _jaiPushStatus('Queued — I\'ll address this the moment the current run finishes.');
+    return;
+  }
 
   // [FOLLOW-UP] If a session is already active (finished or paused) and its
   // workspace is still alive server-side, CONTINUE it with this instruction
@@ -41010,6 +41022,16 @@ function _jaiHandleEvent(type, payload) {
     // AND failed/rate-limited runs (via the shared flush helper).
     _jaiFlushPendingHistory();
     jaiFromError = null;
+    // [FIX] Deliver anything the user sent while the agent was still busy —
+    // previously that message was silently dropped (see sendJaiMessage).
+    if (_jaiQueuedMessage && jaiSessionId && payload.status !== 'error') {
+      const q = _jaiQueuedMessage; _jaiQueuedMessage = null;
+      jaiPendingAttachments = q.attachments || [];
+      setTimeout(() => _jaiFollowUp(jaiSessionId, q.text), 300);
+    } else if (_jaiQueuedMessage) {
+      _jaiPushMsg('agent', 'The run finished before I could get to your queued message — send it again and I\'ll pick it up.');
+      _jaiQueuedMessage = null;
+    }
   }
 }
 
