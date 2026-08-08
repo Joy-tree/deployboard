@@ -12083,6 +12083,17 @@ app.get('/api/upload-files/:projectId', requireAuth, async (req, res) => {
           const ext = e.split('.').pop().toLowerCase();
           if (!BINARY_EXTS.has(ext) && stat.size <= MAX_FILE_SIZE) {
             try { files[rel] = fs.readFileSync(full, 'utf8'); } catch(_) { files[rel] = '[Binary or unreadable file]'; }
+          } else if (BINARY_EXTS.has(ext)) {
+            // [FIX] Previously omitted entirely, so a real, successfully-extracted
+            // and successfully-deployed image/font/binary file was invisible in
+            // the code editor's file explorer -- looking exactly like it had been
+            // dropped during extraction, even though it was sitting right there on
+            // disk and in the live deployment the whole time. The explorer/editor
+            // already has correct handling for binary paths (greys them out,
+            // shows "Binary file cannot be edited" on click) -- it just never got
+            // the path to render. Include it with a placeholder marker instead of
+            // real content (binary content isn't valid UTF-8 JSON text anyway).
+            files[rel] = '\u0000BINARY\u0000';
           }
         }
       } catch(_) {}
@@ -12574,6 +12585,14 @@ async function extractUploadedArchive(archivePath, destDir) {
           const ext = e.split('.').pop().toLowerCase();
           if (!BINARY_EXTS_EXTRACT.has(ext) && stat.size <= MAX_FILE_SIZE) {
             try { files[rel] = fs.readFileSync(full, 'utf8'); } catch(e) { files[rel] = '[Binary or unreadable file]'; }
+          } else if (BINARY_EXTS_EXTRACT.has(ext)) {
+            // [FIX] Same fix as /api/upload-files/:projectId below — a real,
+            // successfully-extracted binary file (image, font, etc.) was
+            // previously invisible in the explorer and uncounted in fileCount,
+            // even though it physically extracted fine and deploys correctly.
+            // The editor already handles binary paths correctly (BINARY_EXTS
+            // check in renderCideTree/cideOpenFile) -- it just never got the path.
+            files[rel] = '\u0000BINARY\u0000';
           }
         }
       } catch(e) {}
