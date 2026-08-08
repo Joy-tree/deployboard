@@ -5869,11 +5869,43 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
     <a href="#" class="nav-link" onclick="showPublicFounders();return false;">Founders</a>
   </div>
   <div class="nav-actions">
+    <button class="btn-nav-menu" id="landingThemeToggle" onclick="landingToggleTheme()" aria-label="Toggle theme" title="Toggle theme (preview only)" style="margin-right:4px;">
+      <svg id="landingThemeIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="19" height="19"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
     <button class="btn-nav-menu" id="hamburgerBtn" onclick="openLandingDrawer()" aria-label="Open menu">
       <div class="hbg"><span></span><span></span><span></span></div>
     </button>
   </div>
 </nav>
+<script>
+// [NEW] Landing-page-only theme preview toggle. The app's own theme system
+// (_applyTheme/themeSet) deliberately coerces any 'light' value back to
+// 'system' site-wide -- see the [FIX] comment near _applyTheme -- so this is
+// intentionally a separate, self-contained toggle scoped to the landing
+// page only, for previewing the new theme-override.css palette. It does
+// NOT touch jt_theme or the app's theme state.
+(function(){
+  var LANDING_THEME_KEY = 'jt_landing_theme_preview';
+  function applyLandingTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    var icon = document.getElementById('landingThemeIcon');
+    if (icon) {
+      icon.innerHTML = t === 'light'
+        ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>'
+        : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    }
+  }
+  window.landingToggleTheme = function(){
+    var current = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = current === 'light' ? 'dark' : 'light';
+    try { localStorage.setItem(LANDING_THEME_KEY, next); } catch(_){}
+    applyLandingTheme(next);
+  };
+  var saved = null;
+  try { saved = localStorage.getItem(LANDING_THEME_KEY); } catch(_){}
+  applyLandingTheme(saved === 'light' ? 'light' : 'dark');
+})();
+</script>
 
 <div id="landingDrawerOverlay" class="landing-drawer-overlay" onclick="closeLandingDrawer()"></div>
 <aside id="landingDrawer" class="landing-drawer" aria-label="Navigation menu">
