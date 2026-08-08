@@ -941,3 +941,30 @@ html[data-theme="light"] .topbar-icon-btn { color: var(--jt-text-dim) !important
 html[data-theme="light"] .vp-card { background: var(--jt-bg-raised) !important; }
 html[data-theme="light"] .vp-otp-box { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
 html[data-theme="light"] body { background: var(--jt-bg-sunken) !important; }
+/* ---------------------------------------------------------------------
+   10. INLINE style="" DARK PANEL BACKGROUNDS — the earlier passes only
+   scanned <style>...</style> blocks. These are hardcoded dark
+   (rgba(2,6,23,X) / rgba(15,23,42,X) "slate-950/900") backgrounds set
+   directly via inline style attributes on specific elements (e.g. the
+   Network Metrics chart panel), which is why they stayed a muddy dark
+   panel even after the page background and most cards went light — the
+   inline attribute was never touched by anything scanning stylesheets.
+   CSS attribute substring selectors ([style*="..."]) can match these
+   regardless of the exact opacity value used.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] [style*="rgba(2,6,23,"],
+html[data-theme="light"] [style*="rgba(2, 6, 23,"],
+html[data-theme="light"] [style*="rgba(15,23,42,"],
+html[data-theme="light"] [style*="rgba(15, 23, 42,"]{
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+/* Tooltips specifically read fine dark-on-light (a common, deliberate
+   convention — GitHub, Linear, etc. all keep tooltips dark in light mode
+   too), so give them a proper solid dark instead of forcing them into the
+   same light-card treatment as a chart panel. */
+html[data-theme="light"] #metricChartTooltip{
+  background: var(--jt-code-bg) !important;
+  color: var(--jt-code-text) !important;
+  border-color: rgba(255,255,255,.12) !important;
+}
