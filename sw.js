@@ -6,7 +6,7 @@
 // browser was quietly handing back a stale disk-cached response underneath
 // it. Every request now explicitly passes {cache:'no-store'}, which bypasses
 // HTTP caching entirely and guarantees a real network round-trip.
-const CACHE_NAME = 'joytree-shell-v3';
+const CACHE_NAME = 'joytree-shell-v4';
 const CORE_ASSETS = ['/', '/index.html', '/theme-override.css', '/manifest.webmanifest', '/favicon_256.png', '/favicon_192.png', '/favicon_512.png', '/favicon_512_maskable.png'];
 
 self.addEventListener('install', (event) => {
