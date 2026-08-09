@@ -9,9 +9,15 @@
   // repainted with theme-override.css's !important rules -- a visible
   // flash/blur every load. This must stay tiny and synchronous (no defer/
   // async) so it always finishes before first paint.
+  //
+  // [FIX] Default is now always 'dark' for anyone who hasn't explicitly
+  // chosen a theme, instead of following the OS's prefers-color-scheme.
+  // The three-way picker (System/Dark/Light) still works exactly as before
+  // for anyone who explicitly picks "System" -- only the *unset* case
+  // changed, from "guess from the OS" to "just use dark".
   (function () {
     try {
-      var t = localStorage.getItem('jt_theme') || 'system';
+      var t = localStorage.getItem('jt_theme') || 'dark';
       var theme;
       if (t === 'dark' || t === 'light') {
         theme = t;
@@ -5916,7 +5922,7 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 // This button now just calls the real themeSet()/reads the real jt_theme
 // key, same as the dashboard's theme picker.
 window.landingToggleTheme = function(){
-  var current = localStorage.getItem('jt_theme') || 'system';
+  var current = localStorage.getItem('jt_theme') || 'dark';
   var next = current === 'light' ? 'dark' : 'light';
   if (typeof themeSet === 'function') themeSet(next);
 };
@@ -22134,12 +22140,16 @@ async function sendAdminBroadcastEmail() {
 // applied via theme-override.css).
 // Stored in localStorage so it persists across sessions.
 (function _initTheme() {
-  const saved = localStorage.getItem('jt_theme') || 'system';
+  // [FIX] Default is 'dark' when nothing is saved, not 'system' -- see head
+  // bootstrap script for the full explanation. Both fallbacks below must
+  // match, or an unset user's theme could get silently flipped by the
+  // matchMedia 'change' listener just below.
+  const saved = localStorage.getItem('jt_theme') || 'dark';
   _applyTheme(saved);
   // Keep 'system' mode live-synced if the OS theme changes while open
   if (window.matchMedia) {
     window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
-      if ((localStorage.getItem('jt_theme') || 'system') === 'system') _applyTheme('system');
+      if ((localStorage.getItem('jt_theme') || 'dark') === 'system') _applyTheme('system');
     });
   }
 })();
@@ -25600,7 +25610,7 @@ function initSocket() {
 window.onload = function() {
   initSocket();
   // Re-apply theme to update icon now that DOM is fully ready
-  _applyTheme(localStorage.getItem('jt_theme') || 'system');
+  _applyTheme(localStorage.getItem('jt_theme') || 'dark');
   // Loader visibility is controlled by auth/bootstrap lifecycle.
 };
 
