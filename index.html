@@ -4561,7 +4561,7 @@ html[data-theme="light"] .vp-otp-box { background: var(--jt-bg-sunken) !importan
 /* [FIX] Hardcoded, not var() -- see matching comment in theme-override.css.
    This full-viewport boot overlay must never be able to resolve to a
    transparent background. */
-html[data-theme="light"] #pageLoader { background: #EFF3EC !important; }
+html[data-theme="light"] #pageLoader { background: #DCE8D2 !important; }
 
 /* ── LIGHT: Landing drawer menu items ── */
 html[data-theme="light"] .ld-link { color: #475569 !important; }
@@ -5680,6 +5680,35 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     Initialising<span class="page-loader-dots"></span>
   </div>
 </div>
+<script>
+// [FIX] Failsafe so the app can never get permanently stuck behind this
+// loader. If the normal bootstrap sequence hasn't hidden #pageLoader
+// within 12s (backend hiccup, an uncaught error somewhere upstream,
+// slow network, etc.), force it away and fall back to the landing page
+// rather than leaving the user staring at "Initialising..." forever.
+// This is deliberately self-contained in its own <script> tag placed
+// immediately after #pageLoader in the DOM, so it runs and is scheduled
+// even if a later script on the page throws.
+(function () {
+  setTimeout(function () {
+    var loader = document.getElementById('pageLoader');
+    if (!loader || loader.classList.contains('hidden')) return; // already hidden normally
+    console.warn('[boot] loader failsafe fired — bootstrap did not finish in time, forcing app to render');
+    loader.classList.add('hidden');
+    setTimeout(function () { loader.style.display = 'none'; }, 450);
+    try {
+      var appEl = document.getElementById('app');
+      var landing = document.getElementById('landing-view');
+      var authView = document.getElementById('auth-view');
+      var hasToken = !!localStorage.getItem('db_auth_token');
+      if (!hasToken && landing && (!appEl || appEl.style.display === 'none')) {
+        if (authView) authView.classList.remove('active');
+        landing.style.display = 'block';
+      }
+    } catch (_) {}
+  }, 12000);
+})();
+</script>
 
 <style>
 /* ── Email Verification Page ── */
@@ -30484,10 +30513,16 @@ function initPWAInstallPrompt(){
     // flip on whether THIS particular navigation happened to land after the
     // new worker took over. Reload once, automatically, the moment control
     // actually changes -- guaranteed fresh assets on the very next load.
-    let swRefreshed = false;
+    //
+    // Guard is stored in sessionStorage (not a plain in-memory flag) because
+    // a plain flag resets on every reload -- if controllerchange fired again
+    // shortly after the reload (e.g. two SW versions activating back-to-back
+    // during a fast redeploy), the in-memory guard would do nothing to stop
+    // a second, third, Nth reload, which looks exactly like a page stuck
+    // re-loading itself and never finishing "Initialising...".
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (swRefreshed) return;
-      swRefreshed = true;
+      if (sessionStorage.getItem('jt_sw_reloaded') === '1') return;
+      try { sessionStorage.setItem('jt_sw_reloaded', '1'); } catch(_) {}
       window.location.reload();
     });
   }
