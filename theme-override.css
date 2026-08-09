@@ -165,7 +165,7 @@ html[data-theme="light"] [style*="background: #111"]{
   color: var(--jt-brand-strong) !important;
 }
 .sidebar-section{ color: var(--jt-text-faint) !important; }
-.nav-item{ color: var(--jt-text-dim) !important; }
+.nav-item{ color: var(--jt-text) !important; font-weight: 700 !important; }
 .nav-item:hover{ background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
 .nav-item.active{ background: var(--jt-brand-tint) !important; color: var(--jt-brand-strong) !important; }
 .sshk-input{
@@ -893,10 +893,10 @@ html[data-theme="light"] .ld-section-label { color: var(--jt-text-faint) !import
 html[data-theme="light"] .modal { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
 html[data-theme="light"] .modal-subtitle { color: var(--jt-text-dim) !important; }
 html[data-theme="light"] .modal-title { color: var(--jt-text) !important; }
-html[data-theme="light"] .nav-item { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .nav-item { color: var(--jt-text) !important; font-weight: 700 !important; }
 html[data-theme="light"] .nav-item,
 html[data-theme="light"] .sidebar-nav a,
-html[data-theme="light"] .sidebar-nav button { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .sidebar-nav button { color: var(--jt-text) !important; font-weight: 700 !important; }
 html[data-theme="light"] .nav-item.active { color: var(--jt-brand-strong) !important; }
 html[data-theme="light"] .nav-item.active,
 html[data-theme="light"] .sidebar-nav a.active,

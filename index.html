@@ -1354,7 +1354,7 @@ html[data-theme="light"] .hero-metric-label { color: #64748b; }
 html[data-theme="light"] .hero-status-pill { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.25); color: #065f46; }
 html[data-theme="light"] #sidebar { background: var(--jt-bg-raised) !important; border-right-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .sidebar-section { color: #94a3b8; }
-html[data-theme="light"] .nav-item { color: #475569; }
+html[data-theme="light"] .nav-item { color: #0f172a; font-weight: 700; }
 html[data-theme="light"] .nav-item:hover { background: #f1f5f9; color: #0f172a; }
 html[data-theme="light"] .nav-item.active { background: rgba(16,185,129,.1); color: #065f46; }
 html[data-theme="light"] #topbar { background: var(--jt-bg-raised) !important; border-bottom-color: rgba(0,0,0,.08) !important; }
@@ -1610,9 +1610,9 @@ ul { list-style:none; }
   min-height: 38px;
   max-height: 38px;
   border-radius: 8px;
-  color: var(--text-2);
+  color: var(--text);
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1;
   transition: background 0.15s, color 0.15s;
   margin-bottom: 1px;
@@ -3846,7 +3846,9 @@ textarea.input { resize: vertical; min-height: 80px; }
 /* ── Sidebar overlay (mobile backdrop) ─────────────────────────────────── */
 .sidebar-overlay {
   display: none; position:fixed; inset:0; z-index:199;
-  background:rgba(0,0,0,0.55);
+  background:rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 /* ── Deploy form grid ──────────────────────────────────────────────────── */
@@ -4647,7 +4649,7 @@ html[data-theme="light"] .topbar-right   { background: var(--jt-bg-raised) !impo
 /* Nav items */
 html[data-theme="light"] .nav-item,
 html[data-theme="light"] .sidebar-nav a,
-html[data-theme="light"] .sidebar-nav button { background: transparent !important; color: #475569 !important; border-color: transparent !important; }
+html[data-theme="light"] .sidebar-nav button { background: transparent !important; color: #0f172a !important; font-weight: 700 !important; border-color: transparent !important; }
 html[data-theme="light"] .nav-item:hover,
 html[data-theme="light"] .sidebar-nav a:hover,
 html[data-theme="light"] .sidebar-nav button:hover { background: var(--jt-bg-sunken) !important; color: #0f172a !important; }
