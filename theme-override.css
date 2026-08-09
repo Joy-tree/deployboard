@@ -987,3 +987,73 @@ html[data-theme="light"] textarea{
   border-color: var(--jt-border) !important;
   color: var(--jt-text) !important;
 }
+
+/* ---------------------------------------------------------------------
+   12. CLASS-BASED dark backgrounds the earlier passes never caught.
+   Everything in sections 1-11 targeted CSS custom properties and inline
+   style="background:#111"-type attribute strings. But a large amount of
+   the codebase sets a hardcoded dark hex directly inside a .className{}
+   rule in a <style> block instead -- invisible to an attribute selector,
+   since [style*="..."] only matches the literal HTML style="" attribute
+   text, never a value that lives inside a stylesheet class rule. This is
+   the actual reason things like the "Our Core Team" cards and "Framework
+   Quick-Start Guides" list stayed solid black regardless of theme: their
+   background was never touched by anything above at all.
+
+   NOTE: a large portion of the site's other hardcoded-dark classes are
+   genuinely code/terminal/editor panes (query studio, migration tool,
+   diff viewer, SDK code-snippet display, DB browser) that are DELIBERATELY
+   dark regardless of theme -- same reasoning already applied to tooltips
+   in section 10. Only confirmed, screenshot-verified non-code UI is
+   listed here; anything else should be added the same way once verified
+   against a real screenshot, not guessed at.
+   --------------------------------------------------------------------- */
+/* "Our Core Team" member cards -- inline style="...background:#0f0f0f;" */
+html[data-theme="light"] [style*="background:#0f0f0f"],
+html[data-theme="light"] [style*="background: #0f0f0f"]{
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+
+/* "Framework Quick-Start Guides" -- .sdk-snippet-shell/.sdk-snippet-header
+   are REUSED for the real generated-code display elsewhere (which stays
+   dark on purpose, like a code editor), so this list was given its own
+   distinguishing classes (sdk-guides-shell/sdk-guides-header) rather than
+   overriding the shared classes directly -- doing that would have wrongly
+   lightened the actual code snippet pane too. */
+html[data-theme="light"] .sdk-guides-shell{
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .sdk-guides-header{
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .sdk-guide-card{
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .sdk-guide-card:hover{
+  background: var(--jt-brand-tint) !important;
+  border-color: rgba(16,185,129,.35) !important;
+}
+html[data-theme="light"] .sdk-guide-name,
+html[data-theme="light"] .sdk-empty-title,
+html[data-theme="light"] .sdk-env-title{
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .sdk-empty-sub,
+html[data-theme="light"] .sdk-snippet-filename span[style*="color:#374151"],
+html[data-theme="light"] [style*="color:#374151"]{
+  color: var(--jt-text-faint) !important;
+}
+
+/* Pricing page plan prices (₵0/₵20/₵30/₵60/₵180) -- .px-plan-price's own
+   default color is #f4f4f5 (near-white), correct for dark theme but
+   invisible against a light card. One plan additionally repeats the same
+   value as a redundant inline style, covered by the attribute selector
+   below too. */
+html[data-theme="light"] .px-plan-price,
+html[data-theme="light"] [style*="color:#f4f4f5"]{
+  color: var(--jt-text) !important;
+}
