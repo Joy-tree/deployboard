@@ -555,7 +555,7 @@ html[data-theme="light"] .vp-sub strong { color: var(--jt-text-faint) !important
    --------------------------------------------------------------------- */
 html[data-theme="light"] #aiQueryModal .qstudio-create-table-head { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #jtApiLinkModal .alm-proj-item { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] #jtEditPromptModal .epm-textarea { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] #jtEditPromptModal .epm-textarea { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #lfAiVersionDrop .jt-ai-trigger { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-cronjobs #cronJobsList > div,
 html[data-theme="light"] #page-cronjobs #cronExecutionLog > div { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
@@ -572,19 +572,19 @@ html[data-theme="light"] #page-db-query .qstudio-editor { background: var(--jt-b
 html[data-theme="light"] #page-db-query .qstudio-editor-footer { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-db-query .query-ops-shell { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-env-manager .custom-select-dropdown { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] #page-env-manager .custom-select-trigger { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] #page-env-manager .custom-select-trigger { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-env-manager .input,
 html[data-theme="light"] #page-settings .input,
-html[data-theme="light"] #page-cronjobs .input { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] #page-cronjobs .input { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-new-deploy #domainSuffix { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-new-deploy .btn-ghost.btn-sm { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] #page-new-deploy .custom-select-btn { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] #page-new-deploy .custom-select-btn { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-new-deploy .custom-select-dropdown { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-new-deploy .custom-select-menu { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] #page-new-deploy .custom-select-trigger { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] #page-new-deploy .custom-select-trigger { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-new-deploy .deploy-stepper-item { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] #page-new-deploy .input { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] #page-new-deploy select.input { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] #page-new-deploy .input { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] #page-new-deploy select.input { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-new-resource #resourceSearch { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-projects .app-hero .hero-metric { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-worker-create .card,
@@ -594,7 +594,7 @@ html[data-theme="light"] .auth-feat-pill { background: var(--jt-bg-raised) !impo
 html[data-theme="light"] .auth-tab.active { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .cred-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .cu-file-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] .custom-select-btn { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .custom-select-btn { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .dash-qa-btn { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .db-btn { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .db-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
@@ -627,7 +627,7 @@ html[data-theme="light"] .hero-side-card { background: var(--jt-bg-raised) !impo
 html[data-theme="light"] .hero-side-kpi div { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .hero-top-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .home-product-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] .input { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .input { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .ld-chip { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .ld-close { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .ld-link-icon { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
@@ -666,7 +666,7 @@ html[data-theme="light"] .repo-metric { background: var(--jt-bg-raised) !importa
 html[data-theme="light"] .repo-stat { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .resource-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .resource-card:hover { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] .resource-search-wrap .input { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .resource-search-wrap .input { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .schema-kpi { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .schema-kpi-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .schema-rel-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
@@ -675,7 +675,7 @@ html[data-theme="light"] .sdk-install-bar { background: var(--jt-bg-raised) !imp
 html[data-theme="light"] .sdk-lang-tab.active { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .sdk-lang-tabs { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .sdk-sidebar-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] .select { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .select { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .sshk-input { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .sshk-key-icon { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .streak-activity-card,
@@ -801,7 +801,7 @@ html[data-theme="light"] #app [style*="background:#111"][style*="border-radius:1
 html[data-theme="light"] #app input,
 html[data-theme="light"] #app select,
 html[data-theme="light"] #app textarea,
-html[data-theme="light"] #app .input { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #app .input { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
 html[data-theme="light"] #app,
 html[data-theme="light"] #app [id^="page-"] { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
 html[data-theme="light"] #landing-view { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
@@ -853,7 +853,7 @@ html[data-theme="light"] #page-webhooks .card { background: var(--jt-bg-raised) 
 html[data-theme="light"] #page-env-manager .custom-select-trigger,
 html[data-theme="light"] #page-env-manager .custom-select-dropdown,
 html[data-theme="light"] #page-cron-create .custom-select-trigger,
-html[data-theme="light"] #page-cron-create .input { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] #page-cron-create .input { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
 html[data-theme="light"] #page-joytree-ai { background: var(--jt-bg-sunken) !important; }
 html[data-theme="light"] #page-joytree-ai [style*="background:var(--jai-bg)"],
 html[data-theme="light"] #page-joytree-ai [style*="background: var(--jai-bg)"] { background: var(--jt-bg-sunken) !important; }
@@ -909,7 +909,7 @@ html[data-theme="light"] .qstudio-create-table-box { background: var(--jt-bg-rai
 html[data-theme="light"] .qstudio-create-table-foot { background: var(--jt-bg-sunken) !important; }
 html[data-theme="light"] .qstudio-create-table-head { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
 html[data-theme="light"] .qstudio-ct-input,
-html[data-theme="light"] .qstudio-ct-select { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .qstudio-ct-select { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
 html[data-theme="light"] .qstudio-ct-select { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
 html[data-theme="light"] .qstudio-ct-sql-preview,
 html[data-theme="light"] #app [class*="ct-sql"] { background: var(--jt-bg-sunken) !important; color: var(--jt-text-dim) !important; }
@@ -967,4 +967,23 @@ html[data-theme="light"] #metricChartTooltip{
   background: var(--jt-code-bg) !important;
   color: var(--jt-code-text) !important;
   border-color: rgba(255,255,255,.12) !important;
+}
+
+/* ---------------------------------------------------------------------
+   11. FORM FIELDS SHOULD BE SUNKEN, NOT WHITE — corrects an over-eager
+   default from the systematic passes above. Per docs' OWN convention
+   (.topbar-search / .topbar-search input both use --bg-sunken; only the
+   floating results/dropdown MENU that pops up over it uses --bg-raised),
+   editable fields read as recessed, not as raised white cards. Section 8/9
+   defaulted many of these to --bg-raised, which is what was making the
+   dashboard look "too whitish" compared to docs' actual layered look.
+   Generic safety net for any real form control not already covered above
+   by a more specific selector.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] input:not([type="checkbox"]):not([type="radio"]),
+html[data-theme="light"] select,
+html[data-theme="light"] textarea{
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text) !important;
 }
