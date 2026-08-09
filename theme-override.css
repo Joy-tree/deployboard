@@ -1544,3 +1544,87 @@ html[data-theme="light"] #lfAiVersionDrop .jt-ai-trigger {
   background: linear-gradient(180deg, var(--jt-bg-raised), var(--jt-bg-sunken)) !important;
   border-color: rgba(6,182,212,.3) !important;
 }
+
+/* ---------------------------------------------------------------------
+   SDK STUDIO (#page-db-sdk) — same class of bug as the Migration page:
+   it's an entirely self-contained "COMPLETE REDESIGN" component with
+   its own scoped <style> block and zero theme awareness. Query Studio
+   (#page-db-query) got a full pass already; SDK Studio was missed
+   entirely, plus it has its own ID-scoped dark rule (#page-db-sdk
+   .db-collapse-wrap / .sdk-card / .db-code-block, all forced #0d0d0d)
+   left over from before Query Studio was split into its own page. That
+   ID-scoped rule out-specifies any plain class selector, so it's
+   matched here with equal (ID) specificity.
+   --------------------------------------------------------------------- */
+
+/* Leftover ID-scoped dark rule from the pre-split Query+SDK page */
+html[data-theme="light"] #page-db-sdk .db-collapse-wrap,
+html[data-theme="light"] #page-db-sdk .sdk-card,
+html[data-theme="light"] #page-db-sdk .db-code-block {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+
+/* Sidebar cards (Database Access, Quick Actions, Connection Test) */
+html[data-theme="light"] .sdk-sidebar-card,
+html[data-theme="light"] .sdk-quick-actions,
+html[data-theme="light"] .sdk-snippet-shell,
+html[data-theme="light"] .sdk-test-panel {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+/* Header strips inside those cards */
+html[data-theme="light"] .sdk-sidebar-head,
+html[data-theme="light"] .sdk-fw-trigger,
+html[data-theme="light"] .sdk-guide-trigger,
+html[data-theme="light"] .sdk-snippet-header,
+html[data-theme="light"] .sdk-env-panel,
+html[data-theme="light"] .sdk-test-header,
+html[data-theme="light"] .sdk-guide-install-line,
+html[data-theme="light"] .sdk-install-bar,
+html[data-theme="light"] .sdk-lang-tabs {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .sdk-guide-body { background: var(--jt-bg-sunken) !important; }
+/* Nested rows/blocks one level up from the sunken strips */
+html[data-theme="light"] .sdk-guide-code-block,
+html[data-theme="light"] .sdk-env-row {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+/* Framework dropdown menu */
+html[data-theme="light"] .sdk-fw-menu {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.1) !important;
+}
+/* Active language tab */
+html[data-theme="light"] .sdk-lang-tab.active {
+  background: var(--jt-bg-raised) !important;
+  color: var(--jt-text) !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08) !important;
+}
+html[data-theme="light"] .sdk-lang-tab:not(.active):hover {
+  color: var(--jt-text-dim) !important;
+  background: rgba(0,0,0,.04) !important;
+}
+/* Small icon chips (action icons, filename dot, empty-state icon) */
+html[data-theme="light"] .sdk-action-icon,
+html[data-theme="light"] .sdk-snippet-filename-dot,
+html[data-theme="light"] .sdk-empty-icon {
+  background: rgba(0,0,0,.04) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .sdk-sidebar-collapse:hover {
+  color: var(--jt-brand-strong) !important;
+  background: rgba(0,0,0,.05) !important;
+}
+html[data-theme="light"] #page-db-sdk .db-editor-db-list-empty,
+html[data-theme="light"] .sdk-guide-card {
+  border-color: var(--jt-border) !important;
+}
+/* "Idle" test-status dot — was a neutral dark grey (#374151, fine on
+   black); on light theme it just needs a touch lighter to not read
+   as an error state */
+html[data-theme="light"] .sdk-test-indicator.idle { background: #94a3b8 !important; }
