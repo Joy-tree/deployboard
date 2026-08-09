@@ -1228,3 +1228,46 @@ html[data-theme="light"] .nav-badge {
   -webkit-backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
 }
+
+/* ---------------------------------------------------------------------
+   DATABASE PAGE — same gap as the Projects page: the hero banner's own
+   background was never overridden, only the text sitting on top of it.
+   .db-hero-kicker/.db-hero-sub/.db-hero-title already had light-theme
+   fixes, but .db-hero itself kept its hardcoded #0d0d0d background, so
+   the whole top banner stayed a deep black slab in light mode.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .db-hero {
+  background:
+    radial-gradient(ellipse 55% 44% at 8% 12%, rgba(31,110,82,.08), transparent),
+    var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 0 0 1px rgba(31,110,82,.04), 0 14px 44px rgba(0,0,0,.05) !important;
+}
+html[data-theme="light"] .db-hero::after {
+  border-color: rgba(31,110,82,.14) !important;
+  box-shadow: 0 0 70px rgba(31,110,82,.06) !important;
+}
+
+/* ---------------------------------------------------------------------
+   SETTINGS PAGE — Account tab. A handful of status/plan badges use
+   inline styles with colors picked for a black card (#94a3b8 pale
+   slate, #86efac and #d1fae5 pale mint) that read as near-invisible
+   washed-out text on a light card. Text color only — these are inline
+   styles without !important, so a stylesheet !important rule wins.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #settingsTabAccount [style*="color:#94a3b8"] {
+  color: var(--jt-text-dim) !important;
+}
+html[data-theme="light"] #settingsTabAccount [style*="color:#86efac"],
+html[data-theme="light"] #settingsTabAccount [style*="color:#d1fae5"] {
+  color: var(--jt-brand-strong) !important;
+}
+html[data-theme="light"] #settingsTabAccount [style*="color:#f87171"] {
+  color: var(--jt-danger) !important;
+}
+/* "Danger Zone" section title uses the same pale coral, doubly so since
+   it's a heading (should read as clearly red, not washed pink) */
+html[data-theme="light"] #settingsTabAccount .card-title[style*="color:#f87171"] {
+  color: var(--jt-danger) !important;
+  font-weight: 700;
+}
