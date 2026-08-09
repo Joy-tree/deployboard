@@ -28,9 +28,9 @@
   --jt-font-body: 'Inter', system-ui, sans-serif;
   --jt-font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 
-  /* Light */
+  /* Light — matches docs.joytree.site exactly */
   --jt-bg: #F6F8F4;
-  --jt-bg-raised: #FBFCF8;
+  --jt-bg-raised: #FFFFFF;
   --jt-bg-sunken: #EFF3EC;
   --jt-border: #DCE3D8;
   --jt-border-soft: #E7ECE4;
@@ -1397,3 +1397,490 @@ html[data-theme="light"] .mig-job {
 /* Job logs stay a dark terminal panel by design (same as Live Logs /
    xterm / diff previews elsewhere) — its original pale-green-on-black
    text already reads fine, so it's intentionally left untouched here. */
+
+/* ---------------------------------------------------------------------
+   INSTALL / ADD-TO-HOME-SCREEN PROMPT — hardcoded dark card (bg
+   #111114, mint-on-black text) with no light-theme variant at all,
+   so it stayed dark and out of place even with light theme selected.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .install-prompt {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 18px 45px rgba(0,0,0,.12) !important;
+}
+html[data-theme="light"] .install-prompt-logo {
+  background: var(--jt-bg-sunken) !important;
+  border-color: rgba(16,185,129,.35) !important;
+}
+html[data-theme="light"] .install-prompt-title { color: var(--jt-text) !important; }
+html[data-theme="light"] .install-prompt-sub { color: var(--jt-text-dim) !important; }
+
+/* ---------------------------------------------------------------------
+   DATABASE QUERY STUDIO (#page-db-query) — never got a light-theme pass.
+   Several backgrounds are ID-scoped `!important` rules with zero theme
+   check at all (.qstudio-toolbar, .qstudio-editor-wrap x2, .qstudio-
+   editor-footer x2), so the whole shell, toolbar, tree, results panel,
+   and status bar stayed solid near-black regardless of theme. Syntax
+   token colors were also tuned pale/light for a black editor background
+   and were barely legible once that background turned light.
+   --------------------------------------------------------------------- */
+
+/* Outer shell + chrome */
+html[data-theme="light"] .qs2-shell { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] .qs2-topbar { border-bottom-color: var(--jt-border) !important; }
+html[data-theme="light"] .qs2-topbar-sep { background: rgba(0,0,0,.1) !important; }
+html[data-theme="light"] .qs2-workspace { border-left-color: var(--jt-border) !important; }
+html[data-theme="light"] .qs2-editor-col { border-right-color: var(--jt-border) !important; }
+
+/* Toolbar buttons */
+html[data-theme="light"] .qstudio-btn {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.14) !important;
+  color: var(--jt-text-dim) !important;
+}
+html[data-theme="light"] .qstudio-btn:hover {
+  color: var(--jt-text) !important;
+  border-color: rgba(0,0,0,.22) !important;
+  background: rgba(0,0,0,.07) !important;
+}
+html[data-theme="light"] .qstudio-btn-danger:hover {
+  border-color: rgba(193,67,46,.4) !important;
+  color: var(--jt-danger) !important;
+  background: rgba(193,67,46,.1) !important;
+}
+html[data-theme="light"] .qstudio-toolbar-sep { background: rgba(0,0,0,.12) !important; }
+html[data-theme="light"] .qstudio-status-pill,
+html[data-theme="light"] #page-db-query .qstudio-status-pill {
+  background: rgba(0,0,0,.05) !important;
+  border-color: rgba(0,0,0,.14) !important;
+  color: var(--jt-text-dim) !important;
+}
+/* Legacy toolbar class (older markup variant, kept in sync defensively) */
+html[data-theme="light"] .qstudio-toolbar,
+html[data-theme="light"] #page-db-query .qstudio-toolbar {
+  background: var(--jt-bg-sunken) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
+
+/* Query tab */
+html[data-theme="light"] .qs2-tab {
+  color: var(--jt-text) !important;
+  background: rgba(0,0,0,.035) !important;
+  border-right-color: var(--jt-border) !important;
+}
+
+/* Table/collection explorer tree */
+html[data-theme="light"] .qs-tree { background: var(--jt-bg-sunken) !important; border-right-color: var(--jt-border) !important; }
+html[data-theme="light"] .qs-tree-head { color: var(--jt-text-faint) !important; border-bottom-color: var(--jt-border) !important; }
+html[data-theme="light"] .qs-tree-refresh { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .qs-tree-empty { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .qs-tree-item { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .qs-tree-item:hover { background: rgba(0,0,0,.05) !important; }
+html[data-theme="light"] .qs-tree-item.active { color: var(--jt-text) !important; }
+html[data-theme="light"] .qs-drawer-close {
+  background: rgba(0,0,0,.05) !important;
+  border-color: rgba(0,0,0,.14) !important;
+  color: var(--jt-text-dim) !important;
+}
+
+/* Editor pane — was forced to #0d0d0d/#0a0a0a by two separate
+   unconditional ID-scoped !important rules */
+html[data-theme="light"] .qstudio-editor-wrap,
+html[data-theme="light"] #page-db-query .qstudio-editor-wrap {
+  background: var(--jt-bg-raised) !important;
+}
+html[data-theme="light"] .qstudio-editor-label,
+html[data-theme="light"] #page-db-query .qstudio-editor-label {
+  color: rgba(31,110,82,.55) !important;
+}
+html[data-theme="light"] .qstudio-gutter {
+  background: rgba(0,0,0,.03) !important;
+  border-right-color: var(--jt-border) !important;
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] .qstudio-editor-footer,
+html[data-theme="light"] #page-db-query .qstudio-editor-footer {
+  background: var(--jt-bg-sunken) !important;
+  border-top-color: var(--jt-border) !important;
+  border-bottom-color: var(--jt-border) !important;
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] .qstudio-editor-footer-stat b { color: var(--jt-text-dim) !important; }
+
+/* SQL/JSON/Redis syntax-highlight tokens — tuned pale for a black
+   editor, several (plain identifiers, light green, light cyan) were
+   near-invisible once the editor background turned light */
+html[data-theme="light"] .ql-kw    { color: #0369a1 !important; }
+html[data-theme="light"] .ql-fn    { color: #b45309 !important; }
+html[data-theme="light"] .ql-str   { color: #15803d !important; }
+html[data-theme="light"] .ql-num   { color: #be185d !important; }
+html[data-theme="light"] .ql-op    { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .ql-cmt   { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .ql-key2  { color: #7c3aed !important; }
+html[data-theme="light"] .ql-field { color: #0e7490 !important; }
+html[data-theme="light"] .ql-punc  { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .ql-bool  { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .ql-jkey  { color: #0369a1 !important; }
+html[data-theme="light"] .ql-jstr  { color: #15803d !important; }
+html[data-theme="light"] .ql-jnum  { color: #be185d !important; }
+html[data-theme="light"] .ql-jbool { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .ql-rcmd  { color: #b45309 !important; }
+html[data-theme="light"] .ql-brace { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .ql-rkey  { color: #0e7490 !important; }
+html[data-theme="light"] .ql-plain { color: var(--jt-text) !important; }
+
+/* Results panel */
+html[data-theme="light"] .qs2-results-head {
+  background: rgba(0,0,0,.03) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .qs2-results-head-label { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .qs2-results-body { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] .qstudio-raw-output .dim { color: var(--jt-text-faint) !important; }
+
+/* Status bar */
+html[data-theme="light"] .qs2-statusbar {
+  background: var(--jt-bg-sunken) !important;
+  border-top-color: var(--jt-border) !important;
+  color: var(--jt-text-dim) !important;
+}
+html[data-theme="light"] #queryRowCount { color: var(--jt-text) !important; }
+
+/* ---------------------------------------------------------------------
+   API GENERATOR PAGE (#page-realtime-api / "Joytree AI v3" studio) —
+   the AI-version trigger box kept a hardcoded near-black gradient
+   background regardless of theme, so its bold dark title text
+   (var(--text), correctly dark on light theme) sat on a still-black
+   box -- unreadable. Give it a light-appropriate surface too.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #lfAiVersionDrop .jt-ai-trigger {
+  background: linear-gradient(180deg, var(--jt-bg-raised), var(--jt-bg-sunken)) !important;
+  border-color: rgba(6,182,212,.3) !important;
+}
+
+/* ---------------------------------------------------------------------
+   SDK STUDIO (#page-db-sdk) — same class of bug as the Migration page:
+   it's an entirely self-contained "COMPLETE REDESIGN" component with
+   its own scoped <style> block and zero theme awareness. Query Studio
+   (#page-db-query) got a full pass already; SDK Studio was missed
+   entirely, plus it has its own ID-scoped dark rule (#page-db-sdk
+   .db-collapse-wrap / .sdk-card / .db-code-block, all forced #0d0d0d)
+   left over from before Query Studio was split into its own page. That
+   ID-scoped rule out-specifies any plain class selector, so it's
+   matched here with equal (ID) specificity.
+   --------------------------------------------------------------------- */
+
+/* Leftover ID-scoped dark rule from the pre-split Query+SDK page */
+html[data-theme="light"] #page-db-sdk .db-collapse-wrap,
+html[data-theme="light"] #page-db-sdk .sdk-card,
+html[data-theme="light"] #page-db-sdk .db-code-block {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+
+/* Sidebar cards (Database Access, Quick Actions, Connection Test) */
+html[data-theme="light"] .sdk-sidebar-card,
+html[data-theme="light"] .sdk-quick-actions,
+html[data-theme="light"] .sdk-snippet-shell,
+html[data-theme="light"] .sdk-test-panel {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+/* Header strips inside those cards */
+html[data-theme="light"] .sdk-sidebar-head,
+html[data-theme="light"] .sdk-fw-trigger,
+html[data-theme="light"] .sdk-guide-trigger,
+html[data-theme="light"] .sdk-snippet-header,
+html[data-theme="light"] .sdk-env-panel,
+html[data-theme="light"] .sdk-test-header,
+html[data-theme="light"] .sdk-guide-install-line,
+html[data-theme="light"] .sdk-install-bar,
+html[data-theme="light"] .sdk-lang-tabs {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .sdk-guide-body { background: var(--jt-bg-sunken) !important; }
+/* Nested rows/blocks one level up from the sunken strips */
+html[data-theme="light"] .sdk-guide-code-block,
+html[data-theme="light"] .sdk-env-row {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+/* Framework dropdown menu */
+html[data-theme="light"] .sdk-fw-menu {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.1) !important;
+}
+/* Active language tab */
+html[data-theme="light"] .sdk-lang-tab.active {
+  background: var(--jt-bg-raised) !important;
+  color: var(--jt-text) !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08) !important;
+}
+html[data-theme="light"] .sdk-lang-tab:not(.active):hover {
+  color: var(--jt-text-dim) !important;
+  background: rgba(0,0,0,.04) !important;
+}
+/* Small icon chips (action icons, filename dot, empty-state icon) */
+html[data-theme="light"] .sdk-action-icon,
+html[data-theme="light"] .sdk-snippet-filename-dot,
+html[data-theme="light"] .sdk-empty-icon {
+  background: rgba(0,0,0,.04) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .sdk-sidebar-collapse:hover {
+  color: var(--jt-brand-strong) !important;
+  background: rgba(0,0,0,.05) !important;
+}
+html[data-theme="light"] #page-db-sdk .db-editor-db-list-empty,
+html[data-theme="light"] .sdk-guide-card {
+  border-color: var(--jt-border) !important;
+}
+/* "Idle" test-status dot — was a neutral dark grey (#374151, fine on
+   black); on light theme it just needs a touch lighter to not read
+   as an error state */
+html[data-theme="light"] .sdk-test-indicator.idle { background: #94a3b8 !important; }
+
+/* ---------------------------------------------------------------------
+   DELETE CONFIRMATION MODAL (Delete Upload / Delete API — shared
+   .adm-* classes). Text colors got a light-theme pass previously, but
+   the box itself was left at a hardcoded pure-black (#000000) with a
+   near-invisible white-on-white border — same "text fixed, container
+   forgotten" gap as the page heroes. Re-surfaced in the site's cream/
+   green palette; text bumped darker/bolder per request. The delete
+   button itself stays solid red — that's a deliberate danger signal,
+   not a theme miss.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #apiDeleteModal .adm-box,
+html[data-theme="light"] #cuDeleteModal .adm-box {
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 0%, rgba(31,110,82,.06), transparent),
+    var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,.18) !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-head,
+html[data-theme="light"] #cuDeleteModal .adm-head {
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-title,
+html[data-theme="light"] #cuDeleteModal .adm-title {
+  color: var(--jt-text) !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-sub,
+html[data-theme="light"] #cuDeleteModal .adm-sub {
+  color: var(--jt-text-dim) !important;
+  font-weight: 600 !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-msg,
+html[data-theme="light"] #cuDeleteModal .adm-msg {
+  color: var(--jt-text-dim) !important;
+  font-size: .92rem !important;
+  font-weight: 600 !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-msg-name,
+html[data-theme="light"] #cuDeleteModal .adm-msg-name {
+  color: var(--jt-text) !important;
+  font-weight: 800 !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-cancel,
+html[data-theme="light"] #cuDeleteModal .adm-cancel {
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text-dim) !important;
+  font-weight: 700 !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-cancel:hover,
+html[data-theme="light"] #cuDeleteModal .adm-cancel:hover {
+  background: rgba(0,0,0,.05) !important;
+  color: var(--jt-text) !important;
+}
+
+/* ---------------------------------------------------------------------
+   PROJECT CARDS — remaining light-theme gaps
+   --------------------------------------------------------------------- */
+/* "New Version"/"Redeploy" ghost button — belt-and-braces re-assert
+   in case a cached copy of this file is still being served; matches
+   the .tree-node-btn-primary treatment exactly so both read as equally
+   solid, filled actions. */
+html[data-theme="light"] .tree-project-node .tree-node-btn.tree-node-btn-ghost {
+  background: var(--jt-brand) !important;
+  border-color: var(--jt-brand-strong) !important;
+  color: #fff !important;
+}
+html[data-theme="light"] .tree-project-node .tree-node-btn.tree-node-btn-ghost:hover {
+  background: var(--jt-brand-strong) !important;
+}
+/* GitHub icon in the card footer (repo name row) — fixed at 50%
+   opacity unconditionally, tuned to sit subtly on a black footer strip;
+   on the light footer that reads as a faint, blurry smudge. */
+html[data-theme="light"] .tree-node-footer svg[style*="opacity:.5"] {
+  opacity: .8 !important;
+}
+
+/* ---------------------------------------------------------------------
+   LIVE LOGS PAGE (#page-logs) — the "Parsed Stream" / structured-logs
+   card was covered previously, but a sibling selector in the very same
+   rule, .build-steps-collapse:not(.quantum-build) (the "Build Progress"
+   step list — Clone Repository, Install Dependencies, etc.), was missed
+   and stayed hardcoded to #111. Restart/Stop button labels were also
+   pale blue/red tuned for a dark toolbar.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #page-logs .build-steps-collapse:not(.quantum-build) {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-logs .btn.btn-ghost[style*="color:#93c5fd"] {
+  color: #0369a1 !important;
+}
+html[data-theme="light"] #page-logs .btn.btn-ghost[style*="color:#fca5a5"] {
+  color: var(--jt-danger) !important;
+}
+
+/* ---------------------------------------------------------------------
+   MANUAL DEPLOY dropdown (Live Logs page) — .manual-menu-list was
+   hardcoded background:#020817 (near-black navy), independent of theme.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .manual-menu-list {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 18px 40px rgba(0,0,0,.12) !important;
+}
+html[data-theme="light"] .manual-item:hover {
+  background: rgba(16,185,129,.08) !important;
+}
+
+/* ---------------------------------------------------------------------
+   NEW DEPLOYMENT — Runtime/Framework dropdown. #page-new-deploy .cs-option
+   was hardcoded color:#cbd5e1 (light slate, tuned for a dark dropdown),
+   nearly invisible against the now-light dropdown panel.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #page-new-deploy .cs-option {
+  color: var(--jt-text-dim) !important;
+}
+html[data-theme="light"] #page-new-deploy .cs-option:hover {
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] #page-new-deploy .cs-option.selected {
+  color: var(--jt-brand-strong) !important;
+}
+
+/* ---------------------------------------------------------------------
+   DASHBOARD — Global Request Radar (world map) card. The card itself
+   was already covered by the shared .geo-intel-card light rule, but
+   three sibling pieces weren't: the country/status pill backgrounds
+   (still a dark translucent navy), and the raw Wikimedia map SVG +
+   its edge vignette, both filtered/tinted only for a dark card.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .geo-chip {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .geo-real-map {
+  filter: saturate(.7) contrast(.7) brightness(1.35) !important;
+  opacity: .55 !important;
+}
+html[data-theme="light"] .geo-map-vignette {
+  background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(220,232,210,.7) 100%) !important;
+}
+
+/* ---------------------------------------------------------------------
+   NOTIFICATIONS panel — rows are rebuilt from a JS template every time
+   the bell is opened, with colors hardcoded for a dark panel:
+   message text (#e2e8f0), the "NOTIFICATIONS" kicker (#86efac), and the
+   "View all activity" button (#94a3b8) — all too pale once the panel
+   itself became a light card.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .notif-panel [style*="color:#e2e8f0"] {
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .notif-panel [style*="color:#86efac"] {
+  color: var(--jt-brand-strong) !important;
+}
+html[data-theme="light"] .notif-panel [style*="color:#94a3b8"] {
+  color: var(--jt-text-dim) !important;
+}
+
+/* ---------------------------------------------------------------------
+   ROTATE API KEY confirmation modal (Settings page) — built as a raw
+   JS overlay appended straight to document.body, OUTSIDE #app, so the
+   existing #app-scoped [style*="background:#0d0d0d"] catch-all never
+   reached it and it always rendered as the dark-only "Delete Database
+   style" modal regardless of theme.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] div[style*="z-index:20000"] div[style*="background:#0d0d0d"] {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 24px 80px rgba(0,0,0,.18) !important;
+}
+html[data-theme="light"] div[style*="z-index:20000"] [style*="color:#f1f5f9"] {
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] div[style*="z-index:20000"] [style*="color:#94a3b8"] {
+  color: var(--jt-text-dim) !important;
+}
+html[data-theme="light"] div[style*="z-index:20000"] [style*="color:#64748b"] {
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] div[style*="z-index:20000"] [style*="color:#e2e8f0"] {
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] div[style*="z-index:20000"] [style*="background:rgba(255,255,255,.05)"] {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+
+/* ---------------------------------------------------------------------
+   SIGN UP / SIGN IN page. Three separate hardcoded-dark spots:
+   1. .auth-title ("Your workspace is waiting.") was color:#f8fafc
+      (near-white) — invisible against a light card. The gradient
+      accent span is untouched since it's already theme-agnostic.
+   2. .auth-google was styled to Google's own DARK button spec
+      (bg #1e1e1e). Per request, switched to Google's official LIGHT
+      button spec (white bg, #dadce0 border, #3c4043 text) instead of
+      just re-tinting it — this matches Google's actual brand guidance
+      for a button sitting on a light page. .auth-github intentionally
+      left untouched — GitHub's own button convention is dark regardless
+      of host page theme.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .auth-title {
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .auth-google {
+  background: #ffffff !important;
+  border-color: #dadce0 !important;
+  color: #3c4043 !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08) !important;
+}
+html[data-theme="light"] .auth-google:hover {
+  background: #f8f9fa !important;
+  border-color: #dadce0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.12) !important;
+}
+html[data-theme="light"] .auth-google-text strong {
+  color: #3c4043 !important;
+}
+html[data-theme="light"] .auth-google-text span {
+  color: #5f6368 !important;
+}
+
+/* ---------------------------------------------------------------------
+   LANDING PAGE — code tab bar ("deploy.sh / database.json / ...") and
+   the snippet-card headers ("Upload Deploy API", "Spin Up a Database",
+   "AI API Builder"). The card bodies below them were already fixed to
+   a light background, but .code-tabs and .snippet-header themselves
+   were still background:rgba(15,26,46,X) — a translucent dark navy
+   with no light-theme pass — leaving a washed-out gray bar sitting on
+   top of an otherwise-white card, with low-contrast text inside it.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .code-tabs {
+  background: var(--jt-bg-sunken) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .snippet-header {
+  background: var(--jt-bg-sunken) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
