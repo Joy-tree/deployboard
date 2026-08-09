@@ -1384,3 +1384,20 @@ html[data-theme="light"] .mig-job {
 /* Job logs stay a dark terminal panel by design (same as Live Logs /
    xterm / diff previews elsewhere) — its original pale-green-on-black
    text already reads fine, so it's intentionally left untouched here. */
+
+/* ---------------------------------------------------------------------
+   INSTALL / ADD-TO-HOME-SCREEN PROMPT — hardcoded dark card (bg
+   #111114, mint-on-black text) with no light-theme variant at all,
+   so it stayed dark and out of place even with light theme selected.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .install-prompt {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 18px 45px rgba(0,0,0,.12) !important;
+}
+html[data-theme="light"] .install-prompt-logo {
+  background: var(--jt-bg-sunken) !important;
+  border-color: rgba(16,185,129,.35) !important;
+}
+html[data-theme="light"] .install-prompt-title { color: var(--jt-text) !important; }
+html[data-theme="light"] .install-prompt-sub { color: var(--jt-text-dim) !important; }
