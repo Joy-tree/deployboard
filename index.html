@@ -3333,7 +3333,7 @@ textarea.input { resize: vertical; min-height: 80px; }
   display:flex;align-items:center;gap:10px;
   padding:10px;border-radius:14px;
   border:1px solid rgba(103,232,249,.2);
-  background:rgba(2,6,23,.5);
+  background:var(--bg-2);
   overflow:hidden;
 }
 #page-realtime-api .lf-upload-name {
@@ -16511,9 +16511,9 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           #lfAiVersionDrop .jt-ai-trigger-desc{font-size:.68rem;color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
           #lfAiVersionDrop .jt-ai-chevron{flex-shrink:0;color:#64748b;transition:transform .18s ease;}
           #lfAiVersionDrop.open .jt-ai-chevron{transform:rotate(180deg);color:#67e8f9;}
-          #lfAiVersionMenu{display:none;position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:999;background:#0d1117;border:1px solid rgba(34,211,238,.2);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.03) inset;}
+          #lfAiVersionMenu{display:none;position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:999;background:var(--bg-3);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.03) inset;}
           #lfAiVersionDrop.open #lfAiVersionMenu{display:block;animation:fadeInDown .12s ease;}
-          .jt-ai-option{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05);transition:background .12s;}
+          .jt-ai-option{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s;}
           .jt-ai-option:last-child{border-bottom:none;}
           .jt-ai-option:hover{background:rgba(34,211,238,.06);}
           .jt-ai-option.selected{background:rgba(16,185,129,.08);}
@@ -16524,7 +16524,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           .jt-ai-option-body{flex:1;min-width:0;}
           .jt-ai-option-name{font-size:.82rem;font-weight:800;color:var(--text);line-height:1.25;}
           .jt-ai-option-desc{font-size:.7rem;color:var(--text-3);margin-top:2px;line-height:1.4;}
-          .jt-ai-option-check{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.12);display:grid;place-items:center;flex-shrink:0;}
+          .jt-ai-option-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);display:grid;place-items:center;flex-shrink:0;}
           .jt-ai-option.selected .jt-ai-option-check{border-color:#10b981;background:#10b981;}
         </style>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -34734,7 +34734,7 @@ async function showApiDetail(flowId) {
           
         </div>
       </div>
-      <div style="margin-top:14px;padding:10px 12px;background:rgba(0,0,0,.3);border-radius:10px;border:1px solid rgba(34,211,238,.12);">
+      <div style="margin-top:14px;padding:10px 12px;background:var(--jt-bg-sunken);border-radius:10px;border:1px solid rgba(34,211,238,.12);">
         <div style="font-size:.7rem;color:var(--text-3);margin-bottom:4px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.1em;">Live Endpoint</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <a href="${fullEndpoint}" target="_blank" style="font-family:var(--font-mono);font-size:.8rem;color:#67e8f9;text-decoration:none;word-break:break-all;">${fullEndpoint}</a>
@@ -34742,7 +34742,7 @@ async function showApiDetail(flowId) {
         </div>
       </div>
       ${a.dockerized && a.dockerUrl ? `
-      <div style="margin-top:8px;padding:10px 12px;background:rgba(0,0,0,.3);border-radius:10px;border:1px solid rgba(52,211,153,.15);">
+      <div style="margin-top:8px;padding:10px 12px;background:var(--jt-bg-sunken);border-radius:10px;border:1px solid rgba(52,211,153,.15);">
         <div style="font-size:.7rem;color:var(--text-3);margin-bottom:4px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.1em;">Docker URL</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <a href="${a.dockerUrl}" target="_blank" style="font-family:var(--font-mono);font-size:.8rem;color:#34d399;text-decoration:none;">${a.dockerUrl}</a>
@@ -34812,7 +34812,7 @@ async function showApiDetail(flowId) {
         Seeded Questions (${questions.length})
       </div>
       <div style="display:grid;gap:8px;max-height:280px;overflow:auto;">
-        ${questions.map((q,i) => `<div style="padding:10px 12px;background:rgba(0,0,0,.3);border-radius:9px;border:1px solid rgba(52,211,153,.12);">
+        ${questions.map((q,i) => `<div style="padding:10px 12px;background:var(--jt-bg-sunken);border-radius:9px;border:1px solid rgba(52,211,153,.12);">
           <div style="font-size:.8rem;color:var(--text);font-weight:500;">${i+1}. ${q.question||''}</div>
           <div style="font-size:.76rem;color:#34d399;margin-top:4px;">Answer: ${q.answer||''}</div>
         </div>`).join('')}
