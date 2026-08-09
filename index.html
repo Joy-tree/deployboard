@@ -5700,8 +5700,24 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
       var appEl = document.getElementById('app');
       var landing = document.getElementById('landing-view');
       var authView = document.getElementById('auth-view');
+      var verifyPage = document.getElementById('verifyEmailPage');
       var hasToken = !!localStorage.getItem('db_auth_token');
-      if (!hasToken && landing && (!appEl || appEl.style.display === 'none')) {
+      // [FIX] Reproduced: this fires purely on a 12s wall-clock timer from
+      // initial page load, with zero awareness of what the user is actually
+      // doing at that moment. On a slow/flaky connection (very plausible
+      // right after a redeploy -- cold server, cache misses), bootstrap can
+      // genuinely take >12s -- and if the person had already reached the
+      // signup/login form or the OTP entry screen and was mid-flow when the
+      // timer hit, this was yanking them back to the landing page and
+      // silently discarding whatever they were doing. A stuck-boot failsafe
+      // should only ever rescue an actually-stuck boot, never interrupt a
+      // real in-progress action -- so skip the forced landing-view redirect
+      // if the person is visibly on the auth form or the OTP verification
+      // screen right now, regardless of why the loader was still showing.
+      var activelyAuthenticating =
+        (authView && authView.classList.contains('active')) ||
+        (verifyPage && verifyPage.style.display !== 'none' && verifyPage.style.display !== '');
+      if (!hasToken && !activelyAuthenticating && landing && (!appEl || appEl.style.display === 'none')) {
         if (authView) authView.classList.remove('active');
         landing.style.display = 'block';
       }
@@ -30522,8 +30538,27 @@ function initPWAInstallPrompt(){
     // re-loading itself and never finishing "Initialising...".
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (sessionStorage.getItem('jt_sw_reloaded') === '1') return;
-      try { sessionStorage.setItem('jt_sw_reloaded', '1'); } catch(_) {}
-      window.location.reload();
+      // [FIX] A fresh SW taking over mid-registration/login (very plausible
+      // right after a burst of redeploys) was silently reloading the whole
+      // page out from under the person, discarding whatever they'd typed
+      // and dropping them back on the landing page with no explanation —
+      // same class of bug as the boot-loader failsafe above. Fresh assets
+      // can wait a few seconds; a half-filled signup form can't be
+      // recovered after a hard reload. Defer the reload (checking every 2s)
+      // until the person isn't actively on the auth form or OTP screen.
+      const authView   = document.getElementById('auth-view');
+      const verifyPage = document.getElementById('verifyEmailPage');
+      const isBusy = () =>
+        (authView && authView.classList.contains('active')) ||
+        (verifyPage && verifyPage.style.display !== 'none' && verifyPage.style.display !== '');
+      const doReload = () => {
+        try { sessionStorage.setItem('jt_sw_reloaded', '1'); } catch(_) {}
+        window.location.reload();
+      };
+      if (!isBusy()) { doReload(); return; }
+      const waitIv = setInterval(() => {
+        if (!isBusy()) { clearInterval(waitIv); doReload(); }
+      }, 2000);
     });
   }
   const card = document.getElementById('installPromptCard');
