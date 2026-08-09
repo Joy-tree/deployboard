@@ -21017,24 +21017,24 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
 <!-- ═══ SSH REVOKE MODAL ═══ -->
 <div id="sshRevokeModal" class="modal-overlay" onclick="if(event.target===this)sshRevokeCancel()">
-  <div class="modal" style="max-width:420px;background:#0d0d0d;border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:32px 28px;box-shadow:0 24px 80px rgba(0,0,0,.7);">
+  <div class="modal" style="max-width:420px;background:var(--bg-3);border:1px solid var(--border);border-radius:18px;padding:32px 28px;box-shadow:0 24px 80px rgba(0,0,0,.35);">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
       <div style="width:40px;height:40px;border-radius:10px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" width="18" height="18"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
       </div>
       <div>
-        <div style="font-weight:700;font-size:1rem;color:#f1f5f9;">Revoke SSH Key</div>
-        <div style="font-size:.82rem;color:#64748b;margin-top:2px;">This action cannot be undone</div>
+        <div style="font-weight:700;font-size:1rem;color:var(--text);">Revoke SSH Key</div>
+        <div style="font-size:.82rem;color:var(--text-3);margin-top:2px;">This action cannot be undone</div>
       </div>
     </div>
-    <p style="font-size:.88rem;color:#94a3b8;line-height:1.6;margin-bottom:8px;">
-      Revoke <strong style="color:#f1f5f9;" id="sshRevokeKeyName"></strong>?
+    <p style="font-size:.88rem;color:var(--text-2);line-height:1.6;margin-bottom:8px;">
+      Revoke <strong style="color:var(--text);" id="sshRevokeKeyName"></strong>?
     </p>
-    <p style="font-size:.82rem;color:#64748b;line-height:1.5;margin-bottom:28px;">
+    <p style="font-size:.82rem;color:var(--text-3);line-height:1.5;margin-bottom:28px;">
       This key will be removed from authorized_keys and can no longer be used to connect to your server.
     </p>
     <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button onclick="sshRevokeCancel()" style="padding:9px 20px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#94a3b8;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;">Cancel</button>
+      <button onclick="sshRevokeCancel()" style="padding:9px 20px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;">Cancel</button>
       <button onclick="sshRevokeConfirm()" style="padding:9px 20px;border-radius:9px;border:none;background:#b91c1c;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s;">Revoke Key</button>
     </div>
   </div>
@@ -26747,20 +26747,20 @@ async function rotatePersonalApiKey() {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;z-index:20000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:24px;';
     overlay.innerHTML = `
-      <div style="background:#0d0d0d;border:1px solid rgba(255,255,255,.09);border-radius:18px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.85);padding:28px 24px;">
+      <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:18px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.5);padding:28px 24px;">
           <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
             <div style="width:44px;height:44px;border-radius:12px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
               <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='#ef4444' stroke-width='2' width='20' height='20'><path d='M21.5 2l-5 5M16.5 2l5 5'/><path d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/><line x1='12' y1='9' x2='12' y2='13'/><line x1='12' y1='17' x2='12.01' y2='17'/></svg>
             </div>
             <div>
-              <div style="font-weight:700;font-size:1rem;color:#f1f5f9;">Rotate API Key</div>
-              <div style="font-size:.80rem;color:#64748b;margin-top:2px;">This action cannot be undone</div>
+              <div style="font-weight:700;font-size:1rem;color:var(--text);">Rotate API Key</div>
+              <div style="font-size:.80rem;color:var(--text-3);margin-top:2px;">This action cannot be undone</div>
             </div>
           </div>
-          <p style="font-size:.875rem;color:#94a3b8;line-height:1.6;margin-bottom:16px;">Your current key will be <strong style="color:#f1f5f9;">permanently invalidated</strong>. Any integrations using it will need to be updated with the new key.</p>
-          <p style="font-size:.80rem;color:#64748b;line-height:1.5;margin-bottom:24px;">This action cannot be reversed. Make sure to copy and update the new key in all your integrations.</p>
+          <p style="font-size:.875rem;color:var(--text-2);line-height:1.6;margin-bottom:16px;">Your current key will be <strong style="color:var(--text);">permanently invalidated</strong>. Any integrations using it will need to be updated with the new key.</p>
+          <p style="font-size:.80rem;color:var(--text-3);line-height:1.5;margin-bottom:24px;">This action cannot be reversed. Make sure to copy and update the new key in all your integrations.</p>
         <div style="display:flex;gap:10px;">
-          <button id="_rotateCancel" style="flex:1;padding:11px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#e2e8f0;font-size:.875rem;font-weight:600;cursor:pointer;transition:background .15s;">Cancel</button>
+          <button id="_rotateCancel" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-size:.875rem;font-weight:600;cursor:pointer;transition:background .15s;">Cancel</button>
           <button id="_rotateConfirm" style="flex:1;padding:11px;border-radius:10px;border:none;background:#ef4444;color:#fff;font-size:.875rem;font-weight:700;cursor:pointer;transition:background .15s;">Rotate Key</button>
         </div>
       </div>`;
@@ -30445,6 +30445,19 @@ function showManualInstallHelp(){
 function initPWAInstallPrompt(){
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+    // [FIX] Without this, an already-open tab keeps running under whatever
+    // service worker controlled it when the tab first loaded, even after a
+    // newer one has installed and activated in the background. That's the
+    // "several reloads" symptom: each manual reload was really just a coin
+    // flip on whether THIS particular navigation happened to land after the
+    // new worker took over. Reload once, automatically, the moment control
+    // actually changes -- guaranteed fresh assets on the very next load.
+    let swRefreshed = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (swRefreshed) return;
+      swRefreshed = true;
+      window.location.reload();
+    });
   }
   const card = document.getElementById('installPromptCard');
   const btnInstall = document.getElementById('installPromptInstall');
@@ -35560,10 +35573,10 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
 #apiDeleteModal .adm-box,
 #cuDeleteModal .adm-box {
   width: 100%; max-width: 420px;
-  background: #000000;
-  border: 1px solid rgba(255,255,255,.09);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
   border-radius: 18px;
-  box-shadow: 0 24px 80px rgba(0,0,0,.85);
+  box-shadow: 0 24px 80px rgba(0,0,0,.4);
   overflow: hidden;
   animation: adm-in .18s cubic-bezier(.22,1,.36,1);
 }
@@ -35575,7 +35588,7 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
 #cuDeleteModal .adm-head {
   display: flex; align-items: center; gap: 14px;
   padding: 22px 22px 16px;
-  border-bottom: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid var(--border);
 }
 #apiDeleteModal .adm-icon,
 #cuDeleteModal .adm-icon {
@@ -35585,14 +35598,14 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
   border: 1px solid rgba(239,68,68,.22);
   display: flex; align-items: center; justify-content: center;
 }
-#apiDeleteModal .adm-title, #cuDeleteModal .adm-title { font-family: var(--font-ui,inherit); font-weight: 800; font-size: .97rem; color: #f1f5f9; letter-spacing: -.02em; }
-#apiDeleteModal .adm-sub,   #cuDeleteModal .adm-sub   { font-size: .78rem; color: #64748b; margin-top: 2px; }
+#apiDeleteModal .adm-title, #cuDeleteModal .adm-title { font-family: var(--font-ui,inherit); font-weight: 800; font-size: .97rem; color: var(--text); letter-spacing: -.02em; }
+#apiDeleteModal .adm-sub,   #cuDeleteModal .adm-sub   { font-size: .78rem; color: var(--text-3); margin-top: 2px; }
 #apiDeleteModal .adm-body,  #cuDeleteModal .adm-body  { padding: 18px 22px 22px; }
 #apiDeleteModal .adm-msg,
 #cuDeleteModal .adm-msg {
-  font-size: .86rem; color: #94a3b8; line-height: 1.6; margin-bottom: 10px;
+  font-size: .86rem; color: var(--text-2); line-height: 1.6; margin-bottom: 10px;
 }
-#apiDeleteModal .adm-msg-name, #cuDeleteModal .adm-msg-name { color: #f1f5f9; font-weight: 700; }
+#apiDeleteModal .adm-msg-name, #cuDeleteModal .adm-msg-name { color: var(--text); font-weight: 700; }
 #apiDeleteModal .adm-footer,
 #cuDeleteModal .adm-footer {
   display: flex; gap: 10px; justify-content: flex-end;
@@ -35600,13 +35613,13 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
 #apiDeleteModal .adm-cancel,
 #cuDeleteModal .adm-cancel {
   padding: 9px 20px; border-radius: 9px;
-  border: 1px solid rgba(255,255,255,.1);
-  background: transparent; color: #94a3b8;
+  border: 1px solid var(--border);
+  background: transparent; color: var(--text-2);
   font-size: .84rem; font-weight: 600; cursor: pointer;
   transition: background .15s, color .15s;
   font-family: var(--font-ui,inherit);
 }
-#apiDeleteModal .adm-cancel:hover, #cuDeleteModal .adm-cancel:hover { background: rgba(255,255,255,.07); color: #f1f5f9; }
+#apiDeleteModal .adm-cancel:hover, #cuDeleteModal .adm-cancel:hover { background: var(--bg-2); color: var(--text); }
 #apiDeleteModal .adm-delete,
 #cuDeleteModal .adm-delete {
   display: flex; align-items: center; gap: 7px;
@@ -35632,8 +35645,8 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
       </div>
     </div>
     <div class="adm-body">
-      <p class="adm-msg">Delete <strong style="color:#f1f5f9;" id="apiDeleteModalName"></strong>?</p>
-      <p style="font-size:.82rem;color:#64748b;line-height:1.5;margin-bottom:28px;">This will permanently stop and remove the Docker container and all stored data.</p>
+      <p class="adm-msg">Delete <strong style="color:var(--text);" id="apiDeleteModalName"></strong>?</p>
+      <p style="font-size:.82rem;color:var(--text-3);line-height:1.5;margin-bottom:28px;">This will permanently stop and remove the Docker container and all stored data.</p>
       <div class="adm-footer">
         <button class="adm-cancel" onclick="closeApiDeleteModal()">Cancel</button>
         <button class="adm-delete" id="apiDeleteConfirmBtn" onclick="confirmApiDeleteExecute()">
@@ -35659,7 +35672,7 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
     </div>
     <div class="adm-body">
       <p class="adm-msg">Delete <strong class="adm-msg-name" id="cuDeleteModalName"></strong>?</p>
-      <p style="font-size:.82rem;color:#64748b;line-height:1.5;margin-bottom:28px;">This will permanently remove all uploaded files and extracted project data from the server.</p>
+      <p style="font-size:.82rem;color:var(--text-3);line-height:1.5;margin-bottom:28px;">This will permanently remove all uploaded files and extracted project data from the server.</p>
       <div class="adm-footer">
         <button class="adm-cancel" onclick="closeCuDeleteModal()">Cancel</button>
         <button class="adm-delete" id="cuDeleteConfirmBtn" onclick="confirmCuDeleteExecute()">
@@ -35673,24 +35686,24 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
 
 <!-- ── DB Delete confirm modal ───────────────────────────────────────────── -->
 <div id="dbDeleteModal" class="modal-overlay" onclick="if(event.target===this)closeDbDeleteModal()">
-  <div class="modal" style="max-width:420px;background:#0a1628;border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:32px 28px;box-shadow:0 24px 80px rgba(0,0,0,.7);">
+  <div class="modal" style="max-width:420px;background:var(--bg-3);border:1px solid var(--border);border-radius:18px;padding:32px 28px;box-shadow:0 24px 80px rgba(0,0,0,.35);">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
       <div style="width:40px;height:40px;border-radius:10px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" width="18" height="18"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
       </div>
       <div>
-        <div style="font-weight:700;font-size:1rem;color:#f1f5f9;">Delete Database</div>
-        <div style="font-size:.82rem;color:#64748b;margin-top:2px;">This action cannot be undone</div>
+        <div style="font-weight:700;font-size:1rem;color:var(--text);">Delete Database</div>
+        <div style="font-size:.82rem;color:var(--text-3);margin-top:2px;">This action cannot be undone</div>
       </div>
     </div>
-    <p style="font-size:.88rem;color:#94a3b8;line-height:1.6;margin-bottom:8px;">
-      Delete <strong style="color:#f1f5f9;" id="dbDeleteModalName"></strong>?
+    <p style="font-size:.88rem;color:var(--text-2);line-height:1.6;margin-bottom:8px;">
+      Delete <strong style="color:var(--text);" id="dbDeleteModalName"></strong>?
     </p>
-    <p style="font-size:.82rem;color:#64748b;line-height:1.5;margin-bottom:28px;">
+    <p style="font-size:.82rem;color:var(--text-3);line-height:1.5;margin-bottom:28px;">
       This will permanently stop and remove the Docker container and all stored data.
     </p>
     <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button onclick="closeDbDeleteModal()" style="padding:9px 20px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#94a3b8;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;">Cancel</button>
+      <button onclick="closeDbDeleteModal()" style="padding:9px 20px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;">Cancel</button>
       <button onclick="confirmDbDeleteExecute()" style="padding:9px 20px;border-radius:9px;border:none;background:#b91c1c;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s;">Delete Database</button>
     </div>
   </div>
@@ -35698,28 +35711,28 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
 
 <!-- ── DB Recreate Modal ────────────────────────────────────────────────────── -->
 <div id="dbRecreateModal" class="modal-overlay" onclick="if(event.target===this)closeDbRecreateModal()">
-  <div class="modal" style="max-width:440px;background:#0a1628;border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:32px 28px;box-shadow:0 24px 80px rgba(0,0,0,.7);">
+  <div class="modal" style="max-width:440px;background:var(--bg-3);border:1px solid var(--border);border-radius:18px;padding:32px 28px;box-shadow:0 24px 80px rgba(0,0,0,.35);">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
       <div style="width:40px;height:40px;border-radius:10px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" width="18" height="18"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
       </div>
       <div>
-        <div style="font-weight:700;font-size:1rem;color:#f1f5f9;">Recreate Database</div>
-        <div style="font-size:.82rem;color:#64748b;margin-top:2px;">Rebuilds the container from scratch</div>
+        <div style="font-weight:700;font-size:1rem;color:var(--text);">Recreate Database</div>
+        <div style="font-size:.82rem;color:var(--text-3);margin-top:2px;">Rebuilds the container from scratch</div>
       </div>
     </div>
-    <p style="font-size:.88rem;color:#94a3b8;line-height:1.6;margin-bottom:8px;">
-      Recreate <strong style="color:#f1f5f9;" id="dbRecreateModalName"></strong>?
+    <p style="font-size:.88rem;color:var(--text-2);line-height:1.6;margin-bottom:8px;">
+      Recreate <strong style="color:var(--text);" id="dbRecreateModalName"></strong>?
     </p>
-    <p style="font-size:.82rem;color:#64748b;line-height:1.5;margin-bottom:20px;">
+    <p style="font-size:.82rem;color:var(--text-3);line-height:1.5;margin-bottom:20px;">
       Use this if the database won't start even after Restart — Restart only relaunches the existing container, so it can't fix things baked in at creation time (memory limits, engine config, etc). Recreate removes the container and provisions a fresh one with the same name, credentials, and connection details, so nothing else needs to be updated afterward.
     </p>
-    <label style="display:flex;align-items:flex-start;gap:10px;margin-bottom:28px;cursor:pointer;font-size:.82rem;color:#94a3b8;line-height:1.5;">
+    <label style="display:flex;align-items:flex-start;gap:10px;margin-bottom:28px;cursor:pointer;font-size:.82rem;color:var(--text-2);line-height:1.5;">
       <input type="checkbox" id="dbRecreateWipeData" checked style="margin-top:2px;">
-      <span>Also erase existing data <span style="color:#64748b;">(recommended — a database that won't start usually never finished writing usable data anyway; leaving this checked avoids reusing a half-initialized data directory)</span></span>
+      <span>Also erase existing data <span style="color:var(--text-3);">(recommended — a database that won't start usually never finished writing usable data anyway; leaving this checked avoids reusing a half-initialized data directory)</span></span>
     </label>
     <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button onclick="closeDbRecreateModal()" style="padding:9px 20px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#94a3b8;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;">Cancel</button>
+      <button onclick="closeDbRecreateModal()" style="padding:9px 20px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;">Cancel</button>
       <button onclick="confirmDbRecreateExecute()" style="padding:9px 20px;border-radius:9px;border:none;background:#b45309;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s;">Recreate Database</button>
     </div>
   </div>

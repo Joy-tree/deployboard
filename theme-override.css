@@ -922,6 +922,19 @@ html[data-theme="light"] .jt-success p { color: var(--jt-text-faint) !important;
 html[data-theme="light"] #jtContactTooltip { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; color: var(--jt-text-dim) !important; }
 html[data-theme="light"] #jtContactTooltip strong { color: var(--jt-brand-strong) !important; }
 html[data-theme="light"] .landing-drawer .ld-link { color: var(--jt-text) !important; }
+
+/* Logs page terminal chrome — the traffic-light title bar and outer frame
+   were hardcoded near-black with no theme guard at all (only the empty-state
+   card inside had light-theme coverage), so the frame around it stayed a
+   dark slab. */
+html[data-theme="light"] .terminal-wrap { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .terminal-topbar { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .term-title { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .term-tag { color: var(--jt-brand-strong) !important; background: var(--jt-brand-tint) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .matrix-terminal-card { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .matrix-topbar { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .matrix-title { color: var(--jt-text-dim) !important; text-shadow: none !important; }
+html[data-theme="light"] .matrix-badge { color: var(--jt-brand-strong) !important; background: var(--jt-brand-tint) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .ld-link { color: var(--jt-text-dim) !important; background: transparent !important; }
 html[data-theme="light"] .ld-link-icon { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .ld-link:hover { color: var(--jt-text) !important; background: var(--jt-brand-tint) !important; }
