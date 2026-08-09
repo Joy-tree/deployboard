@@ -1401,3 +1401,134 @@ html[data-theme="light"] .install-prompt-logo {
 }
 html[data-theme="light"] .install-prompt-title { color: var(--jt-text) !important; }
 html[data-theme="light"] .install-prompt-sub { color: var(--jt-text-dim) !important; }
+
+/* ---------------------------------------------------------------------
+   DATABASE QUERY STUDIO (#page-db-query) — never got a light-theme pass.
+   Several backgrounds are ID-scoped `!important` rules with zero theme
+   check at all (.qstudio-toolbar, .qstudio-editor-wrap x2, .qstudio-
+   editor-footer x2), so the whole shell, toolbar, tree, results panel,
+   and status bar stayed solid near-black regardless of theme. Syntax
+   token colors were also tuned pale/light for a black editor background
+   and were barely legible once that background turned light.
+   --------------------------------------------------------------------- */
+
+/* Outer shell + chrome */
+html[data-theme="light"] .qs2-shell { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] .qs2-topbar { border-bottom-color: var(--jt-border) !important; }
+html[data-theme="light"] .qs2-topbar-sep { background: rgba(0,0,0,.1) !important; }
+html[data-theme="light"] .qs2-workspace { border-left-color: var(--jt-border) !important; }
+html[data-theme="light"] .qs2-editor-col { border-right-color: var(--jt-border) !important; }
+
+/* Toolbar buttons */
+html[data-theme="light"] .qstudio-btn {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.14) !important;
+  color: var(--jt-text-dim) !important;
+}
+html[data-theme="light"] .qstudio-btn:hover {
+  color: var(--jt-text) !important;
+  border-color: rgba(0,0,0,.22) !important;
+  background: rgba(0,0,0,.07) !important;
+}
+html[data-theme="light"] .qstudio-btn-danger:hover {
+  border-color: rgba(193,67,46,.4) !important;
+  color: var(--jt-danger) !important;
+  background: rgba(193,67,46,.1) !important;
+}
+html[data-theme="light"] .qstudio-toolbar-sep { background: rgba(0,0,0,.12) !important; }
+html[data-theme="light"] .qstudio-status-pill,
+html[data-theme="light"] #page-db-query .qstudio-status-pill {
+  background: rgba(0,0,0,.05) !important;
+  border-color: rgba(0,0,0,.14) !important;
+  color: var(--jt-text-dim) !important;
+}
+/* Legacy toolbar class (older markup variant, kept in sync defensively) */
+html[data-theme="light"] .qstudio-toolbar,
+html[data-theme="light"] #page-db-query .qstudio-toolbar {
+  background: var(--jt-bg-sunken) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
+
+/* Query tab */
+html[data-theme="light"] .qs2-tab {
+  color: var(--jt-text) !important;
+  background: rgba(0,0,0,.035) !important;
+  border-right-color: var(--jt-border) !important;
+}
+
+/* Table/collection explorer tree */
+html[data-theme="light"] .qs-tree { background: var(--jt-bg-sunken) !important; border-right-color: var(--jt-border) !important; }
+html[data-theme="light"] .qs-tree-head { color: var(--jt-text-faint) !important; border-bottom-color: var(--jt-border) !important; }
+html[data-theme="light"] .qs-tree-refresh { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .qs-tree-empty { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .qs-tree-item { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .qs-tree-item:hover { background: rgba(0,0,0,.05) !important; }
+html[data-theme="light"] .qs-tree-item.active { color: var(--jt-text) !important; }
+html[data-theme="light"] .qs-drawer-close {
+  background: rgba(0,0,0,.05) !important;
+  border-color: rgba(0,0,0,.14) !important;
+  color: var(--jt-text-dim) !important;
+}
+
+/* Editor pane — was forced to #0d0d0d/#0a0a0a by two separate
+   unconditional ID-scoped !important rules */
+html[data-theme="light"] .qstudio-editor-wrap,
+html[data-theme="light"] #page-db-query .qstudio-editor-wrap {
+  background: var(--jt-bg-raised) !important;
+}
+html[data-theme="light"] .qstudio-editor-label,
+html[data-theme="light"] #page-db-query .qstudio-editor-label {
+  color: rgba(31,110,82,.55) !important;
+}
+html[data-theme="light"] .qstudio-gutter {
+  background: rgba(0,0,0,.03) !important;
+  border-right-color: var(--jt-border) !important;
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] .qstudio-editor-footer,
+html[data-theme="light"] #page-db-query .qstudio-editor-footer {
+  background: var(--jt-bg-sunken) !important;
+  border-top-color: var(--jt-border) !important;
+  border-bottom-color: var(--jt-border) !important;
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] .qstudio-editor-footer-stat b { color: var(--jt-text-dim) !important; }
+
+/* SQL/JSON/Redis syntax-highlight tokens — tuned pale for a black
+   editor, several (plain identifiers, light green, light cyan) were
+   near-invisible once the editor background turned light */
+html[data-theme="light"] .ql-kw    { color: #0369a1 !important; }
+html[data-theme="light"] .ql-fn    { color: #b45309 !important; }
+html[data-theme="light"] .ql-str   { color: #15803d !important; }
+html[data-theme="light"] .ql-num   { color: #be185d !important; }
+html[data-theme="light"] .ql-op    { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .ql-cmt   { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .ql-key2  { color: #7c3aed !important; }
+html[data-theme="light"] .ql-field { color: #0e7490 !important; }
+html[data-theme="light"] .ql-punc  { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .ql-bool  { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .ql-jkey  { color: #0369a1 !important; }
+html[data-theme="light"] .ql-jstr  { color: #15803d !important; }
+html[data-theme="light"] .ql-jnum  { color: #be185d !important; }
+html[data-theme="light"] .ql-jbool { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .ql-rcmd  { color: #b45309 !important; }
+html[data-theme="light"] .ql-brace { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .ql-rkey  { color: #0e7490 !important; }
+html[data-theme="light"] .ql-plain { color: var(--jt-text) !important; }
+
+/* Results panel */
+html[data-theme="light"] .qs2-results-head {
+  background: rgba(0,0,0,.03) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .qs2-results-head-label { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .qs2-results-body { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] .qstudio-raw-output .dim { color: var(--jt-text-faint) !important; }
+
+/* Status bar */
+html[data-theme="light"] .qs2-statusbar {
+  background: var(--jt-bg-sunken) !important;
+  border-top-color: var(--jt-border) !important;
+  color: var(--jt-text-dim) !important;
+}
+html[data-theme="light"] #queryRowCount { color: var(--jt-text) !important; }
