@@ -1136,3 +1136,47 @@ html[data-theme="light"] .tree-node-footer-branch {
   background: rgba(0,0,0,.05) !important;
   border-color: rgba(0,0,0,.09) !important;
 }
+
+/* ---------------------------------------------------------------------
+   PROJECTS PAGE — the hero banner (title + Live/Builds counters) was
+   the real culprit behind "the light color is too deep". It's set with
+   an ID-scoped rule (#page-projects .app-hero { background:#0d0d0d
+   !important }) matching the deploy-composer's intentional dark style.
+   Because that selector carries an ID, it out-specifies the earlier
+   generic `html[data-theme="light"] .app-hero` fix, so the banner
+   stayed forced near-black in light mode no matter what. Same story for
+   the kicker label and metric numbers, which were tuned pale-mint for
+   a black backdrop and nearly vanished once matched against anything
+   lighter. Re-scoped here with matching (ID + attribute) specificity so
+   it actually wins, and re-tinted to the cream/green palette.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #page-projects .app-hero {
+  background:
+    radial-gradient(ellipse 55% 44% at 8% 12%, rgba(31,110,82,.08), transparent),
+    var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 0 0 1px rgba(31,110,82,.04), 0 14px 44px rgba(0,0,0,.05) !important;
+}
+html[data-theme="light"] #page-projects .app-hero::after {
+  border-color: rgba(31,110,82,.14) !important;
+  box-shadow: 0 0 70px rgba(31,110,82,.06) !important;
+}
+html[data-theme="light"] #page-projects .app-hero .app-hero-kicker {
+  color: var(--jt-brand-strong) !important;
+}
+html[data-theme="light"] #page-projects .app-hero .hero-metric {
+  border-color: var(--jt-border) !important;
+  background: var(--jt-bg-sunken) !important;
+}
+html[data-theme="light"] #page-projects .app-hero .hero-metric-value {
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] #page-projects .app-hero .hero-metric-label {
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] #page-projects .app-hero .app-hero-title {
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] #page-projects .app-hero .app-hero-subtitle {
+  color: var(--jt-text-dim) !important;
+}
