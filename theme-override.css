@@ -1819,3 +1819,37 @@ html[data-theme="light"] div[style*="z-index:20000"] [style*="background:rgba(25
   background: var(--jt-bg-sunken) !important;
   border-color: var(--jt-border) !important;
 }
+
+/* ---------------------------------------------------------------------
+   SIGN UP / SIGN IN page. Three separate hardcoded-dark spots:
+   1. .auth-title ("Your workspace is waiting.") was color:#f8fafc
+      (near-white) — invisible against a light card. The gradient
+      accent span is untouched since it's already theme-agnostic.
+   2. .auth-google was styled to Google's own DARK button spec
+      (bg #1e1e1e). Per request, switched to Google's official LIGHT
+      button spec (white bg, #dadce0 border, #3c4043 text) instead of
+      just re-tinting it — this matches Google's actual brand guidance
+      for a button sitting on a light page. .auth-github intentionally
+      left untouched — GitHub's own button convention is dark regardless
+      of host page theme.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .auth-title {
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .auth-google {
+  background: #ffffff !important;
+  border-color: #dadce0 !important;
+  color: #3c4043 !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08) !important;
+}
+html[data-theme="light"] .auth-google:hover {
+  background: #f8f9fa !important;
+  border-color: #dadce0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.12) !important;
+}
+html[data-theme="light"] .auth-google-text strong {
+  color: #3c4043 !important;
+}
+html[data-theme="light"] .auth-google-text span {
+  color: #5f6368 !important;
+}

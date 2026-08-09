@@ -27220,7 +27220,7 @@ async function initTurnstile(force=false) {
     turnstileToken = '';
     turnstileWidgetId = window.turnstile.render('#turnstileWidget', {
       sitekey: turnstileSiteKey,
-      theme: 'dark',
+      theme: document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
       callback: (token) => { turnstileToken = token || ''; if (status) status.textContent = ''; },
       'expired-callback': () => { turnstileToken = ''; if (status) status.textContent = 'Verification expired. Please verify again.'; },
       'error-callback': () => { turnstileToken = ''; if (status) status.textContent = 'Verification failed to load. Refresh page or check Turnstile domain settings.'; }
