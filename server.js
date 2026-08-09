@@ -14602,7 +14602,15 @@ app.use('/api/v1', (req, res, next) => {
 // Guard: never serve static files for /api/* paths
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
-  express.static(path.join(__dirname))(req, res, next);
+  // Dashboard's own shell assets (index.html, theme-override.css, etc.) are
+  // NOT hash-versioned, so any caching layer sitting in front of this
+  // server (CDN edge cache, tunnel, browser HTTP cache) can keep serving a
+  // pre-fix copy indefinitely after a redeploy, since express.static's
+  // default headers don't forbid that. Force revalidation on every request
+  // for these so a code fix here is never masked by a stale cache again.
+  express.static(path.join(__dirname), {
+    setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache, must-revalidate'),
+  })(req, res, next);
 });
 
 // ── SPA client-side routing: serve index.html for all /dashboard/* paths ──────
