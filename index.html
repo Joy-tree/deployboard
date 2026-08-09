@@ -1347,8 +1347,26 @@ footer{
   --radius:    12px;
   --sidebar-w: 240px;
   --topbar-h:  58px;
+}
+/* [FIX] Everything below used to be nested INSIDE the :root{} block above.
+   Under CSS nesting rules, a nested selector like `html[data-theme="dark"]`
+   that doesn't start with `&` gets an implicit descendant combinator from
+   its parent -- so it compiled to ":root html[data-theme=\"dark\"]", i.e.
+   "an html[data-theme=dark] element that is a DESCENDANT of :root". Since
+   :root *is* the html element, it can never be its own descendant, so this
+   (and every other html[data-theme=...]-prefixed rule that followed it,
+   ~40 of them: the dark/light variable overrides plus every "hardcoded
+   color override" for .app-hero, #sidebar, .nav-item, .card, etc.) never
+   matched anything, ever. Only elements that happened to get a *duplicate*,
+   correctly non-nested override elsewhere in the file were actually
+   themed; everything else silently kept the original blue-tinted
+   :root defaults regardless of the selected theme -- which is why the
+   dark theme looked inconsistent (some panels true black, others still
+   the old bluish-navy #0b1221 default) instead of uniform. Un-nesting
+   these into real top-level rules (no other change) makes them apply as
+   originally intended.
 
-/* ══ THEME: DARK — consistent pure black board ═══════════════════════════
+   ══ THEME: DARK — consistent pure black board ═══════════════════════════
    Replaces the blue-tinted defaults with neutral black.
 ══════════════════════════════════════════════════════════════════ */
 html[data-theme="dark"] {
@@ -1444,7 +1462,6 @@ html[data-theme="dark"] .dash-qa-btn { background: #111 !important; }
 .theme-picker-opt svg { width: 14px; height: 14px; flex-shrink: 0; opacity: .7; }
 .theme-picker-opt.active svg { opacity: 1; }
 
-}
 
 /* ── Reset ─────────────────────────────────────────────────────────────── */
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
@@ -1531,6 +1548,11 @@ ul { list-style:none; }
   font-size:.7rem;font-weight:700;letter-spacing:.22em;
   text-transform:uppercase;color:rgba(255,255,255,0.55);
 }
+/* [FIX] The loader's text colors (translucent white / light gray) only
+   worked against its dark background. On light theme they were nearly
+   invisible against #pageLoader's light background. */
+html[data-theme="light"] .pl-logo-name { color: rgba(22,33,27,0.6) !important; }
+html[data-theme="light"] .pl-status { color: rgba(22,33,27,0.4) !important; }
 /* Thin progress bar */
 .pl-bar-wrap {
   width:160px;
