@@ -22205,6 +22205,10 @@ function _applyTheme(t) {
     html.setAttribute('data-theme', prefersLight ? 'light' : 'dark');
   }
 
+  // Live-update any already-open xterm.js deploy-log terminal instead
+  // of requiring a page reload to pick up the new theme
+  if (typeof _jtSyncTerminalThemes === 'function') _jtSyncTerminalThemes();
+
   // Update icon
   const icon = document.getElementById('themeIcon');
   const landingIcon = document.getElementById('landingThemeIcon');
@@ -25072,8 +25076,53 @@ function hideMatrixTerminal(delay = 0) {
 }
 
 // ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 // TERMINAL (Xterm.js)
 // ══════════════════════════════════════════════════════════════════
+const JT_TERM_THEME_DARK = {
+  background:'#010d1a',
+  foreground:'#c8d3f5',
+  cursor:'#10b981',
+  cursorAccent:'#00090f',
+  selectionBackground:'rgba(16,185,129,0.2)',
+  black:'#0a1628',       brightBlack:'#334155',
+  red:'#f87171',         brightRed:'#ef4444',
+  green:'#34d399',       brightGreen:'#10b981',
+  yellow:'#fbbf24',      brightYellow:'#f59e0b',
+  blue:'#60a5fa',        brightBlue:'#3b82f6',
+  magenta:'#a78bfa',     brightMagenta:'#8b5cf6',
+  cyan:'#22d3ee',        brightCyan:'#06b6d4',
+  white:'#e2e8f0',       brightWhite:'#f8fafc'
+};
+// Deep, saturated ANSI colors + a near-black foreground so a real
+// deploy log (mostly plain white/gray text) reads as bold, clear text
+// on a light background instead of the washed-out pastel a straight
+// dark->light inversion would give.
+const JT_TERM_THEME_LIGHT = {
+  background:'#FCFDFA',
+  foreground:'#16211B',
+  cursor:'#0F6E52',
+  cursorAccent:'#FCFDFA',
+  selectionBackground:'rgba(16,185,129,0.22)',
+  black:'#16211B',       brightBlack:'#5B6B60',
+  red:'#B91C1C',         brightRed:'#DC2626',
+  green:'#15803D',       brightGreen:'#0F6E52',
+  yellow:'#B45309',      brightYellow:'#D97706',
+  blue:'#1D4ED8',        brightBlue:'#2563EB',
+  magenta:'#7C3AED',     brightMagenta:'#9333EA',
+  cyan:'#0E7490',        brightCyan:'#0891B2',
+  white:'#16211B',       brightWhite:'#0B120E'
+};
+function _jtTerminalTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'light' ? JT_TERM_THEME_LIGHT : JT_TERM_THEME_DARK;
+}
+// Live-update any already-open xterm instances when the theme toggle
+// is used mid-session, instead of requiring a reload.
+function _jtSyncTerminalThemes() {
+  const t = _jtTerminalTheme();
+  try { if (typeof term !== 'undefined' && term) term.options.theme = t; } catch(_) {}
+}
+
 function initTerminal() {
   if (term) { fitAddon && fitAddon.fit(); return; }
   const el = document.getElementById('terminal');
@@ -25081,21 +25130,7 @@ function initTerminal() {
   const isMobile = window.innerWidth <= 768;
   try {
     term = new Terminal({
-      theme: {
-        background:'#010d1a',
-        foreground:'#c8d3f5',
-        cursor:'#10b981',
-        cursorAccent:'#00090f',
-        selectionBackground:'rgba(16,185,129,0.2)',
-        black:'#0a1628',       brightBlack:'#334155',
-        red:'#f87171',         brightRed:'#ef4444',
-        green:'#34d399',       brightGreen:'#10b981',
-        yellow:'#fbbf24',      brightYellow:'#f59e0b',
-        blue:'#60a5fa',        brightBlue:'#3b82f6',
-        magenta:'#a78bfa',     brightMagenta:'#8b5cf6',
-        cyan:'#22d3ee',        brightCyan:'#06b6d4',
-        white:'#e2e8f0',       brightWhite:'#f8fafc'
-      },
+      theme: _jtTerminalTheme(),
       fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace",
       fontSize:   isMobile ? 12.5 : 13.5,
       lineHeight: 1.75,

@@ -1884,3 +1884,73 @@ html[data-theme="light"] .snippet-header {
   background: var(--jt-bg-sunken) !important;
   border-bottom-color: var(--jt-border) !important;
 }
+
+/* ---------------------------------------------------------------------
+   DEPLOY LOG TERMINAL — the xterm.js canvas itself is now given a real
+   light theme via JS (JT_TERM_THEME_LIGHT in index.html); this covers
+   the surrounding plain-HTML/CSS pieces that JS can't reach: the HUD
+   stat chips overlaid on the terminal, and the "port-forward matrix"
+   routing animation shown mid-deploy. Text bumped bolder/bigger per
+   request.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .terminal-hud span {
+  color: var(--jt-brand-strong) !important;
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06) !important;
+  font-weight: 700 !important;
+}
+html[data-theme="light"] .matrix-stage {
+  background: radial-gradient(circle at 50% 45%, rgba(16,185,129,.10), transparent 32%), var(--jt-bg-sunken) !important;
+}
+html[data-theme="light"] .matrix-column { color: #0F6E52 !important; text-shadow: 0 0 5px rgba(15,110,82,.35) !important; font-weight: 800 !important; }
+html[data-theme="light"] .matrix-title { color: var(--jt-brand-strong) !important; text-shadow: none !important; font-weight: 800 !important; }
+html[data-theme="light"] .matrix-overlay-text { color: var(--jt-text) !important; text-shadow: none !important; font-weight: 700 !important; }
+
+/* ---------------------------------------------------------------------
+   DEPLOY SUCCESS MODAL (.deploy-success-*, .dss-*) — almost entirely
+   hardcoded dark (#111/#0d0d0d cards, rgba(255,255,255,x) borders),
+   with only a handful of text colors previously patched. Filling in
+   every remaining background/border, and bumping text size/weight for
+   a clearer, bolder result as requested.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .deploy-success-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; box-shadow: 0 24px 64px rgba(0,0,0,.18) !important; }
+html[data-theme="light"] .deploy-success-header { background: var(--jt-bg-raised) !important; border-bottom-color: var(--jt-border) !important; }
+html[data-theme="light"] .deploy-success-body { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] .deploy-success-title { color: var(--jt-text) !important; font-size: 1.28rem !important; font-weight: 800 !important; }
+html[data-theme="light"] .deploy-success-sub { color: var(--jt-text-dim) !important; font-size: .9rem !important; font-weight: 600 !important; }
+
+html[data-theme="light"] .dss-stat {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-brand-strong) !important;
+  font-size: .76rem !important;
+  font-weight: 700 !important;
+}
+html[data-theme="light"] .dss-stat svg { stroke: var(--jt-brand-strong) !important; }
+
+html[data-theme="light"] .deploy-success-url-box { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .deploy-success-url-box a { color: #0E7490 !important; font-size: .82rem !important; font-weight: 700 !important; }
+html[data-theme="light"] .dss-copy-btn { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .dss-copy-btn:hover { color: var(--jt-brand-strong) !important; }
+
+html[data-theme="light"] .deploy-ss-wrap { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .dss-loader-arc-bg { stroke: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .deploy-ss-loading p { color: var(--jt-text-dim) !important; font-weight: 700 !important; font-size: .8rem !important; }
+
+html[data-theme="light"] .dss-info-cell { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .dss-info-label { color: var(--jt-text-faint) !important; font-weight: 700 !important; }
+html[data-theme="light"] .dss-info-val { color: var(--jt-text) !important; font-size: .88rem !important; font-weight: 800 !important; }
+html[data-theme="light"] .dss-info-val.green { color: var(--jt-brand-strong) !important; }
+
+html[data-theme="light"] .dss-btn-back {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text-dim) !important;
+  font-weight: 700 !important;
+}
+html[data-theme="light"] .dss-btn-back:hover { color: var(--jt-text) !important; border-color: rgba(0,0,0,.2) !important; }
+html[data-theme="light"] .dss-btn-visit { font-weight: 800 !important; }
+
+html[data-theme="light"] .deploy-ss-close { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .deploy-ss-close:hover { color: var(--jt-text) !important; }
