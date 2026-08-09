@@ -1532,3 +1532,15 @@ html[data-theme="light"] .qs2-statusbar {
   color: var(--jt-text-dim) !important;
 }
 html[data-theme="light"] #queryRowCount { color: var(--jt-text) !important; }
+
+/* ---------------------------------------------------------------------
+   API GENERATOR PAGE (#page-realtime-api / "Joytree AI v3" studio) —
+   the AI-version trigger box kept a hardcoded near-black gradient
+   background regardless of theme, so its bold dark title text
+   (var(--text), correctly dark on light theme) sat on a still-black
+   box -- unreadable. Give it a light-appropriate surface too.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #lfAiVersionDrop .jt-ai-trigger {
+  background: linear-gradient(180deg, var(--jt-bg-raised), var(--jt-bg-sunken)) !important;
+  border-color: rgba(6,182,212,.3) !important;
+}

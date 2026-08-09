@@ -3389,10 +3389,16 @@ textarea.input { resize: vertical; min-height: 80px; }
   overflow:hidden;
 }
 #page-realtime-api .lf-upload-name {
-  font-size:.82rem;color:var(--text-2);
+  font-size:.85rem;font-weight:600;color:var(--text-2);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   flex:1;min-width:0;
 }
+
+/* Prompt-canvas helper texts */
+#page-realtime-api .lf-prompt-help { font-size:.85rem; font-weight:600; color:var(--text-2); margin-top:8px; line-height:1.5; }
+#page-realtime-api .lf-canvas-label { font-size:.78rem; font-weight:700; color:var(--text-2); font-family:var(--font-mono); }
+#page-realtime-api .lf-live-tag { font-size:.78rem; font-weight:800; color:#67e8f9; }
+html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !important; }
 
 /* Action buttons row — stack on mobile */
 #page-realtime-api .lf-actions {
@@ -16549,10 +16555,10 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           <div style="position:absolute;top:10px;right:12px;opacity:.5;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#67e8f9" stroke-width="1.5" width="18" height="18"><path d="M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3m3.343-5.657-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
           </div>
-          <textarea id="lfPrompt" class="input" style="min-height:120px;border:none;background:transparent;box-shadow:none;padding:10px;padding-right:36px;" placeholder="Joytree AI v3: e.g. Generate 1000 unique riddles with answers and difficulty tags"></textarea><div style="font-size:.75rem;color:var(--text-3);margin-top:8px;">Create API from scratch by typing your prompt here. v3 uses high-reasoning AI for large batch generation.</div>
+          <textarea id="lfPrompt" class="input" style="min-height:120px;border:none;background:transparent;box-shadow:none;padding:10px;padding-right:36px;" placeholder="Joytree AI v3: e.g. Generate 1000 unique riddles with answers and difficulty tags"></textarea><div class="lf-prompt-help">Create API from scratch by typing your prompt here. v3 uses high-reasoning AI for large batch generation.</div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 6px 2px 6px;">
-            <div style="font-size:.72rem;color:var(--text-3);font-family:var(--font-mono);">AI prompt canvas</div>
-            <div style="font-size:.72rem;color:#67e8f9;">⚡ v3 large-task mode</div>
+            <div class="lf-canvas-label">AI prompt canvas</div>
+            <div class="lf-live-tag">⚡ v3 large-task mode</div>
           </div>
         </div>
 
@@ -16574,8 +16580,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           #lfAiVersionDrop .jt-ai-trigger:hover,#lfAiVersionDrop.open .jt-ai-trigger{border-color:rgba(34,211,238,.5);box-shadow:0 0 0 3px rgba(34,211,238,.07);}
           #lfAiVersionDrop .jt-ai-trigger-icon{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.2);}
           #lfAiVersionDrop .jt-ai-trigger-text{flex:1;min-width:0;}
-          #lfAiVersionDrop .jt-ai-trigger-name{font-size:.84rem;font-weight:800;color:var(--text);line-height:1.2;}
-          #lfAiVersionDrop .jt-ai-trigger-desc{font-size:.68rem;color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+          #lfAiVersionDrop .jt-ai-trigger-name{font-size:.9rem;font-weight:800;color:var(--text);line-height:1.2;}
+          #lfAiVersionDrop .jt-ai-trigger-desc{font-size:.74rem;font-weight:600;color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
           #lfAiVersionDrop .jt-ai-chevron{flex-shrink:0;color:#64748b;transition:transform .18s ease;}
           #lfAiVersionDrop.open .jt-ai-chevron{transform:rotate(180deg);color:#67e8f9;}
           #lfAiVersionMenu{display:none;position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:999;background:var(--bg-3);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.03) inset;}
@@ -16589,13 +16595,13 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           .jt-ai-option-icon.v2{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);}
           .jt-ai-option-icon.v3{background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.28);}
           .jt-ai-option-body{flex:1;min-width:0;}
-          .jt-ai-option-name{font-size:.82rem;font-weight:800;color:var(--text);line-height:1.25;}
-          .jt-ai-option-desc{font-size:.7rem;color:var(--text-3);margin-top:2px;line-height:1.4;}
+          .jt-ai-option-name{font-size:.88rem;font-weight:800;color:var(--text);line-height:1.25;}
+          .jt-ai-option-desc{font-size:.76rem;font-weight:600;color:var(--text-2);margin-top:3px;line-height:1.45;}
           .jt-ai-option-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);display:grid;place-items:center;flex-shrink:0;}
           .jt-ai-option.selected .jt-ai-option-check{border-color:#10b981;background:#10b981;}
         </style>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-          <label style="font-size:.78rem;font-weight:700;color:var(--text-2);white-space:nowrap;">AI Version</label>
+          <label style="font-size:.84rem;font-weight:800;color:var(--text);white-space:nowrap;">AI Version</label>
           <div id="lfAiVersionDrop" style="flex:1;min-width:240px;max-width:400px;">
             <div class="jt-ai-trigger" onclick="lfAiDropToggle()">
               <div class="jt-ai-trigger-icon" id="lfAiTriggerIcon">
