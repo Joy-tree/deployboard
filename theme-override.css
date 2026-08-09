@@ -1180,3 +1180,51 @@ html[data-theme="light"] #page-projects .app-hero .app-hero-title {
 html[data-theme="light"] #page-projects .app-hero .app-hero-subtitle {
   color: var(--jt-text-dim) !important;
 }
+
+/* ---------------------------------------------------------------------
+   SIDEBAR — a few more hardcoded-for-dark spots that don't switch:
+
+   1. Icons sit at opacity:0.7 unconditionally. On a black sidebar that's
+      a deliberate soft look; on a white one it just reads as faint/
+      "blurry". Bumped for light theme so icons render crisp.
+   2. Logout nav item: only its text color got a light-theme fix earlier
+      — its background (rgba(127,29,29,.15), a translucent dark maroon
+      built for a black sidebar) was left untouched, so it sat as a
+      muddy dark smudge on a white row.
+   3. Nav count badges ("2" on Projects/Deployments) are forced to a
+      near-black green (#052e16) with pale mint text by an unguarded
+      !important rule with no theme check at all — same class of bug
+      as the AI page. Given a proper light-theme treatment instead.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .nav-item svg { opacity: .85 !important; }
+html[data-theme="light"] .nav-item:hover svg,
+html[data-theme="light"] .nav-item.active svg { opacity: 1 !important; }
+
+html[data-theme="light"] .nav-item.logout-item {
+  background: rgba(193,67,46,.08) !important;
+  border-color: rgba(193,67,46,.22) !important;
+}
+html[data-theme="light"] .nav-item.logout-item svg { color: var(--jt-danger) !important; opacity: 1 !important; }
+html[data-theme="light"] .nav-item.logout-item:hover {
+  background: rgba(193,67,46,.14) !important;
+  border-color: rgba(193,67,46,.32) !important;
+}
+
+html[data-theme="light"] .sidebar-nav .badge,
+html[data-theme="light"] .count-pill,
+html[data-theme="light"] .notif-badge,
+html[data-theme="light"] .nav-badge {
+  background: var(--jt-brand) !important;
+  border: 1px solid var(--jt-brand-strong) !important;
+  color: #fff !important;
+}
+
+/* Mobile slide-in drawer: the translateX() animation leaves text/icons
+   looking soft (a known Chrome/WebView sub-pixel rendering artifact on
+   transformed layers) even once it's fully open and no longer moving.
+   Pinning it to a whole-pixel composited layer fixes the softness. */
+#sidebar {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
