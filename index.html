@@ -9590,6 +9590,84 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 .jai-left,.jai-right-wrapper,.jai-right-collapse-btn,.jai-right-body,
 .jai-sess-header,.jai-tab,.jai-right-header,.jai-right-tabs,.jai-view-toggle,
 .jai-view-btn,.jai-log-btn,.jai-changes-count,.jai-right-title { display:none !important; }
+
+/* ══════════════════════════════════════════════════════
+   LIGHT THEME — this whole module was built as translucent
+   white-on-black glassmorphism (rgba(255,255,255,.02–.13) for
+   every card/pill/border), which is invisible on a light/cream
+   background. Re-tint every one of those surfaces for light mode.
+══════════════════════════════════════════════════════ */
+html[data-theme="light"] #page-joytree-ai {
+  --jai-text1: var(--jt-text) !important;
+  --jai-text2: var(--jt-text-dim) !important;
+  --jai-text3: var(--jt-text-faint) !important;
+  --jai-text4: #9BA79C !important;
+  --jai-border2: rgba(0,0,0,.05) !important;
+}
+html[data-theme="light"] #jaiIdleScreen,
+html[data-theme="light"] #jaiSessionScreen { background: var(--jt-bg-sunken) !important; }
+
+/* Faint recessed surfaces (was rgba(255,255,255,.02–.04)) */
+html[data-theme="light"] .jai-idle-icon-pill,
+html[data-theme="light"] .jai-mode-pills,
+html[data-theme="light"] .jai-model-select,
+html[data-theme="light"] .jai-chip,
+html[data-theme="light"] .jai-repo-search,
+html[data-theme="light"] .jai-step-card,
+html[data-theme="light"] .jai-fc-header,
+html[data-theme="light"] .jai-icon-btn.jai-mode-toggle,
+html[data-theme="light"] .jai-icon-btn.jai-model-icon-btn,
+html[data-theme="light"] .jai-cap-card,
+html[data-theme="light"] .jai-hist-card,
+html[data-theme="light"] .jai-hist-branch {
+  background: rgba(0,0,0,.035) !important;
+  border-color: rgba(0,0,0,.09) !important;
+}
+html[data-theme="light"] .jai-idle-icon-pill:hover,
+html[data-theme="light"] .jai-model-select:hover,
+html[data-theme="light"] .jai-gh-idle-pill:hover,
+html[data-theme="light"] .jai-repo-item:hover,
+html[data-theme="light"] .jai-branch-item:hover,
+html[data-theme="light"] .jai-topnav-back:hover,
+html[data-theme="light"] .jai-topnav-btn:hover,
+html[data-theme="light"] .jai-fc-header:hover,
+html[data-theme="light"] .jai-fc-header.open,
+html[data-theme="light"] .jai-icon-btn:hover,
+html[data-theme="light"] .jai-icon-btn.jai-mode-toggle:hover,
+html[data-theme="light"] .jai-icon-btn.jai-model-icon-btn:hover {
+  background: rgba(0,0,0,.07) !important;
+}
+html[data-theme="light"] .jai-cap-card:hover { border-color: rgba(0,0,0,.16) !important; }
+
+/* Pills / bars / bordered surfaces (was rgba(255,255,255,.06–.1)) */
+html[data-theme="light"] .jai-gh-idle-pill,
+html[data-theme="light"] .jai-topnav-back,
+html[data-theme="light"] .jai-repo-sheet-close,
+html[data-theme="light"] .jai-repo-item,
+html[data-theme="light"] .jai-fc-card,
+html[data-theme="light"] .jai-progress-track,
+html[data-theme="light"] .jai-history-empty {
+  background: rgba(0,0,0,.05) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+html[data-theme="light"] .jai-repo-item { background: transparent !important; }
+
+/* Stronger borders / prompt boxes (was rgba(255,255,255,.1–.13)) */
+html[data-theme="light"] .jai-prompt-wrap,
+html[data-theme="light"] .jai-slim-wrap,
+html[data-theme="light"] .jai-repo-sheet,
+html[data-theme="light"] .jai-trial-card {
+  border-color: rgba(0,0,0,.12) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,.08) !important;
+}
+html[data-theme="light"] .jai-repo-sheet-handle { background: rgba(0,0,0,.15) !important; }
+html[data-theme="light"] .jai-step-dot { border-color: rgba(0,0,0,.15) !important; }
+
+/* Placeholders — were near-invisible dark navy tuned for black bg */
+html[data-theme="light"] .jai-prompt-textarea::placeholder,
+html[data-theme="light"] .jai-slim-textarea::placeholder { color: #9BA79C !important; }
+
+/* Code / diff blocks stay dark intentionally (matches terminals elsewhere) */
 </style>
 
       <!-- ══ TRIAL GATE ══ -->
