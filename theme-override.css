@@ -1115,25 +1115,29 @@ html[data-theme="light"] .tree-thumb-placeholder {
 html[data-theme="light"] .tree-thumb-placeholder svg { opacity: .35 !important; color: var(--jt-text-faint) !important; }
 html[data-theme="light"] .tree-thumb-placeholder span { color: var(--jt-text-faint) !important; }
 
-/* "New Version" / "Redeploy" / "View" ghost buttons — were 6% white,
-   invisible on a light card (looked like plain text, not a button) */
-html[data-theme="light"] .tree-node-btn-ghost {
-  background: rgba(0,0,0,.05) !important;
-  color: var(--jt-text-dim) !important;
+/* "New Version" / "Redeploy" / "View" / "Visit" buttons — now solid
+   deep-green fills by default (matching the Background Workers "New
+   Worker" button), so no separate light-theme patch is needed for
+   background/color. Just keep the hover state in sync with the light
+   palette's brand tokens. */
+html[data-theme="light"] .tree-node-btn-ghost,
+html[data-theme="light"] .tree-node-btn-primary {
+  background: var(--jt-brand) !important;
+  border-color: var(--jt-brand-strong) !important;
+  color: #fff !important;
 }
-html[data-theme="light"] .tree-node-btn-ghost:hover {
-  background: rgba(0,0,0,.09) !important;
-  color: var(--jt-text) !important;
+html[data-theme="light"] .tree-node-btn-ghost:hover,
+html[data-theme="light"] .tree-node-btn-primary:hover {
+  background: var(--jt-brand-strong) !important;
 }
 
-/* Delete button — 7% red on white read as a near-invisible pale pink
-   smudge with a washed-out icon; give it real contrast */
+/* Delete button — solid deep red fill, white icon, visible on any theme */
 html[data-theme="light"] .tree-node-btn-danger {
-  background: rgba(193,67,46,.10) !important;
-  border-color: rgba(193,67,46,.24) !important;
-  color: var(--jt-danger) !important;
+  background: var(--jt-danger) !important;
+  border-color: var(--jt-danger) !important;
+  color: #fff !important;
 }
-html[data-theme="light"] .tree-node-btn-danger:hover { background: rgba(193,67,46,.18) !important; }
+html[data-theme="light"] .tree-node-btn-danger:hover { filter: brightness(0.88) !important; }
 
 /* Footer strip (repo/branch/time row) and branch badge pill */
 html[data-theme="light"] .tree-node-footer {

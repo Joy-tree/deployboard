@@ -2458,24 +2458,26 @@ textarea.input { resize: vertical; min-height: 80px; }
   font-size:0.72rem; font-weight:600;
   border-radius:9px; cursor:pointer; border:none;
   display:flex; align-items:center; justify-content:center; gap:5px;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .tree-node-btn svg { width:12px; height:12px; flex-shrink:0; }
 .tree-node-btn-ghost {
-  background:rgba(255,255,255,0.06); color:var(--text-2);
+  background:var(--primary); color:#fff;
+  border:1px solid var(--primary-d);
 }
-.tree-node-btn-ghost:hover { background:rgba(255,255,255,0.11); color:var(--text); }
+.tree-node-btn-ghost:hover { background:var(--primary-d); }
 .tree-node-btn-primary {
-  background:rgba(16,185,129,0.12); color:var(--primary);
-  border:1px solid rgba(16,185,129,0.2);
+  background:var(--primary); color:#fff;
+  border:1px solid var(--primary-d);
 }
-.tree-node-btn-primary:hover { background:rgba(16,185,129,0.22); }
+.tree-node-btn-primary:hover { background:var(--primary-d); }
 .tree-node-btn-danger {
-  background:rgba(239,68,68,0.07); color:#f87171;
-  border:1px solid rgba(239,68,68,0.14);
+  background:var(--red); color:#fff;
+  border:1px solid var(--red);
   flex:0; padding:0 10px;
 }
-.tree-node-btn-danger:hover { background:rgba(239,68,68,0.15); }
+.tree-node-btn-danger:hover { filter:brightness(0.88); }
+
 
 /* Connector line styles (drawn in SVG) */
 .tree-connector {
