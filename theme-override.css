@@ -28,12 +28,12 @@
   --jt-font-body: 'Inter', system-ui, sans-serif;
   --jt-font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 
-  /* Light */
-  --jt-bg: #E7F0DF;
-  --jt-bg-raised: #FCFDFA;
-  --jt-bg-sunken: #DCE8D2;
-  --jt-border: #C7D4BD;
-  --jt-border-soft: #D7E2CD;
+  /* Light — matches docs.joytree.site exactly */
+  --jt-bg: #F6F8F4;
+  --jt-bg-raised: #FFFFFF;
+  --jt-bg-sunken: #EFF3EC;
+  --jt-border: #DCE3D8;
+  --jt-border-soft: #E7ECE4;
   --jt-text: #16211B;
   --jt-text-dim: #4A5A50;
   --jt-text-faint: #7C8B80;
@@ -878,7 +878,7 @@ html[data-theme="light"] #page-realtime-api .card { background: var(--jt-bg-rais
    through behind the loader's logo/progress bar (reported as a "ghosting"
    look, light theme only, since dark theme's transparent-on-dark is much
    less visible). A literal color removes that failure mode entirely. */
-html[data-theme="light"] #pageLoader { background: #DCE8D2 !important; }
+html[data-theme="light"] #pageLoader { background: #EFF3EC !important; }
 html[data-theme="light"] #sidebar { background: var(--jt-bg) !important; }
 html[data-theme="light"] #sidebar,
 html[data-theme="light"] .sidebar-logo,
