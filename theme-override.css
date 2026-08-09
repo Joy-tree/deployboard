@@ -433,7 +433,6 @@ html[data-theme="light"] .mig-hero-sub { color: var(--jt-text-faint) !important;
 html[data-theme="light"] .mig-hero-title { color: var(--jt-text) !important; }
 html[data-theme="light"] .mig-input,
 html[data-theme="light"] .mig-select { color: var(--jt-text) !important; }
-html[data-theme="light"] .mig-job-logs { color: var(--jt-brand-strong) !important; }
 html[data-theme="light"] .mig-job-route { color: var(--jt-text) !important; }
 html[data-theme="light"] .mig-source-opt svg { color: var(--jt-brand-strong) !important; }
 html[data-theme="light"] .mig-source-opt-label { color: var(--jt-text) !important; }
@@ -1271,3 +1270,72 @@ html[data-theme="light"] #settingsTabAccount .card-title[style*="color:#f87171"]
   color: var(--jt-danger) !important;
   font-weight: 700;
 }
+
+/* ---------------------------------------------------------------------
+   NEW DEPLOYMENT PAGE — file-upload dropzone. The main call-to-action
+   label ("Drop your ZIP / HTML here...") was #cbd5e1, a near-white
+   slate picked for a black dropzone — invisible against its pale green
+   tint on a light card. Launch-status text was similarly pale mint.
+   Targeted by id since these are unique inline styles without !important.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #deployFormDropzoneLabel {
+  color: var(--jt-text-dim) !important;
+}
+html[data-theme="light"] #deployLaunchStatus {
+  color: var(--jt-brand-strong) !important;
+}
+
+/* ---------------------------------------------------------------------
+   DATABASE MIGRATION PAGE — this page never got a light-theme pass at
+   all. It's the same self-contained "v10" component pattern as the
+   original AI Agent page bug: its own <style> block, entirely built as
+   translucent white-on-black (source cards at #0b0b0b/#111, inputs at
+   #0b0b0b, borders at rgba(255,255,255,.07–.09)). On a cream page every
+   unselected source card, every input, and every migration-history row
+   rendered as a near-black slab. Full pass below, mirroring the
+   treatment already applied to the AI page and Database page.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .mig-hero {
+  background:
+    radial-gradient(ellipse 55% 44% at 8% 12%, rgba(31,110,82,.08), transparent),
+    var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 0 0 1px rgba(31,110,82,.04), 0 14px 44px rgba(0,0,0,.05) !important;
+}
+html[data-theme="light"] .mig-card-sub,
+html[data-theme="light"] .mig-source-opt-sub,
+html[data-theme="light"] .mig-help,
+html[data-theme="light"] .mig-job-meta,
+html[data-theme="light"] .mig-job-toggle,
+html[data-theme="light"] .mig-empty {
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] .mig-job-toggle:hover { color: var(--jt-brand-strong) !important; }
+
+/* Source picker cards (MongoDB Atlas, Firebase, MySQL, etc.) */
+html[data-theme="light"] .mig-source-opt {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .mig-source-opt:hover { border-color: rgba(31,110,82,.35) !important; }
+html[data-theme="light"] .mig-source-opt.active {
+  background: var(--jt-brand-tint) !important;
+  border-color: var(--jt-brand) !important;
+}
+
+/* Inputs / selects */
+html[data-theme="light"] .mig-input,
+html[data-theme="light"] .mig-select {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+
+/* Migration history rows */
+html[data-theme="light"] .mig-job {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+
+/* Job logs stay a dark terminal panel by design (same as Live Logs /
+   xterm / diff previews elsewhere) — its original pale-green-on-black
+   text already reads fine, so it's intentionally left untouched here. */
