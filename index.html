@@ -5716,7 +5716,8 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
       // screen right now, regardless of why the loader was still showing.
       var activelyAuthenticating =
         (authView && authView.classList.contains('active')) ||
-        (verifyPage && verifyPage.style.display !== 'none' && verifyPage.style.display !== '');
+        (verifyPage && verifyPage.style.display !== 'none' && verifyPage.style.display !== '') ||
+        window._jtOAuthExchangeInFlight === true;
       if (!hasToken && !activelyAuthenticating && landing && (!appEl || appEl.style.display === 'none')) {
         if (authView) authView.classList.remove('active');
         landing.style.display = 'block';
@@ -27163,6 +27164,16 @@ function statusBadge(status) {
     const ghCode = params.get('code');
     const ghState = params.get('state');
     const stateOk = !ghState || ghState === 'deployboard_github_auth' || ghState === 'joytree_github_auth' || ghState === 'deployboard_github_link';
+    // [FIX] OAuth codes (GitHub and Google both) are single-use — exchanging
+    // the same one twice always fails the second time. The busy-checks added
+    // to the SW auto-reload and boot-loader failsafe only covered the visible
+    // login form / OTP screen, not this window — so a service worker update
+    // (or the 12s failsafe) landing mid-exchange could still reload the page
+    // and burn the code before it was ever actually used, then retry with
+    // nothing left to exchange. This flag covers the real at-risk window:
+    // from the moment a code is found in the URL until the exchange (either
+    // provider) has fully resolved, success or failure.
+    if (ghCode && (stateOk || ghState === 'deployboard_google_auth')) window._jtOAuthExchangeInFlight = true;
   if (ghCode && stateOk) {
     try {
       const isLinkMode = ghState === 'deployboard_github_link' || sessionStorage.getItem('jt_gh_link_mode') === '1';
@@ -27266,6 +27277,7 @@ function statusBadge(status) {
       toast('Google sign-in failed. Please try again.', 'error');
     }
   }
+  window._jtOAuthExchangeInFlight = false;
   const ok = await Promise.race([bootstrapSession(), new Promise(resolve => setTimeout(() => resolve(false), 7000))]);
   if (ok) {
     showDashboard(preferPricingAfterAuth ? 'pricing' : 'dashboard');
@@ -27290,6 +27302,7 @@ function statusBadge(status) {
       if (landing) landing.style.display = 'block';
     }
   } finally {
+    window._jtOAuthExchangeInFlight = false;
     hideBootLoader(120);
   }
 })();
@@ -30566,9 +30579,19 @@ function initPWAInstallPrompt(){
       // until the person isn't actively on the auth form or OTP screen.
       const authView   = document.getElementById('auth-view');
       const verifyPage = document.getElementById('verifyEmailPage');
+      // [FIX] This is the actual root cause of the Google-sign-in-stuck
+      // report: neither of the two checks below covers "an OAuth code is
+      // currently being exchanged" — that flow never shows the login form
+      // or the OTP screen, it goes straight from reading ?code= in the URL
+      // to calling the exchange endpoint to showing the dashboard. A
+      // reload landing in that window doesn't just interrupt a form — it
+      // burns a single-use authorization code with nothing to show for it,
+      // and the retry after reload has no code left to exchange, which
+      // looks exactly like "stuck, no error, back to the home page."
       const isBusy = () =>
         (authView && authView.classList.contains('active')) ||
-        (verifyPage && verifyPage.style.display !== 'none' && verifyPage.style.display !== '');
+        (verifyPage && verifyPage.style.display !== 'none' && verifyPage.style.display !== '') ||
+        window._jtOAuthExchangeInFlight === true;
       const doReload = () => {
         try { sessionStorage.setItem('jt_sw_reloaded', '1'); } catch(_) {}
         window.location.reload();
