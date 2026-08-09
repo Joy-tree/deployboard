@@ -1628,3 +1628,100 @@ html[data-theme="light"] .sdk-guide-card {
    black); on light theme it just needs a touch lighter to not read
    as an error state */
 html[data-theme="light"] .sdk-test-indicator.idle { background: #94a3b8 !important; }
+
+/* ---------------------------------------------------------------------
+   DELETE CONFIRMATION MODAL (Delete Upload / Delete API — shared
+   .adm-* classes). Text colors got a light-theme pass previously, but
+   the box itself was left at a hardcoded pure-black (#000000) with a
+   near-invisible white-on-white border — same "text fixed, container
+   forgotten" gap as the page heroes. Re-surfaced in the site's cream/
+   green palette; text bumped darker/bolder per request. The delete
+   button itself stays solid red — that's a deliberate danger signal,
+   not a theme miss.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #apiDeleteModal .adm-box,
+html[data-theme="light"] #cuDeleteModal .adm-box {
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 0%, rgba(31,110,82,.06), transparent),
+    var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,.18) !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-head,
+html[data-theme="light"] #cuDeleteModal .adm-head {
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-title,
+html[data-theme="light"] #cuDeleteModal .adm-title {
+  color: var(--jt-text) !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-sub,
+html[data-theme="light"] #cuDeleteModal .adm-sub {
+  color: var(--jt-text-dim) !important;
+  font-weight: 600 !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-msg,
+html[data-theme="light"] #cuDeleteModal .adm-msg {
+  color: var(--jt-text-dim) !important;
+  font-size: .92rem !important;
+  font-weight: 600 !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-msg-name,
+html[data-theme="light"] #cuDeleteModal .adm-msg-name {
+  color: var(--jt-text) !important;
+  font-weight: 800 !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-cancel,
+html[data-theme="light"] #cuDeleteModal .adm-cancel {
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text-dim) !important;
+  font-weight: 700 !important;
+}
+html[data-theme="light"] #apiDeleteModal .adm-cancel:hover,
+html[data-theme="light"] #cuDeleteModal .adm-cancel:hover {
+  background: rgba(0,0,0,.05) !important;
+  color: var(--jt-text) !important;
+}
+
+/* ---------------------------------------------------------------------
+   PROJECT CARDS — remaining light-theme gaps
+   --------------------------------------------------------------------- */
+/* "New Version"/"Redeploy" ghost button — belt-and-braces re-assert
+   in case a cached copy of this file is still being served; matches
+   the .tree-node-btn-primary treatment exactly so both read as equally
+   solid, filled actions. */
+html[data-theme="light"] .tree-project-node .tree-node-btn.tree-node-btn-ghost {
+  background: var(--jt-brand) !important;
+  border-color: var(--jt-brand-strong) !important;
+  color: #fff !important;
+}
+html[data-theme="light"] .tree-project-node .tree-node-btn.tree-node-btn-ghost:hover {
+  background: var(--jt-brand-strong) !important;
+}
+/* GitHub icon in the card footer (repo name row) — fixed at 50%
+   opacity unconditionally, tuned to sit subtly on a black footer strip;
+   on the light footer that reads as a faint, blurry smudge. */
+html[data-theme="light"] .tree-node-footer svg[style*="opacity:.5"] {
+  opacity: .8 !important;
+}
+
+/* ---------------------------------------------------------------------
+   LIVE LOGS PAGE (#page-logs) — the "Parsed Stream" / structured-logs
+   card was covered previously, but a sibling selector in the very same
+   rule, .build-steps-collapse:not(.quantum-build) (the "Build Progress"
+   step list — Clone Repository, Install Dependencies, etc.), was missed
+   and stayed hardcoded to #111. Restart/Stop button labels were also
+   pale blue/red tuned for a dark toolbar.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #page-logs .build-steps-collapse:not(.quantum-build) {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-logs .btn.btn-ghost[style*="color:#93c5fd"] {
+  color: #0369a1 !important;
+}
+html[data-theme="light"] #page-logs .btn.btn-ghost[style*="color:#fca5a5"] {
+  color: var(--jt-danger) !important;
+}
