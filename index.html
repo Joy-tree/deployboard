@@ -22023,20 +22023,30 @@ async function sendAdminBroadcastEmail() {
 // SIDEBAR
 // ══════════════════════════════════════════════════════════════════
 // ══ Theme system ══════════════════════════════════════════════════════════
-// Three modes: 'system' (no data-theme attribute, falls back to base CSS --
-// dark by default), 'dark' (explicit pure-black override), 'light' (docs.
-// joytree.site palette, applied via theme-override.css).
+// Three modes: 'system' (follows the OS/browser prefers-color-scheme via
+// matchMedia — light or dark, whichever the device is set to), 'dark'
+// (explicit pure-black override), 'light' (docs.joytree.site palette,
+// applied via theme-override.css).
 // Stored in localStorage so it persists across sessions.
 (function _initTheme() {
   const saved = localStorage.getItem('jt_theme') || 'system';
   _applyTheme(saved);
+  // Keep 'system' mode live-synced if the OS theme changes while open
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+      if ((localStorage.getItem('jt_theme') || 'system') === 'system') _applyTheme('system');
+    });
+  }
 })();
 
 function _applyTheme(t) {
   const html = document.documentElement;
   if (t === 'dark')       { html.setAttribute('data-theme', 'dark'); }
   else if (t === 'light') { html.setAttribute('data-theme', 'light'); }
-  else                    { html.removeAttribute('data-theme'); }
+  else {
+    const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    html.setAttribute('data-theme', prefersLight ? 'light' : 'dark');
+  }
 
   // Update icon
   const icon = document.getElementById('themeIcon');
