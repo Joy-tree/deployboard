@@ -1347,28 +1347,28 @@ html[data-theme="light"] {
 }
 
 /* Light mode hardcoded-color overrides */
-html[data-theme="light"] .app-hero { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] .hero-metric { background: #f8fafc !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .app-hero { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .hero-metric { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .hero-metric-value { color: #0f172a; }
 html[data-theme="light"] .hero-metric-label { color: #64748b; }
 html[data-theme="light"] .hero-status-pill { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.25); color: #065f46; }
-html[data-theme="light"] #sidebar { background: #ffffff !important; border-right-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #sidebar { background: var(--jt-bg-raised) !important; border-right-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .sidebar-section { color: #94a3b8; }
 html[data-theme="light"] .nav-item { color: #475569; }
 html[data-theme="light"] .nav-item:hover { background: #f1f5f9; color: #0f172a; }
 html[data-theme="light"] .nav-item.active { background: rgba(16,185,129,.1); color: #065f46; }
-html[data-theme="light"] #topbar { background: #ffffff !important; border-bottom-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #topbar { background: var(--jt-bg-raised) !important; border-bottom-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #page-dashboard .card,
 html[data-theme="light"] #page-deployments .card,
 html[data-theme="light"] #page-env-manager .card,
-html[data-theme="light"] #page-webhooks .card { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] .deployment-table-shell tbody tr { background: #ffffff !important; }
-html[data-theme="light"] .dash-qa-btn { background: #f8fafc !important; }
+html[data-theme="light"] #page-webhooks .card { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .deployment-table-shell tbody tr { background: var(--jt-bg-raised) !important; }
+html[data-theme="light"] .dash-qa-btn { background: var(--jt-bg-sunken) !important; }
 html[data-theme="light"] .dash-qa-btn:hover { background: rgba(16,185,129,.08) !important; }
 html[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); }
-html[data-theme="light"] .sshk-card { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] .sshk-input { background: #f8fafc !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
-html[data-theme="light"] .sshk-code-box { background: #f1f5f9 !important; border-color: rgba(0,0,0,.08) !important; color: #334155 !important; }
+html[data-theme="light"] .sshk-card { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .sshk-input { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
+html[data-theme="light"] .sshk-code-box { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; color: #334155 !important; }
 html[data-theme="light"] .sshk-hero-kicker, html[data-theme="light"] .app-hero-kicker { color: #059669 !important; }
 html[data-theme="light"] .sshk-hero-title, html[data-theme="light"] .app-hero-title { color: #0f172a !important; }
 html[data-theme="light"] .sshk-hero-sub, html[data-theme="light"] .app-hero-subtitle { color: #64748b !important; }
@@ -4452,8 +4452,8 @@ textarea.input { resize: vertical; min-height: 80px; }
   --primary-d:#059669;
 }
 html,body,#landing-view,#app,#app-shell,.app-layout,[id^="page-"]{background:#09090b!important;}
-html[data-theme="light"] #landing-view { background: #f8fafc !important; }
-html[data-theme="light"] body { background: #f8fafc !important; }
+html[data-theme="light"] #landing-view { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] body { background: var(--jt-bg-sunken) !important; }
 
 /* ══════════════════════════════════════════════════════════════════
    THEME OVERRIDES — scoped inside html[data-theme] so they have
@@ -4464,16 +4464,16 @@ html[data-theme="light"] body { background: #f8fafc !important; }
 /* ── LIGHT THEME: ADDITIONAL PAGES ─────────────────────────────── */
 /* Auth page */
 html[data-theme="light"] .auth-bg,
-html[data-theme="light"] .auth-wrap    { background: #f8fafc !important; }
-html[data-theme="light"] .auth-tabs    { background: #f1f5f9 !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] .auth-input   { background: #ffffff !important; color: #0f172a !important; border-color: rgba(0,0,0,.12) !important; }
-html[data-theme="light"] .auth-feat-pill { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
+html[data-theme="light"] .auth-wrap    { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] .auth-tabs    { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .auth-input   { background: var(--jt-bg-raised) !important; color: #0f172a !important; border-color: rgba(0,0,0,.12) !important; }
+html[data-theme="light"] .auth-feat-pill { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
 /* Repo hero, config hero (workers/dockerfile) */
 html[data-theme="light"] #app .repo-hero,
-html[data-theme="light"] #app .config-hero { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
+html[data-theme="light"] #app .config-hero { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
 /* Dropdowns and selects */
 html[data-theme="light"] #app .custom-select-dropdown,
-html[data-theme="light"] #app .btn-ghost { background: #f1f5f9 !important; color: #0f172a !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #app .btn-ghost { background: var(--jt-bg-sunken) !important; color: #0f172a !important; border-color: rgba(0,0,0,.08) !important; }
 /* Data Studio / DB SDK */
 html[data-theme="light"] #app .db-studio-shell,
 html[data-theme="light"] #app .db-studio-pane,
@@ -4481,79 +4481,79 @@ html[data-theme="light"] #app .db-code-block,
 html[data-theme="light"] #app .db-engine-dropdown-trigger,
 html[data-theme="light"] #app .db-engine-dropdown-menu,
 html[data-theme="light"] #app .db-create-form,
-html[data-theme="light"] #app .cdd-menu { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
+html[data-theme="light"] #app .cdd-menu { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
 /* Query Studio */
 html[data-theme="light"] #app .qstudio-db-bar,
 html[data-theme="light"] #app .qstudio-db-dropdown,
 html[data-theme="light"] #app .qstudio-side,
-html[data-theme="light"] #app .qstudio-ct-type-dropdown { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
+html[data-theme="light"] #app .qstudio-ct-type-dropdown { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
 /* Schema Explorer */
 html[data-theme="light"] #app .schema-kpi-card,
 html[data-theme="light"] #app .schema-access-panel,
-html[data-theme="light"] #app .schema-main-panel { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
+html[data-theme="light"] #app .schema-main-panel { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
 /* Modals */
-html[data-theme="light"] .jt-modal-body { background: #ffffff !important; color: #0f172a !important; }
-html[data-theme="light"] #app .modal  { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
+html[data-theme="light"] .jt-modal-body { background: var(--jt-bg-raised) !important; color: #0f172a !important; }
+html[data-theme="light"] #app .modal  { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
 /* Verify / OTP */
-html[data-theme="light"] .vp-card { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] .vp-otp-box { background: #f8fafc !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
+html[data-theme="light"] .vp-card { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .vp-otp-box { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
 /* Page loader */
-html[data-theme="light"] #pageLoader { background: #f8fafc !important; }
+html[data-theme="light"] #pageLoader { background: var(--jt-bg-sunken) !important; }
 
 /* ── LIGHT: Landing drawer menu items ── */
 html[data-theme="light"] .ld-link { color: #475569 !important; }
 html[data-theme="light"] .ld-link:hover { background: rgba(0,0,0,.04) !important; color: #0f172a !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] .ld-link-icon { background: #f1f5f9 !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .ld-link-icon { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .ld-section-label { color: #94a3b8 !important; }
 
 /* ── LIGHT: Notifications panel ── */
-html[data-theme="light"] .notif-panel { background: #ffffff !important; border-color: rgba(0,0,0,.1) !important; box-shadow: 0 8px 32px rgba(0,0,0,.12) !important; color: #0f172a !important; }
+html[data-theme="light"] .notif-panel { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.1) !important; box-shadow: 0 8px 32px rgba(0,0,0,.12) !important; color: #0f172a !important; }
 
 /* ── LIGHT: DB list item, detail panel, buttons ── */
-html[data-theme="light"] #app .db-btn { background: #f1f5f9 !important; color: #475569 !important; border-color: rgba(0,0,0,.1) !important; }
+html[data-theme="light"] #app .db-btn { background: var(--jt-bg-sunken) !important; color: #475569 !important; border-color: rgba(0,0,0,.1) !important; }
 html[data-theme="light"] #app .db-btn:hover { background: #e2e8f0 !important; }
-html[data-theme="light"] #app .db-detail-card { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
+html[data-theme="light"] #app .db-detail-card { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
 html[data-theme="light"] #app .db-detail-card-title { color: #475569 !important; }
 
 /* ── LIGHT: Query Studio terminal ── */
-html[data-theme="light"] #page-db-query .qstudio-terminal { background: #f8fafc !important; }
-html[data-theme="light"] #page-db-query .qstudio-terminal-head { background: #f1f5f9 !important; }
+html[data-theme="light"] #page-db-query .qstudio-terminal { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] #page-db-query .qstudio-terminal-head { background: var(--jt-bg-sunken) !important; }
 html[data-theme="light"] #app .qstudio-terminal-body { color: #0f172a !important; }
-html[data-theme="light"] #app .qstudio-terminal-overlay-box { background: #ffffff !important; }
+html[data-theme="light"] #app .qstudio-terminal-overlay-box { background: var(--jt-bg-raised) !important; }
 
 /* ── LIGHT: Code Upload file cards ── */
-html[data-theme="light"] #app .cu-file-card { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
+html[data-theme="light"] #app .cu-file-card { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
 html[data-theme="light"] #app .cu-file-card:hover { border-color: rgba(0,0,0,.16) !important; }
 
 /* ── LIGHT: JoyTree AI page ── */
-html[data-theme="light"] #page-joytree-ai { background: #f8fafc !important; --jai-bg: #f8fafc; --jai-surface: #ffffff; --jai-border: rgba(0,0,0,.08); --jai-text1: #0f172a; --jai-text2: #475569; --jai-text3: #94a3b8; }
+html[data-theme="light"] #page-joytree-ai { background: var(--jt-bg-sunken) !important; --jai-bg: var(--jt-bg-sunken); --jai-surface: var(--jt-bg-raised); --jai-border: rgba(0,0,0,.08); --jai-text1: #0f172a; --jai-text2: #475569; --jai-text3: #94a3b8; }
 html[data-theme="light"] #page-joytree-ai * { color: inherit; }
 html[data-theme="light"] #page-joytree-ai [style*="background:var(--jai-bg)"],
-html[data-theme="light"] #page-joytree-ai [style*="background: var(--jai-bg)"] { background: #f8fafc !important; }
+html[data-theme="light"] #page-joytree-ai [style*="background: var(--jai-bg)"] { background: var(--jt-bg-sunken) !important; }
 html[data-theme="light"] #page-joytree-ai [style*="background:var(--jai-surface)"],
-html[data-theme="light"] #page-joytree-ai [style*="background: var(--jai-surface)"] { background: #ffffff !important; }
+html[data-theme="light"] #page-joytree-ai [style*="background: var(--jai-surface)"] { background: var(--jt-bg-raised) !important; }
 
 /* ── LIGHT: Repo card stat boxes ── */
-html[data-theme="light"] #app .repo-stat { background: #f8fafc !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
+html[data-theme="light"] #app .repo-stat { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
 
 /* ── LIGHT: Cron job rows & execution rows ── */
 html[data-theme="light"] #page-cronjobs #cronJobsList > div,
-html[data-theme="light"] #page-cronjobs #cronExecutionLog > div { background: #f8fafc !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] #page-cronjobs .card { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #page-cronjobs #cronExecutionLog > div { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #page-cronjobs .card { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #page-cronjobs .wizard-hero,
-html[data-theme="light"] #page-cron-create .wizard-hero { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] #app .cron-preset { background: #f1f5f9 !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
+html[data-theme="light"] #page-cron-create .wizard-hero { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #app .cron-preset { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
 html[data-theme="light"] #app .cron-preset:hover { background: rgba(16,185,129,.06) !important; }
 
 /* ── LIGHT: Env manager / Settings custom selects ── */
 html[data-theme="light"] #page-env-manager .custom-select-trigger,
 html[data-theme="light"] #page-env-manager .custom-select-dropdown,
 html[data-theme="light"] #page-cron-create .custom-select-trigger,
-html[data-theme="light"] #page-cron-create .input { background: #ffffff !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
+html[data-theme="light"] #page-cron-create .input { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
 
 /* ── LIGHT: Realtime API page ── */
-html[data-theme="light"] #page-realtime-api .app-hero { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] #page-realtime-api .card { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #page-realtime-api .app-hero { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #page-realtime-api .card { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
 
 /* ── LIGHT: Flow/API result stat boxes ── */
 html[data-theme="light"] #app [class*="lf-stat"],
@@ -4561,22 +4561,22 @@ html[data-theme="light"] #app [class*="lf-meta"],
 html[data-theme="light"] #app [class*="lf-detail"],
 html[data-theme="light"] #app [class*="lf-card"],
 html[data-theme="light"] #app [class*="lf-endpoint"],
-html[data-theme="light"] #app [class*="lf-box"] { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
+html[data-theme="light"] #app [class*="lf-box"] { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
 
 /* ── LIGHT: Create Table Builder modal ── */
-html[data-theme="light"] .qstudio-create-table-box { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] .qstudio-create-table-head { background: #f8fafc !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
-html[data-theme="light"] .qstudio-create-table-foot { background: #f8fafc !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .qstudio-create-table-box { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .qstudio-create-table-head { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
+html[data-theme="light"] .qstudio-create-table-foot { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .qstudio-ct-input,
-html[data-theme="light"] .qstudio-ct-select { background: #ffffff !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
+html[data-theme="light"] .qstudio-ct-select { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
 
 /* ── LIGHT: DB SDK framework guides & database access panels ── */
-html[data-theme="light"] #app .sdk-guide-item { background: #f8fafc !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #app .sdk-guide-item { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #app .sdk-guide-trigger { color: #0f172a !important; }
-html[data-theme="light"] #app [style*="background:#111"][style*="border-radius:16px"] { background: #ffffff !important; }
+html[data-theme="light"] #app [style*="background:#111"][style*="border-radius:16px"] { background: var(--jt-bg-raised) !important; }
 
 /* ── LIGHT: Modal backdrop and modal body ── */
-html[data-theme="light"] .modal { background: #ffffff !important; border-color: rgba(0,0,0,.12) !important; color: #0f172a !important; }
+html[data-theme="light"] .modal { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.12) !important; color: #0f172a !important; }
 html[data-theme="light"] .modal-header { border-bottom-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .modal-footer { border-top-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .modal-title  { color: #0f172a !important; }
@@ -4584,9 +4584,9 @@ html[data-theme="light"] .modal-subtitle { color: #475569 !important; }
 html[data-theme="light"] .modal-backdrop { background: rgba(0,0,0,.4) !important; }
 
 /* ── LIGHT THEME: LANDING PAGE ────────────────────────────────── */
-html[data-theme="light"] #landing-view { background: #f8fafc !important; color: #0f172a !important; }
+html[data-theme="light"] #landing-view { background: var(--jt-bg-sunken) !important; color: #0f172a !important; }
 html[data-theme="light"] #landing-view nav,
-html[data-theme="light"] #landing-view .landing-drawer { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; box-shadow: 0 1px 8px rgba(0,0,0,.06) !important; }
+html[data-theme="light"] #landing-view .landing-drawer { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; box-shadow: 0 1px 8px rgba(0,0,0,.06) !important; }
 html[data-theme="light"] #landing-view .nav-link,
 html[data-theme="light"] #landing-view .nav-logo-name,
 html[data-theme="light"] #landing-view a:not(.btn-nav-primary) { color: #0f172a; }
@@ -4597,7 +4597,7 @@ html[data-theme="light"] #landing-view .section,
 html[data-theme="light"] #landing-view .how-section,
 html[data-theme="light"] #landing-view .flow-section,
 html[data-theme="light"] #landing-view .snippet-section,
-html[data-theme="light"] #landing-view .cta-section { background: #f8fafc !important; }
+html[data-theme="light"] #landing-view .cta-section { background: var(--jt-bg-sunken) !important; }
 
 /* Cards */
 html[data-theme="light"] #landing-view .home-product-card,
@@ -4610,7 +4610,7 @@ html[data-theme="light"] #landing-view .hero-side-card,
 html[data-theme="light"] #landing-view .hero-command-card,
 html[data-theme="light"] #landing-view .hero-core-step,
 html[data-theme="light"] #landing-view .hero-rail-card,
-html[data-theme="light"] #landing-view .hero-top-card { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #landing-view .hero-top-card { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
 
 /* Text on landing */
 html[data-theme="light"] #landing-view h1,
@@ -4626,23 +4626,23 @@ html[data-theme="light"] #landing-view .how-sub,
 html[data-theme="light"] #landing-view .flow-desc { color: #475569 !important; }
 
 /* Buttons */
-html[data-theme="light"] #landing-view .btn-nav { background: #f1f5f9 !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
+html[data-theme="light"] #landing-view .btn-nav { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
 html[data-theme="light"] #landing-view .btn-nav:hover { background: #e2e8f0 !important; }
 
 /* Footer area */
 html[data-theme="light"] #landing-view footer,
-html[data-theme="light"] #landing-view .footer-inner { background: #f1f5f9 !important; border-color: rgba(0,0,0,.08) !important; color: #475569 !important; }
+html[data-theme="light"] #landing-view .footer-inner { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; color: #475569 !important; }
 
 /* ── LIGHT THEME ──────────────────────────────────────────────── */
 html[data-theme="light"] #app,
-html[data-theme="light"] #app [id^="page-"] { background: #f1f5f9 !important; color: #0f172a !important; }
+html[data-theme="light"] #app [id^="page-"] { background: var(--jt-bg-sunken) !important; color: #0f172a !important; }
 
 /* Sidebar & topbar */
 html[data-theme="light"] #sidebar,
 html[data-theme="light"] .sidebar-logo,
-html[data-theme="light"] .sidebar-bottom { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .sidebar-bottom { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #topbar,
-html[data-theme="light"] .topbar-right   { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .topbar-right   { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
 
 /* Nav items */
 html[data-theme="light"] .nav-item,
@@ -4650,7 +4650,7 @@ html[data-theme="light"] .sidebar-nav a,
 html[data-theme="light"] .sidebar-nav button { background: transparent !important; color: #475569 !important; border-color: transparent !important; }
 html[data-theme="light"] .nav-item:hover,
 html[data-theme="light"] .sidebar-nav a:hover,
-html[data-theme="light"] .sidebar-nav button:hover { background: #f1f5f9 !important; color: #0f172a !important; }
+html[data-theme="light"] .sidebar-nav button:hover { background: var(--jt-bg-sunken) !important; color: #0f172a !important; }
 html[data-theme="light"] .nav-item.active,
 html[data-theme="light"] .sidebar-nav a.active,
 html[data-theme="light"] .sidebar-nav button.active { background: rgba(16,185,129,.1) !important; color: #065f46 !important; border-color: transparent !important; }
@@ -4699,24 +4699,24 @@ html[data-theme="light"] #app .custom-select-btn,
 html[data-theme="light"] #app .custom-select-menu,
 html[data-theme="light"] #app .px-plan,
 html[data-theme="light"] #app .co-form-card,
-html[data-theme="light"] #app .co-summary { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
+html[data-theme="light"] #app .co-summary { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
 
 html[data-theme="light"] #app .custom-select-btn,
 html[data-theme="light"] #app .custom-select-menu,
 html[data-theme="light"] #app .px-plan,
 html[data-theme="light"] #app .co-form-card,
-html[data-theme="light"] #app .co-summary { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
+html[data-theme="light"] #app .co-summary { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
 
 /* ── LIGHT: Project detail hero card ── */
-html[data-theme="light"] #app .pd-hero { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] #app .pd-meta .chip { background: #f8fafc !important; border-color: rgba(0,0,0,.08) !important; color: #475569 !important; }
+html[data-theme="light"] #app .pd-hero { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #app .pd-meta .chip { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; color: #475569 !important; }
 html[data-theme="light"] #app .pd-meta .chip strong { color: #0f172a !important; }
 
 /* ── LIGHT: Runtime logs terminal ── */
 html[data-theme="light"] #app [id^="runtimeLogsOutput-"] { background: #1e293b !important; color: #cbd5e1 !important; }
 
 /* ── LIGHT: Logs page chips (Repo/Branch/Date/Timezone) ── */
-html[data-theme="light"] #app .logs-chip { background: #f1f5f9 !important; border-color: rgba(0,0,0,.1) !important; color: #475569 !important; }
+html[data-theme="light"] #app .logs-chip { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.1) !important; color: #475569 !important; }
 
 /* ── LIGHT: Matrix terminal card (port-forward routing card) ── */
 /* Keep the matrix card intentionally dark — it's a live terminal visualization */
@@ -4729,23 +4729,23 @@ html[data-theme="light"] #app .matrix-terminal-card { border-color: rgba(16,185,
 html[data-theme="light"] #app .xterm-helper-textarea,
 html[data-theme="light"] #app [class*="terminal-container"],
 html[data-theme="light"] #app [class*="xterm-screen"] { background: #0d1117 !important; }
-html[data-theme="light"] #app .repo-metric { background: #f1f5f9 !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #app .repo-metric { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #app .repo-metric-value { color: #0f172a !important; }
 html[data-theme="light"] #app .repo-metric-label { color: #64748b !important; }
 
 /* ── LIGHT: Build Progress quantum card ── */
-html[data-theme="light"] #app .quantum-build { background: #ffffff !important; border-color: rgba(16,185,129,.25) !important; box-shadow: 0 4px 24px rgba(0,0,0,.06) !important; }
+html[data-theme="light"] #app .quantum-build { background: var(--jt-bg-raised) !important; border-color: rgba(16,185,129,.25) !important; box-shadow: 0 4px 24px rgba(0,0,0,.06) !important; }
 html[data-theme="light"] #app .quantum-build::before { display: none !important; }
 html[data-theme="light"] #app .quantum-build-toggle { background: rgba(16,185,129,.04) !important; border-bottom-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #app .quantum-kicker { color: #059669 !important; }
 html[data-theme="light"] #app .quantum-title { color: #0f172a !important; }
-html[data-theme="light"] #app .quantum-build .build-steps-body { background: #ffffff !important; }
+html[data-theme="light"] #app .quantum-build .build-steps-body { background: var(--jt-bg-raised) !important; }
 html[data-theme="light"] #app .build-steps-toggle { color: #0f172a !important; }
 html[data-theme="light"] #app .build-step-name,
 html[data-theme="light"] #app .build-step-title { color: #0f172a !important; }
 html[data-theme="light"] #app .build-step-desc { color: #64748b !important; }
 html[data-theme="light"] #app .repo-card .repo-stat,
-html[data-theme="light"] #app .repo-stat { background: #f1f5f9 !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #app .repo-stat { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #app .repo-stat-value { color: #0f172a !important; }
 html[data-theme="light"] #app .repo-stat-label { color: #64748b !important; }
 
@@ -4754,33 +4754,33 @@ html[data-theme="light"] #app .list-row { border-bottom-color: rgba(0,0,0,.06) !
 html[data-theme="light"] #page-domains .list-row { background: transparent !important; }
 
 /* ── LIGHT: Build Progress / deploy stepper ── */
-html[data-theme="light"] #app .deploy-stepper-item { background: #f8fafc !important; border-color: rgba(0,0,0,.08) !important; color: #475569 !important; }
-html[data-theme="light"] #app .deploy-stepper-badge { background: #f1f5f9 !important; }
-html[data-theme="light"] #app .build-steps-collapse:not(.quantum-build) { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] #page-logs .card { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #app .deploy-stepper-item { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; color: #475569 !important; }
+html[data-theme="light"] #app .deploy-stepper-badge { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] #app .build-steps-collapse:not(.quantum-build) { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #page-logs .card { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
 
 /* ── LIGHT: Live logs hero (project info card) ── */
 html[data-theme="light"] #app .logs-hero { background: linear-gradient(135deg,rgba(16,185,129,.06),rgba(0,0,0,.02)) !important; border-color: rgba(16,185,129,.2) !important; }
 html[data-theme="light"] #app .logs-hero-title { color: #0f172a !important; }
 
 /* ── LIGHT: .logs-hero specific card in image 4 ── */
-html[data-theme="light"] #page-logs .card { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] #app .cu-dropzone { background: #f8fafc !important; border-color: rgba(0,0,0,.15) !important; }
+html[data-theme="light"] #page-logs .card { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #app .cu-dropzone { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.15) !important; }
 html[data-theme="light"] #app .cu-dropzone:hover { background: rgba(16,185,129,.04) !important; }
 html[data-theme="light"] #app .cu-dropzone-title { color: #0f172a !important; }
 html[data-theme="light"] #app .cu-dropzone-sub { color: #64748b !important; }
 
 /* ── LIGHT: DB toolbar ── */
-html[data-theme="light"] #app .db-toolbar { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #app .db-toolbar { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #app .db-toolbar-title { color: #0f172a !important; }
 
 /* ── LIGHT: DB connection string strip ── */
-html[data-theme="light"] #app .db-conn-strip { background: #f8fafc !important; border-color: rgba(0,0,0,.08) !important; color: #475569 !important; }
+html[data-theme="light"] #app .db-conn-strip { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; color: #475569 !important; }
 
 /* ── LIGHT: SDK env panel and rows ── */
-html[data-theme="light"] #app .sdk-env-panel { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; box-shadow: 0 4px 24px rgba(0,0,0,.06) !important; }
+html[data-theme="light"] #app .sdk-env-panel { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; box-shadow: 0 4px 24px rgba(0,0,0,.06) !important; }
 html[data-theme="light"] #app .sdk-env-header { background: rgba(16,185,129,.04) !important; border-bottom-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] #app .sdk-env-row { background: #f8fafc !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #app .sdk-env-row { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #app .sdk-env-title { color: #0f172a !important; }
 html[data-theme="light"] #app .sdk-env-subtitle { color: #64748b !important; }
 
@@ -4789,28 +4789,28 @@ html[data-theme="light"] .landing-drawer .ld-link { color: #0f172a !important; }
 html[data-theme="light"] .landing-drawer .ld-link:hover { background: rgba(0,0,0,.04) !important; }
 
 /* ── LIGHT: Create table modal type selects + SQL preview ── */
-html[data-theme="light"] .qstudio-ct-select { background: #f1f5f9 !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
+html[data-theme="light"] .qstudio-ct-select { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
 html[data-theme="light"] .qstudio-ct-sql-preview,
-html[data-theme="light"] #app [class*="ct-sql"] { background: #f1f5f9 !important; color: #334155 !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #app [class*="ct-sql"] { background: var(--jt-bg-sunken) !important; color: #334155 !important; border-color: rgba(0,0,0,.08) !important; }
 
 /* Inline-styled dark divs inside #app */
 html[data-theme="light"] #app [style*="background:#111"],
 html[data-theme="light"] #app [style*="background: #111"],
 html[data-theme="light"] #app [style*="background:#0d0d0d"],
-html[data-theme="light"] #app [style*="background:#09090b"] { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] #app [style*="background:#09090b"] { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #app [style*="background:#0d0d0d"] input,
 html[data-theme="light"] #app [style*="background:#111"] input,
-html[data-theme="light"] #app [style*="background:#0a0a0a"] input { background: #f8fafc !important; color: #0f172a !important; border-color: rgba(0,0,0,.1) !important; }
+html[data-theme="light"] #app [style*="background:#0a0a0a"] input { background: var(--jt-bg-sunken) !important; color: #0f172a !important; border-color: rgba(0,0,0,.1) !important; }
 
 /* Table rows */
 html[data-theme="light"] .table-shell tbody tr,
-html[data-theme="light"] .deployment-table-shell tbody tr { background: #ffffff !important; color: #0f172a !important; }
+html[data-theme="light"] .deployment-table-shell tbody tr { background: var(--jt-bg-raised) !important; color: #0f172a !important; }
 
 /* Inputs & form elements */
 html[data-theme="light"] #app input,
 html[data-theme="light"] #app select,
 html[data-theme="light"] #app textarea,
-html[data-theme="light"] #app .input { background: #ffffff !important; color: #0f172a !important; border-color: rgba(0,0,0,.12) !important; }
+html[data-theme="light"] #app .input { background: var(--jt-bg-raised) !important; color: #0f172a !important; border-color: rgba(0,0,0,.12) !important; }
 
 /* Text colors */
 html[data-theme="light"] #app h1,
@@ -4845,9 +4845,9 @@ html[data-theme="light"] #app .terminal-empty-title { color: #0f172a !important;
 html[data-theme="light"] #app .terminal-empty-sub   { color: #475569 !important; }
 
 /* SSH Keys page */
-html[data-theme="light"] .sshk-card     { background: #ffffff !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] .sshk-code-box { background: #f1f5f9 !important; color: #334155 !important; }
-html[data-theme="light"] .sshk-input    { background: #f8fafc !important; color: #0f172a !important; border-color: rgba(0,0,0,.1) !important; }
+html[data-theme="light"] .sshk-card     { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .sshk-code-box { background: var(--jt-bg-sunken) !important; color: #334155 !important; }
+html[data-theme="light"] .sshk-input    { background: var(--jt-bg-sunken) !important; color: #0f172a !important; border-color: rgba(0,0,0,.1) !important; }
 html[data-theme="light"] .sshk-card-title,
 html[data-theme="light"] .sshk-key-name,
 html[data-theme="light"] .sshk-hero-title { color: #0f172a !important; }
