@@ -4561,7 +4561,7 @@ html[data-theme="light"] .vp-otp-box { background: var(--jt-bg-sunken) !importan
 /* [FIX] Hardcoded, not var() -- see matching comment in theme-override.css.
    This full-viewport boot overlay must never be able to resolve to a
    transparent background. */
-html[data-theme="light"] #pageLoader { background: #DCE8D2 !important; }
+html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
 
 /* ── LIGHT: Landing drawer menu items ── */
 html[data-theme="light"] .ld-link { color: #475569 !important; }
@@ -27215,7 +27215,25 @@ function statusBadge(status) {
   }
 
   // ── Google OAuth callback ─────────────────────────────────────────
-  if (ghCode && ghState === 'deployboard_google_auth') {
+  if (ghState === 'deployboard_google_auth' && !ghCode) {
+    // [FIX] Reproduced: if Google's redirect comes back without a usable
+    // ?code= (denied, a silent/prompt=none re-auth attempt that failed or
+    // resolved to an unexpected account, session expired mid-flow, etc.),
+    // this previously did nothing at all -- the state=deployboard_google_auth
+    // param stayed in the URL forever (nothing ever called replaceState to
+    // clear it, since that only happened inside the ghCode branch below),
+    // and the person got zero feedback: no error, no redirect, just stuck.
+    // Clean the URL and tell them clearly instead of leaving it hanging.
+    const clean = window.location.origin + window.location.pathname;
+    window.history.replaceState({}, '', clean);
+    const urlErr = new URLSearchParams(window.location.search).get('error');
+    toast(
+      urlErr === 'access_denied'
+        ? 'Google sign-in was cancelled.'
+        : 'Google sign-in didn\u2019t complete (no account was confirmed). Please try again and pick an account when prompted.',
+      'error'
+    );
+  } else if (ghCode && ghState === 'deployboard_google_auth') {
     try {
       const isGoogleLink = sessionStorage.getItem('jt_google_link_mode') === '1';
       try { sessionStorage.removeItem('jt_google_link_mode'); } catch(_) {}

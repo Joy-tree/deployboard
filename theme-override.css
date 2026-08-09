@@ -878,7 +878,7 @@ html[data-theme="light"] #page-realtime-api .card { background: var(--jt-bg-rais
    through behind the loader's logo/progress bar (reported as a "ghosting"
    look, light theme only, since dark theme's transparent-on-dark is much
    less visible). A literal color removes that failure mode entirely. */
-html[data-theme="light"] #pageLoader { background: #DCE8D2 !important; }
+html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
 html[data-theme="light"] #sidebar { background: var(--jt-bg) !important; }
 html[data-theme="light"] #sidebar,
 html[data-theme="light"] .sidebar-logo,
