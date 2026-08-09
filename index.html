@@ -30553,54 +30553,25 @@ function showManualInstallHelp(){
 function initPWAInstallPrompt(){
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(()=>{}));
-    // [FIX] Without this, an already-open tab keeps running under whatever
-    // service worker controlled it when the tab first loaded, even after a
-    // newer one has installed and activated in the background. That's the
-    // "several reloads" symptom: each manual reload was really just a coin
-    // flip on whether THIS particular navigation happened to land after the
-    // new worker took over. Reload once, automatically, the moment control
-    // actually changes -- guaranteed fresh assets on the very next load.
+    // [FIX] Removed the auto-reload-on-controllerchange behavior entirely.
+    // It was added to guarantee fresh assets the moment a new service
+    // worker took over, but every attempt to make that safe (deferring
+    // while the login form or OTP screen was open, then also covering an
+    // in-flight OAuth code exchange) still weren't enough — it kept finding
+    // new in-progress states to interrupt. Concretely: it burned a
+    // single-use Google/GitHub OAuth code mid-exchange, causing sign-in to
+    // silently fail and drop back to the landing page with no explanation,
+    // on at least two separate occasions.
     //
-    // Guard is stored in sessionStorage (not a plain in-memory flag) because
-    // a plain flag resets on every reload -- if controllerchange fired again
-    // shortly after the reload (e.g. two SW versions activating back-to-back
-    // during a fast redeploy), the in-memory guard would do nothing to stop
-    // a second, third, Nth reload, which looks exactly like a page stuck
-    // re-loading itself and never finishing "Initialising...".
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (sessionStorage.getItem('jt_sw_reloaded') === '1') return;
-      // [FIX] A fresh SW taking over mid-registration/login (very plausible
-      // right after a burst of redeploys) was silently reloading the whole
-      // page out from under the person, discarding whatever they'd typed
-      // and dropping them back on the landing page with no explanation —
-      // same class of bug as the boot-loader failsafe above. Fresh assets
-      // can wait a few seconds; a half-filled signup form can't be
-      // recovered after a hard reload. Defer the reload (checking every 2s)
-      // until the person isn't actively on the auth form or OTP screen.
-      const authView   = document.getElementById('auth-view');
-      const verifyPage = document.getElementById('verifyEmailPage');
-      // [FIX] This is the actual root cause of the Google-sign-in-stuck
-      // report: neither of the two checks below covers "an OAuth code is
-      // currently being exchanged" — that flow never shows the login form
-      // or the OTP screen, it goes straight from reading ?code= in the URL
-      // to calling the exchange endpoint to showing the dashboard. A
-      // reload landing in that window doesn't just interrupt a form — it
-      // burns a single-use authorization code with nothing to show for it,
-      // and the retry after reload has no code left to exchange, which
-      // looks exactly like "stuck, no error, back to the home page."
-      const isBusy = () =>
-        (authView && authView.classList.contains('active')) ||
-        (verifyPage && verifyPage.style.display !== 'none' && verifyPage.style.display !== '') ||
-        window._jtOAuthExchangeInFlight === true;
-      const doReload = () => {
-        try { sessionStorage.setItem('jt_sw_reloaded', '1'); } catch(_) {}
-        window.location.reload();
-      };
-      if (!isBusy()) { doReload(); return; }
-      const waitIv = setInterval(() => {
-        if (!isBusy()) { clearInterval(waitIv); doReload(); }
-      }, 2000);
-    });
+    // The actual value this provided (guaranteed-fresh assets) is already
+    // covered without any of that risk: static assets (index.html,
+    // theme-override.css, etc.) already get Cache-Control: no-cache,
+    // must-revalidate from an earlier fix, so a normal page load or manual
+    // refresh always fetches current content regardless of which service
+    // worker is controlling the tab. Losing the "auto" part just means an
+    // already-open tab keeps its current assets until its next natural
+    // navigation/refresh, instead of being silently reloaded out from under
+    // whatever the person was doing.
   }
   const card = document.getElementById('installPromptCard');
   const btnInstall = document.getElementById('installPromptInstall');
