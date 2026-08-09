@@ -1,6 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+  // [FIX] Set data-theme synchronously, first thing in <head>, before any
+  // stylesheet resolves or the page paints. Previously the equivalent logic
+  // (_initTheme) only ran from a script block deep in the body, so the page
+  // painted once with the default theme, then flipped data-theme and
+  // repainted with theme-override.css's !important rules -- a visible
+  // flash/blur every load. This must stay tiny and synchronous (no defer/
+  // async) so it always finishes before first paint.
+  (function () {
+    try {
+      var t = localStorage.getItem('jt_theme') || 'system';
+      var theme;
+      if (t === 'dark' || t === 'light') {
+        theme = t;
+      } else {
+        var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+        theme = prefersLight ? 'light' : 'dark';
+      }
+      document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+  })();
+  </script>
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
