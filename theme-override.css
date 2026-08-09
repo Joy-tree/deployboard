@@ -1052,8 +1052,36 @@ html[data-theme="light"] [style*="color:#374151"]{
    default color is #f4f4f5 (near-white), correct for dark theme but
    invisible against a light card. One plan additionally repeats the same
    value as a redundant inline style, covered by the attribute selector
-   below too. */
+   below too. Same #f4f4f5 bug also hits .px-title (the page headline) --
+   a separate class, not caught by the inline-style selector at all. */
 html[data-theme="light"] .px-plan-price,
+html[data-theme="light"] .px-title,
+html[data-theme="light"] .vp-heading,
+html[data-theme="light"] .co-heading,
+html[data-theme="light"] .co-plan-name,
+html[data-theme="light"] .co-total-val,
+html[data-theme="light"] .jt-modal-name,
 html[data-theme="light"] [style*="color:#f4f4f5"]{
+  color: var(--jt-text) !important;
+}
+/* .px-btn: washed-out grey text + near-invisible border, correct for a
+   dark card but too low-contrast against a light one. The popular plan's
+   own green button (.px-plan.popular .px-btn) is untouched -- it already
+   has a solid background + dark text, correct in either theme. */
+html[data-theme="light"] .px-btn{
+  color: var(--jt-text-dim) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .px-btn:hover{
+  background: var(--jt-bg-sunken) !important;
+  color: var(--jt-text) !important;
+}
+/* Checkout page's input field: same "hardcoded dark class" pattern as the
+   Framework Guides / Our Core Team fixes above -- a real form field, so
+   it gets the same sunken treatment already applied site-wide to inputs
+   in section 11. */
+html[data-theme="light"] .co-input{
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
   color: var(--jt-text) !important;
 }
