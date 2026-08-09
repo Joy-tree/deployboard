@@ -1853,3 +1853,21 @@ html[data-theme="light"] .auth-google-text strong {
 html[data-theme="light"] .auth-google-text span {
   color: #5f6368 !important;
 }
+
+/* ---------------------------------------------------------------------
+   LANDING PAGE — code tab bar ("deploy.sh / database.json / ...") and
+   the snippet-card headers ("Upload Deploy API", "Spin Up a Database",
+   "AI API Builder"). The card bodies below them were already fixed to
+   a light background, but .code-tabs and .snippet-header themselves
+   were still background:rgba(15,26,46,X) — a translucent dark navy
+   with no light-theme pass — leaving a washed-out gray bar sitting on
+   top of an otherwise-white card, with low-contrast text inside it.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .code-tabs {
+  background: var(--jt-bg-sunken) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .snippet-header {
+  background: var(--jt-bg-sunken) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
