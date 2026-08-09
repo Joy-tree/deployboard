@@ -1087,3 +1087,52 @@ html[data-theme="light"] .co-input{
   border-color: var(--jt-border) !important;
   color: var(--jt-text) !important;
 }
+
+/* ---------------------------------------------------------------------
+   PROJECTS PAGE — project tree cards (.tree-project-node and children).
+   Same problem class as the AI Agent page: buttons, footer, and the
+   thumbnail placeholder were all built with translucent white-on-black
+   values (rgba(255,255,255,.02–.11)) with no light-theme equivalent,
+   so on a cream card they were nearly invisible — "New Version"/"View"
+   read as plain unstyled text, and the delete button was a barely
+   visible pale pink smudge.
+   --------------------------------------------------------------------- */
+
+/* Thumbnail placeholder — was hardcoded near-black regardless of theme */
+html[data-theme="light"] .tree-node-thumb,
+html[data-theme="light"] .tree-thumb-placeholder {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .tree-thumb-placeholder svg { opacity: .35 !important; color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .tree-thumb-placeholder span { color: var(--jt-text-faint) !important; }
+
+/* "New Version" / "Redeploy" / "View" ghost buttons — were 6% white,
+   invisible on a light card (looked like plain text, not a button) */
+html[data-theme="light"] .tree-node-btn-ghost {
+  background: rgba(0,0,0,.05) !important;
+  color: var(--jt-text-dim) !important;
+}
+html[data-theme="light"] .tree-node-btn-ghost:hover {
+  background: rgba(0,0,0,.09) !important;
+  color: var(--jt-text) !important;
+}
+
+/* Delete button — 7% red on white read as a near-invisible pale pink
+   smudge with a washed-out icon; give it real contrast */
+html[data-theme="light"] .tree-node-btn-danger {
+  background: rgba(193,67,46,.10) !important;
+  border-color: rgba(193,67,46,.24) !important;
+  color: var(--jt-danger) !important;
+}
+html[data-theme="light"] .tree-node-btn-danger:hover { background: rgba(193,67,46,.18) !important; }
+
+/* Footer strip (repo/branch/time row) and branch badge pill */
+html[data-theme="light"] .tree-node-footer {
+  background: rgba(0,0,0,.02) !important;
+  border-top-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .tree-node-footer-branch {
+  background: rgba(0,0,0,.05) !important;
+  border-color: rgba(0,0,0,.09) !important;
+}
