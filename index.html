@@ -4522,7 +4522,10 @@ html[data-theme="light"] #app .modal  { background: var(--jt-bg-raised) !importa
 html[data-theme="light"] .vp-card { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .vp-otp-box { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.1) !important; color: #0f172a !important; }
 /* Page loader */
-html[data-theme="light"] #pageLoader { background: var(--jt-bg-sunken) !important; }
+/* [FIX] Hardcoded, not var() -- see matching comment in theme-override.css.
+   This full-viewport boot overlay must never be able to resolve to a
+   transparent background. */
+html[data-theme="light"] #pageLoader { background: #EFF3EC !important; }
 
 /* ── LIGHT: Landing drawer menu items ── */
 html[data-theme="light"] .ld-link { color: #475569 !important; }
@@ -5472,7 +5475,7 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=3">
+<link rel="stylesheet" href="theme-override.css?v=4">
 </head>
 <body>
 
