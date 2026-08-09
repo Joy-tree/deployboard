@@ -1725,3 +1725,97 @@ html[data-theme="light"] #page-logs .btn.btn-ghost[style*="color:#93c5fd"] {
 html[data-theme="light"] #page-logs .btn.btn-ghost[style*="color:#fca5a5"] {
   color: var(--jt-danger) !important;
 }
+
+/* ---------------------------------------------------------------------
+   MANUAL DEPLOY dropdown (Live Logs page) — .manual-menu-list was
+   hardcoded background:#020817 (near-black navy), independent of theme.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .manual-menu-list {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 18px 40px rgba(0,0,0,.12) !important;
+}
+html[data-theme="light"] .manual-item:hover {
+  background: rgba(16,185,129,.08) !important;
+}
+
+/* ---------------------------------------------------------------------
+   NEW DEPLOYMENT — Runtime/Framework dropdown. #page-new-deploy .cs-option
+   was hardcoded color:#cbd5e1 (light slate, tuned for a dark dropdown),
+   nearly invisible against the now-light dropdown panel.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #page-new-deploy .cs-option {
+  color: var(--jt-text-dim) !important;
+}
+html[data-theme="light"] #page-new-deploy .cs-option:hover {
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] #page-new-deploy .cs-option.selected {
+  color: var(--jt-brand-strong) !important;
+}
+
+/* ---------------------------------------------------------------------
+   DASHBOARD — Global Request Radar (world map) card. The card itself
+   was already covered by the shared .geo-intel-card light rule, but
+   three sibling pieces weren't: the country/status pill backgrounds
+   (still a dark translucent navy), and the raw Wikimedia map SVG +
+   its edge vignette, both filtered/tinted only for a dark card.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .geo-chip {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .geo-real-map {
+  filter: saturate(.7) contrast(.7) brightness(1.35) !important;
+  opacity: .55 !important;
+}
+html[data-theme="light"] .geo-map-vignette {
+  background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(220,232,210,.7) 100%) !important;
+}
+
+/* ---------------------------------------------------------------------
+   NOTIFICATIONS panel — rows are rebuilt from a JS template every time
+   the bell is opened, with colors hardcoded for a dark panel:
+   message text (#e2e8f0), the "NOTIFICATIONS" kicker (#86efac), and the
+   "View all activity" button (#94a3b8) — all too pale once the panel
+   itself became a light card.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .notif-panel [style*="color:#e2e8f0"] {
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .notif-panel [style*="color:#86efac"] {
+  color: var(--jt-brand-strong) !important;
+}
+html[data-theme="light"] .notif-panel [style*="color:#94a3b8"] {
+  color: var(--jt-text-dim) !important;
+}
+
+/* ---------------------------------------------------------------------
+   ROTATE API KEY confirmation modal (Settings page) — built as a raw
+   JS overlay appended straight to document.body, OUTSIDE #app, so the
+   existing #app-scoped [style*="background:#0d0d0d"] catch-all never
+   reached it and it always rendered as the dark-only "Delete Database
+   style" modal regardless of theme.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] div[style*="z-index:20000"] div[style*="background:#0d0d0d"] {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 24px 80px rgba(0,0,0,.18) !important;
+}
+html[data-theme="light"] div[style*="z-index:20000"] [style*="color:#f1f5f9"] {
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] div[style*="z-index:20000"] [style*="color:#94a3b8"] {
+  color: var(--jt-text-dim) !important;
+}
+html[data-theme="light"] div[style*="z-index:20000"] [style*="color:#64748b"] {
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] div[style*="z-index:20000"] [style*="color:#e2e8f0"] {
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] div[style*="z-index:20000"] [style*="background:rgba(255,255,255,.05)"] {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
