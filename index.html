@@ -4807,12 +4807,11 @@ html[data-theme="light"] #app .logs-chip { background: var(--jt-bg-sunken) !impo
 /* But lighten it slightly for better contrast on light background */
 html[data-theme="light"] #app .matrix-terminal-card { border-color: rgba(16,185,129,.3) !important; box-shadow: 0 8px 32px rgba(0,0,0,.12) !important; }
 
-/* ── LIGHT: xterm / IDE terminal ── */
-/* Terminals are intentionally kept dark — they display ANSI colors */
-/* Just give them a contrasting border so they don't merge with background */
-html[data-theme="light"] #app .xterm-helper-textarea,
-html[data-theme="light"] #app [class*="terminal-container"],
-html[data-theme="light"] #app [class*="xterm-screen"] { background: #0d1117 !important; }
+/* ── xterm / IDE terminal: see theme-override.css — the terminal's
+   actual colors are driven by xterm.js's own theme option (JT_TERM_THEME_LIGHT/
+   DARK, further down this file), which paints via canvas; this DOM-level
+   rule only needs to match that background so there's no dark gap/edge
+   visible before the canvas paints or around its border. ── */
 html[data-theme="light"] #app .repo-metric { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #app .repo-metric-value { color: #0f172a !important; }
 html[data-theme="light"] #app .repo-metric-label { color: #64748b !important; }

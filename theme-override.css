@@ -1954,3 +1954,64 @@ html[data-theme="light"] .dss-btn-visit { font-weight: 800 !important; }
 
 html[data-theme="light"] .deploy-ss-close { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; color: var(--jt-text-faint) !important; }
 html[data-theme="light"] .deploy-ss-close:hover { color: var(--jt-text) !important; }
+
+/* ---------------------------------------------------------------------
+   LIVE LOGS TERMINAL (xterm.js). The terminal's actual text/background
+   is painted by xterm's own canvas, driven by the JT_TERM_THEME_LIGHT
+   object in index.html — that part was already correct. But the DOM
+   chrome AROUND the canvas (.terminal-wrap, .terminal-topbar) was
+   background:#00090f with NO theme condition at all, so in light theme
+   the canvas painted a correct light rectangle while its own padding/
+   edges/gutter still showed the always-dark wrapper behind it — the
+   dark border/gap visible in the screenshots. Also lightened the
+   topbar text (file path, LIVE/status tags) to match.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .terminal-wrap {
+  background: #FCFDFA !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .terminal-topbar {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .term-title {
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] #terminal::-webkit-scrollbar-track {
+  background: rgba(0,0,0,.04) !important;
+}
+html[data-theme="light"] #app .xterm-helper-textarea,
+html[data-theme="light"] #app [class*="terminal-container"],
+html[data-theme="light"] #app [class*="xterm-screen"] {
+  background: #FCFDFA !important;
+}
+
+/* ---------------------------------------------------------------------
+   VERIFICATION CODE page ("Check your inbox"). Three elements were
+   hardcoded background:#0f0f12 (near-black) with zero theme condition:
+   the email icon circle, the "CODE SENT" badge, and the <strong> chip
+   showing the destination email address — all fine on the page's
+   original dark design, all a solid black slab once the page went
+   light. Also fixed .vp-otp-box.filled, which goes dark the instant a
+   digit is typed into one of the 6 code boxes (not visible in an empty
+   screenshot, but the same bug waiting to happen).
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .vp-icon-core {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .vp-badge-chip {
+  background: var(--jt-brand-tint) !important;
+  border-color: rgba(16,185,129,.25) !important;
+  color: var(--jt-brand-strong) !important;
+}
+html[data-theme="light"] .vp-sub strong {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .vp-otp-box.filled {
+  background: var(--jt-brand-tint) !important;
+  border-color: rgba(16,185,129,.45) !important;
+  color: var(--jt-brand-strong) !important;
+}
