@@ -139,7 +139,7 @@ html[data-theme="light"] body{
   background: var(--jt-bg) !important;
 }
 #sidebar, #topbar{ background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-.card, [class$="-card"], [class*="-card "]{ background: var(--jt-bg-raised); border-color: var(--jt-border); }
+.card, [class$="-card"]:not(.matrix-terminal-card), [class*="-card "]{ background: var(--jt-bg-raised); border-color: var(--jt-border); }
 
 /* ---------------------------------------------------------------------
    4. COMMON HARDCODED DARK LITERALS — the actual reason light mode left
@@ -2141,3 +2141,40 @@ html[data-theme="light"] [style*="color:#86efac"] {
   color: var(--jt-brand-strong) !important;
 }
 html[data-theme="light"] #page-analytics .page-header::before { color: var(--jt-brand-strong) !important; font-weight: 700 !important; }
+/* ---------------------------------------------------------------------
+   14. PORT-FORWARD MATRIX PANEL — guaranteed dark and legible, both themes.
+   This is a genuine "digital rain" terminal effect (falling green
+   characters glowing on a near-black background) -- the same category as
+   the deploy terminal or the request-radar map: an intentionally dark,
+   atmospheric visual that cannot be translated to a light background
+   without losing all legibility (bright glowing text on white reads as a
+   muddy mess, not "light mode", which is exactly what was reported).
+   The earlier generic [class$="-card"] rule was incorrectly lightening
+   just the panel's background (matching class="matrix-terminal-card")
+   while every child element stayed styled for a dark backdrop -- that
+   mismatch, not the dark design itself, was the actual bug. Excluded
+   above; this explicitly guarantees the whole panel (frame, topbar, rain
+   text, overlay status chips) stays properly dark + legible regardless of
+   site theme, exactly as designed.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .matrix-terminal-card {
+  background: linear-gradient(180deg,rgba(0,20,10,.94),rgba(0,8,5,.98)) !important;
+  border-color: rgba(16,185,129,.2) !important;
+}
+html[data-theme="light"] .matrix-topbar {
+  background: linear-gradient(180deg,rgba(4,30,16,.92),rgba(0,13,6,.94)) !important;
+  border-color: rgba(16,185,129,.16) !important;
+}
+html[data-theme="light"] .matrix-title { color: #86efac !important; }
+html[data-theme="light"] .matrix-badge { color: #bbf7d0 !important; background: rgba(16,185,129,.1) !important; border-color: rgba(34,197,94,.28) !important; }
+html[data-theme="light"] .matrix-stage { background: radial-gradient(circle at 50% 45%,rgba(16,185,129,.12),transparent 32%),#010503 !important; }
+html[data-theme="light"] .matrix-column { color: #22c55e !important; }
+html[data-theme="light"] .matrix-column:nth-child(3n) { color: #86efac !important; }
+html[data-theme="light"] .matrix-column:nth-child(4n) { color: #06f56f !important; }
+html[data-theme="light"] .matrix-column:nth-child(5n) { color: #86efac !important; }
+html[data-theme="light"] .matrix-overlay-text { color: #d1fae5 !important; }
+html[data-theme="light"] .matrix-overlay-text span {
+  background: rgba(1,10,5,.75) !important;
+  border-color: rgba(16,185,129,.32) !important;
+  color: #d1fae5 !important;
+}
