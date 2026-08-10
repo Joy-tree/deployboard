@@ -4071,7 +4071,7 @@ app.get('/api/auth/google/url', (req, res) => {
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('scope', 'openid email profile');
   url.searchParams.set('access_type', 'offline');
-  url.searchParams.set('prompt', 'select_account');
+  url.searchParams.set('prompt', 'consent select_account');
   url.searchParams.set('state', 'deployboard_google_auth');
   res.json({ url: url.toString(), redirectUri });
 });
