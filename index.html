@@ -27163,6 +27163,11 @@ function statusBadge(status) {
     const params = new URLSearchParams(window.location.search);
     const ghCode = params.get('code');
     const ghState = params.get('state');
+    // ═══ TEMPORARY DIAGNOSTIC — REMOVE AFTER NEXT REPORT ═══
+    if (ghState === 'deployboard_google_auth') {
+      alert('DEBUG: reached init.\ncode present: ' + (!!ghCode) + '\ncode length: ' + (ghCode ? ghCode.length : 0) + '\nstate: ' + ghState + '\nfull search: ' + window.location.search.slice(0, 300));
+    }
+    // ═══ END TEMPORARY DIAGNOSTIC ═══
     const stateOk = !ghState || ghState === 'deployboard_github_auth' || ghState === 'joytree_github_auth' || ghState === 'deployboard_github_link';
     // [FIX] OAuth codes (GitHub and Google both) are single-use — exchanging
     // the same one twice always fails the second time. The busy-checks added
@@ -27257,8 +27262,14 @@ function statusBadge(status) {
         if (r.ok) { toast('Google account connected successfully!', 'success'); }
         else { toast(d.error || 'Google link failed. Please try again.', 'error'); }
       } else {
+        // ═══ TEMPORARY DIAGNOSTIC — REMOVE AFTER NEXT REPORT ═══
+        alert('DEBUG: about to call /api/auth/google/exchange');
+        // ═══ END TEMPORARY DIAGNOSTIC ═══
         const r = await fetch('/api/auth/google/exchange', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ code: ghCode }) });
         const d = await r.json().catch(()=>({}));
+        // ═══ TEMPORARY DIAGNOSTIC — REMOVE AFTER NEXT REPORT ═══
+        alert('DEBUG: response status=' + r.status + '\nbody: ' + JSON.stringify(d).slice(0, 300));
+        // ═══ END TEMPORARY DIAGNOSTIC ═══
         if (d.requiresVerification && d.pendingToken) {
           openVerifyEmailPage(d.pendingToken, d.user?.email || '');
           toast('Verification code sent to your email.', 'info');
@@ -27273,7 +27284,10 @@ function statusBadge(status) {
           toast(d.error || 'Google sign-in failed. Please try again.', 'error');
         }
       }
-    } catch (_) {
+    } catch (err) {
+      // ═══ TEMPORARY DIAGNOSTIC — REMOVE AFTER NEXT REPORT ═══
+      alert('DEBUG: caught exception: ' + (err && err.message || err));
+      // ═══ END TEMPORARY DIAGNOSTIC ═══
       toast('Google sign-in failed. Please try again.', 'error');
     }
   }
