@@ -5662,6 +5662,26 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   //     otherwise guess from package.json scripts.
   let nitroBuildEnv = null;
   let isNitroSsrProject = false;
+  // [FIX] Root cause of "Cannot find module 'tailwindcss'" (and the same
+  // class of failure for postcss/autoprefixer/typescript/etc — anything
+  // declared as a devDependency but actually required at BUILD time, which
+  // is the normal, correct place for build tooling to live in package.json):
+  // this exec() call previously inherited process.env directly, meaning
+  // whatever NODE_ENV the JoyTree server process itself happens to be
+  // running under (production, on a production deploy — completely
+  // reasonable for the platform's own process) was silently passed straight
+  // through into every uploaded project's own install/build step. With
+  // NODE_ENV=production present, npm's dependency resolution can end up
+  // skipping devDependencies entirely — installing only the ~13 runtime
+  // dependencies here instead of the full ~21 including tailwindcss/
+  // postcss/autoprefixer, exactly matching the reported "added 197
+  // packages" (missing the dev-only ones) followed by the build failing to
+  // find a module that genuinely is listed in package.json. The platform's
+  // own production status has nothing to do with what a given upload
+  // needs to build correctly — force NODE_ENV=development for install/
+  // build specifically (runtime, started separately below via `docker run
+  // -e NODE_ENV=production`, is correctly unaffected by this).
+  const buildStepEnv = { ...process.env, NODE_ENV: 'development' };
   if (fs.existsSync(path.join(projectRoot, 'package.json'))) {
     try {
       const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
@@ -5685,7 +5705,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
           project = { ...project, nodeVer: '22' };
         }
         if (!process.env.NITRO_PRESET) {
-          nitroBuildEnv = { ...process.env, NITRO_PRESET: 'node-server' };
+          nitroBuildEnv = { ...buildStepEnv, NITRO_PRESET: 'node-server' };
           log(`\x1b[90m[Joytree]\x1b[0m Forcing NITRO_PRESET=node-server so the build serves its own static assets under plain Node (many scaffolds default to a Cloudflare Workers target, which handles assets differently and would 404 on images here).`);
         }
         if (!String(project.startCmd || '').trim()) {
@@ -5728,7 +5748,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
       const installParts = splitCmd(installCmd);
       log(`\x1b[90m[install] cwd: ${relativeProjectRoot}\x1b[0m`);
       log(`\x1b[90m$ ${installCmd}\x1b[0m`);
-      await exec(installParts[0], installParts[1], { cwd: projectRoot, env: nitroBuildEnv || process.env }, log);
+      await exec(installParts[0], installParts[1], { cwd: projectRoot, env: nitroBuildEnv || buildStepEnv }, log);
     }
   } else {
     log('\x1b[90m[install] No package.json found — skipping install\x1b[0m');
@@ -5759,7 +5779,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
     log(`\x1b[90m[build] cwd: ${relativeProjectRoot}\x1b[0m`);
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
     try {
-      await exec(buildParts[0], buildParts[1], { cwd: projectRoot, env: nitroBuildEnv || process.env }, log);
+      await exec(buildParts[0], buildParts[1], { cwd: projectRoot, env: nitroBuildEnv || buildStepEnv }, log);
     } catch (e) {
       if (isNativeBindingNpmBug(e.message)) {
         log(`\x1b[33m[Joytree] Detected a known npm bug (native binary optional dependencies, see https://github.com/npm/cli/issues/4828) -- this happens when package-lock.json was generated on a different OS than this build environment. Automatically retrying with a clean reinstall...\x1b[0m`);
@@ -5768,9 +5788,9 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
         const _installCmd = project.installCmd || 'npm install';
         const _installParts = splitCmd(_installCmd);
         log(`\x1b[90m$ ${_installCmd} (clean reinstall)\x1b[0m`);
-        await exec(_installParts[0], _installParts[1], { cwd: projectRoot, env: nitroBuildEnv || process.env }, log);
+        await exec(_installParts[0], _installParts[1], { cwd: projectRoot, env: nitroBuildEnv || buildStepEnv }, log);
         log(`\x1b[90m$ ${buildCmd} (retry)\x1b[0m`);
-        await exec(buildParts[0], buildParts[1], { cwd: projectRoot, env: nitroBuildEnv || process.env }, log);
+        await exec(buildParts[0], buildParts[1], { cwd: projectRoot, env: nitroBuildEnv || buildStepEnv }, log);
       } else if (/missing script|npm ERR!.*build|yarn.*command not found.*build|pnpm.*command not found.*build/i.test(String(e.message || ''))) {
         log(`\x1b[33m[Joytree]\x1b[0m No build script found in your project — automatically skipping build step.`);
         log(`\x1b[33m[Joytree]\x1b[0m ℹ Tip: if you intended to run a build, add a "build" script to your package.json, or set the build command to "echo skip" to suppress this message.`);
