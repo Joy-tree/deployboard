@@ -291,7 +291,7 @@ html[data-theme="light"] #page-db-schema .sdk-chip { color: var(--jt-text-faint)
 html[data-theme="light"] #page-domain-add .wizard-hero::before { color: var(--jt-brand-strong) !important; }
 html[data-theme="light"] #page-domain-add .wizard-sub,
 html[data-theme="light"] #page-cron-create .wizard-sub { color: var(--jt-text-faint) !important; }
-html[data-theme="light"] #page-env-manager .page-header::before { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #page-env-manager .page-header::before { color: var(--jt-brand-strong) !important; font-weight: 700 !important; }
 html[data-theme="light"] #page-new-deploy .btn-ghost.btn-sm { color: var(--jt-text-dim) !important; }
 html[data-theme="light"] #page-new-deploy .btn-ghost.btn-sm:hover { color: var(--jt-text) !important; }
 html[data-theme="light"] #page-new-deploy .custom-select-trigger { color: var(--jt-text) !important; }
@@ -301,7 +301,7 @@ html[data-theme="light"] #page-new-deploy .deploy-hero-title { color: var(--jt-t
 html[data-theme="light"] #page-new-deploy .deploy-stepper-item { color: var(--jt-text) !important; font-weight: 700 !important; }
 html[data-theme="light"] #page-new-deploy .settings-collapse-chevron { color: var(--jt-text-faint) !important; }
 html[data-theme="light"] #page-new-resource .resource-section-label { color: var(--jt-brand-strong) !important; }
-html[data-theme="light"] #page-settings .page-header::before { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #page-settings .page-header::before { color: var(--jt-brand-strong) !important; font-weight: 700 !important; }
 html[data-theme="light"] .alert-error { color: var(--jt-danger) !important; }
 html[data-theme="light"] .alert-info { color: var(--jt-info) !important; }
 html[data-theme="light"] .alert-success { color: var(--jt-brand-strong) !important; }
@@ -2072,3 +2072,69 @@ html[data-theme="light"] .btn-nav-primary:hover{
   background: #145A41 !important;
   border-color: #145A41 !important;
 }
+
+/* ---------------------------------------------------------------------
+   13. #86efac (pale mint kicker/label green) — used as a general-purpose
+   dark-mode accent text color in ~60 places across the whole app (kicker
+   labels, code strings, badges, page-header::before content, etc). Only 2
+   spots had ever been fixed for light mode. Everywhere else it read as
+   near-invisible pale green on a near-white card, which is the reported
+   "blurry text" on the analytics/env-vars pages -- and every other page
+   using this same color. Mapped to the brand-strong token, which is dark
+   enough to read clearly on a light card while staying recognizably green.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #page-db-query .qstudio-textarea-hl { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #page-db-schema .app-hero-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #page-db-schema .schema-hero-badge { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #page-db-schema .schema-node-arrow { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #page-db-schema .schema-tip-label { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #page-domain-add .wizard-hero::before { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #page-new-deploy .deploy-hero-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #page-new-resource .resource-section-label { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .app-hero-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .code-block .cs { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .cs { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .db-code-block { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .db-code-str { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .db-hero-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .db-logs-body { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .dbb-node-key { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .diff-hero-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .geo-intel-request b { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .hero-command-card h5 { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .hero-core-badge { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .hero-core-status { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .hero-core-step span { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .hero-rail-card b { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .hero-shift-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .hero-top-card b { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .home-product-meta { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .matrix-column:nth-child(3n) { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .matrix-column:nth-child(5n) { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .matrix-title { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .mig-hero-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .mig-job-logs { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .qstudio-terminal-overlay-close { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .qstudio-textarea-hl { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .quantum-kicker,
+html[data-theme="light"] .quantum-status-pill span { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .query-status-pill { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .schema-hero-badge { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .schema-node-arrow { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .schema-tip-label { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .sdk-cap-badge { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .sdk-code-str { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .sdk-env-copy:hover { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .sdk-guide-code-block .sdk-code-str { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .sdk-snippet-body { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .sdk-snippet-copy-btn:hover { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .sshk-hero-kicker { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .streak-intel-card span { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .surface-kicker { color: var(--jt-brand-strong) !important; }
+/* Inline style="color:#86efac" attributes (JS template strings) — same
+   attribute-substring technique used for the earlier dark-panel-background
+   pass, since these can't be targeted by a normal class/ID selector. */
+html[data-theme="light"] [style*="color:#86efac"] {
+  color: var(--jt-brand-strong) !important;
+}
+html[data-theme="light"] #page-analytics .page-header::before { color: var(--jt-brand-strong) !important; font-weight: 700 !important; }
