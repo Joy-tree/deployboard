@@ -747,6 +747,30 @@ function sendProxyError(req, res, status, type, subdomain, baseDomain) {
   return res.status(status).send(errorPage(type, subdomain, baseDomain));
 }
 
+// ── URGENT SECURITY FIX: force no-store on every API response ─────────────────
+// Confirmed real cross-user leak report: multiple different people, on their
+// own separate devices/accounts/networks, independently visiting the site and
+// seeing ANOTHER user's account/session with zero credentials entered. Not one
+// /api/* route anywhere in this file set Cache-Control on its response — most
+// had no cache header at all, meaning nothing at the origin ever told
+// Cloudflare (or any other proxy/cache sitting in front of this app) that a
+// personalized, per-user response like /api/auth/me must never be cached or
+// reused for a different visitor. If a shared cache stored that response even
+// once (a default/misconfigured "cache everything" rule, an over-eager
+// heuristic, anything), it would keep serving THAT SAME cached identity to
+// every subsequent visitor hitting the same URL — exactly matching three
+// independent people all landing on the same account. This must run before
+// every other middleware and route so it applies unconditionally, with no
+// route able to accidentally skip or override it to something cacheable.
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    res.setHeader('Cache-Control', 'private, no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Vary', 'Authorization, Cookie');
+  }
+  next();
+});
+
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
   // Skip express.json for multipart upload routes — raw stream needed for parseMultipart
