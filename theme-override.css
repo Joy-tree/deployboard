@@ -2015,3 +2015,60 @@ html[data-theme="light"] .vp-otp-box.filled {
   border-color: rgba(16,185,129,.45) !important;
   color: var(--jt-brand-strong) !important;
 }
+
+/* ---------------------------------------------------------------------
+   12. PRIMARY BUTTON GREEN — guaranteed, explicit, both themes.
+   Reported regression: .btn-primary buttons (New Deployment, Deploy Now,
+   etc.) lost their green background in dark theme specifically, while
+   light theme still showed it correctly. Rather than keep chasing which
+   earlier rule is winning the cascade in dark mode specifically, this
+   targets the real compound class actually used in the markup
+   (class="btn btn-primary") with higher specificity than a plain single
+   class selector, explicit per-theme colors (not just a var() that
+   depends on correct inheritance), and !important — so this wins
+   regardless of source order or which other rule was interfering.
+   --------------------------------------------------------------------- */
+html[data-theme="dark"] .btn.btn-primary,
+html[data-theme="dark"] button.btn-primary,
+html[data-theme="dark"] .btn-hero-primary,
+html[data-theme="dark"] .dash-qa-btn.primary,
+html[data-theme="dark"] .btn-nav-primary,
+html:not([data-theme]) .btn.btn-primary,
+html:not([data-theme]) button.btn-primary,
+html:not([data-theme]) .btn-hero-primary,
+html:not([data-theme]) .dash-qa-btn.primary,
+html:not([data-theme]) .btn-nav-primary{
+  background: #10B981 !important;
+  border-color: #10B981 !important;
+  color: #052e16 !important;
+}
+html[data-theme="dark"] .btn.btn-primary:hover,
+html[data-theme="dark"] button.btn-primary:hover,
+html[data-theme="dark"] .btn-hero-primary:hover,
+html[data-theme="dark"] .dash-qa-btn.primary:hover,
+html[data-theme="dark"] .btn-nav-primary:hover,
+html:not([data-theme]) .btn.btn-primary:hover,
+html:not([data-theme]) button.btn-primary:hover,
+html:not([data-theme]) .btn-hero-primary:hover,
+html:not([data-theme]) .dash-qa-btn.primary:hover,
+html:not([data-theme]) .btn-nav-primary:hover{
+  background: #34D399 !important;
+  border-color: #34D399 !important;
+}
+html[data-theme="light"] .btn.btn-primary,
+html[data-theme="light"] button.btn-primary,
+html[data-theme="light"] .btn-hero-primary,
+html[data-theme="light"] .dash-qa-btn.primary,
+html[data-theme="light"] .btn-nav-primary{
+  background: #1F6E52 !important;
+  border-color: #1F6E52 !important;
+  color: #ffffff !important;
+}
+html[data-theme="light"] .btn.btn-primary:hover,
+html[data-theme="light"] button.btn-primary:hover,
+html[data-theme="light"] .btn-hero-primary:hover,
+html[data-theme="light"] .dash-qa-btn.primary:hover,
+html[data-theme="light"] .btn-nav-primary:hover{
+  background: #145A41 !important;
+  border-color: #145A41 !important;
+}
