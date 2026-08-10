@@ -1,12 +1,16 @@
-// [FIX] v3 — the previous fetch handler called fetch(event.request) with the
-// default cache mode, which still lets the BROWSER's own HTTP cache (not the
-// SW's Cache Storage) silently satisfy the request without ever reaching the
-// network. That's why a genuinely new deploy could take several manual
-// reloads to show up: the SW *thought* it was going network-first, but the
-// browser was quietly handing back a stale disk-cached response underneath
-// it. Every request now explicitly passes {cache:'no-store'}, which bypasses
-// HTTP caching entirely and guarantees a real network round-trip.
-const CACHE_NAME = 'joytree-shell-v4';
+// [FIX] v5 — the fetch handler below previously intercepted and cached
+// EVERY GET request on the origin with no path filtering at all,
+// including everything under /api/ (auth exchange, session, profile,
+// etc.). Cache Storage keys responses by URL only, with no concept of
+// "which user" made the request -- so any interrupted/failed API fetch
+// could fail over to a stale cached response, potentially from a
+// different account entirely. This SW now only ever touches the exact
+// static app-shell files in CORE_ASSETS (matched by pathname, ignoring
+// query strings) -- every other request, all of /api/*, and the OAuth
+// callback landing on "/" with query params, goes straight to the
+// network exactly as if this service worker didn't exist, and is never
+// read from or written to Cache Storage.
+const CACHE_NAME = 'joytree-shell-v5';
 const CORE_ASSETS = ['/', '/index.html', '/theme-override.css', '/manifest.webmanifest', '/favicon_256.png', '/favicon_192.png', '/favicon_512.png', '/favicon_512_maskable.png'];
 
 self.addEventListener('install', (event) => {
@@ -29,6 +33,15 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  let pathname;
+  try { pathname = new URL(event.request.url).pathname; } catch (_) { return; }
+
+  // Not one of our known static shell files -> hands-off, straight to
+  // network, never cached, never intercepted. Covers all /api/* calls
+  // and any query-string request (including the OAuth callback).
+  if (!CORE_ASSETS.includes(pathname)) return;
+
   event.respondWith(
     fetch(event.request, { cache: 'no-store' })
       .then((res) => {
@@ -39,3 +52,4 @@ self.addEventListener('fetch', (event) => {
       .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/index.html')))
   );
 });
+
