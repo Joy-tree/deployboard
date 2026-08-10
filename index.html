@@ -1529,59 +1529,47 @@ ul { list-style:none; }
 
 /* ── Page Loading Spinner ─────────────────────────────────────────── */
 #pageLoader {
-  position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:20px;
+  position:fixed;inset:0;z-index:9999;display:flex;
+  align-items:center;justify-content:center;
   background:#0a0a0a;
   transition:opacity .4s ease;
 }
 #pageLoader.hidden { opacity:0; pointer-events:none; }
-/* Logo + name lockup */
-.pl-logo-wrap {
-  display:flex;flex-direction:column;align-items:center;gap:10px;
-  animation:plFadeUp .5s cubic-bezier(.23,1,.32,1) both;
+html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
+
+/* Bold green dot-ring spinner — 8 dots on a circle, staggered pulse creates
+   a chasing/rotating look. Positions are set via left/top (not transform)
+   so the pulse animation's transform:scale() below never conflicts with
+   placement. */
+.pl-spinner {
+  position:relative;
+  width:56px;height:56px;
+  animation:plFadeUp .3s cubic-bezier(.23,1,.32,1) both;
 }
-.pl-logo-img {
-  width:48px;height:48px;border-radius:12px;object-fit:cover;
-  border:1px solid rgba(255,255,255,0.08);
+.pl-spinner i {
+  position:absolute;
+  width:9px;height:9px;
+  border-radius:50%;
+  background:#10b981;
+  box-shadow:0 0 8px rgba(16,185,129,.5);
+  animation:plPulse 1.1s linear infinite;
 }
-.pl-logo-name {
-  font-size:.7rem;font-weight:700;letter-spacing:.22em;
-  text-transform:uppercase;color:rgba(255,255,255,0.55);
-}
-/* [FIX] The loader's text colors (translucent white / light gray) only
-   worked against its dark background. On light theme they were nearly
-   invisible against #pageLoader's light background. */
-html[data-theme="light"] .pl-logo-name { color: rgba(22,33,27,0.6) !important; }
-html[data-theme="light"] .pl-status { color: rgba(22,33,27,0.4) !important; }
-/* Thin progress bar */
-.pl-bar-wrap {
-  width:160px;
-  animation:plFadeUp .5s .08s cubic-bezier(.23,1,.32,1) both;
-}
-.pl-bar-track {
-  height:2px;background:rgba(255,255,255,0.07);border-radius:999px;overflow:hidden;
-}
-.pl-bar-fill {
-  height:100%;width:0%;background:#10b981;border-radius:999px;
-  animation:plBarFill 2.4s cubic-bezier(.4,0,.2,1) forwards;
-}
-@keyframes plBarFill {
-  0%   { width:0% }
-  40%  { width:55% }
-  80%  { width:82% }
-  100% { width:95% }
-}
-/* Status text */
-.pl-status {
-  font-size:.65rem;color:rgba(148,163,184,0.4);letter-spacing:.18em;text-transform:uppercase;
-  animation:plFadeUp .5s .15s cubic-bezier(.23,1,.32,1) both;
+.pl-spinner i:nth-child(1){ animation-delay:-1.0125s; }
+.pl-spinner i:nth-child(2){ animation-delay:-0.8750s; }
+.pl-spinner i:nth-child(3){ animation-delay:-0.7375s; }
+.pl-spinner i:nth-child(4){ animation-delay:-0.6000s; }
+.pl-spinner i:nth-child(5){ animation-delay:-0.4625s; }
+.pl-spinner i:nth-child(6){ animation-delay:-0.3250s; }
+.pl-spinner i:nth-child(7){ animation-delay:-0.1875s; }
+.pl-spinner i:nth-child(8){ animation-delay:-0.0500s; }
+@keyframes plPulse {
+  0%, 100% { opacity:.18; transform:scale(.6); }
+  50%      { opacity:1;   transform:scale(1);  }
 }
 @keyframes plFadeUp {
   from{opacity:0;transform:translateY(6px)}
   to{opacity:1;transform:none}
 }
-.page-loader-dots::after { content:"..."; animation:dots 1.5s steps(3,end) infinite; }
-@keyframes dots { 0%{content:""} 33%{content:"."} 66%{content:".."} 100%{content:"..."} }
 
 /* ── Mobile viewport height fix (address bar issues) ──────────────────── */
 @supports (height: 100dvh) {
@@ -5668,15 +5656,15 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 
 <!-- ── PAGE LOADING SPINNER ─────────────────────────────────────── -->
 <div id="pageLoader">
-  <div class="pl-logo-wrap" aria-hidden="true">
-    <img src="https://raw.githubusercontent.com/joygood123/Url/refs/heads/main/favicon_256.png" alt="JOYTREE" class="pl-logo-img">
-    <div class="pl-logo-name">JOYTREE</div>
-  </div>
-  <div class="pl-bar-wrap" aria-hidden="true">
-    <div class="pl-bar-track"><div class="pl-bar-fill"></div></div>
-  </div>
-  <div class="pl-status">
-    Initialising<span class="page-loader-dots"></span>
+  <div class="pl-spinner" role="status" aria-label="Loading">
+    <i style="left:24px;top:4px;"></i>
+    <i style="left:38.14px;top:9.86px;"></i>
+    <i style="left:44px;top:24px;"></i>
+    <i style="left:38.14px;top:38.14px;"></i>
+    <i style="left:24px;top:44px;"></i>
+    <i style="left:9.86px;top:38.14px;"></i>
+    <i style="left:4px;top:24px;"></i>
+    <i style="left:9.86px;top:9.86px;"></i>
   </div>
 </div>
 <script>
