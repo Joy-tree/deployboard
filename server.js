@@ -14725,13 +14725,27 @@ app.get('/api/screenshot', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/dashboard', (req, res) => res.sendFile(DASHBOARD_INDEX));
+// [FIX] These three routes are how the app is actually reached on a normal
+// navigation or reload (typing joytree.site/dashboard, following a link to
+// /dashboard/projects, refreshing the page) -- and unlike the static-file
+// middleware above (which explicitly forces no-cache, must-revalidate),
+// these called res.sendFile() with no Cache-Control override at all. Express
+// only sets Last-Modified/ETag by default; with no explicit Cache-Control,
+// browsers are free to apply their own heuristic freshness lifetime based on
+// Last-Modified, and can serve a stale copy of the shell straight from the
+// browser's own HTTP cache without ever asking the server — completely
+// independent of the service worker (which no longer caches anything at
+// all; see sw.js). This was a second, unrelated path to the exact same
+// "sometimes loads a stale/broken theme" symptom.
+const DASHBOARD_SHELL_HEADERS = { headers: { 'Cache-Control': 'no-cache, must-revalidate' } };
+
+app.get('/dashboard', (req, res) => res.sendFile(DASHBOARD_INDEX, DASHBOARD_SHELL_HEADERS));
 
 // /dashboard/:page  (any valid sub-page)
 app.get('/dashboard/:page', (req, res, next) => {
   // Only intercept known page slugs; let anything else fall through (future API routes etc.)
   if (DASHBOARD_PAGES.includes(req.params.page)) {
-    return res.sendFile(DASHBOARD_INDEX);
+    return res.sendFile(DASHBOARD_INDEX, DASHBOARD_SHELL_HEADERS);
   }
   next();
 });
@@ -14739,7 +14753,7 @@ app.get('/dashboard/:page', (req, res, next) => {
 // Fallback catch-all — serves index.html for SPA routes but NEVER for /api/* paths
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
-  res.sendFile(DASHBOARD_INDEX);
+  res.sendFile(DASHBOARD_INDEX, DASHBOARD_SHELL_HEADERS);
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────

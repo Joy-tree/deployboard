@@ -1,55 +1,43 @@
-// [FIX] v5 — the fetch handler below previously intercepted and cached
-// EVERY GET request on the origin with no path filtering at all,
-// including everything under /api/ (auth exchange, session, profile,
-// etc.). Cache Storage keys responses by URL only, with no concept of
-// "which user" made the request -- so any interrupted/failed API fetch
-// could fail over to a stale cached response, potentially from a
-// different account entirely. This SW now only ever touches the exact
-// static app-shell files in CORE_ASSETS (matched by pathname, ignoring
-// query strings) -- every other request, all of /api/*, and the OAuth
-// callback landing on "/" with query params, goes straight to the
-// network exactly as if this service worker didn't exist, and is never
-// read from or written to Cache Storage.
-const CACHE_NAME = 'joytree-shell-v5';
-const CORE_ASSETS = ['/', '/index.html', '/theme-override.css', '/manifest.webmanifest', '/favicon_256.png', '/favicon_192.png', '/favicon_512.png', '/favicon_512_maskable.png'];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => Promise.all(CORE_ASSETS.map((url) =>
-        fetch(url, { cache: 'no-store' }).then((res) => cache.put(url, res)).catch(() => {})
-      )))
-      .then(() => self.skipWaiting())
-  );
+// [FIX] v6 — every previous version of this file, however carefully
+// scoped, still had a Cache Storage fallback: on ANY network hiccup
+// (a single dropped request, not even an outage), it would hand back
+// whatever copy of index.html/theme-override.css happened to be sitting
+// in the cache from a previous visit — potentially hours or days old,
+// predating whatever theme/auth/UI fix shipped since. That's what
+// produced the "light theme sometimes loads ugly-dark" report: not a
+// long-open stale tab (that's the controllerchange reload's job), but a
+// completely fresh page load that hit one bad fetch and silently fell
+// back to a stale shell instead of just... trying the network again or
+// showing an error.
+//
+// This same caching layer has now been the root cause of four separate,
+// unrelated bug classes across earlier versions of this file: stuck
+// logins, a cross-account response leak, a stuck loading screen, and
+// this stale-theme flash. That's not a sign any particular guard was
+// wrong — it's a sign the caching itself isn't worth what it costs here.
+// This app is not meant to work offline, and the "faster repeat loads"
+// benefit isn't worth a class of bugs where the page can silently show
+// old UI with no indication anything is stale.
+//
+// So: no Cache Storage, at all. This service worker now exists only so
+// the app is installable as a PWA (a manifest + an active, non-empty
+// service worker registration is what most browsers require for the
+// install prompt) — every request, without exception, goes straight to
+// the network, exactly as if this file weren't here.
+self.addEventListener('install', () => {
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
+  // Clean up any Cache Storage entries left behind by earlier versions
+  // of this service worker, so nothing stale can ever be read from them
+  // again, then take control of already-open tabs immediately.
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-
-  let pathname;
-  try { pathname = new URL(event.request.url).pathname; } catch (_) { return; }
-
-  // Not one of our known static shell files -> hands-off, straight to
-  // network, never cached, never intercepted. Covers all /api/* calls
-  // and any query-string request (including the OAuth callback).
-  if (!CORE_ASSETS.includes(pathname)) return;
-
-  event.respondWith(
-    fetch(event.request, { cache: 'no-store' })
-      .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => {});
-        return res;
-      })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/index.html')))
-  );
-});
-
+// Intentionally no 'fetch' listener — every request falls through to the
+// browser's own default network handling, untouched.
