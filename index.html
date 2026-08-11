@@ -2943,6 +2943,21 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 /* Global app gradient unification: green-forward, reduced blue tint */
 #app{--cyan:#34d399;}
+/* [FIX] The line above is a HIGH-SPECIFICITY (#app ID) override that wins
+   regardless of theme or load order, completely defeating the
+   theme-aware --cyan remap in theme-override.css (:root{--cyan:var(--jt-info)}).
+   #34d399 is a bright mint tuned for a near-black dark-theme card — on a
+   light card it's only 1.92:1 contrast, badly failing WCAG AA (4.5:1).
+   This single variable feeds ~28 places across the app: every "kicker"/
+   eyebrow label (including "GitHub workspace" above Repositories),
+   repo full-name/URL mono text, CNAME/Dockerfile-type labels, the active
+   code tab, analytics numbers, and "View on GitHub" links -- all of which
+   were rendering as this same near-invisible mint in light theme. Add a
+   light-theme override with one extra attribute selector (higher
+   specificity than plain #app) so light mode gets a properly deep,
+   high-contrast green -- the same brand green buttons use -- while dark
+   theme's existing accent is untouched. */
+html[data-theme="light"] #app{--cyan:var(--jt-brand-strong);}
 #page-dashboard,#page-projects,#page-deployments,#page-env-manager,#page-webhooks,#page-domains,#page-domain-store,#page-domain-cpanel,#page-workers,#page-streaks,#page-analytics,#page-settings,#page-cronjobs,#page-db-schema{
   background:transparent;
 }
