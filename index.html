@@ -5534,7 +5534,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=5">
+<link rel="stylesheet" href="theme-override.css?v=6">
 </head>
 <body>
 
@@ -28753,21 +28753,21 @@ function renderNotificationsPanel() {
   };
 
   panel.innerHTML =
-    `<div style="padding:12px 14px 10px;border-bottom:1px solid rgba(16,185,129,.12);display:flex;align-items:center;justify-content:space-between;">
-       <span style="font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:#86efac;">Notifications</span>
-       <span style="font-size:.7rem;color:#475569;">${rows.length} events</span>
+    `<div class="notif-panel-head" style="padding:12px 14px 10px;border-bottom:1px solid rgba(16,185,129,.12);display:flex;align-items:center;justify-content:space-between;">
+       <span class="notif-panel-title" style="font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:#86efac;">Notifications</span>
+       <span class="notif-panel-count" style="font-size:.7rem;color:#475569;">${rows.length} events</span>
      </div>` +
     rows.map(r =>
-      `<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.04);">
+      `<div class="notif-item" style="display:flex;align-items:flex-start;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.04);">
          <span style="flex-shrink:0;margin-top:1px;font-size:.8rem;line-height:1;">${getIcon(r)}</span>
          <div style="flex:1;min-width:0;">
-           <div style="font-size:.8rem;color:#e2e8f0;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(r.message || 'Activity update')}</div>
-           <div style="font-size:.7rem;color:#475569;margin-top:2px;">${escHtml(relTime(r.time))}</div>
+           <div class="notif-item-msg" style="font-size:.8rem;color:#e2e8f0;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(r.message || 'Activity update')}</div>
+           <div class="notif-item-time" style="font-size:.7rem;color:#475569;margin-top:2px;">${escHtml(relTime(r.time))}</div>
          </div>
        </div>`
     ).join('') +
     `<div style="padding:8px 10px;">
-       <button class="btn btn-ghost" style="width:100%;font-size:.78rem;min-height:34px;border-color:rgba(16,185,129,.18);color:#94a3b8;" onclick="showPage('activity');document.getElementById('notifPanel').classList.remove('open');">View all activity</button>
+       <button class="btn btn-ghost notif-view-all-btn" style="width:100%;font-size:.78rem;min-height:34px;border-color:rgba(16,185,129,.18);color:#94a3b8;" onclick="showPage('activity');document.getElementById('notifPanel').classList.remove('open');">View all activity</button>
      </div>`;
 }
 

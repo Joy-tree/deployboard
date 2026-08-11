@@ -2254,3 +2254,171 @@ html[data-theme="light"] .matrix-overlay-text span {
   border-color: rgba(16,185,129,.32) !important;
   color: #d1fae5 !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CODE UPLOAD / IDE — the in-browser VS-Code-style editor (.vsc-* / .cide-*
+   classes) is an entire self-contained "Dark+" theme clone with ~150
+   hardcoded hex colors and ZERO theme awareness — the biggest instance yet
+   of the recurring "self-contained component never got a light pass"
+   pattern. Switching the site to light theme did nothing to it because
+   nothing in it references a CSS variable at all. Built out a full
+   VS-Code-"Light+"-style equivalent below so every panel (titlebar,
+   activity bar, explorer, tabs, breadcrumb, editor, terminal) is legible
+   on a light background. Syntax-highlighting token colors are re-tuned to
+   real Light+ equivalents (dark-on-white needs different colors than
+   light-on-black, not just inverted lightness). The blue VS Code status
+   bar at the very bottom is left untouched — it's a fixed accent color
+   that reads fine against any page background, same as it does in real
+   VS Code's own light theme.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Titlebar */
+html[data-theme="light"] .vsc-titlebar { background: var(--jt-bg-sunken) !important; border-bottom-color: var(--jt-border) !important; }
+html[data-theme="light"] .vsc-back-btn { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .vsc-back-btn:hover { background: rgba(0,0,0,.08) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .vsc-titlebar-project { color: var(--jt-text) !important; }
+html[data-theme="light"] .vsc-titlebar-sep,
+html[data-theme="light"] .vsc-dot,
+html[data-theme="light"] .vsc-breadcrumb-sep { color: #b8c2bc !important; }
+html[data-theme="light"] .vsc-titlebar-stats { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .vsc-title-btn {
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text-dim) !important;
+  background: var(--jt-bg-raised) !important;
+}
+html[data-theme="light"] .vsc-title-btn:hover { background: rgba(0,0,0,.05) !important; color: var(--jt-text) !important; border-color: rgba(0,0,0,.18) !important; }
+html[data-theme="light"] .vsc-title-btn--terminal { border-color: rgba(31,110,82,.3) !important; color: var(--jt-brand-strong) !important; background: rgba(31,110,82,.06) !important; }
+html[data-theme="light"] .vsc-title-btn--terminal:hover { background: rgba(31,110,82,.12) !important; }
+html[data-theme="light"] .vsc-title-btn--deploy { background: var(--jt-brand) !important; border-color: var(--jt-brand) !important; color: #fff !important; }
+html[data-theme="light"] .vsc-title-btn--deploy:hover { background: var(--jt-brand-strong) !important; border-color: var(--jt-brand-strong) !important; }
+
+/* Activity bar */
+html[data-theme="light"] .vsc-activity-bar { background: var(--jt-bg-sunken) !important; border-right-color: var(--jt-border) !important; }
+html[data-theme="light"] .vsc-activity-btn { color: #9aa79f !important; }
+html[data-theme="light"] .vsc-activity-btn:hover { color: var(--jt-text) !important; background: rgba(0,0,0,.05) !important; }
+html[data-theme="light"] .vsc-activity-btn.active { color: var(--jt-text) !important; }
+html[data-theme="light"] .vsc-expl-btn { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .vsc-expl-btn:hover { background: rgba(0,0,0,.08) !important; color: var(--jt-text) !important; }
+
+/* Sidebar / explorer / search / problems / settings panels */
+html[data-theme="light"] .vsc-sidebar { background: var(--jt-bg-raised) !important; border-right-color: var(--jt-border) !important; }
+html[data-theme="light"] .vsc-sidebar-title { color: var(--jt-text-dim) !important; border-bottom-color: var(--jt-border) !important; }
+html[data-theme="light"] .vsc-explorer-section-head { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .vsc-explorer-section-head:hover { background: rgba(0,0,0,.05) !important; }
+html[data-theme="light"] .vsc-chevron { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .vsc-tree-empty { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .vsc-explorer-files::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15) !important; }
+html[data-theme="light"] .cide-tree-item { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .cide-tree-item:hover { background: rgba(0,0,0,.05) !important; }
+html[data-theme="light"] .cide-tree-item.active { background: rgba(31,110,82,.12) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .cide-tree-item.folder { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .cide-folder-arrow { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .vsc-search-input,
+html[data-theme="light"] .vsc-setting-select {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .vsc-search-match { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .vsc-search-match:hover { background: rgba(0,0,0,.05) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .vsc-search-match-file { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .vsc-search-hl { color: #7a5d00 !important; background: rgba(255,215,0,.35) !important; }
+html[data-theme="light"] .vsc-git-btn { background: rgba(0,0,0,.04) !important; border-color: var(--jt-border) !important; color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .vsc-git-btn:hover { background: rgba(0,0,0,.07) !important; }
+html[data-theme="light"] .vsc-git-btn--push { background: rgba(31,110,82,.1) !important; border-color: rgba(31,110,82,.3) !important; color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .vsc-git-action-btn { background: rgba(0,0,0,.04) !important; border-color: var(--jt-border) !important; color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .vsc-git-action-btn:hover { background: rgba(0,0,0,.08) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .vsc-git-changed-item { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .vsc-git-changed-item:hover { background: rgba(0,0,0,.05) !important; }
+html[data-theme="light"] .vsc-problem-item { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .vsc-problem-item:hover { background: rgba(0,0,0,.05) !important; }
+html[data-theme="light"] .vsc-problem-loc,
+html[data-theme="light"] #vscProblemsCount { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .vsc-setting-label { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .vsc-setting-row span,
+html[data-theme="light"] .vsc-setting-row label span { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] #sttFontSizeVal,
+html[data-theme="light"] #sttLineHeightVal { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] #cideWsRateWarn { color: #92600a !important; background: rgba(245,158,11,.1) !important; }
+
+/* Editor area: tabs, breadcrumb, code surface */
+html[data-theme="light"] .vsc-editor-area,
+html[data-theme="light"] .vsc-code-area,
+html[data-theme="light"] .cide-editor-scroll,
+html[data-theme="light"] .cide-line-nums {
+  background: var(--jt-bg-raised) !important;
+}
+html[data-theme="light"] .vsc-tabs { background: var(--jt-bg-sunken) !important; border-bottom-color: var(--jt-border) !important; }
+html[data-theme="light"] .cide-tab { background: var(--jt-bg-sunken) !important; color: var(--jt-text-faint) !important; border-right-color: var(--jt-border) !important; }
+html[data-theme="light"] .cide-tab:hover { color: var(--jt-text-dim) !important; background: rgba(0,0,0,.04) !important; }
+html[data-theme="light"] .cide-tab.active { color: var(--jt-text) !important; background: var(--jt-bg-raised) !important; border-bottom-color: var(--jt-bg-raised) !important; }
+html[data-theme="light"] .vsc-breadcrumb { background: var(--jt-bg-raised) !important; border-bottom-color: var(--jt-border) !important; }
+html[data-theme="light"] .vsc-breadcrumb-path { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .cide-no-file { color: #c9d2cc !important; }
+html[data-theme="light"] .cide-no-file-title { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .cide-no-file-sub { color: #b8c2bc !important; }
+html[data-theme="light"] .cide-line-nums { border-right-color: var(--jt-border) !important; }
+html[data-theme="light"] .cide-ln { color: #c2cac4 !important; }
+html[data-theme="light"] .cide-ln.active { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .cide-hl-layer,
+html[data-theme="light"] .tok-plain,
+html[data-theme="light"] .tok-op,
+html[data-theme="light"] .tok-punc { color: var(--jt-text) !important; }
+html[data-theme="light"] .cide-vscroll-thumb { background: rgba(0,0,0,.18) !important; }
+html[data-theme="light"] .cide-vscroll-track:hover .cide-vscroll-thumb,
+html[data-theme="light"] .cide-vscroll-track:active .cide-vscroll-thumb { background: rgba(0,0,0,.32) !important; }
+html[data-theme="light"] .cide-vt-textarea { caret-color: var(--jt-text) !important; }
+html[data-theme="light"] .cide-vt-textarea::selection { background: rgba(173,214,255,.7) !important; }
+
+/* Syntax highlight tokens — real Light+ equivalents, not just darkened */
+html[data-theme="light"] .tok-kw,  html[data-theme="light"] .tok-bool { color: #0000ff !important; }
+html[data-theme="light"] .tok-kw2  { color: #af00db !important; }
+html[data-theme="light"] .tok-str,
+html[data-theme="light"] .tok-tpl  { color: #a31515 !important; }
+html[data-theme="light"] .tok-num  { color: #098658 !important; }
+html[data-theme="light"] .tok-cmt  { color: #008000 !important; }
+html[data-theme="light"] .tok-fn   { color: #795e26 !important; }
+html[data-theme="light"] .tok-cls,
+html[data-theme="light"] .tok-tag,
+html[data-theme="light"] .tok-dec  { color: #267f99 !important; }
+html[data-theme="light"] .tok-attr,
+html[data-theme="light"] .tok-prop { color: #e50000 !important; }
+html[data-theme="light"] .tok-rx   { color: #af00db !important; }
+
+/* Terminal panel */
+html[data-theme="light"] .vsc-terminal-panel,
+html[data-theme="light"] .vsc-terminal-body { background: var(--jt-bg-raised) !important; border-top-color: var(--jt-border) !important; }
+html[data-theme="light"] .vsc-terminal-topbar { background: var(--jt-bg-sunken) !important; border-bottom-color: var(--jt-border) !important; }
+html[data-theme="light"] .vsc-terminal-tab { background: var(--jt-bg-raised) !important; color: var(--jt-text-dim) !important; border-right-color: var(--jt-border) !important; }
+html[data-theme="light"] .vsc-term-action-btn { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .vsc-term-action-btn:hover { background: rgba(0,0,0,.08) !important; color: var(--jt-text) !important; }
+html[data-theme="light"] .vsc-term-output,
+html[data-theme="light"] .vsc-term-line-out,
+html[data-theme="light"] .vsc-term-input,
+html[data-theme="light"] .vsc-term-at,
+html[data-theme="light"] .vsc-term-colon,
+html[data-theme="light"] .vsc-term-dollar { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] .vsc-term-output::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15) !important; }
+html[data-theme="light"] .vsc-term-line-err { color: #c0392b !important; }
+html[data-theme="light"] .vsc-term-line-sys { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .vsc-term-user,
+html[data-theme="light"] .vsc-term-host { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .vsc-term-dir { color: #0451a5 !important; }
+html[data-theme="light"] .vsc-term-input { caret-color: var(--jt-text) !important; }
+html[data-theme="light"] .git-badge-a { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .git-badge-m { color: #92600a !important; }
+html[data-theme="light"] .git-badge-d { color: var(--jt-danger) !important; }
+
+/* ---------------------------------------------------------------------
+   NOTIFICATIONS PANEL — entirely built with inline styles picked for a
+   black dropdown (message text #e2e8f0 near-white, timestamps/count
+   #475569). On the now-light panel the messages read as barely-there
+   ghost text. Added stable classes to the JS template so this can be
+   targeted from here instead of hunting inline-style attribute strings.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .notif-panel-title { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] .notif-panel-count,
+html[data-theme="light"] .notif-item-time { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .notif-item-msg { color: var(--jt-text) !important; }
+html[data-theme="light"] .notif-view-all-btn { color: var(--jt-text-dim) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .notif-view-all-btn:hover { color: var(--jt-text) !important; background: rgba(0,0,0,.04) !important; }
