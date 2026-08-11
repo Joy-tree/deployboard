@@ -21664,15 +21664,32 @@ async function bootstrapSession(){
       adminQuotaOverrideSeconds = Number.isFinite(wsD.adminQuotaOverrideSeconds) ? wsD.adminQuotaOverrideSeconds : null;
       settings = Object.assign({ baseDomain: 'joytree.site' }, wsD.settings || {});
       _save();
-      // [FIX] Apply the account's server-persisted theme (if set) so it's
-      // correct even on a brand-new device/browser or after a local storage
-      // wipe -- also write it back to localStorage so _initTheme()'s
-      // synchronous, pre-fetch check on the NEXT page load already has the
-      // right value instead of briefly flashing the wrong theme before this
-      // async fetch resolves.
+      // [FIX] The previous version of this always applied settings.theme
+      // (the SERVER value) over whatever the synchronous head script had
+      // already correctly painted from localStorage (the LOCAL value) --
+      // on every single load, not just new devices. If the account's
+      // server-side theme was ever stale (e.g. saved before themeSet()
+      // learned to sync it up at all), this silently flipped a correctly-
+      // rendered light theme back to dark after every load: paint light,
+      // then this fetch resolves a moment later and stomps it back to the
+      // stale server value. That's the "loads dark every time" report --
+      // not a caching or CSS issue, a two-sources-of-truth race.
+      //
+      // Now: if THIS device already has an explicit local choice, treat it
+      // as authoritative (it's the most recent thing the user actually
+      // clicked) and push it up to correct a stale server value, instead
+      // of pulling the stale value down over a correct local one. Only a
+      // device with NO local preference yet (a genuinely new browser, or
+      // one that's had localStorage wiped) adopts the server's theme.
       if (settings.theme && typeof _applyTheme === 'function') {
-        localStorage.setItem('jt_theme', settings.theme);
-        _applyTheme(settings.theme);
+        const _localTheme = localStorage.getItem('jt_theme');
+        if (_localTheme && _localTheme !== settings.theme) {
+          settings.theme = _localTheme;
+          if (typeof queueWorkspaceSync === 'function') queueWorkspaceSync();
+        } else if (!_localTheme) {
+          localStorage.setItem('jt_theme', settings.theme);
+          _applyTheme(settings.theme);
+        }
       }
       // Preload uploadedProjects from Firebase on every login so the upload
       // page shows the correct list on ANY device without needing a manual refresh
