@@ -1413,6 +1413,71 @@ html[data-theme="light"] .mig-job {
    text already reads fine, so it's intentionally left untouched here. */
 
 /* ---------------------------------------------------------------------
+   SITE-WIDE SWEEP: sub-text / labels / hints / chevrons still using the
+   dark-theme slate shades (#94a3b8, #64748b, #475569) directly, with no
+   light-theme override anywhere. These are the "many tiny writings"
+   still reading blurry — field hints, section eyebrows, empty-state
+   copy, modal sub-labels, chevron icons, etc. across dozens of
+   components that the previous variable-level fix didn't reach because
+   each hardcodes its own literal color instead of using var(--text-3).
+   --------------------------------------------------------------------- */
+
+/* Catch-all for JS-template-generated inline styles using these same
+   three literal values anywhere in the app (covers hundreds of
+   dynamically-rendered rows/cards that can't be reached by class). */
+html[data-theme="light"] #app [style*="color:#94a3b8"],
+html[data-theme="light"] #app [style*="color: #94a3b8"],
+html[data-theme="light"] #app [style*="color:#64748b"],
+html[data-theme="light"] #app [style*="color: #64748b"],
+html[data-theme="light"] #app [style*="color:#475569"],
+html[data-theme="light"] #app [style*="color: #475569"] {
+  color: var(--jt-text-faint) !important;
+}
+
+/* Named classes with the same problem, none previously covered */
+html[data-theme="light"] #jtApiLinkModal .alm-sub,
+html[data-theme="light"] .cdd-chevron,
+html[data-theme="light"] .cu-progress-label,
+html[data-theme="light"] .dbb-node-sep,
+html[data-theme="light"] .diff-empty,
+html[data-theme="light"] .diff-help,
+html[data-theme="light"] #jtEditPromptModal .epm-sub,
+html[data-theme="light"] #page-new-deploy .field-hint,
+html[data-theme="light"] #lfAiVersionDrop .jt-ai-chevron,
+html[data-theme="light"] .ld-link-arrow,
+html[data-theme="light"] .ld-stat-lbl,
+html[data-theme="light"] .qstudio-side-label,
+html[data-theme="light"] .query-section-title,
+html[data-theme="light"] .schema-conn-key,
+html[data-theme="light"] .sdk-action-desc,
+html[data-theme="light"] .sdk-fw-trigger-chevron,
+html[data-theme="light"] .sdk-guide-desc,
+html[data-theme="light"] .sshk-empty,
+html[data-theme="light"] .sshk-label,
+html[data-theme="light"] .streak-legend,
+html[data-theme="light"] .surface-metric-label,
+html[data-theme="light"] #app .terminal-empty-sub {
+  color: var(--jt-text-faint) !important;
+}
+
+/* Empty-state titles: these are bigger, bolder headings (not fine-print
+   labels), so give them the stronger var(--jt-text) instead of faint. */
+html[data-theme="light"] .cu-empty-title {
+  color: var(--jt-text) !important;
+  font-weight: 700 !important;
+}
+
+/* .sdk-env-val sits inside .sdk-env-row, which already switches to a
+   light surface (var(--jt-bg-sunken)) elsewhere in this file — so unlike
+   the faint labels above, its text wants the darker/dimmer variable,
+   not the lightest one, for a legible value on that light row. */
+html[data-theme="light"] .sdk-env-val,
+html[data-theme="light"] .sdk-env-val.has-value {
+  color: var(--jt-text-dim) !important;
+  font-weight: 600 !important;
+}
+
+/* ---------------------------------------------------------------------
    INSTALL / ADD-TO-HOME-SCREEN PROMPT — hardcoded dark card (bg
    #111114, mint-on-black text) with no light-theme variant at all,
    so it stayed dark and out of place even with light theme selected.
