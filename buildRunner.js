@@ -5860,7 +5860,14 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
     }
     throw new Error('Container exited during startup. Check logs above.');
   }
-  const livePort = await detectLivePort(candidateContainerName, expectedPort, 120, log);
+  // [FIX] Hardcoded to 120s here while the GitHub path (runServerBuild) uses
+  // runtime.startupTimeoutSeconds (default 300s, configurable per-project).
+  // An app with a real cold-start cost — compiling/initializing a native
+  // module like better-sqlite3, running schema migrations, etc — can
+  // legitimately need more than 120s on first boot, and would be failed
+  // here even though the exact same project deployed from GitHub gets a
+  // full 5 minutes by default.
+  const livePort = await detectLivePort(candidateContainerName, expectedPort, runtime.startupTimeoutSeconds, log);
   if (!livePort) {
     try { await exec('docker', ['logs', '--tail', '80', candidateContainerName], {}, log); } catch(e) {}
     try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(e) {}
