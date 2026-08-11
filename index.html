@@ -30517,25 +30517,47 @@ function showManualInstallHelp(){
 function initPWAInstallPrompt(){
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(()=>{}));
-    // [FIX] Removed the auto-reload-on-controllerchange behavior entirely.
-    // It was added to guarantee fresh assets the moment a new service
-    // worker took over, but every attempt to make that safe (deferring
-    // while the login form or OTP screen was open, then also covering an
-    // in-flight OAuth code exchange) still weren't enough — it kept finding
-    // new in-progress states to interrupt. Concretely: it burned a
-    // single-use Google/GitHub OAuth code mid-exchange, causing sign-in to
-    // silently fail and drop back to the landing page with no explanation,
-    // on at least two separate occasions.
+
+    // [FIX] Reintroduced auto-reload-on-new-SW, rebuilt around a
+    // fundamentally different trigger this time. The previous version
+    // reloaded as soon as a new SW took control, gated by a growing list
+    // of "don't interrupt this" checks (login form open, OTP screen open,
+    // in-flight OAuth exchange) -- and still found new foreground states
+    // to interrupt, most seriously burning a single-use OAuth code
+    // mid-exchange. Removing it entirely fixed that, but traded it for a
+    // worse problem: a tab left open across a deploy (very common on a
+    // dashboard app people keep open all day) never updates until its
+    // next real navigation -- which, for an SPA driven by hash-routing,
+    // may never happen at all. Real, non-technical users hitting a stale
+    // half-old-half-new render have no reason to know "hard refresh"
+    // fixes it; they just see something broken and leave.
     //
-    // The actual value this provided (guaranteed-fresh assets) is already
-    // covered without any of that risk: static assets (index.html,
-    // theme-override.css, etc.) already get Cache-Control: no-cache,
-    // must-revalidate from an earlier fix, so a normal page load or manual
-    // refresh always fetches current content regardless of which service
-    // worker is controlling the tab. Losing the "auto" part just means an
-    // already-open tab keeps its current assets until its next natural
-    // navigation/refresh, instead of being silently reloaded out from under
-    // whatever the person was doing.
+    // Instead of gating on an enumerable (and apparently incomplete) list
+    // of "risky" states, gate on the one condition that actually
+    // guarantees safety by construction: only reload while the tab is
+    // in the background (visibilityState === 'hidden'). A backgrounded
+    // tab cannot be mid-keystroke in a form, mid-upload, or on-screen
+    // during an OAuth redirect the person is watching -- so this can't
+    // interrupt anything the user can perceive, without needing to
+    // enumerate every possible "don't do it now" case up front. The
+    // in-flight-OAuth flag is kept as an explicit extra guard in case
+    // any browser ever reports a tab as still "visible" mid-redirect.
+    let jtSwUpdatePending = false;
+    function jtTryReloadIfSafe() {
+      if (!jtSwUpdatePending) return;
+      if (window._jtOAuthExchangeInFlight === true) return;
+      if (document.visibilityState !== 'hidden') return;
+      let already = false;
+      try { already = sessionStorage.getItem('jt_sw_reloaded') === '1'; } catch (_) {}
+      if (already) return;
+      try { sessionStorage.setItem('jt_sw_reloaded', '1'); } catch (_) {}
+      window.location.reload();
+    }
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      jtSwUpdatePending = true;
+      jtTryReloadIfSafe();
+    });
+    document.addEventListener('visibilitychange', jtTryReloadIfSafe);
   }
   const card = document.getElementById('installPromptCard');
   const btnInstall = document.getElementById('installPromptInstall');
