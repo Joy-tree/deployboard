@@ -1396,10 +1396,10 @@ html[data-theme="light"] {
 html[data-theme="light"] .app-hero { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .hero-metric { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .hero-metric-value { color: #0f172a; }
-html[data-theme="light"] .hero-metric-label { color: #64748b; }
+html[data-theme="light"] .hero-metric-label { color: var(--jt-text-faint); }
 html[data-theme="light"] .hero-status-pill { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.25); color: #065f46; }
 html[data-theme="light"] #sidebar { background: var(--jt-bg-raised) !important; border-right-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] .sidebar-section { color: #94a3b8; }
+html[data-theme="light"] .sidebar-section { color: var(--jt-text-faint); }
 html[data-theme="light"] .nav-item { color: #0f172a; font-weight: 700; }
 html[data-theme="light"] .nav-item:hover { background: #f1f5f9; color: #0f172a; }
 html[data-theme="light"] .nav-item.active { background: rgba(16,185,129,.1); color: #065f46; }
@@ -1417,7 +1417,7 @@ html[data-theme="light"] .sshk-input { background: var(--jt-bg-sunken) !importan
 html[data-theme="light"] .sshk-code-box { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; color: #334155 !important; }
 html[data-theme="light"] .sshk-hero-kicker, html[data-theme="light"] .app-hero-kicker { color: #059669 !important; }
 html[data-theme="light"] .sshk-hero-title, html[data-theme="light"] .app-hero-title { color: #0f172a !important; }
-html[data-theme="light"] .sshk-hero-sub, html[data-theme="light"] .app-hero-subtitle { color: #64748b !important; }
+html[data-theme="light"] .sshk-hero-sub, html[data-theme="light"] .app-hero-subtitle { color: var(--jt-text-faint) !important; }
 html[data-theme="light"] .sshk-card-title, html[data-theme="light"] .sshk-key-name { color: #0f172a !important; }
 html[data-theme="light"] .surface-kicker { color: #059669 !important; }
 
@@ -4555,7 +4555,7 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
 html[data-theme="light"] .ld-link { color: #475569 !important; }
 html[data-theme="light"] .ld-link:hover { background: rgba(0,0,0,.04) !important; color: #0f172a !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .ld-link-icon { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] .ld-section-label { color: #94a3b8 !important; }
+html[data-theme="light"] .ld-section-label { color: var(--jt-text-faint) !important; }
 
 /* ── LIGHT: Notifications panel ── */
 html[data-theme="light"] .notif-panel { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.1) !important; box-shadow: 0 8px 32px rgba(0,0,0,.12) !important; color: #0f172a !important; }
@@ -4682,7 +4682,7 @@ html[data-theme="light"] #landing-view .cred-card {
   border-color: rgba(0,0,0,.08) !important;
 }
 html[data-theme="light"] #landing-view .cred-card b { color: #0f172a !important; }
-html[data-theme="light"] #landing-view .cred-card span { color: #64748b !important; }
+html[data-theme="light"] #landing-view .cred-card span { color: var(--jt-text-faint) !important; }
 
 /* Text on landing */
 html[data-theme="light"] #landing-view h1,
@@ -4727,7 +4727,7 @@ html[data-theme="light"] .nav-item.active,
 html[data-theme="light"] .sidebar-nav a.active,
 html[data-theme="light"] .sidebar-nav button.active { background: rgba(16,185,129,.1) !important; color: #065f46 !important; border-color: transparent !important; }
 html[data-theme="light"] .sidebar-section,
-html[data-theme="light"] .sidebar-section-title { color: #94a3b8 !important; }
+html[data-theme="light"] .sidebar-section-title { color: var(--jt-text-faint) !important; }
 
 /* Topbar buttons & breadcrumb */
 html[data-theme="light"] .topbar-btn,
@@ -4802,7 +4802,7 @@ html[data-theme="light"] #app .matrix-terminal-card { border-color: rgba(16,185,
    visible before the canvas paints or around its border. ── */
 html[data-theme="light"] #app .repo-metric { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #app .repo-metric-value { color: #0f172a !important; }
-html[data-theme="light"] #app .repo-metric-label { color: #64748b !important; }
+html[data-theme="light"] #app .repo-metric-label { color: var(--jt-text-faint) !important; }
 
 /* ── LIGHT: Build Progress quantum card ── */
 html[data-theme="light"] #app .quantum-build { background: var(--jt-bg-raised) !important; border-color: rgba(16,185,129,.25) !important; box-shadow: 0 4px 24px rgba(0,0,0,.06) !important; }
@@ -4814,11 +4814,11 @@ html[data-theme="light"] #app .quantum-build .build-steps-body { background: var
 html[data-theme="light"] #app .build-steps-toggle { color: #0f172a !important; }
 html[data-theme="light"] #app .build-step-name,
 html[data-theme="light"] #app .build-step-title { color: #0f172a !important; }
-html[data-theme="light"] #app .build-step-desc { color: #64748b !important; }
+html[data-theme="light"] #app .build-step-desc { color: var(--jt-text-faint) !important; }
 html[data-theme="light"] #app .repo-card .repo-stat,
 html[data-theme="light"] #app .repo-stat { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #app .repo-stat-value { color: #0f172a !important; }
-html[data-theme="light"] #app .repo-stat-label { color: #64748b !important; }
+html[data-theme="light"] #app .repo-stat-label { color: var(--jt-text-faint) !important; }
 
 /* ── LIGHT: Domain list rows (JS-generated .list-row) ── */
 html[data-theme="light"] #app .list-row { border-bottom-color: rgba(0,0,0,.06) !important; }
@@ -4839,7 +4839,7 @@ html[data-theme="light"] #page-logs .card { background: var(--jt-bg-raised) !imp
 html[data-theme="light"] #app .cu-dropzone { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.15) !important; }
 html[data-theme="light"] #app .cu-dropzone:hover { background: rgba(16,185,129,.04) !important; }
 html[data-theme="light"] #app .cu-dropzone-title { color: #0f172a !important; }
-html[data-theme="light"] #app .cu-dropzone-sub { color: #64748b !important; }
+html[data-theme="light"] #app .cu-dropzone-sub { color: var(--jt-text-faint) !important; }
 
 /* ── LIGHT: DB toolbar ── */
 html[data-theme="light"] #app .db-toolbar { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; }
@@ -4853,7 +4853,7 @@ html[data-theme="light"] #app .sdk-env-panel { background: var(--jt-bg-raised) !
 html[data-theme="light"] #app .sdk-env-header { background: rgba(16,185,129,.04) !important; border-bottom-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #app .sdk-env-row { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] #app .sdk-env-title { color: #0f172a !important; }
-html[data-theme="light"] #app .sdk-env-subtitle { color: #64748b !important; }
+html[data-theme="light"] #app .sdk-env-subtitle { color: var(--jt-text-faint) !important; }
 
 /* ── LIGHT: Landing drawer links ── */
 html[data-theme="light"] .landing-drawer .ld-link { color: #0f172a !important; }
@@ -4906,7 +4906,7 @@ html[data-theme="light"] #app .hero-metric-value,
 html[data-theme="light"] #app .db-stat-value { color: #059669 !important; }
 html[data-theme="light"] #app .hero-metric-label,
 html[data-theme="light"] #app .db-stat-label,
-html[data-theme="light"] #app .db-stat-sub { color: #64748b !important; }
+html[data-theme="light"] #app .db-stat-sub { color: var(--jt-text-faint) !important; }
 html[data-theme="light"] #app .repo-card * { color: #0f172a !important; }
 html[data-theme="light"] #app .repo-card [class*="kicker"],
 html[data-theme="light"] #app .repo-card [class*="lang"] { color: #059669 !important; }
@@ -4924,7 +4924,7 @@ html[data-theme="light"] .sshk-key-name,
 html[data-theme="light"] .sshk-hero-title { color: #0f172a !important; }
 html[data-theme="light"] .sshk-hero-kicker { color: #059669 !important; }
 html[data-theme="light"] .sshk-hero-sub,
-html[data-theme="light"] .sshk-key-fp    { color: #64748b !important; }
+html[data-theme="light"] .sshk-key-fp    { color: var(--jt-text-faint) !important; }
 
 /* ── DARK THEME ───────────────────────────────────────────────── */
 html[data-theme="dark"] #app,
@@ -13970,7 +13970,7 @@ async function runDatabaseDiff() {
   transition:border-color .2s,transform .15s;
 }
 .db-stat-card:hover{transform:translateY(-2px);border-color:rgba(16,185,129,.22);}
-.db-stat-label{font-size:.72rem;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;}
+.db-stat-label{font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;}
 .db-stat-value{font-family:var(--font-mono);font-size:1.8rem;font-weight:800;color:#d1fae5;line-height:1;}
 .db-stat-sub{font-size:.72rem;color:#64748b;margin-top:4px;}
 .db-grid {
@@ -15613,7 +15613,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
   color:#f8fafc;
   line-height:1;margin-bottom:5px;
 }
-.schema-kpi-label{font-size:.65rem;color:rgba(100,116,139,.85);font-weight:600;letter-spacing:.08em;text-transform:uppercase;}
+.schema-kpi-label{font-size:.65rem;color:var(--text-3);font-weight:600;letter-spacing:.08em;text-transform:uppercase;}
 .schema-kpi-icon{
   position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:7px;
   display:flex;align-items:center;justify-content:center;
@@ -18642,7 +18642,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           -webkit-background-clip:text;background-clip:text;color:transparent;
           line-height:1;margin-bottom:6px;
         }
-        .forum-stat-label{font-size:0.72rem;color:rgba(100,116,139,.9);font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
+        .forum-stat-label{font-size:0.72rem;color:var(--text-3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
 
         /* Feature grid */
         .forum-features-grid{

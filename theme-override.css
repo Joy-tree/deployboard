@@ -36,7 +36,18 @@
   --jt-border-soft: #E7ECE4;
   --jt-text: #16211B;
   --jt-text-dim: #4A5A50;
-  --jt-text-faint: #7C8B80;
+  /* [FIX] Was #7C8B80 — only 3.58:1 contrast against the light background,
+     which fails WCAG AA (needs 4.5:1) for normal-sized text. This single
+     variable drives essentially every "minor sub text" on the site in
+     light theme: stat labels (TOTAL/PRIVATE/STACKS/STARS/FORKS/LIVE/
+     BUILDS), section eyebrows, placeholder/loading text, timestamps, and
+     similar — so a low-contrast value here reads as "half the site is
+     blurry" even though every individual element is styled correctly.
+     #556459 gives 6.26:1, comfortably clearing AA with real margin for
+     small text, while staying in the same muted sage-green family as the
+     rest of the light palette rather than turning subtext into full text
+     weight. */
+  --jt-text-faint: #556459;
   --jt-brand: #1F6E52;
   --jt-brand-strong: #145A41;
   --jt-brand-tint: #E4F1EA;
