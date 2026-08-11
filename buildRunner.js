@@ -5793,7 +5793,22 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
 
   try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(e) {}
 
-  // [FIX] Same memory-limit rationale as the other deploy paths above.
+  // [FIX] Two flags the GitHub deploy path (runServerBuild) has always set
+  // on its runtime container that this upload path was missing:
+  //  1. NODE_OPTIONS=--max-old-space-size=<heap> — without it, V8 sizes its
+  //     default heap off the HOST's total memory, not this container's -m
+  //     limit, so on a host with much more RAM than the container is capped
+  //     to, V8 can grow well past the container's hard limit before ever
+  //     triggering its own GC pressure heuristics, and the container gets
+  //     OOM-killed by the kernel with no Node-side warning first.
+  //  2. --memory-swap — left unset, Docker's default swap accounting can
+  //     behave inconsistently across daemon versions; GitHub deploys always
+  //     pin it explicitly to runtime.memorySwap.
+  // Missing either can present as "container is running but never becomes
+  // reachable" (an OOM-killed Node process restarting in a loop under
+  // --restart=unless-stopped looks alive at the Docker level the whole
+  // time, even though it never stays up long enough to finish binding the
+  // HTTP port).
   const runtime = getRuntimeConfig(project);
   const runArgs = [
     'run', '-d', '--restart=unless-stopped',
@@ -5809,15 +5824,21 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
     '-e', `HOST=0.0.0.0`,
     '-e', `HOSTNAME=0.0.0.0`,
     '-e', `NEXT_TELEMETRY_DISABLED=1`,
+    '-e', `NODE_OPTIONS=--max-old-space-size=${runtime.nodeHeapMb}`,
     ...Object.entries(envObj).flatMap(([k,v]) => {
       const key = String(k || '').toUpperCase();
       return (key === 'PORT' || key === 'HOST' || key === 'HOSTNAME') ? [] : ['-e', `${k}=${v}`];
     }),
     '-v', `${hostAppDir}:/app`,
     '-w', '/app',
+  ];
+  if (runtime.memorySwap) {
+    runArgs.push('--memory-swap', runtime.memorySwap);
+  }
+  runArgs.push(
     `node:${nodeVer}`,
     'sh', '-c', `export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH && ${String(startCmdResolved || 'node server.js').replace(/`/g, '\\`')}`
-  ];
+  );
 
   log(`\x1b[90m[docker] Launching Node.js ${nodeVer} container from /app (same built server tree)…\x1b[0m`);
   await exec('docker', runArgs, {}, log);
