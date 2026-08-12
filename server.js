@@ -538,13 +538,21 @@ function _portFromEntry(entry) {
 // "containerName:port" so the proxy can route to Docker DNS; legacy numeric
 // entries fall back to the conventional db-<subdomain> container name.
 function _containerFromEntry(subdomain, entry) {
-  const fallback = `db-${String(subdomain || '').toLowerCase().replace(/[^a-z0-9-]/g, '-')}`;
-  if (entry == null || typeof entry === 'number') return fallback;
+  // A bare number means getOrAssignPort() wrote a port placeholder but
+  // buildRunner hasn't finished writing the real "containerName:port" entry
+  // yet (deploy still in progress). Returning db-<subdomain> here was the
+  // root cause of "Container session ended (exit ?)" — it tried to exec into
+  // a database container that never existed for this app. Return null so
+  // callers can detect the in-progress state and show a proper message.
+  if (entry == null || typeof entry === 'number') return null;
   const s = String(entry).trim();
-  if (!s) return fallback;
+  if (!s) return null;
   const name = s.includes(':') ? s.split(':')[0] : s;
-  if (/^\d+$/.test(name)) return fallback;
-  return name.replace(/[^a-zA-Z0-9_.-]/g, '') || fallback;
+  // Still a bare number string (e.g. "4001") — same placeholder state
+  if (/^\d+$/.test(name)) return null;
+  // db- prefix entries are database containers, never app shell targets
+  const cleaned = name.replace(/[^a-zA-Z0-9_.-]/g, '');
+  return cleaned || null;
 }
 
 function getOrAssignPort(subdomain) {
@@ -17406,6 +17414,21 @@ async function ideTermSpawn(sessionId, socket, userId, projectId, userEmail) {
     const entry = resolvedSubdomain ? portRegistry[resolvedSubdomain] : null;
     containerName = entry ? _containerFromEntry(resolvedSubdomain, entry) : null;
 
+    // Detect deploy-in-progress: entry exists but is still a bare number
+    // placeholder (getOrAssignPort wrote it, buildRunner hasn't finished yet).
+    // _containerFromEntry now returns null for these — surface a clear message
+    // instead of silently falling through to the static-site path or trying
+    // to exec into a non-existent container.
+    const entryIsPlaceholder = entry != null && (
+      typeof entry === 'number' ||
+      (typeof entry === 'string' && /^\d+$/.test(entry.trim()))
+    );
+    if (!containerName && entryIsPlaceholder) {
+      socket.emit('ide:term:data', `\r\n\x1b[33m⚠ Deploy in progress — container not ready yet.\x1b[0m\r\n\x1b[90mWait for the build to finish, then reopen the terminal.\x1b[0m\r\n`);
+      socket.emit('ide:term:killed', { reason: 'deploy_in_progress' });
+      return;
+    }
+
     if (!containerName && resolvedSubdomain) {
       // No live app container — but that's expected and correct for a
       // static deploy (never runs in Docker). Distinguish "genuinely
@@ -17485,14 +17508,29 @@ async function ideTermSpawn(sessionId, socket, userId, projectId, userEmail) {
       detached: false,
     });
 
+    const _sessionStartMs = Date.now();
+    // Buffer stderr so docker exec errors ("No such container", "OCI runtime
+    // exec failed") are shown in the terminal before the exit event fires.
+    let _stderrBuf = '';
+    const _stderrFlush = () => {
+      if (_stderrBuf) {
+        try { socket.emit('ide:term:data', `\x1b[31m${_stderrBuf}\x1b[0m`); } catch(_){}
+        _stderrBuf = '';
+      }
+    };
+
     child.on('error', (err) => {
+      _stderrFlush();
       socket.emit('ide:term:data', `\r\n\x1b[31m✗ Could not exec into container: ${err.message}\x1b[0m\r\n`);
       socket.emit('ide:term:killed', { reason: 'exec_error' });
       ideTermCleanup(sessionId);
     });
 
-    child.on('exit', (code) => {
-      try { socket.emit('ide:term:data', `\r\n\x1b[33mContainer session ended (exit ${code ?? '?'}).\x1b[0m\r\n`); } catch(_){}
+    child.on('exit', (code, signal) => {
+      _stderrFlush();
+      // code is null when killed by a signal (not a clean exit) — surface the signal name
+      const exitDesc = code != null ? `exit ${code}` : `signal ${signal || 'unknown'}`;
+      try { socket.emit('ide:term:data', `\r\n\x1b[33mContainer session ended (${exitDesc}).\x1b[0m\r\n`); } catch(_){}
       socket.emit('ide:term:killed', { reason: 'exit' });
       ideTermCleanup(sessionId);
     });
@@ -17503,7 +17541,15 @@ async function ideTermSpawn(sessionId, socket, userId, projectId, userEmail) {
     });
     child.stderr.on('data', (d) => {
       lastActivity = Date.now();
-      try { socket.emit('ide:term:data', d.toString('utf8')); } catch(_){}
+      // Buffer stderr for first 3s — catches docker exec startup errors
+      // ("No such container", "OCI runtime exec failed") before emitting
+      const text = d.toString('utf8');
+      if (Date.now() - _sessionStartMs < 3000) {
+        _stderrBuf += text;
+      } else {
+        _stderrFlush();
+        try { socket.emit('ide:term:data', text); } catch(_){}
+      }
     });
 
     let bytesThisSec = 0;
