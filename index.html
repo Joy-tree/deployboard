@@ -20975,7 +20975,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
               </div>
             </div>
             <!-- xterm.js mount point -->
-            <div id="cideWsXtermEl" style="flex:1;overflow:hidden;background:#1e1e1e;"></div>
+            <div id="cideWsXtermEl" style="flex:1;overflow:hidden;background:var(--jt-bg-sunken,#1e1e1e);"></div>
           </div>
 
           <!-- Status bar -->
@@ -25201,6 +25201,24 @@ function _jtSyncTerminalThemes() {
       _wsTermXterm.options.theme = t;
       if (_wsTermXterm.rows) _wsTermXterm.refresh(0, _wsTermXterm.rows - 1);
     }
+  } catch(_) {}
+
+  // Also update fullscreen overlay colors if it exists
+  try {
+    const _isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    const _ov = document.getElementById('_termFullscreenOverlay');
+    if (_ov) {
+      _ov.style.background = _isLight ? '#f8fafc' : '#1e1e1e';
+      const _tb = document.getElementById('_termFullscreenTopbar');
+      if (_tb) { _tb.style.background = _isLight ? '#f1f5f9' : '#252526'; _tb.style.borderColor = _isLight ? '#e2e8f0' : '#333'; }
+      const _lb = document.getElementById('_termFullscreenLabel');
+      if (_lb) _lb.style.color = _isLight ? '#374151' : '#ccc';
+      const _cb = document.getElementById('_termFullscreenCloseBtn');
+      if (_cb) _cb.style.color = _isLight ? '#6b7280' : '#888';
+    }
+    // Also update the inline terminal container background
+    const _el = document.getElementById('cideWsXtermEl');
+    if (_el) _el.style.background = _isLight ? 'var(--jt-bg-sunken,#f8fafc)' : '#1e1e1e';
   } catch(_) {}
 }
 
@@ -39593,14 +39611,15 @@ function cideTermFullscreen() {
   if (!overlay) {
     overlay = document.createElement('div');
     overlay.id = '_termFullscreenOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:none;flex-direction:column;background:#1e1e1e;';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:none;flex-direction:column;';
 
     const topbar = document.createElement('div');
-    topbar.style.cssText = 'display:flex;align-items:center;gap:8px;padding:0 14px;height:36px;background:#252526;border-bottom:1px solid #333;flex-shrink:0;';
+    topbar.id = '_termFullscreenTopbar';
+    topbar.style.cssText = 'display:flex;align-items:center;gap:8px;padding:0 14px;height:36px;border-bottom:1px solid;flex-shrink:0;';
     topbar.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" width="13" height="13"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-      <span style="font-family:var(--font-mono);font-size:.72rem;color:#ccc;flex:1;">TERMINAL</span>
-      <button onclick="cideTermFullscreen()" title="Minimise" style="background:none;border:none;cursor:pointer;padding:4px;color:#888;display:flex;align-items:center;" onmouseover="this.style.color='#ccc'" onmouseout="this.style.color='#888'">
+      <span id="_termFullscreenLabel" style="font-family:var(--font-mono);font-size:.72rem;flex:1;">TERMINAL</span>
+      <button onclick="cideTermFullscreen()" title="Minimise" style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;" id="_termFullscreenCloseBtn">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><polyline points="6 9 12 15 18 9"/></svg>
       </button>`;
     overlay.appendChild(topbar);
@@ -39613,6 +39632,21 @@ function cideTermFullscreen() {
     overlay.appendChild(mount);
     document.body.appendChild(overlay);
   }
+
+  // Apply theme-correct colors every time the overlay is opened/toggled
+  // (theme may have changed since the overlay was first created, and the
+  // overlay colors were previously hardcoded dark — broken in light mode).
+  const _isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  overlay.style.background           = _isLight ? '#f8fafc' : '#1e1e1e';
+  const _topbar = document.getElementById('_termFullscreenTopbar');
+  if (_topbar) {
+    _topbar.style.background    = _isLight ? '#f1f5f9' : '#252526';
+    _topbar.style.borderColor   = _isLight ? '#e2e8f0' : '#333';
+  }
+  const _label = document.getElementById('_termFullscreenLabel');
+  if (_label) _label.style.color = _isLight ? '#374151' : '#ccc';
+  const _closeBtn = document.getElementById('_termFullscreenCloseBtn');
+  if (_closeBtn) _closeBtn.style.color = _isLight ? '#6b7280' : '#888';
 
   const smallContainer = document.getElementById('cideWsXtermEl');
   const fullMount      = document.getElementById('_termFullscreenMount');
@@ -39632,6 +39666,16 @@ function cideTermFullscreen() {
       fullMount.appendChild(xtermNode);
       xtermNode.style.cssText = 'position:absolute;inset:0;';
     }
+
+    // Re-sync xterm's internal color palette to the current theme.
+    // Moving the DOM node preserves content but xterm's canvas may repaint
+    // with stale colors if the theme changed since it was first opened.
+    try {
+      if (_wsTermXterm) {
+        _wsTermXterm.options.theme = _jtTerminalTheme();
+        if (_wsTermXterm.rows) _wsTermXterm.refresh(0, _wsTermXterm.rows - 1);
+      }
+    } catch(_) {}
 
     requestAnimationFrame(() => {
       setTimeout(() => {
