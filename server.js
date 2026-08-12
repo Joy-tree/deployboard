@@ -17318,6 +17318,35 @@ setInterval(() => {
 
 // [FIX] The IDE terminal was reported as "Container not found" even for
 // projects that are demonstrably deployed and running (visible/connectable
+// [FIX] Static uploads never get a Docker container by design — they're
+// served directly from disk by nginx/serveStatic (see the SITES_DIR/<sub>/dist
+// routing above), never run in Docker at all. The IDE terminal's resolver was
+// correctly finding these projects; there was just genuinely nothing to exec
+// into, producing "No running container" even for a perfectly healthy static
+// deploy. Give static projects an on-demand, ephemeral, network-isolated
+// shell container mounting their actual served files, instead of failing.
+const IDE_TERM_EPHEMERAL_IMAGE = 'node:20-alpine'; // already pulled — used for regular app deploys too
+async function _ideSpawnEphemeralStaticContainer(subdomain, sessionId) {
+  const distDir = path.join(SITES_DIR, subdomain, 'dist');
+  const containerName = `ide-static-${subdomain}-${String(sessionId).slice(0, 8)}`;
+  const cmd = [
+    'docker run -d --rm',
+    `--name ${shellQuote(containerName)}`,
+    `-v ${shellQuote(distDir + ':/site')}`,
+    `-w /site`,
+    `--memory="128m"`,
+    `--memory-swap="256m"`,
+    `--pids-limit=100`,
+    `--cpus="0.5"`,
+    `--network=none`, // static file browsing only — no reason for outbound access
+    shellQuote(IDE_TERM_EPHEMERAL_IMAGE),
+    'tail -f /dev/null'
+  ].join(' ');
+  const result = await runDocker(cmd, 20000);
+  if (!result || !result.ok) throw new Error((result && result.stderr) || 'docker run failed');
+  return containerName;
+}
+
 // elsewhere in the dashboard). Root cause: portRegistry is keyed by a
 // project's DEPLOYED SUBDOMAIN, but callers sometimes only have the
 // original UPLOAD id (the two are different identifiers for the same
@@ -17362,6 +17391,7 @@ async function ideTermSpawn(sessionId, socket, userId, projectId, userEmail) {
 
   // ── NON-ADMIN: resolve the user's container from their project ───────────
   let containerName = null;
+  let usingEphemeralStatic = false;
   if (!isAdmin) {
     if (!projectId) {
       socket.emit('ide:term:data', '\r\n\x1b[31m✗ No project selected. Pick a project to open its shell.\x1b[0m\r\n');
@@ -17375,6 +17405,26 @@ async function ideTermSpawn(sessionId, socket, userId, projectId, userEmail) {
     const resolvedSubdomain = await _ideTermResolveSubdomain(String(projectId), userId);
     const entry = resolvedSubdomain ? portRegistry[resolvedSubdomain] : null;
     containerName = entry ? _containerFromEntry(resolvedSubdomain, entry) : null;
+
+    if (!containerName && resolvedSubdomain) {
+      // No live app container — but that's expected and correct for a
+      // static deploy (never runs in Docker). Distinguish "genuinely
+      // static, files on disk" from "not actually deployed" by checking
+      // for the same dist dir the static file server itself checks.
+      const staticDistDir = path.join(SITES_DIR, resolvedSubdomain, 'dist');
+      if (fs.existsSync(staticDistDir)) {
+        try {
+          socket.emit('ide:term:data', `\x1b[90mStatic site — starting a temporary sandbox shell over its files…\x1b[0m\r\n`);
+          containerName = await _ideSpawnEphemeralStaticContainer(resolvedSubdomain, sessionId);
+          usingEphemeralStatic = true;
+        } catch (err) {
+          socket.emit('ide:term:data', `\r\n\x1b[31m✗ Could not start a shell for this static site: ${err.message}\x1b[0m\r\n`);
+          socket.emit('ide:term:killed', { reason: 'ephemeral_start_failed' });
+          return;
+        }
+      }
+    }
+
     if (!containerName) {
       socket.emit('ide:term:data', `\r\n\x1b[33m⚠ No running container for this project.\x1b[0m\r\n\x1b[90mDeploy it (or check that its deployment is still running) to open a live shell.\x1b[0m\r\n`);
       socket.emit('ide:term:killed', { reason: 'no_container' });
@@ -17486,11 +17536,12 @@ async function ideTermSpawn(sessionId, socket, userId, projectId, userEmail) {
 
     ideTermSessions.set(sessionId, {
       proc, socket, userId, bytesThisSec, rateTimer, memTimer, idleTimer, echoInput,
+      containerName, isEphemeralStatic: usingEphemeralStatic,
       get lastActivity() { return lastActivity; },
       set lastActivity(v) { lastActivity = v; },
     });
 
-    socket.emit('ide:term:ready', { sessionId, mode: 'container', containerName });
+    socket.emit('ide:term:ready', { sessionId, mode: usingEphemeralStatic ? 'static-sandbox' : 'container', containerName });
     // Send a newline to trigger the container's shell prompt immediately
     try { child.stdin.write('\n'); } catch(_){}
     return;
@@ -17697,6 +17748,16 @@ function ideTermCleanup(sessionId) {
     sess.proc.stderr.destroy();
     sess.proc.kill('SIGKILL');
   } catch (_) {}
+  // [FIX] Ephemeral static-sandbox containers (see
+  // _ideSpawnEphemeralStaticContainer) are created solely for this one
+  // terminal session and must be torn down with it — they were never a
+  // real deployment. `docker stop` + the container's own `--rm` flag
+  // handles removal in one step. This is deliberately gated on the
+  // isEphemeralStatic flag set only in that one code path, so it can
+  // never reach a real, currently-live app container.
+  if (sess.isEphemeralStatic && sess.containerName) {
+    try { runDocker(`docker stop -t 2 ${shellQuote(sess.containerName)}`, 8000).catch(() => {}); } catch (_) {}
+  }
   ideTermSessions.delete(sessionId);
 }
 
