@@ -17316,7 +17316,38 @@ setInterval(() => {
   } catch (_) {}
 }, 10000);
 
-function ideTermSpawn(sessionId, socket, userId, projectId, userEmail) {
+// [FIX] The IDE terminal was reported as "Container not found" even for
+// projects that are demonstrably deployed and running (visible/connectable
+// elsewhere in the dashboard). Root cause: portRegistry is keyed by a
+// project's DEPLOYED SUBDOMAIN, but callers sometimes only have the
+// original UPLOAD id (the two are different identifiers for the same
+// project). Every project ever deployed via /api/upload-deploy already
+// stores uploadProjectId -> subdomain on its own record though (see
+// projectRecord.uploadProjectId in that handler) — this resolves through
+// that authoritative link instead of relying on any client-side cache,
+// so it works uniformly for every project regardless of when it was
+// deployed or what the client happens to have cached.
+async function _ideTermResolveSubdomain(rawProjectId, userId) {
+  // Fast path: rawProjectId is already a live subdomain.
+  if (portRegistry[String(rawProjectId)]) return String(rawProjectId);
+  if (!userId) return null;
+  try {
+    let user = null;
+    if (isDbReady()) {
+      user = await User.findById(userId).lean().catch(() => null);
+    } else {
+      user = localAuth.users.find(u => String(u.id || u._id || '') === String(userId)) || null;
+    }
+    if (!user) return null;
+    const ws = await readWorkspaceFromFirebase(user);
+    const projList = ws && Array.isArray(ws.projects) ? ws.projects : [];
+    const match = projList.find(p => String(p.uploadProjectId || '') === String(rawProjectId));
+    if (match && match.subdomain && portRegistry[String(match.subdomain)]) return String(match.subdomain);
+  } catch (_) {}
+  return null;
+}
+
+async function ideTermSpawn(sessionId, socket, userId, projectId, userEmail) {
   if (ideTermSessions.size >= IDE_TERM_MAX_SESSIONS) {
     socket.emit('ide:term:killed', { reason: 'server_capacity' });
     socket.emit('ide:term:data', '\r\n\x1b[31m⚠ Max terminal sessions reached — please wait\x1b[0m\r\n');
@@ -17337,11 +17368,15 @@ function ideTermSpawn(sessionId, socket, userId, projectId, userEmail) {
       socket.emit('ide:term:killed', { reason: 'no_project' });
       return;
     }
-    // Look up the container name from the port registry (subdomain → containerName:port)
-    const entry = portRegistry[String(projectId)];
-    containerName = entry ? _containerFromEntry(String(projectId), entry) : null;
+    // Look up the container name from the port registry (subdomain → containerName:port).
+    // resolvedSubdomain handles both cases: projectId already being a live
+    // subdomain, or projectId being the original upload id that needs
+    // resolving through the project's stored uploadProjectId link.
+    const resolvedSubdomain = await _ideTermResolveSubdomain(String(projectId), userId);
+    const entry = resolvedSubdomain ? portRegistry[resolvedSubdomain] : null;
+    containerName = entry ? _containerFromEntry(resolvedSubdomain, entry) : null;
     if (!containerName) {
-      socket.emit('ide:term:data', `\r\n\x1b[31m✗ Container not found for project "${projectId}". Make sure it is deployed and running.\x1b[0m\r\n`);
+      socket.emit('ide:term:data', `\r\n\x1b[33m⚠ No running container for this project.\x1b[0m\r\n\x1b[90mDeploy it (or check that its deployment is still running) to open a live shell.\x1b[0m\r\n`);
       socket.emit('ide:term:killed', { reason: 'no_container' });
       return;
     }
@@ -17691,7 +17726,7 @@ io.on('connection', (socket) => {
         } catch (_) {}
       }
 
-      ideTermSpawn(sessionId, socket, userId, projectId, userEmail);
+      await ideTermSpawn(sessionId, socket, userId, projectId, userEmail);
     } catch (err) {
       console.error('[ide:term:start] error:', err && err.message || err);
     }

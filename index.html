@@ -39305,51 +39305,23 @@ function _wsTermRelocate() {
 
 // [FIX] The IDE terminal was sending _cideProjectId — the raw upload id
 // (e.g. "upload_1784468679572") — as the projectId for 'ide:term:start'.
-// But the server resolves containers via portRegistry, which is keyed by
-// the project's DEPLOYED SUBDOMAIN (e.g. "brabeto-goo-xyz"), never by the
-// upload id. These are two different identifiers for the same project, so
-// the container lookup could never succeed even while the container was
-// genuinely up and running — exactly the "Container not found" error
-// reported despite the project clearly being deployed and live.
-//
-// _cuProjects entries now get a .subdomain field written back onto them
-// the moment a deploy succeeds (see the upload-deploy success handler),
-// so this resolves the id -> subdomain link recorded at deploy time.
-// Returns null (and writes a friendly message to the terminal, if given)
-// when the currently open project has never been deployed yet.
-function _wsTermResolveSubdomain(xtermForMessage) {
-  if (!_cideProjectId) {
-    if (xtermForMessage) xtermForMessage.writeln('\r\n\x1b[31m✗ No project open.\x1b[0m');
-    return null;
-  }
-  const cuIdx = _cuProjects.findIndex(p => p.id === _cideProjectId);
-  const proj = cuIdx >= 0 ? _cuProjects[cuIdx] : null;
-  let sub = proj && proj.subdomain ? String(proj.subdomain) : '';
-
-  // [FIX] Self-heal projects deployed BEFORE this id->subdomain link
-  // existed: cross-reference the main dashboard projects list (which has
-  // always tracked .subdomain per deployment) by matching name, and
-  // backfill it onto _cuProjects so this only has to run once per project.
-  if (!sub && proj && typeof projects !== 'undefined') {
-    const match = projects.find(p => p.source === 'upload' && p.name === proj.name && p.subdomain);
-    if (match) {
-      sub = String(match.subdomain);
-      if (cuIdx >= 0) {
-        _cuProjects[cuIdx].subdomain = sub;
-        try { localStorage.setItem(CU_STORE_KEY, JSON.stringify(_cuProjects)); } catch {}
-        cuSyncToFirebase();
-      }
-    }
-  }
-
-  if (!sub) {
-    if (xtermForMessage) {
-      xtermForMessage.writeln('\r\n\x1b[33m⚠ This project hasn\'t been deployed yet.\x1b[0m');
-      xtermForMessage.writeln('\x1b[90mDeploy it once to open a live shell inside its container.\x1b[0m');
-    }
-    return null;
-  }
-  return sub;
+// The server resolves that authoritatively now (see server.js
+// _ideTermResolveSubdomain — fast path if it's already a live subdomain,
+// otherwise resolved through the project's own stored uploadProjectId
+// link, which exists for every project ever deployed). So this no longer
+// blocks the connection attempt on a local cache — a previous version of
+// this fix did exactly that and it's what caused the "hasn't been
+// deployed yet" message to fire wrongly for projects that were, in fact,
+// already deployed and running: the client's own cache just hadn't
+// caught up. Now the client only supplies a cached subdomain as a minor
+// optimization if it happens to have one; the server figures out the
+// rest either way, and only the server's actual 'no_container' response
+// (handled in the ide:term:killed listener below) shows the friendly
+// not-yet-deployed message.
+function _wsTermResolveSubdomain() {
+  if (!_cideProjectId) return null;
+  const proj = _cuProjects.find(p => p.id === _cideProjectId);
+  return (proj && proj.subdomain) ? String(proj.subdomain) : _cideProjectId;
 }
 
 function _wsTermStartSession() {
@@ -39359,8 +39331,8 @@ function _wsTermStartSession() {
     _wsTermSessId = null;
   }
   if (_wsTermSock && _wsTermSock.connected) {
-    const sub = _wsTermResolveSubdomain(_wsTermXterm);
-    if (!sub) return;
+    const sub = _wsTermResolveSubdomain();
+    if (!sub) { _wsTermXterm?.writeln('\r\n\x1b[31m✗ No project open.\x1b[0m'); return; }
     _wsTermXterm?.writeln('\r\n\x1b[36m$ Starting session…\x1b[0m');
     _wsTermSock.emit('ide:term:start', { projectId: sub, userId: currentUser?.id || currentUser?._id || '' });
   }
@@ -39497,8 +39469,8 @@ function cideWsTermInit() {
 
   _wsTermSock.on('connect', () => {
     _wsTermXterm.writeln('\x1b[32m✓ Connected\x1b[0m');
-    const sub = _wsTermResolveSubdomain(_wsTermXterm);
-    if (!sub) return;
+    const sub = _wsTermResolveSubdomain();
+    if (!sub) { _wsTermXterm.writeln('\x1b[31m✗ No project open.\x1b[0m'); return; }
     _wsTermSock.emit('ide:term:start', { projectId: sub, userId: currentUser?.id || currentUser?._id || '' });
   });
 
@@ -39518,7 +39490,12 @@ function cideWsTermInit() {
   });
 
   _wsTermSock.on('ide:term:killed', (data) => {
-    _wsTermXterm.writeln('\x1b[31m\r\n⚠ Session ended: ' + (data?.reason || 'unknown') + '\x1b[0m');
+    // no_container / no_project already get a clear, specific message via
+    // ide:term:data right before this fires — no need to also print the
+    // raw reason code underneath it.
+    if (data?.reason !== 'no_container' && data?.reason !== 'no_project') {
+      _wsTermXterm.writeln('\x1b[31m\r\n⚠ Session ended: ' + (data?.reason || 'unknown') + '\x1b[0m');
+    }
     _wsTermSessId = null;
   });
 
