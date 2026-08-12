@@ -2422,3 +2422,24 @@ html[data-theme="light"] .notif-item-time { color: var(--jt-text-faint) !importa
 html[data-theme="light"] .notif-item-msg { color: var(--jt-text) !important; }
 html[data-theme="light"] .notif-view-all-btn { color: var(--jt-text-dim) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .notif-view-all-btn:hover { color: var(--jt-text) !important; background: rgba(0,0,0,.04) !important; }
+
+/* ---------------------------------------------------------------------
+   IDE TERMINAL — the white patch reported around the live terminal
+   text. Root cause wasn't CSS at all: xterm.js paints its output on a
+   <canvas>, colored entirely by a JS `theme` object passed at
+   creation — CSS can't reach glyphs drawn on a canvas. The deploy-log
+   terminal already picked light/dark correctly via _jtTerminalTheme();
+   this second terminal instance (the one embedded in the IDE, which is
+   what's in the screenshot) was hardcoded to a fixed dark theme
+   (background:'#1e1e1e') independent of site theme, and wasn't wired
+   into the live theme-sync function either. Switched both over to
+   _jtTerminalTheme() in index.html (a one-line JS fix, unavoidable —
+   no CSS-only path reaches canvas-drawn text). The mount container's
+   inline dark background is fixed here in CSS as the visible fallback
+   for the instant between panel-open and xterm finishing its first
+   paint.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] #cideWsXtermEl,
+html[data-theme="light"] #cideXtermContainer {
+  background: var(--jt-bg-raised) !important;
+}
