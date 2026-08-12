@@ -39334,7 +39334,8 @@ function _wsTermStartSession() {
     const sub = _wsTermResolveSubdomain();
     if (!sub) { _wsTermXterm?.writeln('\r\n\x1b[31m✗ No project open.\x1b[0m'); return; }
     _wsTermXterm?.writeln('\r\n\x1b[36m$ Starting session…\x1b[0m');
-    _wsTermSock.emit('ide:term:start', { projectId: sub, userId: currentUser?.id || currentUser?._id || '' });
+    const _tok = authToken || localStorage.getItem('db_auth_token') || '';
+    _wsTermSock.emit('ide:term:start', { projectId: sub, userId: currentUser?.id || currentUser?._id || '', token: _tok });
   }
 }
 
@@ -39467,11 +39468,21 @@ function cideWsTermInit() {
     return;
   }
 
+  // Track whether the socket disconnect was caused by a killed session
+  // (expected) vs a real network drop (should reconnect). Without this,
+  // every ide:term:killed event → socket disconnect → connect → start loop
+  // keeps spawning new sessions endlessly.
+  let _wsTermKilledLocally = false;
+
   _wsTermSock.on('connect', () => {
     _wsTermXterm.writeln('\x1b[32m✓ Connected\x1b[0m');
+    // Don't auto-start if the last disconnect was a clean session end
+    // (killed by server intentionally). The user must click New Session.
+    if (_wsTermKilledLocally) { _wsTermKilledLocally = false; return; }
     const sub = _wsTermResolveSubdomain();
     if (!sub) { _wsTermXterm.writeln('\x1b[31m✗ No project open.\x1b[0m'); return; }
-    _wsTermSock.emit('ide:term:start', { projectId: sub, userId: currentUser?.id || currentUser?._id || '' });
+    const tok = authToken || localStorage.getItem('db_auth_token') || '';
+    _wsTermSock.emit('ide:term:start', { projectId: sub, userId: currentUser?.id || currentUser?._id || '', token: tok });
   });
 
   _wsTermSock.on('ide:term:ready', (data) => {
@@ -39490,17 +39501,24 @@ function cideWsTermInit() {
   });
 
   _wsTermSock.on('ide:term:killed', (data) => {
-    // no_container / no_project already get a clear, specific message via
-    // ide:term:data right before this fires — no need to also print the
-    // raw reason code underneath it.
-    if (data?.reason !== 'no_container' && data?.reason !== 'no_project') {
-      _wsTermXterm.writeln('\x1b[31m\r\n⚠ Session ended: ' + (data?.reason || 'unknown') + '\x1b[0m');
+    // no_container / no_project / deploy_in_progress already get a clear,
+    // specific message via ide:term:data before this fires.
+    const silentReasons = new Set(['no_container', 'no_project', 'deploy_in_progress', 'exit']);
+    if (!silentReasons.has(data?.reason)) {
+      _wsTermXterm.writeln('\x1b[33m\r\n⚠ Session ended: ' + (data?.reason || 'unknown') + '\x1b[0m');
     }
     _wsTermSessId = null;
+    // Mark as intentionally killed so the socket reconnect handler doesn't
+    // auto-spawn a new session — that caused the Disconnected/Connected loop.
+    _wsTermKilledLocally = true;
   });
 
-  _wsTermSock.on('disconnect', () => {
-    _wsTermXterm.writeln('\x1b[33m\r\nDisconnected\x1b[0m');
+  _wsTermSock.on('disconnect', (reason) => {
+    // Don't print "Disconnected" for intentional session kills — the killed
+    // handler already printed a relevant message. Only surface real network drops.
+    if (!_wsTermKilledLocally) {
+      _wsTermXterm.writeln('\x1b[33m\r\nDisconnected\x1b[0m');
+    }
     _wsTermSessId = null;
   });
 
