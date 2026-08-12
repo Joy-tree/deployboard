@@ -2443,3 +2443,33 @@ html[data-theme="light"] #cideWsXtermEl,
 html[data-theme="light"] #cideXtermContainer {
   background: var(--jt-bg-raised) !important;
 }
+
+/* ---------------------------------------------------------------------
+   BUILD PROGRESS PANEL — the step-icon circles (checkmark / spinner /
+   error) render fine when pending, but .done/.active/.error are set
+   with !important to a fixed bright mint (#34d399) picked to glow
+   against a near-black quantum-build card. On the light card that same
+   #34d399 is too pale to read as "colored" at all — it's what looked
+   like a plain white/blank circle in the "rotating progress" step.
+   --------------------------------------------------------------------- */
+html[data-theme="light"] .quantum-steps .step-icon.done {
+  background: rgba(31,110,82,.14) !important;
+  border-color: rgba(31,110,82,.4) !important;
+  color: var(--jt-brand-strong) !important;
+}
+html[data-theme="light"] .quantum-steps .step-icon.active {
+  background: rgba(31,110,82,.16) !important;
+  border-color: rgba(31,110,82,.5) !important;
+  color: var(--jt-brand-strong) !important;
+  box-shadow: 0 0 0 4px rgba(31,110,82,.1) !important;
+}
+html[data-theme="light"] .quantum-steps .step-icon.error {
+  color: var(--jt-danger) !important;
+}
+/* Non-grid (simple list) variant of the same states, same root issue */
+html[data-theme="light"] .step-icon.done,
+html[data-theme="light"] .step-icon.active {
+  background: rgba(31,110,82,.14) !important;
+  border-color: rgba(31,110,82,.4) !important;
+  color: var(--jt-brand-strong) !important;
+}

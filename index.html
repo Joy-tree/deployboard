@@ -5534,7 +5534,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=7">
+<link rel="stylesheet" href="theme-override.css?v=8">
 </head>
 <body>
 
@@ -25162,8 +25162,26 @@ function _jtTerminalTheme() {
 // is used mid-session, instead of requiring a reload.
 function _jtSyncTerminalThemes() {
   const t = _jtTerminalTheme();
-  try { if (typeof term !== 'undefined' && term) term.options.theme = t; } catch(_) {}
-  try { if (typeof _wsTermXterm !== 'undefined' && _wsTermXterm) _wsTermXterm.options.theme = t; } catch(_) {}
+  // Reassigning .options.theme updates xterm's internal palette, but with
+  // the canvas renderer it doesn't reliably repaint rows that were already
+  // drawn under the old theme -- ANSI-colored text (the yellow [Joytree]
+  // tags, cyan step dividers, etc.) stays stuck showing in whatever colors
+  // it was first painted with, while only newly-written lines pick up the
+  // new palette. An explicit refresh forces every already-rendered row to
+  // redraw against the new theme instead of just the ones that scroll back
+  // into view naturally.
+  try {
+    if (typeof term !== 'undefined' && term) {
+      term.options.theme = t;
+      if (term.rows) term.refresh(0, term.rows - 1);
+    }
+  } catch(_) {}
+  try {
+    if (typeof _wsTermXterm !== 'undefined' && _wsTermXterm) {
+      _wsTermXterm.options.theme = t;
+      if (_wsTermXterm.rows) _wsTermXterm.refresh(0, _wsTermXterm.rows - 1);
+    }
+  } catch(_) {}
 }
 
 function initTerminal() {
