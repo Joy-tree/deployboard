@@ -10,22 +10,20 @@
   // flash/blur every load. This must stay tiny and synchronous (no defer/
   // async) so it always finishes before first paint.
   //
-  // [FIX] Default is now always 'dark' for anyone who hasn't explicitly
-  // chosen a theme, instead of following the OS's prefers-color-scheme.
-  // The three-way picker (System/Dark/Light) still works exactly as before
-  // for anyone who explicitly picks "System" -- only the *unset* case
-  // changed, from "guess from the OS" to "just use dark".
+  // [FIX] Theme is now strictly two-valued: 'dark' or 'light', defaulting
+  // to 'dark' when nothing is saved. The old third 'system' mode (follow
+  // OS prefers-color-scheme) added a second code path that could disagree
+  // with what this same value resolved to elsewhere (matchMedia can report
+  // differently depending on exactly when/where it's read, and stray
+  // legacy 'system' values in localStorage from before this change would
+  // silently fall through to the matchMedia branch here forever). Any
+  // stored value that isn't literally 'light' now just resolves to 'dark',
+  // matching _applyTheme below -- one deterministic answer, no OS lookup,
+  // no runtime branch to disagree with itself.
   (function () {
     try {
-      var t = localStorage.getItem('jt_theme') || 'dark';
-      var theme;
-      if (t === 'dark' || t === 'light') {
-        theme = t;
-      } else {
-        var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-        theme = prefersLight ? 'light' : 'dark';
-      }
-      document.documentElement.setAttribute('data-theme', theme);
+      var t = localStorage.getItem('jt_theme');
+      document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
     } catch (e) {}
   })();
   </script>
@@ -8038,10 +8036,6 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
         <div class="theme-picker" id="themePicker">
-          <button class="theme-picker-opt" data-theme="system" onclick="themeSet('system')">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            System
-          </button>
           <button class="theme-picker-opt" data-theme="dark" onclick="themeSet('dark')">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             Dark
@@ -22203,34 +22197,25 @@ async function sendAdminBroadcastEmail() {
 // SIDEBAR
 // ══════════════════════════════════════════════════════════════════
 // ══ Theme system ══════════════════════════════════════════════════════════
-// Three modes: 'system' (follows the OS/browser prefers-color-scheme via
-// matchMedia — light or dark, whichever the device is set to), 'dark'
-// (explicit pure-black override), 'light' (docs.joytree.site palette,
-// applied via theme-override.css).
-// Stored in localStorage so it persists across sessions.
+// Two modes only: 'dark' (explicit pure-black) or 'light' (docs.joytree.site
+// palette, applied via theme-override.css). Stored in localStorage so it
+// persists across sessions.
+// [FIX] Removed the old third 'system' mode (follow OS prefers-color-scheme
+// via matchMedia). It gave the theme two different sources of truth that
+// could disagree -- the stored value itself, and a live OS-lookup that only
+// ran for that one value -- and any code path that forgot to fully resolve
+// 'system' before using it (or a stray legacy 'system' string left over in
+// localStorage) fell back to inconsistent per-call matchMedia results
+// instead of the deterministic saved choice. Two values, one lookup, no
+// runtime branch.
 (function _initTheme() {
-  // [FIX] Default is 'dark' when nothing is saved, not 'system' -- see head
-  // bootstrap script for the full explanation. Both fallbacks below must
-  // match, or an unset user's theme could get silently flipped by the
-  // matchMedia 'change' listener just below.
-  const saved = localStorage.getItem('jt_theme') || 'dark';
+  const saved = localStorage.getItem('jt_theme') === 'light' ? 'light' : 'dark';
   _applyTheme(saved);
-  // Keep 'system' mode live-synced if the OS theme changes while open
-  if (window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
-      if ((localStorage.getItem('jt_theme') || 'dark') === 'system') _applyTheme('system');
-    });
-  }
 })();
 
 function _applyTheme(t) {
   const html = document.documentElement;
-  if (t === 'dark')       { html.setAttribute('data-theme', 'dark'); }
-  else if (t === 'light') { html.setAttribute('data-theme', 'light'); }
-  else {
-    const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-    html.setAttribute('data-theme', prefersLight ? 'light' : 'dark');
-  }
+  html.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
 
   // Live-update any already-open xterm.js deploy-log terminal instead
   // of requiring a page reload to pick up the new theme.
@@ -22256,8 +22241,7 @@ function _applyTheme(t) {
   const landingIcon = document.getElementById('landingThemeIcon');
   const sunPath = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
   const lightPath = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>';
-  const systemPath = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>';
-  const iconHtml = t === 'dark' ? sunPath : t === 'light' ? lightPath : systemPath;
+  const iconHtml = t === 'light' ? lightPath : sunPath;
   if (icon) icon.innerHTML = iconHtml;
   if (landingIcon) landingIcon.innerHTML = iconHtml;
   if (!icon && !landingIcon) return;
