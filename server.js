@@ -538,21 +538,25 @@ function _portFromEntry(entry) {
 // "containerName:port" so the proxy can route to Docker DNS; legacy numeric
 // entries fall back to the conventional db-<subdomain> container name.
 function _containerFromEntry(subdomain, entry) {
+  // NOTE: ALL app containers are named "db-<subdomain>" by buildRunner
+  // (see buildRunner.js lines 408, 531, 634, 1782, 3405, 5778).
+  // The "db-" prefix does NOT mean database-only — it's the universal
+  // naming convention for every deployed project container.
+
   // A bare number means getOrAssignPort() wrote a port placeholder but
   // buildRunner hasn't finished writing the real "containerName:port" entry
-  // yet (deploy still in progress). Returning db-<subdomain> here was the
-  // root cause of "Container session ended (exit ?)" — it tried to exec into
-  // a database container that never existed for this app. Return null so
-  // callers can detect the in-progress state and show a proper message.
+  // yet (deploy still in progress). Return null so callers can show a
+  // proper "deploy in progress" message instead of trying to exec into nothing.
   if (entry == null || typeof entry === 'number') return null;
   const s = String(entry).trim();
   if (!s) return null;
   const name = s.includes(':') ? s.split(':')[0] : s;
   // Still a bare number string (e.g. "4001") — same placeholder state
   if (/^\d+$/.test(name)) return null;
-  // db- prefix entries are database containers, never app shell targets
   const cleaned = name.replace(/[^a-zA-Z0-9_.-]/g, '');
-  return cleaned || null;
+  // If no valid name could be parsed, fall back to the canonical app
+  // container name that buildRunner always uses for this subdomain.
+  return cleaned || ('db-' + String(subdomain || '').toLowerCase().replace(/[^a-z0-9-]/g, '-'));
 }
 
 function getOrAssignPort(subdomain) {
@@ -17453,6 +17457,25 @@ async function ideTermSpawn(sessionId, socket, userId, projectId, userEmail) {
       socket.emit('ide:term:killed', { reason: 'no_container' });
       return;
     }
+
+    // Verify the container is actually running before attempting exec.
+    // If it exists in portRegistry but isn't running (crashed, stopped,
+    // restarting) docker exec will get SIGKILL'd instantly — show a clear
+    // message instead.
+    try {
+      const { execSync: _verify } = require('child_process');
+      const state = _verify(`docker inspect --format='{{.State.Running}}' ${containerName} 2>/dev/null`, { stdio: ['ignore','pipe','ignore'] }).toString().trim();
+      if (state !== 'true') {
+        socket.emit('ide:term:data', `\r\n\x1b[33m⚠ Container "${containerName}" exists but is not running (state: ${state || 'stopped'}).\x1b[0m\r\n\x1b[90mRedeploy the project to restart it.\x1b[0m\r\n`);
+        socket.emit('ide:term:killed', { reason: 'container_stopped' });
+        return;
+      }
+    } catch (_verifyErr) {
+      // container doesn't exist at all
+      socket.emit('ide:term:data', `\r\n\x1b[33m⚠ Container "${containerName}" not found on this host.\x1b[0m\r\n\x1b[90mRedeploy the project to create it.\x1b[0m\r\n`);
+      socket.emit('ide:term:killed', { reason: 'container_not_found' });
+      return;
+    }
   }
 
   // ── Resolve working directory (admin only — docker exec sets its own cwd) ─
@@ -17497,12 +17520,22 @@ async function ideTermSpawn(sessionId, socket, userId, projectId, userEmail) {
   // and cannot escape to the host.
   if (!isAdmin) {
     const cp = require('child_process');
-    // Try bash first, fall back to sh — whichever the container has
-    const containerShell = '/bin/sh';
+    // Use 'script' to allocate a pseudo-TTY inside the container so the
+    // shell doesn't exit immediately (docker exec -i without -t means no
+    // TTY → /bin/sh sees no controlling terminal → SIGKILL). We can't use
+    // docker exec -t because that requires node-pty for proper pty handling
+    // and we deliberately avoid node-pty (VPS OOM risk). Instead we wrap
+    // with `script -q -c '/bin/sh' /dev/null` which allocates a real pty
+    // inside the container and keeps the shell alive for interactive use.
+    // Falls back to plain /bin/sh if script isn't available in the container.
     const child = cp.spawn('docker', [
       'exec', '-i',
       '-e', 'TERM=xterm-256color',
-      containerName, containerShell
+      '-e', 'PS1=$ ',
+      containerName,
+      '/bin/sh', '-c',
+      // Try script first; if not available fall back to plain sh
+      'script -q -c "/bin/sh" /dev/null 2>/dev/null || /bin/sh'
     ], {
       stdio: ['pipe', 'pipe', 'pipe'],
       detached: false,
