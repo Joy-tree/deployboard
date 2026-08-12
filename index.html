@@ -24572,6 +24572,26 @@ async function startDeployment() {
       const storedUploadId = _uploadProjectId;
       _uploadProjectId = null;
 
+      // [FIX] Link this IDE project to the subdomain it just deployed under,
+      // so the terminal can resolve the right container next time it opens
+      // (see _wsTermResolveSubdomain). Without this, _cuProjects never
+      // learns its own deployed subdomain and the terminal has no way to
+      // find the right container even seconds after a successful deploy.
+      if (storedUploadId) {
+        const cuIdx = _cuProjects.findIndex(p => p.id === storedUploadId);
+        if (cuIdx >= 0) {
+          _cuProjects[cuIdx].subdomain = subdomain;
+          try { localStorage.setItem(CU_STORE_KEY, JSON.stringify(_cuProjects)); } catch {}
+          cuSyncToFirebase();
+          // If the IDE terminal is already open for this exact project,
+          // retry the connection right now instead of leaving it stuck on
+          // a stale "not yet deployed" message until manually reopened.
+          if (_cideProjectId === storedUploadId && _wsTermSock && _wsTermSock.connected) {
+            _wsTermStartSession();
+          }
+        }
+      }
+
       // ── New-version cleanup: unlock fields and clear banner ───────────────
       if (_uploadNewVersionFor) {
         _uploadNewVersionFor = null;
@@ -37668,7 +37688,8 @@ async function cuSyncToFirebase() {
     .map(p => ({
       id: p.id, name: p.name, fileName: p.fileName, size: p.size,
       lang: p.lang, uploadedAt: p.uploadedAt, fileCount: p.fileCount,
-      extracted: true, serverPath: p.serverPath || ''
+      extracted: true, serverPath: p.serverPath || '',
+      subdomain: p.subdomain || ''
     }));
   if (!projects.length) return;
   try {
@@ -39282,6 +39303,55 @@ function _wsTermRelocate() {
   setTimeout(() => { if (_wsTermFit) try { _wsTermFit.fit(); } catch(_){} }, 30);
 }
 
+// [FIX] The IDE terminal was sending _cideProjectId — the raw upload id
+// (e.g. "upload_1784468679572") — as the projectId for 'ide:term:start'.
+// But the server resolves containers via portRegistry, which is keyed by
+// the project's DEPLOYED SUBDOMAIN (e.g. "brabeto-goo-xyz"), never by the
+// upload id. These are two different identifiers for the same project, so
+// the container lookup could never succeed even while the container was
+// genuinely up and running — exactly the "Container not found" error
+// reported despite the project clearly being deployed and live.
+//
+// _cuProjects entries now get a .subdomain field written back onto them
+// the moment a deploy succeeds (see the upload-deploy success handler),
+// so this resolves the id -> subdomain link recorded at deploy time.
+// Returns null (and writes a friendly message to the terminal, if given)
+// when the currently open project has never been deployed yet.
+function _wsTermResolveSubdomain(xtermForMessage) {
+  if (!_cideProjectId) {
+    if (xtermForMessage) xtermForMessage.writeln('\r\n\x1b[31m✗ No project open.\x1b[0m');
+    return null;
+  }
+  const cuIdx = _cuProjects.findIndex(p => p.id === _cideProjectId);
+  const proj = cuIdx >= 0 ? _cuProjects[cuIdx] : null;
+  let sub = proj && proj.subdomain ? String(proj.subdomain) : '';
+
+  // [FIX] Self-heal projects deployed BEFORE this id->subdomain link
+  // existed: cross-reference the main dashboard projects list (which has
+  // always tracked .subdomain per deployment) by matching name, and
+  // backfill it onto _cuProjects so this only has to run once per project.
+  if (!sub && proj && typeof projects !== 'undefined') {
+    const match = projects.find(p => p.source === 'upload' && p.name === proj.name && p.subdomain);
+    if (match) {
+      sub = String(match.subdomain);
+      if (cuIdx >= 0) {
+        _cuProjects[cuIdx].subdomain = sub;
+        try { localStorage.setItem(CU_STORE_KEY, JSON.stringify(_cuProjects)); } catch {}
+        cuSyncToFirebase();
+      }
+    }
+  }
+
+  if (!sub) {
+    if (xtermForMessage) {
+      xtermForMessage.writeln('\r\n\x1b[33m⚠ This project hasn\'t been deployed yet.\x1b[0m');
+      xtermForMessage.writeln('\x1b[90mDeploy it once to open a live shell inside its container.\x1b[0m');
+    }
+    return null;
+  }
+  return sub;
+}
+
 function _wsTermStartSession() {
   // Kill any existing session first
   if (_wsTermSessId && _wsTermSock) {
@@ -39289,8 +39359,10 @@ function _wsTermStartSession() {
     _wsTermSessId = null;
   }
   if (_wsTermSock && _wsTermSock.connected) {
+    const sub = _wsTermResolveSubdomain(_wsTermXterm);
+    if (!sub) return;
     _wsTermXterm?.writeln('\r\n\x1b[36m$ Starting session…\x1b[0m');
-    _wsTermSock.emit('ide:term:start', { projectId: _cideProjectId || '', userId: currentUser?.id || currentUser?._id || '' });
+    _wsTermSock.emit('ide:term:start', { projectId: sub, userId: currentUser?.id || currentUser?._id || '' });
   }
 }
 
@@ -39425,7 +39497,9 @@ function cideWsTermInit() {
 
   _wsTermSock.on('connect', () => {
     _wsTermXterm.writeln('\x1b[32m✓ Connected\x1b[0m');
-    _wsTermSock.emit('ide:term:start', { projectId: _cideProjectId || '', userId: currentUser?.id || currentUser?._id || '' });
+    const sub = _wsTermResolveSubdomain(_wsTermXterm);
+    if (!sub) return;
+    _wsTermSock.emit('ide:term:start', { projectId: sub, userId: currentUser?.id || currentUser?._id || '' });
   });
 
   _wsTermSock.on('ide:term:ready', (data) => {
