@@ -21669,20 +21669,18 @@ async function bootstrapSession(){
       // stale server value. That's the "loads dark every time" report --
       // not a caching or CSS issue, a two-sources-of-truth race.
       //
-      // Now: if THIS device already has an explicit local choice, treat it
-      // as authoritative (it's the most recent thing the user actually
-      // clicked) and push it up to correct a stale server value, instead
-      // of pulling the stale value down over a correct local one. Only a
-      // device with NO local preference yet (a genuinely new browser, or
-      // one that's had localStorage wiped) adopts the server's theme.
+      // [FIX] Also no longer lets a fresh device (no local preference yet)
+      // adopt the server's saved theme. Dark is the one true default on
+      // every device until someone explicitly taps Light on that device --
+      // a brand-new browser/session should never silently start in light
+      // just because the account happened to have picked light somewhere
+      // else previously. An explicit local choice still pushes up to
+      // correct a stale server value, same as before.
       if (settings.theme && typeof _applyTheme === 'function') {
         const _localTheme = localStorage.getItem('jt_theme');
         if (_localTheme && _localTheme !== settings.theme) {
           settings.theme = _localTheme;
           if (typeof queueWorkspaceSync === 'function') queueWorkspaceSync();
-        } else if (!_localTheme) {
-          localStorage.setItem('jt_theme', settings.theme);
-          _applyTheme(settings.theme);
         }
       }
       // Preload uploadedProjects from Firebase on every login so the upload
