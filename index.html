@@ -14386,6 +14386,12 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 .db-studio-page{
   display:flex;flex-direction:column;gap:14px;height:calc(100vh - 120px);
 }
+/* Query page overrides the fixed calc height — uses flex:1 chain instead */
+#page-db-query .db-studio-page,
+#page-db-query ~ * .db-studio-page{
+  height:100% !important;
+  gap:0 !important;
+}
 .db-studio-head{
   display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
   padding:14px 16px;border:1px solid var(--border);border-radius:14px;
@@ -16826,17 +16832,25 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
            split; only the chrome (titlebar/toolbar/explorer) changes.
            ═══════════════════════════════════════════════════════════════ */
         #page-db-query .page-back{ margin-bottom:8px; }
+        /* ── Full-height flex chain for the query page ─────────────────
+           The global .db-studio-page rule sets height:calc(100vh-120px)
+           which breaks the flex:1 chain. We override it to 100% here and
+           lock every ancestor so qide-shell actually fills the screen. */
+        html.app-mode.page-db-query #main        { display:flex;flex-direction:column;min-height:0;flex:1; }
+        html.app-mode.page-db-query #content-area{ display:flex;flex-direction:column;min-height:0;flex:1; }
+        html.app-mode.page-db-query #page-db-query{ display:flex;flex-direction:column;min-height:0;flex:1; }
+        html.app-mode.page-db-query .db-studio-page{
+          display:flex !important;flex-direction:column !important;
+          flex:1 !important;min-height:0 !important;
+          height:100% !important;           /* override the calc(100vh-120px) */
+          overflow:hidden !important;
+          gap:0 !important;
+        }
         .qide-shell{
           display:flex;flex-direction:column;min-height:0;flex:1;
           border:1px solid var(--jt-border);border-radius:14px;overflow:hidden;
           background:var(--jt-bg-raised);
-          /* Must fill the page height so editor+results split fills screen */
-          height:100%;
         }
-        /* db-query page: make content-area and page fill height */
-        html.app-mode.page-db-query #content-area{ display:flex;flex-direction:column;flex:1;min-height:0; }
-        html.app-mode.page-db-query #page-db-query{ display:flex;flex-direction:column;flex:1;min-height:0;height:100%; }
-        html.app-mode.page-db-query .db-studio-page{ display:flex;flex-direction:column;flex:1;min-height:0; }
         /* ── Titlebar: connection identity + primary Run action ── */
         .qide-titlebar{
           display:flex;align-items:center;gap:10px;flex-wrap:nowrap;
@@ -16870,11 +16884,13 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         .qide-explorer-toggle.active{ color:var(--jt-brand-strong);border-color:rgba(31,110,82,.4);background:rgba(31,110,82,.1); }
         /* ── Body: icon rail + closable multi-tab sidebar + editor ── */
         .qide-body{ display:flex;min-height:0;flex:1;position:relative; }
-        /* On mobile: qide-shell fills viewport height so editor+terminal
-           cover the full screen (matching the Code IDE layout). */
+        /* Mobile: shell fills viewport, editor takes less height so results
+           are immediately visible without scrolling. */
         @media(max-width:900px){
-          .qide-shell{ flex:1;display:flex;flex-direction:column;min-height:0; }
-          .qide-body{ flex:1;min-height:0; }
+          .qide-shell{ flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden; }
+          .qide-body{ flex:1;min-height:0;overflow:hidden; }
+          .qs2-editor-col{ flex:0 0 38%;max-height:42%;min-height:80px; }
+          .qs2-results-col{ flex:1 1 0;min-height:80px; }
         }
         /* Icon rail — same structural idea as the code editor's activity
            bar (fixed-width vertical icon strip, active state = left accent
@@ -16958,25 +16974,29 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         .qide-results-tab svg{ color:var(--jt-brand-strong); }
         /* Results panel: fills remaining space in the split, with a min height.
            No max-height cap — the flex layout controls sizing instead. */
-        .qide-results-body{ min-height:120px;flex:1;overflow:auto;background:var(--jt-bg-raised); }
+        /* Results body fills its column (flex:1) and SCROLLS when content
+           is huge — overflow:auto here + overflow:hidden on parent column
+           means data tables never push the results panel below the editor. */
+        .qide-results-body{ min-height:0;flex:1;overflow:auto;background:var(--jt-bg-raised);
+          -webkit-overflow-scrolling:touch; }
         /* ── Legacy qs2-* selectors reused as-is below this point (editor
            split, gutter, status bar) — restyled to var(--jt-*) tokens
            instead of the old hardcoded dark palette, still responsive. ── */
         .qs2-main{ display:flex;flex-direction:column;min-height:0;flex:1; }
         .qs2-workspace{ display:flex;flex-direction:column;min-height:0;flex:1; }
         .qs2-tabbar{ display:none; }
-        /* qs2-split: column stack — editor above, results below, both flex children.
-           Editor takes ~55% of the split height; results take the rest. */
-        .qs2-split{ display:flex;flex-direction:column;flex:1;min-height:0; }
-        /* Editor column: grows to fill ~55% of available height */
-        .qs2-editor-col{ flex:1 1 55%;min-width:0;min-height:120px;display:flex;flex-direction:column; }
-        /* Results column: flex column so .qide-results-body can flex:1 inside it */
-        .qs2-results-col{ flex:1 1 45%;min-width:0;min-height:120px;display:flex;flex-direction:column;border-top:1px solid var(--jt-border); }
+        /* qs2-split: column stack — editor above, results below.
+           Both are flex children with overflow:hidden so neither can
+           expand past its share — content scrolls inside each column. */
+        .qs2-split{ display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden; }
+        /* Editor column: 55% of split height, cannot shrink below 100px */
+        .qs2-editor-col{ flex:0 0 55%;min-width:0;min-height:100px;max-height:60%;display:flex;flex-direction:column;overflow:hidden; }
+        /* Results column: takes the rest, overflow:hidden locks it — body scrolls inside */
+        .qs2-results-col{ flex:1 1 0;min-width:0;min-height:100px;display:flex;flex-direction:column;border-top:1px solid var(--jt-border);overflow:hidden; }
         @media(min-width:900px){
           .qide-body{ flex-direction:row; }
-          /* On desktop give the editor a bit more room */
-          .qs2-editor-col{ flex:1 1 58%; }
-          .qs2-results-col{ flex:1 1 42%; }
+          .qs2-editor-col{ flex:0 0 58%;max-height:62%; }
+          .qs2-results-col{ flex:1 1 0; }
         }
         .qstudio-gutter{
           flex-shrink:0;width:38px;padding:14px 8px 14px 0;text-align:right;
