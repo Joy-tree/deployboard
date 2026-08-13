@@ -16797,80 +16797,139 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
     <div class="page" id="page-db-query">
       <style>
-        /* ═══════════ Query Studio v2 — real SQL-client layout ═══════════
-           Full rebuild: no decorative hero, no permanent side-drawer of
-           tutorial content -- just a dense top bar, a live table/collection
-           tree, one editor, one results grid, and one status line. This is
-           the shape every real desktop SQL client (Navicat, SSMS, DataGrip)
-           actually uses; the previous version had a hero header eating the
-           top of the page and a giant always-open tabbed sidebar
-           (Templates/History/Saved/Schema/Relations/Lab) that no reference
-           tool has visible by default. */
+        /* ═══════════════════════════════════════════════════════════════
+           QUERY STUDIO — mobile-first IDE-style rebuild.
+           Modeled on the same visual language as the Code Upload/IDE page
+           (titlebar + toolbar + collapsible explorer + editor + bottom
+           results panel that reads like a terminal) so it feels like a
+           sibling of that page rather than a squeezed-down desktop layout
+           — but reskinned with its own accent/icon language (a database
+           cylinder instead of a folder tree, "Run" instead of "Deploy",
+           a results feed instead of a shell) so it doesn't just look like
+           a copy of the code editor.
+           Built directly on var(--jt-*) tokens (already theme-aware site-
+           wide) instead of hardcoded hex, so light/dark just falls out of
+           the existing theme system with no separate override file needed.
+           Desktop (≥900px) keeps the previous side-by-side editor+results
+           split; only the chrome (titlebar/toolbar/explorer) changes.
+           ═══════════════════════════════════════════════════════════════ */
         #page-db-query .page-back{ margin-bottom:8px; }
-        .qs2-shell{
+        .qide-shell{
           display:flex;flex-direction:column;min-height:0;flex:1;
-          border:1px solid rgba(16,185,129,.18);border-radius:16px;overflow:hidden;background:#0d0d0d;
+          border:1px solid var(--jt-border);border-radius:14px;overflow:hidden;
+          background:var(--jt-bg-raised);
         }
-        .qs2-topbar{
-          display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-          padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.07);
+        /* ── Titlebar: connection identity + primary Run action ── */
+        .qide-titlebar{
+          display:flex;align-items:center;gap:10px;flex-wrap:nowrap;
+          padding:10px 12px;border-bottom:1px solid var(--jt-border);
+          background:var(--jt-bg-sunken);flex-shrink:0;
         }
-        .qs2-topbar-sep{ width:1px;align-self:stretch;background:rgba(255,255,255,.08);margin:2px 2px; }
-        .qs2-actions{ display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1; }
-        .qs2-main{ display:grid;grid-template-columns:220px minmax(0,1fr);min-height:0;flex:1; }
-        @media(max-width:900px){ .qs2-main{ grid-template-columns:1fr; } }
-        .qs2-workspace{ display:flex;flex-direction:column;min-height:0;border-left:1px solid rgba(255,255,255,.06); }
-        @media(max-width:900px){ .qs2-workspace{ border-left:none; } }
-        .qs2-tabbar{ display:flex;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0; }
-        .qs2-tab{
-          padding:8px 16px;font-size:.78rem;font-weight:700;color:#e2e8f0;
-          background:rgba(255,255,255,.03);border-right:1px solid rgba(255,255,255,.06);
-          display:flex;align-items:center;gap:6px;
+        .qide-titlebar .qstudio-db-bar{ flex:1;min-width:0;border:none!important;border-radius:0!important;background:transparent!important; }
+        .qide-titlebar .qstudio-db-bar-head{ padding:2px 4px!important; }
+        .qide-run-btn{
+          display:flex;align-items:center;gap:6px;flex-shrink:0;
+          padding:9px 16px;border-radius:9px;border:none;cursor:pointer;
+          background:var(--jt-brand);color:#fff;font-weight:800;font-size:.82rem;
+          box-shadow:0 2px 10px rgba(31,110,82,.3);transition:background .15s;
         }
-        .qs2-tab svg{ color:#10b981; }
-        /* ── Side-by-side split: editor left, results right (PopSQL-style) ── */
-        .qs2-split{ display:flex;flex:1;min-height:0; }
-        .qs2-editor-col{ flex:1.15;min-width:0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.06); }
-        .qs2-results-col{ flex:1;min-width:0;display:flex;flex-direction:column; }
+        .qide-run-btn:hover{ background:var(--jt-brand-strong); }
+        .qide-run-btn svg{ flex-shrink:0; }
+        /* ── Secondary toolbar: icon strip, horizontally scrollable ── */
+        .qide-toolbar{
+          display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;
+          padding:7px 10px;border-bottom:1px solid var(--jt-border);
+          background:var(--jt-bg-raised);flex-shrink:0;-webkit-overflow-scrolling:touch;
+        }
+        .qide-toolbar::-webkit-scrollbar{ display:none; }
+        .qide-toolbar .qstudio-toolbar-sep{ flex-shrink:0; }
+        .qide-explorer-toggle{
+          display:flex;align-items:center;gap:6px;flex-shrink:0;
+          padding:6px 10px;border-radius:7px;border:1px solid var(--jt-border);
+          background:var(--jt-bg-sunken);color:var(--jt-text-dim);cursor:pointer;
+          font-size:.72rem;font-weight:700;
+        }
+        .qide-explorer-toggle.active{ color:var(--jt-brand-strong);border-color:rgba(31,110,82,.4);background:rgba(31,110,82,.1); }
+        /* ── Body: collapsible explorer + editor ── */
+        .qide-body{ display:flex;min-height:0;flex:1;position:relative; }
+        .qide-explorer-panel{
+          width:240px;flex-shrink:0;border-right:1px solid var(--jt-border);
+          background:var(--jt-bg-sunken);overflow:hidden auto;
+          display:none;
+        }
+        .qide-explorer-panel.open{ display:block; }
         @media(max-width:900px){
-          .qs2-split{ flex-direction:column; }
-          .qs2-editor-col{ border-right:none;border-bottom:1px solid rgba(255,255,255,.06);flex:0 0 auto;max-height:38vh; }
-          .qs2-results-col{ flex:1; }
+          .qide-explorer-panel.open{
+            position:absolute;inset:0;z-index:20;width:100%;
+            box-shadow:0 8px 24px rgba(0,0,0,.18);
+          }
         }
-        .qs2-results-head{
-          display:flex;align-items:center;justify-content:space-between;
-          padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.06);
-          background:rgba(255,255,255,.02);flex-shrink:0;
+        .qide-editor-col{ flex:1;min-width:0;display:flex;flex-direction:column; }
+        /* ── Results panel: styled like a terminal tab strip + body ── */
+        .qide-results-tabbar{
+          display:flex;align-items:center;justify-content:space-between;gap:8px;
+          padding:0 8px;border-top:1px solid var(--jt-border);
+          background:var(--jt-bg-sunken);flex-shrink:0;
         }
-        .qs2-results-head-label{ font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#64748b; }
-        .qs2-results-body{ flex:1;min-height:160px;overflow:auto; }
-        /* ── Line-number gutter ── */
+        .qide-results-tab{
+          display:flex;align-items:center;gap:6px;padding:8px 12px;
+          font-size:.74rem;font-weight:800;letter-spacing:.03em;color:var(--jt-text-dim);
+          border-bottom:2px solid var(--jt-brand);
+        }
+        .qide-results-tab svg{ color:var(--jt-brand-strong); }
+        .qide-results-body{ min-height:140px;max-height:34vh;overflow:auto;background:var(--jt-bg-raised); }
+        @media(min-width:900px){ .qide-results-body{ max-height:none; } }
+        /* ── Legacy qs2-* selectors reused as-is below this point (editor
+           split, gutter, status bar) — restyled to var(--jt-*) tokens
+           instead of the old hardcoded dark palette, still responsive. ── */
+        .qs2-main{ display:flex;flex-direction:column;min-height:0;flex:1; }
+        .qs2-workspace{ display:flex;flex-direction:column;min-height:0;flex:1; }
+        .qs2-tabbar{ display:none; }
+        .qs2-split{ display:flex;flex:1;min-height:0; }
+        @media(max-width:900px){ .qs2-split{ flex-direction:column; } }
+        .qs2-editor-col{ flex:1.15;min-width:0;display:flex;flex-direction:column; }
+        .qs2-results-col{ display:contents; }
+        @media(min-width:900px){
+          .qide-body{ flex-direction:row; }
+          .qs2-split{ flex-direction:row; }
+          .qs2-editor-col{ border-right:1px solid var(--jt-border); }
+        }
         .qstudio-gutter{
           flex-shrink:0;width:38px;padding:14px 8px 14px 0;text-align:right;
-          font-family:var(--font-mono);font-size:.82rem;line-height:1.7;color:#475569;
-          background:rgba(255,255,255,.015);border-right:1px solid rgba(255,255,255,.06);
+          font-family:var(--font-mono);font-size:.82rem;line-height:1.7;color:var(--jt-text-faint);
+          background:rgba(0,0,0,.02);border-right:1px solid var(--jt-border);
           white-space:pre;overflow:hidden;user-select:none;-webkit-user-select:none;
         }
-        @media(max-width:700px){ .qstudio-gutter{ display:none; } }
         .qstudio-hl-inner{ position:relative;flex:1;min-width:0; }
-        .qs2-status-dot{ width:8px;height:8px;border-radius:50%;background:#475569;display:inline-block;margin-right:6px; }
-        .qs2-status-dot.ok{ background:#10b981; }
-        .qs2-status-dot.err{ background:#f87171; }
-        .qs2-status-dot.running{ background:#fbbf24;animation:pulse 1s infinite; }
+        .qs2-status-dot{ width:8px;height:8px;border-radius:50%;background:var(--jt-text-faint);display:inline-block;margin-right:6px; }
+        .qs2-status-dot.ok{ background:var(--jt-brand); }
+        .qs2-status-dot.err{ background:var(--jt-danger); }
+        .qs2-status-dot.running{ background:#f59e0b;animation:pulse 1s infinite; }
         .qs2-statusbar{
           display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
-          padding:7px 14px;border-top:1px solid rgba(255,255,255,.07);background:#0a0a0a;
-          font-size:.72rem;color:#94a3b8;font-family:var(--font-mono);flex-shrink:0;
+          padding:7px 14px;border-top:1px solid var(--jt-border);background:var(--jt-bg-sunken);
+          font-size:.72rem;color:var(--jt-text-faint);font-family:var(--font-mono);flex-shrink:0;
         }
         .qs2-statusbar-left{ display:flex;align-items:center;gap:14px;flex-wrap:wrap; }
+        .qs2-statusbar #queryRowCount{ color:var(--jt-text)!important; }
+        /* Table/collection explorer content — re-themed to var(--jt-*) */
+        .qide-explorer-panel.qs-tree{ background:var(--jt-bg-sunken); border-right:1px solid var(--jt-border); }
+        .qide-explorer-panel .qs-tree-head{ color:var(--jt-text-faint); border-bottom-color:var(--jt-border); }
+        .qide-explorer-panel .qs-tree-refresh{ color:var(--jt-text-faint); }
+        .qide-explorer-panel .qs-tree-refresh:hover{ color:var(--jt-brand-strong); }
+        .qide-explorer-panel .qs-tree-empty{ color:var(--jt-text-faint); }
+        .qide-explorer-panel .qs-tree-item{ color:var(--jt-text-dim); }
+        .qide-explorer-panel .qs-tree-item svg{ color:var(--jt-brand-strong); }
+        .qide-explorer-panel .qs-tree-item:hover{ background:rgba(0,0,0,.05); }
+        .qide-explorer-panel .qs-tree-item.active{ background:rgba(31,110,82,.12);color:var(--jt-text); }
       </style>
       <button class="page-back" onclick="showPage('databases')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Databases</button>
 
       <div class="db-studio-page">
-      <div class="qs2-shell">
+      <div class="qide-shell qs2-shell">
 
-        <!-- ══ Top bar: connection + primary actions ══ -->
-        <div class="qs2-topbar">
+        <!-- ══ Titlebar: connection identity + primary Run action ══ -->
+        <div class="qide-titlebar">
           <div class="qstudio-db-bar" id="qstudioDbBar" style="border:none;border-radius:0;background:transparent;flex-shrink:0;">
             <div class="qstudio-db-bar-head" onclick="toggleQStudioDbDropdown()" style="padding:4px 8px;">
               <div id="qstudioDbSelectedBtn" class="qstudio-db-selected">
@@ -16889,69 +16948,75 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
               <div class="qstudio-db-list" id="dbQueryDbList"></div>
             </div>
           </div>
-
-          <div class="qs2-topbar-sep"></div>
-
-          <div class="qs2-actions">
-            <button class="qstudio-btn-run" id="queryRunBtn" onclick="runEditorQuery()">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Run
-            </button>
-            <button class="qstudio-btn" onclick="runEditorQuery(true)" title="Run and save to history">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
-              <span class="qs-btn-label-full">Save &amp; Run</span>
-            </button>
-            <div class="qstudio-toolbar-sep"></div>
-            <button class="qstudio-btn" onclick="formatCurrentQuery()" title="Format / prettify query">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
-              <span class="qs-btn-label-full">Format</span>
-            </button>
-            <button class="qstudio-btn" onclick="copyCurrentQuery()" title="Copy query">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              <span class="qs-btn-label-full">Copy</span>
-            </button>
-            <button class="qstudio-btn" onclick="clearQueryEditor()" title="Clear editor">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-              <span class="qs-btn-label-full">Clear</span>
-            </button>
-            <div class="qstudio-toolbar-sep"></div>
-            <button class="qstudio-btn" onclick="exportEditorResults('csv')" title="Export as CSV">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              CSV
-            </button>
-            <button class="qstudio-btn" onclick="exportEditorResults('xlsx')" title="Export as Excel">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Excel
-            </button>
-            <button class="qstudio-btn" onclick="document.getElementById('dbImportFile').click()" title="Import CSV">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <span class="qs-btn-label-full">Import</span>
-            </button>
-            <div class="qstudio-toolbar-sep"></div>
-            <button class="qstudio-btn" onclick="openCreateTableModal()" title="Create a new table visually">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
-              <span class="qs-btn-label-full">New Table</span>
-            </button>
-            <button class="qstudio-btn" onclick="openBusinessSchemaSetup()" title="Scaffold all 5 business tables at once" style="color:#a78bfa;">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" width="12" height="12"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-              <span class="qs-btn-label-full">Schema Setup</span>
-            </button>
-            <button class="qstudio-btn" onclick="openAiQueryHelper()" title="AI Query Assistant" style="margin-left:auto;color:#94a3b8;">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              AI
-            </button>
-          </div>
+          <button class="qide-run-btn" id="queryRunBtn" onclick="runEditorQuery()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Run
+          </button>
         </div>
 
-        <!-- ══ Main: table tree + editor/results ══ -->
-        <div class="qs2-main">
+        <!-- ══ Toolbar: explorer toggle + secondary actions (icon strip) ══ -->
+        <div class="qide-toolbar">
+          <button class="qide-explorer-toggle" id="qideExplorerToggle" onclick="qideToggleExplorer()" title="Tables / Collections">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4.03 3-9 3S3 13.66 3 12"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/></svg>
+            Tables
+          </button>
+          <div class="qstudio-toolbar-sep"></div>
+          <button class="qstudio-btn" onclick="runEditorQuery(true)" title="Run and save to history">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+            <span class="qs-btn-label-full">Save &amp; Run</span>
+          </button>
+          <button class="qstudio-btn" onclick="formatCurrentQuery()" title="Format / prettify query">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
+            <span class="qs-btn-label-full">Format</span>
+          </button>
+          <button class="qstudio-btn" onclick="copyCurrentQuery()" title="Copy query">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span class="qs-btn-label-full">Copy</span>
+          </button>
+          <button class="qstudio-btn" onclick="clearQueryEditor()" title="Clear editor">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            <span class="qs-btn-label-full">Clear</span>
+          </button>
+          <div class="qstudio-toolbar-sep"></div>
+          <button class="qstudio-btn" onclick="exportEditorResults('csv')" title="Export as CSV">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            CSV
+          </button>
+          <button class="qstudio-btn" onclick="exportEditorResults('xlsx')" title="Export as Excel">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Excel
+          </button>
+          <button class="qstudio-btn" onclick="document.getElementById('dbImportFile').click()" title="Import CSV">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span class="qs-btn-label-full">Import</span>
+          </button>
+          <div class="qstudio-toolbar-sep"></div>
+          <button class="qstudio-btn" onclick="openCreateTableModal()" title="Create a new table visually">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+            <span class="qs-btn-label-full">New Table</span>
+          </button>
+          <button class="qstudio-btn" onclick="openBusinessSchemaSetup()" title="Scaffold all 5 business tables at once" style="color:#a78bfa;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" width="12" height="12"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span class="qs-btn-label-full">Schema Setup</span>
+          </button>
+          <button class="qstudio-btn" onclick="openAiQueryHelper()" title="AI Query Assistant" style="margin-left:auto;color:var(--jt-text-faint, #94a3b8);">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            AI
+          </button>
+        </div>
+
+        <!-- ══ Body: collapsible table/collection explorer + editor ══ -->
+        <div class="qs2-main qide-body">
 
           <!-- Table/Collection Explorer -->
-          <div class="qs-tree" id="qsTree" style="position:relative;">
+          <div class="qs-tree qide-explorer-panel" id="qsTree" style="position:relative;">
             <div class="qs-tree-head">
               <span id="qsTreeDbLabel">No database selected</span>
               <button class="qs-tree-refresh" onclick="qsLoadTableTree(true)" title="Refresh">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              </button>
+              <button class="qs-tree-refresh" onclick="qideToggleExplorer()" title="Close" style="margin-left:4px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
             <div class="qs-tree-body" id="qsTreeBody">
@@ -16959,7 +17024,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
             </div>
           </div>
 
-          <div class="qs2-workspace">
+          <div class="qs2-workspace qide-editor-col">
             <div class="qs2-tabbar">
               <div class="qs2-tab">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -16987,15 +17052,18 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                 </div>
               </div>
 
-              <!-- Results (right, like PopSQL's SQL/Data/Chart pane) -->
+              <!-- Results (below on mobile, right on desktop — terminal-tab styled) -->
               <div class="qs2-results-col">
-                <div class="qs2-results-head">
-                  <span class="qs2-results-head-label">Result</span>
+                <div class="qide-results-tabbar">
+                  <div class="qide-results-tab">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                    RESULT
+                  </div>
                   <button class="qs-tree-refresh" onclick="openTerminalFullscreen()" title="View fullscreen">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
                   </button>
                 </div>
-                <div class="qs2-results-body" id="dbEditorResults">
+                <div class="qs2-results-body qide-results-body" id="dbEditorResults">
                   <div class="qstudio-raw-output"><span class="dim">-- Awaiting query execution...</span><br><span class="dim">-- Select a database and run a query above.</span></div>
                 </div>
               </div>
@@ -32283,6 +32351,37 @@ function qsExtractNames(rows, engine) {
     return String(r);
   }).filter(Boolean);
 }
+// Query Studio — mobile explorer drawer toggle (Tables/Collections panel).
+// Desktop keeps it open by default via qideExplorerDefaultOpen(); on mobile
+// it's a collapsible overlay so the editor gets full width by default.
+function qideToggleExplorer() {
+  const panel = document.getElementById('qsTree');
+  const btn = document.getElementById('qideExplorerToggle');
+  if (!panel) return;
+  const open = panel.classList.toggle('open');
+  if (btn) btn.classList.toggle('active', open);
+}
+function qideExplorerDefaultOpen() {
+  const panel = document.getElementById('qsTree');
+  const btn = document.getElementById('qideExplorerToggle');
+  if (!panel) return;
+  if (window.innerWidth >= 900) {
+    panel.classList.add('open');
+    if (btn) btn.classList.add('active');
+  }
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', qideExplorerDefaultOpen);
+} else {
+  qideExplorerDefaultOpen();
+}
+window.addEventListener('resize', () => {
+  const panel = document.getElementById('qsTree');
+  if (panel && window.innerWidth >= 900 && !panel.classList.contains('open')) {
+    qideExplorerDefaultOpen();
+  }
+});
+
 async function qsLoadTableTree(forceRefresh) {
   const labelEl = document.getElementById('qsTreeDbLabel');
   const bodyEl = document.getElementById('qsTreeBody');
@@ -33586,7 +33685,6 @@ function qlTokenizeRedis(code) {
 }
 
 function qlRefreshHighlight() {
-  if (window.innerWidth <= 700) return;
   const ta   = document.getElementById('dbQueryInput');
   const pre  = document.getElementById('qstudioHlPre');
   const code = document.getElementById('qstudioHlCode');
