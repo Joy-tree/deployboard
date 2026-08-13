@@ -16936,18 +16936,25 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
             position:fixed !important;
             top:0 !important; bottom:0 !important;
             left:0 !important;
-            width:78vw !important; max-width:300px !important;
+            width:82vw !important; max-width:320px !important;
             z-index:1200 !important;
             transform:translateX(-100%) !important;
-            transition:transform .22s ease !important;
-            display:block !important;   /* always in DOM, hidden via transform */
-            overflow:hidden auto !important;
+            transition:transform .25s cubic-bezier(.4,0,.2,1) !important;
+            display:flex !important; flex-direction:column !important;
+            overflow:hidden !important;
+            /* Solid opaque background — no transparency so editor behind never shows through */
+            background:#0d1117 !important;
+            border-right:1px solid rgba(16,185,129,.18) !important;
             box-shadow:none !important;
           }
           .qide-explorer-panel.open{
             transform:translateX(0) !important;
-            box-shadow:6px 0 32px rgba(0,0,0,.45) !important;
+            box-shadow:8px 0 40px rgba(0,0,0,.7) !important;
           }
+          /* Make the inner scroll area fill the drawer */
+          .qide-explorer-panel > *{ flex-shrink:0; }
+          .qide-explorer-panel .qs-tree-body,
+          .qide-explorer-panel .qide-panel-body{ flex:1;overflow-y:auto !important; }
           /* Backdrop — sits between drawer and editor, closes drawer on tap */
           .qide-panel-backdrop{
             display:none;
