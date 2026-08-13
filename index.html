@@ -16830,7 +16830,13 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           display:flex;flex-direction:column;min-height:0;flex:1;
           border:1px solid var(--jt-border);border-radius:14px;overflow:hidden;
           background:var(--jt-bg-raised);
+          /* Must fill the page height so editor+results split fills screen */
+          height:100%;
         }
+        /* db-query page: make content-area and page fill height */
+        html.app-mode.page-db-query #content-area{ display:flex;flex-direction:column;flex:1;min-height:0; }
+        html.app-mode.page-db-query #page-db-query{ display:flex;flex-direction:column;flex:1;min-height:0;height:100%; }
+        html.app-mode.page-db-query .db-studio-page{ display:flex;flex-direction:column;flex:1;min-height:0; }
         /* ── Titlebar: connection identity + primary Run action ── */
         .qide-titlebar{
           display:flex;align-items:center;gap:10px;flex-wrap:nowrap;
@@ -16864,7 +16870,12 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         .qide-explorer-toggle.active{ color:var(--jt-brand-strong);border-color:rgba(31,110,82,.4);background:rgba(31,110,82,.1); }
         /* ── Body: icon rail + closable multi-tab sidebar + editor ── */
         .qide-body{ display:flex;min-height:0;flex:1;position:relative; }
-        @media(max-width:900px){ .qide-body{ min-height:480px; } }
+        /* On mobile: qide-shell fills viewport height so editor+terminal
+           cover the full screen (matching the Code IDE layout). */
+        @media(max-width:900px){
+          .qide-shell{ flex:1;display:flex;flex-direction:column;min-height:0; }
+          .qide-body{ flex:1;min-height:0; }
+        }
         /* Icon rail — same structural idea as the code editor's activity
            bar (fixed-width vertical icon strip, active state = left accent
            bar) but built on var(--jt-*) so it follows light/dark theme
@@ -16934,7 +16945,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         .qide-panel-action-btn:hover{ color:var(--jt-brand-strong);border-color:rgba(31,110,82,.4); }
         .qide-editor-col{ flex:1;min-width:0;display:flex;flex-direction:column; }
         /* ── Results panel: styled like a terminal tab strip + body ── */
-        .qide-results-tabbar{
+        .qide-results-tabbar{ flex-shrink:0;
           display:flex;align-items:center;justify-content:space-between;gap:8px;
           padding:0 8px;border-top:1px solid var(--jt-border);
           background:var(--jt-bg-sunken);flex-shrink:0;
@@ -16945,25 +16956,27 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           border-bottom:2px solid var(--jt-brand);
         }
         .qide-results-tab svg{ color:var(--jt-brand-strong); }
-        .qide-results-body{ min-height:140px;max-height:34vh;overflow:auto;background:var(--jt-bg-raised); }
-        @media(min-width:900px){ .qide-results-body{ max-height:280px; } }
+        /* Results panel: fills remaining space in the split, with a min height.
+           No max-height cap — the flex layout controls sizing instead. */
+        .qide-results-body{ min-height:120px;flex:1;overflow:auto;background:var(--jt-bg-raised); }
         /* ── Legacy qs2-* selectors reused as-is below this point (editor
            split, gutter, status bar) — restyled to var(--jt-*) tokens
            instead of the old hardcoded dark palette, still responsive. ── */
         .qs2-main{ display:flex;flex-direction:column;min-height:0;flex:1; }
         .qs2-workspace{ display:flex;flex-direction:column;min-height:0;flex:1; }
         .qs2-tabbar{ display:none; }
-        /* [FIX] This was flex-direction:row on desktop (≥900px), putting
-           the editor and results SIDE BY SIDE and squeezing the editor
-           into a narrow column — not what "look like the IDE page" means.
-           The code IDE stacks its editor above its terminal, full width,
-           on every screen size; Query Studio should match that exactly,
-           so this is now always column regardless of viewport width. */
+        /* qs2-split: column stack — editor above, results below, both flex children.
+           Editor takes ~55% of the split height; results take the rest. */
         .qs2-split{ display:flex;flex-direction:column;flex:1;min-height:0; }
-        .qs2-editor-col{ flex:2;min-width:0;min-height:140px;display:flex;flex-direction:column; }
-        .qs2-results-col{ display:contents; }
+        /* Editor column: grows to fill ~55% of available height */
+        .qs2-editor-col{ flex:1 1 55%;min-width:0;min-height:120px;display:flex;flex-direction:column; }
+        /* Results column: flex column so .qide-results-body can flex:1 inside it */
+        .qs2-results-col{ flex:1 1 45%;min-width:0;min-height:120px;display:flex;flex-direction:column;border-top:1px solid var(--jt-border); }
         @media(min-width:900px){
           .qide-body{ flex-direction:row; }
+          /* On desktop give the editor a bit more room */
+          .qs2-editor-col{ flex:1 1 58%; }
+          .qs2-results-col{ flex:1 1 42%; }
         }
         .qstudio-gutter{
           flex-shrink:0;width:38px;padding:14px 8px 14px 0;text-align:right;
@@ -16971,6 +16984,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           background:rgba(0,0,0,.02);border-right:1px solid var(--jt-border);
           white-space:pre;overflow:hidden;user-select:none;-webkit-user-select:none;
         }
+        /* Hide gutter on mobile — textarea is plain there (no hl overlay) */
+        @media(max-width:900px){ .qstudio-gutter{ display:none; } }
         .qstudio-hl-inner{ position:relative;flex:1;min-width:0; }
         .qs2-status-dot{ width:8px;height:8px;border-radius:50%;background:var(--jt-text-faint);display:inline-block;margin-right:6px; }
         .qs2-status-dot.ok{ background:var(--jt-brand); }
@@ -33936,15 +33951,19 @@ function qlUpdateEngine(engine) {
 function initQueryTextareaAutoGrow(){
   const ta = document.getElementById('dbQueryInput');
   if (!ta) return;
-  if (window.innerWidth <= 700) {
+  if (window.innerWidth <= 900) {
     const preEl = document.getElementById('qstudioHlPre');
     if (preEl && preEl.parentNode) preEl.parentNode.removeChild(preEl);
+    // Also hide gutter — no hl overlay on mobile means gutter is meaningless
+    const gEl = document.getElementById('qstudioGutter');
+    if (gEl) gEl.style.display = 'none';
     ta.style.color = '#86efac';
     ta.style.caretColor = '#10b981';
-    ta.style.maxHeight = '42vh';
+    ta.style.flex = '1';
+    ta.style.minHeight = '80px';
     ta.style.overflowY = 'auto';
     ta.style.webkitOverflowScrolling = 'touch';
-    ta.style.resize = 'vertical';
+    ta.style.resize = 'none';
   }
   // Guard: remove old listeners before re-attaching (prevents stacking on page revisit)
   if (ta._qlInited) {
