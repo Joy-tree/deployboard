@@ -16929,21 +16929,33 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         }
         .qide-explorer-panel.open{ display:block; }
         @media(max-width:900px){
-          .qide-explorer-panel.open{
-            position:absolute!important;inset:0!important;left:42px!important;z-index:20;width:calc(100% - 42px)!important;
-            max-width:none!important;
-            /* [FIX] .qs-tree (this same element's other class, from an
-               older separate drawer system) sets position:fixed + a
-               transform:translateX(-100%) default state that only clears
-               via a DIFFERENT class name (qs-tree-open) this new rail
-               never applies. My rule already wins position/left/width via
-               higher specificity, but never touched transform, so that
-               leftover -100% translate kept shifting the whole panel
-               off-screen to the left regardless. Explicitly clearing it
-               here closes that gap. */
-            transform:none!important;
-            box-shadow:0 8px 24px rgba(0,0,0,.18);
+          /* On mobile: panel slides in as a drawer over the LEFT side only.
+             It does NOT cover the editor — a backdrop behind it lets the
+             user tap to dismiss and see the editor is still there. */
+          .qide-explorer-panel{
+            position:fixed !important;
+            top:0 !important; bottom:0 !important;
+            left:0 !important;
+            width:78vw !important; max-width:300px !important;
+            z-index:1200 !important;
+            transform:translateX(-100%) !important;
+            transition:transform .22s ease !important;
+            display:block !important;   /* always in DOM, hidden via transform */
+            overflow:hidden auto !important;
+            box-shadow:none !important;
           }
+          .qide-explorer-panel.open{
+            transform:translateX(0) !important;
+            box-shadow:6px 0 32px rgba(0,0,0,.45) !important;
+          }
+          /* Backdrop — sits between drawer and editor, closes drawer on tap */
+          .qide-panel-backdrop{
+            display:none;
+            position:fixed;inset:0;
+            background:rgba(0,0,0,.52);
+            z-index:1199;
+          }
+          .qide-panel-backdrop.open{ display:block; }
         }
         /* Panel bodies inside the sidebar (Tables/Schema/Saved/History) */
         .qide-panel-body{ padding:8px 10px 14px; }
@@ -32562,19 +32574,51 @@ function qsExtractNames(rows, engine) {
 // Query Studio — mobile explorer drawer toggle (Tables/Collections panel).
 // Desktop keeps it open by default via qideExplorerDefaultOpen(); on mobile
 // it's a collapsible overlay so the editor gets full width by default.
+function _qideGetBackdrop() {
+  let bd = document.getElementById('qidePanelBackdrop');
+  if (!bd) {
+    bd = document.createElement('div');
+    bd.id = 'qidePanelBackdrop';
+    bd.className = 'qide-panel-backdrop';
+    bd.addEventListener('click', () => _qideCloseDrawer());
+    document.body.appendChild(bd);
+  }
+  return bd;
+}
+function _qideOpenDrawer() {
+  const panel = document.getElementById('qsTree');
+  if (!panel) return;
+  panel.classList.add('open');
+  if (window.innerWidth < 900) _qideGetBackdrop().classList.add('open');
+}
+function _qideCloseDrawer() {
+  const panel = document.getElementById('qsTree');
+  if (!panel) return;
+  panel.classList.remove('open');
+  const bd = document.getElementById('qidePanelBackdrop');
+  if (bd) bd.classList.remove('open');
+  document.querySelectorAll('.qide-rail-btn[data-panel]').forEach(b => b.classList.remove('active'));
+  if (panel) panel.dataset.activePanel = '';
+}
 function qideToggleExplorer() {
   const panel = document.getElementById('qsTree');
   if (!panel) return;
   const open = panel.classList.toggle('open');
+  if (window.innerWidth < 900) {
+    const bd = _qideGetBackdrop();
+    if (open) bd.classList.add('open'); else bd.classList.remove('open');
+  }
   document.querySelectorAll('.qide-rail-btn[data-panel]').forEach(b => b.classList.toggle('active', open && b.dataset.panel === panel.dataset.activePanel));
 }
 function qideExplorerDefaultOpen() {
   const panel = document.getElementById('qsTree');
   if (!panel) return;
   if (window.innerWidth >= 900) {
+    // Desktop: open inline sidebar by default
     panel.classList.add('open');
     if (!panel.dataset.activePanel) qideRailSwitch('tables');
   }
+  // Mobile: keep closed by default — user taps rail icon to open drawer
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', qideExplorerDefaultOpen);
@@ -32603,11 +32647,10 @@ function qideRailSwitch(name) {
   if (!panel) return;
   const alreadyOpenSame = panel.classList.contains('open') && panel.dataset.activePanel === name;
   if (alreadyOpenSame) {
-    panel.classList.remove('open');
-    document.querySelectorAll('.qide-rail-btn[data-panel]').forEach(b => b.classList.remove('active'));
+    _qideCloseDrawer();
     return;
   }
-  panel.classList.add('open');
+  _qideOpenDrawer();
   panel.dataset.activePanel = name;
   document.querySelectorAll('.qide-rail-btn[data-panel]').forEach(b => b.classList.toggle('active', b.dataset.panel === name));
   document.querySelectorAll('.qide-panel-body').forEach(el => { el.style.display = 'none'; });
@@ -32618,6 +32661,8 @@ function qideRailSwitch(name) {
   if (titleEl) titleEl.textContent = QIDE_PANEL_TITLES[name] || 'Explorer';
   const refreshBtn = document.getElementById('qsPanelRefreshBtn');
   if (refreshBtn) refreshBtn.style.display = (name === 'tables' || name === 'search') ? 'flex' : 'none';
+  // On mobile, show the backdrop whenever the drawer is open
+  if (window.innerWidth < 900) _qideGetBackdrop().classList.add('open');
   const searchWrap = document.getElementById('qideTablesSearchWrap');
   if (searchWrap) searchWrap.style.display = (name === 'search') ? 'flex' : 'none';
   if (name === 'tables') qsLoadTableTree();
@@ -32715,6 +32760,8 @@ function closeAllQsDrawers() {
   document.getElementById('qsTree')?.classList.remove('qs-tree-open');
   document.getElementById('qstudioSideDrawer')?.classList.remove('qs-drawer-open');
   document.getElementById('qsDrawerBackdrop')?.classList.remove('qs-open');
+  // Also close the new rail drawer + its backdrop on mobile
+  _qideCloseDrawer();
 }
 
 function getDefaultQueryForEngine(engine='postgres'){
