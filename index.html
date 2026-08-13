@@ -16882,6 +16882,16 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         @media(max-width:900px){
           .qide-explorer-panel.open{
             position:absolute;inset:0;left:42px;z-index:20;width:calc(100% - 42px);
+            /* [FIX] .qs-tree (this same element's other class, from an
+               older separate drawer system) sets position:fixed + a
+               transform:translateX(-100%) default state that only clears
+               via a DIFFERENT class name (qs-tree-open) this new rail
+               never applies. My rule already wins position/left/width via
+               higher specificity, but never touched transform, so that
+               leftover -100% translate kept shifting the whole panel
+               off-screen to the left regardless. Explicitly clearing it
+               here closes that gap. */
+            transform:none!important;
             box-shadow:0 8px 24px rgba(0,0,0,.18);
           }
         }
@@ -17041,7 +17051,17 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         </div>
 
         <!-- ══ Body: icon rail + closable multi-tab sidebar + editor ══ -->
-        <div class="qs2-main qide-body">
+        <!-- [FIX] Was class="qs2-main qide-body". .qs2-main sets
+             flex-direction:column; since it's declared AFTER .qide-body
+             in the stylesheet with equal specificity, it silently won on
+             mobile (the only rule that put qide-body back to row was
+             gated behind min-width:900px). That's the actual root cause
+             of the rail/panel/editor stacking vertically with huge gaps,
+             and of the explorer panel (position:absolute, calculated
+             relative to this element) rendering off-screen. .qs2-main
+             isn't used anywhere else on the page, so dropping it here
+             removes the conflict with no other side effects. -->
+        <div class="qide-body">
 
           <!-- Icon rail — like the code IDE's activity bar, but themed to
                follow the site's light/dark palette instead of being
@@ -34062,7 +34082,16 @@ function renderQueryHistory(){
 function reuseQueryHistory(idx){
   const item = _queryHistory[idx]; if (!item) return;
   const q = document.getElementById('dbQueryInput');
-  if (q) { q.value = item.query; q.focus(); }
+  if (q) {
+    q.value = item.query;
+    q.focus();
+    // [FIX] The editor shows a separate syntax-highlighted overlay on top
+    // of this (transparent) textarea; setting .value alone doesn't touch
+    // that overlay, so the visible editor kept showing blank/stale text
+    // after loading a history item even though the real value was set.
+    if (typeof qlRefreshHighlight === 'function') qlRefreshHighlight();
+  }
+  qideRailSwitch('history'); // closes the sidebar so the loaded query is visible
 }
 function clearQueryHistory(){
   _queryHistory = [];
@@ -34091,8 +34120,12 @@ function renderQStudioSaved(){
 function loadSavedQuery(i){
   const s = _qstudioSavedQueries[i]; if (!s) return;
   const q = document.getElementById('dbQueryInput');
-  if (q) { q.value = s.query; q.focus(); }
-  switchQStudioSideTab('templates', document.querySelector('.qstudio-side-tab'));
+  if (q) {
+    q.value = s.query;
+    q.focus();
+    if (typeof qlRefreshHighlight === 'function') qlRefreshHighlight();
+  }
+  qideRailSwitch('saved'); // closes the sidebar so the loaded query is visible
 }
 function deleteSavedQuery(i){
   _qstudioSavedQueries.splice(i,1);
@@ -34151,8 +34184,8 @@ function introspectSchema(){
     mongodb:`{ "listCollections": 1 }`,
     redis:`INFO keyspace`,
   };
-  if (q) { q.value = iqs[engine] || `SELECT 1;`; q.focus(); }
-  switchQStudioSideTab('templates', document.querySelector('.qstudio-side-tab'));
+  if (q) { q.value = iqs[engine] || `SELECT 1;`; q.focus(); if (typeof qlRefreshHighlight === 'function') qlRefreshHighlight(); }
+  qideRailSwitch('schema');
 }
 
 // ── Render Results ────────────────────────────────────────────────
@@ -34477,15 +34510,15 @@ SELECT 'Orders→Products', COUNT(*) FROM Orders o LEFT JOIN Products p ON o.Pro
 function applyRelationQuery(fromTbl, fromCol, toTbl, toCol){
   const sql = `SELECT ${fromTbl}.*, ${toTbl}.*\nFROM ${fromTbl}\nJOIN ${toTbl} ON ${fromTbl}.${fromCol} = ${toTbl}.${toCol}\nLIMIT 50;`;
   const q = document.getElementById('dbQueryInput');
-  if (q) { q.value = sql; q.focus(); }
-  switchQStudioSideTab('templates', document.querySelector('.qstudio-side-tab'));
+  if (q) { q.value = sql; q.focus(); if (typeof qlRefreshHighlight === 'function') qlRefreshHighlight(); }
+  qideRailSwitch('schema');
 }
 
 function applyFkQuery(i){
   const q = (window._qstudioFkQueries||[])[i]; if(!q) return;
   const el = document.getElementById('dbQueryInput');
-  if (el) { el.value = q.sql; el.focus(); }
-  switchQStudioSideTab('templates', document.querySelector('.qstudio-side-tab'));
+  if (el) { el.value = q.sql; el.focus(); if (typeof qlRefreshHighlight === 'function') qlRefreshHighlight(); }
+  qideRailSwitch('schema');
 }
 // ── Lab Guide helpers ─────────────────────────────────────────────
 function labLoadQuery(sql) {
