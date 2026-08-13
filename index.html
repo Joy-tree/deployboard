@@ -16850,8 +16850,29 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           font-size:.72rem;font-weight:700;
         }
         .qide-explorer-toggle.active{ color:var(--jt-brand-strong);border-color:rgba(31,110,82,.4);background:rgba(31,110,82,.1); }
-        /* ── Body: collapsible explorer + editor ── */
+        /* ── Body: icon rail + closable multi-tab sidebar + editor ── */
         .qide-body{ display:flex;min-height:0;flex:1;position:relative; }
+        /* Icon rail — same structural idea as the code editor's activity
+           bar (fixed-width vertical icon strip, active state = left accent
+           bar) but built on var(--jt-*) so it follows light/dark theme
+           instead of being hardcoded dark like the code editor's is. */
+        .qide-rail{
+          width:42px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;
+          padding:8px 0;gap:2px;background:var(--jt-bg-sunken);border-right:1px solid var(--jt-border);
+        }
+        .qide-rail-btn{
+          width:32px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+          border-radius:8px;border:none;background:transparent;color:var(--jt-text-faint);
+          cursor:pointer;position:relative;transition:color .12s,background .12s;
+        }
+        .qide-rail-btn:hover{ color:var(--jt-text-dim);background:rgba(0,0,0,.05); }
+        .qide-rail-btn.active{ color:var(--jt-brand-strong);background:rgba(31,110,82,.1); }
+        .qide-rail-btn.active::before{
+          content:'';position:absolute;left:-8px;top:50%;transform:translateY(-50%);
+          width:2px;height:18px;border-radius:0 2px 2px 0;background:var(--jt-brand);
+        }
+        .qide-rail-spacer{ flex:1; }
+        @media(max-width:900px){ .qide-rail{ width:38px; } .qide-rail-btn{ width:30px;height:30px; } }
         .qide-explorer-panel{
           width:240px;flex-shrink:0;border-right:1px solid var(--jt-border);
           background:var(--jt-bg-sunken);overflow:hidden auto;
@@ -16860,10 +16881,33 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         .qide-explorer-panel.open{ display:block; }
         @media(max-width:900px){
           .qide-explorer-panel.open{
-            position:absolute;inset:0;z-index:20;width:100%;
+            position:absolute;inset:0;left:42px;z-index:20;width:calc(100% - 42px);
             box-shadow:0 8px 24px rgba(0,0,0,.18);
           }
         }
+        /* Panel bodies inside the sidebar (Tables/Schema/Saved/History) */
+        .qide-panel-body{ padding:8px 10px 14px; }
+        .qide-panel-body #qsTreeBody{ padding:0; }
+        .qide-panel-subhead{
+          font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+          color:var(--jt-text-faint);margin:10px 0 6px;
+        }
+        .qide-panel-search{
+          display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:6px 9px;
+          border:1px solid var(--jt-border);border-radius:8px;background:var(--jt-bg-raised);
+          color:var(--jt-text-faint);
+        }
+        .qide-panel-search input{
+          flex:1;min-width:0;border:none;background:transparent;outline:none;
+          font-size:.78rem;color:var(--jt-text);font-family:var(--font-ui);
+        }
+        .qide-panel-search input::placeholder{ color:var(--jt-text-faint); }
+        .qide-panel-action-btn{
+          display:flex;align-items:center;gap:6px;width:100%;padding:8px 10px;margin-bottom:8px;
+          border:1px solid var(--jt-border);border-radius:8px;background:var(--jt-bg-raised);
+          color:var(--jt-text-dim);font-size:.76rem;font-weight:700;cursor:pointer;
+        }
+        .qide-panel-action-btn:hover{ color:var(--jt-brand-strong);border-color:rgba(31,110,82,.4); }
         .qide-editor-col{ flex:1;min-width:0;display:flex;flex-direction:column; }
         /* ── Results panel: styled like a terminal tab strip + body ── */
         .qide-results-tabbar{
@@ -16954,13 +16998,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           </button>
         </div>
 
-        <!-- ══ Toolbar: explorer toggle + secondary actions (icon strip) ══ -->
+        <!-- ══ Toolbar: secondary actions (icon strip) ══ -->
         <div class="qide-toolbar">
-          <button class="qide-explorer-toggle" id="qideExplorerToggle" onclick="qideToggleExplorer()" title="Tables / Collections">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4.03 3-9 3S3 13.66 3 12"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/></svg>
-            Tables
-          </button>
-          <div class="qstudio-toolbar-sep"></div>
           <button class="qstudio-btn" onclick="runEditorQuery(true)" title="Run and save to history">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
             <span class="qs-btn-label-full">Save &amp; Run</span>
@@ -16999,28 +17038,90 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" width="12" height="12"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
             <span class="qs-btn-label-full">Schema Setup</span>
           </button>
-          <button class="qstudio-btn" onclick="openAiQueryHelper()" title="AI Query Assistant" style="margin-left:auto;color:var(--jt-text-faint, #94a3b8);">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            AI
-          </button>
         </div>
 
-        <!-- ══ Body: collapsible table/collection explorer + editor ══ -->
+        <!-- ══ Body: icon rail + closable multi-tab sidebar + editor ══ -->
         <div class="qs2-main qide-body">
 
-          <!-- Table/Collection Explorer -->
+          <!-- Icon rail — like the code IDE's activity bar, but themed to
+               follow the site's light/dark palette instead of being
+               permanently dark, since this page (unlike the code editor)
+               should read as part of the normal app chrome. -->
+          <div class="qide-rail">
+            <button class="qide-rail-btn active" id="qideRailTables" data-panel="tables" onclick="qideRailSwitch('tables')" title="Tables / Collections">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="19" height="19"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4.03 3-9 3S3 13.66 3 12"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/></svg>
+            </button>
+            <button class="qide-rail-btn" id="qideRailSearch" data-panel="search" onclick="qideRailSwitch('search')" title="Search tables">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="19" height="19"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+            <button class="qide-rail-btn" id="qideRailSchema" data-panel="schema" onclick="qideRailSwitch('schema')" title="Schema tools">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="19" height="19"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            </button>
+            <button class="qide-rail-btn" id="qideRailSaved" data-panel="saved" onclick="qideRailSwitch('saved')" title="Saved queries">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="19" height="19"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            </button>
+            <button class="qide-rail-btn" id="qideRailHistory" data-panel="history" onclick="qideRailSwitch('history')" title="Query history">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="19" height="19"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            </button>
+            <div class="qide-rail-spacer"></div>
+            <button class="qide-rail-btn" onclick="openAiQueryHelper()" title="AI Query Assistant">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="19" height="19"><path d="M12 3l1.8 4.9L19 9.5l-4.9 1.8L12 16l-1.8-4.7L5 9.5l5.2-1.6z"/></svg>
+            </button>
+          </div>
+
+          <!-- Table/Collection Explorer — now a closable multi-tab sidebar
+               driven by the rail above, instead of a single-purpose panel. -->
           <div class="qs-tree qide-explorer-panel" id="qsTree" style="position:relative;">
             <div class="qs-tree-head">
-              <span id="qsTreeDbLabel">No database selected</span>
-              <button class="qs-tree-refresh" onclick="qsLoadTableTree(true)" title="Refresh">
+              <span id="qsPanelTitle">Tables / Collections</span>
+              <button class="qs-tree-refresh" id="qsPanelRefreshBtn" onclick="qsLoadTableTree(true)" title="Refresh">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
               </button>
               <button class="qs-tree-refresh" onclick="qideToggleExplorer()" title="Close" style="margin-left:4px;">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <div class="qs-tree-body" id="qsTreeBody">
-              <div class="qs-tree-empty">Select a database above to browse its tables/collections.</div>
+
+            <!-- Tables/Search panel (shared: search box filters the same list) -->
+            <div class="qide-panel-body" id="qidePanelTables">
+              <div class="qide-panel-subhead" id="qsTreeDbLabel">No database selected</div>
+              <div class="qide-panel-search" id="qideTablesSearchWrap" style="display:none;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input id="qsTableSearchInput" placeholder="Filter tables/collections…" oninput="qideFilterTables(this.value)" autocomplete="off" spellcheck="false">
+              </div>
+              <div class="qs-tree-body" id="qsTreeBody">
+                <div class="qs-tree-empty">Select a database above to browse its tables/collections.</div>
+              </div>
+            </div>
+
+            <!-- Schema tools panel (quick tips + FK/relations — reuses the
+                 existing, already-working renderQStudioSchemaQuick /
+                 renderRelationsPanel functions, just newly given somewhere
+                 to render into). -->
+            <div class="qide-panel-body" id="qidePanelSchema" style="display:none;">
+              <div id="qstudioSchemaQuick"></div>
+              <div class="qide-panel-subhead">Relations</div>
+              <div id="qstudioRelationsMap" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+              <div class="qide-panel-subhead">FK Query Templates</div>
+              <div id="qstudioFkTemplates" style="display:flex;flex-direction:column;gap:6px;"></div>
+            </div>
+
+            <!-- Saved queries panel -->
+            <div class="qide-panel-body" id="qidePanelSaved" style="display:none;">
+              <button class="qide-panel-action-btn" onclick="saveCurrentQuery()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Save current query
+              </button>
+              <div id="qstudioSavedList"></div>
+            </div>
+
+            <!-- Query history panel -->
+            <div class="qide-panel-body" id="qidePanelHistory" style="display:none;">
+              <button class="qide-panel-action-btn" onclick="clearQueryHistory()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                Clear history
+              </button>
+              <div id="queryHistoryList"></div>
             </div>
           </div>
 
@@ -32356,18 +32457,16 @@ function qsExtractNames(rows, engine) {
 // it's a collapsible overlay so the editor gets full width by default.
 function qideToggleExplorer() {
   const panel = document.getElementById('qsTree');
-  const btn = document.getElementById('qideExplorerToggle');
   if (!panel) return;
   const open = panel.classList.toggle('open');
-  if (btn) btn.classList.toggle('active', open);
+  document.querySelectorAll('.qide-rail-btn[data-panel]').forEach(b => b.classList.toggle('active', open && b.dataset.panel === panel.dataset.activePanel));
 }
 function qideExplorerDefaultOpen() {
   const panel = document.getElementById('qsTree');
-  const btn = document.getElementById('qideExplorerToggle');
   if (!panel) return;
   if (window.innerWidth >= 900) {
     panel.classList.add('open');
-    if (btn) btn.classList.add('active');
+    if (!panel.dataset.activePanel) qideRailSwitch('tables');
   }
 }
 if (document.readyState === 'loading') {
@@ -32381,6 +32480,54 @@ window.addEventListener('resize', () => {
     qideExplorerDefaultOpen();
   }
 });
+
+// ── IDE-style rail: switches which content the closable sidebar shows.
+// Clicking the already-active icon closes the sidebar (matches the code
+// editor's activity bar closable behavior). Reuses render functions that
+// already existed in the codebase (renderQStudioSchemaQuick,
+// renderRelationsPanel, renderQStudioSaved, renderQueryHistory) but had no
+// visible panel to render into on this page until now. ──
+const QIDE_PANEL_TITLES = {
+  tables: 'Tables / Collections', search: 'Tables / Collections',
+  schema: 'Schema Tools', saved: 'Saved Queries', history: 'Query History'
+};
+function qideRailSwitch(name) {
+  const panel = document.getElementById('qsTree');
+  if (!panel) return;
+  const alreadyOpenSame = panel.classList.contains('open') && panel.dataset.activePanel === name;
+  if (alreadyOpenSame) {
+    panel.classList.remove('open');
+    document.querySelectorAll('.qide-rail-btn[data-panel]').forEach(b => b.classList.remove('active'));
+    return;
+  }
+  panel.classList.add('open');
+  panel.dataset.activePanel = name;
+  document.querySelectorAll('.qide-rail-btn[data-panel]').forEach(b => b.classList.toggle('active', b.dataset.panel === name));
+  document.querySelectorAll('.qide-panel-body').forEach(el => { el.style.display = 'none'; });
+  const targetId = (name === 'search') ? 'qidePanelTables' : 'qidePanel' + name.charAt(0).toUpperCase() + name.slice(1);
+  const target = document.getElementById(targetId);
+  if (target) target.style.display = 'block';
+  const titleEl = document.getElementById('qsPanelTitle');
+  if (titleEl) titleEl.textContent = QIDE_PANEL_TITLES[name] || 'Explorer';
+  const refreshBtn = document.getElementById('qsPanelRefreshBtn');
+  if (refreshBtn) refreshBtn.style.display = (name === 'tables' || name === 'search') ? 'flex' : 'none';
+  const searchWrap = document.getElementById('qideTablesSearchWrap');
+  if (searchWrap) searchWrap.style.display = (name === 'search') ? 'flex' : 'none';
+  if (name === 'tables') qsLoadTableTree();
+  if (name === 'search') {
+    qsLoadTableTree();
+    setTimeout(() => { const s = document.getElementById('qsTableSearchInput'); if (s) s.focus(); }, 60);
+  }
+  if (name === 'schema') { renderQStudioSchemaQuick(); renderRelationsPanel(); }
+  if (name === 'saved') renderQStudioSaved();
+  if (name === 'history') renderQueryHistory();
+}
+function qideFilterTables(val) {
+  const q = String(val || '').trim().toLowerCase();
+  document.querySelectorAll('#qsTreeBody .qs-tree-item').forEach(el => {
+    el.style.display = !q || el.textContent.toLowerCase().includes(q) ? 'flex' : 'none';
+  });
+}
 
 async function qsLoadTableTree(forceRefresh) {
   const labelEl = document.getElementById('qsTreeDbLabel');
