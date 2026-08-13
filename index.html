@@ -15532,10 +15532,19 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
   }
   #page-db-query .qstudio-side-panel.active { display: block !important; }
 
-  /* Mini-cards: bigger tap area */
-  #page-db-query .qstudio-mini-card { padding: 12px 14px !important; margin-bottom: 8px !important; }
-  #page-db-query .qstudio-mini-card-name { font-size: .82rem !important; }
-  #page-db-query .qstudio-mini-card code { font-size: .7rem !important; }
+  /* Mini-cards: compact on mobile, not bigger — these render inside a
+     220px-wide overlay panel here, not a roomy desktop sidebar, so more
+     padding/larger text just means more scrolling for less info per
+     screen. Also clamp the query preview to a single line: saved queries
+     without a custom name default to the query text itself as the name
+     (see saveCurrentQuery()), so name+preview can otherwise show the
+     exact same string twice, stacked, eating double the vertical space
+     for zero extra information. */
+  #page-db-query .qstudio-mini-card { padding: 8px 9px !important; margin-bottom: 5px !important; border-radius: 8px !important; }
+  #page-db-query .qstudio-mini-card-name { font-size: .74rem !important; line-height: 1.3 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+  #page-db-query .qstudio-mini-card code { font-size: .64rem !important; line-height: 1.35 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+  #page-db-query .qstudio-mini-card .meta { margin-top: 3px !important; font-size: .6rem !important; }
+  #page-db-query .qstudio-mini-card .meta-pill { padding: 1px 5px !important; }
   #page-db-query .qstudio-ai-btn { padding: 7px 12px !important; font-size: .76rem !important; border-radius: 9px !important; }
 
   /* ⑫  Modals: handled by global modal CSS above */
@@ -16881,7 +16890,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         .qide-explorer-panel.open{ display:block; }
         @media(max-width:900px){
           .qide-explorer-panel.open{
-            position:absolute;inset:0;left:42px;z-index:20;width:calc(100% - 42px);
+            position:absolute!important;inset:0!important;left:42px!important;z-index:20;width:calc(100% - 42px)!important;
+            max-width:none!important;
             /* [FIX] .qs-tree (this same element's other class, from an
                older separate drawer system) sets position:fixed + a
                transform:translateX(-100%) default state that only clears
@@ -17077,6 +17087,9 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
             <button class="qide-rail-btn" id="qideRailSchema" data-panel="schema" onclick="qideRailSwitch('schema')" title="Schema tools">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="19" height="19"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
             </button>
+            <button class="qide-rail-btn" id="qideRailTemplates" data-panel="templates" onclick="qideRailSwitch('templates')" title="Query templates">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="19" height="19"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg>
+            </button>
             <button class="qide-rail-btn" id="qideRailSaved" data-panel="saved" onclick="qideRailSwitch('saved')" title="Saved queries">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="19" height="19"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
             </button>
@@ -17091,7 +17104,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
           <!-- Table/Collection Explorer — now a closable multi-tab sidebar
                driven by the rail above, instead of a single-purpose panel. -->
-          <div class="qs-tree qide-explorer-panel" id="qsTree" style="position:relative;">
+          <div class="qs-tree qide-explorer-panel" id="qsTree">
             <div class="qs-tree-head">
               <span id="qsPanelTitle">Tables / Collections</span>
               <button class="qs-tree-refresh" id="qsPanelRefreshBtn" onclick="qsLoadTableTree(true)" title="Refresh">
@@ -17124,6 +17137,17 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
               <div id="qstudioRelationsMap" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
               <div class="qide-panel-subhead">FK Query Templates</div>
               <div id="qstudioFkTemplates" style="display:flex;flex-direction:column;gap:6px;"></div>
+            </div>
+
+            <!-- Query templates panel (pre-built patterns like "count
+                 rows", "list tables" — distinct from user-saved queries).
+                 Reuses renderQueryTemplates(), which already existed and
+                 worked, but had no panel to render into after the rail
+                 rebuild — silently invisible until now. -->
+            <div class="qide-panel-body" id="qidePanelTemplates" style="display:none;">
+              <div id="queryTemplateList"></div>
+              <div class="qide-panel-subhead">Common patterns</div>
+              <div id="qstudioCommonTemplates"></div>
             </div>
 
             <!-- Saved queries panel -->
@@ -32509,7 +32533,7 @@ window.addEventListener('resize', () => {
 // visible panel to render into on this page until now. ──
 const QIDE_PANEL_TITLES = {
   tables: 'Tables / Collections', search: 'Tables / Collections',
-  schema: 'Schema Tools', saved: 'Saved Queries', history: 'Query History'
+  schema: 'Schema Tools', templates: 'Query Templates', saved: 'Saved Queries', history: 'Query History'
 };
 function qideRailSwitch(name) {
   const panel = document.getElementById('qsTree');
@@ -32539,6 +32563,7 @@ function qideRailSwitch(name) {
     setTimeout(() => { const s = document.getElementById('qsTableSearchInput'); if (s) s.focus(); }, 60);
   }
   if (name === 'schema') { renderQStudioSchemaQuick(); renderRelationsPanel(); }
+  if (name === 'templates') renderQueryTemplates();
   if (name === 'saved') renderQStudioSaved();
   if (name === 'history') renderQueryHistory();
 }
