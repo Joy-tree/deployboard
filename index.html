@@ -16861,6 +16861,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         .qide-explorer-toggle.active{ color:var(--jt-brand-strong);border-color:rgba(31,110,82,.4);background:rgba(31,110,82,.1); }
         /* ── Body: icon rail + closable multi-tab sidebar + editor ── */
         .qide-body{ display:flex;min-height:0;flex:1;position:relative; }
+        @media(max-width:900px){ .qide-body{ min-height:480px; } }
         /* Icon rail — same structural idea as the code editor's activity
            bar (fixed-width vertical icon strip, active state = left accent
            bar) but built on var(--jt-*) so it follows light/dark theme
@@ -16942,21 +16943,24 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         }
         .qide-results-tab svg{ color:var(--jt-brand-strong); }
         .qide-results-body{ min-height:140px;max-height:34vh;overflow:auto;background:var(--jt-bg-raised); }
-        @media(min-width:900px){ .qide-results-body{ max-height:none; } }
+        @media(min-width:900px){ .qide-results-body{ max-height:280px; } }
         /* ── Legacy qs2-* selectors reused as-is below this point (editor
            split, gutter, status bar) — restyled to var(--jt-*) tokens
            instead of the old hardcoded dark palette, still responsive. ── */
         .qs2-main{ display:flex;flex-direction:column;min-height:0;flex:1; }
         .qs2-workspace{ display:flex;flex-direction:column;min-height:0;flex:1; }
         .qs2-tabbar{ display:none; }
-        .qs2-split{ display:flex;flex:1;min-height:0; }
-        @media(max-width:900px){ .qs2-split{ flex-direction:column; } }
-        .qs2-editor-col{ flex:1.15;min-width:0;display:flex;flex-direction:column; }
+        /* [FIX] This was flex-direction:row on desktop (≥900px), putting
+           the editor and results SIDE BY SIDE and squeezing the editor
+           into a narrow column — not what "look like the IDE page" means.
+           The code IDE stacks its editor above its terminal, full width,
+           on every screen size; Query Studio should match that exactly,
+           so this is now always column regardless of viewport width. */
+        .qs2-split{ display:flex;flex-direction:column;flex:1;min-height:0; }
+        .qs2-editor-col{ flex:2;min-width:0;min-height:140px;display:flex;flex-direction:column; }
         .qs2-results-col{ display:contents; }
         @media(min-width:900px){
           .qide-body{ flex-direction:row; }
-          .qs2-split{ flex-direction:row; }
-          .qs2-editor-col{ border-right:1px solid var(--jt-border); }
         }
         .qstudio-gutter{
           flex-shrink:0;width:38px;padding:14px 8px 14px 0;text-align:right;
