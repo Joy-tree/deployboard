@@ -1794,13 +1794,16 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
 }
 .page { overflow-y:auto; overflow-x:hidden; }
 .page { display:none; height:100%; overflow-y:auto; overflow-x:hidden; padding:28px 28px; -webkit-overflow-scrolling:touch; }
-/* db-query page: full-height flex column, no outer scroll */
-#page-db-query { display:flex !important; flex-direction:column !important; height:100dvh !important; padding:0 !important; overflow:hidden !important; }
+/* db-query page: full-height flex column when active, no outer scroll */
+#page-db-query.active { display:flex !important; flex-direction:column !important; height:100dvh !important; padding:0 !important; overflow:hidden !important; }
 @media (max-width: 700px) {
-  #page-db-query { height: auto !important; min-height: 100%; overflow: visible !important; padding:12px 10px 32px !important; }
+  #page-db-query.active { height:100dvh !important; min-height:100dvh !important; overflow:hidden !important; padding:0 !important; }
+  #page-db-query.active .db-studio-page { padding:0 8px 8px !important; }
 }
+
+
+
 .page.active { display:block; }
-#page-db-query.active { display:flex !important; }
 
 /* ── Page header ───────────────────────────────────────────────────────── */
 .page-header { margin-bottom: 28px; }
@@ -42763,5 +42766,354 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
 </script>
 <!-- ═══════════════ /Dashboard onboarding tour ═══════════════ -->
 
-</body>
+<!-- Query Studio CSS: moved back to internal to guarantee cascade order. -->
+<style id="query-studio-styles">
+
+/* ==========================================================================
+   QUERY STUDIO — #page-db-query layout & chrome
+   All rules scoped to #page-db-query. Edit only here, not in index.html.
+   ========================================================================== */
+
+/* ── Page-level container — set in index.html near the .page rules
+   to avoid cascade fights. Theme-override.css handles child components. */
+
+/* ── Full-height chain ───────────────────────────────────────────────────── */
+/* db-studio-page fills everything below the page-back button */
+#page-db-query.active .db-studio-page {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 12px 12px !important;
+  gap: 0 !important;
+}
+
+/* ── Shell: the outer container ─────────────────────────────────────────── */
+#page-db-query .qide-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--jt-border);
+  border-radius: 14px;
+  background: var(--jt-bg-raised);
+}
+
+/* ── Titlebar ────────────────────────────────────────────────────────────── */
+#page-db-query .qide-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--jt-border);
+  background: var(--jt-bg-sunken);
+  flex-shrink: 0;
+}
+#page-db-query .qide-titlebar .qstudio-db-bar {
+  flex: 1; min-width: 0;
+  border: none !important; border-radius: 0 !important; background: transparent !important;
+}
+#page-db-query .qide-titlebar .qstudio-db-bar-head { padding: 2px 4px !important; }
+
+/* ── Run button ──────────────────────────────────────────────────────────── */
+#page-db-query .qide-run-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 16px;
+  background: #10b981; color: #fff;
+  border: none; border-radius: 8px;
+  font-size: .82rem; font-weight: 600; cursor: pointer;
+  flex-shrink: 0; white-space: nowrap;
+}
+#page-db-query .qide-run-btn:hover { background: #059669; }
+#page-db-query .qide-run-btn svg { flex-shrink: 0; }
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+#page-db-query .qide-toolbar {
+  display: flex; align-items: center; gap: 4px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--jt-border);
+  background: var(--jt-bg-sunken);
+  flex-shrink: 0;
+  overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+#page-db-query .qide-toolbar::-webkit-scrollbar { display: none; }
+#page-db-query .qide-toolbar .qstudio-toolbar-sep { flex-shrink: 0; }
+
+/* ── Body: rail + panel + editor stack ──────────────────────────────────── */
+#page-db-query .qide-body {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Icon rail ───────────────────────────────────────────────────────────── */
+#page-db-query .qide-rail {
+  width: 42px; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 2px; padding: 8px 0;
+  background: var(--jt-bg-sunken);
+  border-right: 1px solid var(--jt-border);
+  overflow: hidden;
+}
+#page-db-query .qide-rail-btn {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; border-radius: 8px;
+  color: var(--jt-text-faint); cursor: pointer; flex-shrink: 0;
+}
+#page-db-query .qide-rail-btn:hover { color: var(--jt-text-dim); background: rgba(0,0,0,.05); }
+#page-db-query .qide-rail-btn.active {
+  color: var(--jt-brand-strong); background: rgba(31,110,82,.1);
+}
+#page-db-query .qide-rail-btn.active::before {
+  content: ""; position: absolute; left: 0;
+  width: 2px; height: 20px;
+  background: var(--jt-brand); border-radius: 0 2px 2px 0;
+}
+#page-db-query .qide-rail-spacer { flex: 1; }
+
+/* ── Explorer panel (desktop inline, mobile drawer) ─────────────────────── */
+#page-db-query .qide-explorer-panel {
+  width: 200px; flex-shrink: 0;
+  display: none;
+  flex-direction: column;
+  background: var(--jt-bg-sunken);
+  border-right: 1px solid var(--jt-border);
+  overflow: hidden;
+}
+#page-db-query .qide-explorer-panel.open { display: flex; }
+
+/* Mobile: slide-in drawer */
+@media (max-width: 900px) {
+  #page-db-query .qide-explorer-panel {
+    position: fixed !important;
+    top: 0 !important; bottom: 0 !important; left: 0 !important;
+    width: 82vw !important; max-width: 320px !important;
+    z-index: 1200 !important;
+    transform: translateX(-100%) !important;
+    transition: transform .25s cubic-bezier(.4,0,.2,1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: #0d1117 !important;
+    border-right: 1px solid rgba(16,185,129,.18) !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+  }
+  #page-db-query .qide-explorer-panel.open {
+    transform: translateX(0) !important;
+    box-shadow: 8px 0 40px rgba(0,0,0,.7) !important;
+  }
+  #page-db-query .qide-rail { width: 38px; }
+  #page-db-query .qide-rail-btn { width: 30px; height: 30px; }
+}
+
+/* Backdrop */
+#page-db-query .qide-panel-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.52);
+  z-index: 1199;
+}
+#page-db-query .qide-panel-backdrop.open { display: block; }
+
+/* ── Panel internals ─────────────────────────────────────────────────────── */
+#page-db-query .qide-panel-body { padding: 8px 10px 14px; flex: 1; overflow-y: auto; }
+#page-db-query .qide-panel-body #qsTreeBody { padding: 0; }
+#page-db-query .qide-panel-subhead {
+  font-size: .68rem; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--jt-text-faint);
+  padding: 10px 10px 4px;
+}
+#page-db-query .qide-panel-search {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 10px 6px; flex-shrink: 0;
+}
+#page-db-query .qide-panel-search input {
+  flex: 1; background: var(--jt-bg-raised);
+  border: 1px solid var(--jt-border); border-radius: 6px;
+  padding: 5px 8px; font-size: .78rem; color: var(--jt-text); outline: none;
+}
+#page-db-query .qide-panel-search input::placeholder { color: var(--jt-text-faint); }
+#page-db-query .qide-panel-action-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 10px; margin: 4px 10px;
+  font-size: .75rem; color: var(--jt-text-dim);
+  background: var(--jt-bg-raised); border: 1px solid var(--jt-border);
+  border-radius: 7px; cursor: pointer;
+}
+#page-db-query .qide-panel-action-btn:hover {
+  color: var(--jt-brand-strong); border-color: rgba(31,110,82,.4);
+}
+
+/* ── Editor column + split ───────────────────────────────────────────────── */
+#page-db-query .qide-editor-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+#page-db-query .qs2-main  { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+#page-db-query .qs2-workspace { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+#page-db-query .qs2-tabbar { display: none; }
+#page-db-query .qs2-split {
+  display: flex; flex-direction: column;
+  flex: 1; min-height: 0; overflow: hidden;
+}
+/* Editor: 55% of split; Results: 45% */
+#page-db-query .qs2-editor-col {
+  flex: 0 0 55%; min-width: 0; min-height: 100px; max-height: 60%;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#page-db-query .qs2-results-col {
+  flex: 1 1 0; min-width: 0; min-height: 100px;
+  display: flex; flex-direction: column;
+  border-top: 1px solid var(--jt-border); overflow: hidden;
+}
+@media (min-width: 900px) {
+  #page-db-query .qide-body { flex-direction: row; }
+  #page-db-query .qs2-editor-col { flex: 0 0 58%; max-height: 62%; }
+  #page-db-query .qs2-results-col { flex: 1 1 0; }
+}
+/* Mobile: editor smaller so results visible immediately */
+@media (max-width: 900px) {
+  #page-db-query .qs2-editor-col { flex: 0 0 38%; max-height: 42%; min-height: 80px; }
+  #page-db-query .qs2-results-col { flex: 1 1 0; min-height: 80px; }
+}
+
+/* ── Gutter ──────────────────────────────────────────────────────────────── */
+#page-db-query .qstudio-gutter {
+  flex-shrink: 0; width: 38px; padding: 14px 8px 14px 0; text-align: right;
+  font-family: var(--font-mono); font-size: .82rem; line-height: 1.7;
+  color: var(--jt-text-faint);
+  background: rgba(0,0,0,.02); border-right: 1px solid var(--jt-border);
+  white-space: pre; overflow: hidden;
+  user-select: none; -webkit-user-select: none;
+}
+@media (max-width: 900px) { #page-db-query .qstudio-gutter { display: none; } }
+#page-db-query .qstudio-hl-inner { position: relative; flex: 1; min-width: 0; }
+
+/* ── Results panel ───────────────────────────────────────────────────────── */
+#page-db-query .qide-results-tabbar {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 0;
+  border-bottom: 1px solid var(--jt-border);
+  padding: 0 12px;
+  background: var(--jt-bg-sunken);
+}
+#page-db-query .qide-results-tab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 12px; font-size: .78rem;
+  color: var(--jt-text-faint); cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+#page-db-query .qide-results-tab svg { color: var(--jt-brand-strong); }
+#page-db-query .qide-results-tab.active {
+  color: var(--jt-text); border-bottom-color: var(--jt-brand);
+}
+#page-db-query .qide-results-body {
+  min-height: 0; flex: 1; overflow: hidden;
+  background: var(--jt-bg-raised);
+  display: flex; flex-direction: column;
+  -webkit-overflow-scrolling: touch;
+}
+#page-db-query .qide-results-body .qstudio-results-table-wrap {
+  flex: 1; min-height: 0; height: auto !important;
+  overflow: auto; border-radius: 0; border: none;
+  border-top: 1px solid var(--jt-border); margin: 0;
+  -webkit-overflow-scrolling: touch;
+}
+#page-db-query .qide-results-body .qstudio-raw-output {
+  flex: 1; min-height: 0; overflow: auto; padding: 14px 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Status bar ──────────────────────────────────────────────────────────── */
+#page-db-query .qs2-status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--jt-text-faint); display: inline-block; margin-right: 6px;
+}
+#page-db-query .qs2-status-dot.ok  { background: var(--jt-brand); }
+#page-db-query .qs2-status-dot.err { background: var(--jt-danger); }
+#page-db-query .qs2-status-dot.running { background: #f59e0b; animation: pulse 1s infinite; }
+#page-db-query .qs2-statusbar {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 4px;
+  padding: 6px 14px; font-size: .72rem;
+  color: var(--jt-text-faint);
+  background: var(--jt-bg-sunken);
+  border-top: 1px solid var(--jt-border);
+  flex-shrink: 0;
+}
+#page-db-query .qs2-statusbar-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+#page-db-query .qs2-statusbar #queryRowCount { color: var(--jt-text) !important; }
+
+/* ── Tree / explorer item theming ────────────────────────────────────────── */
+#page-db-query .qide-explorer-panel.qs-tree {
+  background: var(--jt-bg-sunken); border-right: 1px solid var(--jt-border);
+}
+#page-db-query .qide-explorer-panel .qs-tree-head {
+  color: var(--jt-text-faint); border-bottom-color: var(--jt-border);
+}
+#page-db-query .qide-explorer-panel .qs-tree-refresh { color: var(--jt-text-faint); }
+#page-db-query .qide-explorer-panel .qs-tree-refresh:hover { color: var(--jt-brand-strong); }
+#page-db-query .qide-explorer-panel .qs-tree-empty { color: var(--jt-text-faint); }
+#page-db-query .qide-explorer-panel .qs-tree-item { color: var(--jt-text-dim); }
+#page-db-query .qide-explorer-panel .qs-tree-item svg { color: var(--jt-brand-strong); }
+#page-db-query .qide-explorer-panel .qs-tree-item:hover { background: rgba(0,0,0,.05); }
+#page-db-query .qide-explorer-panel .qs-tree-item.active {
+  background: rgba(31,110,82,.12); color: var(--jt-text);
+}
+
+/* Fullscreen overlay */
+#page-db-query .qstudio-terminal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,.88); backdrop-filter: blur(8px);
+  align-items: flex-start; justify-content: flex-start; padding: 0;
+}
+#page-db-query .qstudio-terminal-overlay-box {
+  width: 100vw; max-width: 100vw;
+  height: 100dvh; max-height: 100dvh; min-height: 100dvh;
+  background: #0a1812; border: none; border-radius: 0;
+  display: flex; flex-direction: column;
+  box-shadow: none;
+}
+#page-db-query .qstudio-terminal-overlay-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px; border-bottom: 1px solid rgba(16,185,129,.14);
+  flex-shrink: 0; background: #0c1d14; border-radius: 0;
+}
+#page-db-query .qstudio-terminal-overlay-body {
+  flex: 1; min-height: 0; overflow: auto; padding: 18px 20px;
+  font-family: var(--font-mono); color: #cbd5e1;
+  font-size: .82rem; line-height: 1.65;
+  -webkit-overflow-scrolling: touch;
+}
+#page-db-query .qstudio-terminal-overlay-body .qstudio-results-table-wrap {
+  height: auto !important; max-height: none !important; overflow: visible !important;
+}
+
+/* ── Primary button green — all themes, all pages ───────────────────────── */
+/* This block is intentionally last in the document so it wins all cascade
+   battles. The original site has html[data-theme=dark] .btn{background:#111114!important}
+   which applies to .btn.btn-primary too. Higher specificity here wins. */
+html[data-theme="dark"] .btn.btn-primary,
+html[data-theme="dark"] button.btn-primary,
+html[data-theme="dark"] .btn-hero-primary,
+html[data-theme="dark"] .btn-nav-primary,
+html[data-theme="dark"] .dash-qa-btn.primary { background:#10b981!important; border-color:#10b981!important; color:#052e16!important; }
+html[data-theme="dark"] .btn.btn-primary:hover,
+html[data-theme="dark"] button.btn-primary:hover,
+html[data-theme="dark"] .btn-hero-primary:hover { background:#059669!important; border-color:#059669!important; }
+html[data-theme="light"] .btn.btn-primary,
+html[data-theme="light"] button.btn-primary,
+html[data-theme="light"] .btn-hero-primary,
+html[data-theme="light"] .btn-nav-primary,
+html[data-theme="light"] .dash-qa-btn.primary { background:#1F6E52!important; border-color:#1F6E52!important; color:#fff!important; }
+html[data-theme="light"] .btn.btn-primary:hover,
+html[data-theme="light"] button.btn-primary:hover,
+html[data-theme="light"] .btn-hero-primary:hover { background:#145A41!important; border-color:#145A41!important; }
+</style>
 </html>
