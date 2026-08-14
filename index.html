@@ -1797,8 +1797,12 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
 /* db-query page: full-height flex column when active, no outer scroll */
 #page-db-query.active { display:flex !important; flex-direction:column !important; height:100dvh !important; padding:0 !important; overflow:hidden !important; }
 @media (max-width: 700px) {
-  #page-db-query.active { height: auto !important; overflow: visible !important; padding:12px 10px 32px !important; }
+  #page-db-query.active { height:100dvh !important; min-height:100dvh !important; overflow:hidden !important; padding:0 !important; }
+  #page-db-query.active .db-studio-page { padding:0 8px 8px !important; }
 }
+
+
+
 .page.active { display:block; }
 
 /* ── Page header ───────────────────────────────────────────────────────── */
