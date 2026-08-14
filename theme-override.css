@@ -2480,54 +2480,8 @@ html[data-theme="light"] .step-icon.active {
    All rules scoped to #page-db-query. Edit only here, not in index.html.
    ========================================================================== */
 
-/* ── Page-level container overrides ─────────────────────────────────────── */
-/* Many inline <style> blocks across index.html set conflicting rules for
-   #page-db-query at different media-query breakpoints, some with !important.
-   This block uses the highest specificity we can get from an external
-   stylesheet (same selector + !important) to establish a single, consistent
-   source of truth. Since theme-override.css loads FIRST (in <head>), the
-   winning rule between us and a later inline block of equal specificity+
-   importance is the inline one — so we use a slightly-higher-specificity
-   selector (html #page-db-query) to guarantee we win regardless of which
-   inline block loads last. */
-
-/* Desktop: fill full viewport, no padding (we handle spacing inside .db-studio-page) */
-@media (min-width: 701px) {
-  html #page-db-query {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-  }
-  html #page-db-query .db-studio-page {
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1 !important;
-    min-height: 0 !important;
-    height: 0 !important;
-    gap: 0 !important;
-    overflow: hidden !important;
-    padding: 0 12px 12px !important;
-  }
-}
-
-/* Mobile: let the page scroll naturally */
-@media (max-width: 700px) {
-  html #page-db-query {
-    height: auto !important;
-    overflow: visible !important;
-    padding: 12px 10px 32px !important;
-  }
-  html #page-db-query .db-studio-page {
-    height: auto !important;
-    min-height: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 10px !important;
-  }
-}
+/* ── Page-level container — set in index.html near the .page rules
+   to avoid cascade fights. Theme-override.css handles child components. */
 
 /* ── Full-height chain (desktop only) ───────────────────────────────────── */
 /* ── Shell: the outer container ─────────────────────────────────────────── */
