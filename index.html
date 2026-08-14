@@ -8775,6 +8775,19 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                       Add Variable
                     </button>
+                    <!-- [NEW] Bulk-paste and file-upload import, matching the
+                         Env Manager page's "Paste from .env" feature, which
+                         previously only existed there — this deploy/build
+                         settings panel required adding vars one at a time. -->
+                    <button class="btn btn-ghost btn-sm" type="button" onclick="toggleDeployEnvBulkPaste()">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      Paste .env
+                    </button>
+                    <button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('deployEnvFileInput').click()">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      Upload .env
+                    </button>
+                    <input type="file" id="deployEnvFileInput" accept=".env,.txt,text/plain" style="display:none;" onchange="handleDeployEnvFileUpload(event)">
                     <!-- [NEW] Lets users persist env vars typed here immediately (via the
                          same /api/projects/:id/env endpoint the Env Manager page uses),
                          without needing to run a full deploy first. Only works once the
@@ -8784,6 +8797,14 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                       Save Now
                     </button>
+                  </div>
+                </div>
+                <div id="deployEnvBulkPasteWrap" style="display:none;margin-bottom:12px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg-2);">
+                  <div style="font-size:0.76rem;color:var(--text-3);margin-bottom:8px;">Paste multiple KEY=VALUE lines at once — same format as a .env file. Blank lines and # comments are skipped.</div>
+                  <textarea class="input input-mono" id="deployEnvBulkPaste" rows="5" style="width:100%;resize:vertical;font-size:0.78rem;" placeholder="MONGO_URI=mongodb://user:pass@host:port/db&#10;R2_ACCOUNT_ID=abc123&#10;R2_BUCKET=my-bucket"></textarea>
+                  <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button class="btn btn-primary btn-sm" type="button" onclick="importDeployEnvBulk()">Import All</button>
+                    <button class="btn btn-ghost btn-sm" type="button" onclick="toggleDeployEnvBulkPaste()">Cancel</button>
                   </div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;">
@@ -11369,7 +11390,7 @@ document.addEventListener('keydown', function(e){
           <div class="card-header">
             <div>
               <div class="card-title">Paste from .env</div>
-              <div class="card-subtitle">Paste multiple KEY=VALUE lines at once — same format as a .env file. Blank lines and # comments are skipped.</div>
+              <div class="card-subtitle">Paste multiple KEY=VALUE lines at once, or upload a .env file — same format either way. Blank lines and # comments are skipped.</div>
             </div>
           </div>
           <div class="card-body">
@@ -11377,6 +11398,11 @@ document.addEventListener('keydown', function(e){
               <textarea class="input input-mono" id="envBulkPaste" rows="6" style="width:100%;resize:vertical;font-size:0.8rem;" placeholder="MONGO_URI=mongodb://user:pass@host:port/db&#10;R2_ACCOUNT_ID=abc123&#10;R2_BUCKET=my-bucket"></textarea>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <button class="btn btn-ghost" type="button" onclick="document.getElementById('envFileUploadInput').click()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload .env file
+              </button>
+              <input type="file" id="envFileUploadInput" accept=".env,.txt,text/plain" style="display:none;" onchange="handleEnvManagerFileUpload(event)">
               <button class="btn btn-primary" onclick="saveEnvVarsBulk()">Import All</button>
               <span id="envBulkStatus" style="font-size:0.78rem;color:var(--text-3);"></span>
             </div>
@@ -23975,6 +24001,83 @@ function removeEnvRow(id) {
     if (empty) empty.style.display = '';
   }
 }
+
+// ── Shared .env-block parser, used by both the deploy/build-settings
+// composer's bulk-paste+upload and the Env Manager page's file upload.
+// Same KEY=VALUE-per-line convention as saveEnvVarsBulk() below (blank
+// lines and #-comments skipped), plus stripping matching quotes around
+// the value since that's valid/common in real .env files. ──
+function parseEnvBlockLines(raw) {
+  const lines = String(raw || '').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+  const parsed = [];
+  let skipped = 0;
+  for (const line of lines) {
+    const eq = line.indexOf('=');
+    if (eq <= 0) { skipped++; continue; }
+    const k = line.slice(0, eq).trim().toUpperCase().replace(/\s/g, '_');
+    let v = line.slice(eq + 1).trim();
+    if ((v.startsWith('"') && v.endsWith('"') && v.length >= 2) || (v.startsWith("'") && v.endsWith("'") && v.length >= 2)) {
+      v = v.slice(1, -1);
+    }
+    if (!k) { skipped++; continue; }
+    parsed.push([k, v]);
+  }
+  return { parsed, skipped };
+}
+
+// ── Deploy/build-settings composer: "Paste .env" ──
+function toggleDeployEnvBulkPaste() {
+  const wrap = document.getElementById('deployEnvBulkPasteWrap');
+  if (!wrap) return;
+  const showing = wrap.style.display === 'none';
+  wrap.style.display = showing ? '' : 'none';
+  if (showing) document.getElementById('deployEnvBulkPaste')?.focus();
+  else { const ta = document.getElementById('deployEnvBulkPaste'); if (ta) ta.value = ''; }
+}
+function importDeployEnvBulk() {
+  const raw = document.getElementById('deployEnvBulkPaste')?.value || '';
+  const { parsed, skipped } = parseEnvBlockLines(raw);
+  if (!parsed.length) { toast('No valid KEY=VALUE lines found', 'error'); return; }
+  parsed.forEach(([k, v]) => addEnvRow(k, v));
+  toggleDeployEnvBulkPaste();
+  const skippedNote = skipped ? ` (${skipped} line${skipped > 1 ? 's' : ''} skipped)` : '';
+  toast(`Added ${parsed.length} variable${parsed.length > 1 ? 's' : ''}${skippedNote} — review below, then Save Now or Deploy`, 'success');
+}
+function handleDeployEnvFileUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const { parsed, skipped } = parseEnvBlockLines(String(reader.result || ''));
+    if (!parsed.length) { toast('No valid KEY=VALUE lines found in that file', 'error'); return; }
+    parsed.forEach(([k, v]) => addEnvRow(k, v));
+    const skippedNote = skipped ? ` (${skipped} skipped)` : '';
+    toast(`Imported ${parsed.length} variable${parsed.length > 1 ? 's' : ''} from ${escHtml(file.name)}${skippedNote} — review below, then Save Now or Deploy`, 'success');
+  };
+  reader.onerror = () => toast('Could not read that file', 'error');
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ── Env Manager page: "Upload .env file" (reads into the existing
+// paste textarea so the user reviews it, then clicks the existing
+// Import All -> saveEnvVarsBulk(), same as if they'd pasted it) ──
+function handleEnvManagerFileUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const ta = document.getElementById('envBulkPaste');
+    if (ta) {
+      const existing = ta.value.trim();
+      ta.value = existing ? existing + '\n' + String(reader.result || '').trim() : String(reader.result || '');
+    }
+    toast(`Loaded ${escHtml(file.name)} — review below, then Import All`, 'success');
+  };
+  reader.onerror = () => toast('Could not read that file', 'error');
+  reader.readAsText(file);
+  event.target.value = '';
+}
 function getEnvVars() {
   const result = {};
   envRows.forEach(id => {
@@ -26014,20 +26117,7 @@ async function saveEnvVarsBulk() {
   const statusEl = document.getElementById('envBulkStatus');
   if (!projectId) { toast('Select a project first', 'error'); return; }
 
-  const lines = raw.split('\n')
-    .map(l => l.trim())
-    .filter(l => l && !l.startsWith('#'));
-
-  const parsed = [];
-  const skipped = [];
-  for (const line of lines) {
-    const eq = line.indexOf('=');
-    if (eq <= 0) { skipped.push(line); continue; }
-    const k = line.slice(0, eq).trim().toUpperCase().replace(/\s/g, '_');
-    const v = line.slice(eq + 1).trim();
-    if (!k) { skipped.push(line); continue; }
-    parsed.push([k, v]);
-  }
+  const { parsed, skipped: skippedCount } = parseEnvBlockLines(raw);
 
   if (!parsed.length) {
     toast('No valid KEY=VALUE lines found', 'error');
@@ -26058,7 +26148,7 @@ async function saveEnvVarsBulk() {
   save();
 
   statusEl.textContent = '';
-  const skippedNote = skipped.length ? ` (${skipped.length} line${skipped.length > 1 ? 's' : ''} skipped — no "=" found)` : '';
+  const skippedNote = skippedCount ? ` (${skippedCount} line${skippedCount > 1 ? 's' : ''} skipped — no "=" found)` : '';
   if (failed === 0) {
     toast(`Imported ${done} variable${done > 1 ? 's' : ''} ✓ Will be injected on next deploy${skippedNote}`, 'success');
     document.getElementById('envBulkPaste').value = '';
