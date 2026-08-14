@@ -43095,5 +43095,25 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   height: auto !important; max-height: none !important; overflow: visible !important;
 }
 
+/* ── Primary button green — all themes, all pages ───────────────────────── */
+/* This block is intentionally last in the document so it wins all cascade
+   battles. The original site has html[data-theme=dark] .btn{background:#111114!important}
+   which applies to .btn.btn-primary too. Higher specificity here wins. */
+html[data-theme="dark"] .btn.btn-primary,
+html[data-theme="dark"] button.btn-primary,
+html[data-theme="dark"] .btn-hero-primary,
+html[data-theme="dark"] .btn-nav-primary,
+html[data-theme="dark"] .dash-qa-btn.primary { background:#10b981!important; border-color:#10b981!important; color:#052e16!important; }
+html[data-theme="dark"] .btn.btn-primary:hover,
+html[data-theme="dark"] button.btn-primary:hover,
+html[data-theme="dark"] .btn-hero-primary:hover { background:#059669!important; border-color:#059669!important; }
+html[data-theme="light"] .btn.btn-primary,
+html[data-theme="light"] button.btn-primary,
+html[data-theme="light"] .btn-hero-primary,
+html[data-theme="light"] .btn-nav-primary,
+html[data-theme="light"] .dash-qa-btn.primary { background:#1F6E52!important; border-color:#1F6E52!important; color:#fff!important; }
+html[data-theme="light"] .btn.btn-primary:hover,
+html[data-theme="light"] button.btn-primary:hover,
+html[data-theme="light"] .btn-hero-primary:hover { background:#145A41!important; border-color:#145A41!important; }
 </style>
 </html>
