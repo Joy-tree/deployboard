@@ -2498,13 +2498,17 @@ html[data-theme="light"] .step-icon.active {
    split; only the chrome (titlebar/toolbar/explorer) changes.
    ═══════════════════════════════════════════════════════════════ */
 #page-db-query .page-back{ margin-bottom:8px; }
+
 /* ── Full-height flex chain for the query page ─────────────────
    The global .db-studio-page rule sets height:calc(100vh-120px)
    which breaks the flex:1 chain. We override it to 100% here and
    lock every ancestor so qide-shell actually fills the screen. */
-html.app-mode.page-db-query #main        { display:flex;flex-direction:column;min-height:0;flex:1; }
+html.app-mode.page-db-query #main{ display:flex;flex-direction:column;min-height:0;flex:1; }
+
 html.app-mode.page-db-query #content-area{ display:flex;flex-direction:column;min-height:0;flex:1; }
+
 html.app-mode.page-db-query #page-db-query{ display:flex;flex-direction:column;min-height:0;flex:1; }
+
 html.app-mode.page-db-query .db-studio-page{
   display:flex !important;flex-direction:column !important;
   flex:1 !important;min-height:0 !important;
@@ -2512,84 +2516,112 @@ html.app-mode.page-db-query .db-studio-page{
   overflow:hidden !important;
   gap:0 !important;
 }
-.qide-shell{
+
+#page-db-query .qide-shell{
   display:flex;flex-direction:column;min-height:0;flex:1;
   border:1px solid var(--jt-border);border-radius:14px;overflow:hidden;
   background:var(--jt-bg-raised);
 }
+
 /* ── Titlebar: connection identity + primary Run action ── */
-.qide-titlebar{
+#page-db-query .qide-titlebar{
   display:flex;align-items:center;gap:10px;flex-wrap:nowrap;
   padding:10px 12px;border-bottom:1px solid var(--jt-border);
   background:var(--jt-bg-sunken);flex-shrink:0;
 }
-.qide-titlebar .qstudio-db-bar{ flex:1;min-width:0;border:none!important;border-radius:0!important;background:transparent!important; }
-.qide-titlebar .qstudio-db-bar-head{ padding:2px 4px!important; }
-.qide-run-btn{
+
+#page-db-query .qide-titlebar .qstudio-db-bar{ flex:1;min-width:0;border:none!important;border-radius:0!important;background:transparent!important; }
+
+#page-db-query .qide-titlebar .qstudio-db-bar-head{ padding:2px 4px!important; }
+
+#page-db-query .qide-run-btn{
   display:flex;align-items:center;gap:6px;flex-shrink:0;
   padding:9px 16px;border-radius:9px;border:none;cursor:pointer;
   background:var(--jt-brand);color:#fff;font-weight:800;font-size:.82rem;
   box-shadow:0 2px 10px rgba(31,110,82,.3);transition:background .15s;
 }
-.qide-run-btn:hover{ background:var(--jt-brand-strong); }
-.qide-run-btn svg{ flex-shrink:0; }
+
+#page-db-query .qide-run-btn:hover{ background:var(--jt-brand-strong); }
+
+#page-db-query .qide-run-btn svg{ flex-shrink:0; }
+
 /* ── Secondary toolbar: icon strip, horizontally scrollable ── */
-.qide-toolbar{
+#page-db-query .qide-toolbar{
   display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;
   padding:7px 10px;border-bottom:1px solid var(--jt-border);
   background:var(--jt-bg-raised);flex-shrink:0;-webkit-overflow-scrolling:touch;
 }
-.qide-toolbar::-webkit-scrollbar{ display:none; }
-.qide-toolbar .qstudio-toolbar-sep{ flex-shrink:0; }
-.qide-explorer-toggle{
+
+#page-db-query .qide-toolbar::-webkit-scrollbar{ display:none; }
+
+#page-db-query .qide-toolbar .qstudio-toolbar-sep{ flex-shrink:0; }
+
+#page-db-query .qide-explorer-toggle{
   display:flex;align-items:center;gap:6px;flex-shrink:0;
   padding:6px 10px;border-radius:7px;border:1px solid var(--jt-border);
   background:var(--jt-bg-sunken);color:var(--jt-text-dim);cursor:pointer;
   font-size:.72rem;font-weight:700;
 }
-.qide-explorer-toggle.active{ color:var(--jt-brand-strong);border-color:rgba(31,110,82,.4);background:rgba(31,110,82,.1); }
+
+#page-db-query .qide-explorer-toggle.active{ color:var(--jt-brand-strong);border-color:rgba(31,110,82,.4);background:rgba(31,110,82,.1); }
+
 /* ── Body: icon rail + closable multi-tab sidebar + editor ── */
-.qide-body{ display:flex;min-height:0;flex:1;position:relative; }
+#page-db-query .qide-body{ display:flex;min-height:0;flex:1;position:relative; }
+
 /* Mobile: shell fills viewport, editor takes less height so results
    are immediately visible without scrolling. */
 @media(max-width:900px){
-  .qide-shell{ flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden; }
-  .qide-body{ flex:1;min-height:0;overflow:hidden; }
-  .qs2-editor-col{ flex:0 0 38%;max-height:42%;min-height:80px; }
-  .qs2-results-col{ flex:1 1 0;min-height:80px; }
+  #page-db-query .qide-shell{ flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden; }
+
+  #page-db-query .qide-body{ flex:1;min-height:0;overflow:hidden; }
+
+  #page-db-query .qs2-editor-col{ flex:0 0 38%;max-height:42%;min-height:80px; }
+
+  #page-db-query .qs2-results-col{ flex:1 1 0;min-height:80px; }
+
 }
 /* Icon rail — same structural idea as the code editor's activity
    bar (fixed-width vertical icon strip, active state = left accent
    bar) but built on var(--jt-*) so it follows light/dark theme
    instead of being hardcoded dark like the code editor's is. */
-.qide-rail{
+#page-db-query .qide-rail{
   width:42px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;
   padding:8px 0;gap:2px;background:var(--jt-bg-sunken);border-right:1px solid var(--jt-border);
 }
-.qide-rail-btn{
+
+#page-db-query .qide-rail-btn{
   width:32px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
   border-radius:8px;border:none;background:transparent;color:var(--jt-text-faint);
   cursor:pointer;position:relative;transition:color .12s,background .12s;
 }
-.qide-rail-btn:hover{ color:var(--jt-text-dim);background:rgba(0,0,0,.05); }
-.qide-rail-btn.active{ color:var(--jt-brand-strong);background:rgba(31,110,82,.1); }
-.qide-rail-btn.active::before{
+
+#page-db-query .qide-rail-btn:hover{ color:var(--jt-text-dim);background:rgba(0,0,0,.05); }
+
+#page-db-query .qide-rail-btn.active{ color:var(--jt-brand-strong);background:rgba(31,110,82,.1); }
+
+#page-db-query .qide-rail-btn.active::before{
   content:'';position:absolute;left:-8px;top:50%;transform:translateY(-50%);
   width:2px;height:18px;border-radius:0 2px 2px 0;background:var(--jt-brand);
 }
-.qide-rail-spacer{ flex:1; }
-@media(max-width:900px){ .qide-rail{ width:38px; } .qide-rail-btn{ width:30px;height:30px; } }
-.qide-explorer-panel{
+
+#page-db-query .qide-rail-spacer{ flex:1; }
+
+@media(max-width:900px){ #page-db-query .qide-rail{ width:38px; }
+ #page-db-query .qide-rail-btn{ width:30px;height:30px; }
+ }
+#page-db-query .qide-explorer-panel{
   width:240px;flex-shrink:0;border-right:1px solid var(--jt-border);
   background:var(--jt-bg-sunken);overflow:hidden auto;
   display:none;
 }
-.qide-explorer-panel.open{ display:block; }
+
+#page-db-query .qide-explorer-panel.open{ display:block; }
+
 @media(max-width:900px){
   /* On mobile: panel slides in as a drawer over the LEFT side only.
      It does NOT cover the editor — a backdrop behind it lets the
      user tap to dismiss and see the editor is still there. */
-  .qide-explorer-panel{
+  #page-db-query .qide-explorer-panel{
     position:fixed !important;
     top:0 !important; bottom:0 !important;
     left:0 !important;
@@ -2604,124 +2636,172 @@ html.app-mode.page-db-query .db-studio-page{
     border-right:1px solid rgba(16,185,129,.18) !important;
     box-shadow:none !important;
   }
-  .qide-explorer-panel.open{
+
+  #page-db-query .qide-explorer-panel.open{
     transform:translateX(0) !important;
     box-shadow:8px 0 40px rgba(0,0,0,.7) !important;
   }
+
   /* Make the inner scroll area fill the drawer */
-  .qide-explorer-panel > *{ flex-shrink:0; }
-  .qide-explorer-panel .qs-tree-body,
-  .qide-explorer-panel .qide-panel-body{ flex:1;overflow-y:auto !important; }
+  #page-db-query .qide-explorer-panel > *{ flex-shrink:0; }
+
+  #page-db-query .qide-explorer-panel .qs-tree-body, #page-db-query .qide-explorer-panel .qide-panel-body{ flex:1;overflow-y:auto !important; }
+
   /* Backdrop — sits between drawer and editor, closes drawer on tap */
-  .qide-panel-backdrop{
+  #page-db-query .qide-panel-backdrop{
     display:none;
     position:fixed;inset:0;
     background:rgba(0,0,0,.52);
     z-index:1199;
   }
-  .qide-panel-backdrop.open{ display:block; }
+
+  #page-db-query .qide-panel-backdrop.open{ display:block; }
+
 }
 /* Panel bodies inside the sidebar (Tables/Schema/Saved/History) */
-.qide-panel-body{ padding:8px 10px 14px; }
-.qide-panel-body #qsTreeBody{ padding:0; }
-.qide-panel-subhead{
+#page-db-query .qide-panel-body{ padding:8px 10px 14px; }
+
+#page-db-query .qide-panel-body #qsTreeBody{ padding:0; }
+
+#page-db-query .qide-panel-subhead{
   font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
   color:var(--jt-text-faint);margin:10px 0 6px;
 }
-.qide-panel-search{
+
+#page-db-query .qide-panel-search{
   display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:6px 9px;
   border:1px solid var(--jt-border);border-radius:8px;background:var(--jt-bg-raised);
   color:var(--jt-text-faint);
 }
-.qide-panel-search input{
+
+#page-db-query .qide-panel-search input{
   flex:1;min-width:0;border:none;background:transparent;outline:none;
   font-size:.78rem;color:var(--jt-text);font-family:var(--font-ui);
 }
-.qide-panel-search input::placeholder{ color:var(--jt-text-faint); }
-.qide-panel-action-btn{
+
+#page-db-query .qide-panel-search input::placeholder{ color:var(--jt-text-faint); }
+
+#page-db-query .qide-panel-action-btn{
   display:flex;align-items:center;gap:6px;width:100%;padding:8px 10px;margin-bottom:8px;
   border:1px solid var(--jt-border);border-radius:8px;background:var(--jt-bg-raised);
   color:var(--jt-text-dim);font-size:.76rem;font-weight:700;cursor:pointer;
 }
-.qide-panel-action-btn:hover{ color:var(--jt-brand-strong);border-color:rgba(31,110,82,.4); }
-.qide-editor-col{ flex:1;min-width:0;display:flex;flex-direction:column; }
+
+#page-db-query .qide-panel-action-btn:hover{ color:var(--jt-brand-strong);border-color:rgba(31,110,82,.4); }
+
+#page-db-query .qide-editor-col{ flex:1;min-width:0;display:flex;flex-direction:column; }
+
 /* ── Results panel: styled like a terminal tab strip + body ── */
-.qide-results-tabbar{ flex-shrink:0;
+#page-db-query .qide-results-tabbar{ flex-shrink:0;
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   padding:0 8px;border-top:1px solid var(--jt-border);
   background:var(--jt-bg-sunken);flex-shrink:0;
 }
-.qide-results-tab{
+
+#page-db-query .qide-results-tab{
   display:flex;align-items:center;gap:6px;padding:8px 12px;
   font-size:.74rem;font-weight:800;letter-spacing:.03em;color:var(--jt-text-dim);
   border-bottom:2px solid var(--jt-brand);
 }
-.qide-results-tab svg{ color:var(--jt-brand-strong); }
+
+#page-db-query .qide-results-tab svg{ color:var(--jt-brand-strong); }
+
 /* Results panel: fills remaining space in the split, with a min height.
    No max-height cap — the flex layout controls sizing instead. */
 /* Results body fills its column and is the ONLY scroll container.
    table-wrap inside it has height:100% to fill the body; the body
    itself scrolls for raw output that exceeds its bounds. */
-.qide-results-body{
+#page-db-query .qide-results-body{
   min-height:0;flex:1;overflow:hidden;background:var(--jt-bg-raised);
   display:flex;flex-direction:column;
   -webkit-overflow-scrolling:touch;
 }
+
 /* table-wrap and raw-output both fill the results body */
-.qide-results-body .qstudio-results-table-wrap{
+#page-db-query .qide-results-body .qstudio-results-table-wrap{
   flex:1;min-height:0;height:auto !important;overflow:auto;
   border-radius:0;border:none;border-top:1px solid var(--jt-border);margin:0;
 }
-.qide-results-body .qstudio-raw-output{
+
+#page-db-query .qide-results-body .qstudio-raw-output{
   flex:1;min-height:0;overflow:auto;padding:14px 16px;
   -webkit-overflow-scrolling:touch;
 }
+
 /* ── Legacy qs2-* selectors reused as-is below this point (editor
    split, gutter, status bar) — restyled to var(--jt-*) tokens
    instead of the old hardcoded dark palette, still responsive. ── */
-.qs2-main{ display:flex;flex-direction:column;min-height:0;flex:1; }
-.qs2-workspace{ display:flex;flex-direction:column;min-height:0;flex:1; }
-.qs2-tabbar{ display:none; }
+#page-db-query .qs2-main{ display:flex;flex-direction:column;min-height:0;flex:1; }
+
+#page-db-query .qs2-workspace{ display:flex;flex-direction:column;min-height:0;flex:1; }
+
+#page-db-query .qs2-tabbar{ display:none; }
+
 /* qs2-split: column stack — editor above, results below.
    Both are flex children with overflow:hidden so neither can
    expand past its share — content scrolls inside each column. */
-.qs2-split{ display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden; }
+#page-db-query .qs2-split{ display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden; }
+
 /* Editor column: 55% of split height, cannot shrink below 100px */
-.qs2-editor-col{ flex:0 0 55%;min-width:0;min-height:100px;max-height:60%;display:flex;flex-direction:column;overflow:hidden; }
+#page-db-query .qs2-editor-col{ flex:0 0 55%;min-width:0;min-height:100px;max-height:60%;display:flex;flex-direction:column;overflow:hidden; }
+
 /* Results column: takes the rest, overflow:hidden locks it — body scrolls inside */
-.qs2-results-col{ flex:1 1 0;min-width:0;min-height:100px;display:flex;flex-direction:column;border-top:1px solid var(--jt-border);overflow:hidden; }
+#page-db-query .qs2-results-col{ flex:1 1 0;min-width:0;min-height:100px;display:flex;flex-direction:column;border-top:1px solid var(--jt-border);overflow:hidden; }
+
 @media(min-width:900px){
-  .qide-body{ flex-direction:row; }
-  .qs2-editor-col{ flex:0 0 58%;max-height:62%; }
-  .qs2-results-col{ flex:1 1 0; }
+  #page-db-query .qide-body{ flex-direction:row; }
+
+  #page-db-query .qs2-editor-col{ flex:0 0 58%;max-height:62%; }
+
+  #page-db-query .qs2-results-col{ flex:1 1 0; }
+
 }
-.qstudio-gutter{
+#page-db-query .qstudio-gutter{
   flex-shrink:0;width:38px;padding:14px 8px 14px 0;text-align:right;
   font-family:var(--font-mono);font-size:.82rem;line-height:1.7;color:var(--jt-text-faint);
   background:rgba(0,0,0,.02);border-right:1px solid var(--jt-border);
   white-space:pre;overflow:hidden;user-select:none;-webkit-user-select:none;
 }
+
 /* Hide gutter on mobile — textarea is plain there (no hl overlay) */
-@media(max-width:900px){ .qstudio-gutter{ display:none; } }
-.qstudio-hl-inner{ position:relative;flex:1;min-width:0; }
-.qs2-status-dot{ width:8px;height:8px;border-radius:50%;background:var(--jt-text-faint);display:inline-block;margin-right:6px; }
-.qs2-status-dot.ok{ background:var(--jt-brand); }
-.qs2-status-dot.err{ background:var(--jt-danger); }
-.qs2-status-dot.running{ background:#f59e0b;animation:pulse 1s infinite; }
-.qs2-statusbar{
+@media(max-width:900px){ #page-db-query .qstudio-gutter{ display:none; }
+ }
+#page-db-query .qstudio-hl-inner{ position:relative;flex:1;min-width:0; }
+
+#page-db-query .qs2-status-dot{ width:8px;height:8px;border-radius:50%;background:var(--jt-text-faint);display:inline-block;margin-right:6px; }
+
+#page-db-query .qs2-status-dot.ok{ background:var(--jt-brand); }
+
+#page-db-query .qs2-status-dot.err{ background:var(--jt-danger); }
+
+#page-db-query .qs2-status-dot.running{ background:#f59e0b;animation:pulse 1s infinite; }
+
+#page-db-query .qs2-statusbar{
   display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
   padding:7px 14px;border-top:1px solid var(--jt-border);background:var(--jt-bg-sunken);
   font-size:.72rem;color:var(--jt-text-faint);font-family:var(--font-mono);flex-shrink:0;
 }
-.qs2-statusbar-left{ display:flex;align-items:center;gap:14px;flex-wrap:wrap; }
-.qs2-statusbar #queryRowCount{ color:var(--jt-text)!important; }
+
+#page-db-query .qs2-statusbar-left{ display:flex;align-items:center;gap:14px;flex-wrap:wrap; }
+
+#page-db-query .qs2-statusbar #queryRowCount{ color:var(--jt-text)!important; }
+
 /* Table/collection explorer content — re-themed to var(--jt-*) */
-.qide-explorer-panel.qs-tree{ background:var(--jt-bg-sunken); border-right:1px solid var(--jt-border); }
-.qide-explorer-panel .qs-tree-head{ color:var(--jt-text-faint); border-bottom-color:var(--jt-border); }
-.qide-explorer-panel .qs-tree-refresh{ color:var(--jt-text-faint); }
-.qide-explorer-panel .qs-tree-refresh:hover{ color:var(--jt-brand-strong); }
-.qide-explorer-panel .qs-tree-empty{ color:var(--jt-text-faint); }
-.qide-explorer-panel .qs-tree-item{ color:var(--jt-text-dim); }
-.qide-explorer-panel .qs-tree-item svg{ color:var(--jt-brand-strong); }
-.qide-explorer-panel .qs-tree-item:hover{ background:rgba(0,0,0,.05); }
-.qide-explorer-panel .qs-tree-item.active{ background:rgba(31,110,82,.12);color:var(--jt-text); }
+#page-db-query .qide-explorer-panel.qs-tree{ background:var(--jt-bg-sunken); border-right:1px solid var(--jt-border); }
+
+#page-db-query .qide-explorer-panel .qs-tree-head{ color:var(--jt-text-faint); border-bottom-color:var(--jt-border); }
+
+#page-db-query .qide-explorer-panel .qs-tree-refresh{ color:var(--jt-text-faint); }
+
+#page-db-query .qide-explorer-panel .qs-tree-refresh:hover{ color:var(--jt-brand-strong); }
+
+#page-db-query .qide-explorer-panel .qs-tree-empty{ color:var(--jt-text-faint); }
+
+#page-db-query .qide-explorer-panel .qs-tree-item{ color:var(--jt-text-dim); }
+
+#page-db-query .qide-explorer-panel .qs-tree-item svg{ color:var(--jt-brand-strong); }
+
+#page-db-query .qide-explorer-panel .qs-tree-item:hover{ background:rgba(0,0,0,.05); }
+
+#page-db-query .qide-explorer-panel .qs-tree-item.active{ background:rgba(31,110,82,.12);color:var(--jt-text); }
+
