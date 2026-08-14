@@ -42762,5 +42762,45 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
 </script>
 <!-- ═══════════════ /Dashboard onboarding tour ═══════════════ -->
 
+<!-- Query Studio: critical structural layout — placed last in document so these
+     rules win regardless of what earlier inline <style> blocks set. All the
+     earlier fixes to theme-override.css were correct but were still being beaten
+     by intermediate inline blocks in document order. This ends that. -->
+<style id="qs-critical-layout">
+  /* Page container: flex column, full height, no padding */
+  #page-db-query.active{display:flex!important;flex-direction:column!important;height:100dvh!important;max-height:100dvh!important;padding:0!important;overflow:hidden!important;}
+  @media(max-width:700px){#page-db-query.active{height:auto!important;overflow:visible!important;padding:12px 10px 32px!important;}}
+
+  /* db-studio-page fills remaining height below .page-back button */
+  #page-db-query.active .db-studio-page{display:flex!important;flex-direction:column!important;flex:1!important;min-height:0!important;height:0!important;overflow:hidden!important;padding:0 12px 12px!important;gap:0!important;}
+
+  /* qide-shell: flex column, fills db-studio-page */
+  #page-db-query.active .qide-shell{display:flex!important;flex-direction:column!important;flex:1!important;min-height:0!important;overflow:hidden!important;}
+
+  /* Titlebar: DB selector + Run button side by side on one row */
+  #page-db-query.active .qide-titlebar{display:flex!important;align-items:center!important;flex-direction:row!important;gap:10px!important;padding:10px 12px!important;flex-shrink:0!important;}
+  #page-db-query.active .qide-titlebar .qstudio-db-bar{flex:1!important;min-width:0!important;}
+  #page-db-query.active .qide-run-btn{display:inline-flex!important;align-items:center!important;gap:6px!important;flex-shrink:0!important;background:#10b981!important;color:#fff!important;border:none!important;border-radius:8px!important;padding:8px 16px!important;font-weight:700!important;cursor:pointer!important;}
+
+  /* Toolbar: single horizontal row, no wrap */
+  #page-db-query.active .qide-toolbar{display:flex!important;flex-direction:row!important;align-items:center!important;flex-shrink:0!important;flex-wrap:nowrap!important;overflow-x:auto!important;}
+
+  /* Body: rail + content side by side */
+  #page-db-query.active .qide-body{display:flex!important;flex-direction:column!important;flex:1!important;min-height:0!important;overflow:hidden!important;}
+  @media(min-width:901px){#page-db-query.active .qide-body{flex-direction:row!important;}}
+
+  /* Rail: vertical icon strip */
+  #page-db-query.active .qide-rail{display:flex!important;flex-direction:column!important;align-items:center!important;flex-shrink:0!important;}
+
+  /* Editor column + results: fill remaining space */
+  #page-db-query.active .qide-editor-col,
+  #page-db-query.active .qs2-workspace{display:flex!important;flex-direction:column!important;flex:1!important;min-height:0!important;min-width:0!important;overflow:hidden!important;}
+  #page-db-query.active .qs2-split{display:flex!important;flex-direction:column!important;flex:1!important;min-height:0!important;}
+  #page-db-query.active .qide-results-body,
+  #page-db-query.active .qs2-results-col{display:flex!important;flex-direction:column!important;flex:1!important;min-height:0!important;overflow:auto!important;}
+
+  /* Statusbar: pinned to bottom */
+  #page-db-query.active .qs2-statusbar{flex-shrink:0!important;}
+</style>
 </body>
 </html>
