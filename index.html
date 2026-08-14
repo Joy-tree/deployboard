@@ -42773,7 +42773,19 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
 /* ── Page-level container — set in index.html near the .page rules
    to avoid cascade fights. Theme-override.css handles child components. */
 
-/* ── Full-height chain (desktop only) ───────────────────────────────────── */
+/* ── Full-height chain ───────────────────────────────────────────────────── */
+/* db-studio-page fills everything below the page-back button */
+#page-db-query.active .db-studio-page {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 12px 12px !important;
+  gap: 0 !important;
+}
+
 /* ── Shell: the outer container ─────────────────────────────────────────── */
 #page-db-query .qide-shell {
   display: flex;
@@ -42806,12 +42818,12 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
 #page-db-query .qide-run-btn {
   display: flex; align-items: center; gap: 6px;
   padding: 7px 16px;
-  background: var(--jt-brand); color: #fff;
+  background: #10b981; color: #fff;
   border: none; border-radius: 8px;
   font-size: .82rem; font-weight: 600; cursor: pointer;
   flex-shrink: 0; white-space: nowrap;
 }
-#page-db-query .qide-run-btn:hover { background: var(--jt-brand-strong); }
+#page-db-query .qide-run-btn:hover { background: #059669; }
 #page-db-query .qide-run-btn svg { flex-shrink: 0; }
 
 /* ── Toolbar ─────────────────────────────────────────────────────────────── */
