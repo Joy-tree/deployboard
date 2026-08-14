@@ -2480,16 +2480,31 @@ html[data-theme="light"] .step-icon.active {
    All rules scoped to #page-db-query. Edit only here, not in index.html.
    ========================================================================== */
 
+/* ── Page-level container overrides ─────────────────────────────────────── */
+/* .page.active defaults to display:block + overflow-y:auto + padding:28px.
+   The query studio needs the page container itself to be a flex column that
+   fills the full viewport height, with no padding and no scroll on the
+   outer container (the child panels manage their own scroll independently). */
+#page-db-query {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  max-height: 100dvh !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
 /* ── Full-height chain ─────────────────────────────────────────────────── */
-/* Override the global .db-studio-page height:calc(100vh-120px) which breaks
-   the flex chain. Use fixed viewport-based height on the shell instead. */
+/* .db-studio-page fills the remaining space below the page-back button. */
 #page-db-query .db-studio-page {
   display: flex !important;
   flex-direction: column !important;
-  height: calc(100dvh - 56px) !important; /* 56px = top nav height */
+  flex: 1 !important;
   min-height: 0 !important;
+  height: 0 !important; /* flex-basis trick: lets flex:1 take over properly */
   gap: 0 !important;
   overflow: hidden !important;
+  padding: 0 12px 12px !important;
 }
 
 /* ── Shell: the outer container ─────────────────────────────────────────── */
