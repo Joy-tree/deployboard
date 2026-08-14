@@ -12309,7 +12309,18 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
     memoryLimit: runtimeProfile.memoryLimit,
     cpuShares: runtimeProfile.cpuShares,
     memorySwap: runtimeProfile.memorySwap,
-    envVars: envVars || {},
+    // [FIX] Was `envVars: envVars || {}`, unconditionally. Every redeploy of
+    // an existing upload project (via "New Version") spreads this whole
+    // projectRecord over the stored one both in Firebase (below) and in the
+    // Mongo upsert further down, which directly spreads projectRecord too.
+    // An empty/incomplete envVars in the request -- for any reason, not
+    // just a known one -- would silently wipe whatever was already saved,
+    // and previously-saved vars would never show up again on the Env
+    // Variables page for that project. GitHub's /api/deploy already guards
+    // this exact way; upload-deploy never had the same protection.
+    ...(envVars && typeof envVars === 'object' && Object.keys(envVars).length > 0
+      ? { envVars }
+      : {}),
     isDockerfileDeploy: false,
     isWorker: false,
     ownerUserId: userId,
@@ -12343,9 +12354,23 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
     ws.projects = Array.isArray(ws.projects) ? ws.projects : [];
     ws.deployments = Array.isArray(ws.deployments) ? ws.deployments : [];
     // Upsert project
+    // [FIX] Was a blind `{...existing, ...projectRecord}`. Since
+    // projectRecord.envVars is now conditionally present (see above),
+    // this alone stops an empty request from wiping stored vars -- but
+    // when the request DOES include envVars, a plain spread would still
+    // fully REPLACE the existing set rather than merge into it, silently
+    // dropping any previously-saved key not present in this particular
+    // request. Merge explicitly instead, matching exactly how
+    // syncDeploymentProjectToFirebase already handles this for GitHub
+    // deploys.
     const existingProjIdx = ws.projects.findIndex(p => p.subdomain === cleanSub || p.id === cleanSub);
-    if (existingProjIdx >= 0) ws.projects[existingProjIdx] = { ...ws.projects[existingProjIdx], ...projectRecord };
-    else ws.projects.push(projectRecord);
+    if (existingProjIdx >= 0) {
+      const merged = { ...ws.projects[existingProjIdx], ...projectRecord };
+      merged.envVars = { ...(ws.projects[existingProjIdx].envVars || {}), ...(projectRecord.envVars || {}) };
+      ws.projects[existingProjIdx] = merged;
+    } else {
+      ws.projects.push(projectRecord);
+    }
     // Add deployment
     ws.deployments.unshift(deploymentRecord);
     if (ws.deployments.length > 100) ws.deployments = ws.deployments.slice(0, 100);
