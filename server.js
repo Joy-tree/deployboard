@@ -6520,9 +6520,21 @@ app.post('/api/proxy-test', async (req, res) => {
 async function resolveEnvProject(req) {
   const projectId = String(req.params.id || '').trim();
   if (!projectId) return { project: null, source: null };
-  if (mongoose.Types.ObjectId.isValid(projectId)) {
-    const project = await Project.findById(projectId);
-    if (project) return { project, source: 'db' };
+  // [FIX] This account (like most on this platform) runs Firebase-only —
+  // MONGODB_URI isn't set, so mongoose.connect() is never even called, and
+  // mongoose.connection.readyState stays permanently 0 (disconnected).
+  // Mongoose's default behavior on a disconnected connection is to BUFFER
+  // the query rather than fail immediately, which then times out after
+  // ~10s (bufferTimeoutMS) and rejects — and since this call had no
+  // try/catch, that rejection would crash straight out of this function
+  // instead of falling through to the Firebase lookup below, which has
+  // the actual (correct) data the whole time. isDbReady() is the same
+  // guard already used elsewhere in this file for exactly this reason.
+  if (isDbReady() && mongoose.Types.ObjectId.isValid(projectId)) {
+    try {
+      const project = await Project.findById(projectId);
+      if (project) return { project, source: 'db' };
+    } catch (_e) { /* fall through to Firebase */ }
   }
 
   // Prefer live workspace from Firebase so env updates done by other endpoints are immediately visible
