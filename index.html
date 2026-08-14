@@ -1794,13 +1794,12 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
 }
 .page { overflow-y:auto; overflow-x:hidden; }
 .page { display:none; height:100%; overflow-y:auto; overflow-x:hidden; padding:28px 28px; -webkit-overflow-scrolling:touch; }
-/* db-query page: full-height flex column, no outer scroll */
-#page-db-query { display:flex !important; flex-direction:column !important; height:100dvh !important; padding:0 !important; overflow:hidden !important; }
+/* db-query page: full-height flex column when active, no outer scroll */
+#page-db-query.active { display:flex !important; flex-direction:column !important; height:100dvh !important; padding:0 !important; overflow:hidden !important; }
 @media (max-width: 700px) {
-  #page-db-query { height: auto !important; min-height: 100%; overflow: visible !important; padding:12px 10px 32px !important; }
+  #page-db-query.active { height: auto !important; overflow: visible !important; padding:12px 10px 32px !important; }
 }
 .page.active { display:block; }
-#page-db-query.active { display:flex !important; }
 
 /* ── Page header ───────────────────────────────────────────────────────── */
 .page-header { margin-bottom: 28px; }
