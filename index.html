@@ -6826,7 +6826,7 @@ window.landingToggleTheme = function(){
   /* Center: JoyTree logo core */
   .orbit-core{
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    width:29%;aspect-ratio:1/1;border-radius:50%;
+    width:19%;aspect-ratio:1/1;border-radius:50%;
     background:var(--bg);border:1px solid var(--border);
     display:flex;align-items:center;justify-content:center;
     z-index:3;
@@ -43236,25 +43236,25 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
     position:absolute; top:0; left:0;
     transform:translate(-50%,-50%) scale(0);
     width:40px; height:40px; border-radius:50%;
-    background:radial-gradient(circle at 34% 30%, #1a5c41, #06301f);
-    border:1px solid rgba(52,211,153,.4);
-    box-shadow:0 8px 20px rgba(0,0,0,.4), 0 0 0 1px rgba(16,185,129,.08);
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    box-shadow:0 6px 16px rgba(0,0,0,.22);
     display:flex; align-items:center; justify-content:center;
     opacity:0;
-    transition:transform .38s cubic-bezier(.34,1.56,.64,1), opacity .28s ease, border-color .2s, box-shadow .2s;
+    transition:transform .38s cubic-bezier(.34,1.56,.64,1), opacity .28s ease, border-color .2s, background .2s;
     cursor:pointer;
   }
-  .jh-fruit-btn svg{ width:17px; height:17px; color:#6ee7b7; }
+  .jh-fruit-btn svg{ width:17px; height:17px; color:var(--green); }
   .jh-fruit-btn:hover{
-    border-color:rgba(52,211,153,.85);
-    box-shadow:0 10px 26px rgba(16,185,129,.35), 0 0 0 1px rgba(16,185,129,.2);
+    border-color:rgba(16,185,129,.45);
+    background:var(--bg-2);
   }
   .jh-fruit-label{
     position:absolute; top:0; right:calc(100% + 10px);
     transform:translateY(-50%) translateX(6px);
     white-space:nowrap;
-    font-size:.72rem; font-weight:700; color:#e8fff4;
-    background:#06140f; border:1px solid rgba(16,185,129,.25);
+    font-size:.72rem; font-weight:700; color:var(--text);
+    background:var(--bg-3); border:1px solid var(--border);
     padding:5px 10px; border-radius:8px;
     opacity:0; pointer-events:none;
     transition:opacity .18s ease, transform .18s ease;
@@ -43273,15 +43273,6 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   #jhTree.open .jh-fruit[data-n="3"] .jh-fruit-btn{ transition-delay:.17s; transform:translate(calc(-50% - 42px),calc(-50% + 22px)) scale(1); }
   #jhTree.open .jh-fruit[data-n="4"] .jh-fruit-btn{ transition-delay:.22s; transform:translate(calc(-50% - 50px),calc(-50% - 30px)) scale(1); }
 
-  #jhTree::before{
-    content:''; position:absolute; left:50%; top:30px;
-    width:0; height:0; border-radius:50%; transform:translate(-50%,-50%);
-    background:radial-gradient(circle, rgba(16,185,129,.35), transparent 70%);
-    transition:width .4s ease, height .4s ease, opacity .4s ease;
-    opacity:0; pointer-events:none; z-index:-1;
-  }
-  #jhTree.open::before{ width:220px; height:220px; opacity:1; }
-
   #jhTreeBackdrop{
     position:fixed; inset:0; z-index:9199;
     background:rgba(2,8,5,0);
@@ -43294,6 +43285,12 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
     #jhTree{ right:10px; bottom:8px; width:64px; height:94px; }
     .jh-fruit-btn{ width:36px; height:36px; }
     .jh-fruit-btn svg{ width:15px; height:15px; }
+
+    #jhTree.open .jh-fruit[data-n="0"] .jh-fruit-btn{ transform:translate(calc(-50% + 0px),calc(-50% - 56px)) scale(1); }
+    #jhTree.open .jh-fruit[data-n="1"] .jh-fruit-btn{ transform:translate(calc(-50% - 40px),calc(-50% - 40px)) scale(1); }
+    #jhTree.open .jh-fruit[data-n="2"] .jh-fruit-btn{ transform:translate(calc(-50% - 56px),calc(-50% + 0px)) scale(1); }
+    #jhTree.open .jh-fruit[data-n="3"] .jh-fruit-btn{ transform:translate(calc(-50% - 40px),calc(-50% + 40px)) scale(1); }
+    #jhTree.open .jh-fruit[data-n="4"] .jh-fruit-btn{ transform:translate(calc(-50% + 0px),calc(-50% + 56px)) scale(1); }
   }
 </style>
 
@@ -43443,7 +43440,7 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   }
 
   function jhAnimate(){
-    var tl = new TimelineMax({ delay:0.3, repeat:-1, repeatDelay:1.4, yoyo:true });
+    var tl = new TimelineMax({ delay:0.42, repeat:-1, repeatDelay:2, yoyo:true });
     tl.to("#jhtShadow", 2, { scale:1 }, 0)
       .to("#jhtTree", 2, { scale:1 }, 0)
       .to("#jhtLeafRb", 2, { scale:1, rotation:'0cw', y:0, delay:.35 }, 0)
