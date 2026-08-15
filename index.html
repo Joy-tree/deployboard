@@ -6069,7 +6069,7 @@ window.landingToggleTheme = function(){
     <a class="ld-link ld-animate" href="#how-it-works" onclick="closeLandingDrawer()"><div class="ld-link-icon" style="color:#06b6d4"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></div><span>How It Works</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
     <a class="ld-link ld-animate" href="#" onclick="showPublicDocs();closeLandingDrawer();return false;"><div class="ld-link-icon" style="color:#8b5cf6"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><span>Docs &amp; Snippets</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
     <a class="ld-link ld-animate" href="#" onclick="showPublicFounders();closeLandingDrawer();return false;"><div class="ld-link-icon" style="color:#34d399"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7z"/><circle cx="12" cy="10" r="2.2"/><path d="M8.5 16c1.2-1.6 2.5-2.4 3.5-2.4s2.3.8 3.5 2.4"/></svg></div><span>Founders</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
-    <a class="ld-link ld-animate" href="#" onclick="showDashboard();showPage('pricing');closeLandingDrawer();return false;"><div class="ld-link-icon" style="color:#f59e0b"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><span>Pricing Plans</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
+    <a class="ld-link ld-animate" href="#" onclick="closeLandingDrawer();document.getElementById('pricing').scrollIntoView({behavior:'smooth',block:'start'});return false;"><div class="ld-link-icon" style="color:#f59e0b"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><span>Pricing Plans</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
 
     <div class="ld-section-label ld-animate">Language Kickstarts</div>
     <a class="ld-link lang ld-animate" href="#lang-nodejs" onclick="closeLandingDrawer()"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js"><div class="ld-lang-info"><span class="ld-lang-name">Node.js</span><span class="ld-lang-sub">Express · Fastify · NestJS</span></div><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
@@ -8404,6 +8404,223 @@ window.landingToggleTheme = function(){
     <div class="cta-note"><span>Free to self-host.</span> No limits. No vendor lock-in.</div>
   </div>
 </section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PRICING — public landing-page pricing, so visitors can see real
+     numbers without being routed through login first. Mirrors the exact
+     plans/prices from the authenticated dashboard pricing page (#page-
+     pricing) so nothing here is invented. CTA buttons send visitors to
+     sign up (showDashboard routes unauthenticated users to signup),
+     same pattern as every other landing CTA on this page.
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="ld-pricing-section" id="pricing" aria-label="Pricing">
+<style>
+  .ld-pricing-section{
+    padding:110px max(20px,5vw) 100px;
+    background:var(--bg-2);
+    border-top:1px solid var(--border);
+    position:relative; overflow:hidden;
+  }
+  .ld-pricing-section::before{
+    content:''; position:absolute; left:50%; top:-10%; width:900px; height:600px;
+    transform:translateX(-50%); pointer-events:none; z-index:0;
+    background:radial-gradient(ellipse 50% 45% at 50% 0%, rgba(16,185,129,.09), transparent 70%);
+  }
+  .ld-pricing-eyebrow{
+    position:relative; z-index:1;
+    text-align:center; font-size:.68rem; font-weight:700; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--green); margin-bottom:14px;
+  }
+  .ld-pricing-headline{
+    position:relative; z-index:1;
+    text-align:center; font-size:clamp(1.7rem,4vw,2.7rem); font-weight:800;
+    letter-spacing:-.03em; color:var(--text); margin-bottom:14px; line-height:1.15;
+  }
+  .ld-pricing-sub{
+    position:relative; z-index:1;
+    text-align:center; font-size:clamp(.9rem,1.7vw,1.08rem); color:var(--text-2);
+    max-width:560px; margin:0 auto 56px; line-height:1.6;
+  }
+
+  .ld-pricing-grid{
+    position:relative; z-index:1;
+    display:grid; grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:14px; max-width:1280px; margin:0 auto;
+  }
+
+  .ld-price-card{
+    background:var(--bg); border:1px solid var(--border); border-radius:18px;
+    padding:26px 20px; display:flex; flex-direction:column;
+    position:relative; overflow:hidden;
+    transition:transform .25s cubic-bezier(.2,.8,.2,1), border-color .25s, box-shadow .25s;
+  }
+  .ld-price-card:hover{
+    transform:translateY(-6px);
+    border-color:rgba(16,185,129,.35);
+    box-shadow:0 20px 44px rgba(0,0,0,.28);
+  }
+
+  .ld-price-card.popular{
+    background:linear-gradient(180deg, rgba(16,185,129,.07), var(--bg) 60%);
+    border-color:rgba(16,185,129,.4);
+    box-shadow:0 0 0 1px rgba(16,185,129,.15), 0 24px 60px rgba(16,185,129,.12);
+    transform:translateY(-10px);
+  }
+  .ld-price-card.popular:hover{ transform:translateY(-14px); }
+
+  .ld-price-badge{
+    position:absolute; top:0; left:50%; transform:translateX(-50%);
+    background:var(--green); color:#052e16;
+    font-size:.6rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+    padding:5px 14px; border-radius:0 0 9px 9px;
+  }
+
+  .ld-price-name{
+    font-size:.8rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--text-3); margin-bottom:16px;
+  }
+  .ld-price-card.popular .ld-price-name{ color:#86efac; margin-top:10px; }
+
+  .ld-price-amount{
+    font-size:2.1rem; font-weight:800; letter-spacing:-.04em; color:var(--text);
+    line-height:1; margin-bottom:6px; display:flex; align-items:baseline; gap:2px;
+  }
+  .ld-price-amount sup{ font-size:1rem; font-weight:700; color:var(--text-3); }
+  .ld-price-amount sub{ font-size:.72rem; font-weight:600; color:var(--text-3); align-self:flex-end; }
+
+  .ld-price-desc{
+    font-size:.78rem; color:var(--text-3); line-height:1.55; margin-bottom:20px; min-height:52px;
+  }
+
+  .ld-price-feats{ list-style:none; padding:0; margin:0 0 22px; display:grid; gap:10px; flex:1; }
+  .ld-price-feats li{
+    display:flex; align-items:flex-start; gap:8px;
+    font-size:.79rem; color:var(--text-2); line-height:1.45;
+  }
+  .ld-price-feats li svg{ flex-shrink:0; margin-top:2px; color:var(--green); }
+
+  .ld-price-btn{
+    width:100%; padding:12px 0; border-radius:10px; margin-top:auto;
+    border:1px solid var(--border); background:transparent;
+    color:var(--text-2); font-family:var(--font-ui); font-size:.84rem; font-weight:700;
+    cursor:pointer; transition:all .18s;
+  }
+  .ld-price-btn:hover{ border-color:rgba(16,185,129,.4); color:var(--text); }
+  .ld-price-card.popular .ld-price-btn{
+    background:var(--green); border-color:var(--green); color:#052e16;
+  }
+  .ld-price-card.popular .ld-price-btn:hover{ background:#0da271; }
+
+  .ld-pricing-trust{
+    position:relative; z-index:1;
+    display:flex; align-items:center; justify-content:center; gap:32px; flex-wrap:wrap;
+    margin:52px auto 0; max-width:820px;
+  }
+  .ld-pricing-trust-item{
+    display:flex; align-items:center; gap:8px; font-size:.82rem; color:var(--text-3);
+  }
+  .ld-pricing-trust-item svg{ color:var(--green); flex-shrink:0; }
+
+  @media(max-width:1080px){
+    .ld-pricing-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .ld-price-card.popular{ order:-1; grid-column:1/-1; transform:none; }
+    .ld-price-card.popular:hover{ transform:translateY(-6px); }
+  }
+  @media(max-width:640px){
+    .ld-pricing-section{ padding:72px 16px 64px; }
+    .ld-pricing-grid{ grid-template-columns:1fr 1fr; gap:12px; }
+    .ld-price-card{ padding:20px 16px; }
+    .ld-pricing-sub{ margin-bottom:40px; }
+    .ld-pricing-trust{ gap:16px; margin-top:36px; }
+  }
+</style>
+
+  <p class="ld-pricing-eyebrow">Simple, transparent pricing</p>
+  <h2 class="ld-pricing-headline">Pay for what you use.</h2>
+  <p class="ld-pricing-sub">Every plan includes live logs, SSL, custom domains, and instant rollbacks. No surprise fees, no forced login just to see a number.</p>
+
+  <div class="ld-pricing-grid">
+
+    <!-- Free -->
+    <div class="ld-price-card">
+      <div class="ld-price-name">Free</div>
+      <div class="ld-price-amount">₵0<sub>/mo</sub></div>
+      <div class="ld-price-desc">Get started at no cost. Perfect for side projects and prototypes.</div>
+      <ul class="ld-price-feats">
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>0.80 GB app RAM · 512MB DB</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>2 GB storage · 100 GB bandwidth</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>5 projects · 3 databases · 5 APIs</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Joytree AI v1 API builder</li>
+      </ul>
+      <button class="ld-price-btn" onclick="showDashboard();return false;">Start free</button>
+    </div>
+
+    <!-- Starter -->
+    <div class="ld-price-card">
+      <div class="ld-price-name">Starter</div>
+      <div class="ld-price-amount"><sup>₵</sup>20<sub>/mo</sub></div>
+      <div class="ld-price-desc">A dedicated environment for early-stage apps and experiments.</div>
+      <ul class="ld-price-feats">
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>1 GB app RAM · 1 GB DB</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>10 GB storage · 250 GB bandwidth</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>10 projects · 8 databases · 20 APIs</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Joytree AI v2 dual-engine</li>
+      </ul>
+      <button class="ld-price-btn" onclick="showDashboard();return false;">Get Starter</button>
+    </div>
+
+    <!-- Pro (Popular) -->
+    <div class="ld-price-card popular">
+      <div class="ld-price-badge">Most popular</div>
+      <div class="ld-price-name">Pro</div>
+      <div class="ld-price-amount"><sup>₵</sup>30<sub>/mo</sub></div>
+      <div class="ld-price-desc">Stable production apps with room to scale confidently.</div>
+      <ul class="ld-price-feats">
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>2 GB app RAM · 2 GB DB</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>35 GB storage · 500 GB bandwidth</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>20 projects · 20 databases · 60 APIs</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Priority support + AI v2</li>
+      </ul>
+      <button class="ld-price-btn" onclick="showDashboard();return false;">Get Pro</button>
+    </div>
+
+    <!-- Growth -->
+    <div class="ld-price-card">
+      <div class="ld-price-name">Growth</div>
+      <div class="ld-price-amount"><sup>₵</sup>60<sub>/mo</sub></div>
+      <div class="ld-price-desc">High-traffic production workloads that need serious headroom.</div>
+      <ul class="ld-price-feats">
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>5 GB app RAM · 5 GB DB</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>60 GB storage · 1 TB bandwidth</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>35 projects · 50 databases · 150 APIs</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Custom domains + SSL</li>
+      </ul>
+      <button class="ld-price-btn" onclick="showDashboard();return false;">Get Growth</button>
+    </div>
+
+    <!-- Scale Max -->
+    <div class="ld-price-card">
+      <div class="ld-price-name">Scale Max</div>
+      <div class="ld-price-amount"><sup>₵</sup>180<sub>/mo</sub></div>
+      <div class="ld-price-desc">Unlimited capacity for large teams and heavy production traffic.</div>
+      <ul class="ld-price-feats">
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>6 GB app RAM · 16 GB DB</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited storage + bandwidth</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>120 projects · 200 databases · 500 APIs</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Claude real-time AI build fixing</li>
+      </ul>
+      <button class="ld-price-btn" onclick="showDashboard();return false;">Get Scale Max</button>
+    </div>
+
+  </div>
+
+  <div class="ld-pricing-trust">
+    <span class="ld-pricing-trust-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Instant activation after payment</span>
+    <span class="ld-pricing-trust-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Paystack-secured MoMo &amp; card checkout</span>
+    <span class="ld-pricing-trust-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Cancel or change plan anytime</span>
+  </div>
+</section>
+
 
 <!-- ── FOOTER ─────────────────────────────────────────────────────── -->
 <footer>
