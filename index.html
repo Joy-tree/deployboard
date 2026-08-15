@@ -24742,12 +24742,26 @@ async function manualDeployAction(type){
 }
 document.addEventListener('click', (e)=>{ if(!e.target.closest('#manualDeployMenu')) document.getElementById('manualDeployMenu')?.classList.remove('open'); });
 
+// [FEATURE] Tracks which project's runtime log stream is currently piped
+// into the terminal, so switching to a different deployment's logs stops
+// the old stream instead of leaving it running in the background forever
+// (exactly the kind of unbounded-resource-usage the backend fix for
+// crash-looping containers was also about avoiding).
+let _terminalAttachedRuntimeProjectId = null;
+
 function viewDeployLogs(deployId) {
   activeBuildId = deployId;
   showPage('logs');
   updateLogsHero(deployments.find(x => x.id === deployId));
   const d = deployments.find(x => x.id === deployId);
   if (d?.status === 'building') showMatrixTerminal(d); else hideMatrixTerminal();
+
+  // Stop any previous terminal-attached runtime stream before switching
+  if (_terminalAttachedRuntimeProjectId && _terminalAttachedRuntimeProjectId !== d?.projectId) {
+    stopRuntimeLogs(_terminalAttachedRuntimeProjectId);
+    _terminalAttachedRuntimeProjectId = null;
+  }
+
   if (d) {
     const lines = Array.isArray(d.logs) ? d.logs : [];
     logBuffer = lines.slice();
@@ -24761,6 +24775,22 @@ function viewDeployLogs(deployId) {
     document.getElementById('termTitle').textContent = d.projectName + ' · ' + d.id.slice(-8);
     document.getElementById('termStatus').innerHTML = statusBadge(d.status);
     updateTerminalEmptyState();
+
+    // [FEATURE] For server apps, keep the terminal alive past the build --
+    // attach the same live runtime log stream used on the Project Detail
+    // page, so every request/console line the running app produces after
+    // deployment keeps appearing here too, isolated to this project via
+    // the existing per-project SSE endpoint (/api/projects/:id/runtime-logs).
+    const proj = (typeof projects !== 'undefined' ? projects : [])
+      .find(p => String(p.id || p._id || '') === String(d.projectId));
+    const isServerApp = proj && String(proj.siteType || '').toLowerCase() === 'server';
+    if (isServerApp && d.status === 'success') {
+      _terminalAttachedRuntimeProjectId = d.projectId;
+      writeTerm('');
+      writeTerm('\x1b[36m━━━ Live App Logs — streaming ━━━\x1b[0m');
+      _runtimeLogStopped[d.projectId] = false;
+      _startRuntimeLogStream(d.projectId, false);
+    }
   }
 }
 
@@ -27531,6 +27561,20 @@ var _runtimeLogRetryTimers = {};
 var _runtimeLogStopped = {};
 
 function _runtimeLogLine(projectId, text) {
+  // [FEATURE] The Deployments page's "View Logs" button opens the build
+  // terminal (viewDeployLogs -> showPage('logs')), a completely different
+  // view from the Project Detail page's "Runtime Logs" card that this
+  // function was originally written for -- so live app logs never showed
+  // up there, and the terminal just went quiet the instant the build
+  // finished. Forward every runtime line into the SAME terminal whenever
+  // it's currently showing a deployment for this project, so build logs
+  // flow seamlessly into live request/console output with no visible seam.
+  const activeDep = (typeof deployments !== 'undefined' && typeof activeBuildId !== 'undefined')
+    ? deployments.find(x => x.id === activeBuildId) : null;
+  if (activeDep && String(activeDep.projectId) === String(projectId)) {
+    writeTerm(String(text || ''));
+  }
+
   const out = document.getElementById('runtimeLogsOutput-' + projectId);
   if (!out) return;
   if (out.textContent === 'Runtime logs will appear here…') out.textContent = '';
