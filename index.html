@@ -6821,26 +6821,19 @@ window.landingToggleTheme = function(){
   .orbit-ring.inner{ inset:16%; border-color:rgba(16,185,129,.14); }
 
   /* Soft ambient glow behind the whole diagram */
-  .orbit-stage::before{
-    content:'';position:absolute;inset:-15%;z-index:-1;border-radius:50%;
-    background:radial-gradient(circle,rgba(16,185,129,.1),transparent 68%);
-    pointer-events:none;
-  }
+  /* Ambient glow removed — clean flat backdrop behind the diagram */
 
   /* Center: JoyTree logo core */
   .orbit-core{
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
     width:29%;aspect-ratio:1/1;border-radius:50%;
-    background:linear-gradient(150deg,#1F6E52,#0d3d2c);
+    background:var(--bg);border:1px solid var(--border);
     display:flex;align-items:center;justify-content:center;
-    box-shadow:0 0 0 1px rgba(16,185,129,.35),
-               0 0 50px rgba(16,185,129,.35),
-               0 20px 44px rgba(0,0,0,.4),
-               inset 0 0 0 1px rgba(255,255,255,.06);
     z-index:3;
+    overflow:hidden;
   }
   .orbit-core img{
-    width:52%;height:52%;object-fit:contain;border-radius:14px;
+    width:100%;height:100%;object-fit:cover;border-radius:50%;
   }
 
   .orbit-nodes{
@@ -6862,16 +6855,20 @@ window.landingToggleTheme = function(){
     transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;
   }
   .orbit-icon svg{width:26px;height:26px;}
-  .orbit-node:hover .orbit-icon{
+  .orbit-node:hover .orbit-icon,
+  .orbit-node.jh-active .orbit-icon{
     transform:translateY(-4px) scale(1.08);
     border-color:rgba(16,185,129,.5);
     box-shadow:0 16px 34px rgba(16,185,129,.25),0 0 0 1px rgba(16,185,129,.3);
   }
+  .orbit-node.jh-active .orbit-icon{ color:var(--green); }
   .orbit-label{
     font-size:.64rem;font-weight:700;letter-spacing:.04em;
     color:var(--text-3);white-space:nowrap;
     background:var(--bg-2);padding:2px 8px;border-radius:6px;
+    transition:color .4s ease;
   }
+  .orbit-node.jh-active .orbit-label{ color:var(--green); }
 
   /* Connector lines: drawn once as a static SVG overlay so they don't
      rotate with the icons — always point from ring edge to center. */
@@ -6883,7 +6880,7 @@ window.landingToggleTheme = function(){
     .orbit-icon{width:44px;height:44px;border-radius:12px;}
     .orbit-icon svg{width:20px;height:20px;}
     .orbit-label{font-size:.56rem;padding:1px 6px;}
-    .orbit-core img{width:50%;height:50%;}
+    /* orbit-core img already fills the circle at 100% — no override needed */
   }
 
   html[data-theme="light"] .orbit-icon{
@@ -6894,7 +6891,7 @@ window.landingToggleTheme = function(){
     background:var(--jt-bg-sunken);color:var(--jt-text-faint);
   }
   html[data-theme="light"] .orbit-core{
-    background:linear-gradient(150deg,#1F6E52,#134736);
+    background:var(--jt-bg-raised);border-color:var(--jt-border);
   }
 </style>
 
@@ -6953,6 +6950,60 @@ window.landingToggleTheme = function(){
     </div>
     </div>
   </div>
+
+  <script>
+  (function(){
+    // Gently auto-cycles a highlighted "active" state around the orbit
+    // nodes, one at a time, in the same clockwise order they're drawn —
+    // so visitors notice each capability in turn without needing to hover.
+    // Pauses while the user is actually interacting with a node, and
+    // respects reduced-motion.
+    var stage = document.currentScript.closest('.orbit-stage');
+    if (!stage) return;
+    var nodes = Array.prototype.slice.call(stage.querySelectorAll('.orbit-node'));
+    if (!nodes.length) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var idx = -1;
+    var timer = null;
+    var paused = false;
+
+    function step(){
+      if (paused) return;
+      nodes.forEach(function(n){ n.classList.remove('jh-active'); });
+      idx = (idx + 1) % nodes.length;
+      nodes[idx].classList.add('jh-active');
+    }
+
+    function start(){
+      if (timer) return;
+      timer = setInterval(step, 1900);
+    }
+    function stop(){
+      clearInterval(timer);
+      timer = null;
+    }
+
+    nodes.forEach(function(n){
+      n.addEventListener('mouseenter', function(){
+        paused = true;
+        nodes.forEach(function(x){ x.classList.remove('jh-active'); });
+      });
+      n.addEventListener('mouseleave', function(){
+        paused = false;
+      });
+    });
+
+    // Only run while the section is actually visible on screen
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { step(); start(); }
+        else { stop(); nodes.forEach(function(n){ n.classList.remove('jh-active'); }); }
+      });
+    }, { threshold: 0.35 });
+    io.observe(stage);
+  })();
+  </script>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════
