@@ -2601,3 +2601,116 @@ html[data-theme="light"] .schema-actions {
   background: var(--jt-bg-raised) !important;
   border-color: var(--jt-border) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AI QUERY ASSISTANT MODAL — the overlay backdrop (#aiQueryModal reuses
+   .qstudio-create-table-modal) had background:rgba(0,0,0,.82-.88) with
+   no theme guard, turning the entire page solid black behind the modal
+   in light theme. Replaced with a soft translucent dark-green veil that
+   reads as "dimmed" without hiding the light-mode page entirely; the
+   modal card box gets the proper light surface treatment below.
+   ═══════════════════════════════════════════════════════════════════════ */
+html[data-theme="light"] #aiQueryModal {
+  background: rgba(16,33,27,.48) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+html[data-theme="light"] #aiQueryModal .qstudio-create-table-box {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 32px 80px rgba(0,0,0,.18), 0 0 0 1px rgba(31,110,82,.1) !important;
+}
+html[data-theme="light"] #aiQueryModal .qstudio-create-table-head {
+  background: var(--jt-bg-sunken) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #aiQueryModal .qstudio-create-table-title {
+  color: var(--jt-text) !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+}
+html[data-theme="light"] #aiQueryModal textarea,
+html[data-theme="light"] #aiQueryModal .qstudio-ct-input {
+  background: var(--jt-bg-sunken) !important;
+  color: var(--jt-text) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #aiQueryModal .qstudio-ct-preview {
+  color: var(--jt-brand-strong) !important;
+}
+html[data-theme="light"] #aiQueryModal .qstudio-create-table-foot {
+  background: var(--jt-bg-sunken) !important;
+  border-top-color: var(--jt-border) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   QUERY PAGE OUTER WRAPPER — the "< Back to Databases" bar area showed
+   a dark background because #page-db-query had no explicit background
+   in light mode. The .qide-shell / .qide-titlebar use var(--jt-bg-*)
+   which do switch correctly, but the outer page div and .db-studio-page
+   didn't, so the area between the topbar and the studio card appeared
+   as whatever the parent's unset dark background was. Explicit fix here.
+   ═══════════════════════════════════════════════════════════════════════ */
+html[data-theme="light"] #page-db-query {
+  background: var(--jt-bg-sunken) !important;
+}
+html[data-theme="light"] #page-db-query .db-studio-page {
+  background: var(--jt-bg-sunken) !important;
+}
+html[data-theme="light"] #page-db-query .qide-shell,
+html[data-theme="light"] #page-db-query .qs2-shell {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-db-query .qide-titlebar {
+  background: var(--jt-bg-sunken) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
+/* Query page dark element belt-and-braces — the nuclear ID-scoped rules
+   at #page-db-query .qstudio-db-bar/body/toolbar/side all use !important
+   so we match the same selector with [data-theme="light"] for higher
+   specificity, guaranteeing these flip correctly in light theme. */
+html[data-theme="light"] #page-db-query .qstudio-db-bar {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-db-query .qstudio-body {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-db-query .qstudio-toolbar {
+  background: var(--jt-bg-sunken) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-db-query .qstudio-side {
+  background: var(--jt-bg-sunken) !important;
+  border-right-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-db-query .qstudio-db-dropdown {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   COMPARE DATABASES HERO — belt-and-braces re-assert with version bump.
+   Browsers caching theme-override.css?v=11 from before the diff-hero
+   fix was added still show the dark #0d0d0d card. The version bump to
+   v12 forces a fresh fetch; these rules are the correct values.
+   ═══════════════════════════════════════════════════════════════════════ */
+html[data-theme="light"] .diff-hero {
+  background:
+    radial-gradient(ellipse 55% 44% at 8% 12%, rgba(31,110,82,.07), transparent),
+    var(--jt-bg-raised) !important;
+  border-color: rgba(31,110,82,.2) !important;
+  box-shadow: 0 0 0 1px rgba(31,110,82,.05), 0 14px 44px rgba(0,0,0,.06) !important;
+}
+html[data-theme="light"] .diff-hero-title {
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .diff-hero-kicker {
+  color: var(--jt-brand-strong) !important;
+}
+html[data-theme="light"] .diff-hero-sub {
+  color: var(--jt-text-faint) !important;
+}
