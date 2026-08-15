@@ -159,6 +159,15 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || process.env.GITHUB_OAUT
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || process.env.GITHUB_OAUTH_CLIENT_SECRET || process.env.GH_CLIENT_SECRET || '';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+// [FEATURE] Live HTTP access logging for deployed server apps. Every
+// request that hits a subdomain (`GET /api/users 200 42ms`) is emitted
+// here, keyed by subdomain, so the runtime-logs SSE endpoint can merge
+// these platform-level access lines in with the container's own stdout
+// -- matching how Render/Heroku-style platforms show a log line for every
+// request regardless of whether the app itself logs anything internally.
+const proxyAccessLogBus = new (require('events').EventEmitter)();
+proxyAccessLogBus.setMaxListeners(0);
+
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || '';
 const FIREBASE_RTDB_URL = (process.env.FIREBASE_RTDB_URL || process.env.FIREBASE_DATABASE_URL || '').replace(/\/+$/, '');
 const FIREBASE_RTDB_SECRET = process.env.FIREBASE_RTDB_SECRET || process.env.FIREBASE_DATABASE_SECRET || '';
@@ -1178,6 +1187,18 @@ app.use((req, res, next) => {
   if (!match) return next();
 
   const subdomain = match[1];
+
+  // [FEATURE] Emit one access-log line per request for this subdomain,
+  // regardless of which branch below actually serves it (proxy, static
+  // file, external mirror, 404, etc). Fires on 'finish' so the real
+  // status code and timing are always known, not guessed up front.
+  const _accessLogStart = Date.now();
+  res.on('finish', () => {
+    const ms = Date.now() - _accessLogStart;
+    const statusColor = res.statusCode >= 500 ? '\x1b[31m' : res.statusCode >= 400 ? '\x1b[33m' : '\x1b[32m';
+    const line = `\x1b[90m[http]\x1b[0m ${req.method} ${req.url} ${statusColor}${res.statusCode}\x1b[0m ${ms}ms`;
+    proxyAccessLogBus.emit('access:' + subdomain, line);
+  });
 
   // [FIX] portRegistry is kept fresh via fs.watch (see above), so newly
   // deployed apps are reachable without a blocking per-request disk read.
@@ -4818,9 +4839,19 @@ app.get('/api/projects/:id/runtime-logs', attachAuthIfPresent, async (req, res) 
     // Write SSE retry directive as first line so browser auto-reconnects
     res.write('retry: 2000\n\n');
 
+    // [FEATURE] Merge in one platform-level access-log line per HTTP
+    // request this subdomain receives (method, path, status, timing),
+    // alongside the container's own stdout/stderr below. This is what
+    // guarantees every request shows up in the log viewer even for apps
+    // that don't log requests themselves -- the same behaviour Render/
+    // Heroku-style platforms provide.
+    const onAccessLog = (line) => send('log', { source: 'http', line });
+    proxyAccessLogBus.on('access:' + subdomain, onAccessLog);
+
     req.on('close', () => {
       closed = true;
       clearInterval(keepAlive);
+      proxyAccessLogBus.off('access:' + subdomain, onAccessLog);
       killChild();
     });
 
@@ -11782,6 +11813,7 @@ app.post('/api/deploy/:deployId/stop', requireAuth, async (req, res) => {
 
     let projectId = '';
     let ownerUserId = '';
+    let subdomain = String(req.body?.subdomain || '').trim();
     if (dep) {
       const project = await findProjectByAnyId(dep.projectId);
       if (project?.ownerUserId && String(project.ownerUserId) !== String(req.user?._id || req.user?.id || '')) {
@@ -11789,18 +11821,47 @@ app.post('/api/deploy/:deployId/stop', requireAuth, async (req, res) => {
       }
       projectId = String(dep.projectId || '');
       ownerUserId = String(project?.ownerUserId || '');
+      if (!subdomain) subdomain = String(project?.subdomain || '');
       dep.status = 'failed';
       dep.endedAt = new Date();
       dep.logs = dep.logs || [];
       dep.logs.push('[manual] Deployment stop requested by user.');
       await dep.save().catch(() => {});
+    } else {
+      // No Mongo document (synthetic id) — trust what the frontend sent,
+      // since it read projectId/subdomain straight off the project it
+      // already has loaded. Still scope everything to the requester.
+      projectId = String(req.body?.projectId || '').trim();
+      ownerUserId = String(req.user?._id || req.user?.id || '');
+    }
+
+    // [FIX] The actual bug: this endpoint previously only ever set a flag
+    // for the build loop to notice at its next checkpoint (between log
+    // lines / between steps). If the build was blocked inside a single
+    // long-running docker command -- `docker pull`, `npm install`, or the
+    // up-to-120s readiness-gate poll -- there was no checkpoint to hit for
+    // a long time, so Stop looked like it worked (UI flipped to "failed")
+    // while the real docker container kept building/running in the
+    // background the whole time, still eating CPU/RAM/disk and slowing
+    // down every other deploy on the host. Candidate container names are
+    // fully deterministic from subdomain + deployId (see buildRunner.js:
+    // `${containerName}-cand-${safeDockerToken(deployId,'build').slice(0,20)}`),
+    // so we can compute it here and force-kill it immediately, with no
+    // dependency on the build script ever checking back in.
+    if (subdomain) {
+      const safeToken = String(deployId || 'build').toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '').slice(0, 20) || 'build';
+      const candidateName = `db-${subdomain}-cand-${safeToken}`;
+      try {
+        const { execSync } = require('child_process');
+        execSync(`docker rm -f ${candidateName}`, { timeout: 10000, stdio: 'ignore' });
+      } catch (_) { /* container may not exist yet, or already gone -- fine either way */ }
     }
 
     const _stopOwner = ownerUserId || String(req.user?._id || req.user?.id || '');
     const _stopTarget = _stopOwner ? io.to('user:' + _stopOwner) : io;
-    _stopTarget.emit('build:log', { deployId, projectId, line: '\x1b[33m[Joytree]\x1b[0m Stop requested by user. Attempting to halt build\u2026' });
+    _stopTarget.emit('build:log', { deployId, projectId, line: '\x1b[33m[Joytree]\x1b[0m Stop requested by user — container killed.\x1b[0m' });
     _stopTarget.emit('build:done', { deployId, projectId, status: 'canceled' });
-    res.json({ ok: true, message: 'Stop requested' });
+    res.json({ ok: true, message: 'Stop requested — build container terminated.' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
