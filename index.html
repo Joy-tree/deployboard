@@ -4138,15 +4138,15 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
   50%{transform:translate(12px,-18px);}
 }
 
-/* Main card */
+/* Auth content — no card/box, sits directly on the page background */
 .auth-wrap {
   position:relative;z-index:1;
   width:min(92vw, 480px);
-  background:#111;
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:24px;
-  box-shadow:0 8px 40px rgba(0,0,0,.6);
-  overflow:hidden;
+  background:transparent;
+  border:none;
+  border-radius:0;
+  box-shadow:none;
+  overflow:visible;
   animation:authCardIn .5s cubic-bezier(.23,1,.32,1) both;
 }
 @keyframes authCardIn {
@@ -4154,14 +4154,11 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
   to   { opacity:1; transform:translateY(0) scale(1); }
 }
 
-/* Top accent bar */
-.auth-accent-bar {
-  height:3px;
-  background:var(--primary);
-}
+/* Top accent bar removed along with the card it used to sit on top of */
+.auth-accent-bar { display:none; }
 
-/* Inner padding area */
-.auth-inner { padding:28px 28px 32px; }
+/* Inner padding area — no card, so no side padding needed either */
+.auth-inner { padding:12px 4px 32px; }
 
 /* Back link */
 .auth-back {
@@ -4530,7 +4527,7 @@ html[data-theme="light"] body { background: var(--jt-bg-sunken) !important; }
 /* ── LIGHT THEME: ADDITIONAL PAGES ─────────────────────────────── */
 /* Auth page */
 html[data-theme="light"] .auth-bg,
-html[data-theme="light"] .auth-wrap    { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] .auth-wrap    { background: transparent !important; }
 html[data-theme="light"] .auth-tabs    { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .auth-input   { background: var(--jt-bg-raised) !important; color: #0f172a !important; border-color: rgba(0,0,0,.12) !important; }
 html[data-theme="light"] .auth-feat-pill { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
