@@ -522,6 +522,15 @@ img{max-width:100%;}
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
   background-clip:text;
 }
+/* "Run databases." is now split into individual letter spans (for the
+   movement animation), so each letter needs the SAME gradient sampled
+   from one shared, viewport-fixed coordinate space -- otherwise every
+   single letter would show its own tiny full green-to-cyan fade instead
+   of the phrase reading as one smooth continuous sweep. */
+.hero-h1 .hero-wave-letter.accent{
+  background-size:340px 100%;
+  background-attachment:fixed;
+}
 .hero-typewriter-wrap{
   font-family:var(--font-ui);
   font-size:clamp(2.1rem,5vw,4.2rem);
@@ -4141,7 +4150,7 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 /* Auth content — no card/box, sits directly on the page background */
 .auth-wrap {
   position:relative;z-index:1;
-  width:min(92vw, 480px);
+  width:min(92vw, 440px);
   background:transparent;
   border:none;
   border-radius:0;
@@ -4157,77 +4166,89 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 /* Top accent bar removed along with the card it used to sit on top of */
 .auth-accent-bar { display:none; }
 
-/* Inner padding area — no card, so no side padding needed either */
-.auth-inner { padding:12px 4px 32px; }
+/* Comfortable side padding now that content isn't boxed by a card edge —
+   keeps text and inputs from hugging the screen edge on mobile. Extra
+   top space clears the fixed back button. */
+.auth-inner { padding:64px 6px 40px; }
 
-/* Back link */
+/* Back link — pinned to the corner like page chrome, out of the way
+   of the form content that now flows freely without a card boundary */
 .auth-back {
+  position:absolute; top:20px; left:0;
   display:inline-flex;align-items:center;gap:6px;
-  font-size:.78rem;font-weight:600;color:#475569;
-  background:#1a1a1a;border:1px solid rgba(255,255,255,.1);
-  border-radius:8px;padding:6px 12px;
-  margin-bottom:22px;cursor:pointer;
-  transition:color .15s, border-color .15s, background .15s;
+  font-size:.78rem;font-weight:600;color:#64748b;
+  background:transparent;border:none;
+  padding:6px 4px;
+  cursor:pointer;
+  transition:color .15s, transform .15s;
   text-decoration:none;
 }
-.auth-back:hover { color:#94a3b8;border-color:rgba(255,255,255,.2);background:#222; }
+.auth-back:hover { color:#a7f3d0; transform:translateX(-2px); }
 .auth-back svg { width:13px;height:13px; }
 
-/* Brand mark */
+/* Brand mark — rounded circular badge instead of a boxy square, reads
+   cleaner sitting directly on the open background */
 .auth-brand {
-  display:flex;align-items:center;gap:12px;margin-bottom:20px;
+  display:flex;align-items:center;gap:11px;margin-bottom:28px;
 }
 .auth-brand-mark {
-  width:42px;height:42px;border-radius:12px;
-  background:#1a1a1a;
+  width:38px;height:38px;border-radius:50%;
+  background:transparent;
   display:flex;align-items:center;justify-content:center;
-  border:1px solid rgba(16,185,129,.2);
-  box-shadow:0 0 16px rgba(16,185,129,.12);
+  border:1px solid rgba(16,185,129,.3);
   flex-shrink:0;
+  overflow:hidden;
 }
-.auth-brand-mark img { width:100%;height:100%;object-fit:cover;border-radius:10px; }
+.auth-brand-mark img { width:100%;height:100%;object-fit:cover;border-radius:50%; }
 
 /* Heading */
 .auth-title {
   font-family:var(--font-ui);
   font-size:clamp(1.75rem,6.5vw,2.4rem);
   font-weight:800;letter-spacing:-0.04em;
-  color:#f8fafc;line-height:1.1;
-  margin-bottom:10px;
+  color:#f8fafc;line-height:1.15;
+  margin-bottom:12px;
 }
 .auth-title .auth-title-accent {
   background:linear-gradient(135deg,var(--primary),var(--cyan));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
 .auth-sub {
-  font-size:.88rem;color:#94a3b8;line-height:1.7;margin-bottom:24px;
-  max-width:38ch;
+  font-size:.9rem;color:#94a3b8;line-height:1.7;margin-bottom:32px;
+  max-width:40ch;
 }
 
-/* Tab switcher */
+/* Tab switcher — underline style instead of a filled box, so it reads
+   as part of the open page rather than another nested card */
 .auth-tabs {
   display:grid;grid-template-columns:1fr 1fr;
-  background:#0d0d0d;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:12px;padding:4px;gap:4px;
-  margin-bottom:22px;
+  background:transparent;
+  border:none;border-bottom:1px solid rgba(255,255,255,.1);
+  border-radius:0;padding:0;gap:0;
+  margin-bottom:30px;
 }
 .auth-tab {
-  padding:11px 10px;border-radius:9px;
+  padding:12px 10px;border-radius:0;
   border:none;background:transparent;
-  color:#475569;font-size:.88rem;font-weight:700;
+  color:#64748b;font-size:.88rem;font-weight:700;
   cursor:pointer;letter-spacing:.01em;
-  transition:all .22s cubic-bezier(.4,0,.2,1);
+  transition:color .2s;
   position:relative;
+  margin-bottom:-1px;
+}
+.auth-tab::after{
+  content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;
+  background:var(--primary);border-radius:2px;
+  transform:scaleX(0);transition:transform .25s cubic-bezier(.4,0,.2,1);
 }
 .auth-tab.active {
-  background:#1a1a1a;
-  color:#d1fae5;
-  box-shadow:none;
+  background:transparent;
+  color:#f0fdf4;
 }
+.auth-tab.active::after{ transform:scaleX(1); }
 
 /* Fields */
-.auth-field { margin-bottom:16px; }
+.auth-field { margin-bottom:18px; }
 .auth-field-label {
   display:flex;align-items:center;justify-content:space-between;
   font-size:.78rem;font-weight:700;letter-spacing:.03em;
@@ -4240,19 +4261,19 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 }
 .auth-input-icon svg { width:16px;height:16px; }
 .auth-input {
-  width:100%;padding:13px 14px 13px 40px;
-  background:#0d0d0d;
-  border:1px solid rgba(255,255,255,.1);
+  width:100%;padding:14px 14px 14px 40px;
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.12);
   border-radius:11px;
   color:#f1f5f9;font-size:.92rem;font-family:var(--font-ui);
   outline:none;transition:border-color .18s, box-shadow .18s, background .18s;
   -webkit-appearance:none;
 }
-.auth-input::placeholder { color:#334155; }
+.auth-input::placeholder { color:#3f4b5c; }
 .auth-input:focus {
-  border-color:rgba(16,185,129,.5);
-  box-shadow:0 0 0 3px rgba(16,185,129,.1);
-  background:#0d0d0d;
+  border-color:rgba(16,185,129,.55);
+  box-shadow:0 0 0 3px rgba(16,185,129,.12);
+  background:rgba(16,185,129,.03);
 }
 
 /* Forgot password */
@@ -6607,33 +6628,22 @@ window.landingToggleTheme = function(){
     .hero-h1-line{ position:relative; display:inline-block; }
     .hero-h1-line::after{ display:none; }
 
-    /* ── Living headline: every character shimmers with one continuous
-       flowing gradient sweep (synced across all letters via a shared
-       fixed background coordinate space, so it reads as ONE wave moving
-       through the whole sentence, not per-letter flicker) while also
-       riding a gentle staggered vertical bob -- like the text itself is
-       breathing. Text is never hidden or clipped to nothing at any point
-       in the cycle, so it's always fully legible, unlike a wipe/reveal. ── */
+    /* ── Living headline: no color, no gradient -- just movement, the
+       way a careful engineer would build it. Each letter rides a subtle
+       staggered bob, giving the sentence one gentle wave that ripples
+       left-to-right on a loop. Text color never changes and is never
+       hidden/clipped at any point in the cycle -- fully legible always. ── */
     .hero-wave-letter{
       display:inline-block;
       white-space:pre;
-      background-image:linear-gradient(100deg,
-        var(--text) 8%, var(--text) 20%,
-        #34d399 38%, #22d3ee 50%, #34d399 62%,
-        var(--text) 80%, var(--text) 100%);
-      background-size:340px 100%;
-      background-attachment:fixed;
-      -webkit-background-clip:text; background-clip:text;
-      color:transparent;
-      animation: heroLetterBob 3.4s ease-in-out infinite, heroShimmerFlow 5.5s linear infinite;
-      animation-delay: var(--wd,0s), 0s;
+      animation: heroLetterBob 3.6s ease-in-out infinite;
+      animation-delay: var(--wd,0s);
       will-change: transform;
     }
-    @keyframes heroShimmerFlow{ from{ background-position:0 0; } to{ background-position:-680px 0; } }
-    @keyframes heroLetterBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-5px); } }
+    @keyframes heroLetterBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-4px); } }
 
     @media(prefers-reduced-motion: reduce){
-      .hero-wave-letter{ animation:none!important; background:none!important; -webkit-text-fill-color:currentColor!important; color:var(--text)!important; }
+      .hero-wave-letter{ animation:none!important; }
     }
 
     .hero-cascade{ opacity:0; transform:translateY(14px); animation:heroCascadeIn .7s ease forwards; }
@@ -6656,23 +6666,29 @@ window.landingToggleTheme = function(){
   <script>
   (function(){
     // Split each hero heading line into individual letter spans so the
-    // CSS shimmer + bob animation (.hero-wave-letter) can animate them.
-    // Each letter gets a small staggered delay via --wd so the bob ripples
-    // left-to-right instead of every letter bobbing in perfect unison.
+    // CSS bob animation (.hero-wave-letter) can animate them -- pure
+    // movement only, no color. "Run databases." keeps its original
+    // static accent gradient (unchanged from the site's existing design,
+    // not something new); every other letter stays plain heading color.
+    // Each letter gets a small staggered delay via --wd so the bob
+    // ripples left-to-right instead of every letter moving in unison.
     var lines = document.querySelectorAll('.hero-h1-line');
     var globalIndex = 0;
     lines.forEach(function(line){
-      var text = line.textContent;
       var frag = document.createDocumentFragment();
-      for (var i = 0; i < text.length; i++){
-        var ch = text[i];
-        var span = document.createElement('span');
-        span.className = 'hero-wave-letter';
-        span.textContent = ch;
-        span.style.setProperty('--wd', (globalIndex * 0.028) + 's');
-        frag.appendChild(span);
-        globalIndex++;
-      }
+      line.childNodes.forEach(function(node){
+        var isAccent = node.nodeType === 1 && node.classList.contains('accent');
+        var text = node.textContent;
+        for (var i = 0; i < text.length; i++){
+          var ch = text[i];
+          var span = document.createElement('span');
+          span.className = 'hero-wave-letter' + (isAccent ? ' accent' : '');
+          span.textContent = ch;
+          span.style.setProperty('--wd', (globalIndex * 0.028) + 's');
+          frag.appendChild(span);
+          globalIndex++;
+        }
+      });
       line.innerHTML = '';
       line.appendChild(frag);
     });
