@@ -2714,3 +2714,160 @@ html[data-theme="light"] .diff-hero-kicker {
 html[data-theme="light"] .diff-hero-sub {
   color: var(--jt-text-faint) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SCHEMA EXPLORER PAGE (#page-db-schema) — background gaps.
+   Text colors were already fixed in an earlier pass, but the dark
+   card/tile backgrounds were never touched: .schema-explorer-block,
+   .schema-tip-card, and .schema-tip-code all have hardcoded #0d0d0d /
+   #030712 backgrounds with no theme guard, and #page-db-schema scoped
+   !important rules re-force the same dark values with higher specificity,
+   so the earlier variable-level fix never reached them.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Outer explorer block */
+html[data-theme="light"] .schema-explorer-block,
+html[data-theme="light"] #page-db-schema .schema-explorer-block {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .schema-explorer-head,
+html[data-theme="light"] #page-db-schema .schema-explorer-head {
+  background: var(--jt-bg-sunken) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .schema-engine-badge,
+html[data-theme="light"] #page-db-schema .schema-engine-badge {
+  background: rgba(31,110,82,.08) !important;
+  border-color: rgba(31,110,82,.22) !important;
+  color: var(--jt-brand-strong) !important;
+}
+
+/* Introspection query tip card */
+html[data-theme="light"] .schema-tip-card,
+html[data-theme="light"] #page-db-schema .schema-tip-card {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .schema-tip-code,
+html[data-theme="light"] #page-db-schema .schema-tip-code {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  color: #0369a1 !important;
+}
+html[data-theme="light"] .schema-tip-copy,
+html[data-theme="light"] #page-db-schema .schema-tip-copy {
+  background: rgba(0,0,0,.05) !important;
+  border-color: rgba(0,0,0,.14) !important;
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] .schema-tip-copy:hover,
+html[data-theme="light"] #page-db-schema .schema-tip-copy:hover {
+  background: rgba(0,0,0,.09) !important;
+  border-color: rgba(0,0,0,.22) !important;
+  color: var(--jt-text) !important;
+}
+
+/* Connection details card */
+html[data-theme="light"] .schema-conn-card,
+html[data-theme="light"] #page-db-schema .schema-conn-card {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .schema-conn-head,
+html[data-theme="light"] #page-db-schema .schema-conn-head {
+  border-bottom-color: var(--jt-border) !important;
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] .schema-conn-head svg,
+html[data-theme="light"] #page-db-schema .schema-conn-head svg {
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] .schema-conn-row,
+html[data-theme="light"] #page-db-schema .schema-conn-row {
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .schema-conn-key,
+html[data-theme="light"] #page-db-schema .schema-conn-key {
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] .schema-conn-val,
+html[data-theme="light"] #page-db-schema .schema-conn-val {
+  color: var(--jt-text) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SDK STUDIO (#page-db-sdk) — remaining dark backgrounds.
+   The sdk-lang-bar (outer row holding the tab pill + framework dropdown)
+   and sdk-test-status (the "Ready to test" ping status box) were both
+   hardcoded #111 / #0d0d0d with no theme guard and no earlier fix.
+   sdk-fw-trigger (framework dropdown button) was fixed for text/border
+   but not for its #0d0d0d background.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Language tab bar — outer row */
+html[data-theme="light"] .sdk-lang-bar {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+
+/* Tab pill container */
+html[data-theme="light"] .sdk-lang-tabs {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+
+/* Active tab */
+html[data-theme="light"] .sdk-lang-tab.active {
+  background: var(--jt-bg-raised) !important;
+  color: var(--jt-text) !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08) !important;
+}
+html[data-theme="light"] .sdk-lang-tab:not(.active) {
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] .sdk-lang-tab:not(.active):hover {
+  color: var(--jt-text-dim) !important;
+  background: rgba(0,0,0,.04) !important;
+}
+
+/* Framework dropdown trigger button */
+html[data-theme="light"] .sdk-fw-trigger {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .sdk-fw-trigger:hover,
+html[data-theme="light"] .sdk-fw-trigger.open {
+  border-color: rgba(31,110,82,.35) !important;
+  background: rgba(31,110,82,.06) !important;
+}
+
+/* Framework dropdown menu */
+html[data-theme="light"] .sdk-fw-menu {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+  box-shadow: 0 14px 44px rgba(0,0,0,.1), 0 0 0 1px rgba(31,110,82,.06) !important;
+}
+html[data-theme="light"] .sdk-fw-option {
+  color: var(--jt-text-faint) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .sdk-fw-option:hover {
+  background: rgba(31,110,82,.06) !important;
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .sdk-fw-option.active {
+  color: var(--jt-brand-strong) !important;
+  background: rgba(31,110,82,.08) !important;
+}
+
+/* Live Ping — test status row ("Ready to test — brabetodb") */
+html[data-theme="light"] .sdk-test-status {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] .sdk-test-indicator.idle {
+  background: #94a3b8 !important;
+}
