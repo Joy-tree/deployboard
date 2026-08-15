@@ -2475,3 +2475,129 @@ html[data-theme="light"] .step-icon.active {
 }
 
 
+
+/* ── Compare Databases page (.diff-*) ────────────────────────────────────
+   Text colors here were already fixed in an earlier pass, but every
+   background/border was left as its original hardcoded dark value
+   (#0d0d0d/#111/#0b0b0b + rgba(255,255,255,..) borders, all tuned for a
+   near-black page). This entire feature was apparently built without the
+   light theme ever being considered, so the hero card, both database
+   picker cards, the engine-pill buttons, the select/input fields, and
+   every diff-result card stayed a black slab regardless of theme. ── */
+html[data-theme="light"] .diff-hero {
+  background: radial-gradient(ellipse 55% 44% at 8% 12%, rgba(31,110,82,.08), transparent), var(--jt-bg-raised) !important;
+  border-color: rgba(31,110,82,.22) !important;
+  box-shadow: 0 0 0 1px rgba(31,110,82,.06), 0 14px 44px rgba(0,0,0,.06) !important;
+}
+html[data-theme="light"] .diff-card,
+html[data-theme="light"] .diff-stat,
+html[data-theme="light"] .diff-collection {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] .diff-source-opt {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] .diff-source-opt:hover {
+  border-color: rgba(31,110,82,.35) !important;
+}
+html[data-theme="light"] .diff-source-opt.active {
+  border-color: var(--jt-brand) !important;
+  color: var(--jt-text) !important;
+  background: rgba(31,110,82,.08) !important;
+}
+html[data-theme="light"] .diff-select,
+html[data-theme="light"] .diff-input {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .diff-input::placeholder { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .diff-help { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .diff-collection-head:hover { background: var(--jt-bg-sunken) !important; }
+html[data-theme="light"] .diff-collection-body { border-top-color: var(--jt-border) !important; }
+html[data-theme="light"] .diff-row-item {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] .diff-empty { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .diff-stat.unchanged b { color: var(--jt-text-faint) !important; }
+
+/* ── Schema Explorer page (.schema-conn-card / .schema-rel-card /
+   .schema-action-btn / legacy .schema-rel /.schema-actions) ── same gap:
+   an earlier pass fixed text colors (some !important-scoped to
+   #page-db-schema, some scoped globally — hence the duplication seen
+   below) but never touched the backgrounds, which were force-set with
+   !important to hardcoded near-black values with no theme guard at all. */
+html[data-theme="light"] #page-db-schema .schema-conn-card,
+html[data-theme="light"] .schema-conn-card {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-db-schema .schema-conn-head,
+html[data-theme="light"] .schema-conn-head {
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-db-schema .schema-conn-head svg,
+html[data-theme="light"] .schema-conn-head svg {
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] #page-db-schema .schema-conn-row,
+html[data-theme="light"] .schema-conn-row {
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-db-schema .schema-conn-row:hover,
+html[data-theme="light"] .schema-conn-row:hover {
+  background: var(--jt-bg-sunken) !important;
+}
+html[data-theme="light"] #page-db-schema .schema-conn-key,
+html[data-theme="light"] .schema-conn-key {
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] #page-db-schema .schema-rel-card,
+html[data-theme="light"] .schema-rel-card {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-db-schema .schema-rel-head svg,
+html[data-theme="light"] .schema-rel-head svg {
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] #page-db-schema .schema-node,
+html[data-theme="light"] .schema-node {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-db-schema .schema-node:hover,
+html[data-theme="light"] .schema-node:hover {
+  border-color: rgba(31,110,82,.35) !important;
+  background: var(--jt-bg-raised) !important;
+}
+html[data-theme="light"] #page-db-schema .schema-action-btn,
+html[data-theme="light"] .schema-action-btn {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-db-schema .schema-action-btn:hover,
+html[data-theme="light"] .schema-action-btn:hover {
+  background: var(--jt-bg-raised) !important;
+  border-color: rgba(31,110,82,.35) !important;
+}
+html[data-theme="light"] #page-db-schema .schema-action-btn svg,
+html[data-theme="light"] .schema-action-btn svg {
+  color: var(--jt-text-faint) !important;
+}
+/* Legacy schema map variant (older markup still present in some code paths) */
+html[data-theme="light"] #page-db-schema .schema-rel,
+html[data-theme="light"] .schema-rel {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-db-schema .schema-actions,
+html[data-theme="light"] .schema-actions {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}

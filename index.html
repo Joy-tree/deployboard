@@ -43115,5 +43115,30 @@ html[data-theme="light"] .dash-qa-btn.primary { background:#1F6E52!important; bo
 html[data-theme="light"] .btn.btn-primary:hover,
 html[data-theme="light"] button.btn-primary:hover,
 html[data-theme="light"] .btn-hero-primary:hover { background:#145A41!important; border-color:#145A41!important; }
+
+/* ── Query Studio drawer (#qsTree) — same "last position wins" approach
+   already used throughout this file for this specific page. Despite a
+   theme-aware, higher-specificity rule already existing
+   (#page-db-query .qide-explorer-panel.qs-tree), it was still rendering
+   as the original hardcoded #0a0a0a in light theme, so pinning it down
+   directly by ID with !important here removes any ambiguity for good. */
+html[data-theme="light"] #qsTree {
+  background: var(--jt-bg-sunken) !important;
+  border-right-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #qsTree .qs-tree-head {
+  color: var(--jt-text-faint) !important;
+  border-bottom-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #qsTree .qs-tree-refresh { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] #qsTree .qs-tree-refresh:hover { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #qsTree .qs-tree-empty { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] #qsTree .qs-tree-item { color: var(--jt-text-dim) !important; }
+html[data-theme="light"] #qsTree .qs-tree-item svg { color: var(--jt-brand-strong) !important; }
+html[data-theme="light"] #qsTree .qs-tree-item:hover { background: rgba(0,0,0,.05) !important; }
+html[data-theme="light"] #qsTree .qs-tree-item.active {
+  background: rgba(31,110,82,.12) !important;
+  color: var(--jt-text) !important;
+}
 </style>
 </html>
