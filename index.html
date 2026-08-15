@@ -23562,7 +23562,19 @@ async function stopActiveDeployment() {
   const d = resolveLogsContextDeployment();
   if (!d) return toast('No active deployment selected to stop', 'info');
   try {
-    const r = await apiFetch(`/api/deploy/${encodeURIComponent(d.id)}/stop`, { method: 'POST' });
+    // [FIX] Send projectId/subdomain explicitly instead of relying on the
+    // backend to resolve them purely from deployId via a Mongo lookup --
+    // deploys with synthetic ids (local_..., subdomain-based) have no Mongo
+    // document, so the backend previously had no way to know WHICH candidate
+    // container to actually kill for those, and Stop only ever flipped a
+    // flag without touching Docker at all.
+    const _stopProj = (typeof projects !== 'undefined' ? projects : [])
+      .find(p => String(p.id || p._id || '') === String(d.projectId));
+    const r = await apiFetch(`/api/deploy/${encodeURIComponent(d.id)}/stop`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: d.projectId || '', subdomain: _stopProj?.subdomain || '' })
+    });
     const data = await r.json().catch(()=>({}));
     if (!r.ok) throw new Error(data.error || 'Failed to stop deployment');
     d.status = 'failed';
