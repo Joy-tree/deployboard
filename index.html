@@ -522,12 +522,12 @@ img{max-width:100%;}
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
   background-clip:text;
 }
-/* "Run databases." is now split into individual letter spans (for the
-   movement animation), so each letter needs the SAME gradient sampled
-   from one shared, viewport-fixed coordinate space -- otherwise every
-   single letter would show its own tiny full green-to-cyan fade instead
-   of the phrase reading as one smooth continuous sweep. */
-.hero-h1 .hero-wave-letter.accent{
+/* "Run databases." is typed in as individual letter spans, so each
+   letter needs the SAME gradient sampled from one shared, viewport-fixed
+   coordinate space -- otherwise every single letter would show its own
+   tiny full green-to-cyan fade instead of the phrase reading as one
+   smooth continuous sweep. */
+.hero-h1 .hero-type-letter.accent{
   background-size:340px 100%;
   background-attachment:fixed;
 }
@@ -6628,22 +6628,51 @@ window.landingToggleTheme = function(){
     .hero-h1-line{ position:relative; display:inline-block; }
     .hero-h1-line::after{ display:none; }
 
-    /* ── Living headline: no color, no gradient -- just movement, the
-       way a careful engineer would build it. Each letter rides a subtle
-       staggered bob, giving the sentence one gentle wave that ripples
-       left-to-right on a loop. Text color never changes and is never
-       hidden/clipped at any point in the cycle -- fully legible always. ── */
-    .hero-wave-letter{
+    /* ── Real typewriter: characters are actually typed onto the page
+       one at a time by a live blinking cursor -- not a subtle bob, an
+       actual sequential reveal with a mechanical key-press punch on
+       every letter as it lands. Once the full headline is typed, it
+       holds, then the cursor erases it and types it again -- a genuine
+       looping typewriter, the way a terminal or code editor demo would
+       do it. No color/gradient added to any of this -- only movement. ── */
+    .hero-h1-line{ position:relative; display:inline-block; }
+    .hero-h1-line::after{ display:none; }
+
+    .hero-type-letter{
       display:inline-block;
       white-space:pre;
-      animation: heroLetterBob 3.6s ease-in-out infinite;
-      animation-delay: var(--wd,0s);
-      will-change: transform;
+      opacity:0;
+      transform:scale(.35) rotateX(-55deg);
+      transform-origin:50% 100%;
     }
-    @keyframes heroLetterBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-4px); } }
+    .hero-type-letter.is-in{
+      animation: heroTypePunch .34s cubic-bezier(.2,1.1,.4,1) forwards;
+    }
+    .hero-type-letter.is-out{
+      animation: heroTypeErase .16s ease-in forwards;
+    }
+    @keyframes heroTypePunch{
+      0%{ opacity:0; transform:scale(.35) rotateX(-55deg); }
+      55%{ opacity:1; transform:scale(1.14) rotateX(8deg); }
+      80%{ transform:scale(.94) rotateX(-3deg); }
+      100%{ opacity:1; transform:scale(1) rotateX(0); }
+    }
+    @keyframes heroTypeErase{
+      0%{ opacity:1; transform:scale(1) rotateX(0); }
+      100%{ opacity:0; transform:scale(.4) rotateX(40deg); }
+    }
+
+    .hero-type-cursor{
+      display:inline-block; width:.06em; height:.82em;
+      background:var(--primary); margin-left:2px; border-radius:1px;
+      vertical-align:-0.08em;
+      animation: heroCursorBlink .85s step-end infinite;
+    }
+    @keyframes heroCursorBlink{ 0%,100%{ opacity:1; } 50%{ opacity:0; } }
 
     @media(prefers-reduced-motion: reduce){
-      .hero-wave-letter{ animation:none!important; }
+      .hero-type-letter{ opacity:1!important; transform:none!important; animation:none!important; }
+      .hero-type-cursor{ display:none!important; }
     }
 
     .hero-cascade{ opacity:0; transform:translateY(14px); animation:heroCascadeIn .7s ease forwards; }
@@ -6661,37 +6690,89 @@ window.landingToggleTheme = function(){
 
   <div class="hero-eyebrow hero-cascade"><span class="hero-eyebrow-dot"></span>&nbsp;AI-Powered Deployment Platform</div>
 
-  <h1 class="hero-h1"><span class="hero-h1-line hero-h1-line-1">Deploy apps. Build APIs.</span><br><span class="hero-h1-line hero-h1-line-2"><span class="accent">Run databases.</span> Ship anything.</span></h1>
+  <h1 class="hero-h1"><span class="hero-h1-line hero-h1-line-1"></span><br><span class="hero-h1-line hero-h1-line-2"></span></h1>
 
   <script>
   (function(){
-    // Split each hero heading line into individual letter spans so the
-    // CSS bob animation (.hero-wave-letter) can animate them -- pure
-    // movement only, no color. "Run databases." keeps its original
-    // static accent gradient (unchanged from the site's existing design,
-    // not something new); every other letter stays plain heading color.
-    // Each letter gets a small staggered delay via --wd so the bob
-    // ripples left-to-right instead of every letter moving in unison.
-    var lines = document.querySelectorAll('.hero-h1-line');
-    var globalIndex = 0;
-    lines.forEach(function(line){
-      var frag = document.createDocumentFragment();
-      line.childNodes.forEach(function(node){
-        var isAccent = node.nodeType === 1 && node.classList.contains('accent');
-        var text = node.textContent;
-        for (var i = 0; i < text.length; i++){
-          var ch = text[i];
-          var span = document.createElement('span');
-          span.className = 'hero-wave-letter' + (isAccent ? ' accent' : '');
-          span.textContent = ch;
-          span.style.setProperty('--wd', (globalIndex * 0.028) + 's');
-          frag.appendChild(span);
-          globalIndex++;
-        }
+    // Real character-by-character typewriter with a live blinking cursor
+    // that visits whichever letter is currently being typed. Types the
+    // full two-line headline in, holds, erases it (fast, cursor-first),
+    // then types it again -- forever. "Run databases." keeps its
+    // original accent gradient class; nothing else gets color.
+    var line1El = document.querySelector('.hero-h1-line-1');
+    var line2El = document.querySelector('.hero-h1-line-2');
+    if (!line1El || !line2El) return;
+
+    // [char, isAccent] pairs for each line, built from the original copy
+    var LINE1 = 'Deploy apps. Build APIs.'.split('').map(function(c){ return [c,false]; });
+    var LINE2 = 'Run databases.'.split('').map(function(c){ return [c,true]; })
+      .concat(' Ship anything.'.split('').map(function(c){ return [c,false]; }));
+
+    var cursor = document.createElement('span');
+    cursor.className = 'hero-type-cursor';
+
+    var TYPE_MS = 42;      // per-character typing speed
+    var ERASE_MS = 14;     // per-character erase speed (faster -- carriage sweep)
+    var HOLD_MS = 3200;    // pause once fully typed
+    var GAP_MS = 500;      // pause once fully erased, before retyping
+
+    function makeLetter(ch, isAccent){
+      var span = document.createElement('span');
+      span.className = 'hero-type-letter' + (isAccent ? ' accent' : '');
+      span.textContent = ch;
+      return span;
+    }
+
+    function typeLine(lineEl, chars, onDone){
+      var i = 0;
+      lineEl.appendChild(cursor);
+      (function step(){
+        if (i >= chars.length){ onDone(); return; }
+        var span = makeLetter(chars[i][0], chars[i][1]);
+        lineEl.insertBefore(span, cursor);
+        requestAnimationFrame(function(){ span.classList.add('is-in'); });
+        i++;
+        setTimeout(step, TYPE_MS);
+      })();
+    }
+
+    function eraseLine(lineEl, onDone){
+      var letters = Array.prototype.slice.call(lineEl.querySelectorAll('.hero-type-letter'));
+      letters.reverse();
+      var i = 0;
+      (function step(){
+        if (i >= letters.length){ onDone(); return; }
+        var span = letters[i];
+        span.classList.remove('is-in');
+        span.classList.add('is-out');
+        setTimeout(function(){ span.remove(); }, ERASE_MS);
+        i++;
+        setTimeout(step, ERASE_MS);
+      })();
+    }
+
+    function cycle(){
+      typeLine(line1El, LINE1, function(){
+        line2El.appendChild(cursor);
+        typeLine(line2El, LINE2, function(){
+          setTimeout(function(){
+            eraseLine(line2El, function(){
+              eraseLine(line1El, function(){
+                setTimeout(cycle, GAP_MS);
+              });
+            });
+          }, HOLD_MS);
+        });
       });
-      line.innerHTML = '';
-      line.appendChild(frag);
-    });
+    }
+
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      LINE1.forEach(function(pair){ line1El.appendChild(makeLetter(pair[0], pair[1])).classList.add('is-in'); });
+      LINE2.forEach(function(pair){ line2El.appendChild(makeLetter(pair[0], pair[1])).classList.add('is-in'); });
+      return;
+    }
+
+    cycle();
   })();
   </script>
 
