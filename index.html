@@ -6768,6 +6768,287 @@ window.landingToggleTheme = function(){
 </section>
 
 
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     FEATURE SHOWCASE — Screenshot-driven product highlights
+     Each feature card uses an alternating layout: image left / right
+     Mobile screenshots sit in a phone-frame; PC screenshots in a
+     browser-chrome frame. Matches the joytree dark-green palette.
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="showcase-section" aria-label="Platform features">
+<style>
+  /* ── Showcase section wrapper ── */
+  .showcase-section{
+    padding:96px max(24px,5vw);
+    background:var(--bg);
+    border-top:1px solid var(--border);
+  }
+  .showcase-eyebrow{
+    text-align:center;
+    font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--green);margin-bottom:14px;
+  }
+  .showcase-headline{
+    text-align:center;
+    font-size:clamp(1.6rem,3.8vw,2.6rem);font-weight:800;letter-spacing:-.03em;
+    color:var(--text);margin-bottom:12px;line-height:1.15;
+  }
+  .showcase-subhead{
+    text-align:center;
+    font-size:clamp(.9rem,1.8vw,1.1rem);color:var(--text-2);
+    max-width:600px;margin:0 auto 72px;line-height:1.6;
+  }
+
+  /* ── Individual feature block ── */
+  .sc-block{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:clamp(32px,5vw,72px);
+    align-items:center;
+    max-width:1160px;
+    margin:0 auto 80px;
+  }
+  .sc-block:last-child{margin-bottom:0;}
+  .sc-block.reverse .sc-visual{order:2;}
+  .sc-block.reverse .sc-copy{order:1;}
+
+  /* ── Copy side ── */
+  .sc-kicker{
+    font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--green);margin-bottom:10px;display:flex;align-items:center;gap:7px;
+  }
+  .sc-kicker::before{content:'';width:22px;height:2px;background:var(--green);border-radius:2px;}
+  .sc-title{
+    font-size:clamp(1.25rem,2.5vw,1.9rem);font-weight:800;letter-spacing:-.025em;
+    color:var(--text);margin-bottom:14px;line-height:1.2;
+  }
+  .sc-desc{
+    font-size:clamp(.88rem,1.5vw,1rem);color:var(--text-2);
+    line-height:1.7;margin-bottom:22px;
+  }
+  .sc-chips{
+    display:flex;flex-wrap:wrap;gap:7px;
+  }
+  .sc-chip{
+    padding:5px 12px;border-radius:8px;font-size:.73rem;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-mono,monospace);
+    background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.22);
+    color:var(--green);
+  }
+
+  /* ── Visual side — shared wrapper ── */
+  .sc-visual{
+    position:relative;
+  }
+
+  /* ── Browser-chrome frame (PC screenshots) ── */
+  .sc-browser{
+    border-radius:14px;overflow:hidden;
+    border:1px solid rgba(255,255,255,.1);
+    box-shadow:0 28px 70px rgba(0,0,0,.55),0 0 0 1px rgba(16,185,129,.06);
+    background:#0d0d0d;
+  }
+  .sc-browser-bar{
+    display:flex;align-items:center;gap:7px;
+    padding:10px 14px;
+    background:#1a1a1a;
+    border-bottom:1px solid rgba(255,255,255,.07);
+  }
+  .sc-browser-dot{width:10px;height:10px;border-radius:50%;}
+  .sc-browser-dot:nth-child(1){background:#ff5f57;}
+  .sc-browser-dot:nth-child(2){background:#febc2e;}
+  .sc-browser-dot:nth-child(3){background:#28c840;}
+  .sc-browser-url{
+    flex:1;margin:0 10px;height:22px;border-radius:5px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.07);
+    display:flex;align-items:center;padding:0 10px;
+    font-size:.65rem;font-family:var(--font-mono,monospace);color:#64748b;
+    letter-spacing:.02em;overflow:hidden;white-space:nowrap;
+  }
+  .sc-browser img{
+    width:100%;height:auto;display:block;
+    border-radius:0 0 13px 13px;
+  }
+
+  /* ── Phone frame (mobile screenshots) ── */
+  .sc-phone{
+    width:clamp(200px,42%,280px);
+    margin:0 auto;
+    border-radius:42px;overflow:hidden;
+    border:6px solid #1e2a23;
+    box-shadow:0 32px 80px rgba(0,0,0,.65),0 0 0 1px rgba(16,185,129,.08),inset 0 0 0 1px rgba(255,255,255,.04);
+    position:relative;background:#000;
+  }
+  .sc-phone::before{
+    content:'';position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    width:60px;height:5px;background:#111;border-radius:3px;z-index:2;
+  }
+  .sc-phone img{
+    width:100%;height:auto;display:block;border-radius:36px;
+  }
+
+  /* ── Dual-phone layout (side by side) ── */
+  .sc-phones-wrap{
+    display:flex;align-items:flex-end;justify-content:center;gap:14px;
+  }
+  .sc-phones-wrap .sc-phone{width:clamp(150px,35%,220px);}
+  .sc-phones-wrap .sc-phone.raised{transform:translateY(-18px);}
+
+  /* ── Glow accent behind visuals ── */
+  .sc-visual::after{
+    content:'';position:absolute;inset:-30px;z-index:-1;
+    background:radial-gradient(ellipse 60% 50% at 50% 60%,rgba(16,185,129,.08),transparent 72%);
+    pointer-events:none;
+  }
+
+  /* ── Mobile layout ── */
+  @media(max-width:860px){
+    .sc-block{grid-template-columns:1fr;gap:32px;}
+    .sc-block.reverse .sc-visual{order:0;}
+    .sc-block.reverse .sc-copy{order:1;}
+    .sc-phone{width:clamp(180px,55%,260px);}
+    .sc-phones-wrap .sc-phone{width:clamp(130px,40%,180px);}
+    .showcase-section{padding:64px 20px;}
+    .showcase-subhead{margin-bottom:52px;}
+  }
+
+  /* ── Light theme overrides ── */
+  html[data-theme="light"] .sc-browser{
+    background:#f8f9fa;
+    border-color:var(--jt-border);
+    box-shadow:0 16px 48px rgba(0,0,0,.12),0 0 0 1px rgba(31,110,82,.08);
+  }
+  html[data-theme="light"] .sc-browser-bar{background:#eef0ec;border-bottom-color:var(--jt-border);}
+  html[data-theme="light"] .sc-browser-url{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.1);color:#94a3b8;}
+  html[data-theme="light"] .sc-phone{border-color:#dce3d8;box-shadow:0 24px 60px rgba(0,0,0,.15);}
+</style>
+
+  <p class="showcase-eyebrow">Everything you need</p>
+  <h2 class="showcase-headline">Built for developers who ship</h2>
+  <p class="showcase-subhead">From CLI to cloud, JoyTree gives you the full stack — deployment, databases, analytics, AI, and more — all in one place.</p>
+
+  <!-- ── 1. CLI — PC screenshot, image RIGHT ── -->
+  <div class="sc-block reverse">
+    <div class="sc-copy">
+      <p class="sc-kicker">Command Line</p>
+      <h3 class="sc-title">Deploy from your terminal, instantly</h3>
+      <p class="sc-desc">The JoyTree CLI puts the full platform in your command line. Deploy a GitHub repo, trigger redeploys, manage API keys, stream live logs, and set env vars — without touching a browser. Every command you need, nothing you don't.</p>
+      <div class="sc-chips">
+        <span class="sc-chip">joytree deploy</span>
+        <span class="sc-chip">--static</span>
+        <span class="sc-chip">autodeploy</span>
+        <span class="sc-chip">v1.4.11</span>
+      </div>
+    </div>
+    <div class="sc-visual">
+      <div class="sc-browser">
+        <div class="sc-browser-bar">
+          <span class="sc-browser-dot"></span>
+          <span class="sc-browser-dot"></span>
+          <span class="sc-browser-dot"></span>
+          <span class="sc-browser-url">cmd.exe — joytree</span>
+        </div>
+        <img src="/assets/showcase/cli.jpg" alt="JoyTree CLI terminal showing deploy commands" loading="lazy" width="1200" height="677"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2. Analytics — PC screenshot, image LEFT ── -->
+  <div class="sc-block">
+    <div class="sc-visual">
+      <div class="sc-browser">
+        <div class="sc-browser-bar">
+          <span class="sc-browser-dot"></span>
+          <span class="sc-browser-dot"></span>
+          <span class="sc-browser-dot"></span>
+          <span class="sc-browser-url">joytree.site/dashboard — Analytics</span>
+        </div>
+        <img src="/assets/showcase/analytics.jpg" alt="JoyTree analytics dashboard showing deployment history and build metrics" loading="lazy" width="1200" height="678"/>
+      </div>
+    </div>
+    <div class="sc-copy">
+      <p class="sc-kicker">Analytics</p>
+      <h3 class="sc-title">Real-time deployment intelligence</h3>
+      <p class="sc-desc">Track every deployment across your entire platform — success rates, build durations, top projects by deploy count, and live failure alerts. Cumulative charts and build-speed breakdowns give you the signal you actually need to ship faster.</p>
+      <div class="sc-chips">
+        <span class="sc-chip">build time</span>
+        <span class="sc-chip">success rate</span>
+        <span class="sc-chip">history</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3. Resources — mobile + sidebar, side by side ── -->
+  <div class="sc-block reverse">
+    <div class="sc-copy">
+      <p class="sc-kicker">Flexible Runtimes</p>
+      <h3 class="sc-title">Every service type. One platform.</h3>
+      <p class="sc-desc">Deploy static sites, persistent web services, custom Dockerfiles, background workers, cron jobs, and more — all from the same dashboard. Switch between projects, manage domains, and access every tool from a clean, organised sidebar.</p>
+      <div class="sc-chips">
+        <span class="sc-chip">static site</span>
+        <span class="sc-chip">web service</span>
+        <span class="sc-chip">dockerfile</span>
+        <span class="sc-chip">worker</span>
+        <span class="sc-chip">cron</span>
+      </div>
+    </div>
+    <div class="sc-visual">
+      <div class="sc-phones-wrap">
+        <div class="sc-phone raised">
+          <img src="/assets/showcase/resources.jpg" alt="JoyTree resource selection screen showing Static Site, Web Service, Dockerfile and more" loading="lazy" width="600" height="1179"/>
+        </div>
+        <div class="sc-phone">
+          <img src="/assets/showcase/sidebar.jpg" alt="JoyTree full sidebar navigation showing all platform tools" loading="lazy" width="600" height="1200"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4. Databases — mobile, image LEFT ── -->
+  <div class="sc-block">
+    <div class="sc-visual">
+      <div class="sc-phone" style="width:clamp(200px,48%,300px);">
+        <img src="/assets/showcase/databases.jpg" alt="JoyTree database picker showing JoyTree DB, MongoDB Atlas, Firebase, MySQL, PostgreSQL, Supabase, MariaDB and Redis" loading="lazy" width="576" height="1137"/>
+      </div>
+    </div>
+    <div class="sc-copy">
+      <p class="sc-kicker">Database Support</p>
+      <h3 class="sc-title">Eight database engines. Zero friction.</h3>
+      <p class="sc-desc">Provision a managed JoyTree database or connect any external one — MongoDB Atlas, Firebase Realtime DB, MySQL, PostgreSQL, Supabase, MariaDB, or Redis. Pull live schemas, run queries, browse data, and compare databases side by side, all without leaving the dashboard.</p>
+      <div class="sc-chips">
+        <span class="sc-chip">MongoDB</span>
+        <span class="sc-chip">PostgreSQL</span>
+        <span class="sc-chip">Firebase</span>
+        <span class="sc-chip">Redis</span>
+        <span class="sc-chip">MySQL</span>
+        <span class="sc-chip">Supabase</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 5. MCP / Claude — mobile, image RIGHT ── -->
+  <div class="sc-block reverse">
+    <div class="sc-copy">
+      <p class="sc-kicker">AI Integration · MCP</p>
+      <h3 class="sc-title">Control JoyTree directly from Claude</h3>
+      <p class="sc-desc">JoyTree's Model Context Protocol (MCP) server exposes your entire platform as tools Claude can call. Deploy a repo, spin up a database, compare migrations, set env vars, stream logs — all by describing what you want in plain English inside Claude.ai.</p>
+      <div class="sc-chips">
+        <span class="sc-chip">MCP server</span>
+        <span class="sc-chip">Claude.ai</span>
+        <span class="sc-chip">23 tools</span>
+        <span class="sc-chip">natural language</span>
+      </div>
+    </div>
+    <div class="sc-visual">
+      <div class="sc-phone" style="width:clamp(200px,48%,300px);">
+        <img src="/assets/showcase/mcp.jpg" alt="Claude.ai showing JoyTree MCP tools including deploy, database management, and environment variable operations" loading="lazy" width="576" height="1113"/>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+
 <!-- ═══════════════ Supported languages + databases marquee ═══════════════ -->
 <section class="platform-marquee-wrap reveal" aria-label="Supported languages and databases">
   <style>
