@@ -43148,23 +43148,154 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   .jt-tour-btn.next{ background:#10b981; border:1px solid #10b981; color:#04150d; }
   .jt-tour-btn.next:hover{ background:#34d399; }
 
-  #jtTourGuideBtn{
-    position:fixed; right:22px; bottom:22px; z-index:9200;
-    width:48px; height:48px; border-radius:50%;
-    background:#0a1510; border:1px solid rgba(16,185,129,.35);
-    box-shadow:0 8px 24px rgba(0,0,0,.4), 0 0 20px rgba(16,185,129,.15);
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer; transition:all .15s;
+
+  /* ═══════════════════════════════════════════════════════════════════
+     JHT — JoyTree Help Tree. Replaces the plain "?" FAB with a small
+     living tree, deep-green throughout (trunk included — no brown bark,
+     stays inside the brand palette). Idle state: a slow breathing grow/
+     shrink loop with a gentle canopy sway, like it's alive. Tap it and
+     the canopy blooms outward into five glowing "fruit" quick-actions;
+     tap again (or pick a fruit, or tap outside) and it folds back down
+     to idle. The full step-by-step spotlight tour (#jtTourCard etc.,
+     untouched below) is now just one of the fruits, not the only entry
+     point.
+     ═══════════════════════════════════════════════════════════════════ */
+  #jhTree{
+    position:fixed; right:20px; bottom:20px; z-index:9200;
+    width:84px; height:104px;
+    display:none;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
   }
-  #jtTourGuideBtn:hover{ border-color:rgba(16,185,129,.6); transform:translateY(-2px); }
-  #jtTourGuideBtn svg{ width:20px; height:20px; color:#34d399; }
-  #jtTourGuideBtn{ display:none; }
-  html.app-mode #jtTourGuideBtn{ display:flex; }
-  /* [FIX] On the JoyTree AI page this FAB sits directly on top of the
-     agent's own round Send button (both fixed to the same bottom-right
-     corner), silently eating taps meant for Send. Shift it up and out of
-     that corner only on this page rather than hiding it globally. */
-  html.app-mode.page-joytree-ai #jtTourGuideBtn{ bottom:96px; }
+  html.app-mode #jhTree{ display:block; }
+  html.app-mode.page-joytree-ai #jhTree{ bottom:94px; }
+
+  #jhTree .jh-stage{
+    position:absolute; inset:0;
+    transform-origin:50% 100%;
+    animation:jhBreathe 4.8s ease-in-out infinite;
+  }
+  #jhTree.open .jh-stage{ animation:none; transform:scale(1.08); }
+  @keyframes jhBreathe{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.055); }
+  }
+
+  #jhTree svg{ position:absolute; inset:0; overflow:visible; }
+
+  /* Ground shadow — breathes opposite the tree so it reads as contact */
+  .jh-shadow{
+    animation:jhShadow 4.8s ease-in-out infinite;
+    transform-origin:50% 100%;
+  }
+  @keyframes jhShadow{
+    0%,100%{ opacity:.35; transform:scaleX(1); }
+    50%{ opacity:.2; transform:scaleX(.82); }
+  }
+
+  /* Canopy blobs sway gently, each slightly out of phase for a natural
+     non-mechanical feel */
+  .jh-canopy{ transform-origin:50% 100%; }
+  .jh-c1{ animation:jhSway1 4.8s ease-in-out infinite; }
+  .jh-c2{ animation:jhSway2 4.8s ease-in-out infinite .15s; }
+  .jh-c3{ animation:jhSway3 4.8s ease-in-out infinite .3s; }
+  @keyframes jhSway1{ 0%,100%{transform:rotate(0deg);} 50%{transform:rotate(-3deg);} }
+  @keyframes jhSway2{ 0%,100%{transform:rotate(0deg);} 50%{transform:rotate(2.5deg);} }
+  @keyframes jhSway3{ 0%,100%{transform:rotate(0deg);} 50%{transform:rotate(-2deg);} }
+  #jhTree.open .jh-canopy{ animation:none!important; transform:none!important; }
+
+  /* Small golden bud — signals "there's more here", pulses independently */
+  .jh-bud{
+    animation:jhBudPulse 2.4s ease-in-out infinite;
+    transform-origin:center;
+  }
+  @keyframes jhBudPulse{
+    0%,100%{ opacity:.55; transform:scale(1); }
+    50%{ opacity:1; transform:scale(1.35); }
+  }
+  #jhTree.open .jh-bud{ opacity:0; }
+
+  @media(prefers-reduced-motion:reduce){
+    #jhTree .jh-stage, .jh-shadow, .jh-canopy, .jh-bud{ animation:none!important; }
+  }
+
+  /* ── Fruit quick-actions — bloom out from the canopy on open ── */
+  .jh-fruits{
+    position:absolute; inset:0; pointer-events:none;
+  }
+  .jh-fruit{
+    position:absolute; top:38px; left:42px;
+    width:0; height:0;
+    display:flex; align-items:center; justify-content:center;
+    pointer-events:none;
+  }
+  .jh-fruit-btn{
+    position:absolute; top:0; left:0;
+    transform:translate(-50%,-50%) scale(0);
+    width:40px; height:40px; border-radius:50%;
+    background:radial-gradient(circle at 34% 30%, #1a5c41, #06301f);
+    border:1px solid rgba(52,211,153,.4);
+    box-shadow:0 8px 20px rgba(0,0,0,.4), 0 0 0 1px rgba(16,185,129,.08);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0;
+    transition:transform .38s cubic-bezier(.34,1.56,.64,1), opacity .28s ease, border-color .2s, box-shadow .2s;
+    cursor:pointer;
+  }
+  .jh-fruit-btn svg{ width:17px; height:17px; color:#6ee7b7; }
+  .jh-fruit-btn:hover{
+    border-color:rgba(52,211,153,.85);
+    box-shadow:0 10px 26px rgba(16,185,129,.35), 0 0 0 1px rgba(16,185,129,.2);
+  }
+  .jh-fruit-label{
+    position:absolute; top:0; right:calc(100% + 10px);
+    transform:translateY(-50%) translateX(6px);
+    white-space:nowrap;
+    font-size:.72rem; font-weight:700; color:#e8fff4;
+    background:#06140f; border:1px solid rgba(16,185,129,.25);
+    padding:5px 10px; border-radius:8px;
+    opacity:0; pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+  }
+  .jh-fruit-btn:hover + .jh-fruit-label,
+  .jh-fruit-btn:focus + .jh-fruit-label{
+    opacity:1; transform:translateY(-50%) translateX(0);
+  }
+
+  #jhTree.open .jh-fruit{ pointer-events:auto; }
+  #jhTree.open .jh-fruit-btn{ pointer-events:auto; opacity:1; }
+
+  /* Each fruit flies out to its own resting spot around the canopy,
+     staggered slightly so they pop like they're budding one after another */
+  #jhTree.open .jh-fruit[data-n="0"] .jh-fruit-btn{ transition-delay:.02s; transform:translate(calc(-50% + 4px),calc(-50% - 58px)) scale(1); }
+  #jhTree.open .jh-fruit[data-n="1"] .jh-fruit-btn{ transition-delay:.07s; transform:translate(calc(-50% + 52px),calc(-50% - 34px)) scale(1); }
+  #jhTree.open .jh-fruit[data-n="2"] .jh-fruit-btn{ transition-delay:.12s; transform:translate(calc(-50% + 46px),calc(-50% + 14px)) scale(1); }
+  #jhTree.open .jh-fruit[data-n="3"] .jh-fruit-btn{ transition-delay:.17s; transform:translate(calc(-50% - 40px),calc(-50% + 14px)) scale(1); }
+  #jhTree.open .jh-fruit[data-n="4"] .jh-fruit-btn{ transition-delay:.22s; transform:translate(calc(-50% - 46px),calc(-50% - 34px)) scale(1); }
+
+  /* Soft ambient glow behind the whole widget when open */
+  #jhTree::before{
+    content:''; position:absolute; left:50%; top:38px;
+    width:0; height:0; border-radius:50%; transform:translate(-50%,-50%);
+    background:radial-gradient(circle, rgba(16,185,129,.35), transparent 70%);
+    transition:width .4s ease, height .4s ease, opacity .4s ease;
+    opacity:0; pointer-events:none; z-index:-1;
+  }
+  #jhTree.open::before{ width:220px; height:220px; opacity:1; }
+
+  /* Backdrop to catch outside-clicks and dim the page slightly while open */
+  #jhTreeBackdrop{
+    position:fixed; inset:0; z-index:9199;
+    background:rgba(2,8,5,0);
+    transition:background .3s ease;
+    display:none;
+  }
+  #jhTreeBackdrop.open{ display:block; background:rgba(2,8,5,.35); }
+
+  @media(max-width:480px){
+    #jhTree{ right:16px; bottom:16px; width:72px; height:90px; }
+    .jh-fruit-btn{ width:36px; height:36px; }
+    .jh-fruit-btn svg{ width:15px; height:15px; }
+  }
 </style>
 
 <div id="jtTourOverlay"></div>
@@ -43187,9 +43318,141 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   </div>
 </div>
 
-<button id="jtTourGuideBtn" title="Replay the guided tour" onclick="startJtTour(true)">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-</button>
+<div id="jhTreeBackdrop"></div>
+
+<div id="jhTree" title="Quick actions & guided tour">
+  <div class="jh-stage">
+    <svg viewBox="0 0 84 104" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="jhTrunkGrad" cx="30%" cy="10%" r="90%">
+          <stop offset="0%" stop-color="#2f6b4d"/>
+          <stop offset="100%" stop-color="#0c2e20"/>
+        </radialGradient>
+        <radialGradient id="jhCanopyGrad1" cx="35%" cy="28%" r="75%">
+          <stop offset="0%" stop-color="#34d399"/>
+          <stop offset="55%" stop-color="#12805a"/>
+          <stop offset="100%" stop-color="#063d29"/>
+        </radialGradient>
+        <radialGradient id="jhCanopyGrad2" cx="38%" cy="26%" r="75%">
+          <stop offset="0%" stop-color="#22c58e"/>
+          <stop offset="55%" stop-color="#0e6e4d"/>
+          <stop offset="100%" stop-color="#053723"/>
+        </radialGradient>
+        <radialGradient id="jhCanopyGrad3" cx="40%" cy="30%" r="75%">
+          <stop offset="0%" stop-color="#3fdba1"/>
+          <stop offset="55%" stop-color="#149362"/>
+          <stop offset="100%" stop-color="#074c33"/>
+        </radialGradient>
+      </defs>
+
+      <ellipse class="jh-shadow" cx="42" cy="99" rx="19" ry="4" fill="#000" opacity=".3"/>
+
+      <path d="M39 100 C37.5 88 37 76 38.5 63 C39.3 55.5 41.6 50 42.4 44 C43 39.5 42.6 35 42 31 L46.4 31 C46.9 35.5 46.6 40 47.6 45 C48.9 51.5 51.5 57 51.8 65 C52.1 76.5 50.8 88.5 48.6 100 Z" fill="url(#jhTrunkGrad)"/>
+
+      <g class="jh-canopy jh-c3">
+        <path d="M58 46c7.5 2 12.5 9.7 11 18-1.7 9.3-10.7 15.7-20.4 14.3-3-.4-5.7-1.6-8-3.3 4-3 6.7-7.7 7.2-13 .6-6.6-2-12.7-6.6-16.8 4.8-2.7 10.9-3.3 16.8-1.2Z" fill="url(#jhCanopyGrad3)"/>
+      </g>
+      <g class="jh-canopy jh-c2">
+        <path d="M20 50c-7 3-11 10.7-8.8 18.7 2.4 8.9 11.8 14.4 21.3 12.3 3-.7 5.5-2.1 7.6-4-3.7-3.3-6-8.1-6.1-13.4-.1-6.6 3-12.4 7.9-16.1-5-2.3-11.2-2.4-21.9 2.5Z" fill="url(#jhCanopyGrad2)"/>
+      </g>
+      <g class="jh-canopy jh-c1">
+        <path d="M42 15c11.6 0 21 9.6 21 21.5S53.6 58 42 58 21 48.4 21 36.5 30.4 15 42 15Z" fill="url(#jhCanopyGrad1)"/>
+        <ellipse cx="35" cy="27" rx="9" ry="6.5" fill="#ffffff" opacity=".1"/>
+      </g>
+
+      <circle class="jh-bud" cx="60" cy="30" r="4.2" fill="#F2CB6E"/>
+      <circle class="jh-bud" cx="22" cy="42" r="3" fill="#E8B94A" opacity=".85"/>
+    </svg>
+  </div>
+
+  <div class="jh-fruits">
+    <div class="jh-fruit" data-n="0">
+      <button class="jh-fruit-btn" title="Replay guided tour" onclick="event.stopPropagation();jhTreeAction('tour')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      </button>
+      <span class="jh-fruit-label">Replay guided tour</span>
+    </div>
+    <div class="jh-fruit" data-n="1">
+      <button class="jh-fruit-btn" title="New Deployment" onclick="event.stopPropagation();jhTreeAction('deploy')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+      </button>
+      <span class="jh-fruit-label">New deployment</span>
+    </div>
+    <div class="jh-fruit" data-n="2">
+      <button class="jh-fruit-btn" title="Documentation" onclick="event.stopPropagation();jhTreeAction('docs')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      </button>
+      <span class="jh-fruit-label">Documentation</span>
+    </div>
+    <div class="jh-fruit" data-n="3">
+      <button class="jh-fruit-btn" title="Support" onclick="event.stopPropagation();jhTreeAction('support')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="14.83" y1="9.17" x2="18.36" y2="5.64"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg>
+      </button>
+      <span class="jh-fruit-label">Support</span>
+    </div>
+    <div class="jh-fruit" data-n="4">
+      <button class="jh-fruit-btn" title="FAQ" onclick="event.stopPropagation();jhTreeAction('faq')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 1 1 5.8 1c-.4 1-1.3 1.4-2.1 1.9-.7.4-1.3 1-1.3 2.1"/><circle cx="12" cy="17" r=".8"/></svg>
+      </button>
+      <span class="jh-fruit-label">FAQ</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var tree = document.getElementById('jhTree');
+  var backdrop = document.getElementById('jhTreeBackdrop');
+  if (!tree || !backdrop) return;
+
+  var open = false;
+
+  function openTree(){
+    if (open) return;
+    open = true;
+    tree.classList.add('open');
+    backdrop.classList.add('open');
+  }
+  function closeTree(){
+    if (!open) return;
+    open = false;
+    tree.classList.remove('open');
+    backdrop.classList.remove('open');
+  }
+
+  tree.addEventListener('click', function(e){
+    // Ignore clicks that originated on a fruit button — those handle
+    // their own action and close separately.
+    if (e.target.closest && e.target.closest('.jh-fruit-btn')) return;
+    if (open) closeTree(); else openTree();
+  });
+  backdrop.addEventListener('click', closeTree);
+  window.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') closeTree();
+  });
+
+  window.jhTreeAction = function(action){
+    closeTree();
+    switch(action){
+      case 'tour':
+        setTimeout(function(){ if (typeof startJtTour === 'function') startJtTour(true); }, 180);
+        break;
+      case 'deploy':
+        if (typeof showPage === 'function') showPage('new-deploy');
+        break;
+      case 'docs':
+        window.open('https://docs.joytree.site', '_blank');
+        break;
+      case 'support':
+        window.open('https://support.joytree.site/', '_blank', 'noopener');
+        break;
+      case 'faq':
+        if (typeof showPage === 'function') showPage('faq');
+        break;
+    }
+  };
+})();
+</script>
 
 <script>
 (function(){
