@@ -5316,6 +5316,68 @@ async function _runUploadBuildInner({ deployId, project, sitesDir, tmpDir, appPo
   if (isBun)    return routeToFrameworkBuild(runBunBuild);
   if (isDeno)   return routeToFrameworkBuild(runDenoBuild);
 
+  // [FIX] Root cause of "GitHub deploys this framework fine, upload fails
+  // on the exact same project": runServerBuild (the GitHub path) inspects
+  // the cloned files for composer.json/manage.py/go.mod/etc and auto-routes
+  // to the correct language builder even when Runtime was left blank/auto.
+  // This upload dispatcher only ever routed to those SAME builders (see
+  // routeToFrameworkBuild calls above) when the user had EXPLICITLY picked
+  // a non-Node runtime from the dropdown -- with Runtime left on auto, a
+  // Python/Go/PHP/Ruby/Rust/Java/Elixir upload silently fell through to
+  // the generic Node.js server path below and failed, while the identical
+  // project pushed to GitHub auto-detected correctly. Same detection
+  // logic, ported to check the already-extracted upload files directly
+  // instead of a post-clone project root.
+  if (!runtime) {
+    const detectRoot = findProjectRoot(uploadFilesDir, () => {}, project);
+    const hasComposerJson    = fs.existsSync(path.join(detectRoot, 'composer.json'));
+    const hasArtisan         = fs.existsSync(path.join(detectRoot, 'artisan'));
+    const hasComposerLock    = fs.existsSync(path.join(detectRoot, 'composer.lock'));
+    const hasRequirementsTxt = fs.existsSync(path.join(detectRoot, 'requirements.txt')) ||
+                               fs.existsSync(path.join(detectRoot, 'requirements')) ||
+                               fs.existsSync(path.join(detectRoot, 'Pipfile')) ||
+                               fs.existsSync(path.join(detectRoot, 'pyproject.toml'));
+    const hasManagePy        = fs.existsSync(path.join(detectRoot, 'manage.py'));
+    const hasGoMod           = fs.existsSync(path.join(detectRoot, 'go.mod'));
+    const hasGemfile         = fs.existsSync(path.join(detectRoot, 'Gemfile'));
+    const hasCargoToml       = fs.existsSync(path.join(detectRoot, 'Cargo.toml'));
+    const hasPomXml          = fs.existsSync(path.join(detectRoot, 'pom.xml'));
+    const hasBuildGradle     = fs.existsSync(path.join(detectRoot, 'build.gradle')) ||
+                               fs.existsSync(path.join(detectRoot, 'build.gradle.kts'));
+    const hasMixExs          = fs.existsSync(path.join(detectRoot, 'mix.exs'));
+
+    if (hasComposerJson || hasArtisan || hasComposerLock) {
+      log(`\x1b[33m[Joytree]\x1b[0m Detected PHP project (composer.json/artisan found) — switching to PHP build pipeline instead of Node.js.`);
+      log(`\x1b[33m[Joytree]\x1b[0m ℹ Tip: set Runtime to "PHP" in your project settings to avoid this auto-detection step.`);
+      return routeToFrameworkBuild(runPhpBuild);
+    }
+    if (hasRequirementsTxt || hasManagePy) {
+      log(`\x1b[33m[Joytree]\x1b[0m Detected Python project (requirements.txt/manage.py found) — switching to Python build pipeline instead of Node.js.`);
+      log(`\x1b[33m[Joytree]\x1b[0m ℹ Tip: set Runtime to "Python" in your project settings to avoid this auto-detection step.`);
+      return routeToFrameworkBuild(runPythonBuild);
+    }
+    if (hasGoMod) {
+      log(`\x1b[33m[Joytree]\x1b[0m Detected Go project (go.mod found) — switching to Go build pipeline instead of Node.js.`);
+      return routeToFrameworkBuild(runGoBuild);
+    }
+    if (hasGemfile) {
+      log(`\x1b[33m[Joytree]\x1b[0m Detected Ruby project (Gemfile found) — switching to Ruby build pipeline instead of Node.js.`);
+      return routeToFrameworkBuild(runRubyBuild);
+    }
+    if (hasCargoToml) {
+      log(`\x1b[33m[Joytree]\x1b[0m Detected Rust project (Cargo.toml found) — switching to Rust build pipeline instead of Node.js.`);
+      return routeToFrameworkBuild(runRustBuild);
+    }
+    if (hasPomXml || hasBuildGradle) {
+      log(`\x1b[33m[Joytree]\x1b[0m Detected JVM project (pom.xml/build.gradle found) — switching to Java build pipeline instead of Node.js.`);
+      return routeToFrameworkBuild(runJvmBuild);
+    }
+    if (hasMixExs) {
+      log(`\x1b[33m[Joytree]\x1b[0m Detected Elixir project (mix.exs found) — switching to Elixir build pipeline instead of Node.js.`);
+      return routeToFrameworkBuild(runElixirBuild);
+    }
+  }
+
   // ── Step 2: Node / generic routing ────────────────────────────────────────
   let isServerApp = siteType === 'server';
   if (!isServerApp) {
