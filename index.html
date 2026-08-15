@@ -8065,7 +8065,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <div class="app-hero">
         <div>
           <div class="app-hero-kicker">joytree command center</div>
-          <div class="app-hero-title" id="dashGreeting">Good morning 👋</div>
+          <div class="app-hero-title" id="dashGreeting">Good morning</div>
           <div class="app-hero-subtitle">Iconic real-time overview for projects, deployments, traffic, activity, and platform health.</div>
           <div class="hero-status-pill">Platform online · routing healthy</div>
         </div>
@@ -23053,7 +23053,7 @@ function renderDashboard() {
 
   // Greeting
   const hour = new Date().getHours();
-  const greet = hour < 12 ? 'Good morning 👋' : hour < 18 ? 'Good afternoon 👋' : 'Good evening 👋';
+  const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const greetEl = document.getElementById('dashGreeting');
   if (greetEl) greetEl.textContent = greet;
 
