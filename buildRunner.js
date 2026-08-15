@@ -466,7 +466,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
   // a heavy runtime) could consume unbounded host RAM.
   const runtime = getRuntimeConfig(project);
   const runArgs = [
-    'run', '-d', '--restart=unless-stopped',
+    'run', '-d', '--restart=no',
     '--name',         candidateContainerName,
     '--network',      networkName,
     // [FIX] Apps that dial the VPS's own public IP for a locally-hosted
@@ -509,6 +509,13 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
   // Promote candidate to stable name used by proxy/registry
   try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
   await exec('docker', ['rename', candidateContainerName, containerName], {}, () => {});
+  // [FIX] The candidate container launches with --restart=no so a
+  // crash-looping start command stays visibly exited instead of being
+  // silently relaunched by Docker mid-healthcheck (which was masking
+  // startup failures as "still waiting" forever -- see detectLivePort's
+  // liveness check above). Only apply real crash-resilience now that the
+  // container has actually proven it serves HTTP.
+  try { await exec('docker', ['update', '--restart', 'unless-stopped', containerName], {}, () => {}); } catch(_) {}
 
   // Register in port registry
   const portsFile = path.join(sitesDir, 'ports.json');
@@ -585,7 +592,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   // deploy paths (see comment near the Dockerfile-deploy path above).
   const runtime = getRuntimeConfig(project);
   const runArgs = [
-    'run', '-d', '--restart=unless-stopped',
+    'run', '-d', '--restart=no',
     '--name',         candidateContainerName,
     '--network',      networkName,
     '--add-host',     'host.docker.internal:host-gateway',
@@ -619,6 +626,11 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     throw new Error(`Worker container exited immediately. Check your start command: "${startCmd}"`);
   }
 
+  // [FIX] Same reasoning as the promotion step in the other build paths:
+  // launched with --restart=no so a crash-looping start command stays
+  // visibly exited instead of being silently relaunched mid-healthcheck.
+  // Now that liveness is confirmed, apply real crash-resilience.
+  try { await exec('docker', ['update', '--restart', 'unless-stopped', candidateContainerName], {}, () => {}); } catch(_) {}
   log(`\x1b[32m[docker] ✓ Background worker is running\x1b[0m`);
   emitStep(emit, 'start', 'done');
   fs.rmSync(buildDir, { recursive: true, force: true });
@@ -778,7 +790,7 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const runArgs = [
     'run', '-d',
     '--name',       candidateContainerName,
-    '--restart',    'unless-stopped',
+    '--restart',    'no',
     '--network',    'deployboard-net',
     '--add-host',   'host.docker.internal:host-gateway',
     '--cpu-shares', CPU_SHARES,
@@ -855,6 +867,13 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
     log(`\x1b[32m[docker] ✓ Proxy registered: ${project.subdomain} → ${containerName}:${targetPort}\x1b[0m`);
     await archivePreviousContainer(containerName, project.subdomain, log);
     await exec('docker', ['rename', candidateContainerName, containerName], {}, () => {});
+    // [FIX] The candidate container launches with --restart=no so a
+    // crash-looping start command stays visibly exited instead of being
+    // silently relaunched by Docker mid-healthcheck (which was masking
+    // startup failures as "still waiting" forever -- see detectLivePort's
+    // liveness check above). Only apply real crash-resilience now that the
+    // container has actually proven it serves HTTP.
+    try { await exec('docker', ['update', '--restart', 'unless-stopped', containerName], {}, () => {}); } catch(_) {}
     await cleanupArchivedContainers(project.subdomain, DEPLOY_HISTORY_KEEP, log);
   } catch(e) {
     log(`\x1b[31m[docker] Candidate failed: ${e.message}\x1b[0m`);
@@ -1898,7 +1917,7 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
   const runtime = getRuntimeConfig(project);
   const runArgs = [
     'run', '-d',
-    '--name', candidateContainerName, '--restart', 'unless-stopped',
+    '--name', candidateContainerName, '--restart', 'no',
     '--network', 'deployboard-net',
     '--add-host', 'host.docker.internal:host-gateway',
     '--cpu-shares', runtime.cpuShares, '--pids-limit', PIDS_LIMIT,
@@ -1936,6 +1955,13 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
     log(`\x1b[32m[docker] ✓ Proxy: ${project.subdomain} → ${containerName}:${livePort}\x1b[0m`);
     await archivePreviousContainer(containerName, project.subdomain, log);
     await exec('docker', ['rename', candidateContainerName, containerName], {}, () => {});
+    // [FIX] The candidate container launches with --restart=no so a
+    // crash-looping start command stays visibly exited instead of being
+    // silently relaunched by Docker mid-healthcheck (which was masking
+    // startup failures as "still waiting" forever -- see detectLivePort's
+    // liveness check above). Only apply real crash-resilience now that the
+    // container has actually proven it serves HTTP.
+    try { await exec('docker', ['update', '--restart', 'unless-stopped', containerName], {}, () => {}); } catch(_) {}
     await cleanupArchivedContainers(project.subdomain, DEPLOY_HISTORY_KEEP, log);
   } catch (e) {
     log(`\x1b[31m[docker] Failed: ${e.message}\x1b[0m`);
@@ -3662,7 +3688,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
   const dockerArgs = [
     'run', '-d',
     '--name',         candidateContainerName,
-    '--restart',      'unless-stopped',
+    '--restart',      'no',
     '--network',      'deployboard-net',
     // [FIX] Lets apps reach VPS-local services (e.g. a self-hosted DB bound
     // to the VPS's public IP) via host.docker.internal instead of hairpinning
@@ -3767,6 +3793,13 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
     // name that does not exist yet, producing intermittent 502s.
     await archivePreviousContainer(containerName, project.subdomain, log);
     await exec('docker', ['rename', candidateContainerName, containerName], {}, () => {});
+    // [FIX] The candidate container launches with --restart=no so a
+    // crash-looping start command stays visibly exited instead of being
+    // silently relaunched by Docker mid-healthcheck (which was masking
+    // startup failures as "still waiting" forever -- see detectLivePort's
+    // liveness check above). Only apply real crash-resilience now that the
+    // container has actually proven it serves HTTP.
+    try { await exec('docker', ['update', '--restart', 'unless-stopped', containerName], {}, () => {}); } catch(_) {}
     log(`\x1b[90m[docker] Promoted candidate to stable: ${containerName}\x1b[0m`);
     registry[project.subdomain] = `${containerName}:${targetPort}`;
     fs.writeFileSync(pFile, JSON.stringify(registry, null, 2));
@@ -5811,7 +5844,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   // HTTP port).
   const runtime = getRuntimeConfig(project);
   const runArgs = [
-    'run', '-d', '--restart=unless-stopped',
+    'run', '-d', '--restart=no',
     '--name', candidateContainerName,
     '--network', networkName,
     '--add-host', 'host.docker.internal:host-gateway',
@@ -5890,6 +5923,13 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   try {
     await archivePreviousContainer(containerName, cleanSub, log);
     await exec('docker', ['rename', candidateContainerName, containerName], {}, () => {});
+    // [FIX] The candidate container launches with --restart=no so a
+    // crash-looping start command stays visibly exited instead of being
+    // silently relaunched by Docker mid-healthcheck (which was masking
+    // startup failures as "still waiting" forever -- see detectLivePort's
+    // liveness check above). Only apply real crash-resilience now that the
+    // container has actually proven it serves HTTP.
+    try { await exec('docker', ['update', '--restart', 'unless-stopped', containerName], {}, () => {}); } catch(_) {}
     log(`\x1b[90m[docker]\x1b[0m Promoted candidate to stable: ${containerName}`);
 
     let registry = {};
