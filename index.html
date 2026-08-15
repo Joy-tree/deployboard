@@ -43416,41 +43416,39 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   var open = false;
   var loop = null;
 
-  // ── Grow/shrink loop -- restored to the original pen's real behaviour:
-  // each leaf cluster hinges in from its own attachment point on the
-  // branch (transformOrigin sits exactly at that joint), rotating and
-  // sliding into place on its own slightly-staggered timing. That stagger
-  // is what makes it read as organic growth rather than a stiff single
-  // block popping in all at once -- but because every leaf's pivot point
-  // IS its branch joint, it stays visually hinged to the tree for the
-  // entire motion instead of ever looking like a separate flying piece. ──
+  // ── Grow/shrink loop. The original pen's rotation/hinge values were
+  // tuned exactly for its own leaf artwork's bounding boxes -- once the
+  // leaves were redrawn with the site's own leaf shape (different size,
+  // different position, different bounding box entirely), those old
+  // pivot points no longer land on the new leaves at all, so they were
+  // rotating and sliding in from essentially arbitrary points -- hence
+  // the disconnected, scattered look. Fix: every leaf now scales in
+  // from its OWN CENTER (transformOrigin:"center"), which can never
+  // misalign a leaf regardless of its shape or position, since scaling
+  // from center never moves the leaf -- it only grows in place, exactly
+  // where it's already correctly attached to the branch. Each leaf still
+  // gets its own small stagger delay for organic, non-stiff growth; the
+  // whole tree additionally scales up as one unit from the trunk base,
+  // so branches and canopy grow together, in proportion, always aligned. ──
   function jhSetup(){
     TweenMax.set("#jhtShadow", { scale:0, transformOrigin:"15px 8px" });
     TweenMax.set("#jhtTree", { scale:0, transformOrigin:"154px bottom" });
-    TweenMax.set("#jhtLeafRb", { scale:0, rotation:'-60cw', y:-15, transformOrigin:"left bottom" });
-    TweenMax.set("#jhtLeafRm", { scale:0, rotation:'-50cw', y:30, transformOrigin:"left bottom" });
-    TweenMax.set("#jhtLeafLb", { scale:0, rotation:'60cw', y:-80, transformOrigin:"right bottom" });
-    TweenMax.set("#jhtLeafLm", { scale:0, rotation:'40cw', y:-90, transformOrigin:"right bottom" });
-    TweenMax.set("#jhtLeafTop", { scale:0, transformOrigin:"center bottom" });
-    TweenMax.set("#jhtLeafRb g", { scale:0, transformOrigin:"left 60px" });
-    TweenMax.set("#jhtLeafRm g", { scale:0, transformOrigin:"22px 140px" });
-    TweenMax.set("#jhtLeafLb g", { scale:0, transformOrigin:"right 56px" });
-    TweenMax.set("#jhtLeafLm g", { scale:0, transformOrigin:"106px bottom" });
+    TweenMax.set("#jhtLeafRb", { scale:0, transformOrigin:"center" });
+    TweenMax.set("#jhtLeafRm", { scale:0, transformOrigin:"center" });
+    TweenMax.set("#jhtLeafLb", { scale:0, transformOrigin:"center" });
+    TweenMax.set("#jhtLeafLm", { scale:0, transformOrigin:"center" });
+    TweenMax.set("#jhtLeafTop", { scale:0, transformOrigin:"center" });
   }
 
   function jhAnimate(){
     var tl = new TimelineMax({ delay:0.42, repeat:-1, repeatDelay:2, yoyo:true });
-    tl.to("#jhtShadow", 2, { scale:1 }, 0)
-      .to("#jhtTree", 2, { scale:1 }, 0)
-      .to("#jhtLeafRb", 2, { scale:1, rotation:'0cw', y:0, delay:.35 }, 0)
-      .to("#jhtLeafRm", 2, { scale:1, rotation:'0cw', y:0, delay:.35 }, 0)
-      .to("#jhtLeafLb", 2, { scale:1, rotation:'0cw', y:0, delay:.35 }, 0)
-      .to("#jhtLeafLm", 2, { scale:1, rotation:'0cw', y:0, delay:.35 }, 0)
-      .to("#jhtLeafTop", 2.5, { scale:1, delay:.35 }, 0)
-      .to("#jhtLeafLb g", 2.25, { scale:1, delay:.5 }, 0)
-      .to("#jhtLeafLm g", 2.25, { scale:1, delay:.6 }, 0)
-      .to("#jhtLeafRb g", 2.25, { scale:1, delay:.5 }, 0)
-      .to("#jhtLeafRm g", 2.25, { scale:1, delay:.6 }, 0);
+    tl.to("#jhtShadow", 2, { scale:1, ease:Power2.easeInOut }, 0)
+      .to("#jhtTree", 2, { scale:1, ease:Power2.easeInOut }, 0)
+      .to("#jhtLeafTop", 1.6, { scale:1, ease:Back.easeOut.config(1.4), delay:.5 }, 0)
+      .to("#jhtLeafRb", 1.6, { scale:1, ease:Back.easeOut.config(1.4), delay:.65 }, 0)
+      .to("#jhtLeafLb", 1.6, { scale:1, ease:Back.easeOut.config(1.4), delay:.65 }, 0)
+      .to("#jhtLeafRm", 1.6, { scale:1, ease:Back.easeOut.config(1.4), delay:.8 }, 0)
+      .to("#jhtLeafLm", 1.6, { scale:1, ease:Back.easeOut.config(1.4), delay:.8 }, 0);
     return tl;
   }
 
