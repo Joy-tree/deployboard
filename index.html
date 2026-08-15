@@ -43149,84 +43149,36 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   .jt-tour-btn.next:hover{ background:#34d399; }
 
 
+
   /* ═══════════════════════════════════════════════════════════════════
-     JHT — JoyTree Help Tree. Replaces the plain "?" FAB with a small
-     living tree, deep-green throughout (trunk included — no brown bark,
-     stays inside the brand palette). Idle state: a slow breathing grow/
-     shrink loop with a gentle canopy sway, like it's alive. Tap it and
-     the canopy blooms outward into five glowing "fruit" quick-actions;
-     tap again (or pick a fruit, or tap outside) and it folds back down
-     to idle. The full step-by-step spotlight tour (#jtTourCard etc.,
-     untouched below) is now just one of the fruits, not the only entry
-     point.
+     JHT — JoyTree Help Tree, v2. A real growing/shrinking SVG tree
+     (GSAP-animated: full grow -> hold -> shrink -> regrow, on a loop —
+     genuinely alive, not a flat breathing icon) in deep JoyTree green.
+     Tap it: the loop freezes fully grown and five glowing fruit
+     quick-actions bloom out around the canopy. Tap again / tap outside
+     and it folds back in and resumes growing.
      ═══════════════════════════════════════════════════════════════════ */
   #jhTree{
-    position:fixed; right:20px; bottom:20px; z-index:9200;
-    width:84px; height:104px;
+    position:fixed; right:14px; bottom:10px; z-index:9200;
+    width:76px; height:110px;
     display:none;
     cursor:pointer;
     -webkit-tap-highlight-color:transparent;
   }
   html.app-mode #jhTree{ display:block; }
-  html.app-mode.page-joytree-ai #jhTree{ bottom:94px; }
+  html.app-mode.page-joytree-ai #jhTree{ bottom:84px; }
 
-  #jhTree .jh-stage{
-    position:absolute; inset:0;
-    transform-origin:50% 100%;
-    animation:jhBreathe 4.8s ease-in-out infinite;
-  }
-  #jhTree.open .jh-stage{ animation:none; transform:scale(1.08); }
-  @keyframes jhBreathe{
-    0%,100%{ transform:scale(1); }
-    50%{ transform:scale(1.055); }
-  }
-
-  #jhTree svg{ position:absolute; inset:0; overflow:visible; }
-
-  /* Ground shadow — breathes opposite the tree so it reads as contact */
-  .jh-shadow{
-    animation:jhShadow 4.8s ease-in-out infinite;
-    transform-origin:50% 100%;
-  }
-  @keyframes jhShadow{
-    0%,100%{ opacity:.35; transform:scaleX(1); }
-    50%{ opacity:.2; transform:scaleX(.82); }
-  }
-
-  /* Canopy blobs sway gently, each slightly out of phase for a natural
-     non-mechanical feel */
-  .jh-canopy{ transform-origin:50% 100%; }
-  .jh-c1{ animation:jhSway1 4.8s ease-in-out infinite; }
-  .jh-c2{ animation:jhSway2 4.8s ease-in-out infinite .15s; }
-  .jh-c3{ animation:jhSway3 4.8s ease-in-out infinite .3s; }
-  @keyframes jhSway1{ 0%,100%{transform:rotate(0deg);} 50%{transform:rotate(-3deg);} }
-  @keyframes jhSway2{ 0%,100%{transform:rotate(0deg);} 50%{transform:rotate(2.5deg);} }
-  @keyframes jhSway3{ 0%,100%{transform:rotate(0deg);} 50%{transform:rotate(-2deg);} }
-  #jhTree.open .jh-canopy{ animation:none!important; transform:none!important; }
-
-  /* Small golden bud — signals "there's more here", pulses independently */
-  .jh-bud{
-    animation:jhBudPulse 2.4s ease-in-out infinite;
-    transform-origin:center;
-  }
-  @keyframes jhBudPulse{
-    0%,100%{ opacity:.55; transform:scale(1); }
-    50%{ opacity:1; transform:scale(1.35); }
-  }
-  #jhTree.open .jh-bud{ opacity:0; }
+  #jhTreeSvg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
 
   @media(prefers-reduced-motion:reduce){
-    #jhTree .jh-stage, .jh-shadow, .jh-canopy, .jh-bud{ animation:none!important; }
+    #jhTree{ display:none!important; }
   }
 
   /* ── Fruit quick-actions — bloom out from the canopy on open ── */
-  .jh-fruits{
-    position:absolute; inset:0; pointer-events:none;
-  }
+  .jh-fruits{ position:absolute; inset:0; pointer-events:none; }
   .jh-fruit{
-    position:absolute; top:38px; left:42px;
+    position:absolute; top:30px; left:38px;
     width:0; height:0;
-    display:flex; align-items:center; justify-content:center;
     pointer-events:none;
   }
   .jh-fruit-btn{
@@ -43264,17 +43216,14 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   #jhTree.open .jh-fruit{ pointer-events:auto; }
   #jhTree.open .jh-fruit-btn{ pointer-events:auto; opacity:1; }
 
-  /* Each fruit flies out to its own resting spot around the canopy,
-     staggered slightly so they pop like they're budding one after another */
-  #jhTree.open .jh-fruit[data-n="0"] .jh-fruit-btn{ transition-delay:.02s; transform:translate(calc(-50% + 4px),calc(-50% - 58px)) scale(1); }
-  #jhTree.open .jh-fruit[data-n="1"] .jh-fruit-btn{ transition-delay:.07s; transform:translate(calc(-50% + 52px),calc(-50% - 34px)) scale(1); }
-  #jhTree.open .jh-fruit[data-n="2"] .jh-fruit-btn{ transition-delay:.12s; transform:translate(calc(-50% + 46px),calc(-50% + 14px)) scale(1); }
-  #jhTree.open .jh-fruit[data-n="3"] .jh-fruit-btn{ transition-delay:.17s; transform:translate(calc(-50% - 40px),calc(-50% + 14px)) scale(1); }
-  #jhTree.open .jh-fruit[data-n="4"] .jh-fruit-btn{ transition-delay:.22s; transform:translate(calc(-50% - 46px),calc(-50% - 34px)) scale(1); }
+  #jhTree.open .jh-fruit[data-n="0"] .jh-fruit-btn{ transition-delay:.02s; transform:translate(calc(-50% + 2px),calc(-50% - 62px)) scale(1); }
+  #jhTree.open .jh-fruit[data-n="1"] .jh-fruit-btn{ transition-delay:.07s; transform:translate(calc(-50% + 54px),calc(-50% - 30px)) scale(1); }
+  #jhTree.open .jh-fruit[data-n="2"] .jh-fruit-btn{ transition-delay:.12s; transform:translate(calc(-50% + 44px),calc(-50% + 22px)) scale(1); }
+  #jhTree.open .jh-fruit[data-n="3"] .jh-fruit-btn{ transition-delay:.17s; transform:translate(calc(-50% - 42px),calc(-50% + 22px)) scale(1); }
+  #jhTree.open .jh-fruit[data-n="4"] .jh-fruit-btn{ transition-delay:.22s; transform:translate(calc(-50% - 50px),calc(-50% - 30px)) scale(1); }
 
-  /* Soft ambient glow behind the whole widget when open */
   #jhTree::before{
-    content:''; position:absolute; left:50%; top:38px;
+    content:''; position:absolute; left:50%; top:30px;
     width:0; height:0; border-radius:50%; transform:translate(-50%,-50%);
     background:radial-gradient(circle, rgba(16,185,129,.35), transparent 70%);
     transition:width .4s ease, height .4s ease, opacity .4s ease;
@@ -43282,7 +43231,6 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   }
   #jhTree.open::before{ width:220px; height:220px; opacity:1; }
 
-  /* Backdrop to catch outside-clicks and dim the page slightly while open */
   #jhTreeBackdrop{
     position:fixed; inset:0; z-index:9199;
     background:rgba(2,8,5,0);
@@ -43292,78 +43240,95 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   #jhTreeBackdrop.open{ display:block; background:rgba(2,8,5,.35); }
 
   @media(max-width:480px){
-    #jhTree{ right:16px; bottom:16px; width:72px; height:90px; }
+    #jhTree{ right:10px; bottom:8px; width:64px; height:94px; }
     .jh-fruit-btn{ width:36px; height:36px; }
     .jh-fruit-btn svg{ width:15px; height:15px; }
   }
 </style>
 
-<div id="jtTourOverlay"></div>
-<div id="jtTourSpotlight" class="jt-tour-spotlight"></div>
-<div id="jtTourCard">
-  <div class="jt-tour-head">
-    <div class="jt-tour-avatar">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22V12M12 12C12 12 4 10 4 4C10 4 12 12 12 12ZM12 12C12 12 20 10 20 4C14 4 12 12 12 12Z"/></svg>
-    </div>
-    <div class="jt-tour-title" id="jtTourTitle">Welcome to JoyTree</div>
-  </div>
-  <p class="jt-tour-body" id="jtTourBody">Let's take a quick look around.</p>
-  <div class="jt-tour-dots" id="jtTourDots"></div>
-  <div class="jt-tour-actions">
-    <button class="jt-tour-btn skip" id="jtTourSkip">Skip</button>
-    <div class="jt-tour-actions-right">
-      <button class="jt-tour-btn back" id="jtTourBack">Back</button>
-      <button class="jt-tour-btn next" id="jtTourNext">Next</button>
-    </div>
-  </div>
-</div>
-
 <div id="jhTreeBackdrop"></div>
 
 <div id="jhTree" title="Quick actions & guided tour">
-  <div class="jh-stage">
-    <svg viewBox="0 0 84 104" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="jhTrunkGrad" cx="30%" cy="10%" r="90%">
-          <stop offset="0%" stop-color="#2f6b4d"/>
-          <stop offset="100%" stop-color="#0c2e20"/>
-        </radialGradient>
-        <radialGradient id="jhCanopyGrad1" cx="35%" cy="28%" r="75%">
-          <stop offset="0%" stop-color="#34d399"/>
-          <stop offset="55%" stop-color="#12805a"/>
-          <stop offset="100%" stop-color="#063d29"/>
-        </radialGradient>
-        <radialGradient id="jhCanopyGrad2" cx="38%" cy="26%" r="75%">
-          <stop offset="0%" stop-color="#22c58e"/>
-          <stop offset="55%" stop-color="#0e6e4d"/>
-          <stop offset="100%" stop-color="#053723"/>
-        </radialGradient>
-        <radialGradient id="jhCanopyGrad3" cx="40%" cy="30%" r="75%">
-          <stop offset="0%" stop-color="#3fdba1"/>
-          <stop offset="55%" stop-color="#149362"/>
-          <stop offset="100%" stop-color="#074c33"/>
-        </radialGradient>
-      </defs>
-
-      <ellipse class="jh-shadow" cx="42" cy="99" rx="19" ry="4" fill="#000" opacity=".3"/>
-
-      <path d="M39 100 C37.5 88 37 76 38.5 63 C39.3 55.5 41.6 50 42.4 44 C43 39.5 42.6 35 42 31 L46.4 31 C46.9 35.5 46.6 40 47.6 45 C48.9 51.5 51.5 57 51.8 65 C52.1 76.5 50.8 88.5 48.6 100 Z" fill="url(#jhTrunkGrad)"/>
-
-      <g class="jh-canopy jh-c3">
-        <path d="M58 46c7.5 2 12.5 9.7 11 18-1.7 9.3-10.7 15.7-20.4 14.3-3-.4-5.7-1.6-8-3.3 4-3 6.7-7.7 7.2-13 .6-6.6-2-12.7-6.6-16.8 4.8-2.7 10.9-3.3 16.8-1.2Z" fill="url(#jhCanopyGrad3)"/>
+<svg id="jhTreeSvg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 302.7 436.37">
+    <defs>
+      <linearGradient id="Dégradé_sans_nom_18" data-name="Dégradé sans nom 18" x1="156.31" y1="365.15" x2="246.31" y2="431.81" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#04120c"/>
+        <stop offset="1" stop-color="#04120c" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="Dégradé_sans_nom_4" data-name="Dégradé sans nom 4" x1="200.34" y1="253.69" x2="176.67" y2="221.09" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#1b3b2c"/>
+        <stop offset="0.23" stop-color="#1b3b2c"/>
+        <stop offset="1" stop-color="#eafff2"/>
+      </linearGradient>
+      <linearGradient id="Dégradé_sans_nom_2" data-name="Dégradé sans nom 2" x1="303.2" y1="168.65" x2="213.62" y2="249.02" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#16a673"/>
+        <stop offset="1" stop-color="#0e6e4d"/>
+      </linearGradient>
+      <linearGradient id="Dégradé_sans_nom_3" data-name="Dégradé sans nom 3" x1="236.83" y1="175.48" x2="254.62" y2="212.29" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#22c58e"/>
+        <stop offset="1" stop-color="#3fdba1"/>
+      </linearGradient>
+      <linearGradient id="Dégradé_sans_nom_4-2" x1="196.6" y1="195.74" x2="177" y2="178.38" xlink:href="#Dégradé_sans_nom_4"/>
+      <linearGradient id="Dégradé_sans_nom_3-2" x1="296.11" y1="44.64" x2="176.48" y2="155.68" xlink:href="#Dégradé_sans_nom_3"/>
+      <linearGradient id="Dégradé_sans_nom_2-2" x1="274.3" y1="150.3" x2="231.97" y2="99.99" xlink:href="#Dégradé_sans_nom_2"/>
+      <linearGradient id="Dégradé_sans_nom_4-3" x1="-19.56" y1="223.16" x2="218.1" y2="279.92" xlink:href="#Dégradé_sans_nom_4"/>
+      <linearGradient id="Dégradé_sans_nom_2-3" x1="16.11" y1="204.08" x2="92.18" y2="276.48" xlink:href="#Dégradé_sans_nom_2"/>
+      <linearGradient id="Dégradé_sans_nom_2-4" x1="106.7" y1="255.03" x2="106.7" y2="255.03" xlink:href="#Dégradé_sans_nom_2"/>
+      <linearGradient id="Dégradé_sans_nom_3-3" x1="63.36" y1="209.36" x2="54.16" y2="240.65" xlink:href="#Dégradé_sans_nom_3"/>
+      <linearGradient id="Dégradé_sans_nom_4-4" x1="75.32" y1="182.31" x2="144.32" y2="160.33" xlink:href="#Dégradé_sans_nom_4"/>
+      <linearGradient id="Dégradé_sans_nom_2-5" x1="19.89" y1="76.27" x2="141.37" y2="193.45" xlink:href="#Dégradé_sans_nom_2"/>
+      <linearGradient id="Dégradé_sans_nom_3-4" x1="38.58" y1="178.83" x2="83.36" y2="134.66" xlink:href="#Dégradé_sans_nom_3"/>
+      <linearGradient id="Dégradé_sans_nom_39" data-name="Dégradé sans nom 39" x1="148.36" y1="248.02" x2="163.23" y2="248.02" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#2f6b4d"/>
+        <stop offset="0.69" stop-color="#123a29"/>
+        <stop offset="1" stop-color="#164a33"/>
+      </linearGradient>
+      <linearGradient id="Dégradé_sans_nom_2-6" x1="147.41" y1="4.1" x2="181.15" y2="164.83" xlink:href="#Dégradé_sans_nom_2"/>
+      <linearGradient id="Dégradé_sans_nom_3-5" x1="98.37" y1="94.42" x2="168.31" y2="80.31" xlink:href="#Dégradé_sans_nom_3"/>
+    </defs>
+    <title>mongo-tree</title>
+    <g id="jhtShadow">
+      <path d="M172,366c1,6,93.49,68.65,93.49,68.65l-19.53,1s-61.8-40.89-84.32-54.19-19.06-14.2-19.07-14.21c-.46-.45,2-4.64,11.81-4.64S171.88,363.56,172,366Z" transform="translate(-1.14 -2.3)" opacity="0.1" fill="url(#Dégradé_sans_nom_18)"/>
+    </g>
+    <g id="jhtTree">
+      <g id="jhtLeafRb">
+        <g>
+          <path d="M226.46,217.24S207.89,223.52,201,229c-2.12,1.69.56,1.74.52,3.5,0,0,30.61,20,66.11-3.15,25.12-18.4,27.8-37.3,30.61-40.42a45.85,45.85,0,0,1,5.32-6.52Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_2)"/>
+          <path d="M296.79,182.08c-4.39-2.39-28-14.22-60.31-2s-38.85,46.27-38.85,46.27c3.37,3.66,9.48-1.84,18.58-5,8.63-3,19.24-7.3,30-12.34,5.66-2.66,54.85-23.65,57.66-26.82C301.3,183,300.29,183.34,296.79,182.08Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_3)"/>
+        </g>
+        <path d="M214.36,221.93c-8.15,2.8-14.29,4.4-16.71,4.41-8.73,8.22-47.32,28-47.32,28l.33,3.69s42.57-24.81,47.09-25.68a8.57,8.57,0,0,1,4,.26l-.21-.13C201.6,228.71,208,224.83,214.36,221.93Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_4)"/>
       </g>
-      <g class="jh-canopy jh-c2">
-        <path d="M20 50c-7 3-11 10.7-8.8 18.7 2.4 8.9 11.8 14.4 21.3 12.3 3-.7 5.5-2.1 7.6-4-3.7-3.3-6-8.1-6.1-13.4-.1-6.6 3-12.4 7.9-16.1-5-2.3-11.2-2.4-21.9 2.5Z" fill="url(#jhCanopyGrad2)"/>
+      <g id="jhtLeafRm">
+        <g>
+          <path d="M278.57,52c-5.14,3.07-32.38,1.65-65.06,31.82-42.24,43.41-22.55,91.82-22.55,91.82,10.05,8.39,28.23-30.77,28.23-30.77l70-98.55A65.5,65.5,0,0,1,278.57,52Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_3-2)"/>
+          <path d="M287.76,55.87c-.8-5.26-.08-6.58,1.86-9.89-5.21,3.07-48.13,66.28-53.41,73.48a463.05,463.05,0,0,0-28,43c-2.27,4-8.66,10.5-10.19,13.58-2.21,4.45.88,4.89.52,6.76,0,0,49.56.17,75.53-41.78S289.91,62.69,287.76,55.87Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_2-2)"/>
+        </g>
+        <path d="M209.28,160.51c-5.8,8.06-13,16-18.34,15.1l-.12-.3c-7.31,14.08-39.23,40.24-39.23,40.24l2.08,2.47s30.9-29.42,45-35.26h-.15C199.16,179.4,203.11,171.2,209.28,160.51Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_4-2)"/>
       </g>
-      <g class="jh-canopy jh-c1">
-        <path d="M42 15c11.6 0 21 9.6 21 21.5S53.6 58 42 58 21 48.4 21 36.5 30.4 15 42 15Z" fill="url(#jhCanopyGrad1)"/>
-        <ellipse cx="35" cy="27" rx="9" ry="6.5" fill="#ffffff" opacity=".1"/>
+      <g id="jhtLeafLb">
+        <polygon points="106.7 255.03 106.7 255.03 106.7 255.03 106.7 255.03" fill="url(#Dégradé_sans_nom_2-3)"/>
+        <g>
+          <path d="M100,250,1.44,217.33a45.85,45.85,0,0,1,5.93,6c3.09,2.83,7.59,21.39,34.37,37.28,37.57,19.65,66.11-3.25,66.11-3.25A7.91,7.91,0,0,0,100,250Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_2-4)"/>
+          <path d="M68,208.52c-33.34-9-55.7,5-59.83,7.83-3.37,1.59-4.4,1.37-7,.73,3.1,2.88,54.07,19.08,60,21.12C101,252,104,253,111.12,250.82,111.12,250.82,101.32,217.54,68,208.52Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_3-3)"/>
+        </g>
+        <path d="M151.59,271.16s-26.7-11.72-40.52-20.5l.05.17A63.85,63.85,0,0,1,93,249c6.56,2.28,14.39,4.57,14.84,8.33h0l-.2.15a8.57,8.57,0,0,1,3.94-.64c4.58.43,40,18,40,18Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_4-3)"/>
       </g>
-
-      <circle class="jh-bud" cx="60" cy="30" r="4.2" fill="#F2CB6E"/>
-      <circle class="jh-bud" cx="22" cy="42" r="3" fill="#E8B94A" opacity=".85"/>
-    </svg>
-  </div>
+      <g id="jhtLeafLm">
+        <g>
+          <path d="M100.8,117C68.12,86.85,40.88,88.27,35.74,85.2a65.5,65.5,0,0,1-10.6-5.68l70,98.55S108.58,201.6,118,210c3.14,2.8,2.73-.7,5.36-1.16C123.36,208.84,143,160.43,100.8,117Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_2-5)"/>
+          <path d="M78.1,152.7c-5.28-7.21-48.21-70.41-53.41-73.48,1.94,3.32,2.66,4.63,1.86,9.89-2.15,6.81-12.26,43.16,13.71,85.11S115.79,216,115.79,216c-.38-2-.31-3.08-2.79-8C106.73,195.59,92.83,172.8,78.1,152.7Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_3-4)"/>
+        </g>
+        <path d="M124.21,214.16a12.25,12.25,0,0,1-.73-5.65l-.13.33c-5.34.92-12.54-7-18.34-15.1,6.17,10.68,10.11,18.87,10.77,22.24,12.74,9.65,33.34,37.83,33.34,37.83l5.08-1.47S126.67,220.25,124.21,214.16Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_4-4)"/>
+      </g>
+      <g id="jhtMain">
+        <g id="jhtLeafTop">
+          <path d="M190.25,76.57c-9.85-43.37-33.1-57.63-35.6-63.08a65.5,65.5,0,0,1-5.52-10.68L151,123.66s-3.84,36.9,5.84,41.35C156.83,165,200.48,136.27,190.25,76.57Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_2-6)"/>
+          <path d="M151.33,93.11c.06-8.93.15-85.33-2.4-90.81-.28,3.83-.43,5.32-4.07,9.21-5.63,4.4-34.55,28.63-36.91,77.91s38.59,77.21,38.59,77.21C151,165,151,147,151.33,93.11Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_3-5)"/>
+        </g>
+        <path id="jhtStem" d="M172.18,366.33l0-.12a1.74,1.74,0,0,0-.23-.59C157.31,327.94,153,183,154.53,169.88a9.89,9.89,0,0,1,2.16-4.95A111.2,111.2,0,0,1,151,139s-3,21-4.64,27.5c5.39,21.3,2.7,91.54,1.07,142.46-.94,29.43-3.93,37.31-5.62,57.36h.12a1.48,1.48,0,0,0,0,.16c0,2.57,6.78,4.66,15.14,4.66s15.14-2.09,15.14-4.66a1.48,1.48,0,0,0,0-.16Z" transform="translate(-1.14 -2.3)" fill="url(#Dégradé_sans_nom_39)"/>
+      </g>
+    </g>
+  </svg>
 
   <div class="jh-fruits">
     <div class="jh-fruit" data-n="0">
@@ -43399,17 +43364,57 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.3/TweenMax.min.js"></script>
 <script>
 (function(){
   var tree = document.getElementById('jhTree');
   var backdrop = document.getElementById('jhTreeBackdrop');
-  if (!tree || !backdrop) return;
+  if (!tree || !backdrop || typeof TweenMax === 'undefined') return;
 
   var open = false;
+  var loop = null;
 
+  // ── Grow/shrink loop, adapted from the original growing-tree pen:
+  // same setup()/animate() structure and transformOrigins, just
+  // namespaced selectors (#jht*) and deep-green recolored SVG. ──
+  function jhSetup(){
+    TweenMax.set("#jhtShadow", { scale:0, transformOrigin:"15px 8px" });
+    TweenMax.set("#jhtTree", { scale:0, transformOrigin:"154px bottom" });
+    TweenMax.set("#jhtLeafRb", { scale:0, rotation:'-60cw', y:-15, transformOrigin:"left bottom" });
+    TweenMax.set("#jhtLeafRm", { scale:0, rotation:'-50cw', y:30, transformOrigin:"left bottom" });
+    TweenMax.set("#jhtLeafLb", { scale:0, rotation:'60cw', y:-80, transformOrigin:"right bottom" });
+    TweenMax.set("#jhtLeafLm", { scale:0, rotation:'40cw', y:-90, transformOrigin:"right bottom" });
+    TweenMax.set("#jhtLeafTop", { scale:0, transformOrigin:"center bottom" });
+    TweenMax.set("#jhtLeafRb g", { scale:0, transformOrigin:"left 60px" });
+    TweenMax.set("#jhtLeafRm g", { scale:0, transformOrigin:"22px 140px" });
+    TweenMax.set("#jhtLeafLb g", { scale:0, transformOrigin:"right 56px" });
+    TweenMax.set("#jhtLeafLm g", { scale:0, transformOrigin:"106px bottom" });
+  }
+
+  function jhAnimate(){
+    var tl = new TimelineMax({ delay:0.3, repeat:-1, repeatDelay:1.4, yoyo:true });
+    tl.to("#jhtShadow", 2, { scale:1 }, 0)
+      .to("#jhtTree", 2, { scale:1 }, 0)
+      .to("#jhtLeafRb", 2, { scale:1, rotation:'0cw', y:0, delay:.35 }, 0)
+      .to("#jhtLeafRm", 2, { scale:1, rotation:'0cw', y:0, delay:.35 }, 0)
+      .to("#jhtLeafLb", 2, { scale:1, rotation:'0cw', y:0, delay:.35 }, 0)
+      .to("#jhtLeafLm", 2, { scale:1, rotation:'0cw', y:0, delay:.35 }, 0)
+      .to("#jhtLeafTop", 2.5, { scale:1, delay:.35 }, 0)
+      .to("#jhtLeafLb g", 2.25, { scale:1, delay:.5 }, 0)
+      .to("#jhtLeafLm g", 2.25, { scale:1, delay:.6 }, 0)
+      .to("#jhtLeafRb g", 2.25, { scale:1, delay:.5 }, 0)
+      .to("#jhtLeafRm g", 2.25, { scale:1, delay:.6 }, 0);
+    return tl;
+  }
+
+  jhSetup();
+  loop = jhAnimate();
+
+  // ── Fruit menu open/close — freezes the tree fully grown while open ──
   function openTree(){
     if (open) return;
     open = true;
+    if (loop) loop.pause(loop.duration()); // snap to fully-grown frame, hold there
     tree.classList.add('open');
     backdrop.classList.add('open');
   }
@@ -43418,11 +43423,10 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
     open = false;
     tree.classList.remove('open');
     backdrop.classList.remove('open');
+    if (loop) loop.resume();
   }
 
   tree.addEventListener('click', function(e){
-    // Ignore clicks that originated on a fruit button — those handle
-    // their own action and close separately.
     if (e.target.closest && e.target.closest('.jh-fruit-btn')) return;
     if (open) closeTree(); else openTree();
   });
