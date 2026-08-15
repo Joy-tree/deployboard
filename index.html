@@ -43422,36 +43422,25 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   var open = false;
   var loop = null;
 
-  // ── Grow/shrink loop, adapted from the original growing-tree pen:
-  // same setup()/animate() structure and transformOrigins, just
-  // namespaced selectors (#jht*) and deep-green recolored SVG. ──
+  // ── Grow/shrink loop. The original pen animates each leaf cluster's
+  // own rotation + vertical offset independently from the trunk, which
+  // looks fine at full size but reads as "scattered pieces flying in,
+  // then linking up" at small icon scale -- exactly the opposite of a
+  // tree that grows as one connected whole. Fix: stop animating the
+  // leaves separately and scale the ENTIRE tree (trunk + every leaf
+  // cluster, since they're all nested inside #jhtTree) as a single
+  // rigid body from its base. Every part stays attached to every other
+  // part for the whole motion -- it just gets bigger and smaller,
+  // exactly like a real sapling growing, never disassembling. ──
   function jhSetup(){
     TweenMax.set("#jhtShadow", { scale:0, transformOrigin:"15px 8px" });
     TweenMax.set("#jhtTree", { scale:0, transformOrigin:"154px bottom" });
-    TweenMax.set("#jhtLeafRb", { scale:0, rotation:'-60cw', y:-15, transformOrigin:"left bottom" });
-    TweenMax.set("#jhtLeafRm", { scale:0, rotation:'-50cw', y:30, transformOrigin:"left bottom" });
-    TweenMax.set("#jhtLeafLb", { scale:0, rotation:'60cw', y:-80, transformOrigin:"right bottom" });
-    TweenMax.set("#jhtLeafLm", { scale:0, rotation:'40cw', y:-90, transformOrigin:"right bottom" });
-    TweenMax.set("#jhtLeafTop", { scale:0, transformOrigin:"center bottom" });
-    TweenMax.set("#jhtLeafRb g", { scale:0, transformOrigin:"left 60px" });
-    TweenMax.set("#jhtLeafRm g", { scale:0, transformOrigin:"22px 140px" });
-    TweenMax.set("#jhtLeafLb g", { scale:0, transformOrigin:"right 56px" });
-    TweenMax.set("#jhtLeafLm g", { scale:0, transformOrigin:"106px bottom" });
   }
 
   function jhAnimate(){
     var tl = new TimelineMax({ delay:0.42, repeat:-1, repeatDelay:2, yoyo:true });
-    tl.to("#jhtShadow", 2, { scale:1 }, 0)
-      .to("#jhtTree", 2, { scale:1 }, 0)
-      .to("#jhtLeafRb", 2, { scale:1, rotation:'0cw', y:0, delay:.35 }, 0)
-      .to("#jhtLeafRm", 2, { scale:1, rotation:'0cw', y:0, delay:.35 }, 0)
-      .to("#jhtLeafLb", 2, { scale:1, rotation:'0cw', y:0, delay:.35 }, 0)
-      .to("#jhtLeafLm", 2, { scale:1, rotation:'0cw', y:0, delay:.35 }, 0)
-      .to("#jhtLeafTop", 2.5, { scale:1, delay:.35 }, 0)
-      .to("#jhtLeafLb g", 2.25, { scale:1, delay:.5 }, 0)
-      .to("#jhtLeafLm g", 2.25, { scale:1, delay:.6 }, 0)
-      .to("#jhtLeafRb g", 2.25, { scale:1, delay:.5 }, 0)
-      .to("#jhtLeafRm g", 2.25, { scale:1, delay:.6 }, 0);
+    tl.to("#jhtShadow", 2.2, { scale:1, ease:Power2.easeInOut }, 0)
+      .to("#jhtTree", 2.2, { scale:1, ease:Power2.easeInOut }, 0);
     return tl;
   }
 
