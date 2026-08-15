@@ -500,11 +500,22 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
   const stable = await waitForContainerRunning(candidateContainerName, 90, log); // [FIX] increased from 30s to 90s for heavy apps
   if (!stable) {
     try { await exec('docker', ['logs', '--tail', '60', candidateContainerName], {}, log); } catch(e) {}
+    // [FIX] Kill the dead candidate immediately instead of leaving it sitting
+    // around exited (or, before the --restart=no fix above, crash-looping
+    // forever) on the host. Every failed deploy that isn't cleaned up here
+    // is one more container idling on the VPS, eating disk/pid slots and
+    // slowing down every other user's builds over time.
+    try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(_) {}
     throw new Error('Dockerfile container exited during startup. Check logs above.');
   }
 
   const livePort = await detectLivePort(candidateContainerName, exposedPort, 120, log);
-  const targetPort = livePort || exposedPort;
+  if (!livePort) {
+    try { await exec('docker', ['logs', '--tail', '80', candidateContainerName], {}, log); } catch(e) {}
+    try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(_) {}
+    throw new Error('Readiness gate failed: app did not expose a reachable HTTP port.');
+  }
+  const targetPort = livePort;
 
   // Promote candidate to stable name used by proxy/registry
   try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
