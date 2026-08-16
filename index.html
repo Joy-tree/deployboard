@@ -1668,6 +1668,9 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
 .nav-item svg { width:16px; height:16px; flex-shrink:0; opacity:0.7; }
 .nav-item:hover { background: var(--bg-hover); color: var(--text); }
 .nav-item:hover svg { opacity:1; }
+.nav-item.nav-item-loading { opacity:0.55; pointer-events:none; }
+.nav-item.nav-item-loading svg { animation: navItemSpin 0.8s linear infinite; }
+@keyframes navItemSpin { to { transform: rotate(360deg); } }
 .nav-item.active {
   background: rgba(16,185,129,0.1);
   color: var(--primary);
@@ -9004,7 +9007,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
       Databases
     </div>
-    <div class="nav-item" onclick="openDbVisualizerFromSidebar()">
+    <div class="nav-item" onclick="openDbVisualizerFromSidebar(this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       Data Visualizer
     </div>
@@ -37954,7 +37957,23 @@ function openDbVisualizerFor(dbId, alreadyOpen) {
 // database pre-selected via a card -- defaults to the first running
 // database (falling back to the first database of any status), and the
 // topbar dropdown lets you switch to any other one from right there.
-function openDbVisualizerFromSidebar() {
+async function openDbVisualizerFromSidebar(navEl) {
+  // [FIX] _databases is only populated by a loadDatabases() call, which on
+  // fresh page load is deferred behind a 1.5s setTimeout (see bottom of
+  // this file). Clicking this sidebar item before that fires found
+  // _databases still at its initial empty [], which this function then
+  // read as "you have no databases" and bounced to the Databases page --
+  // even for a user who clearly has one, just because the cache hadn't
+  // loaded yet. Actively fetch instead of trusting an empty cache: only
+  // treat it as "genuinely no databases" after a real, awaited load
+  // confirms that.
+  if (!_databases || !_databases.length) {
+    if (navEl) navEl.classList.add('nav-item-loading');
+    try {
+      await loadDatabases();
+    } catch (_e) { /* loadDatabases already handles/logs its own errors */ }
+    if (navEl) navEl.classList.remove('nav-item-loading');
+  }
   if (!_databases || !_databases.length) {
     toast('No databases yet — create one first from the Databases page', 'info');
     showPage('databases');
