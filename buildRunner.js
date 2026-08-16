@@ -5755,6 +5755,20 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   const relativeProjectRoot = path.relative(buildDir, projectRoot) || '.';
   log(`\x1b[90m[deploy] Server app root: ${relativeProjectRoot} — install, build, and start all use this same directory.\x1b[0m`);
 
+  // [FIX] The GitHub path (runServerBuild) has a safety check here: if the
+  // project doesn't actually have a runnable start command or server entry
+  // (isDeployableServerProject), it gracefully falls back to a static
+  // deploy instead of plowing ahead into install/build/container-launch
+  // and failing with a confusing error much later. This upload path had no
+  // equivalent -- a project misclassified as "server" (or manually set
+  // that way when it isn't really one) would fail deep in the container
+  // startup phase instead of being caught early with a clear redirect.
+  if (!isDeployableServerProject(projectRoot, String(project.startCmd || '').trim())) {
+    log(`\x1b[33m[auto] No production server start could be inferred. Falling back to static deployment flow.\x1b[0m`);
+    const fallbackProject = { ...project, siteType: 'static', buildCmd: project.buildCmd || 'echo skip', outputDir: project.outputDir || '.' };
+    return runUploadStaticBuild({ deployId, project: fallbackProject, sitesDir, tmpDir, emit, onLog, uploadFilesDir, log, cleanSub, appPort, baseDomain });
+  }
+
   // [FIX] Root cause of uploaded Node/Next.js projects failing to build
   // (TypeError: Cannot read properties of null (reading 'useContext'),
   // Error: <Html> should not be imported outside of pages/_document, and
@@ -5955,12 +5969,18 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   // time, even though it never stays up long enough to finish binding the
   // HTTP port).
   const runtime = getRuntimeConfig(project);
+  // [FIX] Was the fixed global CPU_SHARES constant ('512', same as a free
+  // tier), completely ignoring the user's actual billing plan. The GitHub
+  // path already correctly uses runtime.cpuShares (computed per-project
+  // from getRuntimeConfig, which reads the plan's real CPU allocation) --
+  // a Pro/Scale Max user deploying via upload was silently capped to the
+  // same CPU priority as a free account.
   const runArgs = [
     'run', '-d', '--restart=no',
     '--name', candidateContainerName,
     '--network', networkName,
     '--add-host', 'host.docker.internal:host-gateway',
-    '--cpu-shares', CPU_SHARES,
+    '--cpu-shares', runtime.cpuShares,
     '--pids-limit', PIDS_LIMIT,
     '-m', runtime.memory,
     '--memory-reservation', runtime.memory,
@@ -5980,10 +6000,30 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   if (runtime.memorySwap) {
     runArgs.push('--memory-swap', runtime.memorySwap);
   }
+  // [FIX] The GitHub path's startup command self-heals if node_modules
+  // ends up missing at runtime (e.g. the copy fallback above had to skip
+  // it because rsync wasn't available) by reinstalling before running the
+  // start command. This upload path had NO such check -- it just ran
+  // startCmdResolved directly, so the very fallback tier that's supposed
+  // to keep a deploy alive when rsync is unavailable would still leave the
+  // container unable to start at all ("Cannot find module 'next'" etc),
+  // since nothing ever reinstalled the dependencies it deliberately left out.
+  const runtimeInstallCmdUp = normalizeInstallLikeCommand((project.installCmd || '').trim() || getDefaultInstallCmd(appDir), appDir).replace(/`/g, '\\`');
+  const ensureRuntimeDepsUp = `[ -d node_modules ] || [ ! -f package.json ] || (echo "[Joytree] node_modules missing in /app — reinstalling dependencies before start" && corepack enable >/dev/null 2>&1 || true; ${runtimeInstallCmdUp})`;
   runArgs.push(
     `node:${nodeVer}`,
-    'sh', '-c', `export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH && ${String(startCmdResolved || 'node server.js').replace(/`/g, '\\`')}`
+    'sh', '-c', `export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH && ${ensureRuntimeDepsUp} && ${String(startCmdResolved || 'node server.js').replace(/`/g, '\\`')}`
   );
+
+  // [FIX] GitHub path pulls the runtime image explicitly before running,
+  // so a missing/stale image is surfaced as a clear "Pulling..." log line
+  // rather than happening silently inline as part of `docker run`.
+  log(`\x1b[90m[docker] Pulling node:${nodeVer}…\x1b[0m`);
+  try {
+    await exec('docker', ['pull', `node:${nodeVer}`], {}, log);
+  } catch (e) {
+    log(`\x1b[33m[docker] Using cached image\x1b[0m`);
+  }
 
   log(`\x1b[90m[docker] Launching Node.js ${nodeVer} container from /app (same built server tree)…\x1b[0m`);
   await exec('docker', runArgs, {}, log);
@@ -5995,6 +6035,15 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   await new Promise(r => setTimeout(r, 3000));
   const stable = await waitForContainerRunning(candidateContainerName, 90, log); // [FIX] increased from 30s to 90s for heavy apps
   if (!stable) {
+    // [FIX] GitHub path shows OOM/exit-code/error details from `docker
+    // inspect` here, not just the raw log tail -- e.g. instantly reveals
+    // an OOM-kill instead of leaving the person to guess from output alone.
+    try {
+      const inspectLines = [];
+      await exec('docker', ['inspect', '--format={{.State.Status}}|oom={{.State.OOMKilled}}|exit={{.State.ExitCode}}|error={{.State.Error}}', candidateContainerName], {}, (line) => inspectLines.push(line));
+      const diag = (inspectLines.join('\n').trim().split('\n').pop() || '').trim();
+      if (diag) log(`\x1b[33m[docker] State details: ${diag}\x1b[0m`);
+    } catch (_) {}
     try { await exec('docker', ['logs', '--tail', '60', candidateContainerName], {}, log); } catch(e) {}
     try { await exec('docker', ['rm', '-f', candidateContainerName], {}, () => {}); } catch(e) {}
     if (!isStableRegistryTarget(previousTarget)) {
