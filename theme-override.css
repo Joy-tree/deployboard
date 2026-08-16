@@ -2871,3 +2871,43 @@ html[data-theme="light"] .sdk-test-status {
 html[data-theme="light"] .sdk-test-indicator.idle {
   background: #94a3b8 !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DARK THEME — hardcoded blue color cleanup. These elements previously
+   had their color baked directly into index.html (either as inline
+   style="" attributes or as class rules inside index.html's own internal
+   <style> block), completely bypassing this stylesheet and the site's
+   theme system. The color has been stripped from index.html/inline
+   markup and now lives here instead, as the single external source of
+   truth for these accents — matching the site's deep-green palette
+   instead of the leftover blue.
+   ═══════════════════════════════════════════════════════════════════════ */
+.executive-banner span { color: #6ee7b7 !important; }
+.cn { color: #6ee7b7 !important; }
+.code-block .cn { color: #6ee7b7 !important; }
+.alert-info {
+  background: rgba(16,185,129,0.08) !important;
+  border: 1px solid rgba(16,185,129,0.25) !important;
+  color: #6ee7b7 !important;
+}
+.qstudio-raw-output .info { color: #6ee7b7 !important; }
+.schema-tip-code { color: #6ee7b7 !important; }
+
+/* Runtime log viewer text (was inline on #lfLogs) */
+.jt-log-text { color: #6ee7b7 !important; }
+
+/* Custom-domain "Using a subdomain?" tip boxes (was inline, duplicated
+   in two places on the domain setup page) */
+.jt-tip-box {
+  background: rgba(16,185,129,0.08) !important;
+  border: 1px solid rgba(16,185,129,0.2) !important;
+  border-radius: 10px !important;
+}
+.jt-tip-heading { color: #6ee7b7 !important; }
+
+/* Restart-deployment ghost button (had a green border but hardcoded
+   blue text) */
+.jt-restart-btn { color: #6ee7b7 !important; }
+
+/* Database explorer — JSON/object value table cells */
+.jt-json-cell { color: #6ee7b7 !important; }
