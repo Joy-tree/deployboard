@@ -1030,7 +1030,7 @@ body.landing-drawer-open { overflow:hidden; }
 .hero::after{content:"";position:absolute;inset:auto -12% -180px;height:280px;background:radial-gradient(ellipse at center,rgba(16,185,129,.18),transparent 70%);pointer-events:none}
 .executive-banner{width:min(1160px,calc(100% - 40px));margin:16px auto 0;padding:16px 18px;border:1px solid rgba(34,211,238,.32);border-radius:18px;background:linear-gradient(145deg,rgba(10,20,36,.88),rgba(4,10,20,.95));display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;box-shadow:0 20px 70px rgba(0,0,0,.34)}
 .executive-banner strong{font-family:var(--font-ui);font-size:1.08rem;letter-spacing:-.04em;color:#ecfeff}
-.executive-banner span{color:#6ee7b7;font-size:.87rem}
+.executive-banner span{font-size:.87rem}
 .exec-badges{display:flex;gap:8px;flex-wrap:wrap}
 .exec-badge{padding:6px 10px;border-radius:999px;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.12);font-size:.67rem;letter-spacing:.08em;text-transform:uppercase;color:#d1fae5;font-weight:700}
 .cred-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:min(1160px,calc(100% - 40px));margin:18px auto 0}
@@ -1198,7 +1198,7 @@ body.landing-drawer-open { overflow:hidden; }
 .code-panel.active{display:block;}
 .ck{color:#c084fc;}
 .cs{color:#86efac;}
-.cn{color:#6ee7b7;}
+.cn{}
 .co{color:#6b7280;}
 .cy{color:var(--cyan);}
 
@@ -3832,7 +3832,7 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
   margin-bottom: 16px;
 }
 .alert svg { width:16px; height:16px; flex-shrink:0; margin-top:1px; }
-.alert-info { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); color:#6ee7b7; }
+.alert-info { border-radius: 8px; }
 .alert-success { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); color:#6ee7b7; }
 .alert-warning { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); color:#fcd34d; }
 .alert-error { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); color:#fca5a5; }
@@ -3851,7 +3851,7 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 }
 .code-block .ck { color: #c084fc; }
 .code-block .cs { color: #86efac; }
-.code-block .cn { color: #6ee7b7; }
+.code-block .cn { }
 
 /* ── Quick Action Buttons ──────────────────────────────────────────────── */
 .dash-quick-btn {
@@ -5555,7 +5555,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=13">
+<link rel="stylesheet" href="theme-override.css?v=14">
 </head>
 <body>
 
@@ -9957,7 +9957,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="page-subtitle">Real-time build output streamed via Socket.io</div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button class="btn btn-ghost" style="border-color:rgba(34,197,94,.35);color:#6ee7b7;" onclick="restartActiveDeployment()">
+            <button class="btn btn-ghost jt-restart-btn" onclick="restartActiveDeployment()">
               ↻ Restart
             </button>
             <button class="btn btn-ghost" style="border-color:rgba(239,68,68,.4);color:#fca5a5;" onclick="stopActiveDeployment()">
@@ -16138,7 +16138,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
   white-space:pre-wrap;word-break:break-word;
 }
 .qstudio-raw-output .err{color:#fca5a5;}
-.qstudio-raw-output .info{color:#6ee7b7;}
+.qstudio-raw-output .info{}
 .qstudio-raw-output .ok{color:#a3e7c5;}
 .qstudio-raw-output .dim{color:#4b5563;}
 
@@ -16828,7 +16828,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 .schema-tip-label svg{width:12px;height:12px;}
 .schema-tip-code{
   background:#030712;border:1px solid rgba(255,255,255,.08);border-radius:8px;
-  padding:10px 14px;font-family:var(--font-mono);font-size:.78rem;color:#6ee7b7;
+  padding:10px 14px;font-family:var(--font-mono);font-size:.78rem;
   display:flex;align-items:center;justify-content:space-between;gap:10px;
   overflow-x:auto;
 }
@@ -17831,7 +17831,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       </div></div>
       <div class="card" style="margin-top:12px;"><div class="card-body">
         <div style="font-weight:700;margin-bottom:8px;">Execution Logs</div>
-        <pre id="lfLogs" style="max-height:320px;overflow:auto;background:#030712;border:1px solid var(--border);padding:12px;border-radius:12px;color:#6ee7b7;font-size:.75rem;">No logs yet.</pre>
+        <pre id="lfLogs" class="jt-log-text" style="max-height:320px;overflow:auto;background:#030712;border:1px solid var(--border);padding:12px;border-radius:12px;font-size:.75rem;">No logs yet.</pre>
       </div></div>
       <div class="card" style="margin-top:12px;"><div class="card-body">
         <div style="font-weight:800;font-size:1.05rem;margin-bottom:8px;">API Management</div>
@@ -20366,8 +20366,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
             </div>
           </div>
           <!-- Subdomain tip -->
-          <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:14px;">
-            <div style="font-size:0.8rem;font-weight:800;color:#6ee7b7;margin-bottom:8px;">Using a subdomain (app.yourdomain.com)?</div>
+          <div style="padding:14px;" class="jt-tip-box">
+            <div class="jt-tip-heading" style="font-size:0.8rem;font-weight:800;margin-bottom:8px;">Using a subdomain (app.yourdomain.com)?</div>
             <div style="font-size:0.78rem;color:var(--text-2);line-height:1.75;">
               Set Name to just the prefix — e.g. <code style="background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);">app</code> for <code style="background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);">app.yourdomain.com</code>. Not the full URL.<br><br>
               <strong style="color:var(--text);">Free subdomain services</strong> (dpdns.org, duckdns.org, afraid.org etc.) control their own DNS zone — add the CNAME through their dashboard, not Cloudflare.
@@ -20601,8 +20601,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                 4. Wait up to 48h for propagation
               </div>
             </div>
-            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:14px;">
-              <div style="font-size:0.8rem;font-weight:800;color:#6ee7b7;margin-bottom:8px;">Using a subdomain (app.yourdomain.com)?</div>
+            <div style="padding:14px;" class="jt-tip-box">
+              <div class="jt-tip-heading" style="font-size:0.8rem;font-weight:800;margin-bottom:8px;">Using a subdomain (app.yourdomain.com)?</div>
               <div style="font-size:0.78rem;color:var(--text-2);line-height:1.75;">
                 Set Name to just the prefix -- e.g. <code style="background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);">app</code> for <code style="background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);">app.yourdomain.com</code>. Not the full URL.<br><br>
                 <strong style="color:var(--text);">Free subdomain services</strong> (dpdns.org, duckdns.org, afraid.org etc.) control their own DNS zone. Add the CNAME through their dashboard, not Cloudflare.
@@ -35348,7 +35348,7 @@ function renderQueryResultsTable(rows){
   const tbody = rows.map(r=>`<tr>${cols.map(c=>{
     const v = r[c];
     if (v === null || v === undefined) return `<td><span class="qstudio-results-null">null</span></td>`;
-    if (typeof v === 'object') return `<td style="color:#6ee7b7;">${JSON.stringify(v).replace(/</g,'&lt;')}</td>`;
+    if (typeof v === 'object') return `<td class="jt-json-cell">${JSON.stringify(v).replace(/</g,'&lt;')}</td>`;
     return `<td>${String(v).replace(/</g,'&lt;')}</td>`;
   }).join('')}</tr>`).join('');
   results.innerHTML = `<div class="qstudio-results-table-wrap"><table class="qstudio-results-table"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
