@@ -15768,6 +15768,57 @@ v1.post('/deploy', async (req, res) => {
 // the same on-disk layout /api/upload-project produces, then handing off to
 // the proven /api/upload-deploy endpoint (which accepts the same jtk_ Bearer
 // token this request already carried, via requireAuth's branch 2).
+// [FEATURE] Shared by /deploy-from-zip and the chunked-upload /finish
+// endpoint below -- both end up with a complete archive buffer in hand
+// (one from decoding a single request, the other from reassembling many
+// small chunks), and from that point on the work is identical: write it
+// to disk, extract it, hand off to the same proven /api/upload-deploy
+// pipeline the dashboard's own "Upload files" flow uses. Extracted here
+// so the chunked path can't drift from the already-tested single-shot
+// path.
+async function deployArchiveBuffer(req, archiveBuffer, meta) {
+  const { name, subdomain, buildCmd, startCmd, installCmd, outputDir, siteType, nodeVer, envVars } = meta;
+  const userId = String(req.user?._id || req.user?.id || 'anon');
+  const projectId = 'zip_' + Date.now();
+  const userUploadDir = path.join(UPLOADS_DIR, userId, projectId);
+  fs.mkdirSync(userUploadDir, { recursive: true });
+
+  const archivePath = path.join(userUploadDir, 'archive.zip');
+  fs.writeFileSync(archivePath, archiveBuffer);
+
+  const filesDir = path.join(userUploadDir, 'files');
+  await extractUploadedArchive(archivePath, filesDir);
+
+  const cleanSubdomain = String(subdomain || name).toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+
+  const r = await fetch(`http://localhost:${PORT}/api/upload-deploy`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': req.headers.authorization || '',
+    },
+    body: JSON.stringify({
+      projectId, name, subdomain: cleanSubdomain,
+      siteType:   siteType   || '',
+      buildCmd:   buildCmd   || '',
+      startCmd:   startCmd   || '',
+      installCmd: installCmd || '',
+      outputDir:  outputDir  || '',
+      nodeVer:    nodeVer    || '20',
+      envVars:    envVars    || {},
+    }),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(data.error || `HTTP ${r.status}`); e.status = r.status; throw e; }
+  return {
+    deployId: data.deployId || null,
+    subdomain: cleanSubdomain,
+    liveUrl: data.liveUrl || null,
+    message: data.message || 'Deploy from zip triggered.',
+  };
+}
+
 v1.post('/deploy-from-zip', async (req, res) => {
   try {
     const { name, subdomain, zipBase64, zipUrl, branch, buildCmd, startCmd, installCmd,
@@ -15837,59 +15888,135 @@ v1.post('/deploy-from-zip', async (req, res) => {
       return res.status(413).json({ ok: false, error: `Archive exceeds ${MAX_ZIP_BYTES / (1024*1024)}MB limit` });
     }
 
-    const userId = String(req.user?._id || req.user?.id || 'anon');
-    const projectId = 'zip_' + Date.now();
-    const userUploadDir = path.join(UPLOADS_DIR, userId, projectId);
-    try { fs.mkdirSync(userUploadDir, { recursive: true }); }
-    catch (e) { return res.status(500).json({ ok: false, error: 'Could not create upload directory: ' + e.message }); }
-
-    const archivePath = path.join(userUploadDir, 'archive.zip');
-    try { fs.writeFileSync(archivePath, archiveBuffer); }
-    catch (e) { return res.status(500).json({ ok: false, error: 'Failed to write archive: ' + e.message }); }
-
-    const filesDir = path.join(userUploadDir, 'files');
+    let result;
     try {
-      await extractUploadedArchive(archivePath, filesDir);
+      result = await deployArchiveBuffer(req, archiveBuffer, { name, subdomain, buildCmd, startCmd, installCmd, outputDir, siteType, nodeVer, envVars });
     } catch (e) {
-      return res.status(400).json({ ok: false, error: 'Failed to extract archive: ' + e.message });
+      return res.status(e.status || 500).json({ ok: false, error: e.message });
     }
+    res.json({ ok: true, ...result });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
 
-    const cleanSubdomain = String(subdomain || name).toLowerCase()
-      .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+// ── Chunked zip upload (bridge for archives too large for one call) ────────
+// Three-step flow purpose-built for AI/MCP callers: an archive generated
+// locally by an AI has to be sent to us somehow, and the only channel an
+// MCP tool call has is its own arguments -- there's no way for it to open
+// a raw network connection itself. Inlining a whole archive as one base64
+// argument (deploy-from-zip's zipBase64) works, but the size of that
+// argument is bounded by the calling AI's own per-call output budget, not
+// by anything this server enforces. These three endpoints let the same
+// archive arrive as many small, ordinary POST bodies instead of one huge
+// one -- each individual request stays tiny regardless of total project
+// size (up to the same 260MB ceiling), and by the time /finish runs, the
+// archive is already fully assembled server-side, so it hands off to the
+// exact same deployArchiveBuffer() the single-shot path above uses.
+const ZIP_UPLOAD_MAX_BYTES = 260 * 1024 * 1024;
+const ZIP_UPLOAD_TTL_MS = 20 * 60 * 1000; // 20 min of inactivity
+const zipUploadSessions = new Map(); // uploadId -> { userId, totalBytes, receivedBytes, nextChunkIndex, filePath, expiresAt }
 
-    // Hand off to the existing, already-proven upload-deploy pipeline. Forward
-    // the same Authorization header this request came in with -- requireAuth
-    // accepts jtk_ Bearer tokens directly (see branch 2), so no separate
-    // internal-key auth path is needed here.
-    const r = await fetch(`http://localhost:${PORT}/api/upload-deploy`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': req.headers.authorization || '',
-      },
-      body: JSON.stringify({
-        projectId, name, subdomain: cleanSubdomain,
-        siteType:   siteType   || '',
-        buildCmd:   buildCmd   || '',
-        startCmd:   startCmd   || '',
-        installCmd: installCmd || '',
-        outputDir:  outputDir  || '',
-        nodeVer:    nodeVer    || '20',
-        envVars:    envVars    || {},
-      }),
+function zipUploadCleanupExpired() {
+  const now = Date.now();
+  for (const [id, s] of zipUploadSessions.entries()) {
+    if (s.expiresAt < now) {
+      try { fs.unlinkSync(s.filePath); } catch (_) {}
+      zipUploadSessions.delete(id);
+    }
+  }
+}
+setInterval(zipUploadCleanupExpired, 5 * 60 * 1000).unref?.();
+
+v1.post('/zip-uploads', (req, res) => {
+  try {
+    const totalBytes = Number(req.body?.totalBytes);
+    if (!Number.isFinite(totalBytes) || totalBytes <= 0) {
+      return res.status(400).json({ ok: false, error: 'totalBytes must be a positive number' });
+    }
+    if (totalBytes > ZIP_UPLOAD_MAX_BYTES) {
+      return res.status(413).json({ ok: false, error: `totalBytes exceeds the ${ZIP_UPLOAD_MAX_BYTES / (1024*1024)}MB limit` });
+    }
+    zipUploadCleanupExpired();
+
+    const userId = String(req.user?._id || req.user?.id || 'anon');
+    const uploadId = 'zu_' + crypto.randomBytes(16).toString('hex');
+    const tmpDirForUploads = path.join(UPLOADS_DIR, '_zip_upload_sessions');
+    fs.mkdirSync(tmpDirForUploads, { recursive: true });
+    const filePath = path.join(tmpDirForUploads, uploadId + '.zip');
+    fs.writeFileSync(filePath, Buffer.alloc(0)); // create empty, chunks append to it
+
+    zipUploadSessions.set(uploadId, {
+      userId, totalBytes, receivedBytes: 0, nextChunkIndex: 0, filePath,
+      expiresAt: Date.now() + ZIP_UPLOAD_TTL_MS,
     });
 
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) return res.status(r.status).json({ ok: false, error: data.error || `HTTP ${r.status}` });
+    res.json({ ok: true, uploadId, maxBytes: ZIP_UPLOAD_MAX_BYTES, expiresInSeconds: ZIP_UPLOAD_TTL_MS / 1000 });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
+v1.post('/zip-uploads/:uploadId/chunk', (req, res) => {
+  try {
+    const session = zipUploadSessions.get(req.params.uploadId);
+    if (!session) return res.status(404).json({ ok: false, error: 'Upload session not found or expired -- call joytree_zip_upload_start again' });
+    if (session.userId !== String(req.user?._id || req.user?.id || 'anon')) {
+      return res.status(403).json({ ok: false, error: 'This upload session belongs to a different account' });
+    }
+    const { chunkIndex, chunkBase64 } = req.body || {};
+    if (typeof chunkBase64 !== 'string' || !chunkBase64.length) {
+      return res.status(400).json({ ok: false, error: 'chunkBase64 is required' });
+    }
+    if (Number(chunkIndex) !== session.nextChunkIndex) {
+      return res.status(409).json({ ok: false, error: `Expected chunkIndex ${session.nextChunkIndex} next, got ${chunkIndex}. Chunks must arrive in order with no gaps or repeats.` });
+    }
+
+    let chunkBuf;
+    try { chunkBuf = Buffer.from(chunkBase64, 'base64'); }
+    catch (_) { return res.status(400).json({ ok: false, error: 'chunkBase64 is not valid base64' }); }
+
+    if (session.receivedBytes + chunkBuf.length > session.totalBytes) {
+      return res.status(413).json({ ok: false, error: 'This chunk would push the upload past the totalBytes declared in joytree_zip_upload_start' });
+    }
+
+    fs.appendFileSync(session.filePath, chunkBuf);
+    session.receivedBytes += chunkBuf.length;
+    session.nextChunkIndex += 1;
+    session.expiresAt = Date.now() + ZIP_UPLOAD_TTL_MS;
+
     res.json({
       ok: true,
-      deployId: data.deployId || null,
-      subdomain: cleanSubdomain,
-      liveUrl: data.liveUrl || null,
-      message: data.message || 'Deploy from zip triggered.',
+      receivedBytes: session.receivedBytes,
+      totalBytes: session.totalBytes,
+      complete: session.receivedBytes === session.totalBytes,
+      nextChunkIndex: session.nextChunkIndex,
     });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
+
+v1.post('/zip-uploads/:uploadId/finish', async (req, res) => {
+  const session = zipUploadSessions.get(req.params.uploadId);
+  try {
+    if (!session) return res.status(404).json({ ok: false, error: 'Upload session not found or expired -- call joytree_zip_upload_start again' });
+    if (session.userId !== String(req.user?._id || req.user?.id || 'anon')) {
+      return res.status(403).json({ ok: false, error: 'This upload session belongs to a different account' });
+    }
+    if (session.receivedBytes !== session.totalBytes) {
+      return res.status(409).json({ ok: false, error: `Only ${session.receivedBytes}/${session.totalBytes} bytes received -- send the remaining chunks before finishing` });
+    }
+    const { name, subdomain, buildCmd, startCmd, installCmd, outputDir, siteType, nodeVer, envVars } = req.body || {};
+    if (!name) return res.status(400).json({ ok: false, error: 'name is required' });
+
+    const archiveBuffer = fs.readFileSync(session.filePath);
+    const result = await deployArchiveBuffer(req, archiveBuffer, { name, subdomain, buildCmd, startCmd, installCmd, outputDir, siteType, nodeVer, envVars });
+
+    try { fs.unlinkSync(session.filePath); } catch (_) {}
+    zipUploadSessions.delete(req.params.uploadId);
+
+    res.json({ ok: true, ...result });
+  } catch (e) {
+    try { if (session) { fs.unlinkSync(session.filePath); zipUploadSessions.delete(req.params.uploadId); } } catch (_) {}
+    res.status(e.status || 500).json({ ok: false, error: e.message });
+  }
+});
+
 
 v1.post('/projects/:id/redeploy', async (req, res) => {
   try {
