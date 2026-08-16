@@ -15669,10 +15669,14 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
   background:#0d0d0d;
 }
 
-/* ── New: left table/collection tree (Navicat/SSMS-style explorer) ── */
+/* ── New: left table/collection tree (Navicat/SSMS-style explorer) ──
+   Background matched to #0d0d0d to align exactly with the query page's
+   own panels (.qstudio-db-bar / .qstudio-body), which use that same
+   shade — was #0a0a0a, a slightly different black that created a subtle
+   seam between the sidebar and the rest of the query page. ── */
 .qs-tree{
   display:flex;flex-direction:column;min-height:0;
-  background:#0a0a0a;border-right:1px solid rgba(255,255,255,.07);
+  background:#0d0d0d;border-right:1px solid rgba(255,255,255,.07);
   overflow-y:auto;
 }
 .qs-tree-head{
