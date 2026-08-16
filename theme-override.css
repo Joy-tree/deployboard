@@ -3034,3 +3034,39 @@ html[data-theme="light"] .sdk-test-indicator.idle {
   background: #111111 !important;
   color: #6ee7b7 !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DASHBOARD CHARTS — Network Metrics & Build Health.
+   Both chart backgrounds and the metrics tooltip were plain
+   rgba(0,0,0,X) overlays with no theme awareness at all. In dark theme
+   that blends in fine, but in light theme it renders as a muddy gray
+   box behind the chart and a stark black tooltip floating over an
+   otherwise white card — exactly the "ugly" look reported. Now themed
+   properly for both.
+   ═══════════════════════════════════════════════════════════════════════ */
+.jt-chart-panel {
+  background: rgba(0,0,0,.35);
+}
+.jt-chart-panel.jt-chart-panel-subtle {
+  background: rgba(0,0,0,.15);
+}
+html[data-theme="light"] .jt-chart-panel {
+  background: var(--jt-bg-sunken) !important;
+}
+html[data-theme="light"] .jt-chart-panel.jt-chart-panel-subtle {
+  background: rgba(15,23,42,.04) !important;
+}
+
+.jt-chart-tooltip {
+  background: rgba(0,0,0,.95);
+  color: var(--text);
+  box-shadow: 0 8px 28px rgba(0,0,0,.35);
+}
+html[data-theme="light"] .jt-chart-tooltip {
+  background: var(--jt-bg-raised) !important;
+  color: var(--jt-text) !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,.14) !important;
+  border-color: rgba(31,110,82,.3) !important;
+}
+.jt-chart-tooltip-title { color: #a7f3d0; }
+html[data-theme="light"] .jt-chart-tooltip-title { color: var(--jt-brand-strong) !important; }
