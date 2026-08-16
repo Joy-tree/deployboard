@@ -5555,7 +5555,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=15">
+<link rel="stylesheet" href="theme-override.css?v=16">
 </head>
 <body>
 
@@ -9273,7 +9273,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <div><div class="card-title">Build Health</div></div>
               <span style="font-family:var(--font-mono);font-size:1.1rem;font-weight:800;color:var(--green);" id="dashSuccessRate">—</span>
             </div>
-            <div style="height:56px;background:rgba(0,0,0,0.15);border-radius:0 0 0 0;position:relative;overflow:hidden;">
+            <div class="jt-chart-panel jt-chart-panel-subtle" style="height:56px;border-radius:0 0 0 0;position:relative;overflow:hidden;">
               <svg id="buildHealthChart" width="100%" height="56" preserveAspectRatio="none" style="display:block;position:absolute;inset:0;"></svg>
             </div>
             <div style="display:flex;justify-content:space-between;padding:10px 16px 14px;">
@@ -9342,9 +9342,9 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               <option value="12">Last 12 hours</option><option value="24">Last 24 hours</option><option value="48">Last 2 days</option><option value="168">Last 7 days</option>
             </select>
           </div>
-          <div style="height:220px;margin-top:10px;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:10px;position:relative;">
+          <div class="jt-chart-panel" style="height:220px;margin-top:10px;border:1px solid var(--border);border-radius:10px;position:relative;">
             <svg id="networkMetricChart" width="100%" height="220" preserveAspectRatio="none" style="display:block"></svg>
-            <div id="metricChartTooltip" style="position:absolute;pointer-events:none;display:none;min-width:170px;max-width:230px;background:rgba(0,0,0,.95);border:1px solid rgba(16,185,129,.35);border-radius:10px;padding:8px 10px;color:var(--text);font-size:.74rem;line-height:1.35;backdrop-filter:blur(4px);box-shadow:0 8px 28px rgba(0,0,0,.35);z-index:5;"></div>
+            <div id="metricChartTooltip" class="jt-chart-tooltip" style="position:absolute;pointer-events:none;display:none;min-width:170px;max-width:230px;border:1px solid rgba(16,185,129,.35);border-radius:10px;padding:8px 10px;font-size:.74rem;line-height:1.35;backdrop-filter:blur(4px);z-index:5;"></div>
           </div>
           <div style="font-size:.78rem;color:var(--text-3);margin-top:8px;">Resolution: one point per hour. Updates every 6 seconds.</div>
           <div class="metric-usage">
@@ -24047,7 +24047,7 @@ function renderNetworkMetrics(){
     hoverLine.setAttribute('x1', point.x); hoverLine.setAttribute('x2', point.x); hoverLine.style.display = 'block';
     hoverDot.setAttribute('cx', point.x); hoverDot.setAttribute('cy', point.y); hoverDot.style.display = 'block';
     const dt = labels[idx];
-    tooltip.innerHTML = `<div style="color:#a7f3d0;font-weight:700;margin-bottom:3px;">Outbound bandwidth</div><div style="font-family:var(--font-mono);color:var(--text-2);">${dt.toLocaleString([], { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div><div style="margin-top:4px;font-family:var(--font-mono);font-size:.9rem;">● ${(ser[idx] || 0).toFixed(2)} MB</div>`;
+    tooltip.innerHTML = `<div class="jt-chart-tooltip-title" style="font-weight:700;margin-bottom:3px;">Outbound bandwidth</div><div style="font-family:var(--font-mono);color:var(--text-2);">${dt.toLocaleString([], { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div><div style="margin-top:4px;font-family:var(--font-mono);font-size:.9rem;">● ${(ser[idx] || 0).toFixed(2)} MB</div>`;
     const px = (point.x / W) * rect.width;
     const py = (point.y / H) * rect.height;
     tooltip.style.left = `${Math.min(rect.width - 190, Math.max(8, px + 12))}px`;
