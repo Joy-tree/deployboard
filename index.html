@@ -37387,8 +37387,19 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
   padding:3px 10px;border-radius:6px;border:1px solid var(--border);
   background:var(--bg-hover);
 }
+.dbb-visualize-btn {
+  margin-left:auto;display:inline-flex;align-items:center;gap:6px;
+  font-size:.74rem;font-weight:700;color:var(--green);
+  padding:7px 14px;border-radius:8px;
+  border:1px solid rgba(16,185,129,.35);
+  background:rgba(16,185,129,.08);cursor:pointer;transition:all .18s;
+}
+.dbb-visualize-btn:hover{background:rgba(16,185,129,.16);border-color:rgba(16,185,129,.55);}
+.dbb-visualize-btn svg{width:13px;height:13px;flex-shrink:0;}
+@media(max-width:560px){ .dbb-visualize-label{display:none;} .dbb-visualize-btn{padding:7px 9px;} }
+
 .dbb-close-btn {
-  margin-left:auto;display:inline-flex;align-items:center;gap:5px;
+  margin-left:0;display:inline-flex;align-items:center;gap:5px;
   font-size:.74rem;font-weight:700;color:var(--text-2);
   padding:7px 14px;border-radius:8px;
   border:1px solid var(--border);
@@ -37564,6 +37575,10 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
         Data Browser
       </div>
       <div class="dbb-topbar-dbname" id="dbbDbLabel">—</div>
+      <button class="dbb-visualize-btn" onclick="openDbVisualizer()" title="Visualize this database">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span class="dbb-visualize-label">Visualize</span>
+      </button>
       <button class="dbb-sidebar-toggle" onclick="dbbToggleSidebar()" title="Toggle tables list">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
@@ -37600,6 +37615,628 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
       </div>
     </div>
   </div>
+<!-- ── DB Visualizer Modal ──────────────────────────────────────────────────── -->
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   DATABASE VISUALIZER — real charts (hand-rendered SVG, matching the
+   same technique already used by the dashboard's Network Metrics
+   chart) driven by real data pulled through the existing
+   /api/databases/:id/query endpoint. Row/document counts, growth over
+   time with real dates, and field/column type distribution -- for
+   MongoDB, PostgreSQL, MySQL/MariaDB, and Redis. Colors are theme
+   variables so this follows the site's dark/light theme automatically;
+   light-mode-specific overrides live in theme-override.css, not here.
+   ═══════════════════════════════════════════════════════════════════ */
+#dbVisualizer {
+  display:none;position:fixed;inset:0;z-index:9901;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(10px);
+  flex-direction:column;
+}
+#dbVisualizer.open { display:flex; }
+.dbv-shell {
+  display:flex;flex-direction:column;width:100%;height:100%;
+  background:var(--bg);color:var(--text);
+  font-family:var(--font-ui, sans-serif);
+}
+.dbv-topbar {
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:12px 18px;background:var(--bg-card);
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.dbv-topbar-title {
+  font-size:.8rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--green);display:flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);
+}
+.dbv-topbar-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(16,185,129,.5);}
+.dbv-topbar-dbname{
+  font-size:.75rem;color:var(--text-2);font-family:var(--font-mono);
+  padding:3px 10px;border-radius:6px;border:1px solid var(--border);
+  background:var(--bg-hover);
+}
+.dbv-table-select{
+  font-size:.75rem;font-family:var(--font-mono);color:var(--text);
+  background:var(--bg-hover);border:1px solid var(--border);
+  border-radius:7px;padding:6px 10px;max-width:220px;
+}
+.dbv-refresh-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:.74rem;font-weight:700;color:var(--green);
+  padding:7px 12px;border-radius:8px;border:1px solid rgba(16,185,129,.35);
+  background:rgba(16,185,129,.08);cursor:pointer;transition:all .18s;
+}
+.dbv-refresh-btn:hover{background:rgba(16,185,129,.16);}
+.dbv-refresh-btn:disabled{opacity:.5;cursor:not-allowed;}
+.dbv-refresh-btn svg{width:12px;height:12px;}
+.dbv-refresh-btn.spinning svg{animation:dbvSpin .8s linear infinite;}
+@keyframes dbvSpin{to{transform:rotate(360deg);}}
+.dbv-close-btn {
+  margin-left:auto;display:inline-flex;align-items:center;gap:5px;
+  font-size:.74rem;font-weight:700;color:var(--text-2);
+  padding:7px 14px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;cursor:pointer;transition:all .18s;
+}
+.dbv-close-btn:hover{color:var(--text);border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.1);}
+
+.dbv-body{
+  flex:1;overflow-y:auto;padding:18px;
+}
+.dbv-body::-webkit-scrollbar{width:6px;}
+.dbv-body::-webkit-scrollbar-thumb{background:rgba(16,185,129,.15);border-radius:99px;}
+
+/* Quick stat pills */
+.dbv-stats-row{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;
+}
+.dbv-stat-card{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:14px;
+  padding:14px 16px;
+}
+.dbv-stat-label{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px;}
+.dbv-stat-value{font-size:1.4rem;font-weight:800;color:var(--text);font-family:var(--font-mono);}
+.dbv-stat-value.green{color:var(--green);}
+
+/* Chart cards grid */
+.dbv-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;
+}
+.dbv-card{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:16px;
+  padding:18px;position:relative;overflow:hidden;
+}
+.dbv-card.full{grid-column:1/-1;}
+.dbv-card-title{
+  font-size:.86rem;font-weight:800;color:var(--text);margin-bottom:2px;
+  display:flex;align-items:center;gap:8px;
+}
+.dbv-card-title svg{width:15px;height:15px;color:var(--green);flex-shrink:0;}
+.dbv-card-sub{font-size:.74rem;color:var(--text-3);margin-bottom:14px;}
+.dbv-chart-wrap{position:relative;width:100%;}
+.dbv-empty{
+  text-align:center;padding:40px 16px;color:var(--text-3);font-size:.8rem;
+}
+.dbv-empty svg{margin-bottom:10px;opacity:.35;}
+.dbv-loading{
+  text-align:center;padding:40px 16px;color:var(--text-2);font-size:.8rem;
+  font-family:var(--font-mono);
+}
+
+/* Tooltip shared by bar/line/donut charts */
+.dbv-tooltip{
+  position:absolute;pointer-events:none;display:none;
+  min-width:140px;max-width:220px;
+  background:var(--bg);border:1px solid rgba(16,185,129,.4);
+  border-radius:9px;padding:8px 10px;font-size:.72rem;line-height:1.4;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:8;
+  color:var(--text);
+}
+.dbv-tooltip-title{font-weight:800;color:var(--green);margin-bottom:2px;}
+.dbv-tooltip-meta{color:var(--text-2);font-family:var(--font-mono);font-size:.68rem;}
+.dbv-tooltip-value{margin-top:3px;font-family:var(--font-mono);font-weight:700;font-size:.82rem;color:var(--text);}
+
+/* Bar chart */
+.dbv-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.dbv-bar-label{
+  width:110px;flex-shrink:0;font-size:.74rem;color:var(--text-2);
+  font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.dbv-bar-track{flex:1;height:20px;background:var(--bg-hover);border-radius:6px;overflow:hidden;position:relative;}
+.dbv-bar-fill{
+  height:100%;border-radius:6px;
+  background:linear-gradient(90deg,var(--primary-d),var(--green));
+  transition:width .5s cubic-bezier(.4,0,.2,1);
+  cursor:pointer;
+}
+.dbv-bar-value{width:56px;flex-shrink:0;text-align:right;font-size:.74rem;font-weight:700;color:var(--text);font-family:var(--font-mono);}
+
+/* Donut legend */
+.dbv-donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.dbv-donut-legend{flex:1;min-width:140px;display:flex;flex-direction:column;gap:8px;}
+.dbv-legend-item{display:flex;align-items:center;gap:8px;font-size:.76rem;color:var(--text-2);cursor:default;}
+.dbv-legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+.dbv-legend-name{font-family:var(--font-mono);color:var(--text);font-weight:600;}
+.dbv-legend-pct{margin-left:auto;color:var(--text-3);font-family:var(--font-mono);}
+
+@media(max-width:900px){
+  .dbv-stats-row{grid-template-columns:1fr 1fr;}
+  .dbv-grid{grid-template-columns:1fr;}
+  .dbv-donut-wrap{flex-direction:column;align-items:center;}
+}
+@media(max-width:560px){
+  .dbv-stats-row{grid-template-columns:1fr 1fr;gap:8px;}
+  .dbv-stat-card{padding:10px 12px;}
+  .dbv-stat-value{font-size:1.1rem;}
+  .dbv-topbar{padding:10px 12px;gap:8px;}
+  .dbv-topbar-title span{display:none;}
+  .dbv-table-select{max-width:130px;}
+  .dbv-body{padding:12px;}
+  .dbv-card{padding:14px;}
+  .dbv-bar-label{width:70px;font-size:.68rem;}
+}
+</style>
+
+<div id="dbVisualizer">
+  <div class="dbv-shell">
+    <div class="dbv-topbar">
+      <div class="dbv-topbar-title">
+        <div class="dbv-topbar-dot"></div>
+        <span>Database Visualizer</span>
+      </div>
+      <div class="dbv-topbar-dbname" id="dbvDbLabel">—</div>
+      <select class="dbv-table-select" id="dbvTableSelect" onchange="dbvOnTableChange()">
+        <option value="">Select a table/collection…</option>
+      </select>
+      <button class="dbv-refresh-btn" id="dbvRefreshBtn" onclick="dbvRefreshAll()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+      <button class="dbv-close-btn" onclick="closeDbVisualizer()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Close
+      </button>
+    </div>
+
+    <div class="dbv-body" id="dbvBody">
+      <div class="dbv-stats-row">
+        <div class="dbv-stat-card">
+          <div class="dbv-stat-label">Tables / Collections</div>
+          <div class="dbv-stat-value" id="dbvStatTables">—</div>
+        </div>
+        <div class="dbv-stat-card">
+          <div class="dbv-stat-label">Total Records</div>
+          <div class="dbv-stat-value green" id="dbvStatRecords">—</div>
+        </div>
+        <div class="dbv-stat-card">
+          <div class="dbv-stat-label">Selected Table</div>
+          <div class="dbv-stat-value" id="dbvStatSelected" style="font-size:1rem;">—</div>
+        </div>
+        <div class="dbv-stat-card">
+          <div class="dbv-stat-label">Last Refreshed</div>
+          <div class="dbv-stat-value" id="dbvStatRefreshed" style="font-size:.9rem;">—</div>
+        </div>
+      </div>
+
+      <div class="dbv-grid">
+        <div class="dbv-card full">
+          <div class="dbv-card-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+            Record Count by Table
+          </div>
+          <div class="dbv-card-sub">Real row/document counts across every table in this database</div>
+          <div class="dbv-chart-wrap" id="dbvBarChart">
+            <div class="dbv-loading">Select a table to load charts…</div>
+          </div>
+        </div>
+
+        <div class="dbv-card full">
+          <div class="dbv-card-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Growth Over Time
+          </div>
+          <div class="dbv-card-sub" id="dbvGrowthSub">Records created per day, detected from a timestamp field</div>
+          <div class="dbv-chart-wrap" id="dbvLineChart" style="height:220px;">
+            <div class="dbv-loading">Select a table to load charts…</div>
+          </div>
+        </div>
+
+        <div class="dbv-card">
+          <div class="dbv-card-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10h-10z"/></svg>
+            Field Type Distribution
+          </div>
+          <div class="dbv-card-sub" id="dbvFieldsSub">Column/field types in the selected table</div>
+          <div class="dbv-chart-wrap" id="dbvDonutChart">
+            <div class="dbv-loading">Select a table to load charts…</div>
+          </div>
+        </div>
+
+        <div class="dbv-card">
+          <div class="dbv-card-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Schema Summary
+          </div>
+          <div class="dbv-card-sub">Field/column names and inferred types</div>
+          <div class="dbv-chart-wrap" id="dbvSchemaList" style="max-height:260px;overflow-y:auto;">
+            <div class="dbv-loading">Select a table to load charts…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Database Visualizer ──────────────────────────────────────────────────
+// Real charts driven by real data, queried through the same
+// /api/databases/:id/query endpoint the Data Browser and Query Studio
+// already use in production for every supported engine.
+let _dbvDbId = null;
+let _dbvEngine = null;
+let _dbvDbName = null;
+let _dbvTables = [];          // [{name, count}]
+let _dbvSelectedTable = null;
+
+const DBV_GREENS = ['#10b981','#34d399','#6ee7b7','#059669','#a7f3d0','#047857','#d1fae5'];
+
+function openDbVisualizer() {
+  if (!_dbbDbId) return;
+  _dbvDbId = _dbbDbId;
+  _dbvEngine = _dbbEngine;
+  _dbvDbName = document.getElementById('dbbDbLabel').textContent.split(' (')[0];
+
+  document.getElementById('dbvDbLabel').textContent = _dbvDbName + ' (' + (_dbvEngine || '') + ')';
+  document.getElementById('dbVisualizer').classList.add('open');
+  document.documentElement.classList.add('modal-open');
+
+  // Carry the collection/table already selected in the Data Browser, if any
+  _dbvSelectedTable = _dbbSelectedColl || null;
+  dbvRefreshAll();
+}
+
+function closeDbVisualizer() {
+  document.getElementById('dbVisualizer').classList.remove('open');
+  document.documentElement.classList.remove('modal-open');
+}
+
+async function dbvQuery(query) {
+  const r = await apiFetch('/api/databases/' + _dbvDbId + '/query', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query })
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'Query failed');
+  return d;
+}
+
+// Extracts a flat array of scalar values from a query response, regardless
+// of the shape differences between engines (see dbbLoadCollections for the
+// same underlying parsing pattern already proven in the Data Browser).
+function dbvFlatRows(d, engine) {
+  if (engine === 'mongodb') {
+    try {
+      const parsed = typeof d.raw === 'string' ? JSON.parse(d.raw) : d.raw;
+      if (parsed?.cursor?.firstBatch) return parsed.cursor.firstBatch;
+      if (typeof parsed?.n === 'number') return [parsed.n];
+      if (Array.isArray(parsed)) return parsed;
+      return [parsed];
+    } catch (_) { return d.rows || []; }
+  }
+  if (engine === 'redis') return (d.rows || []).flat().filter(Boolean);
+  // postgres / mysql / mariadb — rows are {_row:"a | b"} or {result:"a\tb"}
+  return (d.rows || []).map(r => (r._row !== undefined ? r._row : r.result !== undefined ? r.result : Object.values(r)[0]));
+}
+
+async function dbvRefreshAll() {
+  const btn = document.getElementById('dbvRefreshBtn');
+  btn.disabled = true; btn.classList.add('spinning');
+  try {
+    await dbvLoadTables();
+    dbvPopulateTableSelect();
+    if (!_dbvSelectedTable && _dbvTables.length) _dbvSelectedTable = _dbvTables[0].name;
+    document.getElementById('dbvTableSelect').value = _dbvSelectedTable || '';
+    dbvRenderStats();
+    dbvRenderBarChart();
+    if (_dbvSelectedTable) {
+      await Promise.all([dbvLoadAndRenderGrowth(), dbvLoadAndRenderFieldTypes()]);
+    }
+    document.getElementById('dbvStatRefreshed').textContent = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  } catch (e) {
+    toast(e.message || 'Failed to load visualizer data', 'error');
+  } finally {
+    btn.disabled = false; btn.classList.remove('spinning');
+  }
+}
+
+function dbvOnTableChange() {
+  _dbvSelectedTable = document.getElementById('dbvTableSelect').value || null;
+  dbvRenderStats();
+  if (_dbvSelectedTable) {
+    dbvLoadAndRenderGrowth();
+    dbvLoadAndRenderFieldTypes();
+  }
+}
+
+function dbvPopulateTableSelect() {
+  const sel = document.getElementById('dbvTableSelect');
+  sel.innerHTML = '<option value="">Select a table/collection…</option>' +
+    _dbvTables.map(t => `<option value="${escHtml(t.name)}">${escHtml(t.name)} (${t.count.toLocaleString()})</option>`).join('');
+}
+
+function dbvRenderStats() {
+  document.getElementById('dbvStatTables').textContent = _dbvTables.length.toLocaleString();
+  document.getElementById('dbvStatRecords').textContent = _dbvTables.reduce((s,t) => s + (t.count||0), 0).toLocaleString();
+  document.getElementById('dbvStatSelected').textContent = _dbvSelectedTable || '—';
+}
+
+// ── Step 1: list every table/collection + its real row/document count ──
+async function dbvLoadTables() {
+  document.getElementById('dbvBarChart').innerHTML = '<div class="dbv-loading">Loading tables…</div>';
+  let names = [];
+  if (_dbvEngine === 'mongodb') {
+    const d = await dbvQuery(JSON.stringify({ listCollections: 1, nameOnly: true }));
+    names = dbvFlatRows(d, 'mongodb').map(c => c.name).filter(Boolean);
+  } else if (_dbvEngine === 'postgres') {
+    const d = await dbvQuery("SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY table_name;");
+    names = dbvFlatRows(d, 'postgres').filter(Boolean);
+  } else if (_dbvEngine === 'mysql' || _dbvEngine === 'mariadb') {
+    const d = await dbvQuery('SHOW TABLES;');
+    names = dbvFlatRows(d, _dbvEngine).filter(Boolean);
+  } else if (_dbvEngine === 'redis') {
+    const d = await dbvQuery('DBSIZE');
+    const n = parseInt(dbvFlatRows(d, 'redis')[0], 10) || 0;
+    _dbvTables = [{ name: 'keyspace', count: n }];
+    return;
+  } else {
+    _dbvTables = [];
+    return;
+  }
+
+  // Real count per table — one query per table, run in parallel
+  const counts = await Promise.all(names.map(async (name) => {
+    try {
+      let d, n = 0;
+      if (_dbvEngine === 'mongodb') {
+        d = await dbvQuery(JSON.stringify({ count: name }));
+        const flat = dbvFlatRows(d, 'mongodb');
+        n = typeof flat[0] === 'number' ? flat[0] : (flat[0]?.n || 0);
+      } else if (_dbvEngine === 'postgres') {
+        d = await dbvQuery(`SELECT COUNT(*) FROM "${name}";`);
+        n = parseInt(dbvFlatRows(d, 'postgres')[0], 10) || 0;
+      } else {
+        d = await dbvQuery('SELECT COUNT(*) FROM `' + name + '`;');
+        n = parseInt(dbvFlatRows(d, _dbvEngine)[0], 10) || 0;
+      }
+      return { name, count: n };
+    } catch (_) { return { name, count: 0 }; }
+  }));
+  _dbvTables = counts.sort((a,b) => b.count - a.count);
+}
+
+// ── Step 2: growth over time (real dates) for the selected table ──
+async function dbvLoadAndRenderGrowth() {
+  const wrap = document.getElementById('dbvLineChart');
+  wrap.innerHTML = '<div class="dbv-loading">Detecting timestamp field…</div>';
+  document.getElementById('dbvGrowthSub').textContent = 'Records created per day, detected from a timestamp field';
+
+  if (_dbvEngine === 'redis') {
+    wrap.innerHTML = '<div class="dbv-empty">Growth-over-time isn\'t available for Redis (no generic timestamp convention for keys).</div>';
+    return;
+  }
+
+  try {
+    let series = []; // [{date:'YYYY-MM-DD', count}]
+    if (_dbvEngine === 'mongodb') {
+      const TS_FIELDS = ['createdAt','created_at','timestamp','date','updatedAt'];
+      const sampleD = await dbvQuery(JSON.stringify({ find: _dbvSelectedTable, limit: 1 }));
+      const sample = dbvFlatRows(sampleD, 'mongodb')[0] || {};
+      const field = TS_FIELDS.find(f => sample[f] !== undefined);
+      if (!field) { wrap.innerHTML = '<div class="dbv-empty">No timestamp field found on this collection (checked createdAt, created_at, timestamp, date, updatedAt).</div>'; return; }
+      const d = await dbvQuery(JSON.stringify({
+        aggregate: _dbvSelectedTable,
+        pipeline: [
+          { $match: { [field]: { $exists: true } } },
+          { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: `$${field}` } }, count: { $sum: 1 } } },
+          { $sort: { _id: 1 } },
+          { $limit: 90 }
+        ],
+        cursor: {}
+      }));
+      series = dbvFlatRows(d, 'mongodb').map(r => ({ date: r._id, count: r.count }));
+    } else if (_dbvEngine === 'postgres') {
+      const colD = await dbvQuery(`SELECT column_name FROM information_schema.columns WHERE table_name='${_dbvSelectedTable}' AND data_type LIKE '%timestamp%' OR (table_name='${_dbvSelectedTable}' AND data_type='date') LIMIT 1;`);
+      const field = dbvFlatRows(colD, 'postgres')[0];
+      if (!field) { wrap.innerHTML = '<div class="dbv-empty">No timestamp/date column found on this table.</div>'; return; }
+      const d = await dbvQuery(`SELECT DATE("${field}") as d, COUNT(*) as c FROM "${_dbvSelectedTable}" GROUP BY d ORDER BY d LIMIT 90;`);
+      series = dbvFlatRows(d, 'postgres').map(line => {
+        const [date, count] = String(line).split('|').map(s => s.trim());
+        return { date, count: parseInt(count, 10) || 0 };
+      });
+    } else { // mysql / mariadb
+      const colD = await dbvQuery(`SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='${_dbvSelectedTable}' AND DATA_TYPE IN ('datetime','timestamp','date') LIMIT 1;`);
+      const field = dbvFlatRows(colD, _dbvEngine)[0];
+      if (!field) { wrap.innerHTML = '<div class="dbv-empty">No timestamp/date column found on this table.</div>'; return; }
+      const d = await dbvQuery(`SELECT DATE(\`${field}\`) as d, COUNT(*) as c FROM \`${_dbvSelectedTable}\` GROUP BY d ORDER BY d LIMIT 90;`);
+      series = dbvFlatRows(d, _dbvEngine).map(line => {
+        const [date, count] = String(line).split('\t');
+        return { date, count: parseInt(count, 10) || 0 };
+      });
+    }
+
+    series = series.filter(s => s.date && !isNaN(s.count));
+    if (!series.length) { wrap.innerHTML = '<div class="dbv-empty">No dated records found to chart.</div>'; return; }
+    dbvRenderLineChart(wrap, series);
+  } catch (e) {
+    wrap.innerHTML = '<div class="dbv-empty">Couldn\'t load growth data: ' + escHtml(e.message || '') + '</div>';
+  }
+}
+
+// ── Step 3: field/column type distribution for the selected table ──
+async function dbvLoadAndRenderFieldTypes() {
+  const donutWrap = document.getElementById('dbvDonutChart');
+  const schemaWrap = document.getElementById('dbvSchemaList');
+  donutWrap.innerHTML = '<div class="dbv-loading">Loading schema…</div>';
+  schemaWrap.innerHTML = '';
+  document.getElementById('dbvFieldsSub').textContent = _dbvEngine === 'mongodb'
+    ? 'Inferred from a live sample of documents (schemaless)'
+    : 'Declared column types from the database schema';
+
+  try {
+    let fields = []; // [{name, type}]
+    if (_dbvEngine === 'mongodb') {
+      const d = await dbvQuery(JSON.stringify({ find: _dbvSelectedTable, limit: 25 }));
+      const docs = dbvFlatRows(d, 'mongodb');
+      const seen = {};
+      docs.forEach(doc => {
+        Object.entries(doc || {}).forEach(([k, v]) => {
+          if (k === '_id') return;
+          const t = v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v === 'object' ? 'object' : typeof v;
+          if (!seen[k]) seen[k] = {};
+          seen[k][t] = (seen[k][t] || 0) + 1;
+        });
+      });
+      fields = Object.entries(seen).map(([name, types]) => ({
+        name, type: Object.entries(types).sort((a,b) => b[1]-a[1])[0][0]
+      }));
+    } else if (_dbvEngine === 'postgres') {
+      const d = await dbvQuery(`SELECT column_name, data_type FROM information_schema.columns WHERE table_name='${_dbvSelectedTable}' ORDER BY ordinal_position;`);
+      fields = dbvFlatRows(d, 'postgres').map(line => {
+        const [name, type] = String(line).split('|').map(s => s.trim());
+        return { name, type };
+      }).filter(f => f.name);
+    } else { // mysql / mariadb
+      const d = await dbvQuery(`SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='${_dbvSelectedTable}' ORDER BY ORDINAL_POSITION;`);
+      fields = dbvFlatRows(d, _dbvEngine).map(line => {
+        const [name, type] = String(line).split('\t');
+        return { name, type };
+      }).filter(f => f.name);
+    }
+
+    if (!fields.length) {
+      donutWrap.innerHTML = '<div class="dbv-empty">No fields found.</div>';
+      return;
+    }
+
+    // Aggregate counts per type for the donut
+    const byType = {};
+    fields.forEach(f => { byType[f.type] = (byType[f.type] || 0) + 1; });
+    const donutData = Object.entries(byType).map(([label, value]) => ({ label, value }));
+    dbvRenderDonutChart(donutWrap, donutData);
+
+    schemaWrap.innerHTML = fields.map(f =>
+      `<div style="display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px solid var(--border);font-size:.78rem;">
+         <span style="font-family:var(--font-mono);color:var(--text);">${escHtml(f.name)}</span>
+         <span style="font-family:var(--font-mono);color:var(--green);">${escHtml(f.type)}</span>
+       </div>`
+    ).join('');
+  } catch (e) {
+    donutWrap.innerHTML = '<div class="dbv-empty">Couldn\'t load schema: ' + escHtml(e.message || '') + '</div>';
+  }
+}
+
+// ── Chart renderer: bar chart (record counts per table) ──
+function dbvRenderBarChart() {
+  const wrap = document.getElementById('dbvBarChart');
+  if (!_dbvTables.length) { wrap.innerHTML = '<div class="dbv-empty">No tables/collections found in this database.</div>'; return; }
+  const max = Math.max(1, ...(_dbvTables.map(t => t.count)));
+  wrap.innerHTML = _dbvTables.slice(0, 12).map(t => {
+    const pct = Math.max(2, Math.round((t.count / max) * 100));
+    return `<div class="dbv-bar-row">
+      <div class="dbv-bar-label" title="${escHtml(t.name)}">${escHtml(t.name)}</div>
+      <div class="dbv-bar-track"><div class="dbv-bar-fill" style="width:${pct}%"></div></div>
+      <div class="dbv-bar-value">${t.count.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Chart renderer: line chart (growth over time, real dates) ──
+function dbvRenderLineChart(wrap, series) {
+  const W = 600, H = 200, p = 30;
+  const max = Math.max(1, ...series.map(s => s.count));
+  const pts = series.map((s, i) => ({
+    x: p + i * (W - 2*p) / Math.max(series.length - 1, 1),
+    y: H - p - (s.count / max) * (H - 2*p),
+    date: s.date, count: s.count
+  }));
+  const path = pts.map((pt,i) => `${i?'L':'M'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`).join(' ');
+  const area = path + ` L ${pts[pts.length-1].x.toFixed(1)} ${H-p} L ${p} ${H-p} Z`;
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:100%;display:block;" id="dbvLineSvg">
+      <path d="${area}" fill="rgba(16,185,129,.14)"/>
+      <path d="${path}" stroke="#10b981" stroke-width="2.2" fill="none"/>
+      ${pts.filter((_,i) => i % Math.max(1, Math.ceil(pts.length/10)) === 0).map(pt =>
+        `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="3" fill="#34d399"/>`).join('')}
+      <line id="dbvLineHover" x1="0" y1="${p}" x2="0" y2="${H-p}" stroke="rgba(148,163,184,.4)" stroke-dasharray="3,4" style="display:none"/>
+    </svg>
+    <div class="dbv-tooltip" id="dbvLineTooltip"></div>`;
+
+  const svg = document.getElementById('dbvLineSvg');
+  const hoverLine = document.getElementById('dbvLineHover');
+  const tooltip = document.getElementById('dbvLineTooltip');
+
+  function showTip(clientX) {
+    const rect = svg.getBoundingClientRect();
+    const xPx = Math.min(Math.max(clientX - rect.left, 0), rect.width);
+    const xSvg = (xPx / rect.width) * W;
+    let idx = 0, best = Infinity;
+    pts.forEach((pt,i) => { const d = Math.abs(pt.x - xSvg); if (d < best) { best = d; idx = i; } });
+    const pt = pts[idx];
+    hoverLine.setAttribute('x1', pt.x); hoverLine.setAttribute('x2', pt.x); hoverLine.style.display = 'block';
+    const dt = new Date(pt.date + 'T00:00:00');
+    const dateLabel = isNaN(dt.getTime()) ? pt.date : dt.toLocaleDateString([], { month:'short', day:'numeric', year:'numeric' });
+    tooltip.innerHTML = `<div class="dbv-tooltip-title">${escHtml(dateLabel)}</div><div class="dbv-tooltip-value">${pt.count.toLocaleString()} record${pt.count===1?'':'s'}</div>`;
+    const px = (pt.x / W) * rect.width, py = (pt.y / H) * rect.height;
+    tooltip.style.left = Math.min(rect.width - 180, Math.max(4, px - 70)) + 'px';
+    tooltip.style.top = Math.max(4, py - 60) + 'px';
+    tooltip.style.display = 'block';
+  }
+  function hideTip() { hoverLine.style.display = 'none'; tooltip.style.display = 'none'; }
+  svg.addEventListener('mousemove', e => showTip(e.clientX));
+  svg.addEventListener('mouseleave', hideTip);
+  svg.addEventListener('touchstart', e => { if (e.touches[0]) showTip(e.touches[0].clientX); }, { passive:true });
+  svg.addEventListener('touchmove', e => { if (e.touches[0]) showTip(e.touches[0].clientX); }, { passive:true });
+  svg.addEventListener('touchend', hideTip);
+}
+
+// ── Chart renderer: donut chart (field/column type distribution) ──
+function dbvRenderDonutChart(wrap, data) {
+  const total = data.reduce((s,d) => s + d.value, 0);
+  if (!total) { wrap.innerHTML = '<div class="dbv-empty">No data.</div>'; return; }
+  const cx = 60, cy = 60, r = 46, innerR = 27;
+  let angle = -90;
+  const arcs = data.map((d, i) => {
+    const frac = d.value / total;
+    const startAngle = angle;
+    const sweep = frac * 360;
+    angle += sweep;
+    const endAngle = angle;
+    const toXY = (a, radius) => [cx + radius * Math.cos(a * Math.PI/180), cy + radius * Math.sin(a * Math.PI/180)];
+    const [x1,y1] = toXY(startAngle, r), [x2,y2] = toXY(endAngle, r);
+    const [ix1,iy1] = toXY(endAngle, innerR), [ix2,iy2] = toXY(startAngle, innerR);
+    const large = sweep > 180 ? 1 : 0;
+    const color = DBV_GREENS[i % DBV_GREENS.length];
+    const path = `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} L ${ix1.toFixed(2)} ${iy1.toFixed(2)} A ${innerR} ${innerR} 0 ${large} 0 ${ix2.toFixed(2)} ${iy2.toFixed(2)} Z`;
+    return { path, color, label: d.label, value: d.value, pct: Math.round(frac*100) };
+  });
+
+  wrap.innerHTML = `
+    <div class="dbv-donut-wrap">
+      <svg viewBox="0 0 120 120" style="width:140px;height:140px;flex-shrink:0;">
+        ${arcs.map(a => `<path d="${a.path}" fill="${a.color}" stroke="var(--bg-card)" stroke-width="1.5"/>`).join('')}
+        <text x="60" y="56" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text)">${total}</text>
+        <text x="60" y="70" text-anchor="middle" font-size="7" fill="var(--text-3)">fields</text>
+      </svg>
+      <div class="dbv-donut-legend">
+        ${arcs.map(a => `<div class="dbv-legend-item">
+          <span class="dbv-legend-dot" style="background:${a.color}"></span>
+          <span class="dbv-legend-name">${escHtml(a.label)}</span>
+          <span class="dbv-legend-pct">${a.pct}%</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+}
+</script>
+
 </div>
 <!-- ── Code Upload / IDE Pages ─────────────────────────────────────────────── -->
 <style>
