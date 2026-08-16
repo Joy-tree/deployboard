@@ -37781,7 +37781,15 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
   .dbv-body{padding:12px;}
   .dbv-card{padding:14px;}
   .dbv-bar-label{width:70px;font-size:.68rem;}
+  .dbv-topbar .custom-select{max-width:130px;}
 }
+/* [FIX] makeCustomSelect() hides the original <select> and inserts a
+   brand new sibling element (.custom-select) that doesn't inherit the
+   .dbv-table-select class or its inline width -- without this, the two
+   dropdown replacements would collapse/stretch unpredictably in the
+   topbar's flex layout instead of sitting sized like the originals did. */
+.dbv-topbar .custom-select{flex:0 1 200px;min-width:130px;}
+.dbv-topbar .custom-select-btn{height:38px;font-size:.78rem;}
 </style>
 
 <div id="dbVisualizer">
@@ -37895,11 +37903,22 @@ function dbvPopulateDbSelect() {
   const sel = document.getElementById('dbvDbLabel');
   if (!_databases || !_databases.length) {
     sel.innerHTML = '<option value="">No databases yet</option>';
+    makeCustomSelect('dbvDbLabel', 'No databases yet');
     return;
   }
   sel.innerHTML = _databases.map(d =>
     `<option value="${escHtml(d.id)}"${d.id === _dbvDbId ? ' selected' : ''}>${escHtml(d.name)} (${escHtml(d.engine || '')})</option>`
   ).join('');
+  // [FIX] Was a native <select> -- the closed box can be themed, but the
+  // OPEN options list is rendered by the OS/browser itself and completely
+  // ignores site CSS (stark white, native radio buttons, no dark mode).
+  // makeCustomSelect() is the same themed-dropdown component already used
+  // for repo/branch pickers elsewhere -- it hides the native select and
+  // builds a fully CSS-controlled menu next to it, while keeping the
+  // underlying select (and this function's own logic) working exactly as
+  // before via a synthetic 'change' event. Safe to call every refresh --
+  // it's idempotent and just re-syncs the menu to the new options.
+  makeCustomSelect('dbvDbLabel', 'Select a database…');
 }
 
 // Fired when the person picks a different database from the topbar
@@ -38029,6 +38048,8 @@ function dbvPopulateTableSelect() {
   const sel = document.getElementById('dbvTableSelect');
   sel.innerHTML = '<option value="">Select a table/collection…</option>' +
     _dbvTables.map(t => `<option value="${escHtml(t.name)}">${escHtml(t.name)} (${t.count.toLocaleString()})</option>`).join('');
+  // [FIX] Same native-select-popup problem as the database dropdown above.
+  makeCustomSelect('dbvTableSelect', 'Select a table/collection…');
 }
 
 function dbvRenderStats() {
