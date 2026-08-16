@@ -2911,3 +2911,102 @@ html[data-theme="light"] .sdk-test-indicator.idle {
 
 /* Database explorer — JSON/object value table cells */
 .jt-json-cell { color: #6ee7b7 !important; }
+
+/* ---------------------------------------------------------------------
+   THE REAL "BLUE BOXES" — .card / --bg-card was already remapped above
+   (both themes), so cards themselves should already be neutral black/
+   cream, not navy. But that remap never touched a separate, much larger
+   family of elements that hardcode a literal navy blue directly as a
+   background value instead of going through --bg-card at all:
+   rgba(2,6,23, X) and rgba(15,23,42, X) at ~35 different call sites
+   (inputs, dropdown menus, log/deploy-info panels, KPI chips, quantum-
+   build panels, query-studio side panels), plus a few solid hex
+   equivalents (#020817, #010d1a). These are the actual boxes circled —
+   cron job empty-states sit inside a plain .card (already fixed), but
+   the deploy-info panel, form inputs, dropdowns, and runtime-log output
+   never went through the variable system to begin with.
+   Fixed at the class level where one exists; inline occurrences (the
+   runtime-log <pre>, a couple of one-off panels) caught via attribute
+   selectors on the literal style string as a safety net.
+   --------------------------------------------------------------------- */
+
+/* Text inputs / selects site-wide */
+.input, .custom-select-btn {
+  background: var(--jt-bg-sunken) !important;
+}
+.custom-select-menu {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+
+/* Live Logs — deployment identity card + its Repo/Branch/Date/Timezone
+   chip pills (the box circled in the "clarity-ai-detect..." screenshot) */
+.logs-hero {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+.logs-chip {
+  background: var(--jt-bg-sunken) !important;
+}
+
+/* Runtime Logs output panel (Project detail page) — literal inline
+   background:#010d1a with no class at all */
+[id^="runtimeLogsOutput-"] {
+  background: var(--jt-bg-sunken) !important;
+  color: var(--jt-text-dim) !important;
+}
+
+/* Small KPI / metric chip used in a few stat rows */
+.metric-kpi {
+  background: var(--jt-bg-sunken) !important;
+}
+
+/* Query Studio side panels / mini cards (list of saved queries, db
+   chip, mini cards inside the side rail) */
+.query-db-chip, .query-mini-card {
+  background: var(--jt-bg-sunken) !important;
+}
+.query-side {
+  background: var(--jt-bg-raised) !important;
+}
+
+/* Quantum-build panel (Build Progress) — the reactor/telemetry/step
+   cards behind the animation, and the log-summary card that borrows
+   the same gradient family. Keeps the decorative green/cyan glow
+   layers, just swaps the underlying navy gradient for a neutral one. */
+.quantum-build {
+  background:
+    radial-gradient(circle at 10% 0%,rgba(16,185,129,.18),transparent 32%),
+    radial-gradient(circle at 95% 12%,rgba(56,189,248,.16),transparent 30%),
+    linear-gradient(180deg, var(--jt-bg-raised), var(--jt-bg-sunken)) !important;
+}
+.structured-log-card {
+  background: linear-gradient(180deg, var(--jt-bg-raised), var(--jt-bg-sunken)) !important;
+}
+.quantum-build-toggle {
+  background: var(--jt-bg-sunken) !important;
+}
+.quantum-reactor,
+.quantum-telemetry div,
+.quantum-steps .deploy-step,
+.quantum-steps .step-icon {
+  background: var(--jt-bg-sunken) !important;
+}
+
+/* Safety net: catch any remaining one-off inline
+   style="...background:rgba(2,6,23,X)..." / "...background:rgba(15,23,42,X)..."
+   occurrences not already covered above by class, across the whole
+   dashboard (excludes the landing/marketing page, which keeps its
+   deliberate navy gradient hero design). */
+#app [style*="rgba(2,6,23"],
+#app [style*="rgba(2, 6, 23"],
+#app [style*="rgba(15,23,42"],
+#app [style*="rgba(15, 23, 42"],
+#app [style*="background:#020817"],
+#app [style*="background: #020817"],
+#app [style*="background:#010d1a"],
+#app [style*="background: #010d1a"],
+#app [style*="background:#0f172a"],
+#app [style*="background: #0f172a"] {
+  background: var(--jt-bg-sunken) !important;
+}
