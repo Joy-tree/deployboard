@@ -3010,3 +3010,27 @@ html[data-theme="light"] .sdk-test-indicator.idle {
 #app [style*="background: #0f172a"] {
   background: var(--jt-bg-sunken) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DARK THEME — navy-blue background cleanup (second pass).
+   Root cause found: the site's core `--bg-card` CSS variable, and the
+   base `.input`/`.select` classes used by nearly every form field on the
+   platform, were defined with a navy-blue tint (`#0b1221` / `rgba(2,6,23,
+   ...)` — Tailwind's "slate-950/900" family) instead of the site's actual
+   neutral black. Dashboard, Deployments, Env Manager, Webhooks, New
+   Deploy, Worker Create, and Dockerfile Deploy pages had each been
+   individually patched with page-specific `.card` overrides over time —
+   but Cron Jobs, Live Logs, and the Runtime Logs panel were never added
+   to that patch list, so they kept showing the original navy default.
+   The root variables and base classes are now fixed directly in
+   index.html (see --bg/--bg-card/--bg-hover and .input/.select), so
+   every page benefits automatically instead of needing its own patch.
+   This block closes the one remaining gap the variable fix doesn't
+   reach: the runtime log viewer's own panel background/text.
+   ═══════════════════════════════════════════════════════════════════════ */
+#page-cronjobs .card { background: #111111 !important; border-color: rgba(255,255,255,.07) !important; }
+
+.jt-runtime-log-pane {
+  background: #111111 !important;
+  color: #6ee7b7 !important;
+}
