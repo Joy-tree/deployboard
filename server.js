@@ -15911,9 +15911,28 @@ v1.post('/deploy-from-zip', async (req, res) => {
 // size (up to the same 260MB ceiling), and by the time /finish runs, the
 // archive is already fully assembled server-side, so it hands off to the
 // exact same deployArchiveBuffer() the single-shot path above uses.
+//
+// [FIX] Two real corruption risks in a scheme like this, closed here:
+// (1) If a caller base64-encodes the WHOLE archive first and then slices
+//     the resulting TEXT into chunks, decoding each text slice on its own
+//     produces garbage -- base64 only decodes correctly in 4-character/
+//     3-byte-aligned groups, and mid-stream slices aren't valid standalone
+//     base64. The only correct approach is to slice the RAW bytes first,
+//     then base64-encode each raw slice independently (each chunk decodes
+//     cleanly on its own; concatenating the DECODED raw bytes in order
+//     always reconstructs the original file exactly, regardless of where
+//     the cuts fall). The tool description below spells this out instead
+//     of leaving it to be inferred.
+// (2) Even with correct chunking, something could still go wrong in
+//     transit (a chunk silently mangled, a client bug). sha256 is now
+//     optional-but-recommended on /zip-uploads and verified byte-for-byte
+//     against the fully assembled archive on /finish -- a real integrity
+//     check, not just an ordering check, so any corruption is caught
+//     with a clear error instead of silently deploying a broken archive
+//     or failing confusingly later at extraction/build time.
 const ZIP_UPLOAD_MAX_BYTES = 260 * 1024 * 1024;
 const ZIP_UPLOAD_TTL_MS = 20 * 60 * 1000; // 20 min of inactivity
-const zipUploadSessions = new Map(); // uploadId -> { userId, totalBytes, receivedBytes, nextChunkIndex, filePath, expiresAt }
+const zipUploadSessions = new Map(); // uploadId -> { userId, totalBytes, receivedBytes, nextChunkIndex, filePath, expectedSha256, expiresAt }
 
 function zipUploadCleanupExpired() {
   const now = Date.now();
@@ -15935,6 +15954,10 @@ v1.post('/zip-uploads', (req, res) => {
     if (totalBytes > ZIP_UPLOAD_MAX_BYTES) {
       return res.status(413).json({ ok: false, error: `totalBytes exceeds the ${ZIP_UPLOAD_MAX_BYTES / (1024*1024)}MB limit` });
     }
+    const expectedSha256 = req.body?.sha256 ? String(req.body.sha256).trim().toLowerCase() : null;
+    if (expectedSha256 && !/^[0-9a-f]{64}$/.test(expectedSha256)) {
+      return res.status(400).json({ ok: false, error: 'sha256 must be a 64-character hex string' });
+    }
     zipUploadCleanupExpired();
 
     const userId = String(req.user?._id || req.user?.id || 'anon');
@@ -15945,7 +15968,7 @@ v1.post('/zip-uploads', (req, res) => {
     fs.writeFileSync(filePath, Buffer.alloc(0)); // create empty, chunks append to it
 
     zipUploadSessions.set(uploadId, {
-      userId, totalBytes, receivedBytes: 0, nextChunkIndex: 0, filePath,
+      userId, totalBytes, receivedBytes: 0, nextChunkIndex: 0, filePath, expectedSha256,
       expiresAt: Date.now() + ZIP_UPLOAD_TTL_MS,
     });
 
@@ -16005,6 +16028,33 @@ v1.post('/zip-uploads/:uploadId/finish', async (req, res) => {
     if (!name) return res.status(400).json({ ok: false, error: 'name is required' });
 
     const archiveBuffer = fs.readFileSync(session.filePath);
+
+    // [FIX] Two integrity checks before this ever reaches extraction/deploy:
+    // a fast signature check that catches gross corruption immediately
+    // (every valid zip starts with the bytes 'PK'), and — if the caller
+    // supplied one when starting the session — a full sha256 comparison,
+    // which catches ANY corruption, however subtle, with a precise error
+    // instead of a confusing downstream extraction or build failure.
+    if (archiveBuffer.length < 4 || archiveBuffer[0] !== 0x50 || archiveBuffer[1] !== 0x4b) {
+      zipUploadSessions.delete(req.params.uploadId);
+      try { fs.unlinkSync(session.filePath); } catch (_) {}
+      return res.status(422).json({
+        ok: false,
+        error: 'Assembled file does not start with a valid zip signature (PK) -- the chunks were likely sliced from an already-base64-encoded string rather than from the raw archive bytes. Each chunk must be the base64 encoding of a contiguous slice of the RAW zip bytes, encoded independently, not a slice of the full base64 text.'
+      });
+    }
+    if (session.expectedSha256) {
+      const actualSha256 = crypto.createHash('sha256').update(archiveBuffer).digest('hex');
+      if (actualSha256 !== session.expectedSha256) {
+        zipUploadSessions.delete(req.params.uploadId);
+        try { fs.unlinkSync(session.filePath); } catch (_) {}
+        return res.status(422).json({
+          ok: false,
+          error: `Checksum mismatch: expected sha256 ${session.expectedSha256} but assembled archive hashes to ${actualSha256}. The archive did not reassemble correctly -- do not retry finish; start a new upload session.`
+        });
+      }
+    }
+
     const result = await deployArchiveBuffer(req, archiveBuffer, { name, subdomain, buildCmd, startCmd, installCmd, outputDir, siteType, nodeVer, envVars });
 
     try { fs.unlinkSync(session.filePath); } catch (_) {}
