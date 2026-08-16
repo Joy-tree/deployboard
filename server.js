@@ -13905,6 +13905,30 @@ async function injectConnStrIntoProject(projectId, engine, internalConn, user = 
 }
 
 // ── GET /api/databases — list all databases for the user ──────────────────────
+// [FEATURE] Best-effort durable record of a user's privacy-consent choice,
+// beyond just the localStorage flag in their current browser. Firebase-only
+// (this platform doesn't use MongoDB), same fetch/PUT pattern used by the
+// custom-domain helpers above. Never blocks or errors out the consent
+// modal itself if this fails — the frontend call is fire-and-forget.
+app.post('/api/privacy-consent', requireAuth, async (req, res) => {
+  try {
+    const choice = String(req.body?.choice || '').trim();
+    if (!['accepted', 'rejected'].includes(choice)) {
+      return res.status(400).json({ error: 'choice must be "accepted" or "rejected"' });
+    }
+    if (FIREBASE_RTDB_URL) {
+      const ownerKey = firebaseWorkspaceKey(req.user);
+      const authQuery = FIREBASE_RTDB_SECRET ? '?auth=' + encodeURIComponent(FIREBASE_RTDB_SECRET) : '';
+      await fetch(`${FIREBASE_RTDB_URL}/deployboard_privacy_consent/${ownerKey}.json${authQuery}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ choice, at: new Date().toISOString(), ip: req.ip || '' })
+      }).catch(() => {});
+    }
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/databases', requireAuth, async (req, res) => {
   try {
     // Firebase RTDB is the primary store — no MongoDB needed
