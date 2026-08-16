@@ -999,14 +999,9 @@ async function refreshCustomDomainCache() {
         }
       }
     }
-    // 2. MongoDB (secondary — keeps old entries working if they exist)
-    if (isMongoReady()) {
-      const docs = await CustomDomain.find().lean().maxTimeMS(3000).catch(() => []);
-      for (const doc of docs) {
-        if (doc.domain && doc.subdomain) _cdCache.set(String(doc.domain).toLowerCase(), String(doc.subdomain));
-      }
-    }
-    // 3. In-memory fallback store
+    // [FIX] Mongo step removed — this platform doesn't use MongoDB anymore,
+    // Firebase (above) is the one real store custom domains are written to.
+    // 2. In-memory fallback store
     for (const entry of memDomains) {
       if (entry.domain && entry.subdomain) _cdCache.set(String(entry.domain).toLowerCase(), String(entry.subdomain));
     }
@@ -1947,18 +1942,73 @@ async function removeAllContainersForSubdomain(subdomain, log = console.log) {
   }
 }
 
-// [FEATURE] Custom domain records live in MongoDB (CustomDomain model,
-// defined right below), completely separate from the Firebase-backed
-// project workspace that the rest of a project's data lives in. Neither
-// delete endpoint ever removed the CustomDomain record for a deleted
-// project's subdomain, so a custom domain that had been pointed at a
-// deleted project stayed mapped forever — best-effort cleanup here, same
-// pattern as the existing legacy-Mongo-project-cleanup calls nearby.
+// [FIX] This platform doesn't use MongoDB anymore — Firebase RTDB is the
+// only real datastore. Custom domains were the one exception left behind:
+// several endpoints (POST /api/domains, the verify endpoint, and domain
+// cleanup on project delete) only ever wrote to/read from the Mongo
+// CustomDomain model, with Firebase used as a read-time cache at best.
+// With Mongo not actually running/used, every domain "saved" through
+// those endpoints was silently falling into the in-memory-only fallback
+// (memDomains) instead — meaning custom domains added through them never
+// really persisted and vanished on every server restart. These helpers
+// make Firebase the one real store for custom domains, matching the
+// domainKey format (`domain.replace(/[^a-z0-9_-]/g,'_')`) already used by
+// the newer domain-attach flow and the delete endpoints below.
+function customDomainKey(domain) {
+  return String(domain || '').toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+}
+
+async function fbGetCustomDomain(domain) {
+  if (!FIREBASE_RTDB_URL || !domain) return null;
+  try {
+    const authQuery = FIREBASE_RTDB_SECRET ? '?auth=' + encodeURIComponent(FIREBASE_RTDB_SECRET) : '';
+    const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_custom_domains/${customDomainKey(domain)}.json${authQuery}`);
+    if (!r.ok) return null;
+    const data = await r.json().catch(() => null);
+    return data || null;
+  } catch (_) { return null; }
+}
+
+async function fbSaveCustomDomain(entry) {
+  if (!FIREBASE_RTDB_URL || !entry?.domain) return false;
+  try {
+    const authQuery = FIREBASE_RTDB_SECRET ? '?auth=' + encodeURIComponent(FIREBASE_RTDB_SECRET) : '';
+    const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_custom_domains/${customDomainKey(entry.domain)}.json${authQuery}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    });
+    return r.ok;
+  } catch (_) { return false; }
+}
+
+async function fbDeleteCustomDomain(domain) {
+  if (!FIREBASE_RTDB_URL || !domain) return;
+  try {
+    const authQuery = FIREBASE_RTDB_SECRET ? '?auth=' + encodeURIComponent(FIREBASE_RTDB_SECRET) : '';
+    await fetch(`${FIREBASE_RTDB_URL}/deployboard_custom_domains/${customDomainKey(domain)}.json${authQuery}`, { method: 'DELETE' });
+  } catch (_) {}
+}
+
+// Removes every custom domain mapping pointed at a given subdomain (used
+// when a project is deleted). Firebase RTDB has no "delete where field
+// equals X" query, so this reads the whole node and deletes matches —
+// fine at this data volume (a platform's total custom-domain count).
 async function removeCustomDomainsForSubdomain(subdomain) {
   const safeSub = String(subdomain || '').trim();
-  if (!safeSub || !isDbReady()) return;
+  if (!safeSub || !FIREBASE_RTDB_URL) return;
   try {
-    await CustomDomain.deleteMany({ subdomain: safeSub });
+    const authQuery = FIREBASE_RTDB_SECRET ? '?auth=' + encodeURIComponent(FIREBASE_RTDB_SECRET) : '';
+    const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_custom_domains.json${authQuery}`);
+    if (!r.ok) return;
+    const data = await r.json().catch(() => ({}));
+    if (!data || typeof data !== 'object') return;
+    for (const [key, entry] of Object.entries(data)) {
+      if (entry && String(entry.subdomain || '') === safeSub) {
+        await fetch(`${FIREBASE_RTDB_URL}/deployboard_custom_domains/${key}.json${authQuery}`, { method: 'DELETE' }).catch(() => {});
+        console.log(`[Delete] Removed custom domain mapping ${entry.domain} → ${safeSub}`);
+      }
+    }
   } catch (e) {
     console.warn(`[Delete] Custom domain cleanup skipped/failed for ${safeSub}:`, e.message);
   }
@@ -5171,14 +5221,8 @@ async function getAllCustomDomains() {
       }
     } catch(_) {}
   }
-  // 2. MongoDB
-  if (isMongoReady()) {
-    try {
-      const docs = await CustomDomain.find().sort({ createdAt: -1 }).lean().maxTimeMS(5000);
-      for (const d of docs) if (d.domain && !map.has(String(d.domain).toLowerCase())) map.set(String(d.domain).toLowerCase(), d);
-    } catch(_) {}
-  }
-  // 3. In-memory fallback
+  // [FIX] Mongo step removed — Firebase (above) is the one real store.
+  // 2. In-memory fallback
   for (const d of memDomains) if (d.domain && !map.has(String(d.domain).toLowerCase())) map.set(String(d.domain).toLowerCase(), d);
   return Array.from(map.values());
 }
@@ -5203,50 +5247,46 @@ app.get('/api/domains', attachAuthIfPresent, async (req, res) => {
   } catch(e) { res.json([]); }
 });
 
-app.post('/api/domains', async (req, res) => {
+// [FIX] Rewritten off MongoDB entirely -- this endpoint used to require
+// Mongo to persist anything at all, silently falling back to memDomains
+// (which resets on every restart) whenever Mongo wasn't ready. It was also
+// missing requireAuth, so anyone could attach a custom domain to any
+// subdomain with no ownership check at all. Now: real auth is required,
+// the subdomain is verified against the CALLER's own Firebase workspace
+// (the actual source of truth for projects, not Mongo), and the domain
+// entry is written straight to Firebase — the same durable store the
+// newer streaming domain-attach flow already correctly uses.
+app.post('/api/domains', requireAuth, async (req, res) => {
   const { domain, subdomain } = req.body;
   if (!domain || !subdomain) return res.status(400).json({ error: 'domain and subdomain are required' });
   const clean = normalizeHostHeader(domain);
   if (!clean) return res.status(400).json({ error: 'Invalid domain' });
   try {
-    if (!isMongoReady()) {
-      // In-memory fallback
-      const exists = memDomains.find(d => d.domain === clean);
-      if (exists) {
-        if (exists.subdomain !== subdomain) {
-          // Reassign: overwrite old entry instead of blocking
-          exists.subdomain = subdomain;
-          exists.verified = false;
-          _cdCache.delete(clean);
-          addActivity('domain', 'Custom domain reassigned (mem): ' + clean + ' → ' + subdomain);
-          return res.json({ ok: true, domain: exists, reassigned: true, warning: 'MongoDB unavailable — domain saved in memory only and will reset on restart' });
-        }
-        return res.json({ ok: true, domain: exists, existing: true, warning: 'MongoDB unavailable — domain saved in memory only and will reset on restart' });
-      }
-      const entry = { domain: clean, subdomain, verified: false, createdAt: new Date() };
-      memDomains.push(entry);
-      addActivity('domain', 'Custom domain added (mem): ' + clean + ' → ' + subdomain);
-      return res.json({ ok: true, domain: entry, warning: 'MongoDB unavailable — domain saved in memory only and will reset on restart' });
-    }
-    const existing = await CustomDomain.findOne({ domain: clean }).lean().maxTimeMS(5000);
+    const ownerKey = firebaseWorkspaceKey(req.user);
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    const project = (ws.projects || []).find(p => p.subdomain === subdomain);
+    if (!project) return res.status(404).json({ error: 'Project not found for subdomain: ' + subdomain });
+
+    const existing = await fbGetCustomDomain(clean);
     if (existing) {
       if (existing.subdomain !== subdomain) {
         // Reassign: update to new project instead of blocking with 409
-        await CustomDomain.findOneAndUpdate({ domain: clean }, { subdomain, verified: false }, { new: true }).maxTimeMS(5000);
+        const updated = { ...existing, subdomain, verified: false, ownerKey };
+        const savedOk = await fbSaveCustomDomain(updated);
         _cdCache.delete(clean);
-        const mi = memDomains.findIndex(d => d.domain === clean);
-        if (mi >= 0) { memDomains[mi].subdomain = subdomain; memDomains[mi].verified = false; }
         addActivity('domain', 'Custom domain reassigned: ' + clean + ' → ' + subdomain);
-        return res.json({ ok: true, reassigned: true });
+        if (!savedOk) return res.status(502).json({ error: 'Failed to save to Firebase' });
+        return res.json({ ok: true, reassigned: true, domain: updated });
       }
       return res.json({ ok: true, domain: existing, existing: true });
     }
-    const project = await Project.findOne({ subdomain }).lean().maxTimeMS(5000);
-    if (!project) return res.status(404).json({ error: 'Project not found for subdomain: ' + subdomain });
-    const cd = await new CustomDomain({ domain: clean, subdomain, verified: false }).save();
+
+    const entry = { domain: clean, subdomain, verified: false, ownerKey, createdAt: Date.now() };
+    const savedOk = await fbSaveCustomDomain(entry);
+    if (!savedOk) return res.status(502).json({ error: 'Failed to save to Firebase' });
     console.log('[CustomDomain] Added: ' + clean + ' -> ' + subdomain);
     addActivity('domain', 'Custom domain added: ' + clean + ' → ' + subdomain);
-    res.json({ ok: true, domain: cd });
+    res.json({ ok: true, domain: entry });
   } catch(e) {
     console.error('[CustomDomain] save error:', e.message);
     res.status(500).json({ error: e.message });
@@ -5338,11 +5378,15 @@ app.post('/api/domains/:domain/verify', async (req, res) => {
   if (!domain) return res.status(400).json({ error: 'Invalid domain' });
   try {
     const result = await verifyDomainDns(domain);
-    if (!isMongoReady()) {
+    // [FIX] Was Mongo-only (with an in-memory fallback that never
+    // persisted) — verified status now updates the same Firebase record
+    // everything else reads from.
+    const existing = await fbGetCustomDomain(domain);
+    if (existing) {
+      await fbSaveCustomDomain({ ...existing, verified: result.verified });
+    } else {
       const entry = memDomains.find(d => d.domain === domain);
       if (entry) entry.verified = result.verified;
-    } else {
-      await CustomDomain.findOneAndUpdate({ domain }, { verified: result.verified }).maxTimeMS(5000);
     }
     res.json({ ok: true, ...result });
   } catch(e) {
@@ -5362,8 +5406,7 @@ app.delete('/api/domains/:domain', requireAuth, async (req, res) => {
         await fetch(FIREBASE_RTDB_URL + '/deployboard_custom_domains/' + domainKey + '.json' + authQuery, { method: 'DELETE' });
       } catch(_) {}
     }
-    // Remove from MongoDB
-    if (isMongoReady()) await CustomDomain.findOneAndDelete({ domain }).catch(() => {});
+    // [FIX] Mongo cleanup removed — Firebase above is the one real store.
     // Remove from memory cache and memDomains
     _cdCache.delete(domain);
     const mi = memDomains.findIndex(d => d.domain === domain);
@@ -5589,7 +5632,7 @@ app.get('/api/domains/transfer', attachAuthIfPresent, async (req, res) => {
           const domainKey = domain.replace(/[^a-z0-9_-]/g, '_');
           await fetch(FIREBASE_RTDB_URL + '/deployboard_custom_domains/' + domainKey + '.json' + authQuery, { method: 'DELETE' }).catch(() => {});
         }
-        if (isMongoReady()) await CustomDomain.findOneAndDelete({ domain }).catch(() => {});
+        // [FIX] Mongo cleanup removed — Firebase above is the one real store.
         _cdCache.delete(domain);
         const mi = memDomains.findIndex(d => d.domain === domain);
         if (mi >= 0) memDomains.splice(mi, 1);
@@ -5659,14 +5702,9 @@ app.get('/api/domains/transfer', attachAuthIfPresent, async (req, res) => {
       else memDomains.push(domainEntry);
       send('warn', '⚠ Saved in memory only (resets on restart) — configure FIREBASE_RTDB_URL to persist');
     }
-    // Also upsert into MongoDB if available (keeps old verifyCustomDomain endpoint working)
-    if (isMongoReady()) {
-      await CustomDomain.findOneAndUpdate(
-        { domain },
-        { domain, subdomain, verified: dnsResult.verified },
-        { upsert: true, new: true, maxTimeMS: 5000 }
-      ).catch(() => {});
-    }
+    // [FIX] Mongo upsert removed — the verify endpoint now reads/writes
+    // Firebase directly (see fbGetCustomDomain/fbSaveCustomDomain above),
+    // so this compat step is no longer needed.
     // Push into routing cache immediately so traffic works without waiting for next refresh
     upsertCustomDomainCache(domain, subdomain);
     send('step', `✓ Mapping saved: ${domain} → ${subdomain}`);
