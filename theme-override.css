@@ -3070,3 +3070,32 @@ html[data-theme="light"] .jt-chart-tooltip {
 }
 .jt-chart-tooltip-title { color: #a7f3d0; }
 html[data-theme="light"] .jt-chart-tooltip-title { color: var(--jt-brand-strong) !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DB VISUALIZER — themed custom dropdowns.
+   The database picker and table/collection picker used to be plain
+   native <select> elements. The closed box can be themed with CSS, but
+   the OPEN options list is rendered natively by the browser/OS and
+   ignores site CSS entirely -- stark white background, black text,
+   native radio buttons, regardless of dark/light theme. Both dropdowns
+   now use the same themed custom-select component already used for
+   repo/branch pickers elsewhere (makeCustomSelect()) instead of the
+   native popup.
+   That component already has a light-theme override -- but it's scoped
+   to `#app .custom-select-menu`, and #dbVisualizer is a modal that lives
+   as a sibling OUTSIDE #app in the DOM (same as the Data Browser), so
+   that existing rule never reached it. Scoped here specifically instead.
+   ═══════════════════════════════════════════════════════════════════════ */
+html[data-theme="light"] #dbVisualizer .custom-select-btn,
+html[data-theme="light"] #dbVisualizer .custom-select-menu {
+  background: var(--jt-bg-raised) !important;
+  border-color: rgba(0,0,0,.1) !important;
+  color: var(--jt-text) !important;
+}
+html[data-theme="light"] #dbVisualizer .custom-select-item {
+  color: var(--jt-text-faint) !important;
+}
+html[data-theme="light"] #dbVisualizer .custom-select-item:hover {
+  background: rgba(31,110,82,.08) !important;
+  color: var(--jt-text) !important;
+}
