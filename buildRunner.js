@@ -5875,9 +5875,48 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
     fs.renameSync(projectRoot, appDir);
     log(`\x1b[32m[deploy]\x1b[0m ✓ Server app moved to permanent storage with build artifacts and node_modules intact`);
   } catch (moveErr) {
-    log(`\x1b[90m[deploy] Cross-device move, copying full server app tree…\x1b[0m`);
+    // [FIX] copyDir() "resolves" every symlink via realpath and copies the
+    // TARGET FILE'S CONTENT to the symlink's location -- which physically
+    // relocates that file. Any CLI shim that does a __dirname-relative
+    // require (exactly what node_modules/.bin/next does internally --
+    // require('../server/require-hook'), resolved relative to wherever the
+    // file actually lives on disk) breaks the instant it's copied out of
+    // its real location (node_modules/next/dist/bin/) into .bin/, since the
+    // relative path no longer points anywhere real. That's the exact cause
+    // of "Cannot find module '../server/require-hook'" at container start
+    // -- the SAME class of bug the GitHub deploy path already fixed by
+    // using rsync's --links flag instead (which preserves symlinks AS
+    // symlinks, never relocating what they point to). This upload path had
+    // fallen back to the old broken copyDir() instead -- bringing it in
+    // line with the GitHub path's exact fallback chain fixes it here too.
+    log(`\x1b[90m[deploy] Cross-device move, using rsync…\x1b[0m`);
     fs.mkdirSync(appDir, { recursive: true });
-    copyDir(projectRoot, appDir);
+    try {
+      const { execSync } = require('child_process');
+      execSync(`rsync -a --links --no-whole-file "${projectRoot}/" "${appDir}/"`, { stdio: 'pipe', maxBuffer: 50*1024*1024 });
+      log(`\x1b[32m[deploy]\x1b[0m ✓ App synced with rsync (symlinks intact)`);
+    } catch (rsyncErr) {
+      // rsync not available — copy without node_modules so the container's
+      // own runtime bootstrap reinstalls it fresh (see startWithPath's
+      // ensureRuntimeDeps below), rather than ending up with broken
+      // relocated CLI shims from a naive copy.
+      log(`\x1b[33m[deploy]\x1b[0m rsync unavailable, copying source only (node_modules will install in container)`);
+      const excludes = ['node_modules', '.git'];
+      const copyFiltered = (src, dst) => {
+        fs.mkdirSync(dst, { recursive: true });
+        for (const entry of fs.readdirSync(src)) {
+          if (excludes.includes(entry)) continue;
+          const s = path.join(src, entry), d = path.join(dst, entry);
+          try {
+            const st = fs.lstatSync(s);
+            if (st.isDirectory()) copyFiltered(s, d);
+            else if (st.isFile()) fs.copyFileSync(s, d);
+          } catch (_) {}
+        }
+      };
+      copyFiltered(projectRoot, appDir);
+      log(`\x1b[33m[deploy]\x1b[0m Source copied without node_modules — runtime bootstrap will reinstall dependencies in /app before start`);
+    }
     log(`\x1b[32m[deploy]\x1b[0m ✓ Server app copied to permanent storage`);
   }
 
