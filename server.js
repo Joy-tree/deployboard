@@ -1913,6 +1913,57 @@ async function removeSubdomain(subdomain) {
   } catch(e) {}
 }
 
+// [FEATURE] Full container cleanup for a deleted project. The delete
+// endpoints below only ever removed the exact "db-{subdomain}" stable
+// container -- but every past deploy of that project left a stopped
+// "db-{subdomain}-prev-{timestamp}" container behind for rollback history
+// (see archivePreviousContainer/cleanupArchivedContainers in buildRunner.js,
+// which only prunes those during a NEW deploy, never on delete), and an
+// in-flight deploy at the moment of deletion would have a
+// "db-{subdomain}-cand-{deployId}" candidate too. None of those matched
+// the exact-name-only `docker rm -f db-${subdomain}` call, so they sat on
+// disk forever after "deleting" a project — exactly the leftover-space
+// issue this fixes. Removes every container whose name starts with
+// "db-{subdomain}", not just the one exact stable name.
+async function removeAllContainersForSubdomain(subdomain, log = console.log) {
+  const safeSub = String(subdomain || '').trim();
+  if (!safeSub) return;
+  try {
+    const { stdout } = await execP(`docker ps -a --format "{{.Names}}"`);
+    const names = String(stdout || '').split('\n').map(s => s.trim()).filter(Boolean);
+    const matches = names.filter(n => n === `db-${safeSub}` || n.startsWith(`db-${safeSub}-`));
+    for (const name of matches) {
+      try {
+        await execP(`docker rm -f ${name}`);
+        log(`[Delete] Removed container ${name}`);
+      } catch (e) {
+        log(`[Delete] Failed to remove container ${name}: ${e.message}`);
+      }
+    }
+  } catch (e) {
+    // docker ps itself failing — fall back to at least trying the one
+    // known exact name so a normal (non-archived) project still cleans up.
+    try { await execP(`docker rm -f db-${safeSub}`); } catch (_) {}
+  }
+}
+
+// [FEATURE] Custom domain records live in MongoDB (CustomDomain model,
+// defined right below), completely separate from the Firebase-backed
+// project workspace that the rest of a project's data lives in. Neither
+// delete endpoint ever removed the CustomDomain record for a deleted
+// project's subdomain, so a custom domain that had been pointed at a
+// deleted project stayed mapped forever — best-effort cleanup here, same
+// pattern as the existing legacy-Mongo-project-cleanup calls nearby.
+async function removeCustomDomainsForSubdomain(subdomain) {
+  const safeSub = String(subdomain || '').trim();
+  if (!safeSub || !isDbReady()) return;
+  try {
+    await CustomDomain.deleteMany({ subdomain: safeSub });
+  } catch (e) {
+    console.warn(`[Delete] Custom domain cleanup skipped/failed for ${safeSub}:`, e.message);
+  }
+}
+
 // ── MongoDB models ────────────────────────────────────────────────────────────
 // ── Custom Domain model ──────────────────────────────────────────────────────
 const customDomainSchema = new mongoose.Schema({
@@ -5058,19 +5109,20 @@ app.delete('/api/projects/:id', requireAuth, async (req, res) => {
       console.error(`[Delete] Failed to remove site files for ${p.subdomain}:`, e.message);
     }
 
-    // Stop and remove user app Docker container
-    try {
-      await execP(`docker rm -f db-${p.subdomain}`);
-      console.log(`[Docker] Removed container db-${p.subdomain}`);
-    } catch(e) {
-      console.error(`[Delete] Failed to remove container db-${p.subdomain}:`, e.message);
-    }
+    // [FIX] Now removes every container for this subdomain -- stable,
+    // any in-flight candidate, and every archived rollback container from
+    // past deploys -- not just the one exact "db-{subdomain}" name.
+    await removeAllContainersForSubdomain(p.subdomain, (msg) => console.log(msg));
 
     delete portRegistry[p.subdomain];
     savePortRegistry();
 
     await removeSubdomain(p.subdomain).catch(e =>
       console.error(`[Delete] Failed to remove DNS/tunnel route for ${p.subdomain}:`, e.message));
+
+    // [FIX] Custom domain mappings pointed at this project used to survive
+    // deletion forever (separate Mongo record, never cleaned up).
+    await removeCustomDomainsForSubdomain(p.subdomain);
 
     res.json({ ok: true, removedProjectId: p.id, subdomain: p.subdomain });
   } catch(e) {
@@ -15570,8 +15622,10 @@ v1.delete('/projects/:id', async (req, res) => {
     try { fs.rmSync(path.join(SITES_DIR, p.subdomain), { recursive: true, force: true }); }
     catch(e) { console.error(`[v1 Delete] Failed to remove site files for ${p.subdomain}:`, e.message); }
 
-    try { await execP(`docker rm -f db-${p.subdomain}`); }
-    catch(e) { console.error(`[v1 Delete] Failed to remove container db-${p.subdomain}:`, e.message); }
+    // [FIX] Now removes every container for this subdomain -- stable,
+    // any in-flight candidate, and every archived rollback container from
+    // past deploys -- not just the one exact "db-{subdomain}" name.
+    await removeAllContainersForSubdomain(p.subdomain, (msg) => console.log(msg));
 
     delete portRegistry[p.subdomain];
     savePortRegistry();
@@ -15579,7 +15633,11 @@ v1.delete('/projects/:id', async (req, res) => {
     await removeSubdomain(p.subdomain).catch(e =>
       console.error(`[v1 Delete] Failed to remove DNS/tunnel route for ${p.subdomain}:`, e.message));
 
-    res.json({ ok: true, message: 'Project fully removed: workspace record, site files, container, and DNS route.' });
+    // [FIX] Custom domain mappings pointed at this project used to survive
+    // deletion forever (separate Mongo record, never cleaned up).
+    await removeCustomDomainsForSubdomain(p.subdomain);
+
+    res.json({ ok: true, message: 'Project fully removed: workspace record, site files, all containers (including archived rollbacks), custom domain mappings, and DNS route.' });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
