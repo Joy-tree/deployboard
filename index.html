@@ -1333,9 +1333,9 @@ footer{
 
 /* ── Design Tokens ─────────────────────────────────────────────────────── */
 :root {
-  --bg:        #060b14;
-  --bg-card:   #0b1221;
-  --bg-hover:  #0f1a2e;
+  --bg:        #0a0a0a;
+  --bg-card:   #111111;
+  --bg-hover:  #1a1a1a;
   --border:    rgba(16,185,129,0.10);
   --border-hi: rgba(16,185,129,0.22);
   --primary:   #10b981;
@@ -1487,9 +1487,9 @@ ul { list-style:none; }
 /* ══ END LANDING CSS ══ */
 /* ── Design Tokens ─────────────────────────────────────────────────────── */
 :root {
-  --bg:        #060b14;
-  --bg-card:   #0b1221;
-  --bg-hover:  #0f1a2e;
+  --bg:        #0a0a0a;
+  --bg-card:   #111111;
+  --bg-hover:  #1a1a1a;
   --border:    rgba(16,185,129,0.10);
   --border-hi: rgba(16,185,129,0.22);
   --primary:   #10b981;
@@ -2015,7 +2015,7 @@ tr:hover td { background: var(--bg-hover); }
 .input {
   width: 100%;
   padding: 9px 12px;
-  background: rgba(2,6,23,0.6);
+  background: rgba(0,0,0,0.6);
   border: 1.5px solid var(--border);
   border-radius: 8px;
   color: var(--text);
@@ -2032,7 +2032,7 @@ tr:hover td { background: var(--bg-hover); }
 .select {
   width: 100%;
   padding: 9px 12px;
-  background: rgba(2,6,23,0.6);
+  background: rgba(0,0,0,0.6);
   border: 1.5px solid var(--border);
   border-radius: 8px;
   color: var(--text);
@@ -27439,7 +27439,7 @@ function showProjectDetail(projectId) {
           '</div>' +
         '</div>' +
         '<div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:0.75rem;color:var(--text-3);font-family:var(--font-mono);" id="runtimeLogsStatus-' + p.id + '">Disconnected · click Stream logs to follow app output after deployment.</div>' +
-        '<pre id="runtimeLogsOutput-' + p.id + '" style="margin:0;min-height:260px;max-height:460px;overflow:auto;padding:16px;background:#010d1a;color:#c8d3f5;font-family:var(--font-mono);font-size:0.76rem;line-height:1.65;white-space:pre-wrap;word-break:break-word;">Runtime logs will appear here…</pre>' +
+        '<pre id="runtimeLogsOutput-' + p.id + '" class="jt-runtime-log-pane" style="margin:0;min-height:260px;max-height:460px;overflow:auto;padding:16px;font-family:var(--font-mono);font-size:0.76rem;line-height:1.65;white-space:pre-wrap;word-break:break-word;">Runtime logs will appear here…</pre>' +
       '</div>' +
 
       // ── Deployment History
