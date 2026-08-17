@@ -63,6 +63,17 @@ services:
     volumes:
       - sites-data:/var/www/user-sites
       - /tmp/deployboard-builds:/tmp/deployboard-builds
+      # [FIX] Was missing entirely -- vapid-keys.json was being written to
+      # /app/vapid-keys.json inside the container with no volume mount,
+      # meaning it lived only in that container's own writable layer. Every
+      # `docker compose build --no-cache` + up recreated the container from
+      # scratch, silently generating a brand-new VAPID key pair each time
+      # and invalidating every push subscription created under the
+      # previous one -- the exact "VAPID credentials do not correspond to
+      # the credentials used to create the subscriptions" error. Bind-
+      # mounted to the host now so the same keys persist across every
+      # future rebuild; only generated once, ever, on true first boot.
+      - ./vapid-keys.json:/app/vapid-keys.json
       # Mount Docker socket so DeployBoard can spawn user app containers
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
