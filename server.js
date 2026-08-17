@@ -3093,7 +3093,7 @@ if (process.env.MONGODB_URI) {
 }
 
 // ── Build runner ──────────────────────────────────────────────────────────────
-const { runBuild, getPlanRuntimeProfile, normalizeMemoryLimit } = require('./buildRunner');
+const { runBuild, getPlanRuntimeProfile, normalizeMemoryLimit, requestBuildStop } = require('./buildRunner');
 
 // ── API routes ────────────────────────────────────────────────────────────────
 
@@ -12237,6 +12237,16 @@ app.post('/api/deploy/:deployId/stop', requireAuth, async (req, res) => {
         execSync(`docker rm -f ${candidateName}`, { timeout: 10000, stdio: 'ignore' });
       } catch (_) { /* container may not exist yet, or already gone -- fine either way */ }
     }
+
+    // [FIX] Killing the current container only handles a build that's stuck
+    // INSIDE that one step. It did nothing for later steps -- the orchestration
+    // had no way to know a stop was ever requested, so it would launch further
+    // containers for subsequent phases (start runtime, verify, etc.) as if
+    // nothing happened. This registers the stop so buildRunner's own
+    // checkBuildStopped() calls (now present at the start of every step
+    // across every pipeline) will catch it the moment execution reaches
+    // its next checkpoint, however soon or far off that is.
+    if (deployId) requestBuildStop(deployId);
 
     const _stopOwner = ownerUserId || String(req.user?._id || req.user?.id || '');
     const _stopTarget = _stopOwner ? io.to('user:' + _stopOwner) : io;
