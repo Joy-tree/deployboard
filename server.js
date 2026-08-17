@@ -5238,6 +5238,97 @@ app.delete('/api/projects/:id', requireAuth, async (req, res) => {
   }
 });
 
+// [FEATURE] Resilient build-log fallback stream, additive alongside the
+// existing Socket.IO push channel (not a replacement — the socket path
+// still handles everything while connected). Backgrounding a mobile tab
+// can silently suspend a WebSocket well before Socket.IO's own reconnect
+// logic notices, and even a fast reconnect still has to wait out a round
+// trip. Render/Vercel-style platforms sidestep this entirely by not
+// depending on one persistent connection staying alive at all — this is
+// the same idea: plain Server-Sent Events, which the BROWSER itself
+// auto-reconnects natively (no custom JS reconnect logic needed), backed
+// by a simple poll of the already-persisted Deployment.logs array rather
+// than hooking into the live build process. The client only opens this
+// while the socket is actually down and a build is being watched, so
+// logs keep appearing continuously through a disconnect instead of the
+// UI visibly freezing until the socket recovers.
+app.get('/api/deployments/:id/log-stream', attachAuthIfPresent, async (req, res) => {
+  let closed = false;
+  let keepAlive = null;
+  let pollTimer = null;
+
+  const send = (event, data) => {
+    if (res.writableEnded || closed) return;
+    try { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); } catch (_) {}
+  };
+
+  try {
+    const deployId = String(req.params.id || '');
+    if (!isDbReady() || !mongoose.Types.ObjectId.isValid(deployId)) {
+      return res.status(404).json({ error: 'Deployment not found' });
+    }
+    const dep = await Deployment.findById(deployId).lean().maxTimeMS(5000).catch(() => null);
+    if (!dep) return res.status(404).json({ error: 'Deployment not found' });
+
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    if (!req.user.isAdmin) {
+      const project = dep.projectId ? await Project.findById(dep.projectId).select('ownerUserId').lean().maxTimeMS(5000).catch(() => null) : null;
+      const ownerId = String((project && project.ownerUserId) || '');
+      const myId = String(req.user._id || req.user.id || '');
+      if (!ownerId || ownerId !== myId) return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.setHeader('X-SSE-Retry', '1500');
+    if (typeof res.flushHeaders === 'function') res.flushHeaders();
+    // First line is the browser's own auto-reconnect directive — if this
+    // connection drops for any reason, EventSource retries on its own in
+    // 1.5s with zero JS reconnect logic required on the client.
+    res.write('retry: 1500\n\n');
+
+    req.on('close', () => {
+      closed = true;
+      clearInterval(keepAlive);
+      clearTimeout(pollTimer);
+    });
+
+    keepAlive = setInterval(() => send('ping', { t: Date.now() }), 20000);
+
+    // Client passes how many lines it's already rendered via ?since=N so
+    // this only ever sends the delta, never re-sends lines already shown.
+    let sentCount = Math.max(0, parseInt(req.query.since, 10) || 0);
+
+    const poll = async () => {
+      if (closed) return;
+      try {
+        const fresh = await Deployment.findById(deployId).select('status logs duration').lean().maxTimeMS(5000);
+        if (fresh) {
+          const logs = Array.isArray(fresh.logs) ? fresh.logs : [];
+          if (logs.length > sentCount) {
+            send('log', { lines: logs.slice(sentCount) });
+            sentCount = logs.length;
+          }
+          if (fresh.status && fresh.status !== 'building' && fresh.status !== 'pending') {
+            send('done', { status: fresh.status, duration: fresh.duration || null });
+            closed = true;
+            clearInterval(keepAlive);
+            return res.end();
+          }
+        }
+      } catch (_) {}
+      if (!closed) pollTimer = setTimeout(poll, 1200);
+    };
+    poll();
+  } catch (e) {
+    if (!res.headersSent) res.status(500).json({ error: e.message });
+    else { try { res.end(); } catch (_) {} }
+  }
+});
+
+
 app.get('/api/deployments', attachAuthIfPresent, async (req, res) => {
   try {
     const mineOnly = String(req.query.mine || '') === '1';

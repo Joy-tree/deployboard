@@ -23642,6 +23642,7 @@ async function stopActiveDeployment() {
     d.logs = d.logs || [];
     d.logs.push('[manual] Deployment stop requested by user.');
     activeBuildId = null;
+    stopLogStreamFallback();
     save();
     // [FIX] renderLogsPage() doesn't exist anywhere in this file — calling it
     // threw a ReferenceError right after the stop request had already
@@ -26783,6 +26784,66 @@ async function ensureIncomingBuildVisible(deployId) {
   return deployments.find(x => x.id === deployId) || null;
 }
 
+// [FEATURE] Resilient fallback log stream (see the matching server route,
+// GET /api/deployments/:id/log-stream, for the full rationale). Plain
+// Server-Sent Events, auto-reconnected natively by the browser — used
+// only as a backstop while the main Socket.IO connection is down and an
+// active build is being watched, so log lines keep appearing continuously
+// through a disconnect instead of the UI visibly freezing until the
+// socket recovers. Feeds through the exact same writeTerm/logBuffer
+// pipeline the socket path uses, so there's no visible difference in how
+// lines render regardless of which transport delivered them.
+let _logStreamFallbackES = null;
+function stopLogStreamFallback() {
+  if (_logStreamFallbackES) {
+    try { _logStreamFallbackES.close(); } catch (_) {}
+    _logStreamFallbackES = null;
+  }
+}
+function startLogStreamFallback() {
+  if (_logStreamFallbackES || !activeBuildId) return;
+  try {
+    // EventSource can't send custom headers (no Authorization), so auth
+    // has to go via the query-string token path getAuthUser() already
+    // supports specifically for this reason.
+    const tok = authToken || localStorage.getItem('db_auth_token') || '';
+    const url = `${API}/api/deployments/${activeBuildId}/log-stream?since=${logBuffer.length}` + (tok ? `&token=${encodeURIComponent(tok)}` : '');
+    const es = new EventSource(url, { withCredentials: true });
+    _logStreamFallbackES = es;
+    es.addEventListener('log', (ev) => {
+      try {
+        const { lines } = JSON.parse(ev.data);
+        if (Array.isArray(lines) && lines.length) {
+          for (const ln of lines) { writeTerm(ln); logBuffer.push(ln); }
+          renderStructuredLogs();
+        }
+      } catch (_) {}
+    });
+    es.addEventListener('done', (ev) => {
+      try {
+        const { status, duration } = JSON.parse(ev.data);
+        const dep = deployments.find(d => String(d.id || d._id || '') === String(activeBuildId));
+        applyBuildDoneUpdate({
+          deployId: activeBuildId,
+          projectId: dep ? dep.projectId : null,
+          status,
+          duration: duration || (dep ? dep.duration : null) || null,
+          liveUrl: dep ? (dep.liveUrl || (projects.find(p => String(p.id || p._id || '') === String(dep.projectId)) || {}).liveUrl) : null,
+          source: dep ? dep.source : 'manual'
+        });
+      } catch (_) {}
+      stopLogStreamFallback();
+    });
+    es.onerror = () => {
+      // EventSource retries on its own per the server's `retry:` directive
+      // — nothing to do here except let it keep trying. If the deployment
+      // record genuinely can't be found (e.g. it finished and was pruned
+      // ages ago), the browser will just keep quietly retrying a 404,
+      // which readyState reflects but doesn't need explicit handling.
+    };
+  } catch (_) {}
+}
+
 function initSocket() {
   if (socket) return;
   if (typeof io === 'undefined') {
@@ -26872,6 +26933,9 @@ function initSocket() {
       // "Disconnected" line below before it ever shows, so brief blips
       // are invisible instead of interrupting the log stream.
       if (_disconnectMsgTimer) { clearTimeout(_disconnectMsgTimer); _disconnectMsgTimer = null; }
+      // Socket has the connection back — hand off from the SSE fallback,
+      // if it was running, back to the normal push path.
+      stopLogStreamFallback();
     });
 
     let _disconnectMsgTimer = null;
@@ -26881,13 +26945,22 @@ function initSocket() {
         statusEl.className = 'badge badge-error';
         statusEl.innerHTML = '<span class="badge-dot"></span>Reconnecting…';
       }
+      // [FIX] "Should keep streaming logs no matter what, shouldn't visibly
+      // disconnect at all." Start the SSE fallback immediately (not after
+      // any grace period) whenever a build is actively being watched —
+      // it's a lightweight polling stream, so there's no real cost to
+      // starting it right away, and it's what keeps logs appearing
+      // continuously through exactly the kind of extended background-tab
+      // outage that made this feel broken before, rather than only
+      // covering brief blips.
+      if (activeBuildId) startLogStreamFallback();
       // Don't interrupt the log stream for a brief blip that reconnects
       // on its own in a second or two (the common case, especially now
       // that visibilitychange forces an immediate reconnect attempt) —
       // only surface it in the terminal if it's still down after a beat.
       _disconnectMsgTimer = setTimeout(() => {
-        writeTerm('\x1b[33m[system]\x1b[0m \x1b[90mReconnecting to build server · ' + reason + '\x1b[0m');
-        if (statusEl) statusEl.innerHTML = '<span class="badge-dot"></span>Disconnected';
+        writeTerm('\x1b[33m[system]\x1b[0m \x1b[90mLive connection interrupted · ' + reason + ' — still streaming via backup connection\x1b[0m');
+        if (statusEl) statusEl.innerHTML = '<span class="badge-dot"></span>Reconnecting (backup active)';
       }, 2500);
     });
 
@@ -27096,6 +27169,12 @@ function initSocket() {
     // spinning forever even though the deploy had long since finished
     // successfully on the server.
     function applyBuildDoneUpdate({ deployId, projectId, status, duration, liveUrl, source }) {
+      // Build has reached a terminal state via whichever transport got
+      // there first (socket push, reconnect catch-up, or the SSE
+      // fallback) — nothing left to stream, so tear down the fallback
+      // here as the single point every completion path funnels through,
+      // rather than remembering to do it at each individual call site.
+      if (deployId === activeBuildId) stopLogStreamFallback();
       if (deployId === activeBuildId) {
         const card = document.getElementById('deployNotifPromptCard');
         if (card) card.style.display = 'none';
