@@ -3099,3 +3099,69 @@ html[data-theme="light"] #dbVisualizer .custom-select-item:hover {
   background: rgba(31,110,82,.08) !important;
   color: var(--jt-text) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DEPLOY NOTIFICATION PROMPT (Logs page)
+   In-context "enable notifications" card shown while a deploy is
+   actively streaming — same idea as Claude's own "Get notified when
+   Claude responds" prompt. Deliberately flat and restrained: a solid
+   card background with a single colored accent border, no gradient
+   washes, no radial glow blobs, no pulsing shadow animation — those
+   read as generic AI-generated polish rather than an intentional part
+   of this design system. Matches the plain, solid-color language the
+   rest of the dashboard's cards and buttons already use.
+   ═══════════════════════════════════════════════════════════════════════ */
+.dnp-card{
+  position:relative;margin-bottom:12px;padding:16px 18px;border-radius:12px;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-left:3px solid var(--green);
+  animation:dnpFadeIn .3s ease;
+}
+@keyframes dnpFadeIn{ from{opacity:0;transform:translateY(-6px);} to{opacity:1;transform:translateY(0);} }
+.dnp-icon{
+  width:34px;height:34px;border-radius:9px;margin-bottom:10px;
+  background:rgba(16,185,129,.1);
+  display:flex;align-items:center;justify-content:center;color:var(--green);
+}
+.dnp-icon svg{width:17px;height:17px;}
+.dnp-close{
+  position:absolute;top:12px;right:12px;width:24px;height:24px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  background:transparent;border:none;color:var(--text-3);cursor:pointer;
+  transition:background .15s,color .15s;
+}
+.dnp-close:hover{background:var(--bg-hover);color:var(--text);}
+.dnp-close svg{width:11px;height:11px;}
+.dnp-title{font-size:.92rem;font-weight:700;color:var(--text);margin-bottom:4px;}
+.dnp-sub{font-size:.79rem;color:var(--text-2);line-height:1.5;margin-bottom:14px;max-width:440px;}
+.dnp-btn{
+  padding:8px 16px;border-radius:8px;border:none;
+  background:var(--green);
+  color:#052e16;font-weight:700;font-size:.8rem;cursor:pointer;
+  transition:background .15s;
+}
+.dnp-btn:hover{background:var(--primary-d,#0da271);}
+.dnp-btn:disabled{opacity:.6;cursor:not-allowed;}
+@media(max-width:560px){
+  .dnp-card{padding:14px 16px;}
+}
+
+html[data-theme="light"] .dnp-card{
+  background:var(--jt-bg-raised)!important;
+  border-color:rgba(31,110,82,.16)!important;
+  border-left-color:var(--jt-brand-strong)!important;
+}
+html[data-theme="light"] .dnp-icon{
+  background:rgba(31,110,82,.08)!important;
+  color:var(--jt-brand-strong)!important;
+}
+html[data-theme="light"] .dnp-title{ color:var(--jt-text)!important; }
+html[data-theme="light"] .dnp-sub{ color:var(--jt-text-faint)!important; }
+html[data-theme="light"] .dnp-close{ color:var(--jt-text-faint)!important; }
+html[data-theme="light"] .dnp-close:hover{ background:var(--jt-bg-sunken)!important; color:var(--jt-text)!important; }
+html[data-theme="light"] .dnp-btn{
+  background:var(--jt-brand-strong)!important;
+  color:#fff!important;
+}
+html[data-theme="light"] .dnp-btn:hover{ background:var(--jt-brand)!important; }
