@@ -7256,19 +7256,32 @@ app.post('/api/push/test', requireAuth, async (req, res) => {
       url: '/dashboard',
     });
 
+    // [FIX] This whole branch (subscriptions DO exist) never had any debug
+    // info at all -- if every single webpush.sendNotification() call
+    // failed, delivered stayed 0 and the response looked byte-for-byte
+    // identical to "no subscriptions were found," even though the real
+    // problem was completely different (e.g. bad VAPID keys, an expired/
+    // invalid subscription, a network error reaching the push service).
+    // Capturing the actual error from each attempt now instead of only
+    // checking for 404/410.
     let delivered = 0;
+    const sendErrors = [];
     await Promise.all(subs.map(async (sub) => {
       try {
         await webpush.sendNotification(sub, payload);
         delivered++;
       } catch (err) {
+        sendErrors.push({ endpoint: (sub.endpoint || '').slice(-24), statusCode: err.statusCode || null, message: err.message || String(err), body: err.body ? String(err.body).slice(0, 200) : null });
         if (err.statusCode === 404 || err.statusCode === 410) {
           await removePushSubscription(req.user, sub.endpoint);
         }
       }
     }));
 
-    res.json({ ok: true, delivered, attempted: subs.length });
+    res.json({
+      ok: true, delivered, attempted: subs.length,
+      debug: delivered === 0 ? { subscriptionsFound: subs.length, sendErrors } : undefined,
+    });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
