@@ -53,6 +53,7 @@ const archiver = require('archiver');
 const os       = require('os');
 const mongoose = require('mongoose');
 const crypto   = require('crypto');
+const webpush  = require('web-push');
 const { exec: _execAsync } = require('child_process');
 const { promisify: _promisify } = require('util');
 // [FIX] The AI agent code below (cloneUserRepo, execute_command tool, git
@@ -7017,6 +7018,126 @@ function addActivity(type, message) {
   if (activityLog.length > 500) activityLog.pop();
 }
 
+// ── Web Push: deployment completion notifications ─────────────────────────
+// [FEATURE] Sends a real OS-level push notification (works even if the
+// dashboard tab/app isn't open) when a deployment finishes, success or
+// failure -- shows the JoyTree icon, a short status line, and opens
+// straight to that deploy's logs on tap. Requires the browser/PWA to have
+// subscribed first (see /api/push/subscribe, called from the frontend
+// once the site is installed as an app).
+//
+// VAPID keys are generated once and persisted to a local file so they
+// stay stable across restarts (a key rotation would silently invalidate
+// every existing subscription) -- same "generate on first run, persist
+// locally" approach already used elsewhere in this file (FLOW_FILE,
+// APIS_FILE), rather than requiring a manual env var setup step.
+const VAPID_KEYS_FILE = path.join(__dirname, 'vapid-keys.json');
+let vapidKeys;
+try {
+  vapidKeys = JSON.parse(fs.readFileSync(VAPID_KEYS_FILE, 'utf8'));
+} catch (_) {
+  vapidKeys = webpush.generateVAPIDKeys();
+  try { fs.writeFileSync(VAPID_KEYS_FILE, JSON.stringify(vapidKeys, null, 2)); } catch (e) {
+    console.error('[push] Could not persist VAPID keys -- they will regenerate on next restart, invalidating existing subscriptions:', e.message);
+  }
+}
+webpush.setVapidDetails(
+  `mailto:support@joytree.app`,
+  vapidKeys.publicKey,
+  vapidKeys.privateKey
+);
+
+function pushSubscriptionsKey(user) {
+  return 'deployboard_push_subs/' + firebaseWorkspaceKey(user);
+}
+
+async function fbGetPushSubscriptions(user) {
+  if (!FIREBASE_RTDB_URL) return [];
+  try {
+    const authQuery = FIREBASE_RTDB_SECRET ? '?auth=' + encodeURIComponent(FIREBASE_RTDB_SECRET) : '';
+    const r = await fetch(`${FIREBASE_RTDB_URL}/${pushSubscriptionsKey(user)}.json${authQuery}`);
+    const data = await r.json();
+    return data && typeof data === 'object' ? Object.values(data) : [];
+  } catch (_) { return []; }
+}
+
+async function fbSavePushSubscription(user, sub) {
+  if (!FIREBASE_RTDB_URL) return;
+  const authQuery = FIREBASE_RTDB_SECRET ? '?auth=' + encodeURIComponent(FIREBASE_RTDB_SECRET) : '';
+  // Keyed by a hash of the endpoint so re-subscribing the same device
+  // overwrites its old entry instead of accumulating duplicates.
+  const subKey = crypto.createHash('sha256').update(sub.endpoint).digest('hex').slice(0, 24);
+  await fetch(`${FIREBASE_RTDB_URL}/${pushSubscriptionsKey(user)}/${subKey}.json${authQuery}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub)
+  });
+}
+
+async function fbRemovePushSubscription(user, endpoint) {
+  if (!FIREBASE_RTDB_URL) return;
+  const authQuery = FIREBASE_RTDB_SECRET ? '?auth=' + encodeURIComponent(FIREBASE_RTDB_SECRET) : '';
+  const subKey = crypto.createHash('sha256').update(endpoint).digest('hex').slice(0, 24);
+  await fetch(`${FIREBASE_RTDB_URL}/${pushSubscriptionsKey(user)}/${subKey}.json${authQuery}`, { method: 'DELETE' }).catch(() => {});
+}
+
+// Fire-and-forget from every call site -- a notification failing to send
+// should never fail or slow down the deploy itself.
+async function sendDeployPushNotification(user, { status, projectName, subdomain, duration, error, deployId }) {
+  try {
+    const subs = await fbGetPushSubscriptions(user);
+    if (!subs.length) return;
+
+    const ok = status === 'success';
+    const title = ok ? 'Deployment succeeded' : 'Deployment failed';
+    const body = ok
+      ? `${projectName} deployed in ${duration}s — tap to view logs`
+      : `${projectName}: ${(error || 'Build failed').slice(0, 100)}`;
+
+    const payload = JSON.stringify({
+      title, body,
+      icon: '/favicon_192.png',
+      badge: '/favicon_192.png',
+      tag: `deploy-${subdomain || projectName}`,
+      url: deployId ? `/dashboard?viewDeploy=${encodeURIComponent(deployId)}` : '/dashboard',
+    });
+
+    await Promise.all(subs.map(async (sub) => {
+      try {
+        await webpush.sendNotification(sub, payload);
+      } catch (err) {
+        // 404/410 = the browser has invalidated this subscription (uninstalled,
+        // permissions revoked, etc.) -- clean it up so we stop trying.
+        if (err.statusCode === 404 || err.statusCode === 410) {
+          await fbRemovePushSubscription(user, sub.endpoint);
+        }
+      }
+    }));
+  } catch (_) { /* never let a notification failure affect the deploy */ }
+}
+
+app.get('/api/push/vapid-public-key', (req, res) => {
+  res.json({ publicKey: vapidKeys.publicKey });
+});
+
+app.post('/api/push/subscribe', requireAuth, async (req, res) => {
+  try {
+    const sub = req.body?.subscription;
+    if (!sub || !sub.endpoint || !sub.keys?.p256dh || !sub.keys?.auth) {
+      return res.status(400).json({ ok: false, error: 'Invalid push subscription object' });
+    }
+    await fbSavePushSubscription(req.user, sub);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
+app.post('/api/push/unsubscribe', requireAuth, async (req, res) => {
+  try {
+    const endpoint = req.body?.endpoint;
+    if (!endpoint) return res.status(400).json({ ok: false, error: 'endpoint is required' });
+    await fbRemovePushSubscription(req.user, endpoint);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
 // ── LogiFlow: Visual Backend Simulator (developer prototype) ─────────────────
 const FLOW_FILE = path.join(__dirname, 'database_storage.json');
 const flowRegistry = new Map();     // flowId -> flowDefinition
@@ -11776,6 +11897,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       emitAutoDeployStatus(project._id, 'watching', { branch: branch || 'main', sha: triggerSha, completed: true, result: 'success' });
     }
     addActivity('deploy', (deploySource === 'auto' ? '✓ Automatic deployment succeeded: ' : '✓ Deployment succeeded: ') + name + ' in ' + duration + 's');
+    sendDeployPushNotification(req.user, { status: 'success', projectName: name, subdomain: cleanSub, duration, deployId: String(deployment._id) }).catch(() => {});
     emit('build:log', { line: `\n\x1b[32m✓ Deployed in ${duration}s\x1b[0m` });
     emit('build:done', { status: 'success', duration, liveUrl: cf?.url || null });
     // [FIX] Tell the frontend the container is live and it can open the runtime log stream now.
@@ -11837,6 +11959,11 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     }
     const wasStopped = /stopped by user/i.test(String(buildErr.message || ''));
     addActivity('deploy', (wasStopped ? '⏹ Deployment stopped: ' : (deploySource === 'auto' ? '✗ Automatic deployment failed: ' : '✗ Deployment failed: ')) + name + ' — ' + buildErr.message.slice(0,80));
+    if (!wasStopped) {
+      // User-initiated stops aren't really a "failure" worth a push interruption --
+      // only genuine build/deploy errors trigger a notification here.
+      sendDeployPushNotification(req.user, { status: 'failed', projectName: name, subdomain: cleanSub, error: buildErr.message, deployId: String(deployment._id) }).catch(() => {});
+    }
     const buildDir = path.join(TMP_DIR, deployId);
     try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
     const safeErr = sanitizeSecrets(buildErr.message);
