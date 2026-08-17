@@ -109,6 +109,12 @@ const io = new SocketIO(server, {
 
 const PORT        = process.env.PORT        || 3001;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/deployboard';
+// [FEATURE] Push subscriptions live in their own dedicated database --
+// separate from the main app DB above -- provisioned the same way any
+// other JoyTree database is. Isolated on purpose: a completely
+// independent mongoose connection, not sharing the main connection's
+// lifecycle, retry loop, or failure modes.
+const PUSH_MONGODB_URI = process.env.PUSH_MONGODB_URI || 'mongodb://push:push@84.247.188.211:14002/push?authSource=admin';
 const SITES_DIR   = process.env.SITES_DIR   || '/var/www/user-sites';
 const TMP_DIR     = process.env.TMP_DIR     || '/tmp/deployboard-builds';
 
@@ -2028,12 +2034,12 @@ const CustomDomain = mongoose.model('CustomDomain', customDomainSchema);
 // [FIX] Deploy push notifications originally lived in Firebase RTDB under a
 // brand-new path this project's security rules never covered, so every
 // write was silently rejected regardless of which path it lived under.
-// MongoDB is already the primary datastore for User/Project/Deployment --
-// storing subscriptions here goes through this app's own Mongoose models
-// instead of a third party's opaque rule engine, so there's no
-// permissions layer to fight with.
+// Now on their own dedicated, independently-provisioned MongoDB instance --
+// a completely separate mongoose connection from the main app DB below,
+// with its own connection lifecycle, so nothing about the main site's
+// Mongo/Firebase mode affects this.
 const pushSubscriptionSchema = new mongoose.Schema({
-  userId:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+  userId:   { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
   endpoint: { type: String, required: true, unique: true },
   keys: {
     p256dh: { type: String, required: true },
@@ -2041,7 +2047,15 @@ const pushSubscriptionSchema = new mongoose.Schema({
   },
   createdAt: { type: Date, default: Date.now }
 });
-const PushSubscription = mongoose.model('PushSubscription', pushSubscriptionSchema);
+const pushDbConnection = mongoose.createConnection(PUSH_MONGODB_URI, {
+  serverSelectionTimeoutMS: 8000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 10000,
+});
+pushDbConnection.on('connected', () => console.log('[push-db] Connected to:', PUSH_MONGODB_URI.replace(/\/\/.*@/, '//***@')));
+pushDbConnection.on('error', (e) => console.error('[push-db] Connection error:', e.message));
+function isPushDbReady() { return pushDbConnection.readyState === 1; }
+const PushSubscription = pushDbConnection.model('PushSubscription', pushSubscriptionSchema);
 
 const projectSchema = new mongoose.Schema({
   name:       { type: String, required: true },
@@ -7065,11 +7079,12 @@ webpush.setVapidDetails(
   vapidKeys.privateKey
 );
 
-// [FIX] Stored in MongoDB now, not Firebase -- see the PushSubscription
-// model comment above for why. userId scoping happens via the model's
-// own userId field rather than a Firebase path string.
+// [FIX] Stored in a dedicated MongoDB instance now, not Firebase -- see
+// the PushSubscription model comment above for why. Checks this
+// connection's own readiness (isPushDbReady), independent of the main
+// app database's state.
 async function getPushSubscriptions(user) {
-  if (!isDbReady()) { console.error('[push] MongoDB is not ready -- push subscriptions unavailable.'); return []; }
+  if (!isPushDbReady()) { console.error('[push] Push database is not ready -- subscriptions unavailable.'); return []; }
   try {
     const userId = user?._id || user?.id;
     if (!userId) return [];
@@ -7082,7 +7097,7 @@ async function getPushSubscriptions(user) {
 }
 
 async function savePushSubscription(user, sub) {
-  if (!isDbReady()) throw new Error('MongoDB is not connected on the server');
+  if (!isPushDbReady()) throw new Error('Push database is not connected on the server');
   const userId = user?._id || user?.id;
   if (!userId) throw new Error('No user id available to save this subscription against');
   // upsert on endpoint (unique) -- re-subscribing the same device overwrites
@@ -7096,7 +7111,7 @@ async function savePushSubscription(user, sub) {
 }
 
 async function removePushSubscription(user, endpoint) {
-  if (!isDbReady()) return;
+  if (!isPushDbReady()) return;
   try { await PushSubscription.deleteOne({ endpoint }); } catch (_) {}
 }
 
