@@ -12971,6 +12971,12 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
       if (!notifyUploadSuccess.ok && !notifyUploadSuccess.skipped) {
         emit('build:log', { line: `\x1b[33m[Resend]\x1b[0m Deployment success email could not be sent (${notifyUploadSuccess.reason || 'unknown'}).` });
       }
+      // [FIX] Push notifications were only ever hooked into the GitHub-repo
+      // deploy pipeline -- this separate upload-based pipeline (dashboard
+      // file uploads, MCP's deploy-from-zip/chunked upload, CLI uploads)
+      // had zero push hooks despite correctly emailing every time, which
+      // is exactly why some deploys emailed but never pushed.
+      sendDeployPushNotification(req.user, { status: 'success', projectName: name, subdomain: cleanSub, duration, deployId: finalDeployId }).catch(() => {});
 
       emit('build:done', { status: 'success', duration, liveUrl: finalLiveUrl });
       emit('runtime:ready', { subdomain: cleanSub, liveUrl: finalLiveUrl });
@@ -13002,6 +13008,7 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
       if (!notifyUploadFailure.ok && !notifyUploadFailure.skipped) {
         emit('build:log', { line: `\x1b[33m[Resend]\x1b[0m Deployment failure email could not be sent (${notifyUploadFailure.reason || 'unknown'}).` });
       }
+      sendDeployPushNotification(req.user, { status: 'failed', projectName: name, subdomain: cleanSub, error: safeErr, deployId: finalDeployId }).catch(() => {});
 
       emit('build:done', { status: 'failed', duration });
     } finally {
