@@ -2049,7 +2049,14 @@ const CustomDomain = mongoose.model('CustomDomain', customDomainSchema);
 // with its own connection lifecycle, so nothing about the main site's
 // Mongo/Firebase mode affects this.
 const pushSubscriptionSchema = new mongoose.Schema({
-  userId:   { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+  // [FIX] Was mongoose.Schema.Types.ObjectId -- this app's user ids aren't
+  // always real MongoDB ObjectIds. This app runs primarily on Firebase for
+  // account data; accounts created that way get a custom string id like
+  // "u_1780334068539", not an auto-generated Mongo ObjectId, so casting
+  // failed with a BSONError the instant a real user tried to subscribe.
+  // Plain String handles both an ObjectId's string form and this app's own
+  // custom id format equally well.
+  userId:   { type: String, required: true, index: true },
   endpoint: { type: String, required: true, unique: true },
   keys: {
     p256dh: { type: String, required: true },
