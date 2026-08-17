@@ -29,6 +29,38 @@ const { spawn, execSync } = require('child_process');
 const path      = require('path');
 const fs        = require('fs');
 
+// ── Cooperative build cancellation ──────────────────────────────────────────
+// [FIX] The Stop button previously only force-killed whichever ONE docker
+// container happened to be running at that exact moment (computed from a
+// deterministic candidate name) and told the frontend to show "stopped" --
+// but the actual build orchestration below is a single, uninterrupted async
+// function once started, with no checkpoint anywhere to ever notice a stop
+// was requested. Killing that one container didn't stop the *build*: if the
+// kill happened during an early step, later steps (install, build, launch a
+// DIFFERENT container for the next phase, verify) kept right on running to
+// completion regardless, still consuming real CPU/RAM/disk the whole time --
+// exactly the "click Stop, but Step 5/Verify still happens anyway" behavior.
+// This is the actual checkpoint mechanism: a shared set of deployIds that
+// have been asked to stop, checked at the start of every major step across
+// every pipeline in this file. Throwing here with this exact message is
+// intentional -- server.js's catch block already detects `/stopped by
+// user/i` in the error message to distinguish an intentional stop from a
+// real failure (skips the failure push notification, shows "canceled" not
+// "failed" in the UI); that detection existed already, it just never had
+// anything real to catch.
+const _stoppedDeployIds = new Set();
+function requestBuildStop(deployId) {
+  if (deployId) _stoppedDeployIds.add(String(deployId));
+}
+function checkBuildStopped(deployId) {
+  if (deployId && _stoppedDeployIds.has(String(deployId))) {
+    _stoppedDeployIds.delete(String(deployId)); // self-cleaning -- this check is one-shot per stop request
+    const e = new Error('Build stopped by user');
+    e.isStopRequest = true;
+    throw e;
+  }
+}
+
 // ── Build-step CPU/IO niceness ──────────────────────────────────────────────
 // npm install / npm run build / vite build / pip install etc. all run via
 // exec() on the SAME host process as the Joytree dashboard itself (not inside
@@ -415,6 +447,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
 
   // ── Step 1: Clone ────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
+  checkBuildStopped(deployId);
   log('\x1b[36m━━━ Step 1/4 — Clone ━━━\x1b[0m');
   if (fs.existsSync(buildDir)) fs.rmSync(buildDir, { recursive: true, force: true });
   fs.mkdirSync(buildDir, { recursive: true });
@@ -442,6 +475,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
 
   // ── Step 2: Build Docker image ───────────────────────────────────────────
   emitStep(emit, 'build', 'active');
+  checkBuildStopped(deployId);
   log('\n\x1b[36m━━━ Step 2/4 — Docker Build ━━━\x1b[0m');
   log(`\x1b[90m$ docker build -f ${dfPath} -t ${imageName} .\x1b[0m`);
 
@@ -455,6 +489,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
 
   // ── Step 3: Stop old container, start new one ────────────────────────────
   emitStep(emit, 'copy', 'active');
+  checkBuildStopped(deployId);
   log('\n\x1b[36m━━━ Step 3/4 — Start Container ━━━\x1b[0m');
 
   try { await exec('docker', ['rm', '-f', containerName], {}, () => {}); } catch(e) {}
@@ -493,6 +528,7 @@ async function runDockerfileBuild({ deployId, project, sitesDir, tmpDir, githubT
 
   // ── Step 4: Wait for app to be ready ────────────────────────────────────
   emitStep(emit, 'start', 'active');
+  checkBuildStopped(deployId);
   log('\n\x1b[36m━━━ Step 4/4 — Verify ━━━\x1b[0m');
   log('\x1b[90m[docker] Waiting for app to start…\x1b[0m');
   await new Promise(r => setTimeout(r, 3000));
@@ -557,6 +593,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // Step 1: Clone
   emitStep(emit, 'clone', 'active');
+  checkBuildStopped(deployId);
   log(`\x1b[36m━━━ Step 1/4 — Clone ━━━\x1b[0m`);
   if (fs.existsSync(buildDir)) fs.rmSync(buildDir, { recursive: true, force: true });
   fs.mkdirSync(buildDir, { recursive: true });
@@ -569,6 +606,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // Step 2: Install
   emitStep(emit, 'install', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 2/4 — Install ━━━\x1b[0m`);
   const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
   log(`\x1b[90m[install] cwd: ${relativeProjectRoot}\x1b[0m`);
@@ -578,6 +616,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // Step 3: Build
   emitStep(emit, 'build', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 3/4 — Build ━━━\x1b[0m`);
   const buildCmd = (project.buildCmd || '').trim() || 'echo skip';
   if (buildCmd !== 'echo skip') {
@@ -589,6 +628,7 @@ async function runWorkerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // Step 4: Start container (no port needed)
   emitStep(emit, 'start', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 4/4 — Start Worker ━━━\x1b[0m`);
 
   // Copy files to persistent dir
@@ -665,6 +705,7 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 1: Clone ────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
+  checkBuildStopped(deployId);
   log(`\x1b[36m━━━ Step 1/6 — Clone ━━━\x1b[0m`);
   if (fs.existsSync(buildDir)) fs.rmSync(buildDir, { recursive: true, force: true });
   fs.mkdirSync(buildDir, { recursive: true });
@@ -679,6 +720,7 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 2: Install ──────────────────────────────────────────────────────────────────────────
   emitStep(emit, 'install', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 2/6 — Install Dependencies ━━━\x1b[0m`);
   log(`\x1b[90m[python] Streaming logs in structured batches\x1b[0m`);
 
@@ -691,6 +733,7 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 3: Build (collectstatic, migrate, etc.) ──────────────────────
   emitStep(emit, 'build', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 3/6 — Build Project ━━━\x1b[0m`);
   log(`\x1b[90m[python] Streaming logs in structured batches\x1b[0m`);
 
@@ -709,6 +752,7 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 4: Persist app dir ──────────────────────────────────────────────
   emitStep(emit, 'copy', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 4/6 — Prepare App Dir ━━━\x1b[0m`);
   if (fs.existsSync(appDir)) fs.rmSync(appDir, { recursive: true, force: true });
   fs.mkdirSync(path.dirname(appDir), { recursive: true });
@@ -737,6 +781,7 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 5: Launch container ──────────────────────────────────────────────
   emitStep(emit, 'start', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 5/6 — Launch Container ━━━\x1b[0m`);
 
   // ── Smart start command resolution ────────────────────────────────────────
@@ -902,6 +947,7 @@ async function runPythonBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 6: Cleanup ───────────────────────────────────────────────────────
   emitStep(emit, 'cleanup', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 6/6 — Cleanup ━━━\x1b[0m`);
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(_) {}
   emitStep(emit, 'cleanup', 'done');
@@ -1818,6 +1864,7 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
 
   // Step 1: Clone
   emitStep(emit, 'clone', 'active');
+  checkBuildStopped(deployId);
   log(`\x1b[36m━━━ Step 1/6 — Clone ━━━\x1b[0m`);
   if (fs.existsSync(buildDir)) fs.rmSync(buildDir, { recursive: true, force: true });
   fs.mkdirSync(buildDir, { recursive: true });
@@ -1845,6 +1892,7 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
 
   // Step 2: Install
   emitStep(emit, 'install', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 2/6 — Install Dependencies ━━━\x1b[0m`);
   if (installCmd && installCmd !== 'echo skip') {
     log(`\x1b[90m$ ${installCmd}\x1b[0m`);
@@ -1870,6 +1918,7 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
 
   // Step 3: Build
   emitStep(emit, 'build', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 3/6 — Build ━━━\x1b[0m`);
   if (buildCmd && buildCmd !== 'echo skip') {
     log(`\x1b[90m$ ${buildCmd}\x1b[0m`);
@@ -1890,6 +1939,7 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
 
   // Step 4: Persist app dir
   emitStep(emit, 'copy', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 4/6 — Prepare App Dir ━━━\x1b[0m`);
   if (fs.existsSync(appDir)) fs.rmSync(appDir, { recursive: true, force: true });
   fs.mkdirSync(path.dirname(appDir), { recursive: true });
@@ -1914,6 +1964,7 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
 
   // Step 5: Launch container
   emitStep(emit, 'start', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 5/6 — Launch Container ━━━\x1b[0m`);
   log(`\x1b[90m[docker] Command: ${resolvedStartCmd}\x1b[0m`);
 
@@ -1990,6 +2041,7 @@ async function runGenericBuild({ deployId, project, sitesDir, tmpDir, githubToke
 
   // Step 6: Cleanup
   emitStep(emit, 'cleanup', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 6/6 — Cleanup ━━━\x1b[0m`);
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(_) {}
   emitStep(emit, 'cleanup', 'done');
@@ -3091,6 +3143,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 1: Clone ──────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
+  checkBuildStopped(deployId);
   log(`\x1b[36m━━━ Step 1/5 — Clone ━━━\x1b[0m`);
   if (fs.existsSync(buildDir)) fs.rmSync(buildDir, { recursive: true, force: true });
   fs.mkdirSync(buildDir, { recursive: true });
@@ -3156,6 +3209,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 2: Install ────────────────────────────────────────────────────────
   emitStep(emit, 'install', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 2/5 — Install ━━━\x1b[0m`);
   if (hasPackageJson) {
     const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
@@ -3168,6 +3222,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 3: Build ──────────────────────────────────────────────────────────
   emitStep(emit, 'build', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 3/5 — Build ━━━\x1b[0m`);
   const buildCmd = (project.buildCmd || '').trim() || (hasPackageJson ? getDefaultBuildCmd(projectRoot) : 'echo skip');
   let buildWasAutoSkipped = false;
@@ -3206,6 +3261,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 4: Copy ───────────────────────────────────────────────────────────
   emitStep(emit, 'copy', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 4/5 — Deploy ━━━\x1b[0m`);
 
   // outputDir '.' means serve the whole project root (no build step)
@@ -3425,6 +3481,7 @@ async function runStaticBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 5: Cleanup ────────────────────────────────────────────────────────
   emitStep(emit, 'cleanup', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 5/5 — Cleanup ━━━\x1b[0m`);
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
   emitStep(emit, 'cleanup', 'done');
@@ -3449,6 +3506,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 1: Clone ──────────────────────────────────────────────────────────
   emitStep(emit, 'clone', 'active');
+  checkBuildStopped(deployId);
   log(`\x1b[36m━━━ Step 1/6 — Clone ━━━\x1b[0m`);
   if (fs.existsSync(buildDir)) fs.rmSync(buildDir, { recursive: true, force: true });
   fs.mkdirSync(buildDir, { recursive: true });
@@ -3589,6 +3647,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 2: Install ────────────────────────────────────────────────────────
   emitStep(emit, 'install', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 2/6 — Install ━━━\x1b[0m`);
   const installCmd = (project.installCmd || '').trim() || getDefaultInstallCmd(projectRoot);
   log(`\x1b[90m[install] cwd: ${relativeProjectRoot}\x1b[0m`);
@@ -3598,6 +3657,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 3: Build ──────────────────────────────────────────────────────────
   emitStep(emit, 'build', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 3/6 — Build ━━━\x1b[0m`);
   const buildCmd = (project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot);
   if (buildCmd !== 'echo skip') {
@@ -3622,6 +3682,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 4: Persist app dir (symlink to build dir so Docker can mount it) ───
   emitStep(emit, 'copy', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 4/6 — Prepare App Dir ━━━\x1b[0m`);
 
   // CRITICAL FIX: Do NOT copy node_modules — symlinks break and monorepos fail.
@@ -3672,6 +3733,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 5: Run in isolated Docker container ───────────────────────────────
   emitStep(emit, 'start', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 5/6 — Launch Container ━━━\x1b[0m`);
   log(`\x1b[90m[docker] Image:     ${nodeImage}\x1b[0m`);
   log(`\x1b[90m[docker] Container: ${candidateContainerName} (candidate)\x1b[0m`);
@@ -3837,6 +3899,7 @@ async function runServerBuild({ deployId, project, sitesDir, tmpDir, githubToken
 
   // ── Step 6: Cleanup temp build dir ────────────────────────────────────────
   emitStep(emit, 'cleanup', 'active');
+  checkBuildStopped(deployId);
   log(`\n\x1b[36m━━━ Step 6/6 — Cleanup ━━━\x1b[0m`);
   try { fs.rmSync(buildDir, { recursive: true, force: true }); } catch(e) {}
   emitStep(emit, 'cleanup', 'done');
@@ -5158,7 +5221,7 @@ function emitStep(emit, id, state) {
   emit('build:step', { step: { id, state } });
 }
 
-module.exports = { runBuild, runUploadBuild, getPlanRuntimeProfile, normalizeMemoryLimit, PLAN_RUNTIME_PROFILES, detectLivePort };
+module.exports = { runBuild, runUploadBuild, getPlanRuntimeProfile, normalizeMemoryLimit, PLAN_RUNTIME_PROFILES, detectLivePort, requestBuildStop };
 
 // ── UPLOAD BUILD ──────────────────────────────────────────────────────────────
 // Deploy from a locally extracted directory instead of cloning from GitHub.
@@ -5441,6 +5504,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
 
   // Step 1: Copy uploaded files to build dir
   emitStep(emit, 'clone', 'active');
+  checkBuildStopped(deployId);
   log('\x1b[36m━━━ Step 1/4 — Load Uploaded Files ━━━\x1b[0m');
   log('\x1b[90m[upload] Copying extracted project files to build workspace…\x1b[0m');
   copyDir(uploadFilesDir, buildDir);
@@ -5492,6 +5556,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
   // Step 2: Install — runs inside Docker container just like GitHub builds,
   // so npm gets caching, proper isolation, and the same speed.
   emitStep(emit, 'install', 'active');
+  checkBuildStopped(deployId);
   log('\n\x1b[36m━━━ Step 2/4 — Install ━━━\x1b[0m');
   const hasPackageJson = fs.existsSync(path.join(projectRoot, 'package.json'));
   let isPlainStatic = !hasPackageJson;
@@ -5522,6 +5587,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
 
   // Step 3: Build — also runs inside Docker container
   emitStep(emit, 'build', 'active');
+  checkBuildStopped(deployId);
   log('\n\x1b[36m━━━ Step 3/4 — Build ━━━\x1b[0m');
   const buildCmd = (!isPlainStatic && hasPackageJson)
     ? (String(project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot))
@@ -5553,6 +5619,7 @@ async function runUploadStaticBuild({ deployId, project, sitesDir, tmpDir, emit,
 
   // Step 4: Copy to dist
   emitStep(emit, 'copy', 'active');
+  checkBuildStopped(deployId);
   log('\n\x1b[36m━━━ Step 4/4 — Copy to Serve ━━━\x1b[0m');
   const outputDir = String(project.outputDir || 'dist').trim() || 'dist';
   let resolvedOutputDir = outputDir;
@@ -5744,6 +5811,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
 
   // Step 1: Load files
   emitStep(emit, 'clone', 'active');
+  checkBuildStopped(deployId);
   log('\x1b[36m━━━ Step 1/5 — Load Uploaded Files ━━━\x1b[0m');
   log('\x1b[90m[upload] Copying extracted project files to build workspace…\x1b[0m');
   copyDir(uploadFilesDir, buildDir);
@@ -5836,6 +5904,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
 
   // Step 2: Install
   emitStep(emit, 'install', 'active');
+  checkBuildStopped(deployId);
   log('\n\x1b[36m━━━ Step 2/5 — Install ━━━\x1b[0m');
   const hasPackageJson = fs.existsSync(path.join(projectRoot, 'package.json'));
   if (hasPackageJson) {
@@ -5851,6 +5920,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
 
   // Step 3: Build
   emitStep(emit, 'build', 'active');
+  checkBuildStopped(deployId);
   log('\n\x1b[36m━━━ Step 3/5 — Build ━━━\x1b[0m');
   const buildCmd = hasPackageJson ? (String(project.buildCmd || '').trim() || getDefaultBuildCmd(projectRoot)) : 'echo skip';
   if (buildCmd === 'echo skip') {
@@ -5881,6 +5951,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
   // root and the same completed tree is mounted as /app for the long-running
   // server process. Never copy only static output for server apps.
   emitStep(emit, 'copy', 'active');
+  checkBuildStopped(deployId);
   log('\n\x1b[36m━━━ Step 4/5 — Prepare App + Launch Container ━━━\x1b[0m');
 
   if (fs.existsSync(appDir)) fs.rmSync(appDir, { recursive: true, force: true });
@@ -6031,6 +6102,7 @@ async function runUploadServerBuild({ deployId, project, sitesDir, tmpDir, appPo
 
   // Step 5: Verify
   emitStep(emit, 'start', 'active');
+  checkBuildStopped(deployId);
   log('\n\x1b[36m━━━ Step 5/5 — Verify ━━━\x1b[0m');
   await new Promise(r => setTimeout(r, 3000));
   const stable = await waitForContainerRunning(candidateContainerName, 90, log); // [FIX] increased from 30s to 90s for heavy apps
