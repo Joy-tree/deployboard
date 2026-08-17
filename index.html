@@ -11922,6 +11922,20 @@ document.addEventListener('keydown', function(e){
                 <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="checkSystemStatus()">Refresh Status</button>
               </div>
             </div>
+            <div class="card" id="pushNotifCard">
+              <div class="card-header"><div class="card-title">Deploy Notifications</div></div>
+              <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:0.82rem;color:var(--text-2);">Status</span>
+                  <span class="badge" id="pushNotifStatusBadge"><span class="badge-dot"></span>Checking…</span>
+                </div>
+                <div style="font-size:.78rem;color:var(--text-3);line-height:1.5;" id="pushNotifHint">
+                  Get a notification on your phone when a deploy finishes, success or failure — even if the app isn't open. Requires installing JoyTree as an app first (the download prompt in this same tab).
+                </div>
+                <button class="btn btn-ghost btn-sm" style="width:100%;" id="pushNotifEnableBtn" onclick="manualEnablePushNotifications()">Enable Notifications</button>
+                <button class="btn btn-ghost btn-sm" style="width:100%;" id="pushNotifTestBtn" onclick="sendTestPushNotification()" disabled>Send Test Notification</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -11938,6 +11952,7 @@ document.addEventListener('keydown', function(e){
               <div class="field admin-only">
                 <label class="field-label">Personal Access Token</label>
                 <input class="input input-mono" id="settingsGhToken" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+
                 <div class="field-hint">Stored in your server's environment as <code style="font-family:var(--font-mono);">GITHUB_TOKEN</code>. Never exposed to the browser.</div>
               </div>
               <div class="field">
@@ -22971,6 +22986,9 @@ function showPage(id, navEl, _skipPush) {
     toast('Only the project admin can access Emails.', 'error');
     id = 'dashboard';
   }
+  if (id === 'settings' && typeof checkPushNotifStatus === 'function') {
+    setTimeout(checkPushNotifStatus, 0);
+  }
   // ── If navigating AWAY from new-deploy, clean up any new-version upload state ──
   // This prevents locked name/subdomain fields and the new-version banner from
   // persisting when the user changes their mind and comes back to deploy something else.
@@ -27911,6 +27929,7 @@ function switchSettingsTab(tab, el) {
     if (tabEl) tabEl.classList.add('active');
   }
   if (tab === 'referrals' && typeof loadReferralSettings === 'function') loadReferralSettings();
+  if (tab === 'general' && typeof checkPushNotifStatus === 'function') checkPushNotifStatus();
 }
 async function loadReferralSettings() {
   try {
@@ -31922,10 +31941,14 @@ function showManualInstallHelp(){
 })();
 
 // ── Deploy push notifications ───────────────────────────────────────────
-// [FEATURE] Only auto-prompts once the site is running as an installed
-// app (standalone display mode) -- exactly the "after the user downloads
-// the app version" trigger requested, not on every ordinary browser tab
-// visit where a permission prompt would just be noise.
+// [FEATURE] Auto-subscribes silently once the site is running as an
+// installed app (standalone display mode). Also exposes a manual
+// "Enable Notifications" + "Send Test Notification" pair in Settings ->
+// General, because the auto-path failing for any reason (permission
+// previously dismissed, VPS not yet rebuilt with this endpoint, iOS's
+// stricter requirements, etc.) was previously completely silent -- no
+// way for the user OR me to tell what actually happened. Now every step
+// logs to console and the manual path surfaces real toasts.
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -31935,42 +31958,151 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-async function initDeployPushNotifications(registration) {
-  try {
-    if (!('PushManager' in window) || !hasAuthToken()) return;
+let _pushSwRegistration = null;
 
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    if (!isStandalone) return;
+// Does the actual subscribe work. Returns {ok, reason} instead of just
+// swallowing everything, so both the silent auto-path and the manual
+// button can react appropriately.
+async function subscribeToPushNotifications() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return { ok: false, reason: 'not_supported' };
+  }
+  if (!hasAuthToken()) return { ok: false, reason: 'not_logged_in' };
 
-    // Already subscribed on this device? Just make sure the backend still
-    // has this exact subscription on file (cheap, idempotent) and stop --
-    // no need to touch the permission prompt again.
-    const existing = await registration.pushManager.getSubscription();
-    if (existing) {
-      apiFetch('/api/push/subscribe', {
+  const registration = _pushSwRegistration || await navigator.serviceWorker.ready.catch(() => null);
+  if (!registration) return { ok: false, reason: 'no_service_worker' };
+
+  const existing = await registration.pushManager.getSubscription().catch(() => null);
+  if (existing) {
+    try {
+      const r = await apiFetch('/api/push/subscribe', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subscription: existing.toJSON() }),
-      }).catch(() => {});
-      return;
+      });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); return { ok: false, reason: 'sync_failed', detail: d.error || `HTTP ${r.status}` }; }
+      return { ok: true, reason: 'already_subscribed' };
+    } catch (e) {
+      console.warn('[push] Re-syncing existing subscription failed:', e.message);
+      return { ok: false, reason: 'sync_failed', detail: e.message };
     }
+  }
 
-    if (Notification.permission === 'denied') return;
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return;
+  if (Notification.permission === 'denied') return { ok: false, reason: 'permission_denied' };
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return { ok: false, reason: 'permission_' + permission };
 
-    const { publicKey } = await (await fetch('/api/push/vapid-public-key')).json();
-    if (!publicKey) return;
+  let publicKey;
+  try {
+    const r = await fetch('/api/push/vapid-public-key');
+    if (!r.ok) return { ok: false, reason: 'vapid_endpoint_missing', detail: `HTTP ${r.status} -- is the VPS rebuilt with the push feature yet?` };
+    ({ publicKey } = await r.json());
+  } catch (e) {
+    return { ok: false, reason: 'vapid_fetch_failed', detail: e.message };
+  }
+  if (!publicKey) return { ok: false, reason: 'no_vapid_key' };
 
-    const sub = await registration.pushManager.subscribe({
+  let sub;
+  try {
+    sub = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey),
     });
+  } catch (e) {
+    console.warn('[push] pushManager.subscribe() failed:', e.message);
+    return { ok: false, reason: 'subscribe_failed', detail: e.message };
+  }
 
-    await apiFetch('/api/push/subscribe', {
+  try {
+    const r = await apiFetch('/api/push/subscribe', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ subscription: sub.toJSON() }),
     });
-  } catch (_) { /* push is a nice-to-have -- never let it block anything else */ }
+    if (!r.ok) { const d = await r.json().catch(() => ({})); return { ok: false, reason: 'save_to_server_failed', detail: d.error || `HTTP ${r.status}` }; }
+  } catch (e) {
+    return { ok: false, reason: 'save_to_server_failed', detail: e.message };
+  }
+
+  return { ok: true, reason: 'subscribed' };
+}
+
+async function initDeployPushNotifications(registration) {
+  _pushSwRegistration = registration;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (!isStandalone) { console.log('[push] Not running as an installed app -- skipping auto-subscribe (use Settings -> General -> Enable Notifications to opt in manually).'); return; }
+  const result = await subscribeToPushNotifications();
+  console.log('[push] Auto-subscribe result:', result);
+}
+
+const PUSH_STATUS_MESSAGES = {
+  not_supported: 'Not supported in this browser',
+  not_logged_in: 'Log in first',
+  no_service_worker: 'App shell not ready yet — reload and try again',
+  permission_denied: 'Blocked — enable notifications for this site in your phone/browser settings',
+  permission_default: "Didn't grant permission",
+  vapid_endpoint_missing: 'Server not updated yet — the VPS needs a rebuild for this feature',
+  subscribe_failed: 'Browser could not create a subscription',
+  save_to_server_failed: 'Could not save to server',
+};
+
+async function checkPushNotifStatus() {
+  const badge = document.getElementById('pushNotifStatusBadge');
+  const enableBtn = document.getElementById('pushNotifEnableBtn');
+  const testBtn = document.getElementById('pushNotifTestBtn');
+  if (!badge) return;
+
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    badge.className = 'badge'; badge.innerHTML = '<span class="badge-dot"></span>Not supported';
+    enableBtn.disabled = true; testBtn.disabled = true;
+    return;
+  }
+  try {
+    const reg = _pushSwRegistration || await navigator.serviceWorker.ready.catch(() => null);
+    const sub = reg ? await reg.pushManager.getSubscription().catch(() => null) : null;
+    if (sub) {
+      badge.className = 'badge badge-success'; badge.innerHTML = '<span class="badge-dot"></span>Enabled';
+      enableBtn.textContent = 'Re-sync'; enableBtn.disabled = false;
+      testBtn.disabled = false;
+    } else {
+      badge.className = 'badge badge-pending'; badge.innerHTML = '<span class="badge-dot"></span>Not enabled';
+      enableBtn.textContent = 'Enable Notifications'; enableBtn.disabled = false;
+      testBtn.disabled = true;
+    }
+  } catch (_) {
+    badge.className = 'badge'; badge.innerHTML = '<span class="badge-dot"></span>Unknown';
+  }
+}
+
+async function manualEnablePushNotifications() {
+  const btn = document.getElementById('pushNotifEnableBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enabling…'; }
+  const result = await subscribeToPushNotifications();
+  console.log('[push] Manual enable result:', result);
+  if (result.ok) {
+    toast('Notifications enabled — try "Send Test Notification" below', 'success');
+  } else {
+    const msg = PUSH_STATUS_MESSAGES[result.reason] || result.reason;
+    toast('Could not enable notifications: ' + msg + (result.detail ? ' (' + result.detail + ')' : ''), 'error');
+  }
+  await checkPushNotifStatus();
+}
+
+async function sendTestPushNotification() {
+  const btn = document.getElementById('pushNotifTestBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  try {
+    const res = await apiFetch('/api/push/test', { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    if (data.delivered > 0) {
+      toast(`Test sent to ${data.delivered} device${data.delivered === 1 ? '' : 's'} — check your notification shade`, 'success');
+    } else {
+      toast('No active subscription found on the server — try Enable Notifications again', 'error');
+    }
+  } catch (e) {
+    toast('Test failed: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Send Test Notification'; }
+  }
 }
 
 function initPWAInstallPrompt(){
