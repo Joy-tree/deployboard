@@ -38322,29 +38322,42 @@ function openDbVisualizerFor(dbId, alreadyOpen) {
 // the dropdown from whatever's already cached, and let the person pick.
 // No waiting, no guessing, nothing that can hang.
 function openDbVisualizerFromSidebar() {
-  _dbvDbId = null;
-  _dbvEngine = null;
-  _dbvDbName = null;
-  _dbvSelectedTable = null;
+  // [DEBUG] Wrapped in try/catch with a visible toast on failure -- if
+  // this is throwing partway through for some reason not caught by
+  // static review, it was failing completely silently before, which is
+  // exactly why the sidebar looked "stuck": if this throws, nothing
+  // downstream that would normally close the sidebar or open the modal
+  // runs, and there was no way to see that from outside.
+  try {
+    _dbvDbId = null;
+    _dbvEngine = null;
+    _dbvDbName = null;
+    _dbvSelectedTable = null;
 
-  document.getElementById('dbVisualizer').classList.add('open');
-  document.documentElement.classList.add('modal-open');
-  dbvPopulateDbSelect();
+    document.getElementById('dbVisualizer').classList.add('open');
+    document.documentElement.classList.add('modal-open');
+    dbvPopulateDbSelect();
 
-  document.getElementById('dbvBarChart').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
-  document.getElementById('dbvLineChart').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
-  document.getElementById('dbvDonutChart').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
-  document.getElementById('dbvSchemaList').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
-  document.getElementById('dbvStatTables').textContent = '—';
-  document.getElementById('dbvStatRecords').textContent = '—';
-  document.getElementById('dbvStatSelected').textContent = '—';
-  document.getElementById('dbvStatRefreshed').textContent = '—';
+    document.getElementById('dbvBarChart').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
+    document.getElementById('dbvLineChart').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
+    document.getElementById('dbvDonutChart').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
+    document.getElementById('dbvSchemaList').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
+    document.getElementById('dbvStatTables').textContent = '—';
+    document.getElementById('dbvStatRecords').textContent = '—';
+    document.getElementById('dbvStatSelected').textContent = '—';
+    document.getElementById('dbvStatRefreshed').textContent = '—';
 
-  // Refresh the dropdown in the background if the database list hasn't
-  // loaded yet -- never blocks opening the modal, just fills the
-  // dropdown in shortly after if it was empty.
-  if (!_databases || !_databases.length) {
-    loadDatabases().then(() => dbvPopulateDbSelect()).catch(() => {});
+    // Also explicitly close the sidebar -- don't rely on some other
+    // generic nav-item handler to do it, in case this specific item
+    // never had that wired the same way as data-page items do.
+    if (typeof closeSidebar === 'function') closeSidebar();
+
+    if (!_databases || !_databases.length) {
+      loadDatabases().then(() => dbvPopulateDbSelect()).catch(() => {});
+    }
+  } catch (e) {
+    console.error('[dbv] openDbVisualizerFromSidebar failed:', e);
+    toast('Could not open Data Visualizer: ' + e.message, 'error', 8000);
   }
 }
 
