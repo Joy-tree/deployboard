@@ -114,7 +114,17 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/deploy
 // other JoyTree database is. Isolated on purpose: a completely
 // independent mongoose connection, not sharing the main connection's
 // lifecycle, retry loop, or failure modes.
-const PUSH_MONGODB_URI = process.env.PUSH_MONGODB_URI || 'mongodb://push:push@84.247.188.211:14002/push?authSource=admin';
+// [FIX] The credential-bearing fallback here was a mistake -- it meant the
+// real database password lived directly in source, in git history,
+// regardless of whether the env var was ever set. Set PUSH_MONGODB_URI in
+// your actual .env / docker-compose environment on the VPS -- never in a
+// file that gets committed. No credential-bearing default: if it's
+// missing, this should fail loudly (and obviously) rather than silently
+// fall back to a real password sitting in the repo.
+const PUSH_MONGODB_URI = process.env.PUSH_MONGODB_URI || '';
+if (!PUSH_MONGODB_URI) {
+  console.error('[push-db] PUSH_MONGODB_URI is not set -- deploy push notifications will not work until it is configured in the environment.');
+}
 const SITES_DIR   = process.env.SITES_DIR   || '/var/www/user-sites';
 const TMP_DIR     = process.env.TMP_DIR     || '/tmp/deployboard-builds';
 
@@ -2047,14 +2057,21 @@ const pushSubscriptionSchema = new mongoose.Schema({
   },
   createdAt: { type: Date, default: Date.now }
 });
-const pushDbConnection = mongoose.createConnection(PUSH_MONGODB_URI, {
+// mongoose.createConnection() with an empty string URI throws synchronously
+// (invalid connection string) rather than just failing to connect -- that
+// would crash the whole server at startup if PUSH_MONGODB_URI is unset.
+// Fall back to a connection string that's syntactically valid but points
+// nowhere useful, so createConnection() succeeds and the retry/readyState
+// machinery below can report "not ready" the normal way instead of
+// crashing the process.
+const pushDbConnection = mongoose.createConnection(PUSH_MONGODB_URI || 'mongodb://127.0.0.1:1/unconfigured', {
   serverSelectionTimeoutMS: 8000,
   socketTimeoutMS: 45000,
   connectTimeoutMS: 10000,
 });
 pushDbConnection.on('connected', () => console.log('[push-db] Connected to:', PUSH_MONGODB_URI.replace(/\/\/.*@/, '//***@')));
 pushDbConnection.on('error', (e) => console.error('[push-db] Connection error:', e.message));
-function isPushDbReady() { return pushDbConnection.readyState === 1; }
+function isPushDbReady() { return !!PUSH_MONGODB_URI && pushDbConnection.readyState === 1; }
 const PushSubscription = pushDbConnection.model('PushSubscription', pushSubscriptionSchema);
 
 const projectSchema = new mongoose.Schema({
