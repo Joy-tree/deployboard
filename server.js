@@ -7184,6 +7184,23 @@ app.get('/api/push/_build-marker', (req, res) => {
   res.json({ marker: 'push-debug-2026-08-17-v2', builtAt: new Date().toISOString() });
 });
 
+// [FIX] Lets the frontend check "does THIS logged-in account have push
+// notifications enabled" -- distinct from "does this browser have any
+// subscription at all." A PushSubscription is stored per browser/device
+// via the service worker, completely independent of which JoyTree
+// account is currently logged in. Checking only the browser-level
+// subscription meant: enable notifications on account A, log into
+// account B on the same device, and account B would be treated as
+// already subscribed even though it never enabled anything -- silently
+// skipping the in-context "enable notifications" prompt for every
+// account after the first one on a given device.
+app.get('/api/push/status', requireAuth, async (req, res) => {
+  try {
+    const subs = await getPushSubscriptions(req.user);
+    res.json({ subscribed: subs.length > 0 });
+  } catch (e) { res.status(500).json({ subscribed: false, error: e.message }); }
+});
+
 app.get('/api/push/vapid-public-key', (req, res) => {
   res.json({ publicKey: vapidKeys.publicKey });
 });
