@@ -7138,6 +7138,42 @@ app.post('/api/push/unsubscribe', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
+// [FEATURE] Lets a user verify the whole push pipeline actually works --
+// subscribe -> saved in Firebase -> web-push delivery -> arrives on the
+// device -- without needing to run and wait on a real deploy every time.
+// Reports back exactly how many of the user's saved subscriptions the
+// notification was actually delivered to, so "nothing happened" and
+// "no subscription was ever saved" are distinguishable from the UI.
+app.post('/api/push/test', requireAuth, async (req, res) => {
+  try {
+    const subs = await fbGetPushSubscriptions(req.user);
+    if (!subs.length) return res.json({ ok: true, delivered: 0, attempted: 0 });
+
+    const payload = JSON.stringify({
+      title: 'Test notification',
+      body: 'If you can see this, deploy notifications are working correctly.',
+      icon: '/favicon_192.png',
+      badge: '/favicon_192.png',
+      tag: 'joytree-test',
+      url: '/dashboard',
+    });
+
+    let delivered = 0;
+    await Promise.all(subs.map(async (sub) => {
+      try {
+        await webpush.sendNotification(sub, payload);
+        delivered++;
+      } catch (err) {
+        if (err.statusCode === 404 || err.statusCode === 410) {
+          await fbRemovePushSubscription(req.user, sub.endpoint);
+        }
+      }
+    }));
+
+    res.json({ ok: true, delivered, attempted: subs.length });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
 // ── LogiFlow: Visual Backend Simulator (developer prototype) ─────────────────
 const FLOW_FILE = path.join(__dirname, 'database_storage.json');
 const flowRegistry = new Map();     // flowId -> flowDefinition
