@@ -9012,7 +9012,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
       Databases
     </div>
-    <div class="nav-item" onclick="openDbVisualizerFromSidebar(this)">
+    <div class="nav-item" onclick="openDbVisualizerFromSidebar()">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       Data Visualizer
     </div>
@@ -38256,7 +38256,12 @@ function dbvPopulateDbSelect() {
     makeCustomSelect('dbvDbLabel', 'No databases yet');
     return;
   }
-  sel.innerHTML = _databases.map(d =>
+  // [FIX] When nothing is selected yet (_dbvDbId is null), no <option> got
+  // the `selected` attribute -- a native select then just displays its
+  // FIRST real option as if chosen, which looked like a database had
+  // already been picked when nothing actually had been.
+  const placeholder = !_dbvDbId ? '<option value="" selected disabled>Select a database…</option>' : '';
+  sel.innerHTML = placeholder + _databases.map(d =>
     `<option value="${escHtml(d.id)}"${d.id === _dbvDbId ? ' selected' : ''}>${escHtml(d.name)} (${escHtml(d.engine || '')})</option>`
   ).join('');
   // [FIX] Was a native <select> -- the closed box can be themed, but the
@@ -38304,32 +38309,43 @@ function openDbVisualizerFor(dbId, alreadyOpen) {
 // database pre-selected via a card -- defaults to the first running
 // database (falling back to the first database of any status), and the
 // topbar dropdown lets you switch to any other one from right there.
-async function openDbVisualizerFromSidebar(navEl) {
-  // [FIX] _databases is only populated by a loadDatabases() call, which on
-  // fresh page load is deferred behind a 1.5s setTimeout (see bottom of
-  // this file). Clicking this sidebar item before that fires found
-  // _databases still at its initial empty [], which this function then
-  // read as "you have no databases" and bounced to the Databases page --
-  // even for a user who clearly has one, just because the cache hadn't
-  // loaded yet. Actively fetch instead of trusting an empty cache: only
-  // treat it as "genuinely no databases" after a real, awaited load
-  // confirms that.
-  if (!_databases || !_databases.length) {
-    if (navEl) navEl.classList.add('nav-item-loading');
-    try {
-      await loadDatabases();
-    } catch (_e) { /* loadDatabases already handles/logs its own errors */ }
-    if (navEl) navEl.classList.remove('nav-item-loading');
-  }
-  if (!_databases || !_databases.length) {
-    toast('No databases yet — create one first from the Databases page', 'info');
-    showPage('databases');
-    return;
-  }
-  const first = _databases.find(d => d.status === 'running') || _databases[0];
+// [FIX] Previously tried to be "smart" -- wait for _databases to load,
+// guess the first running database, auto-select it. That await had no
+// timeout, so if loadDatabases() ever hung, this left the nav item
+// stuck in its loading state and the visualizer's overlay class applied
+// with nothing actually rendered -- looking like the sidebar had frozen,
+// and leaving that modal's high z-index stuck on top of anything opened
+// afterward (explains why Browse then appeared to open the visualizer
+// instead of the Data Browser -- Browse was working correctly the whole
+// time, just hidden underneath the stuck-open visualizer). Simplified
+// per explicit request: open instantly with nothing pre-selected, populate
+// the dropdown from whatever's already cached, and let the person pick.
+// No waiting, no guessing, nothing that can hang.
+function openDbVisualizerFromSidebar() {
+  _dbvDbId = null;
+  _dbvEngine = null;
+  _dbvDbName = null;
+  _dbvSelectedTable = null;
+
   document.getElementById('dbVisualizer').classList.add('open');
   document.documentElement.classList.add('modal-open');
-  openDbVisualizerFor(first.id, /*alreadyOpen*/ true);
+  dbvPopulateDbSelect();
+
+  document.getElementById('dbvBarChart').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
+  document.getElementById('dbvLineChart').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
+  document.getElementById('dbvDonutChart').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
+  document.getElementById('dbvSchemaList').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
+  document.getElementById('dbvStatTables').textContent = '—';
+  document.getElementById('dbvStatRecords').textContent = '—';
+  document.getElementById('dbvStatSelected').textContent = '—';
+  document.getElementById('dbvStatRefreshed').textContent = '—';
+
+  // Refresh the dropdown in the background if the database list hasn't
+  // loaded yet -- never blocks opening the modal, just fills the
+  // dropdown in shortly after if it was empty.
+  if (!_databases || !_databases.length) {
+    loadDatabases().then(() => dbvPopulateDbSelect()).catch(() => {});
+  }
 }
 
 function openDbVisualizer() {
