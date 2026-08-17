@@ -2926,6 +2926,66 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 
 .logs-hero{margin-bottom:12px;background:linear-gradient(135deg,rgba(0,0,0,.9),rgba(6,20,15,.92));border:1px solid var(--border-hi);border-radius:14px;padding:14px 16px;display:flex;gap:14px;justify-content:space-between;flex-wrap:wrap}
+
+/* [FEATURE] In-context "enable notifications" prompt -- same idea as
+   Claude's own "Get notified when Claude responds" card, shown while a
+   task is running. This appears specifically while a deploy is actively
+   streaming on the Logs page, only for people who've installed the app
+   and haven't enabled notifications yet. Deliberately more polished than
+   a plain white system-style card: dark glass surface, a soft green glow
+   that echoes the "something is live right now" moment, matching the
+   rest of the dashboard's aesthetic rather than looking like a generic
+   OS permission prompt. */
+.dnp-card{
+  position:relative;margin-bottom:12px;padding:18px 20px;border-radius:16px;
+  background:linear-gradient(160deg,rgba(16,185,129,.08),rgba(0,0,0,.85) 60%);
+  border:1px solid rgba(16,185,129,.28);
+  box-shadow:0 0 0 1px rgba(16,185,129,.06),0 12px 40px rgba(16,185,129,.08),0 4px 18px rgba(0,0,0,.35);
+  animation:dnpFadeIn .4s cubic-bezier(.16,1,.3,1);
+  overflow:hidden;
+}
+.dnp-card::before{
+  content:'';position:absolute;top:-40%;right:-15%;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(16,185,129,.16),transparent 70%);
+  pointer-events:none;
+}
+@keyframes dnpFadeIn{ from{opacity:0;transform:translateY(-8px);} to{opacity:1;transform:translateY(0);} }
+.dnp-icon{
+  width:38px;height:38px;border-radius:11px;margin-bottom:12px;
+  background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);
+  display:flex;align-items:center;justify-content:center;color:var(--green);
+  animation:dnpPulseIcon 2.4s ease-in-out infinite;
+}
+@keyframes dnpPulseIcon{
+  0%,100%{ box-shadow:0 0 0 0 rgba(16,185,129,.25); }
+  50%{ box-shadow:0 0 0 8px rgba(16,185,129,0); }
+}
+.dnp-icon svg{width:19px;height:19px;}
+.dnp-close{
+  position:absolute;top:14px;right:14px;width:26px;height:26px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  background:transparent;border:1px solid transparent;color:var(--text-3);cursor:pointer;
+  transition:all .15s;
+}
+.dnp-close:hover{background:rgba(255,255,255,.06);color:var(--text);}
+.dnp-close svg{width:12px;height:12px;}
+.dnp-title{font-size:.95rem;font-weight:800;color:var(--text);margin-bottom:5px;letter-spacing:-.01em;}
+.dnp-sub{font-size:.8rem;color:var(--text-2);line-height:1.55;margin-bottom:16px;max-width:440px;}
+.dnp-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 18px;border-radius:10px;border:none;
+  background:linear-gradient(135deg,var(--green),var(--primary-d));
+  color:#052e16;font-weight:800;font-size:.82rem;cursor:pointer;
+  transition:transform .15s,box-shadow .15s;
+  box-shadow:0 4px 14px rgba(16,185,129,.25);
+}
+.dnp-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(16,185,129,.35);}
+.dnp-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+@media(max-width:560px){
+  .dnp-card{padding:16px;}
+  .dnp-close{top:12px;right:12px;}
+}
+
 .logs-hero-title{font-family:var(--font-ui);font-weight:800;font-size:1.2rem;letter-spacing:-.04em;color:#e2fff2}
 .logs-hero-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .logs-chip{padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(0,0,0,.55);font-size:.76rem;color:#a7f3d0;font-family:var(--font-mono)}
@@ -10011,6 +10071,18 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <button class="manual-item" onclick="manualDeployAction('clean')">Clear terminal + deploy</button>
           </div>
         </div>
+      </div>
+
+      <div class="dnp-card" id="deployNotifPromptCard" style="display:none;">
+        <div class="dnp-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <button class="dnp-close" onclick="dismissDeployNotifPrompt()" aria-label="Dismiss">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="dnp-title">Get notified when this deploy finishes</div>
+        <div class="dnp-sub">Feel free to step away — we'll let you know the moment it's done, right on your phone, whether it succeeds or fails.</div>
+        <button class="dnp-btn" id="dnpEnableBtn" onclick="enableDeployNotifFromPrompt()">Turn on notifications</button>
       </div>
 
       <div style="width:100%;margin-bottom:0;">
@@ -24807,6 +24879,7 @@ function viewDeployLogs(deployId) {
   updateLogsHero(deployments.find(x => x.id === deployId));
   const d = deployments.find(x => x.id === deployId);
   if (d?.status === 'building') showMatrixTerminal(d); else hideMatrixTerminal();
+  if (typeof maybeShowDeployNotifPrompt === 'function') maybeShowDeployNotifPrompt();
 
   // Stop any previous terminal-attached runtime stream before switching
   if (_terminalAttachedRuntimeProjectId && _terminalAttachedRuntimeProjectId !== d?.projectId) {
@@ -26915,6 +26988,7 @@ function initSocket() {
       // Show building status badge
       const statusEl = document.getElementById('termStatus');
       if (statusEl) statusEl.innerHTML = statusBadge('building');
+      if (typeof maybeShowDeployNotifPrompt === 'function') maybeShowDeployNotifPrompt();
     });
 
     // ── Build step state changed ─────────────────────────────────
@@ -26996,6 +27070,10 @@ function initSocket() {
 
     // ── Build finished ───────────────────────────────────────────
     socket.on('build:done', ({ deployId, projectId, status, duration, liveUrl, source }) => {
+      if (deployId === activeBuildId) {
+        const card = document.getElementById('deployNotifPromptCard');
+        if (card) card.style.display = 'none';
+      }
       // Log to activity feed
       const _dep = deployments.find(x => x.id === deployId);
       logActivity('deploy', (_dep ? _dep.projectName : 'Project') + ' deployment ' + status + (duration ? ' in ' + duration + 's' : ''));
@@ -32055,6 +32133,63 @@ async function subscribeToPushNotifications() {
   }
 
   return { ok: true, reason: 'subscribed' };
+}
+
+// ── In-context "enable notifications" prompt (Logs page, while building) ──
+// [FEATURE] Same idea as Claude's own "Get notified when Claude responds"
+// card that appears while a task is running -- shown here specifically
+// while a deploy is actively streaming, only to people who've installed
+// the app (matches "when they download the app") and haven't already
+// enabled notifications. Not shown again for a while after being
+// dismissed, so it never turns into a nag.
+const DNP_DISMISS_KEY = 'jt_deploy_notif_prompt_dismissed_until';
+
+async function maybeShowDeployNotifPrompt() {
+  const card = document.getElementById('deployNotifPromptCard');
+  if (!card) return;
+
+  const onLogsPage = document.getElementById('page-logs')?.classList.contains('active');
+  const activeDep = deployments.find(x => x.id === activeBuildId);
+  const isBuilding = activeDep?.status === 'building';
+
+  if (!onLogsPage || !isBuilding) { card.style.display = 'none'; return; }
+
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (!isStandalone || !('PushManager' in window)) { card.style.display = 'none'; return; }
+
+  try {
+    const dismissedUntil = Number(localStorage.getItem(DNP_DISMISS_KEY) || 0);
+    if (Date.now() < dismissedUntil) { card.style.display = 'none'; return; }
+  } catch (_) {}
+
+  try {
+    const reg = _pushSwRegistration || await navigator.serviceWorker.ready.catch(() => null);
+    const existing = reg ? await reg.pushManager.getSubscription().catch(() => null) : null;
+    if (existing) { card.style.display = 'none'; return; } // already enabled -- nothing to prompt for
+  } catch (_) {}
+
+  card.style.display = 'block';
+}
+
+function dismissDeployNotifPrompt() {
+  const card = document.getElementById('deployNotifPromptCard');
+  if (card) card.style.display = 'none';
+  try { localStorage.setItem(DNP_DISMISS_KEY, String(Date.now() + 3 * 24 * 60 * 60 * 1000)); } catch (_) {} // 3 days
+}
+
+async function enableDeployNotifFromPrompt() {
+  const btn = document.getElementById('dnpEnableBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Turning on…'; }
+  const result = await subscribeToPushNotifications();
+  if (result.ok) {
+    toast('Notifications on — we\'ll let you know when this finishes', 'success');
+    const card = document.getElementById('deployNotifPromptCard');
+    if (card) card.style.display = 'none';
+  } else {
+    const msg = PUSH_STATUS_MESSAGES[result.reason] || result.reason;
+    toast('Could not enable notifications: ' + msg, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Turn on notifications'; }
+  }
 }
 
 async function initDeployPushNotifications(registration) {
