@@ -11939,21 +11939,6 @@ document.addEventListener('keydown', function(e){
                 <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="checkSystemStatus()">Refresh Status</button>
               </div>
             </div>
-            <div class="card" id="pushNotifCard">
-              <div class="card-header"><div class="card-title">Deploy Notifications</div></div>
-              <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span style="font-size:0.82rem;color:var(--text-2);">Status</span>
-                  <span class="badge" id="pushNotifStatusBadge"><span class="badge-dot"></span>Checking…</span>
-                </div>
-                <div style="font-size:.78rem;color:var(--text-3);line-height:1.5;" id="pushNotifHint">
-                  Get a notification on your phone when a deploy finishes, success or failure — even if the app isn't open. Requires installing JoyTree as an app first (the download prompt in this same tab).
-                </div>
-                <button class="btn btn-ghost btn-sm" style="width:100%;" id="pushNotifEnableBtn" onclick="manualEnablePushNotifications()">Enable Notifications</button>
-                <button class="btn btn-ghost btn-sm" style="width:100%;" id="pushNotifTestBtn" onclick="sendTestPushNotification()" disabled>Send Test Notification</button>
-                <button class="btn btn-ghost btn-sm" style="width:100%;color:#f87171;border-color:rgba(239,68,68,.3);" id="pushNotifDisableBtn" onclick="disablePushNotifications()" disabled>Turn Off Notifications</button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -12191,6 +12176,23 @@ document.addEventListener('keydown', function(e){
 
           <!-- RIGHT column -->
           <div style="display:flex;flex-direction:column;gap:16px;">
+
+            <!-- Deploy Notifications -->
+            <div class="card" id="pushNotifCard">
+              <div class="card-header"><div class="card-title">Deploy Notifications</div></div>
+              <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:0.82rem;color:var(--text-2);">Status</span>
+                  <span class="badge" id="pushNotifStatusBadge"><span class="badge-dot"></span>Checking…</span>
+                </div>
+                <div style="font-size:.78rem;color:var(--text-3);line-height:1.5;" id="pushNotifHint">
+                  Get a notification on your phone when a deploy finishes, success or failure — even if the app isn't open. Requires installing JoyTree as an app first (the download prompt in this same tab).
+                </div>
+                <button class="btn btn-ghost btn-sm" style="width:100%;" id="pushNotifEnableBtn" onclick="manualEnablePushNotifications()">Enable Notifications</button>
+                <button class="btn btn-ghost btn-sm" style="width:100%;" id="pushNotifTestBtn" onclick="sendTestPushNotification()" disabled>Send Test Notification</button>
+                <button class="btn btn-ghost btn-sm" style="width:100%;color:#f87171;border-color:rgba(239,68,68,.3);" id="pushNotifDisableBtn" onclick="disablePushNotifications()" disabled>Turn Off Notifications</button>
+              </div>
+            </div>
 
             <!-- Security -->
             <div class="card">
@@ -27953,7 +27955,7 @@ function switchSettingsTab(tab, el) {
     if (tabEl) tabEl.classList.add('active');
   }
   if (tab === 'referrals' && typeof loadReferralSettings === 'function') loadReferralSettings();
-  if (tab === 'general' && typeof checkPushNotifStatus === 'function') checkPushNotifStatus();
+  if (tab === 'account' && typeof checkPushNotifStatus === 'function') checkPushNotifStatus();
 }
 async function loadReferralSettings() {
   try {
