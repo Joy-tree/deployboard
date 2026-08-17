@@ -32116,19 +32116,17 @@ async function sendTestPushNotification() {
     if (data.delivered > 0) {
       toast(`Test sent to ${data.delivered} device${data.delivered === 1 ? '' : 's'} — check your notification shade`, 'success');
     } else {
-      // [DEBUG] Surface the server's diagnostic breakdown instead of just
-      // the generic message -- console for full detail, a shortened
-      // version in the toast itself so it's visible without opening
-      // devtools on a phone.
+      // [FIX] Was conditionally building a human-readable explanation from
+      // data.debug -- but if the debug values themselves were ambiguous
+      // (e.g. a null count from a swallowed server-side error), NONE of
+      // those conditions would match, silently producing zero extra text
+      // and making a genuinely different failure look identical to "this
+      // code isn't running at all." Always dumping the raw debug object
+      // removes that possibility entirely -- there's no branch left that
+      // can produce nothing.
       console.log('[push] Test found no subscriptions. Debug info:', data.debug);
-      let extra = '';
-      if (data.debug) {
-        const d = data.debug;
-        if (!d.dbReady) extra = ` (push DB not connected — state ${d.connectionState})`;
-        else if (d.totalSubscriptionsAnyUser === 0) extra = ' (0 subscriptions exist in the DB at all — save is not persisting)';
-        else if (d.totalSubscriptionsAnyUser > 0) extra = ` (${d.totalSubscriptionsAnyUser} subscription(s) exist, but none match your user id "${d.userIdUsedForQuery}" — likely saved under a different id)`;
-      }
-      toast('No active subscription found on the server' + extra, 'error', 8000);
+      const raw = data.debug ? JSON.stringify(data.debug) : 'NO DEBUG OBJECT IN RESPONSE (server may be running old code)';
+      toast('No active subscription found. ' + raw, 'error', 15000);
     }
   } catch (e) {
     toast('Test failed: ' + e.message, 'error');
