@@ -7174,6 +7174,16 @@ async function sendDeployPushNotification(user, { status, projectName, subdomain
   } catch (_) { /* never let a notification failure affect the deploy */ }
 }
 
+// [DEBUG] Deliberately trivial -- no auth, no database, no dependencies
+// on anything else in the push notification code. Exists purely to
+// answer one question with zero ambiguity: is the server actually
+// running this exact build or not. If this marker doesn't match what
+// I expect after a rebuild, the container is running stale code --
+// period, no other explanation possible for this specific endpoint.
+app.get('/api/push/_build-marker', (req, res) => {
+  res.json({ marker: 'push-debug-2026-08-17-v2', builtAt: new Date().toISOString() });
+});
+
 app.get('/api/push/vapid-public-key', (req, res) => {
   res.json({ publicKey: vapidKeys.publicKey });
 });
