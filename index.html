@@ -26794,9 +26794,26 @@ function initSocket() {
     socket = io(API, {
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1500,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 300,
+      reconnectionDelayMax: 2000,
       timeout: 8000
+    });
+
+    // [FIX] "Reconnecting takes too long — it should show live logs the
+    // instant the user gets back, not disconnect at all." A background/
+    // suspended mobile tab can silently drop its WebSocket without the
+    // page knowing right away — Socket.IO only notices once its own
+    // ping-timeout logic times out, which can take many seconds on its
+    // own before the reconnection backoff timer even starts. Rather than
+    // wait for that, force an immediate manual reconnect attempt the
+    // instant the tab regains visibility (foregrounded, app reopened,
+    // screen unlocked) — this is what makes it feel instant instead of
+    // waiting out a timeout + backoff delay.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && socket && !socket.connected) {
+        socket.connect();
+      }
     });
 
     let _hasConnectedBefore = false;
@@ -26824,10 +26841,18 @@ function initSocket() {
       // re-fetch authoritative deployment state and, if the build we were
       // watching has actually finished, run the real completion path.
       if (_hasConnectedBefore && activeBuildId) {
-        writeTerm('\x1b[36m[system]\x1b[0m \x1b[90mReconnected — checking for updates while you were away…\x1b[0m');
         try {
           await syncServerStateFromApi({ persist: true, render: false });
           const dep = deployments.find(d => String(d.id || d._id || '') === String(activeBuildId));
+          // Backfill any log lines that streamed while we were disconnected
+          // — the server keeps the full log history per deployment, so
+          // diff against what's already rendered locally and write only
+          // the new lines, filling the gap instead of leaving one.
+          if (dep && Array.isArray(dep.logs) && dep.logs.length > logBuffer.length) {
+            const missed = dep.logs.slice(logBuffer.length);
+            for (const ln of missed) { writeTerm(ln); logBuffer.push(ln); }
+            renderStructuredLogs();
+          }
           if (dep && dep.status && dep.status !== 'building' && dep.status !== 'pending') {
             applyBuildDoneUpdate({
               deployId: activeBuildId,
@@ -26843,15 +26868,27 @@ function initSocket() {
         }
       }
       _hasConnectedBefore = true;
+      // A fast reconnect (the common case now) cancels the pending
+      // "Disconnected" line below before it ever shows, so brief blips
+      // are invisible instead of interrupting the log stream.
+      if (_disconnectMsgTimer) { clearTimeout(_disconnectMsgTimer); _disconnectMsgTimer = null; }
     });
 
+    let _disconnectMsgTimer = null;
     socket.on('disconnect', (reason) => {
-      writeTerm('\x1b[33m[system]\x1b[0m \x1b[90mDisconnected from build server · ' + reason + '\x1b[0m');
       const statusEl = document.getElementById('statusSocket');
       if (statusEl) {
         statusEl.className = 'badge badge-error';
-        statusEl.innerHTML = '<span class="badge-dot"></span>Disconnected';
+        statusEl.innerHTML = '<span class="badge-dot"></span>Reconnecting…';
       }
+      // Don't interrupt the log stream for a brief blip that reconnects
+      // on its own in a second or two (the common case, especially now
+      // that visibilitychange forces an immediate reconnect attempt) —
+      // only surface it in the terminal if it's still down after a beat.
+      _disconnectMsgTimer = setTimeout(() => {
+        writeTerm('\x1b[33m[system]\x1b[0m \x1b[90mReconnecting to build server · ' + reason + '\x1b[0m');
+        if (statusEl) statusEl.innerHTML = '<span class="badge-dot"></span>Disconnected';
+      }, 2500);
     });
 
     socket.on('connect_error', (err) => {
