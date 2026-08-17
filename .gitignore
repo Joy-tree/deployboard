@@ -1,2 +1,8 @@
 node_modules/
 email-assets/
+
+# Real secrets -- never commit these. See env.example for the template.
+.env
+.env.local
+.env.*.local
+vapid-keys.json
