@@ -11951,6 +11951,7 @@ document.addEventListener('keydown', function(e){
                 </div>
                 <button class="btn btn-ghost btn-sm" style="width:100%;" id="pushNotifEnableBtn" onclick="manualEnablePushNotifications()">Enable Notifications</button>
                 <button class="btn btn-ghost btn-sm" style="width:100%;" id="pushNotifTestBtn" onclick="sendTestPushNotification()" disabled>Send Test Notification</button>
+                <button class="btn btn-ghost btn-sm" style="width:100%;color:#f87171;border-color:rgba(239,68,68,.3);" id="pushNotifDisableBtn" onclick="disablePushNotifications()" disabled>Turn Off Notifications</button>
               </div>
             </div>
           </div>
@@ -32171,22 +32172,23 @@ async function checkPushNotifStatus() {
   const badge = document.getElementById('pushNotifStatusBadge');
   const enableBtn = document.getElementById('pushNotifEnableBtn');
   const testBtn = document.getElementById('pushNotifTestBtn');
+  const disableBtn = document.getElementById('pushNotifDisableBtn');
   if (!badge) return;
 
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     badge.className = 'badge'; badge.innerHTML = '<span class="badge-dot"></span>Not supported';
-    enableBtn.disabled = true; testBtn.disabled = true;
+    enableBtn.disabled = true; testBtn.disabled = true; if (disableBtn) disableBtn.disabled = true;
     return;
   }
   badge.className = 'badge badge-pending'; badge.innerHTML = '<span class="badge-dot"></span>Checking…';
-  enableBtn.disabled = true; testBtn.disabled = true;
+  enableBtn.disabled = true; testBtn.disabled = true; if (disableBtn) disableBtn.disabled = true;
   try {
     const reg = _pushSwRegistration || await navigator.serviceWorker.ready.catch(() => null);
     const sub = reg ? await reg.pushManager.getSubscription().catch(() => null) : null;
     if (!sub) {
       badge.className = 'badge badge-pending'; badge.innerHTML = '<span class="badge-dot"></span>Not enabled';
       enableBtn.textContent = 'Enable Notifications'; enableBtn.disabled = false;
-      testBtn.disabled = true;
+      testBtn.disabled = true; if (disableBtn) disableBtn.disabled = true;
       return;
     }
     // [FIX] A local browser subscription existing doesn't mean the SERVER
@@ -32200,20 +32202,51 @@ async function checkPushNotifStatus() {
     if (result.ok) {
       badge.className = 'badge badge-success'; badge.innerHTML = '<span class="badge-dot"></span>Enabled';
       enableBtn.textContent = 'Re-sync'; enableBtn.disabled = false;
-      testBtn.disabled = false;
+      testBtn.disabled = false; if (disableBtn) disableBtn.disabled = false;
     } else {
       const msg = PUSH_STATUS_MESSAGES[result.reason] || result.reason;
       badge.className = 'badge badge-error'; badge.innerHTML = '<span class="badge-dot"></span>Not synced to server';
       const hint = document.getElementById('pushNotifHint');
       if (hint) hint.innerHTML = `<span style="color:#f87171;">Browser is subscribed, but the server doesn't have it saved (${escHtml(msg)}). Tap "Re-sync" to fix.</span>`;
       enableBtn.textContent = 'Re-sync'; enableBtn.disabled = false;
-      testBtn.disabled = true;
+      testBtn.disabled = true; if (disableBtn) disableBtn.disabled = false; // still let them turn off a broken subscription
     }
   } catch (_) {
     badge.className = 'badge'; badge.innerHTML = '<span class="badge-dot"></span>Unknown';
     enableBtn.disabled = false;
   }
 }
+
+// [FEATURE] Fully unsubscribes -- both sides. Removes the browser-level
+// PushManager subscription (so this device stops receiving pushes
+// entirely, regardless of account) AND tells the server to forget it for
+// this account specifically, so a stale entry doesn't linger and get
+// treated as "still enabled" by /api/push/status the next time this or
+// any other account checks on this device.
+async function disablePushNotifications() {
+  const btn = document.getElementById('pushNotifDisableBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Turning off…'; }
+  try {
+    const reg = _pushSwRegistration || await navigator.serviceWorker.ready.catch(() => null);
+    const sub = reg ? await reg.pushManager.getSubscription().catch(() => null) : null;
+    if (sub) {
+      try {
+        await apiFetch('/api/push/unsubscribe', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        });
+      } catch (_) { /* still unsubscribe locally even if the server call fails */ }
+      await sub.unsubscribe();
+    }
+    toast('Notifications turned off', 'success');
+  } catch (e) {
+    toast('Could not fully turn off notifications: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.textContent = 'Turn Off Notifications'; }
+    await checkPushNotifStatus();
+  }
+}
+
 
 async function manualEnablePushNotifications() {
   const btn = document.getElementById('pushNotifEnableBtn');
