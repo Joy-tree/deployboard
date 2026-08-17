@@ -2025,6 +2025,24 @@ const customDomainSchema = new mongoose.Schema({
 });
 const CustomDomain = mongoose.model('CustomDomain', customDomainSchema);
 
+// [FIX] Deploy push notifications originally lived in Firebase RTDB under a
+// brand-new path this project's security rules never covered, so every
+// write was silently rejected regardless of which path it lived under.
+// MongoDB is already the primary datastore for User/Project/Deployment --
+// storing subscriptions here goes through this app's own Mongoose models
+// instead of a third party's opaque rule engine, so there's no
+// permissions layer to fight with.
+const pushSubscriptionSchema = new mongoose.Schema({
+  userId:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+  endpoint: { type: String, required: true, unique: true },
+  keys: {
+    p256dh: { type: String, required: true },
+    auth:   { type: String, required: true }
+  },
+  createdAt: { type: Date, default: Date.now }
+});
+const PushSubscription = mongoose.model('PushSubscription', pushSubscriptionSchema);
+
 const projectSchema = new mongoose.Schema({
   name:       { type: String, required: true },
   isDockerfileDeploy: { type: Boolean, default: false },
@@ -7047,75 +7065,46 @@ webpush.setVapidDetails(
   vapidKeys.privateKey
 );
 
-function pushSubscriptionsKey(user) {
-  // [FIX] Was a brand-new top-level path ('deployboard_push_subs/...') that
-  // this Firebase project's security rules never had a rule for, so every
-  // write to it was silently rejected. Nesting under deployboard_workspaces
-  // instead reuses the exact same path every other feature (projects,
-  // deployments, custom domains, etc.) already writes to successfully --
-  // if that's writable, this is too, with zero Firebase console changes
-  // needed. This is a plain Firebase REST sub-path write, so it only
-  // touches the pushSubscriptions node, not the rest of the workspace
-  // object -- no read-modify-write, no race with concurrent deploy writes.
-  return 'deployboard_workspaces/' + firebaseWorkspaceKey(user) + '/pushSubscriptions';
-}
-
-async function fbGetPushSubscriptions(user) {
-  if (!FIREBASE_RTDB_URL) { console.error('[push] FIREBASE_RTDB_URL is not set -- push subscriptions cannot be read or saved at all.'); return []; }
+// [FIX] Stored in MongoDB now, not Firebase -- see the PushSubscription
+// model comment above for why. userId scoping happens via the model's
+// own userId field rather than a Firebase path string.
+async function getPushSubscriptions(user) {
+  if (!isDbReady()) { console.error('[push] MongoDB is not ready -- push subscriptions unavailable.'); return []; }
   try {
-    const authQuery = FIREBASE_RTDB_SECRET ? '?auth=' + encodeURIComponent(FIREBASE_RTDB_SECRET) : '';
-    const r = await fetch(`${FIREBASE_RTDB_URL}/${pushSubscriptionsKey(user)}.json${authQuery}`);
-    const data = await r.json();
-    // [FIX] Firebase returns a normal 200 with an error payload (e.g.
-    // {error:"Permission denied"}) rather than a non-2xx status when a
-    // security rule blocks the request -- !r.ok alone would miss that.
-    if (!r.ok || (data && typeof data === 'object' && data.error)) {
-      console.error('[push] Firebase rejected reading push subscriptions:', r.status, JSON.stringify(data).slice(0, 300));
-      return [];
-    }
-    return data && typeof data === 'object' ? Object.values(data) : [];
+    const userId = user?._id || user?.id;
+    if (!userId) return [];
+    const docs = await PushSubscription.find({ userId }).lean();
+    return docs.map(d => ({ endpoint: d.endpoint, keys: d.keys }));
   } catch (e) {
-    console.error('[push] fbGetPushSubscriptions threw:', e.message);
+    console.error('[push] getPushSubscriptions threw:', e.message);
     return [];
   }
 }
 
-async function fbSavePushSubscription(user, sub) {
-  if (!FIREBASE_RTDB_URL) throw new Error('FIREBASE_RTDB_URL is not configured on the server');
-  const authQuery = FIREBASE_RTDB_SECRET ? '?auth=' + encodeURIComponent(FIREBASE_RTDB_SECRET) : '';
-  // Keyed by a hash of the endpoint so re-subscribing the same device
-  // overwrites its old entry instead of accumulating duplicates.
-  const subKey = crypto.createHash('sha256').update(sub.endpoint).digest('hex').slice(0, 24);
-  const r = await fetch(`${FIREBASE_RTDB_URL}/${pushSubscriptionsKey(user)}/${subKey}.json${authQuery}`, {
-    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub)
-  });
-  const data = await r.json().catch(() => null);
-  // [FIX] This never checked the response at all before -- Firebase
-  // security rules silently blocking this brand-new path (no existing
-  // rule covered `deployboard_push_subs`) would come back as a normal
-  // HTTP 200 with {error:"Permission denied"} in the body, which this
-  // code was ignoring entirely. The endpoint above would then report
-  // {ok:true} to the browser even though nothing was actually written,
-  // which is exactly the "Enabled, but test finds no subscription" bug.
-  if (!r.ok || (data && typeof data === 'object' && data.error)) {
-    const detail = data && data.error ? data.error : `HTTP ${r.status}`;
-    console.error('[push] Firebase rejected saving a push subscription:', detail);
-    throw new Error(`Firebase rejected the write: ${detail} -- check that your Firebase RTDB rules allow writes under deployboard_push_subs/`);
-  }
+async function savePushSubscription(user, sub) {
+  if (!isDbReady()) throw new Error('MongoDB is not connected on the server');
+  const userId = user?._id || user?.id;
+  if (!userId) throw new Error('No user id available to save this subscription against');
+  // upsert on endpoint (unique) -- re-subscribing the same device overwrites
+  // its old entry (and re-attaches it to the current user) instead of
+  // erroring on the unique constraint or accumulating duplicates.
+  await PushSubscription.findOneAndUpdate(
+    { endpoint: sub.endpoint },
+    { userId, endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } },
+    { upsert: true, setDefaultsOnInsert: true }
+  );
 }
 
-async function fbRemovePushSubscription(user, endpoint) {
-  if (!FIREBASE_RTDB_URL) return;
-  const authQuery = FIREBASE_RTDB_SECRET ? '?auth=' + encodeURIComponent(FIREBASE_RTDB_SECRET) : '';
-  const subKey = crypto.createHash('sha256').update(endpoint).digest('hex').slice(0, 24);
-  await fetch(`${FIREBASE_RTDB_URL}/${pushSubscriptionsKey(user)}/${subKey}.json${authQuery}`, { method: 'DELETE' }).catch(() => {});
+async function removePushSubscription(user, endpoint) {
+  if (!isDbReady()) return;
+  try { await PushSubscription.deleteOne({ endpoint }); } catch (_) {}
 }
 
 // Fire-and-forget from every call site -- a notification failing to send
 // should never fail or slow down the deploy itself.
 async function sendDeployPushNotification(user, { status, projectName, subdomain, duration, error, deployId }) {
   try {
-    const subs = await fbGetPushSubscriptions(user);
+    const subs = await getPushSubscriptions(user);
     if (!subs.length) return;
 
     const ok = status === 'success';
@@ -7139,7 +7128,7 @@ async function sendDeployPushNotification(user, { status, projectName, subdomain
         // 404/410 = the browser has invalidated this subscription (uninstalled,
         // permissions revoked, etc.) -- clean it up so we stop trying.
         if (err.statusCode === 404 || err.statusCode === 410) {
-          await fbRemovePushSubscription(user, sub.endpoint);
+          await removePushSubscription(user, sub.endpoint);
         }
       }
     }));
@@ -7156,7 +7145,7 @@ app.post('/api/push/subscribe', requireAuth, async (req, res) => {
     if (!sub || !sub.endpoint || !sub.keys?.p256dh || !sub.keys?.auth) {
       return res.status(400).json({ ok: false, error: 'Invalid push subscription object' });
     }
-    await fbSavePushSubscription(req.user, sub);
+    await savePushSubscription(req.user, sub);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
@@ -7165,7 +7154,7 @@ app.post('/api/push/unsubscribe', requireAuth, async (req, res) => {
   try {
     const endpoint = req.body?.endpoint;
     if (!endpoint) return res.status(400).json({ ok: false, error: 'endpoint is required' });
-    await fbRemovePushSubscription(req.user, endpoint);
+    await removePushSubscription(req.user, endpoint);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
@@ -7178,7 +7167,7 @@ app.post('/api/push/unsubscribe', requireAuth, async (req, res) => {
 // "no subscription was ever saved" are distinguishable from the UI.
 app.post('/api/push/test', requireAuth, async (req, res) => {
   try {
-    const subs = await fbGetPushSubscriptions(req.user);
+    const subs = await getPushSubscriptions(req.user);
     if (!subs.length) return res.json({ ok: true, delivered: 0, attempted: 0 });
 
     const payload = JSON.stringify({
@@ -7197,7 +7186,7 @@ app.post('/api/push/test', requireAuth, async (req, res) => {
         delivered++;
       } catch (err) {
         if (err.statusCode === 404 || err.statusCode === 410) {
-          await fbRemovePushSubscription(req.user, sub.endpoint);
+          await removePushSubscription(req.user, sub.endpoint);
         }
       }
     }));
