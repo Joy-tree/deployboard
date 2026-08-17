@@ -7212,16 +7212,27 @@ app.post('/api/push/test', requireAuth, async (req, res) => {
       // saved at all" and "the DB connection dropped" all look identical
       // from outside -- surface enough here to tell them apart without
       // needing server log access.
+      // [FIX] countDocuments() failing was being silently swallowed,
+      // leaving totalSubscriptionsAnyUser as null -- which the frontend
+      // then failed to explain at all (none of its if/else branches match
+      // null), making a real, different failure look identical to "no
+      // debug info present." Capturing and reporting that error directly
+      // now instead of hiding it.
       const userId = req.user?._id || req.user?.id;
       let totalDocsAnyUser = null;
-      try { totalDocsAnyUser = isPushDbReady() ? await PushSubscription.countDocuments({}) : null; } catch (_) {}
+      let countError = null;
+      try { totalDocsAnyUser = isPushDbReady() ? await PushSubscription.countDocuments({}) : null; }
+      catch (e) { countError = e.message; }
       return res.json({
         ok: true, delivered: 0, attempted: 0,
         debug: {
           dbReady: isPushDbReady(),
           connectionState: pushDbConnection.readyState, // 0=disconnected,1=connected,2=connecting,3=disconnecting
+          pushMongoUriConfigured: !!PUSH_MONGODB_URI,
           userIdUsedForQuery: userId || null,
+          reqUserRaw: { hasId: !!req.user?._id, hasIdField: !!req.user?.id, keys: req.user ? Object.keys(req.user) : [] },
           totalSubscriptionsAnyUser: totalDocsAnyUser,
+          countError,
         }
       });
     }
