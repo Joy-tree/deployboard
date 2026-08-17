@@ -31972,25 +31972,8 @@ async function subscribeToPushNotifications() {
   const registration = _pushSwRegistration || await navigator.serviceWorker.ready.catch(() => null);
   if (!registration) return { ok: false, reason: 'no_service_worker' };
 
-  const existing = await registration.pushManager.getSubscription().catch(() => null);
-  if (existing) {
-    try {
-      const r = await apiFetch('/api/push/subscribe', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscription: existing.toJSON() }),
-      });
-      if (!r.ok) { const d = await r.json().catch(() => ({})); return { ok: false, reason: 'sync_failed', detail: d.error || `HTTP ${r.status}` }; }
-      return { ok: true, reason: 'already_subscribed' };
-    } catch (e) {
-      console.warn('[push] Re-syncing existing subscription failed:', e.message);
-      return { ok: false, reason: 'sync_failed', detail: e.message };
-    }
-  }
-
-  if (Notification.permission === 'denied') return { ok: false, reason: 'permission_denied' };
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') return { ok: false, reason: 'permission_' + permission };
-
+  // Always fetch the server's CURRENT key first -- everything below is
+  // compared against this, not assumed.
   let publicKey;
   try {
     const r = await fetch('/api/push/vapid-public-key');
@@ -32000,12 +31983,61 @@ async function subscribeToPushNotifications() {
     return { ok: false, reason: 'vapid_fetch_failed', detail: e.message };
   }
   if (!publicKey) return { ok: false, reason: 'no_vapid_key' };
+  const currentKeyBytes = urlBase64ToUint8Array(publicKey);
+
+  // [FIX] A PushSubscription is permanently bound to whichever VAPID key
+  // was active at the moment it was created -- re-POSTing the same
+  // existing subscription to the server (what this used to do
+  // unconditionally) does NOT rebind it to a new key if the server's key
+  // has changed since. That subscription is dead forever regardless of
+  // how many times it's "re-synced." The only fix is unsubscribe() +
+  // subscribe() again with the current key. Compare the existing
+  // subscription's actual bound key against the server's current one
+  // instead of just assuming it's still valid.
+  let existing = await registration.pushManager.getSubscription().catch(() => null);
+  if (existing) {
+    const existingKeyBytes = new Uint8Array(existing.options?.applicationServerKey || []);
+    const keysMatch = existingKeyBytes.length === currentKeyBytes.length &&
+      existingKeyBytes.every((b, i) => b === currentKeyBytes[i]);
+
+    if (keysMatch) {
+      try {
+        const r = await apiFetch('/api/push/subscribe', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscription: existing.toJSON() }),
+        });
+        if (!r.ok) { const d = await r.json().catch(() => ({})); return { ok: false, reason: 'sync_failed', detail: d.error || `HTTP ${r.status}` }; }
+        return { ok: true, reason: 'already_subscribed' };
+      } catch (e) {
+        return { ok: false, reason: 'sync_failed', detail: e.message };
+      }
+    }
+
+    // Key mismatch -- this subscription can never work again. Tear it
+    // down properly (both browser-side and tell the server to forget it)
+    // before creating a fresh one below.
+    console.warn('[push] Existing subscription is bound to a stale VAPID key -- unsubscribing and creating a fresh one.');
+    try {
+      await apiFetch('/api/push/unsubscribe', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: existing.endpoint }),
+      }).catch(() => {});
+      await existing.unsubscribe();
+    } catch (e) {
+      console.warn('[push] Failed to clean up stale subscription:', e.message);
+    }
+    existing = null;
+  }
+
+  if (Notification.permission === 'denied') return { ok: false, reason: 'permission_denied' };
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return { ok: false, reason: 'permission_' + permission };
 
   let sub;
   try {
     sub = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey),
+      applicationServerKey: currentKeyBytes,
     });
   } catch (e) {
     console.warn('[push] pushManager.subscribe() failed:', e.message);
