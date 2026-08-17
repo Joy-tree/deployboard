@@ -68,6 +68,15 @@ self.addEventListener('push', (event) => {
     // still alerts the user (renotify) since the new one matters.
     tag: data.tag || 'joytree-deploy',
     renotify: true,
+    // [FIX] silent defaults to false per spec, but leaving it implicit
+    // meant behavior varied across browsers/devices -- explicit here so
+    // the system notification sound always plays. vibrate adds a haptic
+    // cue on mobile alongside the sound, same as a normal phone
+    // notification (not the app being focused or not -- this is a real
+    // OS-level notification either way, so it always surfaces wherever
+    // the person currently is, same as any other app's notifications).
+    silent: false,
+    vibrate: [200, 100, 200],
     data: { url: data.url || '/dashboard' },
   };
 
