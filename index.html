@@ -32107,11 +32107,22 @@ async function maybeShowDeployNotifPrompt() {
     if (Date.now() < dismissedUntil) { card.style.display = 'none'; return; }
   } catch (_) {}
 
+  // [FIX] Was checking navigator.pushManager.getSubscription() -- that's
+  // browser/device-level, completely independent of which JoyTree
+  // account is logged in. Enable notifications on account A, then log
+  // into account B on the same device, and this would see "browser
+  // already has a subscription" and silently skip showing the prompt
+  // for account B, even though B never enabled anything itself. Check
+  // with the server, scoped to the actual logged-in account, instead.
   try {
-    const reg = _pushSwRegistration || await navigator.serviceWorker.ready.catch(() => null);
-    const existing = reg ? await reg.pushManager.getSubscription().catch(() => null) : null;
-    if (existing) { card.style.display = 'none'; return; } // already enabled -- nothing to prompt for
-  } catch (_) {}
+    const r = await apiFetch('/api/push/status');
+    const d = await r.json().catch(() => ({}));
+    if (d.subscribed) { card.style.display = 'none'; return; }
+  } catch (_) {
+    // If the status check itself fails, fall through and show the
+    // prompt anyway -- better to occasionally over-show it than to
+    // silently hide it because of a network hiccup.
+  }
 
   card.style.display = 'block';
 }
