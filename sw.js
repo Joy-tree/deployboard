@@ -24,6 +24,13 @@
 // service worker registration is what most browsers require for the
 // install prompt) — every request, without exception, goes straight to
 // the network, exactly as if this file weren't here.
+//
+// [FEATURE] Push notifications ARE handled here (below) -- that's a
+// separate concern from the caching decision above. Showing a push
+// notification and intercepting fetches are unrelated capabilities of a
+// service worker; keeping push does not reintroduce any of the caching
+// bugs described above, since no response is ever read from or written
+// to Cache Storage anywhere in this file.
 self.addEventListener('install', () => {
   self.skipWaiting();
 });
@@ -41,3 +48,47 @@ self.addEventListener('activate', (event) => {
 
 // Intentionally no 'fetch' listener — every request falls through to the
 // browser's own default network handling, untouched.
+
+// ── Push notifications: deployment completion ──────────────────────────
+// Fired when the backend sends a push via web-push (see
+// sendDeployPushNotification in server.js) after a deploy finishes,
+// success or failure. Shows the JoyTree icon with a short status line,
+// same idea as how Claude's own app notifies when a task finishes.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (_) {}
+
+  const title = data.title || 'JoyTree';
+  const options = {
+    body: data.body || '',
+    icon: data.icon || '/favicon_192.png',
+    badge: data.badge || '/favicon_192.png',
+    // tag + renotify: a second deploy notification for the SAME project
+    // replaces the first instead of stacking up a pile of old ones, but
+    // still alerts the user (renotify) since the new one matters.
+    tag: data.tag || 'joytree-deploy',
+    renotify: true,
+    data: { url: data.url || '/dashboard' },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Tapping the notification focuses an already-open JoyTree tab and
+// navigates it to the deploy's logs, or opens a new tab if none is open.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/dashboard';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    })
+  );
+});
