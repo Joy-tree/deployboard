@@ -7052,24 +7052,47 @@ function pushSubscriptionsKey(user) {
 }
 
 async function fbGetPushSubscriptions(user) {
-  if (!FIREBASE_RTDB_URL) return [];
+  if (!FIREBASE_RTDB_URL) { console.error('[push] FIREBASE_RTDB_URL is not set -- push subscriptions cannot be read or saved at all.'); return []; }
   try {
     const authQuery = FIREBASE_RTDB_SECRET ? '?auth=' + encodeURIComponent(FIREBASE_RTDB_SECRET) : '';
     const r = await fetch(`${FIREBASE_RTDB_URL}/${pushSubscriptionsKey(user)}.json${authQuery}`);
     const data = await r.json();
+    // [FIX] Firebase returns a normal 200 with an error payload (e.g.
+    // {error:"Permission denied"}) rather than a non-2xx status when a
+    // security rule blocks the request -- !r.ok alone would miss that.
+    if (!r.ok || (data && typeof data === 'object' && data.error)) {
+      console.error('[push] Firebase rejected reading push subscriptions:', r.status, JSON.stringify(data).slice(0, 300));
+      return [];
+    }
     return data && typeof data === 'object' ? Object.values(data) : [];
-  } catch (_) { return []; }
+  } catch (e) {
+    console.error('[push] fbGetPushSubscriptions threw:', e.message);
+    return [];
+  }
 }
 
 async function fbSavePushSubscription(user, sub) {
-  if (!FIREBASE_RTDB_URL) return;
+  if (!FIREBASE_RTDB_URL) throw new Error('FIREBASE_RTDB_URL is not configured on the server');
   const authQuery = FIREBASE_RTDB_SECRET ? '?auth=' + encodeURIComponent(FIREBASE_RTDB_SECRET) : '';
   // Keyed by a hash of the endpoint so re-subscribing the same device
   // overwrites its old entry instead of accumulating duplicates.
   const subKey = crypto.createHash('sha256').update(sub.endpoint).digest('hex').slice(0, 24);
-  await fetch(`${FIREBASE_RTDB_URL}/${pushSubscriptionsKey(user)}/${subKey}.json${authQuery}`, {
+  const r = await fetch(`${FIREBASE_RTDB_URL}/${pushSubscriptionsKey(user)}/${subKey}.json${authQuery}`, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub)
   });
+  const data = await r.json().catch(() => null);
+  // [FIX] This never checked the response at all before -- Firebase
+  // security rules silently blocking this brand-new path (no existing
+  // rule covered `deployboard_push_subs`) would come back as a normal
+  // HTTP 200 with {error:"Permission denied"} in the body, which this
+  // code was ignoring entirely. The endpoint above would then report
+  // {ok:true} to the browser even though nothing was actually written,
+  // which is exactly the "Enabled, but test finds no subscription" bug.
+  if (!r.ok || (data && typeof data === 'object' && data.error)) {
+    const detail = data && data.error ? data.error : `HTTP ${r.status}`;
+    console.error('[push] Firebase rejected saving a push subscription:', detail);
+    throw new Error(`Firebase rejected the write: ${detail} -- check that your Firebase RTDB rules allow writes under deployboard_push_subs/`);
+  }
 }
 
 async function fbRemovePushSubscription(user, endpoint) {
