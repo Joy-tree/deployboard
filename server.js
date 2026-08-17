@@ -7207,7 +7207,24 @@ app.post('/api/push/unsubscribe', requireAuth, async (req, res) => {
 app.post('/api/push/test', requireAuth, async (req, res) => {
   try {
     const subs = await getPushSubscriptions(req.user);
-    if (!subs.length) return res.json({ ok: true, delivered: 0, attempted: 0 });
+    if (!subs.length) {
+      // [DEBUG] "No subscriptions for this user" and "nothing was ever
+      // saved at all" and "the DB connection dropped" all look identical
+      // from outside -- surface enough here to tell them apart without
+      // needing server log access.
+      const userId = req.user?._id || req.user?.id;
+      let totalDocsAnyUser = null;
+      try { totalDocsAnyUser = isPushDbReady() ? await PushSubscription.countDocuments({}) : null; } catch (_) {}
+      return res.json({
+        ok: true, delivered: 0, attempted: 0,
+        debug: {
+          dbReady: isPushDbReady(),
+          connectionState: pushDbConnection.readyState, // 0=disconnected,1=connected,2=connecting,3=disconnecting
+          userIdUsedForQuery: userId || null,
+          totalSubscriptionsAnyUser: totalDocsAnyUser,
+        }
+      });
+    }
 
     const payload = JSON.stringify({
       title: 'Test notification',
