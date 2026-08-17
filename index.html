@@ -32055,20 +32055,40 @@ async function checkPushNotifStatus() {
     enableBtn.disabled = true; testBtn.disabled = true;
     return;
   }
+  badge.className = 'badge badge-pending'; badge.innerHTML = '<span class="badge-dot"></span>Checking…';
+  enableBtn.disabled = true; testBtn.disabled = true;
   try {
     const reg = _pushSwRegistration || await navigator.serviceWorker.ready.catch(() => null);
     const sub = reg ? await reg.pushManager.getSubscription().catch(() => null) : null;
-    if (sub) {
+    if (!sub) {
+      badge.className = 'badge badge-pending'; badge.innerHTML = '<span class="badge-dot"></span>Not enabled';
+      enableBtn.textContent = 'Enable Notifications'; enableBtn.disabled = false;
+      testBtn.disabled = true;
+      return;
+    }
+    // [FIX] A local browser subscription existing doesn't mean the SERVER
+    // has it saved -- if the very first save attempt ever failed (e.g. the
+    // VPS hadn't been rebuilt with this feature yet), the browser-side
+    // subscription still gets created and persists regardless, so this
+    // badge was showing a false "Enabled" indefinitely with no way to
+    // notice. Actually re-confirm the save against the server every time
+    // instead of trusting local existence alone.
+    const result = await subscribeToPushNotifications();
+    if (result.ok) {
       badge.className = 'badge badge-success'; badge.innerHTML = '<span class="badge-dot"></span>Enabled';
       enableBtn.textContent = 'Re-sync'; enableBtn.disabled = false;
       testBtn.disabled = false;
     } else {
-      badge.className = 'badge badge-pending'; badge.innerHTML = '<span class="badge-dot"></span>Not enabled';
-      enableBtn.textContent = 'Enable Notifications'; enableBtn.disabled = false;
+      const msg = PUSH_STATUS_MESSAGES[result.reason] || result.reason;
+      badge.className = 'badge badge-error'; badge.innerHTML = '<span class="badge-dot"></span>Not synced to server';
+      const hint = document.getElementById('pushNotifHint');
+      if (hint) hint.innerHTML = `<span style="color:#f87171;">Browser is subscribed, but the server doesn't have it saved (${escHtml(msg)}). Tap "Re-sync" to fix.</span>`;
+      enableBtn.textContent = 'Re-sync'; enableBtn.disabled = false;
       testBtn.disabled = true;
     }
   } catch (_) {
     badge.className = 'badge'; badge.innerHTML = '<span class="badge-dot"></span>Unknown';
+    enableBtn.disabled = false;
   }
 }
 
