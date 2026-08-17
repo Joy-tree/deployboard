@@ -2927,64 +2927,9 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 .logs-hero{margin-bottom:12px;background:linear-gradient(135deg,rgba(0,0,0,.9),rgba(6,20,15,.92));border:1px solid var(--border-hi);border-radius:14px;padding:14px 16px;display:flex;gap:14px;justify-content:space-between;flex-wrap:wrap}
 
-/* [FEATURE] In-context "enable notifications" prompt -- same idea as
-   Claude's own "Get notified when Claude responds" card, shown while a
-   task is running. This appears specifically while a deploy is actively
-   streaming on the Logs page, only for people who've installed the app
-   and haven't enabled notifications yet. Deliberately more polished than
-   a plain white system-style card: dark glass surface, a soft green glow
-   that echoes the "something is live right now" moment, matching the
-   rest of the dashboard's aesthetic rather than looking like a generic
-   OS permission prompt. */
-.dnp-card{
-  position:relative;margin-bottom:12px;padding:18px 20px;border-radius:16px;
-  background:linear-gradient(160deg,rgba(16,185,129,.08),rgba(0,0,0,.85) 60%);
-  border:1px solid rgba(16,185,129,.28);
-  box-shadow:0 0 0 1px rgba(16,185,129,.06),0 12px 40px rgba(16,185,129,.08),0 4px 18px rgba(0,0,0,.35);
-  animation:dnpFadeIn .4s cubic-bezier(.16,1,.3,1);
-  overflow:hidden;
-}
-.dnp-card::before{
-  content:'';position:absolute;top:-40%;right:-15%;width:220px;height:220px;border-radius:50%;
-  background:radial-gradient(circle,rgba(16,185,129,.16),transparent 70%);
-  pointer-events:none;
-}
-@keyframes dnpFadeIn{ from{opacity:0;transform:translateY(-8px);} to{opacity:1;transform:translateY(0);} }
-.dnp-icon{
-  width:38px;height:38px;border-radius:11px;margin-bottom:12px;
-  background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);
-  display:flex;align-items:center;justify-content:center;color:var(--green);
-  animation:dnpPulseIcon 2.4s ease-in-out infinite;
-}
-@keyframes dnpPulseIcon{
-  0%,100%{ box-shadow:0 0 0 0 rgba(16,185,129,.25); }
-  50%{ box-shadow:0 0 0 8px rgba(16,185,129,0); }
-}
-.dnp-icon svg{width:19px;height:19px;}
-.dnp-close{
-  position:absolute;top:14px;right:14px;width:26px;height:26px;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  background:transparent;border:1px solid transparent;color:var(--text-3);cursor:pointer;
-  transition:all .15s;
-}
-.dnp-close:hover{background:rgba(255,255,255,.06);color:var(--text);}
-.dnp-close svg{width:12px;height:12px;}
-.dnp-title{font-size:.95rem;font-weight:800;color:var(--text);margin-bottom:5px;letter-spacing:-.01em;}
-.dnp-sub{font-size:.8rem;color:var(--text-2);line-height:1.55;margin-bottom:16px;max-width:440px;}
-.dnp-btn{
-  display:inline-flex;align-items:center;gap:7px;
-  padding:9px 18px;border-radius:10px;border:none;
-  background:linear-gradient(135deg,var(--green),var(--primary-d));
-  color:#052e16;font-weight:800;font-size:.82rem;cursor:pointer;
-  transition:transform .15s,box-shadow .15s;
-  box-shadow:0 4px 14px rgba(16,185,129,.25);
-}
-.dnp-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(16,185,129,.35);}
-.dnp-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
-@media(max-width:560px){
-  .dnp-card{padding:16px;}
-  .dnp-close{top:12px;right:12px;}
-}
+/* [FEATURE] In-context "enable notifications" prompt -- appears while a
+   deploy is actively streaming on the Logs page. All CSS for .dnp-* lives
+   in theme-override.css, including light/dark theming. */
 
 .logs-hero-title{font-family:var(--font-ui);font-weight:800;font-size:1.2rem;letter-spacing:-.04em;color:#e2fff2}
 .logs-hero-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
