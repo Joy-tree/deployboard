@@ -28915,6 +28915,23 @@ function showDashboard(defaultPage = 'dashboard') {
   // feature existed) opening the site after it ships -- privacyConsentMaybeShow()
   // itself checks localStorage first and no-ops instantly if already answered.
   if (typeof privacyConsentMaybeShow === 'function') privacyConsentMaybeShow();
+  // [FEATURE] Tapping a deploy-complete push notification lands here with
+  // ?viewDeploy=<id> -- jump straight to that deploy's logs instead of
+  // just landing on the generic dashboard home.
+  (function openDeployFromNotification() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const deployId = params.get('viewDeploy');
+      if (!deployId) return;
+      params.delete('viewDeploy');
+      const cleanUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+      window.history.replaceState({}, '', cleanUrl);
+      setTimeout(() => {
+        if (typeof showPage === 'function') showPage('logs');
+        if (typeof viewDeployLogs === 'function') viewDeployLogs(deployId);
+      }, 300);
+    } catch (_) {}
+  })();
   const verify = document.getElementById('verifyEmailPage'); if (verify) verify.style.display = 'none';
   document.getElementById('auth-view').classList.remove('active');
   document.documentElement.classList.add('app-mode');
@@ -31904,9 +31921,65 @@ function showManualInstallHelp(){
   });
 })();
 
+// ── Deploy push notifications ───────────────────────────────────────────
+// [FEATURE] Only auto-prompts once the site is running as an installed
+// app (standalone display mode) -- exactly the "after the user downloads
+// the app version" trigger requested, not on every ordinary browser tab
+// visit where a permission prompt would just be noise.
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function initDeployPushNotifications(registration) {
+  try {
+    if (!('PushManager' in window) || !hasAuthToken()) return;
+
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (!isStandalone) return;
+
+    // Already subscribed on this device? Just make sure the backend still
+    // has this exact subscription on file (cheap, idempotent) and stop --
+    // no need to touch the permission prompt again.
+    const existing = await registration.pushManager.getSubscription();
+    if (existing) {
+      apiFetch('/api/push/subscribe', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: existing.toJSON() }),
+      }).catch(() => {});
+      return;
+    }
+
+    if (Notification.permission === 'denied') return;
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+
+    const { publicKey } = await (await fetch('/api/push/vapid-public-key')).json();
+    if (!publicKey) return;
+
+    const sub = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+
+    await apiFetch('/api/push/subscribe', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: sub.toJSON() }),
+    });
+  } catch (_) { /* push is a nice-to-have -- never let it block anything else */ }
+}
+
 function initPWAInstallPrompt(){
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => { initDeployPushNotifications(reg); })
+        .catch(()=>{});
+    });
 
     // [FIX] Reintroduced auto-reload-on-new-SW, rebuilt around a
     // fundamentally different trigger this time. The previous version
