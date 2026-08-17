@@ -7048,7 +7048,16 @@ webpush.setVapidDetails(
 );
 
 function pushSubscriptionsKey(user) {
-  return 'deployboard_push_subs/' + firebaseWorkspaceKey(user);
+  // [FIX] Was a brand-new top-level path ('deployboard_push_subs/...') that
+  // this Firebase project's security rules never had a rule for, so every
+  // write to it was silently rejected. Nesting under deployboard_workspaces
+  // instead reuses the exact same path every other feature (projects,
+  // deployments, custom domains, etc.) already writes to successfully --
+  // if that's writable, this is too, with zero Firebase console changes
+  // needed. This is a plain Firebase REST sub-path write, so it only
+  // touches the pushSubscriptions node, not the rest of the workspace
+  // object -- no read-modify-write, no race with concurrent deploy writes.
+  return 'deployboard_workspaces/' + firebaseWorkspaceKey(user) + '/pushSubscriptions';
 }
 
 async function fbGetPushSubscriptions(user) {
