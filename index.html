@@ -26799,7 +26799,8 @@ function initSocket() {
       timeout: 8000
     });
 
-    socket.on('connect', () => {
+    let _hasConnectedBefore = false;
+    socket.on('connect', async () => {
       console.log('[Socket.io] Connected:', socket.id);
       writeBench('LIVE LOG STREAM', 'Connected · session ' + socket.id.substring(0,12) + '…');
       const statusEl = document.getElementById('statusSocket');
@@ -26810,6 +26811,38 @@ function initSocket() {
       // Join this user's private room so build events are scoped to them only
       const _myUserId = currentUser?.id || currentUser?._id || currentUser?.uid || settings?.userId || '';
       if (_myUserId) socket.emit('auth:join', { userId: String(_myUserId) });
+
+      // [FIX] "Deploy finishes successfully in the background, but the
+      // frontend still shows Disconnected / stuck mid-build after
+      // returning to the app." Socket.IO's own reconnection was already
+      // working (it silently retries and rejoins fine) — the real gap was
+      // that a build:done event fired WHILE disconnected (app backgrounded
+      // or closed) is just gone forever; there's no event replay. So the
+      // page kept showing whatever mid-build state it had right up until
+      // the disconnect, even minutes after the deploy had actually
+      // finished server-side. On every reconnect (not the first connect),
+      // re-fetch authoritative deployment state and, if the build we were
+      // watching has actually finished, run the real completion path.
+      if (_hasConnectedBefore && activeBuildId) {
+        writeTerm('\x1b[36m[system]\x1b[0m \x1b[90mReconnected — checking for updates while you were away…\x1b[0m');
+        try {
+          await syncServerStateFromApi({ persist: true, render: false });
+          const dep = deployments.find(d => String(d.id || d._id || '') === String(activeBuildId));
+          if (dep && dep.status && dep.status !== 'building' && dep.status !== 'pending') {
+            applyBuildDoneUpdate({
+              deployId: activeBuildId,
+              projectId: dep.projectId,
+              status: dep.status,
+              duration: dep.duration || null,
+              liveUrl: dep.liveUrl || (projects.find(p => String(p.id || p._id || '') === String(dep.projectId)) || {}).liveUrl || null,
+              source: dep.source || 'manual'
+            });
+          }
+        } catch (e) {
+          console.warn('[Socket.io] Reconnect catch-up sync failed:', e.message);
+        }
+      }
+      _hasConnectedBefore = true;
     });
 
     socket.on('disconnect', (reason) => {
@@ -27017,7 +27050,15 @@ function initSocket() {
     });
 
     // ── Build finished ───────────────────────────────────────────
-    socket.on('build:done', ({ deployId, projectId, status, duration, liveUrl, source }) => {
+    // [FIX] Extracted so the exact same completion handling (status
+    // update, terminal banner, toast, screenshot overlay, deploy button
+    // reset) can ALSO run from the reconnect catch-up path below — a
+    // build:done event fired while the socket was disconnected (app
+    // backgrounded/closed) is simply gone forever once missed; without
+    // this, the frontend stayed stuck showing "Step 5 · Start Runtime"
+    // spinning forever even though the deploy had long since finished
+    // successfully on the server.
+    function applyBuildDoneUpdate({ deployId, projectId, status, duration, liveUrl, source }) {
       if (deployId === activeBuildId) {
         const card = document.getElementById('deployNotifPromptCard');
         if (card) card.style.display = 'none';
@@ -27030,7 +27071,6 @@ function initSocket() {
       const whPayload = { deployId, status, duration, liveUrl, projectName: dep ? dep.projectName : '' };
       if (status === 'success') fireWebhooks('deployment.success', whPayload);
       if (status === 'failed')  fireWebhooks('deployment.failed',  whPayload);
-      let incomingBuildMadeVisible = false;
       let d = deployments.find(x => x.id === deployId);
       if (!d && projectId) {
         const projForIncoming = projects.find(p => String(p.id || p._id || '') === String(projectId));
@@ -27112,7 +27152,9 @@ function initSocket() {
       // Always reset the deploy button — whether success or failure, whether
       // the user is on the deploy form or navigated away during the build.
       setDeployLaunchUI(false);
-    });
+    }
+
+    socket.on('build:done', applyBuildDoneUpdate);
 
   } catch(e) {
     console.warn('[Socket.io] Could not initialise:', e.message);
