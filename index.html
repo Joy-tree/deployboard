@@ -26929,48 +26929,33 @@ function initSocket() {
         }
       }
       _hasConnectedBefore = true;
-      // A fast reconnect (the common case now) cancels the pending
-      // "Disconnected" line below before it ever shows, so brief blips
-      // are invisible instead of interrupting the log stream.
-      if (_disconnectMsgTimer) { clearTimeout(_disconnectMsgTimer); _disconnectMsgTimer = null; }
       // Socket has the connection back — hand off from the SSE fallback,
       // if it was running, back to the normal push path.
       stopLogStreamFallback();
     });
 
-    let _disconnectMsgTimer = null;
     socket.on('disconnect', (reason) => {
-      const statusEl = document.getElementById('statusSocket');
-      if (statusEl) {
-        statusEl.className = 'badge badge-error';
-        statusEl.innerHTML = '<span class="badge-dot"></span>Reconnecting…';
-      }
-      // [FIX] "Should keep streaming logs no matter what, shouldn't visibly
-      // disconnect at all." Start the SSE fallback immediately (not after
-      // any grace period) whenever a build is actively being watched —
-      // it's a lightweight polling stream, so there's no real cost to
-      // starting it right away, and it's what keeps logs appearing
-      // continuously through exactly the kind of extended background-tab
-      // outage that made this feel broken before, rather than only
-      // covering brief blips.
+      // [FIX] "Shouldn't even show a connection message — it should just
+      // continue." Previously this flipped a status badge to
+      // 'Reconnecting…' immediately and, after a delay, wrote a visible
+      // '[system] connection interrupted' line into the terminal. Both
+      // are now intentionally silent: the SSE fallback below is what
+      // actually keeps logs flowing, so from the user's perspective
+      // nothing should visibly change at all when this fires. Kept as a
+      // console.warn only, for actual debugging via devtools — never
+      // user-facing.
+      console.warn('[Socket.io] Disconnected:', reason);
+      // Start the SSE fallback immediately (not after any grace period)
+      // whenever a build is actively being watched — it's a lightweight
+      // polling stream, so there's no real cost to starting it right
+      // away, and it's what keeps logs appearing continuously through
+      // exactly the kind of extended background-tab outage that made
+      // this feel broken before, rather than only covering brief blips.
       if (activeBuildId) startLogStreamFallback();
-      // Don't interrupt the log stream for a brief blip that reconnects
-      // on its own in a second or two (the common case, especially now
-      // that visibilitychange forces an immediate reconnect attempt) —
-      // only surface it in the terminal if it's still down after a beat.
-      _disconnectMsgTimer = setTimeout(() => {
-        writeTerm('\x1b[33m[system]\x1b[0m \x1b[90mLive connection interrupted · ' + reason + ' — still streaming via backup connection\x1b[0m');
-        if (statusEl) statusEl.innerHTML = '<span class="badge-dot"></span>Reconnecting (backup active)';
-      }, 2500);
     });
 
     socket.on('connect_error', (err) => {
       console.warn('[Socket.io] Connection error:', err.message);
-      const statusEl = document.getElementById('statusSocket');
-      if (statusEl) {
-        statusEl.className = 'badge badge-error';
-        statusEl.innerHTML = '<span class="badge-dot"></span>Offline';
-      }
     });
 
     socket.on('autodeploy:status', ({ projectId, status, at, completed, result, sha, deployId, subdomain, projectName }) => {

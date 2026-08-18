@@ -5373,13 +5373,55 @@ app.get('/api/deployments', attachAuthIfPresent, async (req, res) => {
   try {
     const mineOnly = String(req.query.mine || '') === '1';
     if (mineOnly && !req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    // [FIX] Same class of bug already fixed on /api/projects, and for the
+    // exact same reason: this queried MongoDB as the primary source, but
+    // Firebase is what every deploy path actually treats as the real
+    // store — and for upload-sourced deploys specifically, there IS no
+    // Mongo Deployment document at all (see activeDeployLogs and the
+    // upload-deploy handlers, which only ever write deploymentRecord to
+    // Firebase). A finished upload deploy would just permanently vanish
+    // from this endpoint, which is exactly why reconnect catch-up
+    // (syncServerStateFromApi -> here) could reconnect fine, run its
+    // sync, and still find nothing to backfill or complete for an
+    // upload deploy that had actually finished minutes ago in the
+    // background — the endpoint it asked never had the data to give it.
+    let fbDeployments = [];
+    if (mineOnly) {
+      try {
+        const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+        fbDeployments = Array.isArray(ws.deployments) ? ws.deployments : [];
+      } catch (_) {}
+    }
+
     const filter = req.query.projectId ? { projectId: req.query.projectId } : {};
     if (mineOnly) {
-      const owned = await Project.find({ ownerUserId: String(req.user._id || req.user.id || '') }).select('_id').lean().maxTimeMS(5000);
+      const owned = await Project.find({ ownerUserId: String(req.user._id || req.user.id || '') }).select('_id').lean().maxTimeMS(5000).catch(() => []);
       filter.projectId = { $in: owned.map(p => p._id) };
     }
-    const rows = await Deployment.find(filter).sort({ startedAt: -1 }).limit(100).lean();
-    res.json(rows.map(d => ({ ...d, id: String(d._id), projectId: String(d.projectId || '') })));
+    const mongoRows = await Deployment.find(filter).sort({ startedAt: -1 }).limit(100).lean().catch(() => []);
+    const mongoNormalized = mongoRows.map(d => ({ ...d, id: String(d._id), projectId: String(d.projectId || '') }));
+
+    if (!mineOnly) {
+      // Non-scoped callers (projectId-only, no user context) never had
+      // Firebase data to merge in the first place — unchanged behavior.
+      return res.json(mongoNormalized);
+    }
+
+    // Merge: Firebase entries are authoritative; any Mongo row not already
+    // present (matched by id) gets included too rather than dropped, in
+    // case something genuinely only exists there.
+    const byId = new Map();
+    fbDeployments.forEach(d => {
+      const id = String(d.id || d._id || '');
+      if (id) byId.set(id, { ...d, id, projectId: String(d.projectId || '') });
+    });
+    mongoNormalized.forEach(d => { if (!byId.has(d.id)) byId.set(d.id, d); });
+
+    let merged = Array.from(byId.values());
+    if (req.query.projectId) merged = merged.filter(d => String(d.projectId || '') === String(req.query.projectId));
+    merged.sort((a, b) => new Date(b.startedAt || 0).getTime() - new Date(a.startedAt || 0).getTime());
+    res.json(merged.slice(0, 100));
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
