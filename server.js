@@ -260,6 +260,22 @@ const JOYTREE_WEB_SEARCH_ENABLED = String(process.env.JOYTREE_WEB_SEARCH_ENABLED
 
 const authOtpStore = new Map();
 const deployStopRequests = new Set();
+// [FEATURE] Shared registry of currently-building deployments, keyed by
+// deployId -> a live reference to whichever object that deploy's onLog
+// callback is actually pushing lines into (the Mongoose `deployment` doc
+// for GitHub-sourced deploys, or the plain `deploymentRecord` object for
+// upload-sourced ones). Upload deploys in particular have NO durable,
+// poll-able log source during an active build at all otherwise — their
+// logs live only in that one request handler's local closure until the
+// build finishes and it's written to Firebase once at the end. Since
+// Node is single-process, a shared in-memory Map lets a completely
+// separate request (the SSE fallback log-stream endpoint) read the exact
+// same live object other in-progress requests are still writing into,
+// with no DB round-trip needed at all for the common case of "build is
+// actively running right now." Entries are added right when a build
+// starts and removed the moment it finishes — see the three call sites
+// (one GitHub-deploy path, two upload-deploy paths).
+const activeDeployLogs = new Map();
 
 function normalizeBaseDomain(value) {
   return String(value || 'localhost')
@@ -5246,12 +5262,22 @@ app.delete('/api/projects/:id', requireAuth, async (req, res) => {
 // trip. Render/Vercel-style platforms sidestep this entirely by not
 // depending on one persistent connection staying alive at all — this is
 // the same idea: plain Server-Sent Events, which the BROWSER itself
-// auto-reconnects natively (no custom JS reconnect logic needed), backed
-// by a simple poll of the already-persisted Deployment.logs array rather
-// than hooking into the live build process. The client only opens this
-// while the socket is actually down and a build is being watched, so
-// logs keep appearing continuously through a disconnect instead of the
-// UI visibly freezing until the socket recovers.
+// auto-reconnects natively (no custom JS reconnect logic needed).
+//
+// Data source: this app's actual primary store is Firebase (per-user
+// workspace, see readWorkspaceFromFirebase) — MongoDB is secondary and,
+// for upload-sourced deploys specifically, isn't used for the deployment
+// record at all. Ownership is therefore verified against the caller's
+// OWN Firebase workspace (deploys are written there synchronously before
+// the deploy-trigger endpoint even responds, so this is reliable from
+// the first moment a client has a deployId). For the actual live log
+// content, this prefers activeDeployLogs — a shared in-memory registry
+// (see its declaration) pointing at the exact same object every deploy
+// path's onLog callback is already pushing lines into as the build runs,
+// zero DB/Firebase round-trip needed while a build is genuinely active.
+// Once a build leaves that registry (finished), there's nothing left to
+// change, so this does one final Firebase read and closes rather than
+// polling something static forever.
 app.get('/api/deployments/:id/log-stream', attachAuthIfPresent, async (req, res) => {
   let closed = false;
   let keepAlive = null;
@@ -5264,19 +5290,14 @@ app.get('/api/deployments/:id/log-stream', attachAuthIfPresent, async (req, res)
 
   try {
     const deployId = String(req.params.id || '');
-    if (!isDbReady() || !mongoose.Types.ObjectId.isValid(deployId)) {
-      return res.status(404).json({ error: 'Deployment not found' });
-    }
-    const dep = await Deployment.findById(deployId).lean().maxTimeMS(5000).catch(() => null);
-    if (!dep) return res.status(404).json({ error: 'Deployment not found' });
-
+    if (!deployId) return res.status(404).json({ error: 'Deployment not found' });
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-    if (!req.user.isAdmin) {
-      const project = dep.projectId ? await Project.findById(dep.projectId).select('ownerUserId').lean().maxTimeMS(5000).catch(() => null) : null;
-      const ownerId = String((project && project.ownerUserId) || '');
-      const myId = String(req.user._id || req.user.id || '');
-      if (!ownerId || ownerId !== myId) return res.status(403).json({ error: 'Forbidden' });
-    }
+
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    const ownedDeploy = Array.isArray(ws.deployments)
+      ? ws.deployments.find(d => String(d.id || d._id || '') === deployId)
+      : null;
+    if (!ownedDeploy) return res.status(404).json({ error: 'Deployment not found' });
 
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -5303,23 +5324,42 @@ app.get('/api/deployments/:id/log-stream', attachAuthIfPresent, async (req, res)
 
     const poll = async () => {
       if (closed) return;
-      try {
-        const fresh = await Deployment.findById(deployId).select('status logs duration').lean().maxTimeMS(5000);
-        if (fresh) {
-          const logs = Array.isArray(fresh.logs) ? fresh.logs : [];
-          if (logs.length > sentCount) {
-            send('log', { lines: logs.slice(sentCount) });
-            sentCount = logs.length;
-          }
-          if (fresh.status && fresh.status !== 'building' && fresh.status !== 'pending') {
-            send('done', { status: fresh.status, duration: fresh.duration || null });
-            closed = true;
-            clearInterval(keepAlive);
-            return res.end();
-          }
+
+      const live = activeDeployLogs.get(deployId);
+      if (live) {
+        // Fast path — build is genuinely active right now, read straight
+        // from the shared in-memory object, no I/O at all.
+        const logs = Array.isArray(live.logs) ? live.logs : [];
+        if (logs.length > sentCount) {
+          send('log', { lines: logs.slice(sentCount) });
+          sentCount = logs.length;
         }
-      } catch (_) {}
-      if (!closed) pollTimer = setTimeout(poll, 1200);
+        if (live.status && live.status !== 'building' && live.status !== 'pending') {
+          send('done', { status: live.status, duration: live.duration || null });
+          closed = true; clearInterval(keepAlive);
+          return res.end();
+        }
+        pollTimer = setTimeout(poll, 800);
+        return;
+      }
+
+      // Not in the live registry — the build already finished (or this
+      // process restarted and lost in-memory state). Nothing further will
+      // change, so this is a one-shot final read rather than continued
+      // polling of something static.
+      try {
+        const freshWs = (await readWorkspaceFromFirebase(req.user)) || {};
+        const dep = Array.isArray(freshWs.deployments)
+          ? freshWs.deployments.find(d => String(d.id || d._id || '') === deployId)
+          : null;
+        const logs = dep && Array.isArray(dep.logs) ? dep.logs : [];
+        if (logs.length > sentCount) send('log', { lines: logs.slice(sentCount) });
+        send('done', { status: (dep && dep.status) || 'unknown', duration: (dep && dep.duration) || null });
+      } catch (_) {
+        send('done', { status: 'unknown', duration: null });
+      }
+      closed = true; clearInterval(keepAlive);
+      res.end();
     };
     poll();
   } catch (e) {
@@ -11817,6 +11857,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   }
 
   const deployId = deployment._id.toString();
+  activeDeployLogs.set(deployId, deployment);
   await syncDeploymentProjectToFirebase(req.user, {
     project,
     deployment,
@@ -12076,6 +12117,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     const duration = Math.round((Date.now() - buildStart) / 1000);
     deployment.status = 'success'; deployment.duration = duration; deployment.endedAt = new Date();
     try { await deployment.save(); } catch(e) {}
+    activeDeployLogs.delete(deployId);
     await syncDeploymentProjectToFirebase(req.user, {
       project,
       deployment,
@@ -12163,6 +12205,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
     const duration = Math.round((Date.now() - buildStart) / 1000);
     deployment.status = 'failed'; deployment.duration = duration; deployment.endedAt = new Date();
     try { await deployment.save(); } catch(e) {}
+    activeDeployLogs.delete(deployId);
     await syncDeploymentProjectToFirebase(req.user, {
       project,
       deployment,
@@ -12901,6 +12944,7 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
     logs: [],
     startedAt: now
   };
+  activeDeployLogs.set(deployId, deploymentRecord);
 
   // Save project + deployment to Firebase workspace (primary) and localAuth (fallback)
   const userForFirebase = await enrichAuthUser(req.user);
@@ -12972,6 +13016,15 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
 
   // Helper to persist deployment status to Firebase
   async function saveDeployStatus(status, extra = {}, projectPatch = {}) {
+    // Keep the shared in-memory registry (activeDeployLogs) in sync with
+    // whatever Firebase is about to be told, and clear it out once the
+    // build reaches a real terminal state — 'building' is called once at
+    // the very start too, which must NOT clear the entry.
+    try {
+      deploymentRecord.status = status;
+      if (extra && typeof extra === 'object') Object.assign(deploymentRecord, extra);
+    } catch (_) {}
+    if (status !== 'building' && status !== 'pending') activeDeployLogs.delete(deployId);
     try {
       const ws = (await readWorkspaceFromFirebase(userForFirebase)) || {};
       ws.deployments = Array.isArray(ws.deployments) ? ws.deployments : [];
@@ -13350,6 +13403,7 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
     branch: 'upload', status: 'pending', source: 'upload',
     triggerSha: '', logs: [], startedAt: now
   };
+  activeDeployLogs.set(deployId, deploymentRecord);
 
   try {
     const ws = (await readWorkspaceFromFirebase(userForFirebase)) || {};
@@ -13386,6 +13440,11 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
   const emit = (event, data) => _redeployTarget.emit(event, { deployId: finalDeployId, projectId: cleanSub, source: 'upload', ...data });
 
   async function saveRedeployStatus(status, extra = {}, projectPatch = {}) {
+    try {
+      deploymentRecord.status = status;
+      if (extra && typeof extra === 'object') Object.assign(deploymentRecord, extra);
+    } catch (_) {}
+    if (status !== 'building' && status !== 'pending') activeDeployLogs.delete(deployId);
     try {
       const ws = (await readWorkspaceFromFirebase(userForFirebase)) || {};
       ws.deployments = Array.isArray(ws.deployments) ? ws.deployments : [];
