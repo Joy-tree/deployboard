@@ -77,6 +77,12 @@ self.addEventListener('push', (event) => {
     // the person currently is, same as any other app's notifications).
     silent: false,
     vibrate: [200, 100, 200],
+    // [FIX] Without this, Android/Chrome can auto-dismiss the notification
+    // after a few seconds even if the person didn't see it in time (e.g.
+    // screen was off and only just turned on). requireInteraction keeps it
+    // sitting in the shade/lock screen until they actually dismiss or tap
+    // it, instead of it quietly vanishing before they get a chance to look.
+    requireInteraction: true,
     data: { url: data.url || '/dashboard' },
   };
 

@@ -7335,7 +7335,18 @@ async function sendDeployPushNotification(user, { status, projectName, subdomain
 
     await Promise.all(subs.map(async (sub) => {
       try {
-        await webpush.sendNotification(sub, payload);
+        // [FIX] Was `webpush.sendNotification(sub, payload)` with no options at
+        // all -- meaning every push went out at the web-push library's default
+        // 'normal' urgency. Urgency is a real header FCM (what Chrome uses
+        // under the hood) reads to decide delivery priority: 'normal' can be
+        // delayed/batched to save the recipient device's battery, which is
+        // also why it tends to land quietly in the shade with just a sound
+        // instead of interrupting the screen the way a 'high' urgency push
+        // does. Deploy completion is exactly the kind of time-sensitive,
+        // user-is-waiting-for-it event 'high' exists for. TTL gives the push
+        // service up to an hour to redeliver if the device was briefly
+        // offline/asleep when this was first sent, instead of dropping it.
+        await webpush.sendNotification(sub, payload, { urgency: 'high', TTL: 3600 });
       } catch (err) {
         // 404/410 = the browser has invalidated this subscription (uninstalled,
         // permissions revoked, etc.) -- clean it up so we stop trying.
@@ -7458,7 +7469,7 @@ app.post('/api/push/test', requireAuth, async (req, res) => {
     const sendErrors = [];
     await Promise.all(subs.map(async (sub) => {
       try {
-        await webpush.sendNotification(sub, payload);
+        await webpush.sendNotification(sub, payload, { urgency: 'high', TTL: 3600 });
         delivered++;
       } catch (err) {
         sendErrors.push({ endpoint: (sub.endpoint || '').slice(-24), statusCode: err.statusCode || null, message: err.message || String(err), body: err.body ? String(err.body).slice(0, 200) : null });
