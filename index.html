@@ -32039,12 +32039,33 @@ function maybeShowInstallPromptCard(force = false){
   const card = document.getElementById('installPromptCard');
   if (!card) return;
   if (window.matchMedia('(display-mode: standalone)').matches) return;
+  if (isRunningInsideAndroidTwa()) return; // already the real installed app
   const state = getInstallPromptState();
   if (!force && (state === 'never' || state === 'downloaded')) return;
+  updateInstallPromptCardForPlayStore(card);
   card.classList.add('show');
 }
 
+// [FEATURE] On Android, once ANDROID_PLAY_STORE_PACKAGE_ID is set above,
+// swap the card's copy/button to point at the real Play Store listing
+// instead of the generic PWA "Install" flow.
+function updateInstallPromptCardForPlayStore(card){
+  const playUrl = getPlayStoreUrl();
+  const btnInstall = document.getElementById('installPromptInstall');
+  if (!playUrl || !isAndroidDevice() || !btnInstall) return;
+  const titleEl = card.querySelector('.install-prompt-title');
+  const subEl = card.querySelector('.install-prompt-sub');
+  if (titleEl) titleEl.textContent = 'Get the Joytree app';
+  if (subEl) subEl.textContent = 'Now available on Google Play — faster, with real notifications.';
+  btnInstall.textContent = 'Get it on Google Play';
+}
+
 async function triggerInstallPromptFlow(){
+  const playUrl = getPlayStoreUrl();
+  if (playUrl && isAndroidDevice()) {
+    window.open(playUrl, '_blank');
+    return false; // opening the listing isn't "install accepted" -- just hide the card, no success toast
+  }
   if (!deferredInstallPrompt) {
     showManualInstallHelp();
     return false;
@@ -32081,6 +32102,36 @@ function showManualInstallHelp(){
     msg = 'To install JoyTree: open the browser menu (\u22EE) and choose "Install app" / "Add to Home screen". If you don\u2019t see it, the app may already be installed.';
   }
   toast(msg, 'info');
+}
+
+// [FEATURE] Once the Android app (TWA) is published to the Play Store,
+// Android users should land on the real Play Store listing instead of the
+// raw browser "Install" prompt -- it's the actual app now, gets proper
+// auto-updates, and having two separate install paths (PWA + Play Store)
+// for the same device is just confusing. iOS/desktop have no Play Store
+// equivalent, so they keep using the existing beforeinstallprompt/manual
+// flow below unchanged.
+//
+// >>> Fill this in once `bubblewrap build` gives you the real applicationId
+// (e.g. 'site.joytree.twa') and the app is live on the Play Store. Leave
+// it empty/null until then -- everything below safely no-ops and falls
+// back to the existing PWA install flow when this isn't set. <<<
+const ANDROID_PLAY_STORE_PACKAGE_ID = null; // e.g. 'site.joytree.twa'
+
+function getPlayStoreUrl(){
+  return ANDROID_PLAY_STORE_PACKAGE_ID
+    ? `https://play.google.com/store/apps/details?id=${encodeURIComponent(ANDROID_PLAY_STORE_PACKAGE_ID)}`
+    : null;
+}
+function isAndroidDevice(){
+  return /Android/i.test(navigator.userAgent || '');
+}
+// When the site is opened FROM the published TWA itself, Chrome sets
+// document.referrer to "android-app://<package>" -- this is the standard
+// way to detect "already running as the real installed app" so the
+// install card/Play Store nudge never shows to someone who already has it.
+function isRunningInsideAndroidTwa(){
+  return /^android-app:\/\//.test(document.referrer || '');
 }
 
 // [FIX] Capture beforeinstallprompt at PARSE TIME (inline script runs before
