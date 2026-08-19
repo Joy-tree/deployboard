@@ -12661,6 +12661,8 @@ document.addEventListener('keydown', function(e){
         </div>
       </div>
 
+            <div id="dsTestWholesaleBanner"></div>
+
       <!-- Search bar -->
       <div style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;background:#111;padding:20px;margin-bottom:16px;">
         <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;font-weight:600;">Search Domain Availability</div>
@@ -12835,8 +12837,38 @@ document.addEventListener('keydown', function(e){
       '.site': { usd: 2.99,  renew: 22.99 },
     };
 
-    // Convert a USD wholesale price → GHS retail (×3 markup)
-    function dsUsdToGhs(usd) { return Math.ceil(usd * DS_MARKUP * DS_EXCHANGE_RATE); }
+    // Convert a USD wholesale price → GHS retail (×3 markup).
+    // [TEST MODE] Admin-only: lets me register a domain at NameSilo's
+    // actual wholesale cost to verify the full checkout → NameSilo
+    // registration pipeline works, without giving every visitor wholesale
+    // pricing. The isAdminEmail() check happens HERE, at the point price
+    // is actually computed — not just to decide whether to render a
+    // toggle button — so flipping the localStorage flag via devtools
+    // without actually being logged in as the admin account does nothing;
+    // isAdminEmail() still returns false and the real 3x markup still
+    // applies regardless of that flag's value.
+    function dsUsdToGhs(usd) {
+      const testMode = isAdminEmail() && localStorage.getItem('ds_test_wholesale') === '1';
+      const multiplier = testMode ? 1 : DS_MARKUP;
+      return Math.ceil(usd * multiplier * DS_EXCHANGE_RATE);
+    }
+    function dsToggleTestWholesale() {
+      const on = localStorage.getItem('ds_test_wholesale') === '1';
+      localStorage.setItem('ds_test_wholesale', on ? '0' : '1');
+      toast(on ? 'Test mode off — showing real retail (3× markup) prices again.' : 'Test mode ON — showing NameSilo wholesale price (1×). Only you see this.', on ? 'info' : 'warning', 6000);
+      dsRenderTestWholesaleBanner();
+      if (document.getElementById('dsSearchInput')?.value?.trim()) dsSearch();
+    }
+    function dsRenderTestWholesaleBanner() {
+      const host = document.getElementById('dsTestWholesaleBanner');
+      if (!host) return;
+      if (!isAdminEmail()) { host.innerHTML = ''; return; }
+      const on = localStorage.getItem('ds_test_wholesale') === '1';
+      host.innerHTML = `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-radius:9px;margin-bottom:12px;background:${on ? 'rgba(245,158,11,.12)' : 'rgba(255,255,255,.04)'};border:1px solid ${on ? 'rgba(245,158,11,.3)' : 'rgba(255,255,255,.08)'};font-size:.78rem;">
+        <span style="color:${on ? 'var(--amber)' : 'var(--text-3)'};font-weight:700;">${on ? '⚠ TEST MODE — showing wholesale (1×) price, admin-only' : 'Admin: test-buy at wholesale price'}</span>
+        <button class="btn btn-sm ${on ? '' : 'btn-ghost'}" style="margin-left:auto;font-size:.7rem;" onclick="dsToggleTestWholesale()">${on ? 'Turn off — back to real prices' : 'Turn on wholesale pricing'}</button>
+      </div>`;
+    }
     // Show the retail price in Ghana cedis only.
     function dsPriceTag(usd, ghs) {
       return `<div style="text-align:right;">
@@ -13447,7 +13479,7 @@ document.addEventListener('keydown', function(e){
       if (_orig) {
         window.showPage = function(page, el) {
           const r = _orig.apply(this, arguments);
-          if (page === 'domain-store') { dsLoadTlds(); dsLoadMyDomains(); }
+          if (page === 'domain-store') { dsLoadTlds(); dsLoadMyDomains(); dsRenderTestWholesaleBanner(); }
           if (page === 'domain-cpanel') { dcpInit(); }
           return r;
         };
