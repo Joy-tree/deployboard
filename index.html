@@ -8964,10 +8964,9 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
       Domains
     </div>
-    <div class="nav-item" data-page="domain-store" onclick="showDomainStoreMaintenanceNotice()" style="display:flex;align-items:center;gap:10px;">
+    <div class="nav-item" data-page="domain-store" onclick="showPage('domain-store',this)" style="display:flex;align-items:center;gap:10px;">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
       Domain Store
-      <span class="badge" style="margin-left:auto;font-size:.62rem;padding:2px 7px;border-radius:20px;">Maintenance</span>
     </div>
     <div class="nav-item" data-page="domain-cpanel" onclick="showPage('domain-cpanel',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/><circle cx="12" cy="10" r="3"/></svg>
@@ -23055,12 +23054,6 @@ window.addEventListener('popstate', function(e) {
     showPage(id, null, true /* skipPush */);
   }
 });
-
-// Domain Store is temporarily locked for maintenance -- clicking it in the
-// sidebar shows this notice instead of navigating into the page itself.
-function showDomainStoreMaintenanceNotice(){
-  toast('Domain Store is temporarily locked for maintenance. Check back soon — existing domains and DNS settings are unaffected.', 'info', 6000);
-}
 
 function showPage(id, navEl, _skipPush) {
   if (id === 'emails' && !isAdminEmail()) {
