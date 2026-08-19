@@ -12921,7 +12921,7 @@ document.addEventListener('keydown', function(e){
     async function dsLoadTlds(force = false) {
       if (dsTldsLoaded && !force) return dsAllTlds;
       try {
-        const res = await apiFetch(API + '/api/domains/tlds?limit=100');
+        const res = await apiFetch(API + '/api/domains/tlds?limit=600');
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || 'Could not load Joytree extensions');
         dsAllTlds = dsMergeTlds(data.tlds || []);

@@ -6194,7 +6194,7 @@ app.get('/api/domains/debug', async (req, res) => {
 
 app.get('/api/domains/tlds', requireAuth, async (req, res) => {
   try {
-    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 100, 1), 100);
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 100, 1), 600);
 
     if (!NAMESILO_API_KEY) {
       return res.json({ tlds: DOMAIN_STORE_FALLBACK_TLDS.slice(0, limit), demo: true });
