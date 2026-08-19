@@ -12812,8 +12812,10 @@ document.addEventListener('keydown', function(e){
     .ds-avail-taken { opacity:.55; }
     .ds-domain-row { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.06); flex-wrap:wrap; }
     .ds-domain-row:last-child { border-bottom:none; }
-    .ds-dns-record-row { display:grid; grid-template-columns:60px 1fr 1fr 60px 36px; gap:6px; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:.72rem; }
+    .ds-dns-record-row { display:grid; grid-template-columns:52px 1fr 1fr 36px; gap:6px; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:.72rem; }
     .ds-dns-record-row:last-child { border-bottom:none; }
+    .ds-dns-record-row .ds-ttl-col { display:none; }
+    @media(min-width:520px){ .ds-dns-record-row { grid-template-columns:52px 1fr 1fr 52px 36px; } .ds-dns-record-row .ds-ttl-col { display:block; } }
     </style>
 
     <!-- ════════ DOMAIN STORE JAVASCRIPT ════════ -->
@@ -13279,7 +13281,8 @@ document.addEventListener('keydown', function(e){
             ${failed ? `<button class="btn btn-sm btn-primary" id="dsRowRetry-${dsEscapeHtml(d.paystackRef)}" style="font-size:.7rem;white-space:nowrap;" onclick="dsRetryRegistration('${dsEscapeHtml(d.paystackRef)}', this)">Retry Registration</button>` : ''}
             ${unattached ? `<button class="btn btn-sm" style="font-size:.7rem;white-space:nowrap;background:var(--amber);border-color:var(--amber);color:#1a1a1a;font-weight:700;" onclick="dsGoAttachDomain('${d.domain}')">Attach</button>` : ''}
             ${!failed ? `<button class="btn btn-sm btn-ghost" onclick="dsOpenDnsManager('${d.domain}')" style="font-size:.7rem;white-space:nowrap;">DNS</button>
-            <button class="btn btn-sm btn-ghost" onclick="dsRenewDomain('${d.domain}')" style="font-size:.7rem;">Renew</button>` : ''}
+            <button class="btn btn-sm btn-ghost" onclick="dsRenewDomain('${d.domain}')" style="font-size:.7rem;">Renew</button>
+            <button class="btn btn-sm btn-ghost" onclick="dsGoToCpanel('${d.domain}')" style="font-size:.7rem;white-space:nowrap;color:var(--primary);border-color:rgba(16,185,129,0.3);" title="Open Domain cPanel">⚙ cPanel</button>` : ''}
           </div>
         `; }).join('');
       } catch(e) {
@@ -13293,6 +13296,12 @@ document.addEventListener('keydown', function(e){
     // instead of leaving the customer to discover the Domain cPanel page
     // and pick the right domain out of a dropdown themselves.
     function dsGoAttachDomain(domain) {
+      window._dcpPendingSelectDomain = domain;
+      showPage('domain-cpanel');
+    }
+
+    function dsGoToCpanel(domain) {
+      // Pre-select the domain in cPanel so the user lands straight on it
       window._dcpPendingSelectDomain = domain;
       showPage('domain-cpanel');
     }
@@ -13329,13 +13338,13 @@ document.addEventListener('keydown', function(e){
         }
         el.innerHTML = `
           <div class="ds-dns-record-row" style="font-size:.65rem;color:var(--text-3);font-weight:600;border-bottom:1px solid rgba(255,255,255,0.08);">
-            <div>TYPE</div><div>HOST</div><div>VALUE</div><div>TTL</div><div></div>
+            <div>TYPE</div><div>HOST</div><div>VALUE</div><div class="ds-ttl-col">TTL</div><div></div>
           </div>
           ${records.map(r => `<div class="ds-dns-record-row">
             <div style="font-family:var(--font-mono);color:var(--cyan);">${r.type}</div>
             <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.host}</div>
             <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2);">${r.value}</div>
-            <div style="color:var(--text-3);">${r.ttl}</div>
+            <div class="ds-ttl-col" style="color:var(--text-3);">${r.ttl}</div>
             <div><button onclick="dsDnsDeleteRecord('${domain}','${r.id}')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.15);border-radius:6px;padding:3px 7px;color:#f87171;cursor:pointer;font-size:.68rem;">✕</button></div>
           </div>`).join('')}`;
       } catch(e) {
