@@ -6268,7 +6268,12 @@ app.get('/api/domains/check', requireAuth, async (req, res) => {
           domainList.forEach(domain => {
             const tld = domain.split('.').slice(1).join('.');
             const row = byTld.get(tld);
-            if (row) priceMap[domain] = { register: row.register, renew: row.renew };
+            if (row && Number.isFinite(row.register) && row.register > 0) {
+              priceMap[domain] = { register: row.register, renew: row.renew };
+            }
+            // If no price row: leave priceMap[domain] undefined so the frontend
+            // knows this TLD's price is genuinely unknown (not a cheap fallback).
+            // This prevents users registering premium TLDs like .autos at wrong prices.
           });
           return priceMap;
         } catch(e) {

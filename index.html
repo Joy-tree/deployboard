@@ -12821,7 +12821,7 @@ document.addEventListener('keydown', function(e){
     <!-- ════════ DOMAIN STORE JAVASCRIPT ════════ -->
     <script>
     // ── Config ───────────────────────────────────────────────────────────
-    const DS_EXCHANGE_RATE = 12;   // GHS per USD — update when rate shifts
+    const DS_EXCHANGE_RATE = 16;   // GHS per USD — update when rate shifts (USD/GHS ~16 as of 2026)
     // Fallback prices only used if live pricing doesn't return a price
     const DS_TLD_FALLBACK = {
       '.com':  { usd: 9.95,  renew: 11.99 },
@@ -13008,10 +13008,22 @@ document.addEventListener('keydown', function(e){
           const tld = '.' + domain.split('.').slice(1).join('.');
           const fallback = dsFallbackForTld(tld);
           const rowPrice = dsAllTlds.find(row => row.tld === tld);
-          const usdReg = Number.parseFloat(livePrices[domain]?.register ?? rowPrice?.register ?? fallback.register);
-          const usdRenew = Number.parseFloat(livePrices[domain]?.renew ?? rowPrice?.renew ?? fallback.renew);
-          const ghsReg = dsUsdToGhs(usdReg);
-          const ghsRenew = dsUsdToGhs(usdRenew);
+          // IMPORTANT: Only use live price from server — never silently fall back
+          // to a cheap generic price for domains the TLD list doesn't cover.
+          // If NameSilo didn't return a price for this specific domain/TLD,
+          // hasLivePrice stays false and we show "Price unavailable" instead of
+          // a misleading low number (which caused users to pay too little and
+          // get a failed registration for expensive/premium TLDs like .autos).
+          const hasLivePrice = livePrices[domain]?.register != null;
+          const usdReg = hasLivePrice
+            ? Number.parseFloat(livePrices[domain].register)
+            : (rowPrice?.register != null ? Number.parseFloat(rowPrice.register) : null);
+          const usdRenew = hasLivePrice
+            ? Number.parseFloat(livePrices[domain].renew ?? livePrices[domain].register)
+            : (rowPrice?.renew != null ? Number.parseFloat(rowPrice.renew) : null);
+          const ghsReg = usdReg != null ? dsUsdToGhs(usdReg) : null;
+          const ghsRenew = usdRenew != null ? dsUsdToGhs(usdRenew) : null;
+          const priceKnown = ghsReg != null;
           const avail = availability[domain];
           const safeDomain = dsEscapeHtml(domain);
 
@@ -13020,10 +13032,13 @@ document.addEventListener('keydown', function(e){
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
               <div style="flex:1;min-width:0;">
                 <div style="font-weight:700;font-size:.88rem;color:var(--text);">${safeDomain}</div>
-                <div style="font-size:.7rem;color:var(--text-3);">Available · renews GHS ${ghsRenew}/yr</div>
+                <div style="font-size:.7rem;color:var(--text-3);">${priceKnown ? 'Available · renews GHS '+ghsRenew+'/yr' : 'Available · renewal price not available'}</div>
               </div>
-              ${dsPriceTag(usdReg, ghsReg)}
-              <button class="btn btn-primary" style="min-height:30px;font-size:.72rem;padding:0 12px;" onclick="dsOpenCheckout('${domain}',${ghsReg},${ghsRenew},${usdReg})">Register</button>
+              ${priceKnown ? dsPriceTag(usdReg, ghsReg) : '<div style="font-size:.72rem;color:var(--text-3);text-align:right;white-space:nowrap;">Price<br>unavailable</div>'}
+              ${priceKnown
+                ? `<button class="btn btn-primary" style="min-height:30px;font-size:.72rem;padding:0 12px;" onclick="dsOpenCheckout('${domain}',${ghsReg},${ghsRenew},${usdReg})">Register</button>`
+                : `<button class="btn btn-sm btn-ghost" style="font-size:.72rem;opacity:.55;cursor:not-allowed;" disabled title="Price not available from registry — this TLD may require special registration">N/A</button>`
+              }
             </div>`;
           } else if (avail === 'taken') {
             html += `<div class="ds-avail-row ds-avail-taken">
