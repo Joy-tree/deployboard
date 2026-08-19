@@ -1964,6 +1964,8 @@ tr:hover td { background: var(--bg-hover); }
 .badge-success .badge-dot { background:var(--green); }
 .badge-error { background:rgba(239,68,68,0.1); color:var(--red); border:1px solid rgba(239,68,68,0.2); }
 .badge-error .badge-dot { background:var(--red); }
+.badge-warning { background:rgba(245,158,11,0.12); color:var(--amber); border:1px solid rgba(245,158,11,0.25); }
+.badge-warning .badge-dot { background:var(--amber); }
 .badge-building { background:rgba(16,185,129,0.1); color:var(--green); border:1px solid rgba(16,185,129,0.2); }
 .badge-building .badge-dot { background:var(--green); animation:pulse 1s infinite; }
 .badge-pending { background:rgba(245,158,11,0.1); color:var(--amber); border:1px solid rgba(245,158,11,0.2); }
@@ -13159,7 +13161,11 @@ document.addEventListener('keydown', function(e){
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && data.ok) {
-          toast('Domain registered! DNS is being configured.', 'success', 7000);
+          if (projectId) {
+            toast('Domain registered! DNS is being configured.', 'success', 7000);
+          } else {
+            toast('Domain registered! It isn\'t pointed at a project yet — attach it anytime from Domains.', 'success', 8000);
+          }
           dsLoadMyDomains();
           if (projectId) {
             await apiFetch(API + '/api/domains/attach', {
@@ -13254,21 +13260,36 @@ document.addEventListener('keydown', function(e){
           el.innerHTML = '<div style="text-align:center;padding:28px;color:var(--text-3);font-size:.82rem;">No domains registered yet. Search above to get started.</div>';
           return;
         }
-        el.innerHTML = list.map(d => `
+        el.innerHTML = list.map(d => {
+          const unattached = d.status === 'active' && !d.projectId;
+          const badgeClass = unattached ? 'badge-warning' : (d.status === 'active' ? 'badge-success' : 'badge-error');
+          const badgeLabel = unattached ? 'Not attached' : (d.status || 'unknown');
+          return `
           <div class="ds-domain-row">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${d.status==='active'?'var(--primary)':'#f87171'}" stroke-width="2" width="15" height="15" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             <div style="flex:1;min-width:0;">
               <div style="font-weight:700;font-size:.88rem;color:var(--text);">${d.domain}</div>
-              <div style="font-size:.7rem;color:var(--text-3);">Expires: ${d.expiresAt ? new Date(d.expiresAt).toLocaleDateString() : '—'} · ${d.projectId ? '📎 '+d.projectName : 'No project'}</div>
+              <div style="font-size:.7rem;color:${unattached ? 'var(--amber)' : 'var(--text-3)'};">Expires: ${d.expiresAt ? new Date(d.expiresAt).toLocaleDateString() : '—'} · ${d.projectId ? '📎 '+d.projectName : '⚠ Not pointed at a project yet'}</div>
             </div>
-            <span class="badge ${d.status==='active'?'badge-success':'badge-error'}" style="flex-shrink:0;"><span class="badge-dot"></span>${d.status||'unknown'}</span>
+            <span class="badge ${badgeClass}" style="flex-shrink:0;"><span class="badge-dot"></span>${badgeLabel}</span>
+            ${unattached ? `<button class="btn btn-sm" style="font-size:.7rem;white-space:nowrap;background:var(--amber);border-color:var(--amber);color:#1a1a1a;font-weight:700;" onclick="dsGoAttachDomain('${d.domain}')">Attach</button>` : ''}
             <button class="btn btn-sm btn-ghost" onclick="dsOpenDnsManager('${d.domain}')" style="font-size:.7rem;white-space:nowrap;">DNS</button>
             <button class="btn btn-sm btn-ghost" onclick="dsRenewDomain('${d.domain}')" style="font-size:.7rem;">Renew</button>
           </div>
-        `).join('');
+        `; }).join('');
       } catch(e) {
         el.innerHTML = '<div style="color:#f87171;font-size:.8rem;padding:12px 0;">Could not load domains.</div>';
       }
+    }
+
+    // Jump straight to a specific domain in the existing Domain cPanel
+    // attach flow (dcpAttachProject) — used by the "Attach" button on an
+    // unattached domain row so there's an actual path back to fix it,
+    // instead of leaving the customer to discover the Domain cPanel page
+    // and pick the right domain out of a dropdown themselves.
+    function dsGoAttachDomain(domain) {
+      window._dcpPendingSelectDomain = domain;
+      showPage('domain-cpanel');
     }
 
     async function dsOpenDnsManager(domain) {
@@ -13716,8 +13737,16 @@ document.addEventListener('keydown', function(e){
           }
           noD.style.display = 'none';
           dcpRenderItems(dcpDomainList);
-          // Auto-select first domain
-          if (dcpDomainList.length === 1) {
+          // Auto-select first domain, OR a specific one requested by whoever
+          // navigated here (e.g. the "Attach" button on an unattached
+          // domain row in the Domain Store list) — regardless of how many
+          // domains are on the account.
+          if (window._dcpPendingSelectDomain && dcpDomainList.some(d => d.domain === window._dcpPendingSelectDomain)) {
+            const target = window._dcpPendingSelectDomain;
+            window._dcpPendingSelectDomain = null;
+            dcpSetSelectValue(target, target);
+            dcpSelectDomain(target);
+          } else if (dcpDomainList.length === 1) {
             dcpSetSelectValue(dcpDomainList[0].domain, dcpDomainList[0].domain);
             dcpSelectDomain(dcpDomainList[0].domain);
           }
