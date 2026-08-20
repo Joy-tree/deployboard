@@ -12752,14 +12752,14 @@ document.addEventListener('keydown', function(e){
         <div style="border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px;background:#111;">
           <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:10px;">Add DNS Record</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-            <select id="dsDnsType" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;">
+            <select id="dsDnsType" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;min-width:0;width:100%;">
               <option>A</option><option>AAAA</option><option>CNAME</option><option>MX</option><option>TXT</option><option>NS</option>
             </select>
-            <input id="dsDnsHost" type="text" placeholder="Host (@ for root)" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;outline:none;">
+            <input id="dsDnsHost" type="text" placeholder="Host (@ for root)" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;outline:none;min-width:0;width:100%;">
           </div>
           <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:10px;">
-            <input id="dsDnsValue" type="text" placeholder="Value / Points to" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;outline:none;">
-            <input id="dsDnsTtl" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="TTL (3600)" value="3600" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;outline:none;">
+            <input id="dsDnsValue" type="text" placeholder="Value / Points to" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;outline:none;min-width:0;width:100%;">
+            <input id="dsDnsTtl" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="TTL (3600)" value="3600" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;outline:none;min-width:0;width:100%;">
           </div>
           <button class="btn btn-primary" onclick="dsDnsAddRecord()" style="width:100%;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -13642,14 +13642,14 @@ document.addEventListener('keydown', function(e){
           <div style="border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;background:#0d0d0d;">
             <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:12px;">Add DNS Record</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-              <select id="dcpDnsType" style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;">
+              <select id="dcpDnsType" style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;min-width:0;width:100%;">
                 <option>A</option><option>AAAA</option><option>CNAME</option><option>MX</option><option>TXT</option><option>NS</option>
               </select>
-              <input id="dcpDnsHost" type="text" placeholder="Host  (@ for root)" style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;outline:none;">
+              <input id="dcpDnsHost" type="text" placeholder="Host  (@ for root)" style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;outline:none;min-width:0;width:100%;">
             </div>
             <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px;">
-              <input id="dcpDnsValue" type="text" placeholder="Value / Points to" style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;outline:none;">
-              <input id="dcpDnsTtl" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="TTL" value="3600" style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;outline:none;">
+              <input id="dcpDnsValue" type="text" placeholder="Value / Points to" style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;outline:none;min-width:0;width:100%;">
+              <input id="dcpDnsTtl" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="TTL" value="3600" style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;outline:none;min-width:0;width:100%;">
             </div>
             <button class="btn btn-primary" onclick="dcpAddDns()" style="width:100%;" id="dcpDnsAddBtn">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -16072,7 +16072,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 .qstudio-ct-field{margin-bottom:16px;}
 .qstudio-ct-label{font-size:.72rem;font-weight:700;color:#94a3b8;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;}
 .qstudio-ct-input{
-  width:100%;padding:11px 14px;
+  width:100%;min-width:0;padding:11px 14px;
   background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.18);border-radius:10px;
   color:var(--text);font-size:.84rem;font-family:var(--font-mono);
   transition:border-color .15s;
