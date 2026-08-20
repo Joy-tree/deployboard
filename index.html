@@ -13205,7 +13205,7 @@ document.addEventListener('keydown', function(e){
           }
         } else if (data.paymentTaken) {
           // Payment went through but NameSilo failed — show persistent recovery UI
-          dsShowRegistrationFailure(domain, paystackRef, data.error || 'NameSilo registration failed');
+          dsShowRegistrationFailure(domain, paystackRef, data.error || 'Joytree registration failed');
         } else {
           throw new Error(data.error || 'Registration failed');
         }
@@ -13292,7 +13292,7 @@ document.addEventListener('keydown', function(e){
           const unattached = d.status === 'active' && !d.projectId;
           const failed = d.status === 'failed_namesilo';
           const badgeClass = unattached ? 'badge-warning' : (d.status === 'active' ? 'badge-success' : 'badge-error');
-          const badgeLabel = unattached ? 'Not attached' : (d.status || 'unknown');
+          const badgeLabel = unattached ? 'Not attached' : (failed ? 'Registration failed' : (d.status || 'unknown'));
           return `
           <div class="ds-domain-row">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${d.status==='active'?'var(--primary)':'#f87171'}" stroke-width="2" width="15" height="15" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
@@ -13572,7 +13572,7 @@ document.addEventListener('keydown', function(e){
             <div style="width:24px;height:24px;border-radius:50%;background:var(--primary);color:#000;font-size:.72rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
             <div style="font-size:.9rem;font-weight:800;color:var(--text);">Point Nameservers to Cloudflare</div>
           </div>
-          <div style="font-size:.8rem;color:var(--text-2);line-height:1.65;margin-bottom:16px;padding-left:34px;">Set these two nameservers at your registrar (NameSilo) to enable Cloudflare DNS, free SSL, and connect your domain to Joytree hosting.</div>
+          <div style="font-size:.8rem;color:var(--text-2);line-height:1.65;margin-bottom:16px;padding-left:34px;">Set these two nameservers at your registrar (Joytree) to enable Cloudflare DNS, free SSL, and connect your domain to Joytree hosting.</div>
 
           <!-- NS boxes -->
           <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;padding-left:34px;">
@@ -13593,7 +13593,7 @@ document.addEventListener('keydown', function(e){
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
               Apply Nameservers at Registrar
             </button>
-            <div style="font-size:.7rem;color:var(--text-3);margin-top:8px;">This automatically updates the nameservers for your domain via NameSilo. DNS propagation may take up to 24 hours.</div>
+            <div style="font-size:.7rem;color:var(--text-3);margin-top:8px;">This automatically updates the nameservers for your domain via Joytree. DNS propagation may take up to 24 hours.</div>
           </div>
         </div>
 
@@ -23597,6 +23597,16 @@ function closeLandingDrawer() {
 // TOAST
 // ══════════════════════════════════════════════════════════════════
 function toast(msg, type='info', duration=3500, action = null) {
+  // [FIX] Defensive rebrand net: this app is a wrapper around several
+  // backend providers (NameSilo for domains, etc.) that customers never
+  // interact with directly, so any of their raw error text reaching a
+  // toast should read as Joytree's own rather than exposing the vendor
+  // name. Server-side messages are already rebranded at the source;
+  // this just guarantees the same for any other/future path a
+  // provider's error text might reach this shared toast function.
+  if (typeof msg === 'string' && /namesilo/i.test(msg)) {
+    msg = msg.replace(/namesilo/gi, 'Joytree');
+  }
   const icons = {
     success:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     error:  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',

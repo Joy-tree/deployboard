@@ -6032,6 +6032,18 @@ app.get('/api/domains/transfer', attachAuthIfPresent, async (req, res) => {
 const NAMESILO_API_KEY = process.env.NAMESILO_API_KEY || '';
 const NAMESILO_BASE    = 'https://www.namesilo.com/api';
 
+// [FIX] NameSilo is our backend registrar, but every user-facing string
+// (error messages, toasts, instructional copy) should read as Joytree's
+// own -- customers never interact with NameSilo directly, so seeing its
+// name in an error is confusing and undercuts the "this is my platform"
+// feel. This wraps any string that might contain upstream error text
+// (which can itself mention "NameSilo", e.g. "not enough available
+// NameSilo account funds") so it's rebranded no matter where it
+// originated, instead of hunting down every literal template string.
+function debrand(str) {
+  return String(str == null ? '' : str).replace(/namesilo/gi, 'Joytree');
+}
+
 async function namesiloCall(operation, params = {}) {
   const qs = new URLSearchParams({ version: '1', type: 'json', key: NAMESILO_API_KEY, ...params });
   const url = `${NAMESILO_BASE}/${operation}?${qs}`;
@@ -6040,7 +6052,7 @@ async function namesiloCall(operation, params = {}) {
   try {
     const r = await fetch(url, { signal: controller.signal });
     const json = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(`NameSilo HTTP ${r.status}`);
+    if (!r.ok) throw new Error(`Joytree domain service HTTP ${r.status}`);
 
     // NameSilo JSON is usually { reply: {...} }, but some responses are
     // double-wrapped as { reply: { reply: {...} } }. Always unwrap to the
@@ -6091,7 +6103,7 @@ function namesiloAvailabilitySets(data) {
 function namesiloAvailabilityStatus(data, domain) {
   const code = namesiloCode(data);
   if (code && code !== 300) {
-    throw new Error(`NameSilo error ${code}: ${data?.detail || 'Availability check failed'}`);
+    throw new Error(debrand(`Joytree error ${code}: ${data?.detail || 'Availability check failed'}`));
   }
 
   const wanted = String(domain || '').toLowerCase();
@@ -6345,7 +6357,7 @@ app.post('/api/domains/register', requireAuth, async (req, res) => {
         });
         const c = Number(regData?.code || 0);
         if (c === 300 || c === 302) { namesiloErr = null; break; }
-        namesiloErr = `NameSilo error ${c}: ${regData?.detail || 'Registration failed'}`;
+        namesiloErr = debrand(`Joytree error ${c}: ${regData?.detail || 'Registration failed'}`);
         if (attempt < 2) await new Promise(r => setTimeout(r, 3000)); // wait 3s before retry
       } catch(e) {
         namesiloErr = e.message;
@@ -6398,7 +6410,7 @@ app.post('/api/domains/register/retry', requireAuth, async (req, res) => {
       return res.status(400).json({ error: `Cannot retry a domain with status: ${rec.status}` });
     }
 
-    if (!NAMESILO_API_KEY) return res.status(503).json({ error: 'NameSilo not configured' });
+    if (!NAMESILO_API_KEY) return res.status(503).json({ error: 'Joytree domain service not configured' });
 
     const contactRes = await namesiloCall('contactList', {});
     const contactId  = contactRes?.contact?.[0]?.contact_id || '';
@@ -6407,7 +6419,7 @@ app.post('/api/domains/register/retry', requireAuth, async (req, res) => {
     });
     const code = Number(regData?.code || 0);
     if (code !== 300 && code !== 302) {
-      throw new Error(`NameSilo error ${code}: ${regData?.detail || 'Retry failed'}`);
+      throw new Error(debrand(`Joytree error ${code}: ${regData?.detail || 'Retry failed'}`));
     }
     rec.status = 'active'; rec.namesiloCode = code; rec.retriedAt = new Date().toISOString();
     delete rec.failReason; delete rec.failedAt;
@@ -6725,7 +6737,7 @@ app.post('/api/domains/dns/add', requireAuth, async (req, res) => {
       domain, rrtype: type, rrhost: host, rrvalue: value, rrttl: ttl
     });
     const code = Number(data?.code || 0);
-    if (code !== 300) throw new Error(`NameSilo error ${code}: ${data?.detail || 'Add failed'}`);
+    if (code !== 300) throw new Error(debrand(`Joytree error ${code}: ${data?.detail || 'Add failed'}`));
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -6740,7 +6752,7 @@ app.post('/api/domains/dns/delete', requireAuth, async (req, res) => {
 
     const data = await namesiloCall('dnsDeleteRecord', { domain, rrid: recordId });
     const code = Number(data?.code || 0);
-    if (code !== 300) throw new Error(`NameSilo error ${code}: ${data?.detail || 'Delete failed'}`);
+    if (code !== 300) throw new Error(debrand(`Joytree error ${code}: ${data?.detail || 'Delete failed'}`));
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -6842,7 +6854,7 @@ app.post('/api/domains/nameservers', requireAuth, async (req, res) => {
     nameservers.forEach((ns, i) => { params[`ns${i+1}`] = ns; });
     const data = await namesiloCall('changeNameServers', params);
     const code = Number(data?.code || 0);
-    if (code !== 300) throw new Error(`NameSilo error ${code}: ${data?.detail || 'NS update failed'}`);
+    if (code !== 300) throw new Error(debrand(`Joytree error ${code}: ${data?.detail || 'NS update failed'}`));
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
