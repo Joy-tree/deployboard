@@ -1974,6 +1974,25 @@ tr:hover td { background: var(--bg-hover); }
 .badge-error .badge-dot { background:var(--red); }
 .badge-warning { background:rgba(245,158,11,0.12); color:var(--amber); border:1px solid rgba(245,158,11,0.25); }
 .badge-warning .badge-dot { background:var(--amber); }
+.dcp-ns-mode-btn {
+  display:flex; align-items:center; gap:6px;
+  background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+  border-radius:9px; padding:8px 14px; color:var(--text-2);
+  font-size:.76rem; font-weight:700; cursor:pointer; transition:all .15s;
+}
+.dcp-ns-mode-btn.active {
+  background:rgba(16,185,129,0.12); border-color:rgba(16,185,129,0.4); color:var(--primary);
+}
+.dcp-ns-input-row {
+  display:flex; align-items:center; gap:8px;
+  background:#0d0d0d; border:1px solid rgba(16,185,129,0.2); border-radius:10px; padding:8px 10px;
+}
+.dcp-ns-input-row input {
+  flex:1; min-width:0; background:transparent; border:none; outline:none;
+  font-family:monospace; font-size:.85rem; color:var(--text);
+}
+.dcp-ns-input-row input:disabled { color:var(--text); opacity:0.85; cursor:default; }
+.dcp-ns-input-row input::placeholder { color:var(--text-3); }
 .badge-building { background:rgba(16,185,129,0.1); color:var(--green); border:1px solid rgba(16,185,129,0.2); }
 .badge-building .badge-dot { background:var(--green); animation:pulse 1s infinite; }
 .badge-pending { background:rgba(245,158,11,0.1); color:var(--amber); border:1px solid rgba(245,158,11,0.2); }
@@ -13574,21 +13593,32 @@ document.addEventListener('keydown', function(e){
         <div style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;background:#111;padding:20px;margin-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
             <div style="width:24px;height:24px;border-radius:50%;background:var(--primary);color:#000;font-size:.72rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
-            <div style="font-size:.9rem;font-weight:800;color:var(--text);">Point Nameservers to Cloudflare</div>
+            <div style="font-size:.9rem;font-weight:800;color:var(--text);">Point Nameservers</div>
           </div>
-          <div style="font-size:.8rem;color:var(--text-2);line-height:1.65;margin-bottom:16px;padding-left:34px;">Set these two nameservers at your registrar (Joytree) to enable Cloudflare DNS, free SSL, and connect your domain to Joytree hosting.</div>
+          <div style="font-size:.8rem;color:var(--text-2);line-height:1.65;margin-bottom:14px;padding-left:34px;">Use Joytree's managed Cloudflare nameservers for free SSL and hosting in one click — or point to your own DNS provider (e.g. a Cloudflare zone you manage yourself) if you'd rather handle DNS elsewhere.</div>
 
-          <!-- NS boxes -->
-          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;padding-left:34px;">
-            <div style="display:flex;align-items:center;gap:8px;background:#0d0d0d;border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:12px 14px;">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:var(--primary);flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-              <span style="font-family:monospace;font-size:.85rem;color:var(--text);flex:1;" id="dcpNs1">loading...</span>
-              <button onclick="dcpCopy('dcpNs1')" style="background:rgba(255,255,255,0.06);border:none;border-radius:6px;padding:4px 8px;color:var(--text-2);cursor:pointer;font-size:.7rem;">Copy</button>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;background:#0d0d0d;border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:12px 14px;">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:var(--primary);flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-              <span style="font-family:monospace;font-size:.85rem;color:var(--text);flex:1;" id="dcpNs2">loading...</span>
-              <button onclick="dcpCopy('dcpNs2')" style="background:rgba(255,255,255,0.06);border:none;border-radius:6px;padding:4px 8px;color:var(--text-2);cursor:pointer;font-size:.7rem;">Copy</button>
+          <!-- Mode toggle -->
+          <div style="display:flex;gap:8px;padding-left:34px;margin-bottom:14px;">
+            <button class="dcp-ns-mode-btn active" id="dcpNsModeJoytreeBtn" onclick="dcpSetNsMode('joytree')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+              Joytree (recommended)
+            </button>
+            <button class="dcp-ns-mode-btn" id="dcpNsModeCustomBtn" onclick="dcpSetNsMode('custom')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M4 21V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12"/><path d="M9 21V12h6v9"/></svg>
+              Custom nameservers
+            </button>
+          </div>
+
+          <!-- NS boxes (editable when in custom mode) -->
+          <div id="dcpNsInputWrap" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;padding-left:34px;"></div>
+
+          <div id="dcpNsAddRow" style="padding-left:34px;margin-bottom:14px;display:none;">
+            <button onclick="dcpAddNsField()" style="background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.18);border-radius:8px;padding:7px 12px;color:var(--text-2);cursor:pointer;font-size:.74rem;">+ Add another nameserver</button>
+          </div>
+
+          <div id="dcpNsCustomWarning" style="display:none;padding-left:34px;margin-bottom:14px;">
+            <div style="font-size:.74rem;color:var(--amber);background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:10px 12px;line-height:1.5;">
+              ⚠ With custom nameservers, Joytree no longer manages DNS for this domain — Step 2's "Connect to Project" CNAME won't take effect unless you create matching DNS records with your own provider instead.
             </div>
           </div>
 
@@ -13706,6 +13736,60 @@ document.addEventListener('keydown', function(e){
 
       let dcpCurrentDomain = '';
       let dcpDomainList = [];
+      let dcpNsMode = 'joytree'; // 'joytree' | 'custom'
+      let dcpCustomNsValues = ['', '']; // preserved across mode switches so a user isn't retyping if they toggle back and forth
+
+      // ── Nameservers: mode toggle + editable custom fields ──────────
+      window.dcpSetNsMode = function(mode) {
+        // Before switching away from custom, remember whatever the person
+        // already typed so flipping back to it doesn't lose their work.
+        if (dcpNsMode === 'custom') {
+          dcpCustomNsValues = Array.from(document.querySelectorAll('#dcpNsInputWrap input')).map(i => i.value.trim());
+        }
+        dcpNsMode = mode;
+        document.getElementById('dcpNsModeJoytreeBtn').classList.toggle('active', mode === 'joytree');
+        document.getElementById('dcpNsModeCustomBtn').classList.toggle('active', mode === 'custom');
+        document.getElementById('dcpNsAddRow').style.display = mode === 'custom' ? 'block' : 'none';
+        document.getElementById('dcpNsCustomWarning').style.display = mode === 'custom' ? 'block' : 'none';
+        dcpRenderNsInputs();
+      };
+
+      function dcpNsRowHtml(value, index, editable) {
+        const removeBtn = (editable && index >= 2)
+          ? `<button onclick="dcpRemoveNsField(${index})" style="background:none;border:none;color:var(--text-3);cursor:pointer;font-size:1rem;line-height:1;padding:0 2px;">×</button>`
+          : '';
+        const copyBtn = !editable
+          ? `<button onclick="dcpCopy('dcpNsVal${index}')" style="background:rgba(255,255,255,0.06);border:none;border-radius:6px;padding:4px 8px;color:var(--text-2);cursor:pointer;font-size:.7rem;">Copy</button>`
+          : '';
+        return `
+          <div class="dcp-ns-input-row">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:var(--primary);flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <input id="dcpNsVal${index}" type="text" value="${(value || '').replace(/"/g,'&quot;')}" placeholder="ns${index+1}.yourprovider.com" ${editable ? '' : 'disabled'} spellcheck="false" autocomplete="off">
+            ${copyBtn}${removeBtn}
+          </div>`;
+      }
+
+      function dcpRenderNsInputs() {
+        const wrap = document.getElementById('dcpNsInputWrap');
+        if (!wrap) return;
+        if (dcpNsMode === 'joytree') {
+          wrap.innerHTML = DCP_NS.map((ns, i) => dcpNsRowHtml(ns, i, false)).join('');
+        } else {
+          const values = dcpCustomNsValues.length >= 2 ? dcpCustomNsValues : ['', ''];
+          wrap.innerHTML = values.map((v, i) => dcpNsRowHtml(v, i, true)).join('');
+        }
+      }
+
+      window.dcpAddNsField = function() {
+        dcpCustomNsValues = Array.from(document.querySelectorAll('#dcpNsInputWrap input')).map(i => i.value.trim());
+        dcpCustomNsValues.push('');
+        dcpRenderNsInputs();
+      };
+      window.dcpRemoveNsField = function(index) {
+        dcpCustomNsValues = Array.from(document.querySelectorAll('#dcpNsInputWrap input')).map(i => i.value.trim());
+        dcpCustomNsValues.splice(index, 1);
+        dcpRenderNsInputs();
+      };
 
       // ── Custom select helpers ─────────────────────────────────────
       window.dcpToggleSelect = function() {
@@ -13827,8 +13911,7 @@ document.addEventListener('keydown', function(e){
         document.getElementById('dcpLinkedProject').textContent = rec.projectName || 'None';
 
         // Nameservers
-        document.getElementById('dcpNs1').textContent = DCP_NS[0];
-        document.getElementById('dcpNs2').textContent = DCP_NS[1];
+        dcpSetNsMode('joytree');
 
         // Populate project dropdown
         await dcpLoadProjects(rec.projectId || '');
@@ -13898,13 +13981,25 @@ document.addEventListener('keydown', function(e){
       // ── Apply nameservers at registrar ────────────────────────────
       window.dcpApplyNameservers = async function() {
         if (!dcpCurrentDomain) return;
+        let nameservers;
+        if (dcpNsMode === 'joytree') {
+          nameservers = DCP_NS;
+        } else {
+          nameservers = Array.from(document.querySelectorAll('#dcpNsInputWrap input'))
+            .map(i => i.value.trim())
+            .filter(Boolean);
+          if (nameservers.length < 2) {
+            toast('Enter at least 2 nameservers.', 'error');
+            return;
+          }
+        }
         const btn = document.getElementById('dcpNsBtn');
         btn.disabled = true; btn.textContent = 'Applying…';
         try {
           const res = await apiFetch(API + '/api/domains/nameservers', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ domain: dcpCurrentDomain, nameservers: DCP_NS })
+            body: JSON.stringify({ domain: dcpCurrentDomain, nameservers })
           });
           const data = await res.json();
           if (!res.ok || !data.ok) throw new Error(data.error || 'Failed');
@@ -14035,7 +14130,8 @@ document.addEventListener('keydown', function(e){
       window.dcpCopy = function(elId) {
         const el = document.getElementById(elId);
         if (!el) return;
-        navigator.clipboard.writeText(el.textContent.trim()).then(() => toast('Copied!', 'success', 2000));
+        const text = ('value' in el) ? el.value.trim() : el.textContent.trim();
+        navigator.clipboard.writeText(text).then(() => toast('Copied!', 'success', 2000));
       };
 
     })();
