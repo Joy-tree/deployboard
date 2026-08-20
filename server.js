@@ -107,6 +107,21 @@ const io = new SocketIO(server, {
   pingTimeout: 60000
 });
 
+// [FIX] SECURITY: real-time events (deploy status, database status, etc.)
+// are scoped to a per-user room -- io.to('user:'+ownerId) -- everywhere in
+// this file via a `ownerId ? io.to('user:'+ownerId) : io` pattern. That
+// fallback to the bare `io` object was meant for "we don't know the owner
+// yet", but `io.emit(...)` broadcasts to EVERY connected socket on the
+// entire platform -- so any code path where the owner id came back empty
+// (a lookup miss, a local/non-Mongo fallback object, a race before the
+// owner was resolved, etc.) silently leaked that user's deploy/database
+// status, including error messages, to every other logged-in user. This
+// is what caused one account to see another account's "deployment
+// failed" notification. NOOP_EMITTER replaces that fallback: if we don't
+// definitively know who owns this event, nobody sees it, instead of
+// everybody seeing it.
+const NOOP_EMITTER = { emit: () => {} };
+
 const PORT        = process.env.PORT        || 3001;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/deployboard';
 // [FEATURE] Push subscriptions live in their own dedicated database --
@@ -11954,7 +11969,7 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
   try { await deployment.save(); } catch(e) {}
 
   const _ownerRoomId = String(project?.ownerUserId || req.user?._id || req.user?.id || '');
-  const _emitTarget = _ownerRoomId ? io.to('user:' + _ownerRoomId) : io;
+  const _emitTarget = _ownerRoomId ? io.to('user:' + _ownerRoomId) : NOOP_EMITTER;
   // Pass ownerRoomId into autodeploy status emits so they are also scoped
   const _boundEmitAutoDeployStatus = (pid, st, ex={}) => emitAutoDeployStatus(pid, st, ex, _ownerRoomId);
   const emit = (event, data) => _emitTarget.emit(event, { deployId, projectId: String(project._id), source: deploySource, triggerSha, ...data });
@@ -12453,7 +12468,7 @@ app.post('/api/deploy/:deployId/stop', requireAuth, async (req, res) => {
     if (deployId) requestBuildStop(deployId);
 
     const _stopOwner = ownerUserId || String(req.user?._id || req.user?.id || '');
-    const _stopTarget = _stopOwner ? io.to('user:' + _stopOwner) : io;
+    const _stopTarget = _stopOwner ? io.to('user:' + _stopOwner) : NOOP_EMITTER;
     _stopTarget.emit('build:log', { deployId, projectId, line: '\x1b[33m[Joytree]\x1b[0m Stop requested by user — container killed.\x1b[0m' });
     _stopTarget.emit('build:done', { deployId, projectId, status: 'canceled' });
     res.json({ ok: true, message: 'Stop requested — build container terminated.' });
@@ -13081,7 +13096,7 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
   // Async build
   const buildStart = Date.now();
   const _uploadOwnerRoomId = String(req.user?._id || req.user?.id || '');
-  const _uploadEmitTarget = _uploadOwnerRoomId ? io.to('user:' + _uploadOwnerRoomId) : io;
+  const _uploadEmitTarget = _uploadOwnerRoomId ? io.to('user:' + _uploadOwnerRoomId) : NOOP_EMITTER;
   const emit = (event, data) => _uploadEmitTarget.emit(event, { deployId: finalDeployId, projectId: cleanSub, source: 'upload', ...data });
 
   // Helper to persist deployment status to Firebase
@@ -13506,7 +13521,7 @@ app.post('/api/projects/:id/redeploy-upload', requireAuth, async (req, res) => {
 
   const buildStart = Date.now();
   const _redeployOwnerRoomId = String(req.user?._id || req.user?.id || '');
-  const _redeployTarget = _redeployOwnerRoomId ? io.to('user:' + _redeployOwnerRoomId) : io;
+  const _redeployTarget = _redeployOwnerRoomId ? io.to('user:' + _redeployOwnerRoomId) : NOOP_EMITTER;
   const emit = (event, data) => _redeployTarget.emit(event, { deployId: finalDeployId, projectId: cleanSub, source: 'upload', ...data });
 
   async function saveRedeployStatus(status, extra = {}, projectPatch = {}) {
@@ -14746,7 +14761,7 @@ app.post('/api/databases/:id/start', requireAuth, async (req, res) => {
     db.status = 'running'; db.updatedAt = new Date().toISOString();
     await persistDb(req.user, db);
     const _dbStartUserId = String(req.user?._id || req.user?.id || '');
-    (_dbStartUserId ? io.to('user:' + _dbStartUserId) : io).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'running', connStr: db.connStr || db.connectionString || '' });
+    (_dbStartUserId ? io.to('user:' + _dbStartUserId) : NOOP_EMITTER).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'running', connStr: db.connStr || db.connectionString || '' });
     addActivity('database', `▶ Database "${db.name}" started`);
     res.json({ ok: true, status: 'running' });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -14764,7 +14779,7 @@ app.post('/api/databases/:id/stop', requireAuth, async (req, res) => {
     db.status = 'stopped'; db.updatedAt = new Date().toISOString();
     await persistDb(req.user, db);
     const _dbStopUserId = String(req.user?._id || req.user?.id || '');
-    (_dbStopUserId ? io.to('user:' + _dbStopUserId) : io).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'stopped' });
+    (_dbStopUserId ? io.to('user:' + _dbStopUserId) : NOOP_EMITTER).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'stopped' });
     addActivity('database', `⏹ Database "${db.name}" stopped`);
     res.json({ ok: true, status: 'stopped' });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -14782,7 +14797,7 @@ app.post('/api/databases/:id/restart', requireAuth, async (req, res) => {
     db.status = 'running'; db.updatedAt = new Date().toISOString();
     await persistDb(req.user, db);
     const _dbRestartUserId = String(req.user?._id || req.user?.id || '');
-    (_dbRestartUserId ? io.to('user:' + _dbRestartUserId) : io).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'running', connStr: db.connStr || db.connectionString || '' });
+    (_dbRestartUserId ? io.to('user:' + _dbRestartUserId) : NOOP_EMITTER).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'running', connStr: db.connStr || db.connectionString || '' });
     addActivity('database', `↺ Database "${db.name}" restarted`);
     res.json({ ok: true, status: 'running' });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -14845,7 +14860,7 @@ app.post('/api/databases/:id/recreate', requireAuth, async (req, res) => {
     db.status = 'provisioning'; db.updatedAt = new Date().toISOString();
     await persistDb(req.user, db);
     const _dbRecreateUserId = String(req.user?._id || req.user?.id || '');
-    (_dbRecreateUserId ? io.to('user:' + _dbRecreateUserId) : io).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'provisioning' });
+    (_dbRecreateUserId ? io.to('user:' + _dbRecreateUserId) : NOOP_EMITTER).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'provisioning' });
 
     res.json({ ok: true, status: 'provisioning' });
 
@@ -14862,7 +14877,7 @@ app.post('/api/databases/:id/recreate', requireAuth, async (req, res) => {
         await persistDb(req.user, updated);
 
         const extConn = externalDbConnStr(updated);
-        (_dbRecreateUserId ? io.to('user:' + _dbRecreateUserId) : io).emit('db:status', {
+        (_dbRecreateUserId ? io.to('user:' + _dbRecreateUserId) : NOOP_EMITTER).emit('db:status', {
           id: db.id, name: db.name, engine: db.engine, status: 'running', connStr: extConn || realConn
         });
         // [FIX] hostPort can legitimately differ from oldHostPort now that
@@ -14878,7 +14893,7 @@ app.post('/api/databases/:id/recreate', requireAuth, async (req, res) => {
       } catch (e) {
         const updated = { ...db, status: 'error', updatedAt: new Date().toISOString() };
         await persistDb(req.user, updated).catch(() => {});
-        (_dbRecreateUserId ? io.to('user:' + _dbRecreateUserId) : io).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'error' });
+        (_dbRecreateUserId ? io.to('user:' + _dbRecreateUserId) : NOOP_EMITTER).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'error' });
         addActivity('database', `❌ Failed to recreate database "${db.name}": ${e.message}`);
         console.error(`[DB] Recreate failed for "${db.name}":`, e.message);
       }
@@ -14932,7 +14947,7 @@ app.post('/api/databases/:id/memory', requireAuth, async (req, res) => {
     db.updatedAt = new Date().toISOString();
     await persistDb(req.user, db);
     const _uid = String(req.user?._id || req.user?.id || '');
-    (_uid ? io.to('user:' + _uid) : io).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'provisioning' });
+    (_uid ? io.to('user:' + _uid) : NOOP_EMITTER).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'provisioning' });
 
     res.json({ ok: true, status: 'provisioning', memory: requested });
 
@@ -14953,7 +14968,7 @@ app.post('/api/databases/:id/memory', requireAuth, async (req, res) => {
         await persistDb(req.user, updated);
 
         const extConn = externalDbConnStr(updated);
-        (_uid ? io.to('user:' + _uid) : io).emit('db:status', {
+        (_uid ? io.to('user:' + _uid) : NOOP_EMITTER).emit('db:status', {
           id: db.id, name: db.name, engine: db.engine, status: 'running', connStr: extConn || realConn
         });
         addActivity('database', `✅ Database "${db.name}" resized to ${requested} RAM and back online on port ${hostPort}`);
@@ -14961,7 +14976,7 @@ app.post('/api/databases/:id/memory', requireAuth, async (req, res) => {
       } catch (e) {
         const updated = { ...db, status: 'error', updatedAt: new Date().toISOString() };
         await persistDb(req.user, updated).catch(() => {});
-        (_uid ? io.to('user:' + _uid) : io).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'error' });
+        (_uid ? io.to('user:' + _uid) : NOOP_EMITTER).emit('db:status', { id: db.id, name: db.name, engine: db.engine, status: 'error' });
         addActivity('database', `❌ Failed to resize database "${db.name}": ${e.message}`);
         console.error(`[DB] Memory resize failed for "${db.name}":`, e.message);
       }
@@ -14991,7 +15006,7 @@ app.post('/api/databases/:id/delete', requireAuth, async (req, res) => {
     // Remove from Firebase, local cache, and Mongo
     await removeDb(req.user, req.params.id);
     const _dbDelUserId = String(req.user?._id || req.user?.id || '');
-    (_dbDelUserId ? io.to('user:' + _dbDelUserId) : io).emit('db:deleted', { id: req.params.id });
+    (_dbDelUserId ? io.to('user:' + _dbDelUserId) : NOOP_EMITTER).emit('db:deleted', { id: req.params.id });
     addActivity('database', `🗑 Database "${db.name}" deleted`);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -18043,13 +18058,21 @@ function emitAutoDeployStatus(projectId, status, extra = {}, ownerUserId = '') {
       at: new Date().toISOString(),
       ...extra
     };
-    // Scope to the owner's room so other users never see this event
+    // [FIX] SECURITY: scope to the owner's room so other users never see
+    // this event -- this comment already said the right thing, but the
+    // code below it did the opposite: when uid was empty it fell back to
+    // io.emit(...), a platform-wide broadcast of this project's deploy
+    // status (including error messages) to every connected user. Almost
+    // every call site of this function omits the 4th ownerUserId
+    // argument, so that fallback was firing constantly, not as a rare
+    // edge case -- this is what let one account see another account's
+    // "deployment failed" toast. If we don't know the owner, drop the
+    // event instead of broadcasting it to everyone.
     const uid = String(ownerUserId || extra.ownerUserId || '');
     if (uid) {
       io.to('user:' + uid).emit('autodeploy:status', payload);
     } else {
-      // Fallback: include projectId in payload so client can filter
-      io.emit('autodeploy:status', payload);
+      console.warn('[emitAutoDeployStatus] no ownerUserId for project', payload.projectId, '-- event dropped, not broadcast');
     }
   } catch (_) {}
 }
