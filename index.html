@@ -29195,7 +29195,19 @@ function showDashboard(defaultPage = 'dashboard') {
   const verify = document.getElementById('verifyEmailPage'); if (verify) verify.style.display = 'none';
   document.getElementById('auth-view').classList.remove('active');
   document.documentElement.classList.add('app-mode');
-  window.history.pushState({view:'app', page:'dashboard'}, '', '/dashboard');
+  // [FIX] This used to unconditionally rewrite the URL to plain
+  // '/dashboard' here, every time -- including on a hard page load that
+  // arrived at a deep link like '/dashboard/domain-cpanel?domain=X'
+  // (e.g. from dsGoToCpanel's real navigation). By the time the
+  // "restore page from URL" logic further down ran pathToPage() on
+  // window.location.pathname, this line had already stomped it back to
+  // '/dashboard', so every deep link silently bounced to the plain
+  // dashboard right after finishing its reload. Only rewrite when we're
+  // actually arriving from outside the app (e.g. the landing page '/')
+  // -- leave an already-correct dashboard sub-path/query string alone.
+  if (!window.location.pathname.startsWith('/dashboard')) {
+    window.history.pushState({view:'app', page:'dashboard'}, '', '/dashboard');
+  }
   if (typeof io !== 'undefined' && (!socket || !socket.connected)) initSocket();
   if (!window._dashboardInited) {
     window._dashboardInited = true;
