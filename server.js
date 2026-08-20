@@ -15386,7 +15386,8 @@ const DASHBOARD_PAGES = [
   'logs', 'ai-analysis', 'env-manager', 'domains', 'analytics', 'webhooks',
   'cronjobs', 'workers', 'streaks', 'team', 'usage', 'activity', 'secrets',
   'settings', 'docs', 'faq', 'support', 'forum', 'domain-add', 'cron-create',
-  'dockerfile-deploy', 'pricing', 'databases', 'db-create', 'db-editor', 'db-detail', 'checkout'
+  'dockerfile-deploy', 'pricing', 'databases', 'db-create', 'db-editor', 'db-detail', 'checkout',
+  'domain-cpanel'
 ];
 
 // /dashboard  (base — no trailing segment)

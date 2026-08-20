@@ -1476,6 +1476,14 @@ html[data-theme="dark"] .dash-qa-btn { background: #111 !important; }
 a { text-decoration:none; color:inherit; }
 button { cursor:pointer; font-family:var(--font-ui); }
 input,select,textarea { font-family:var(--font-ui); }
+/* [FIX] Native number-input spinner/stepper controls render using the
+   device's own OS/browser accent color (often blue on Android Chrome),
+   completely ignoring the site's green design system -- looks like a
+   stray colored blob sitting on top of fields like DNS TTL. Suppress the
+   native control everywhere. */
+input[type="number"] { -moz-appearance: textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 ul { list-style:none; }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────────── */
@@ -12751,7 +12759,7 @@ document.addEventListener('keydown', function(e){
           </div>
           <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:10px;">
             <input id="dsDnsValue" type="text" placeholder="Value / Points to" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;outline:none;">
-            <input id="dsDnsTtl" type="number" placeholder="TTL (3600)" value="3600" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;outline:none;">
+            <input id="dsDnsTtl" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="TTL (3600)" value="3600" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;outline:none;">
           </div>
           <button class="btn btn-primary" onclick="dsDnsAddRecord()" style="width:100%;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -13316,9 +13324,15 @@ document.addEventListener('keydown', function(e){
     }
 
     function dsGoToCpanel(domain) {
-      // Pre-select the domain in cPanel so the user lands straight on it
-      window._dcpPendingSelectDomain = domain;
-      showPage('domain-cpanel');
+      // [FIX] This used to call showPage('domain-cpanel') like every other
+      // in-app tab — an instant, seamless swap with no page reload. cPanel
+      // is conceptually a separate system, so it should feel like following
+      // a real link to a different page instead of just another dashboard
+      // tab: full browser navigation, URL bar changes, brief reload flash.
+      // _dcpPendingSelectDomain is an in-memory JS variable and would be
+      // lost across an actual reload, so the target domain is passed via a
+      // URL query param instead; dcpInit() picks it up from there too.
+      window.location.href = '/dashboard/domain-cpanel?domain=' + encodeURIComponent(domain);
     }
 
     async function dsOpenDnsManager(domain) {
@@ -13631,7 +13645,7 @@ document.addEventListener('keydown', function(e){
             </div>
             <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px;">
               <input id="dcpDnsValue" type="text" placeholder="Value / Points to" style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;outline:none;">
-              <input id="dcpDnsTtl" type="number" placeholder="TTL" value="3600" style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;outline:none;">
+              <input id="dcpDnsTtl" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="TTL" value="3600" style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;outline:none;">
             </div>
             <button class="btn btn-primary" onclick="dcpAddDns()" style="width:100%;" id="dcpDnsAddBtn">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -13768,8 +13782,14 @@ document.addEventListener('keydown', function(e){
           dcpRenderItems(dcpDomainList);
           // Auto-select first domain, OR a specific one requested by whoever
           // navigated here (e.g. the "Attach" button on an unattached
-          // domain row in the Domain Store list) — regardless of how many
-          // domains are on the account.
+          // domain row in the Domain Store list, or a full page navigation
+          // from dsGoToCpanel's ?domain= query param, since a hard reload
+          // loses the in-memory _dcpPendingSelectDomain) — regardless of
+          // how many domains are on the account.
+          if (!window._dcpPendingSelectDomain) {
+            const _dcpQpDomain = new URLSearchParams(window.location.search).get('domain');
+            if (_dcpQpDomain) window._dcpPendingSelectDomain = _dcpQpDomain;
+          }
           if (window._dcpPendingSelectDomain && dcpDomainList.some(d => d.domain === window._dcpPendingSelectDomain)) {
             const target = window._dcpPendingSelectDomain;
             window._dcpPendingSelectDomain = null;
