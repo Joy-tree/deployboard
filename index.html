@@ -13014,21 +13014,21 @@ document.addEventListener('keydown', function(e){
         let html = '';
         for (const domain of checks) {
           const tld = '.' + domain.split('.').slice(1).join('.');
-          const fallback = dsFallbackForTld(tld);
-          const rowPrice = dsAllTlds.find(row => row.tld === tld);
-          // IMPORTANT: Only use live price from server — never silently fall back
-          // to a cheap generic price for domains the TLD list doesn't cover.
-          // If NameSilo didn't return a price for this specific domain/TLD,
-          // hasLivePrice stays false and we show "Price unavailable" instead of
-          // a misleading low number (which caused users to pay too little and
-          // get a failed registration for expensive/premium TLDs like .autos).
+          // IMPORTANT: Only use the live per-domain price from the server —
+          // never fall back to the generic catalog/TLD-list price (rowPrice)
+          // for a domain the live check didn't return a price for. That
+          // catalog price is a base/representative rate for the TLD as a
+          // whole and can be wildly wrong for a specific premium or
+          // restricted name, which is exactly what caused users to pay a
+          // cheap fallback price and then have NameSilo reject the
+          // registration as "insufficient funds" for the real cost. If
+          // hasLivePrice is false, usdReg/usdRenew MUST stay null so
+          // priceKnown below is false and the existing "Price unavailable" /
+          // disabled "N/A" button UI actually takes effect instead of being
+          // silently bypassed.
           const hasLivePrice = livePrices[domain]?.register != null;
-          const usdReg = hasLivePrice
-            ? Number.parseFloat(livePrices[domain].register)
-            : (rowPrice?.register != null ? Number.parseFloat(rowPrice.register) : null);
-          const usdRenew = hasLivePrice
-            ? Number.parseFloat(livePrices[domain].renew ?? livePrices[domain].register)
-            : (rowPrice?.renew != null ? Number.parseFloat(rowPrice.renew) : null);
+          const usdReg = hasLivePrice ? Number.parseFloat(livePrices[domain].register) : null;
+          const usdRenew = hasLivePrice ? Number.parseFloat(livePrices[domain].renew ?? livePrices[domain].register) : null;
           const ghsReg = usdReg != null ? dsUsdToGhs(usdReg) : null;
           const ghsRenew = usdRenew != null ? dsUsdToGhs(usdRenew) : null;
           const priceKnown = ghsReg != null;
@@ -13063,7 +13063,7 @@ document.addEventListener('keydown', function(e){
                 <div style="font-weight:700;font-size:.88rem;color:var(--text);">${safeDomain}</div>
                 <div style="font-size:.7rem;color:var(--text-3);">Could not confirm availability</div>
               </div>
-              ${dsPriceTag(usdReg, ghsReg)}
+              ${priceKnown ? dsPriceTag(usdReg, ghsReg) : ''}
             </div>`;
           }
         }
@@ -13442,21 +13442,25 @@ document.addEventListener('keydown', function(e){
     }
 
     async function dsRenewDomain(domain) {
-      // Fetch live renew price for this domain
+      // [FIX] This used to silently fall back to DS_TLD_FALLBACK[tld] ||
+      // DS_TLD_FALLBACK['.com'] whenever the live check didn't return a
+      // renew price for this domain's TLD -- and since DS_TLD_FALLBACK only
+      // has 10 popular TLDs, any domain outside that list (e.g. a premium
+      // TLD like .auto) silently renewed at .com's price instead. Same
+      // class of bug as the search-results fix: never open checkout with a
+      // price we don't actually know is correct.
       try {
         const res = await apiFetch(API + '/api/domains/check?domains=' + encodeURIComponent(domain));
         const data = await res.json().catch(() => ({}));
         const usdRenew = data.prices?.[domain]?.renew;
-        const tld = '.' + domain.split('.').slice(1).join('.');
-        const fallback = DS_TLD_FALLBACK[tld] || DS_TLD_FALLBACK['.com'];
-        const usd = usdRenew ?? fallback.renew;
-        const ghs = dsUsdToGhs(usd);
-        dsOpenCheckout(domain + ' (renewal)', ghs, ghs, usd);
+        if (usdRenew == null) {
+          toast('Renewal price for ' + domain + ' isn\'t available right now — please contact support to renew this domain.', 'error', 6000);
+          return;
+        }
+        const ghs = dsUsdToGhs(usdRenew);
+        dsOpenCheckout(domain + ' (renewal)', ghs, ghs, usdRenew);
       } catch(e) {
-        const tld = '.' + domain.split('.').slice(1).join('.');
-        const fallback = DS_TLD_FALLBACK[tld] || DS_TLD_FALLBACK['.com'];
-        const ghs = dsUsdToGhs(fallback.renew);
-        dsOpenCheckout(domain + ' (renewal)', ghs, ghs, fallback.renew);
+        toast('Could not fetch a renewal price for ' + domain + '. Please try again.', 'error');
       }
     }
 
