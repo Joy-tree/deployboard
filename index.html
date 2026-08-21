@@ -4596,24 +4596,24 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
   #settingsTabGithub button.btn { white-space:normal; }
 }
 
-.geo-intel-card{position:relative;overflow:hidden;border:1px solid rgba(148,163,184,.28);border-radius:24px;padding:20px;margin:0 0 18px;background:linear-gradient(145deg,rgba(14,19,28,.95),rgba(3,8,19,.96));box-shadow:0 10px 28px rgba(0,0,0,.22)}
-.geo-intel-card::before{display:none}
-.geo-intel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;z-index:2;margin-bottom:10px}
-.geo-intel-kicker{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:#9ca3af;font-weight:700}
-.geo-intel-request{font-size:.84rem;color:#e5e7eb;font-weight:600}
-.geo-intel-request b{color:#86efac}
-.geo-intel-pulse{width:10px;height:10px;border-radius:50%;background:#10b981;box-shadow:0 0 0 6px rgba(16,185,129,.18)}
-.geo-intel-map{position:relative;z-index:2;height:220px;border-radius:18px;border:1px solid rgba(148,163,184,.22);background:#050807;overflow:hidden}
-.geo-real-map{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.05) contrast(1.06) brightness(.9)}
-.geo-map-vignette{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,transparent 45%,rgba(0,0,0,.6) 100%);pointer-events:none}
-.geo-marker-glow{position:absolute;width:52px;height:52px;border-radius:50%;background:radial-gradient(circle,rgba(34,197,94,.35) 0%,rgba(16,185,129,.16) 45%,rgba(16,185,129,0) 75%);transform:translate(-50%,-50%);pointer-events:none;will-change:transform,opacity;animation:geoGlowPulse 3.2s ease-out infinite}
-.geo-marker-pin{position:absolute;width:10px;height:10px;border-radius:50%;background:#22c55e;transform:translate(-50%,-50%);box-shadow:0 0 0 1px rgba(6,95,70,.6);will-change:transform,opacity;animation:geoPinBlink 2.4s steps(2,end) infinite}
+
+
+
+
+
+
+
+
+
+
+
+
 @keyframes geoGlowPulse{0%,100%{transform:translate(-50%,-50%) scale(.9);opacity:.72}50%{transform:translate(-50%,-50%) scale(1.06);opacity:.38}}
 @keyframes geoPinBlink{0%,45%{opacity:1}55%,100%{opacity:.68}}
-.geo-intel-meta{position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
-.geo-chip{font-size:.76rem;padding:7px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.25);background:rgba(30,41,59,.45);color:#e5e7eb}
+
+
 @media (max-width: 900px) {
-  .geo-intel-card::before{display:none;}
+  
   .reveal{opacity:1!important;transform:none!important;}
 }
 
@@ -4901,7 +4901,6 @@ html[data-theme="light"] #app .webhook-event-card,
 html[data-theme="light"] #app .streak-metric-card,
 html[data-theme="light"] #app .terminal-empty-card,
 html[data-theme="light"] #app .dash-qa-btn,
-html[data-theme="light"] #app .geo-intel-card,
 html[data-theme="light"] #app .hero-metric,
 html[data-theme="light"] #app .repo-card,
 html[data-theme="light"] #app .db-hero,
@@ -9279,26 +9278,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       </div>
 
 
-      <div class="geo-intel-card" id="geoIntelCard">
-        <div class="geo-intel-head">
-          <div>
-            <div class="geo-intel-kicker">Global request radar</div>
-            <div class="geo-intel-request" id="geoIntelRequest">Requesting from <b>🌍 Detecting…</b></div>
-          </div>
-          <div class="geo-intel-pulse" aria-hidden="true"></div>
-        </div>
-        <div class="geo-intel-map">
-          <img class="geo-real-map" src="https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg" alt="World map">
-          <div class="geo-map-vignette"></div>
-          <div id="geoMarkerGlow" class="geo-marker-glow" style="left:50%;top:50%;"></div>
-          <div id="geoMarkerPin" class="geo-marker-pin" style="left:50%;top:50%;"></div>
-        </div>
-        <div class="geo-intel-meta">
-          <div class="geo-chip" id="geoIntelCountry">Country: —</div>
-          
-          <div class="geo-chip">Status: <span style="color:#34d399;font-weight:700;">Protected edge live</span></div>
-        </div>
-      </div>
+
 
       <!-- ── Stat Cards — 2×3 grid, Mythical Systems style ── -->
       <div class="stats-grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
@@ -24701,23 +24681,7 @@ function setGeoMarkerByLatLon(lat, lon) {
   if (glow) { glow.style.left = x + '%'; glow.style.top = y + '%'; }
   return true;
 }
-let geoIntelHydrated = false;
-async function hydrateGeoIntelCard() {
-  if (geoIntelHydrated) return;
-  geoIntelHydrated = true;
-  try {
-    const r = await fetch('https://ipapi.co/json/');
-    const d = await r.json();
-    const country = d.country_name || 'Unknown location';
-    const flag = getCountryFlagEmoji(d.country_code);
-    const req = document.getElementById('geoIntelRequest');
-    const c = document.getElementById('geoIntelCountry');
-    if (req) req.innerHTML = `Requesting from <b>${flag} ${country}</b>`;
-    if (c) c.textContent = `Country: ${flag} ${country}`;
-    const usedLatLon = setGeoMarkerByLatLon(d.latitude, d.longitude);
-    if (!usedLatLon) setGeoMarkerByCountry(country);
-  } catch (_) {}
-}
+
 function synthMetricSeries(projectId, hours){
   const seed = Array.from(String(projectId||'x')).reduce((a,c)=>a+c.charCodeAt(0),0);
   const recent = deployments.filter(d => !projectId || d.projectId===projectId || d.projectName===projectId).slice(-40);
@@ -24846,7 +24810,6 @@ function updateCoreHeroMetrics() {
 // ══════════════════════════════════════════════════════════════════
 function renderDashboard() {
   try {
-    hydrateGeoIntelCard();
     updateCoreHeroMetrics();
     const total   = projects.length;
     const success = deployments.filter(d => d.status === 'success').length;
