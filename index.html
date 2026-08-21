@@ -13079,15 +13079,22 @@ document.addEventListener('keydown', function(e){
     async function dsSearch() {
       const raw = (document.getElementById('dsSearchInput').value || '').trim().toLowerCase().replace(/https?:\/\//,'').split('/')[0];
       if (!raw) return toast('Enter a domain name to search.', 'error');
-      const base = raw.includes('.') ? raw.split('.')[0] : raw;
-      if (!base || !/^[a-z0-9-]+$/.test(base) || base.startsWith('-') || base.endsWith('-')) return toast('Enter a valid name.', 'error');
+
+      // ── Detect whether the user typed an exact domain (e.g. "good.cv") ──
+      // If so: check ONLY that exact domain first and pin it at the top,
+      // then fall through to the normal TLD-sweep for the rest.
+      const parts = raw.split('.');
+      const base = parts[0];
+      const exactTld = parts.length >= 2 ? '.' + parts.slice(1).join('.') : null;
+
+      if (!base || !/^[a-z0-9-]+$/.test(base) || base.startsWith('-') || base.endsWith('-')) return toast('Enter a valid name (letters, numbers, hyphens only).', 'error');
 
       const btn = document.getElementById('dsSearchBtn');
       btn.disabled = true; btn.textContent = 'Checking…';
 
       const results = document.getElementById('dsSearchResults');
       results.style.display = 'block';
-      results.innerHTML = '<div style="color:var(--text-3);font-size:.8rem;padding:8px 0;">Loading Joytree extensions and prices…</div>';
+      results.innerHTML = '<div style="color:var(--text-3);font-size:.8rem;padding:8px 0;">Checking availability…</div>';
 
       dsSearchBase = base;
       dsSearchOffset = 0;
@@ -13095,11 +13102,80 @@ document.addEventListener('keydown', function(e){
 
       try {
         await dsLoadTlds();
+
+        // If user typed an exact TLD (e.g. "good.cv"), check it first and pin
+        // it at the very top before the regular TLD sweep starts.
+        if (exactTld) {
+          const exactDomain = base + exactTld;
+          try {
+            const exactRes = await apiFetch(API + '/api/domains/check?domains=' + encodeURIComponent(exactDomain));
+            const exactData = await exactRes.json().catch(() => ({}));
+            if (exactRes.ok) {
+              const pinHtml = dsRenderDomainRow(exactDomain, exactData.availability || {}, exactData.prices || {}, true);
+              dsSearchHtml = pinHtml;
+            }
+          } catch(_) { /* non-fatal — fall through to full sweep */ }
+          // Filter the TLD sweep to exclude the exact TLD (already shown above)
+          // but still show all others so the user can compare
+          dsActiveTlds = dsActiveTlds.length ? dsActiveTlds : [];
+        }
+
         await dsSearchMoreResults(true);
       } catch(e) {
         results.innerHTML = '<div style="color:#f87171;font-size:.8rem;padding:8px 0;">Could not check availability. Please try again.</div>';
       } finally {
         btn.disabled = false; btn.textContent = 'Check';
+      }
+    }
+
+    // ── Shared row renderer — used by both single-domain pin and batch sweep ──
+    function dsRenderDomainRow(domain, availability, livePrices, pinned = false) {
+      const tld = '.' + domain.split('.').slice(1).join('.');
+      const hasLivePrice = livePrices[domain]?.register != null;
+      const usdReg   = hasLivePrice ? Number.parseFloat(livePrices[domain].register) : null;
+      const usdRenew = hasLivePrice ? Number.parseFloat(livePrices[domain].renew ?? livePrices[domain].register) : null;
+      const ghsReg   = usdReg   != null ? dsUsdToGhs(usdReg)   : null;
+      const ghsRenew = usdRenew != null ? dsUsdToGhs(usdRenew) : null;
+      const priceKnown = ghsReg != null;
+      const avail = availability[domain];
+      const safeDomain = dsEscapeHtml(domain);
+      const pinnedStyle = pinned ? 'border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.04);' : '';
+
+      if (avail === true || avail === 'available') {
+        return \`<div class="ds-avail-row ds-avail-available" style="\${pinnedStyle}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:.88rem;color:var(--text);">\${safeDomain}</div>
+            <div style="font-size:.7rem;color:var(--text-3);">\${priceKnown ? 'Available · renews GHS '+ghsRenew+'/yr' : 'Available · renewal price not available'}</div>
+          </div>
+          \${priceKnown ? dsPriceTag(usdReg, ghsReg) : '<div style="font-size:.72rem;color:var(--text-3);text-align:right;white-space:nowrap;">Price<br>unavailable</div>'}
+          \${priceKnown
+            ? \`<button class="btn btn-primary" style="min-height:30px;font-size:.72rem;padding:0 12px;" onclick="dsOpenCheckout('\${domain}',\${ghsReg},\${ghsRenew},\${usdReg})">Register</button>\`
+            : \`<button class="btn btn-sm btn-ghost" style="font-size:.72rem;opacity:.55;cursor:not-allowed;" disabled>N/A</button>\`
+          }
+        </div>\`;
+      } else if (avail === 'taken') {
+        // Taken: show "Try to Buy" button linking to NameSilo aftermarket
+        const buyUrl = 'https://www.namesilo.com/domain/search-domains?query=' + encodeURIComponent(domain);
+        return \`<div class="ds-avail-row ds-avail-taken" style="\${pinnedStyle}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:.88rem;color:var(--text);">\${safeDomain}</div>
+            <div style="font-size:.7rem;color:#f87171;">Registered · may be available aftermarket</div>
+          </div>
+          <a href="\${buyUrl}" target="_blank" rel="noopener" style="flex-shrink:0;">
+            <button class="btn btn-sm" style="min-height:30px;font-size:.72rem;padding:0 11px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);color:#fbbf24;white-space:nowrap;">Try to Buy</button>
+          </a>
+        </div>\`;
+      } else {
+        return \`<div class="ds-avail-row" style="\${pinnedStyle}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:.88rem;color:var(--text);">\${safeDomain}</div>
+            <div style="font-size:.7rem;color:var(--text-3);">Could not confirm availability</div>
+          </div>
+          \${priceKnown ? dsPriceTag(usdReg, ghsReg) : ''}
+        </div>\`;
       }
     }
 
@@ -13123,62 +13199,8 @@ document.addEventListener('keydown', function(e){
         const availability = data.availability || {};
         const livePrices = data.prices || {};
 
-        let html = '';
-        for (const domain of checks) {
-          const tld = '.' + domain.split('.').slice(1).join('.');
-          // IMPORTANT: Only use the live per-domain price from the server —
-          // never fall back to the generic catalog/TLD-list price (rowPrice)
-          // for a domain the live check didn't return a price for. That
-          // catalog price is a base/representative rate for the TLD as a
-          // whole and can be wildly wrong for a specific premium or
-          // restricted name, which is exactly what caused users to pay a
-          // cheap fallback price and then have NameSilo reject the
-          // registration as "insufficient funds" for the real cost. If
-          // hasLivePrice is false, usdReg/usdRenew MUST stay null so
-          // priceKnown below is false and the existing "Price unavailable" /
-          // disabled "N/A" button UI actually takes effect instead of being
-          // silently bypassed.
-          const hasLivePrice = livePrices[domain]?.register != null;
-          const usdReg = hasLivePrice ? Number.parseFloat(livePrices[domain].register) : null;
-          const usdRenew = hasLivePrice ? Number.parseFloat(livePrices[domain].renew ?? livePrices[domain].register) : null;
-          const ghsReg = usdReg != null ? dsUsdToGhs(usdReg) : null;
-          const ghsRenew = usdRenew != null ? dsUsdToGhs(usdRenew) : null;
-          const priceKnown = ghsReg != null;
-          const avail = availability[domain];
-          const safeDomain = dsEscapeHtml(domain);
-
-          if (avail === true || avail === 'available') {
-            html += `<div class="ds-avail-row ds-avail-available">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
-              <div style="flex:1;min-width:0;">
-                <div style="font-weight:700;font-size:.88rem;color:var(--text);">${safeDomain}</div>
-                <div style="font-size:.7rem;color:var(--text-3);">${priceKnown ? 'Available · renews GHS '+ghsRenew+'/yr' : 'Available · renewal price not available'}</div>
-              </div>
-              ${priceKnown ? dsPriceTag(usdReg, ghsReg) : '<div style="font-size:.72rem;color:var(--text-3);text-align:right;white-space:nowrap;">Price<br>unavailable</div>'}
-              ${priceKnown
-                ? `<button class="btn btn-primary" style="min-height:30px;font-size:.72rem;padding:0 12px;" onclick="dsOpenCheckout('${domain}',${ghsReg},${ghsRenew},${usdReg})">Register</button>`
-                : `<button class="btn btn-sm btn-ghost" style="font-size:.72rem;opacity:.55;cursor:not-allowed;" disabled title="Price not available from registry — this TLD may require special registration">N/A</button>`
-              }
-            </div>`;
-          } else if (avail === 'taken') {
-            html += `<div class="ds-avail-row ds-avail-taken">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              <div style="flex:1;min-width:0;">
-                <div style="font-weight:700;font-size:.88rem;color:var(--text);">${safeDomain}</div>
-                <div style="font-size:.7rem;color:#f87171;">Taken</div>
-              </div>
-            </div>`;
-          } else {
-            html += `<div class="ds-avail-row">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <div style="flex:1;min-width:0;">
-                <div style="font-weight:700;font-size:.88rem;color:var(--text);">${safeDomain}</div>
-                <div style="font-size:.7rem;color:var(--text-3);">Could not confirm availability</div>
-              </div>
-              ${priceKnown ? dsPriceTag(usdReg, ghsReg) : ''}
-            </div>`;
-          }
-        }
+        // Use the shared dsRenderDomainRow renderer for each result
+        let html = checks.map(domain => dsRenderDomainRow(domain, availability, livePrices, false)).join('');
 
         dsSearchOffset += batch.length;
         dsSearchHtml += html;
