@@ -3165,3 +3165,83 @@ html[data-theme="light"] .dnp-btn{
   color:#fff!important;
 }
 html[data-theme="light"] .dnp-btn:hover{ background:var(--jt-brand)!important; }
+
+
+/* ══════════════════════════════════════════════════════════════════
+   AUTH PAGE — light/dark clean overrides (no blue, no red)
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Dark theme: all neutral dark, no blue */
+html[data-theme="dark"] .auth-input,
+html[data-theme="dark"] .auth-input:focus {
+  background: #0f0f0f !important;
+  border-color: rgba(255,255,255,.1) !important;
+  color: #f9fafb !important;
+}
+html[data-theme="dark"] .auth-tabs {
+  background: rgba(255,255,255,.04) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+html[data-theme="dark"] .auth-tab.active {
+  background: #1a1a1a !important;
+  color: #f9fafb !important;
+}
+html[data-theme="dark"] .auth-wrap {
+  background: #0d0f10 !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
+
+/* Light theme: white card, readable inputs */
+html[data-theme="light"] .auth-wrap {
+  background: #ffffff !important;
+  border: 1px solid rgba(0,0,0,.09) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06) !important;
+}
+html[data-theme="light"] .auth-title { color: #111827 !important; }
+html[data-theme="light"] .auth-title-accent { color: #059669 !important; }
+html[data-theme="light"] .auth-sub { color: #6b7280 !important; }
+html[data-theme="light"] .auth-input {
+  background: #f9fafb !important;
+  border-color: rgba(0,0,0,.12) !important;
+  color: #111827 !important;
+}
+html[data-theme="light"] .auth-input::placeholder { color: #9ca3af !important; }
+html[data-theme="light"] .auth-input-icon { color: #9ca3af !important; }
+html[data-theme="light"] .auth-field-label { color: #6b7280 !important; }
+html[data-theme="light"] .auth-tabs {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+html[data-theme="light"] .auth-tab { color: #9ca3af !important; }
+html[data-theme="light"] .auth-tab.active {
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1) !important;
+}
+html[data-theme="light"] .auth-divider { color: #9ca3af !important; }
+html[data-theme="light"] .auth-divider::before,
+html[data-theme="light"] .auth-divider::after { background: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .auth-trust-item { color: #6b7280 !important; }
+html[data-theme="light"] .auth-back { color: #9ca3af !important; }
+html[data-theme="light"] .auth-back:hover { color: #059669 !important; }
+
+/* GitHub + Google stay dark always (correct on both themes) */
+.auth-github, .auth-google {
+  background: #161b22 !important;
+  color: #f0f6fc !important;
+}
+html[data-theme="light"] .auth-github { background: #1c1c1c !important; }
+html[data-theme="light"] .auth-google { background: #1c1c1c !important; color: #e8eaed !important; }
+
+/* ══ Logout modal — no red anywhere ══ */
+#logoutModal .modal { border-color: var(--border) !important; box-shadow: 0 20px 60px rgba(0,0,0,.4) !important; }
+#logoutModal .modal-header { background: var(--bg-card) !important; border-bottom-color: var(--border) !important; }
+#logoutModal .modal-icon { background: var(--bg-hover) !important; border-color: var(--border) !important; color: var(--text-2) !important; }
+
+/* ══ Landing hero — no gradient on text ══ */
+html[data-theme="light"] .hero-h1 { color: #111827 !important; }
+html[data-theme="light"] .hero-h1-swap { color: #059669 !important; }
+html[data-theme="light"] .hero-h1-static { color: #111827 !important; }
+html[data-theme="light"] .hero-h1 .accent { color: #059669 !important; -webkit-text-fill-color: #059669 !important; }
+html[data-theme="light"] .hero-sub { color: #374151 !important; }
+html[data-theme="light"] .hero-trust-item { color: #4b5563 !important; }
