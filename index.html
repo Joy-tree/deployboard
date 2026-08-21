@@ -23274,6 +23274,16 @@ function showBootLoader(message = 'Loading') {
   const txt = loader.querySelector('.page-loader-text');
   if (txt) txt.innerHTML = `${message}<span class="page-loader-dots"></span>`;
   if (bootLoaderTimer) { clearTimeout(bootLoaderTimer); bootLoaderTimer = null; }
+  // [FIX] Stamp the correct theme background inline before making the loader
+  // visible. Without this, re-showing the loader mid-session (e.g. during a
+  // workspace sync on a non-dashboard page) always painted it with the CSS
+  // default background (#09090B dark), even when the user had already switched
+  // to light theme — because the browser reflows display:flex before the CSS
+  // cascade fully re-evaluates html[data-theme="light"] #pageLoader. The inline
+  // style wins over any stylesheet rule (specificity 1000) so the color is
+  // always correct on the first paint, regardless of cascade timing.
+  const _isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  loader.style.background = _isLight ? '#F6F8F4' : '#09090B';
   loader.style.display = 'flex';
   loader.classList.remove('hidden');
 }
@@ -23773,7 +23783,21 @@ async function sendAdminBroadcastEmail() {
 
 function _applyTheme(t) {
   const html = document.documentElement;
-  html.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+  const isLight = t === 'light';
+  html.setAttribute('data-theme', isLight ? 'light' : 'dark');
+
+  // [FIX] Stamp the pageLoader's background as an inline style so it is
+  // ALWAYS in sync with the current theme regardless of CSS cascade order
+  // or load timing. The CSS rule `html[data-theme="light"] #pageLoader`
+  // only wins when theme-override.css has fully parsed and no higher-
+  // specificity inline style is competing — but showBootLoader() sets
+  // loader.style.display='flex' which forces a reflow, and on that same
+  // frame the cascade may not have settled yet (especially on non-dashboard
+  // pages where the loader re-shows mid-session after a sync operation).
+  // An inline style has specificity 1000 and beats every stylesheet rule,
+  // so this is the only reliable way to pin the loader color to the theme.
+  const _loader = document.getElementById('pageLoader');
+  if (_loader) _loader.style.background = isLight ? '#F6F8F4' : '#09090B';
 
   // Live-update any already-open xterm.js deploy-log terminal instead
   // of requiring a page reload to pick up the new theme.
@@ -23799,12 +23823,11 @@ function _applyTheme(t) {
   const landingIcon = document.getElementById('landingThemeIcon');
   const sunPath = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
   const lightPath = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>';
-  const iconHtml = t === 'light' ? lightPath : sunPath;
+  const iconHtml = isLight ? lightPath : sunPath;
   if (icon) icon.innerHTML = iconHtml;
   if (landingIcon) landingIcon.innerHTML = iconHtml;
-  if (!icon && !landingIcon) return;
 
-  // Mark active option
+  // Mark active option (always runs — no early return on missing icon)
   document.querySelectorAll('.theme-picker-opt').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.theme === t);
   });
@@ -23823,6 +23846,27 @@ function themeSet(t) {
   // browser-local one.
   settings.theme = t;
   if (typeof queueWorkspaceSync === 'function') queueWorkspaceSync();
+  // [FIX] Force a re-render of the current page after theme switch so any
+  // JS-rendered component that stamped colors via element.style.* (JS
+  // property assignment, not HTML attribute) gets rebuilt with the correct
+  // theme. CSS [style*="..."] attribute selectors cannot catch JS-set style
+  // properties — only HTML attribute values — so those elements stay dark
+  // after a toggle unless we re-render. This also fixes the "stuck on
+  // non-dashboard pages" bug: page components that were rendered at dark-
+  // theme time and not re-rendered on toggle kept their dark JS-set colors
+  // even though data-theme="light" was correctly set on <html>.
+  // Only fire when the app is actually in app-mode (logged in) and a
+  // current page is known — no-op on landing/auth pages.
+  try {
+    if (
+      typeof currentPage !== 'undefined' &&
+      currentPage &&
+      document.documentElement.classList.contains('app-mode') &&
+      typeof showPage === 'function'
+    ) {
+      showPage(currentPage, null, true /* skipPush — URL is already correct */);
+    }
+  } catch (_) { /* page re-render is best-effort */ }
   themePickerClose();
 }
 
