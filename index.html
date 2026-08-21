@@ -39245,39 +39245,47 @@ function openDbVisualizerFor(dbId, alreadyOpen) {
 // the dropdown from whatever's already cached, and let the person pick.
 // No waiting, no guessing, nothing that can hang.
 function openDbVisualizerFromSidebar() {
-  // [DEBUG] Wrapped in try/catch with a visible toast on failure -- if
-  // this is throwing partway through for some reason not caught by
-  // static review, it was failing completely silently before, which is
-  // exactly why the sidebar looked "stuck": if this throws, nothing
-  // downstream that would normally close the sidebar or open the modal
-  // runs, and there was no way to see that from outside.
   try {
-    _dbvDbId = null;
-    _dbvEngine = null;
-    _dbvDbName = null;
-    _dbvSelectedTable = null;
-
-    document.getElementById('dbVisualizer').classList.add('open');
-    document.documentElement.classList.add('modal-open');
-    dbvPopulateDbSelect();
-
-    document.getElementById('dbvBarChart').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
-    document.getElementById('dbvLineChart').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
-    document.getElementById('dbvDonutChart').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
-    document.getElementById('dbvSchemaList').innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
-    document.getElementById('dbvStatTables').textContent = '—';
-    document.getElementById('dbvStatRecords').textContent = '—';
-    document.getElementById('dbvStatSelected').textContent = '—';
-    document.getElementById('dbvStatRefreshed').textContent = '—';
-
-    // Also explicitly close the sidebar -- don't rely on some other
-    // generic nav-item handler to do it, in case this specific item
-    // never had that wired the same way as data-page items do.
+    // Close sidebar first, then open the visualizer after the CSS
+    // transition completes (300ms). This prevents the sidebar's
+    // body overflow:hidden from fighting the modal's fixed positioning,
+    // which was causing the visualizer to appear invisible on mobile.
     if (typeof closeSidebar === 'function') closeSidebar();
 
-    if (!_databases || !_databases.length) {
-      loadDatabases().then(() => dbvPopulateDbSelect()).catch(() => {});
-    }
+    setTimeout(function() {
+      try {
+        _dbvDbId = null;
+        _dbvEngine = null;
+        _dbvDbName = null;
+        _dbvSelectedTable = null;
+
+        const el = document.getElementById('dbVisualizer');
+        if (!el) { toast('Data Visualizer not available.', 'error'); return; }
+
+        el.classList.add('open');
+        document.documentElement.classList.add('modal-open');
+
+        // Reset chart placeholders
+        ['dbvBarChart','dbvLineChart','dbvDonutChart','dbvSchemaList'].forEach(function(id) {
+          const c = document.getElementById(id);
+          if (c) c.innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
+        });
+        ['dbvStatTables','dbvStatRecords','dbvStatSelected','dbvStatRefreshed'].forEach(function(id) {
+          const c = document.getElementById(id);
+          if (c) c.textContent = '—';
+        });
+
+        // Load databases if not yet fetched, then populate dropdown
+        if (!_databases || !_databases.length) {
+          loadDatabases().then(function() { dbvPopulateDbSelect(); }).catch(function(){});
+        } else {
+          dbvPopulateDbSelect();
+        }
+      } catch(inner) {
+        console.error('[dbv] open failed:', inner);
+        toast('Could not open Data Visualizer: ' + inner.message, 'error', 8000);
+      }
+    }, 320);
   } catch (e) {
     console.error('[dbv] openDbVisualizerFromSidebar failed:', e);
     toast('Could not open Data Visualizer: ' + e.message, 'error', 8000);
