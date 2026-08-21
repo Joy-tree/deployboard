@@ -13077,23 +13077,47 @@ document.addEventListener('keydown', function(e){
       }).slice(0, 100);
     }
 
+    // Whether a background TLD fetch is already in-flight
+    let _dsTldFetchInFlight = false;
+
     async function dsLoadTlds(force = false) {
+      // Already loaded and not forced — return immediately, no network call
       if (dsTldsLoaded && !force) return dsAllTlds;
+
+      // If another fetch is already in-flight, wait for it instead of
+      // firing a second parallel request
+      if (_dsTldFetchInFlight && !force) {
+        await new Promise(r => setTimeout(r, 100));
+        if (dsTldsLoaded) return dsAllTlds;
+      }
+
+      _dsTldFetchInFlight = true;
       try {
-        const res = await apiFetch(API + '/api/domains/tlds?limit=600');
+        const res = await apiFetch(API + '/api/domains/tlds');
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || 'Could not load Joytree extensions');
+        if (!res.ok) throw new Error(data.error || 'Could not load extensions');
         dsAllTlds = dsMergeTlds(data.tlds || []);
         dsTldsLoaded = true;
       } catch(e) {
-        console.warn('[DomainStore] Could not load live Joytree TLDs:', e);
+        console.warn('[DomainStore] Could not load live TLDs:', e);
         dsAllTlds = dsMergeTlds([]);
         dsTldsLoaded = true;
+      } finally {
+        _dsTldFetchInFlight = false;
       }
       if (!dsVisibleTldCount) dsVisibleTldCount = Math.min(DS_TLD_PAGE_SIZE, dsAllTlds.length);
       dsRenderTldFilters();
       dsInitPricingTable();
       return dsAllTlds;
+    }
+
+    // Background preload — fires once when the domain store page opens.
+    // Does NOT block rendering: page shows immediately with fallback TLDs,
+    // then filter chips and pricing table update when the fetch completes.
+    function dsPreloadTlds() {
+      if (dsTldsLoaded || _dsTldFetchInFlight) return;
+      // Small delay so the page renders first before we hit the network
+      setTimeout(() => dsLoadTlds(), 400);
     }
 
     function dsRenderTldFilters() {
@@ -13166,7 +13190,8 @@ document.addEventListener('keydown', function(e){
       dsSearchHtml = '';
 
       try {
-        await dsLoadTlds();
+        // If TLDs not cached yet, load them now (fast if preloaded in background)
+        if (!dsTldsLoaded) await dsLoadTlds();
 
         // If user typed an exact TLD (e.g. "good.cv"), check it first and pin
         // it at the very top before the regular TLD sweep starts.
@@ -13769,7 +13794,7 @@ document.addEventListener('keydown', function(e){
       if (_orig) {
         window.showPage = function(page, el) {
           const r = _orig.apply(this, arguments);
-          if (page === 'domain-store') { dsLoadTlds(); dsLoadMyDomains(); }
+          if (page === 'domain-store') { dsPreloadTlds(); dsLoadMyDomains(); }
           if (page === 'domain-cpanel') { dcpInit(); }
           return r;
         };
