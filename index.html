@@ -13687,6 +13687,13 @@ document.addEventListener('keydown', function(e){
           <div style="font-size:.8rem;color:var(--text-2);line-height:1.65;margin-bottom:16px;padding-left:34px;">View, add, and delete DNS records for your domain.</div>
 
           <!-- Records table -->
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+            <div style="font-size:.78rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.06em;">DNS Records</div>
+            <button id="dcpDnsDownloadBtn" onclick="dcpDownloadDns()" style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.13);border-radius:8px;padding:5px 10px;color:var(--text-2);cursor:pointer;font-size:.72rem;font-weight:600;transition:background .15s,color .15s;" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='var(--text)'" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.color='var(--text-2)'">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export for Cloudflare
+            </button>
+          </div>
           <div id="dcpDnsTable" style="margin-bottom:16px;overflow-x:auto;">
             <div style="text-align:center;padding:20px;color:var(--text-3);font-size:.82rem;">Loading DNS records…</div>
           </div>
@@ -13933,8 +13940,22 @@ document.addEventListener('keydown', function(e){
           ? new Date(rec.expiresAt).toLocaleDateString() : '—';
         document.getElementById('dcpLinkedProject').textContent = rec.projectName || 'None';
 
-        // Nameservers
-        dcpSetNsMode('joytree');
+        // Nameservers — restore saved mode + custom values from Firebase record
+        // [FIX] Previously this always reset to 'joytree' mode, discarding any
+        // custom nameservers the user had set. Now we read nsMode and
+        // customNameservers that the server persists on the domain entry.
+        {
+          const savedNsMode = rec.nsMode || 'joytree';
+          const savedCustomNs = Array.isArray(rec.customNameservers) && rec.customNameservers.length >= 2
+            ? rec.customNameservers
+            : ['', ''];
+          if (savedNsMode === 'custom') {
+            dcpCustomNsValues = savedCustomNs;
+          } else {
+            dcpCustomNsValues = ['', ''];
+          }
+          dcpSetNsMode(savedNsMode);
+        }
 
         // Populate project dropdown
         await dcpLoadProjects(rec.projectId || '');
@@ -14129,7 +14150,7 @@ document.addEventListener('keydown', function(e){
           });
           const data = await res.json();
           if (!res.ok || !data.ok) throw new Error(data.error || 'Failed');
-          toast('Nameservers updated! DNS propagation can take up to 24 hours.', 'success', 8000);
+          toast('Nameservers saved & applied! DNS propagation can take up to 24 hours.', 'success', 8000);
         } catch(e) {
           toast('Could not update nameservers: ' + e.message, 'error', 7000);
         } finally {
