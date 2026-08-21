@@ -12765,7 +12765,13 @@ document.addEventListener('keydown', function(e){
           </button>
         </div>
         <!-- DNS Records table -->
-        <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:10px;">DNS Records</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;">DNS Records</div>
+          <button class="btn btn-sm btn-ghost" onclick="dsDownloadDnsRecords(this)" style="font-size:.68rem;padding:4px 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </button>
+        </div>
         <div id="dsDnsRecordsTable" style="margin-bottom:14px;"></div>
         <!-- Add record form -->
         <div style="border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px;background:#111;">
@@ -13667,10 +13673,16 @@ document.addEventListener('keydown', function(e){
               <div style="width:24px;height:24px;border-radius:50%;background:var(--primary);color:#000;font-size:.72rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
               <div style="font-size:.9rem;font-weight:800;color:var(--text);">DNS Records</div>
             </div>
-            <button class="btn btn-sm btn-ghost" onclick="dcpLoadDns()" style="font-size:.72rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              Refresh Records
-            </button>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn btn-sm btn-ghost" onclick="dcpDownloadDns()" style="font-size:.72rem;" id="dcpDnsDownloadBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download Records
+              </button>
+              <button class="btn btn-sm btn-ghost" onclick="dcpLoadDns()" style="font-size:.72rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                Refresh Records
+              </button>
+            </div>
           </div>
           <div style="font-size:.8rem;color:var(--text-2);line-height:1.65;margin-bottom:16px;padding-left:34px;">View, add, and delete DNS records for your domain.</div>
 
@@ -13989,7 +14001,110 @@ document.addEventListener('keydown', function(e){
         }
       };
 
-      // ── Apply nameservers at registrar ────────────────────────────
+      // ── Export DNS records as a BIND zone file (Cloudflare's DNS import
+      // tool, and most other registrars/DNS hosts, accept this format).
+      // Shared by both DNS record UIs (cPanel and the Domain Store's
+      // inline DNS panel) so the format logic lives in exactly one place. ──
+      function dnsRecordsToZoneFile(domain, records) {
+        // Zone files list NS first, then A/AAAA, then CNAME, then MX,
+        // then TXT/everything else -- this is the conventional order
+        // (and what most importers, including Cloudflare's, expect to
+        // read cleanly), rather than whatever arbitrary order the API
+        // happened to return records in.
+        const typeOrder = { NS: 0, A: 1, AAAA: 2, CNAME: 3, MX: 4, TXT: 5, SRV: 6 };
+        const sorted = [...records].sort((a, b) => {
+          const ta = typeOrder[String(a.type).toUpperCase()] ?? 9;
+          const tb = typeOrder[String(b.type).toUpperCase()] ?? 9;
+          if (ta !== tb) return ta - tb;
+          return String(a.host).localeCompare(String(b.host));
+        });
+
+        const escapeTxt = v => '"' + String(v).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+        // FQDNs in a zone file need a trailing dot, or the importer reads
+        // them as relative to $ORIGIN (e.g. "example.com" would become
+        // "example.com.perfect-general.boats"). A bare "@" or single
+        // hostname without dots (a same-zone target) is left as-is.
+        const fqdn = v => {
+          const s = String(v).trim();
+          if (!s || s === '@' || !s.includes('.') || s.endsWith('.')) return s;
+          return s + '.';
+        };
+
+        const lines = [
+          `; DNS zone export for ${domain}`,
+          `; Generated by Joytree on ${new Date().toISOString()}`,
+          `; Import this file directly in Cloudflare: DNS > Records > Import and Export > Import file`,
+          `$ORIGIN ${domain}.`,
+          ''
+        ];
+        sorted.forEach(r => {
+          const host = (!r.host || r.host === '@') ? '@' : r.host;
+          const type = String(r.type).toUpperCase();
+          const ttl = Number(r.ttl) || 3600;
+          let valueOut;
+          if (type === 'TXT') {
+            valueOut = escapeTxt(r.value);
+          } else if (type === 'MX') {
+            // NameSilo doesn't expose MX priority as a separate field --
+            // reuse it if the value already starts with one (e.g. a raw
+            // "10 mail.example.com"), otherwise default to 10.
+            const m = String(r.value).trim().match(/^(\d+)\s+(.+)$/);
+            valueOut = m ? `${m[1]} ${fqdn(m[2])}` : `10 ${fqdn(r.value)}`;
+          } else if (type === 'CNAME' || type === 'NS') {
+            valueOut = fqdn(r.value);
+          } else {
+            valueOut = r.value;
+          }
+          lines.push(`${host}\t${ttl}\tIN\t${type}\t${valueOut}`);
+        });
+        return lines.join('\n') + '\n';
+      }
+
+      function triggerZoneFileDownload(domain, zoneText) {
+        const blob = new Blob([zoneText], { type: 'text/dns' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${domain}.zone.txt`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      async function downloadDnsRecordsFor(domain, btn) {
+        if (!domain) return;
+        const originalHtml = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
+        try {
+          // Re-fetch rather than reuse whatever's on screen, so the download
+          // always matches the live records even if something changed
+          // (added/deleted) since the table last rendered.
+          const res = await apiFetch(API + '/api/domains/dns?domain=' + encodeURIComponent(domain));
+          const data = await res.json();
+          const records = Array.isArray(data.records) ? data.records : [];
+          if (!records.length) {
+            toast('No DNS records to download.', 'error');
+            return;
+          }
+          triggerZoneFileDownload(domain, dnsRecordsToZoneFile(domain, records));
+          toast(`Downloaded ${records.length} record${records.length === 1 ? '' : 's'} — ready to import in Cloudflare.`, 'success', 5000);
+        } catch(e) {
+          toast('Could not download records: ' + e.message, 'error');
+        } finally {
+          if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+        }
+      }
+
+      window.dcpDownloadDns = function() {
+        downloadDnsRecordsFor(dcpCurrentDomain, document.getElementById('dcpDnsDownloadBtn'));
+      };
+
+      window.dsDownloadDnsRecords = function(btn) {
+        downloadDnsRecordsFor(dsManagedDomain, btn || null);
+      };
+
+
       window.dcpApplyNameservers = async function() {
         if (!dcpCurrentDomain) return;
         let nameservers;
