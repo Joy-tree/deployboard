@@ -12917,6 +12917,25 @@ document.addEventListener('keydown', function(e){
       </div>
     </div>
 
+      <!-- ════════ TRY TO BUY MODAL ════════ -->
+      <div id="dsTryToBuyModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;">
+        <div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:20px;width:min(95vw,420px);padding:28px;position:relative;">
+          <button onclick="document.getElementById('dsTryToBuyModal').style.display='none';" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.07);border:none;border-radius:8px;padding:6px 10px;color:var(--text-2);cursor:pointer;font-size:.82rem;">✕</button>
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" width="20" height="20"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          </div>
+          <div style="font-size:.65rem;color:#f59e0b;text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:6px;">Domain Acquisition</div>
+          <div style="font-size:1.1rem;font-weight:900;color:var(--text);margin-bottom:4px;" id="dsTryToBuyDomain">—</div>
+          <div style="font-size:.82rem;color:var(--text-2);line-height:1.55;margin-bottom:20px;">This domain is currently registered. We can attempt to acquire it on your behalf through backorder or direct negotiation. Submit your interest and we'll reach out.</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
+            <input id="dsTryToBuyEmail" type="email" placeholder="Your email address" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:var(--text);font-size:.88rem;outline:none;">
+            <textarea id="dsTryToBuyNote" placeholder="Notes? (max offer, urgency, etc.) — optional" rows="3" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:var(--text);font-size:.84rem;outline:none;resize:none;font-family:inherit;"></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="dsTryToBuySubmit()" style="width:100%;min-height:46px;font-size:.92rem;font-weight:800;" id="dsTryToBuyBtn">Submit Acquisition Request</button>
+          <div style="margin-top:10px;font-size:.7rem;color:var(--text-3);text-align:center;">We'll review and contact you within 1–2 business days.</div>
+        </div>
+      </div>
+
     <!-- ════════ DOMAIN STORE STYLES ════════ -->
     <style>
     .ds-tld-btn {
@@ -12928,7 +12947,7 @@ document.addEventListener('keydown', function(e){
     .ds-tld-btn.ds-tld-active { background:rgba(16,185,129,0.12); color:var(--primary); border-color:rgba(16,185,129,0.3); }
     .ds-avail-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; background:#0d0d0d; border:1px solid rgba(255,255,255,0.07); margin-bottom:6px; flex-wrap:wrap; }
     .ds-avail-available { border-color:rgba(16,185,129,0.25); }
-    .ds-avail-taken { opacity:.55; }
+    .ds-avail-taken { opacity:1; }
     .ds-domain-row { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.06); flex-wrap:wrap; }
     .ds-domain-row:last-child { border-bottom:none; }
     .ds-dns-record-row { display:grid; grid-template-columns:52px 1fr 1fr 36px; gap:6px; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:.72rem; }
@@ -13155,18 +13174,16 @@ document.addEventListener('keydown', function(e){
           }
         </div>\`;
       } else if (avail === 'taken') {
-        // Taken: show "Try to Buy" button linking to NameSilo aftermarket
-        const buyUrl = 'https://www.namesilo.com/domain/search-domains?query=' + encodeURIComponent(domain);
-        return \`<div class="ds-avail-row ds-avail-taken" style="\${pinnedStyle}">
+        // Taken — show Joytree's own 'Try to Buy' inquiry modal, no external redirect
+        return `<div class="ds-avail-row ds-avail-taken" style="${pinnedStyle}">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:.88rem;color:var(--text);">\${safeDomain}</div>
-            <div style="font-size:.7rem;color:#f87171;">Registered · may be available aftermarket</div>
+            <div style="font-weight:700;font-size:.88rem;color:var(--text);">${safeDomain}</div>
+            <div style="font-size:.7rem;color:#f87171;">Registered · may be acquirable</div>
           </div>
-          <a href="\${buyUrl}" target="_blank" rel="noopener" style="flex-shrink:0;">
-            <button class="btn btn-sm" style="min-height:30px;font-size:.72rem;padding:0 11px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);color:#fbbf24;white-space:nowrap;">Try to Buy</button>
-          </a>
-        </div>\`;
+          <button class="btn btn-sm" style="min-height:30px;font-size:.72rem;padding:0 11px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);color:#fbbf24;white-space:nowrap;flex-shrink:0;" onclick="dsTryToBuy('${domain}')">Try to Buy</button>
+        </div>`;
+      } else {
       } else {
         return \`<div class="ds-avail-row" style="\${pinnedStyle}">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -13212,6 +13229,39 @@ document.addEventListener('keydown', function(e){
         if (remaining > 0) dsSearchHtml = dsSearchHtml.replace(/<button class="btn btn-secondary"[\s\S]*?<\/button>$/, '');
       } catch(e) {
         results.innerHTML = dsSearchHtml + '<div style="color:#f87171;font-size:.8rem;padding:8px 0;">Could not check availability. Please try again.</div>';
+      }
+    }
+
+    function dsTryToBuy(domain) {
+      document.getElementById('dsTryToBuyDomain').textContent = domain;
+      document.getElementById('dsTryToBuyEmail').value = '';
+      document.getElementById('dsTryToBuyNote').value = '';
+      const btn = document.getElementById('dsTryToBuyBtn');
+      btn.disabled = false; btn.textContent = 'Submit Acquisition Request';
+      document.getElementById('dsTryToBuyModal').style.display = 'flex';
+    }
+
+    async function dsTryToBuySubmit() {
+      const domain = document.getElementById('dsTryToBuyDomain').textContent;
+      const email  = (document.getElementById('dsTryToBuyEmail').value || '').trim();
+      const note   = (document.getElementById('dsTryToBuyNote').value || '').trim();
+      if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+        return toast('Enter a valid email address.', 'error');
+      }
+      const btn = document.getElementById('dsTryToBuyBtn');
+      btn.disabled = true; btn.textContent = 'Submitting…';
+      try {
+        // Send request to your own backend — no external redirect
+        await apiFetch(API + '/api/domains/try-to-buy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ domain, email, note })
+        });
+        toast('Request submitted! We\'ll be in touch within 1–2 business days.', 'success', 7000);
+        document.getElementById('dsTryToBuyModal').style.display = 'none';
+      } catch(e) {
+        toast('Could not submit request. Please try again.', 'error');
+        btn.disabled = false; btn.textContent = 'Submit Acquisition Request';
       }
     }
 
