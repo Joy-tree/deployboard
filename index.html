@@ -4270,130 +4270,109 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 /* Auth content — no card/box, sits directly on the page background */
 .auth-wrap {
   position:relative;z-index:1;
-  width:min(92vw, 440px);
-  background:transparent;
-  border:none;
-  border-radius:0;
-  box-shadow:none;
-  overflow:visible;
-  animation:authCardIn .5s cubic-bezier(.23,1,.32,1) both;
+  width:min(94vw, 420px);
+  background:#0d0f10;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;
+  box-shadow:0 32px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.04) inset;
+  overflow:hidden;
+  animation:authCardIn .45s cubic-bezier(.23,1,.32,1) both;
 }
 @keyframes authCardIn {
-  from { opacity:0; transform:translateY(28px) scale(.97); }
+  from { opacity:0; transform:translateY(24px) scale(.97); }
   to   { opacity:1; transform:translateY(0) scale(1); }
 }
-
-/* Top accent bar removed along with the card it used to sit on top of */
 .auth-accent-bar { display:none; }
+.auth-inner { padding:32px 28px 28px; }
 
-/* Comfortable side padding now that content isn't boxed by a card edge —
-   keeps text and inputs from hugging the screen edge on mobile. Extra
-   top space clears the fixed back button. */
-.auth-inner { padding:64px 6px 40px; }
-
-/* Back link — pinned to the corner like page chrome, out of the way
-   of the form content that now flows freely without a card boundary */
+/* Back link */
 .auth-back {
-  position:absolute; top:20px; left:0;
   display:inline-flex;align-items:center;gap:6px;
-  font-size:.78rem;font-weight:600;color:#64748b;
+  font-size:.78rem;font-weight:600;color:#4b5563;
   background:transparent;border:none;
-  padding:6px 4px;
+  padding:0;margin-bottom:24px;
   cursor:pointer;
-  transition:color .15s, transform .15s;
+  transition:color .15s;
   text-decoration:none;
 }
-.auth-back:hover { color:#a7f3d0; transform:translateX(-2px); }
+.auth-back:hover { color:#10b981; }
 .auth-back svg { width:13px;height:13px; }
 
-/* Brand mark — rounded circular badge instead of a boxy square, reads
-   cleaner sitting directly on the open background */
+/* Brand */
 .auth-brand {
-  display:flex;align-items:center;gap:11px;margin-bottom:28px;
+  display:flex;align-items:center;gap:10px;margin-bottom:26px;
 }
 .auth-brand-mark {
-  width:38px;height:38px;border-radius:50%;
+  width:34px;height:34px;border-radius:50%;
   background:transparent;
   display:flex;align-items:center;justify-content:center;
   border:1px solid rgba(16,185,129,.3);
-  flex-shrink:0;
-  overflow:hidden;
+  flex-shrink:0;overflow:hidden;
 }
 .auth-brand-mark img { width:100%;height:100%;object-fit:cover;border-radius:50%; }
 
 /* Heading */
 .auth-title {
   font-family:var(--font-ui);
-  font-size:clamp(1.75rem,6.5vw,2.4rem);
-  font-weight:800;letter-spacing:-0.04em;
-  color:#f8fafc;line-height:1.15;
-  margin-bottom:12px;
+  font-size:clamp(1.6rem,6vw,2.1rem);
+  font-weight:900;letter-spacing:-0.04em;
+  color:#f9fafb;line-height:1.15;
+  margin-bottom:6px;
 }
-.auth-title .auth-title-accent {
-  background:linear-gradient(135deg,var(--primary),var(--cyan));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
+.auth-title .auth-title-accent { color:#10b981; }
 .auth-sub {
-  font-size:.9rem;color:#94a3b8;line-height:1.7;margin-bottom:32px;
-  max-width:40ch;
+  font-size:.84rem;color:#4b5563;line-height:1.65;margin-bottom:24px;
 }
 
-/* Tab switcher — underline style instead of a filled box, so it reads
-   as part of the open page rather than another nested card */
+/* Tabs */
 .auth-tabs {
   display:grid;grid-template-columns:1fr 1fr;
-  background:transparent;
-  border:none;border-bottom:1px solid rgba(255,255,255,.1);
-  border-radius:0;padding:0;gap:0;
-  margin-bottom:30px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:4px;gap:4px;
+  margin-bottom:24px;
 }
 .auth-tab {
-  padding:12px 10px;border-radius:0;
+  padding:9px 10px;border-radius:7px;
   border:none;background:transparent;
-  color:#64748b;font-size:.88rem;font-weight:700;
+  color:#4b5563;font-size:.84rem;font-weight:700;
   cursor:pointer;letter-spacing:.01em;
-  transition:color .2s;
+  transition:background .18s, color .18s;
   position:relative;
-  margin-bottom:-1px;
 }
-.auth-tab::after{
-  content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;
-  background:var(--primary);border-radius:2px;
-  transform:scaleX(0);transition:transform .25s cubic-bezier(.4,0,.2,1);
-}
+.auth-tab::after { display:none; }
 .auth-tab.active {
-  background:transparent;
-  color:#f0fdf4;
+  background:#111827;
+  color:#f9fafb;
+  box-shadow:0 1px 4px rgba(0,0,0,.35);
 }
-.auth-tab.active::after{ transform:scaleX(1); }
 
 /* Fields */
-.auth-field { margin-bottom:18px; }
+.auth-field { margin-bottom:14px; }
 .auth-field-label {
   display:flex;align-items:center;justify-content:space-between;
-  font-size:.78rem;font-weight:700;letter-spacing:.03em;
-  color:#94a3b8;margin-bottom:7px;text-transform:uppercase;
+  font-size:.72rem;font-weight:700;letter-spacing:.04em;
+  color:#6b7280;margin-bottom:6px;text-transform:uppercase;
 }
 .auth-input-wrap { position:relative; }
 .auth-input-icon {
   position:absolute;left:13px;top:50%;transform:translateY(-50%);
-  color:#475569;pointer-events:none;
+  color:#374151;pointer-events:none;
 }
 .auth-input-icon svg { width:16px;height:16px; }
 .auth-input {
-  width:100%;padding:14px 14px 14px 40px;
-  background:rgba(255,255,255,.025);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:11px;
-  color:#f1f5f9;font-size:.92rem;font-family:var(--font-ui);
-  outline:none;transition:border-color .18s, box-shadow .18s, background .18s;
+  width:100%;padding:12px 14px 12px 40px;
+  background:#111827;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;
+  color:#f9fafb;font-size:.9rem;font-family:var(--font-ui);
+  outline:none;transition:border-color .18s, box-shadow .18s;
   -webkit-appearance:none;
 }
-.auth-input::placeholder { color:#3f4b5c; }
+.auth-input::placeholder { color:#374151; }
 .auth-input:focus {
-  border-color:rgba(16,185,129,.55);
-  box-shadow:0 0 0 3px rgba(16,185,129,.12);
-  background:rgba(16,185,129,.03);
+  border-color:rgba(16,185,129,.5);
+  box-shadow:0 0 0 3px rgba(16,185,129,.1);
 }
 
 /* Forgot password */
@@ -4405,58 +4384,48 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 
 /* Submit button */
 .auth-submit {
-  width:100%;padding:15px 20px;margin-top:6px;
+  width:100%;padding:13px 20px;margin-top:4px;
   background:#10b981;
-  border:none;border-radius:12px;
-  color:#fff;font-size:1rem;font-weight:800;letter-spacing:.02em;
+  border:none;border-radius:11px;
+  color:#fff;font-size:.95rem;font-weight:800;letter-spacing:.01em;
   cursor:pointer;
-  box-shadow:none;
-  transition:all .2s;
+  transition:background .18s;
   display:flex;align-items:center;justify-content:center;gap:8px;
   font-family:var(--font-ui);
 }
-.auth-submit:hover {
-  transform:translateY(-2px);
-  background:#059669;
-}
-.auth-submit:active { transform:translateY(0); }
-.auth-submit svg { width:17px;height:17px; }
+.auth-submit:hover { background:#059669; }
+.auth-submit svg { width:16px;height:16px; }
 
 /* Divider */
 .auth-divider {
   display:flex;align-items:center;gap:12px;
-  color:#1e293b;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  margin:18px 0;
+  color:#374151;font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  margin:16px 0;
 }
 .auth-divider::before,.auth-divider::after {
   content:'';flex:1;height:1px;
-  background:rgba(255,255,255,.07);
+  background:rgba(255,255,255,.06);
 }
 
 /* GitHub button */
 .auth-github {
-  width:100%;padding:15px 20px;
+  width:100%;padding:13px 18px;
   background:#161b22;
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:12px;
-  color:#f0f6fc;font-size:.95rem;font-weight:700;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:11px;
+  color:#f0f6fc;font-size:.9rem;font-weight:700;
   cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:12px;
-  transition:all .2s;
-  box-shadow:none;
-  position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:background .18s, border-color .18s;
   font-family:var(--font-ui);
+  margin-bottom:10px;
 }
 .auth-github::before { display:none; }
-.auth-github:hover {
-  border-color:rgba(255,255,255,.24);
-  transform:translateY(-2px);
-}
-.auth-github:active { transform:translateY(0); }
-.auth-github-icon { width:22px;height:22px;flex-shrink:0; }
+.auth-github:hover { background:#1c2128; border-color:rgba(255,255,255,.2); }
+.auth-github-icon { width:20px;height:20px;flex-shrink:0; }
 .auth-github-text { display:flex;flex-direction:column;align-items:flex-start;line-height:1; }
-.auth-github-text strong { font-size:.95rem;font-weight:800; }
-.auth-github-text span { font-size:.65rem;color:#8b949e;font-weight:500;margin-top:2px;letter-spacing:.04em; }
+.auth-github-text strong { font-size:.9rem;font-weight:700; }
+.auth-github-text span { display:none; }
 
 .auth-github.loading { opacity:.78; cursor:wait; pointer-events:none; }
 .auth-github-spinner { width:16px;height:16px;border:2px solid rgba(240,246,252,.35);border-top-color:#f0f6fc;border-radius:50%;animation:dpSpin .7s linear infinite;display:none;flex-shrink:0; }
@@ -4465,25 +4434,23 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 
 /* ── Google sign-in button ───────────────────────────────────────── */
 .auth-google {
-  display: flex; align-items: center; gap: 12px;
-  width: 100%; padding: 14px 20px;
-  background: #1e1e1e;
+  display: flex; align-items: center; justify-content:center; gap: 10px;
+  width: 100%; padding: 13px 18px;
+  background: #1c1c1c;
   color: #e8eaed;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 11px;
   font-family: var(--font-ui, inherit); font-size: .9rem; font-weight: 700;
-  cursor: pointer; text-align: left;
-  transition: background .15s, border-color .15s, box-shadow .15s, transform .12s;
-  position: relative; overflow: hidden;
-  margin-top: 10px;
+  cursor: pointer;
+  transition: background .18s, border-color .18s;
+  margin-top: 0;
 }
 .auth-google::before { display:none; }
-.auth-google:hover { background: #262626; border-color: rgba(255,255,255,.22); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,.35); }
-.auth-google:active { transform: translateY(0); }
+.auth-google:hover { background: #242424; border-color: rgba(255,255,255,.2); }
 .auth-google-icon { width:20px; height:20px; flex-shrink:0; }
 .auth-google-text { display:flex; flex-direction:column; align-items:flex-start; line-height:1; }
-.auth-google-text strong { font-size:.95rem; font-weight:700; color:#e8eaed; }
-.auth-google-text span { font-size:.65rem; color:#9aa0a6; font-weight:500; margin-top:3px; letter-spacing:.04em; }
+.auth-google-text strong { font-size:.9rem; font-weight:700; color:#e8eaed; }
+.auth-google-text span { display:none; }
 .auth-google.loading { opacity:.78; cursor:wait; pointer-events:none; }
 .auth-google-spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,.2); border-top-color:#4285f4; border-radius:50%; animation:dpSpin .7s linear infinite; display:none; flex-shrink:0; }
 .auth-google.loading .auth-google-spinner { display:inline-block; }
@@ -4668,7 +4635,28 @@ html[data-theme="light"] body { background: var(--jt-bg-sunken) !important; }
 /* ── LIGHT THEME: ADDITIONAL PAGES ─────────────────────────────── */
 /* Auth page */
 html[data-theme="light"] .auth-bg,
-html[data-theme="light"] .auth-wrap    { background: transparent !important; }
+html[data-theme="light"] .auth-wrap {
+  background: #ffffff !important;
+  border-color: rgba(0,0,0,.09) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06) !important;
+}
+html[data-theme="light"] .auth-title { color: #111827 !important; }
+html[data-theme="light"] .auth-title-accent { color: #059669 !important; }
+html[data-theme="light"] .auth-sub { color: #6b7280 !important; }
+html[data-theme="light"] .auth-tabs { background: rgba(0,0,0,.04) !important; border-color: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .auth-tab.active { background: #fff !important; color: #111827 !important; }
+html[data-theme="light"] .auth-tab { color: #9ca3af !important; }
+html[data-theme="light"] .auth-input { background: #f9fafb !important; border-color: rgba(0,0,0,.12) !important; color: #111827 !important; }
+html[data-theme="light"] .auth-input::placeholder { color: #9ca3af !important; }
+html[data-theme="light"] .auth-input-icon { color: #9ca3af !important; }
+html[data-theme="light"] .auth-field-label { color: #6b7280 !important; }
+html[data-theme="light"] .auth-github { background: #1c1c1c !important; }
+html[data-theme="light"] .auth-google { background: #1c1c1c !important; color: #fff !important; }
+html[data-theme="light"] .auth-divider { color: #9ca3af !important; }
+html[data-theme="light"] .auth-divider::before,
+html[data-theme="light"] .auth-divider::after { background: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .auth-trust-item { color: #6b7280 !important; }
+html[data-theme="light"] .auth-back { color: #9ca3af !important; }
 html[data-theme="light"] .auth-tabs    { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .auth-input   { background: var(--jt-bg-raised) !important; color: #0f172a !important; border-color: rgba(0,0,0,.12) !important; }
 html[data-theme="light"] .auth-feat-pill { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.08) !important; color: #0f172a !important; }
@@ -5699,18 +5687,33 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
       </div>
 
       <!-- Heading -->
-      <div class="auth-title">Your workspace <span class="auth-title-accent">is waiting.</span></div>
-      <div class="auth-sub">Connect your GitHub, deploy in seconds, and ship with confidence — all from one professional control surface.</div>
+      <div class="auth-title">Let's get you<br><span class="auth-title-accent">building.</span></div>
 
       <!-- Tabs -->
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tabSignup" onclick="switchAuthMode('signup')">Create Account</button>
-        <button class="auth-tab" id="tabLogin" onclick="switchAuthMode('login')">Sign In</button>
+      <div class="auth-tabs" style="margin-bottom:20px;">
+        <button class="auth-tab active" id="tabSignup" onclick="switchAuthMode('signup')">Sign up</button>
+        <button class="auth-tab" id="tabLogin" onclick="switchAuthMode('login')">Sign in</button>
       </div>
+
+      <!-- Social buttons first -->
+      <button class="auth-github" id="authGithubBtn" onclick="continueWithGitHub()">
+        <span class="auth-github-spinner" aria-hidden="true"></span>
+        <svg class="auth-github-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.6-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.8 1.4 3.5 1.1.1-.8.4-1.4.8-1.8-2.7-.3-5.5-1.4-5.5-6a4.7 4.7 0 0 1 1.2-3.2 4.3 4.3 0 0 1 .1-3.1s1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.6 5.5 18.6 5.8 18.6 5.8a4.3 4.3 0 0 1 .1 3.1 4.7 4.7 0 0 1 1.2 3.2c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>
+        <div class="auth-github-text"><strong>Continue with GitHub</strong></div>
+      </button>
+
+      <button class="auth-google" id="authGoogleBtn" onclick="continueWithGoogle()">
+        <span class="auth-google-spinner" aria-hidden="true"></span>
+        <svg class="auth-google-icon" viewBox="0 0 48 48"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.6 33.9 30 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.4-.1-2.7-.5-4z"/><path fill="#34A853" d="M6.3 14.7l7 5.1C15.1 16 19.2 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3c-7.8 0-14.5 4.7-17.7 11.7z"/><path fill="#FBBC05" d="M24 45c5.8 0 10.8-1.9 14.6-5.2l-6.7-5.5C29.8 36 27 37 24 37c-5.9 0-10.9-4-12.7-9.5l-7 5.4C7.5 40.3 15.2 45 24 45z"/><path fill="#EA4335" d="M44.5 20H24v8.5h11.8c-.9 2.6-2.6 4.8-4.9 6.3l6.7 5.5C41.8 36.7 45 30.8 45 24c0-1.4-.1-2.7-.5-4z"/></svg>
+        <div class="auth-google-text"><strong>Continue with Google</strong></div>
+      </button>
+
+      <!-- Divider -->
+      <div class="auth-divider">or</div>
 
       <!-- Email -->
       <div class="auth-field">
-        <div class="auth-field-label">Email address</div>
+        <div class="auth-field-label">Email</div>
         <div class="auth-input-wrap">
           <span class="auth-input-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg></span>
           <input class="auth-input" id="authEmail" type="email" placeholder="you@company.com" autocomplete="email">
@@ -5730,7 +5733,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
       <div class="auth-field">
         <div class="auth-field-label">
           Password
-          <a href="#" class="auth-forgot" id="authForgotLink" style="display:none">Forgot password?</a>
+          <a href="#" class="auth-forgot" id="authForgotLink" style="display:none">Forgot?</a>
         </div>
         <div class="auth-input-wrap">
           <span class="auth-input-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
@@ -5745,36 +5748,13 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 
       <!-- Submit -->
       <button class="auth-submit" onclick="submitAuth()" id="authSubmitBtn">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
         Create account
-      </button>
-
-      <!-- Divider -->
-      <div class="auth-divider">or continue with</div>
-
-      <!-- GitHub -->
-      <button class="auth-github" id="authGithubBtn" onclick="continueWithGitHub()">
-        <span class="auth-github-spinner" aria-hidden="true"></span>
-        <svg class="auth-github-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.6-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.8 1.4 3.5 1.1.1-.8.4-1.4.8-1.8-2.7-.3-5.5-1.4-5.5-6a4.7 4.7 0 0 1 1.2-3.2 4.3 4.3 0 0 1 .1-3.1s1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.6 5.5 18.6 5.8 18.6 5.8a4.3 4.3 0 0 1 .1 3.1 4.7 4.7 0 0 1 1.2 3.2c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>
-        <div class="auth-github-text">
-          <strong>Continue with GitHub</strong>
-          <span>CONNECT YOUR REPOSITORIES</span>
-        </div>
-      </button>
-
-      <!-- Google -->
-      <button class="auth-google" id="authGoogleBtn" onclick="continueWithGoogle()">
-        <span class="auth-google-spinner" aria-hidden="true"></span>
-        <svg class="auth-google-icon" viewBox="0 0 48 48"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.6 33.9 30 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.4-.1-2.7-.5-4z"/><path fill="#34A853" d="M6.3 14.7l7 5.1C15.1 16 19.2 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3c-7.8 0-14.5 4.7-17.7 11.7z"/><path fill="#FBBC05" d="M24 45c5.8 0 10.8-1.9 14.6-5.2l-6.7-5.5C29.8 36 27 37 24 37c-5.9 0-10.9-4-12.7-9.5l-7 5.4C7.5 40.3 15.2 45 24 45z"/><path fill="#EA4335" d="M44.5 20H24v8.5h11.8c-.9 2.6-2.6 4.8-4.9 6.3l6.7 5.5C41.8 36.7 45 30.8 45 24c0-1.4-.1-2.7-.5-4z"/></svg>
-        <div class="auth-google-text">
-          <strong>Continue with Google</strong>
-          <span>SIGN IN WITH YOUR GOOGLE ACCOUNT</span>
-        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
 
       <!-- Trust -->
       <div class="auth-trust">
-        <div class="auth-trust-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Free forever plan</div>
+        <div class="auth-trust-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Free forever</div>
         <div class="auth-trust-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>No credit card</div>
         <div class="auth-trust-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Deploy in 60s</div>
       </div>
