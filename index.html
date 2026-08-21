@@ -13261,8 +13261,16 @@ document.addEventListener('keydown', function(e){
       const ps = pinned ? 'border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.04);' : '';
 
       if (avail === true || avail === 'available') {
+        // [FIX] JSON.stringify(domain) produces double-quoted text (e.g. "example.com"),
+        // but that was being inserted straight into an onclick="..." attribute that is
+        // ALSO double-quoted. The embedded quote closed the attribute early, leaving
+        // the browser with a broken/empty onclick and stray text outside any attribute --
+        // so tapping Register did nothing at all, silently. Fix: use single quotes to
+        // wrap the domain argument and HTML-escape the domain value itself (it can
+        // contain nothing but the domain's own safe characters, but escaping is cheap
+        // insurance) instead of JSON.stringify, which always emits double quotes.
         const registerBtn = priceKnown
-          ? '<button class="btn btn-primary" style="min-height:30px;font-size:.72rem;padding:0 12px;" onclick="dsOpenCheckout(' + JSON.stringify(domain) + ',' + ghsReg + ',' + ghsRenew + ',' + usdReg + ')">Register</button>'
+          ? '<button class="btn btn-primary" style="min-height:30px;font-size:.72rem;padding:0 12px;" onclick="dsOpenCheckout(\'' + domain.replace(/'/g, "\\'") + '\',' + ghsReg + ',' + ghsRenew + ',' + usdReg + ')">Register</button>'
           : '<button class="btn btn-sm btn-ghost" style="font-size:.72rem;opacity:.55;cursor:not-allowed;" disabled>N/A</button>';
         const priceEl = priceKnown
           ? dsPriceTag(usdReg, ghsReg)
