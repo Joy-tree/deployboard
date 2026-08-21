@@ -38918,6 +38918,20 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
       </div>
     </div>
   </div>
+</div>
+<!-- [FIX] ROOT CAUSE of "sidebar click does nothing": this closing </div> was
+     missing, so #dbVisualizer (the next element below) ended up nested ONE
+     LEVEL INSIDE #dbDataBrowser instead of being its own sibling modal.
+     #dbDataBrowser stays display:none until ITS OWN .open class is added
+     (via the "Browse" button flow) -- and a display:none ancestor collapses
+     its entire subtree to 0x0 regardless of any position:fixed/inset:0 on a
+     descendant. So openDbVisualizerFromSidebar() ran every line correctly
+     (confirmed via toast), correctly added .open to #dbVisualizer, and
+     #dbVisualizer's own CSS (position:fixed;inset:0;z-index:9901) was
+     already 100% correct -- it was invisible only because its real parent,
+     #dbDataBrowser, was still display:none the whole time. This one </div>
+     makes #dbVisualizer a direct sibling of #dbDataBrowser again, matching
+     what its CSS already assumed. -->
 <!-- ── DB Visualizer Modal ──────────────────────────────────────────────────── -->
 <style>
 /* ═══════════════════════════════════════════════════════════════════
