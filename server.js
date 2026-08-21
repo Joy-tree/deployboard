@@ -6996,6 +6996,27 @@ app.post('/api/domains/nameservers', requireAuth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Domain acquisition inquiry (Try to Buy) ─────────────────────
+// Saves the request to Firebase so you can review and act on it.
+// No external redirect — everything stays on the Joytree platform.
+app.post('/api/domains/try-to-buy', requireAuth, async (req, res) => {
+  try {
+    const { domain, email, note } = req.body || {};
+    if (!domain || !email) return res.status(400).json({ error: 'domain and email required' });
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    ws.domainAcquisitionRequests = Array.isArray(ws.domainAcquisitionRequests) ? ws.domainAcquisitionRequests : [];
+    ws.domainAcquisitionRequests.unshift({
+      domain: String(domain).toLowerCase().trim(),
+      email: String(email).trim(),
+      note: String(note || '').trim(),
+      requestedAt: new Date().toISOString(),
+      status: 'pending'
+    });
+    await writeWorkspaceToFirebase(req.user, ws);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Paystack webhook: handle domain registration payment ──────────
 // (hook into existing webhook — domain type is detected by metadata)
 // This is handled inside the existing /api/paystack/webhook route
