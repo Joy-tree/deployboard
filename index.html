@@ -39266,6 +39266,13 @@ function openDbVisualizerFor(dbId, alreadyOpen) {
 // the dropdown from whatever's already cached, and let the person pick.
 // No waiting, no guessing, nothing that can hang.
 function openDbVisualizerFromSidebar() {
+  // [DEBUG] Every step wrapped so a failure ANYWHERE in this sequence is
+  // visible via toast instead of silently doing nothing. If you see no
+  // toast at all when tapping this nav item, the onclick itself never
+  // fired (a different bug entirely — likely something intercepting the
+  // tap before it reaches this handler). If you DO see an error toast,
+  // it tells us exactly which line broke.
+  toast('Opening Data Visualizer…', 'success', 1500);
   try {
     _dbvDbId = null;
     _dbvEngine = null;
@@ -39273,18 +39280,22 @@ function openDbVisualizerFromSidebar() {
     _dbvSelectedTable = null;
 
     const el = document.getElementById('dbVisualizer');
-    if (!el) { toast('Data Visualizer not available.', 'error'); return; }
+    if (!el) {
+      toast('ERROR: #dbVisualizer element not found in DOM.', 'error', 8000);
+      return;
+    }
 
-    // Open the modal immediately — it is position:fixed so it sits above
-    // everything regardless of sidebar state. Close sidebar after so the
-    // animation plays underneath the already-visible modal.
+    // Check #app is actually visible — the visualizer is nested inside #app,
+    // which requires html.app-mode to render at all. If the user somehow
+    // isn't in app-mode when clicking this, the modal opens but stays hidden.
+    if (!document.documentElement.classList.contains('app-mode')) {
+      toast('ERROR: app-mode is not active — cannot show Data Visualizer.', 'error', 8000);
+      return;
+    }
+
     el.classList.add('open');
-    document.documentElement.classList.add('modal-open');
-    // Also restore body scroll (sidebar sets overflow:hidden) now that
-    // the modal is taking over full-screen.
     document.body.style.overflow = '';
 
-    // Reset placeholders
     ['dbvBarChart','dbvLineChart','dbvDonutChart','dbvSchemaList'].forEach(function(id) {
       const c = document.getElementById(id);
       if (c) c.innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
@@ -39294,18 +39305,31 @@ function openDbVisualizerFromSidebar() {
       if (c) c.textContent = '—';
     });
 
-    // Close sidebar after modal is visible
-    if (typeof closeSidebar === 'function') closeSidebar();
+    if (typeof closeSidebar === 'function') {
+      closeSidebar();
+    } else {
+      toast('WARNING: closeSidebar is not defined.', 'error', 6000);
+    }
 
-    // Load databases
+    if (typeof dbvPopulateDbSelect !== 'function') {
+      toast('ERROR: dbvPopulateDbSelect is not defined — visualizer script may not have loaded.', 'error', 8000);
+      return;
+    }
+
     if (!_databases || !_databases.length) {
-      loadDatabases().then(function() { dbvPopulateDbSelect(); }).catch(function(){});
+      if (typeof loadDatabases !== 'function') {
+        toast('ERROR: loadDatabases is not defined.', 'error', 8000);
+        return;
+      }
+      loadDatabases().then(function() { dbvPopulateDbSelect(); }).catch(function(err){
+        toast('loadDatabases failed: ' + err.message, 'error', 8000);
+      });
     } else {
       dbvPopulateDbSelect();
     }
   } catch (e) {
     console.error('[dbv] openDbVisualizerFromSidebar failed:', e);
-    toast('Could not open Data Visualizer: ' + e.message, 'error', 8000);
+    toast('Could not open Data Visualizer: ' + e.message, 'error', 10000);
   }
 }
 
