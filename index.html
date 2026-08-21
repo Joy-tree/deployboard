@@ -527,9 +527,9 @@ img{max-width:100%;}
    coordinate space -- otherwise every single letter would show its own
    tiny full green-to-cyan fade instead of the phrase reading as one
    smooth continuous sweep. */
-.hero-h1 .hero-type-letter.accent{
-  background-size:340px 100%;
-  background-attachment:fixed;
+.hero-h1-static {
+  display: block;
+  color: var(--text);
 }
 .hero-typewriter-wrap{
   font-family:var(--font-ui);
@@ -544,7 +544,7 @@ img{max-width:100%;}
   display:block;
   width:100%;
 }
-.hero-typewriter{color:transparent;background:linear-gradient(96deg,#10b981 0%,#06b6d4 45%,#22d3ee 100%);-webkit-background-clip:text;background-clip:text;white-space:nowrap;display:inline-block;animation:typewriterNeon 1.6s ease-in-out infinite;}
+.hero-typewriter{color:var(--text);white-space:nowrap;display:inline-block;}
 .hero-typewriter-static{display:block;color:inherit;}
 .hero-typewriter-label{display:block;text-align:center;width:100%;color:inherit;}
 .hero-typewriter-line{display:block;text-align:center;width:100%;min-height:1.2em;}
@@ -6783,12 +6783,9 @@ window.landingToggleTheme = function(){
       .hero-type-cursor{ display:none!important; }
     }
 
-    .hero-cascade{ opacity:0; transform:translateY(14px); animation:heroCascadeIn .7s ease forwards; }
-    .hero-eyebrow.hero-cascade{ animation-delay:.05s; }
-    .hero-chip.hero-cascade{ animation-delay:1.55s; }
-    .hero-sub.hero-cascade{ animation-delay:1.75s; }
-    .hero-actions.hero-cascade{ animation-delay:1.95s; }
-    .hero-trust.hero-cascade{ animation-delay:2.15s; }
+    .hero-cascade{ opacity:0; transform:translateY(12px); animation:heroCascadeIn .6s ease forwards; }
+    .hero-actions.hero-cascade{ animation-delay:.35s; }
+    .hero-trust.hero-cascade{ animation-delay:.55s; }
     @keyframes heroCascadeIn{ to{ opacity:1; transform:translateY(0); } }
 
     @media (prefers-reduced-motion: reduce){
@@ -6796,100 +6793,11 @@ window.landingToggleTheme = function(){
     }
   </style>
 
-  <div class="hero-eyebrow hero-cascade"><span class="hero-eyebrow-dot"></span>&nbsp;AI-Powered Deployment Platform</div>
-
-  <h1 class="hero-h1"><span class="hero-h1-line hero-h1-line-1"></span><br><span class="hero-h1-line hero-h1-line-2"></span></h1>
-
-  <script>
-  (function(){
-    // Real character-by-character typewriter with a live blinking cursor
-    // that visits whichever letter is currently being typed. Types the
-    // full two-line headline in, holds, erases it (fast, cursor-first),
-    // then types it again -- forever. "Run databases." keeps its
-    // original accent gradient class; nothing else gets color.
-    var line1El = document.querySelector('.hero-h1-line-1');
-    var line2El = document.querySelector('.hero-h1-line-2');
-    if (!line1El || !line2El) return;
-
-    // [char, isAccent] pairs for each line, built from the original copy
-    var LINE1 = 'Deploy apps. Build APIs.'.split('').map(function(c){ return [c,false]; });
-    var LINE2 = 'Run databases.'.split('').map(function(c){ return [c,true]; })
-      .concat(' Ship anything.'.split('').map(function(c){ return [c,false]; }));
-
-    var cursor = document.createElement('span');
-    cursor.className = 'hero-type-cursor';
-
-    var TYPE_MS = 42;      // per-character typing speed
-    var ERASE_MS = 14;     // per-character erase speed (faster -- carriage sweep)
-    var HOLD_MS = 3200;    // pause once fully typed
-    var GAP_MS = 500;      // pause once fully erased, before retyping
-
-    function makeLetter(ch, isAccent){
-      var span = document.createElement('span');
-      span.className = 'hero-type-letter' + (isAccent ? ' accent' : '');
-      span.textContent = ch;
-      return span;
-    }
-
-    function typeLine(lineEl, chars, onDone){
-      var i = 0;
-      lineEl.appendChild(cursor);
-      (function step(){
-        if (i >= chars.length){ onDone(); return; }
-        var span = makeLetter(chars[i][0], chars[i][1]);
-        lineEl.insertBefore(span, cursor);
-        requestAnimationFrame(function(){ span.classList.add('is-in'); });
-        i++;
-        setTimeout(step, TYPE_MS);
-      })();
-    }
-
-    function eraseLine(lineEl, onDone){
-      var letters = Array.prototype.slice.call(lineEl.querySelectorAll('.hero-type-letter'));
-      letters.reverse();
-      var i = 0;
-      (function step(){
-        if (i >= letters.length){ onDone(); return; }
-        var span = letters[i];
-        span.classList.remove('is-in');
-        span.classList.add('is-out');
-        setTimeout(function(){ span.remove(); }, ERASE_MS);
-        i++;
-        setTimeout(step, ERASE_MS);
-      })();
-    }
-
-    function cycle(){
-      typeLine(line1El, LINE1, function(){
-        line2El.appendChild(cursor);
-        typeLine(line2El, LINE2, function(){
-          setTimeout(function(){
-            eraseLine(line2El, function(){
-              eraseLine(line1El, function(){
-                setTimeout(cycle, GAP_MS);
-              });
-            });
-          }, HOLD_MS);
-        });
-      });
-    }
-
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-      LINE1.forEach(function(pair){ line1El.appendChild(makeLetter(pair[0], pair[1])).classList.add('is-in'); });
-      LINE2.forEach(function(pair){ line2El.appendChild(makeLetter(pair[0], pair[1])).classList.add('is-in'); });
-      return;
-    }
-
-    cycle();
-  })();
-  </script>
-
-  <div class="hero-chip hero-cascade">
-    <span class="hero-chip-label">Built for</span>
-    <span class="hero-chip-word" id="typewriter">AI API Platform Builders</span>
-  </div>
-
-  <p class="hero-sub hero-cascade">Describe an API in plain English and JoyTree generates a live, hosted REST endpoint in seconds. Deploy from GitHub or a ZIP — and when a build fails, AI diagnoses it, opens a fix, and redeploys automatically.</p>
+  <h1 class="hero-h1">
+    <span class="hero-h1-static">Deploy apps.</span><br>
+    <span class="hero-h1-static">Build APIs.</span><br>
+    <span class="hero-h1-static">Ship anything.</span>
+  </h1>
 
   <div class="hero-actions hero-cascade">
     <a href="#" onclick="showDashboard();return false;" class="btn-hero-primary">
@@ -6897,8 +6805,7 @@ window.landingToggleTheme = function(){
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </a>
     <a href="#how-it-works" class="btn-hero-ghost">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      See how it works
+      View pricing
     </a>
   </div>
 
