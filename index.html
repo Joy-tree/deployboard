@@ -13264,51 +13264,48 @@ document.addEventListener('keydown', function(e){
     }
 
     // ── Shared row renderer — used by both single-domain pin and batch sweep ──
-    function dsRenderDomainRow(domain, availability, livePrices, pinned = false) {
-      const tld = '.' + domain.split('.').slice(1).join('.');
-      const hasLivePrice = livePrices[domain]?.register != null;
+    function dsRenderDomainRow(domain, availability, livePrices, pinned) {
+      const hasLivePrice = livePrices[domain] && livePrices[domain].register != null;
       const usdReg   = hasLivePrice ? Number.parseFloat(livePrices[domain].register) : null;
-      const usdRenew = hasLivePrice ? Number.parseFloat(livePrices[domain].renew ?? livePrices[domain].register) : null;
+      const usdRenew = hasLivePrice ? Number.parseFloat(livePrices[domain].renew != null ? livePrices[domain].renew : livePrices[domain].register) : null;
       const ghsReg   = usdReg   != null ? dsUsdToGhs(usdReg)   : null;
       const ghsRenew = usdRenew != null ? dsUsdToGhs(usdRenew) : null;
       const priceKnown = ghsReg != null;
       const avail = availability[domain];
       const safeDomain = dsEscapeHtml(domain);
-      const pinnedStyle = pinned ? 'border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.04);' : '';
+      const ps = pinned ? 'border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.04);' : '';
 
       if (avail === true || avail === 'available') {
-        return \`<div class="ds-avail-row ds-avail-available" style="\${pinnedStyle}">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
-          <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:.88rem;color:var(--text);">\${safeDomain}</div>
-            <div style="font-size:.7rem;color:var(--text-3);">\${priceKnown ? 'Available · renews GHS '+ghsRenew+'/yr' : 'Available · renewal price not available'}</div>
-          </div>
-          \${priceKnown ? dsPriceTag(usdReg, ghsReg) : '<div style="font-size:.72rem;color:var(--text-3);text-align:right;white-space:nowrap;">Price<br>unavailable</div>'}
-          \${priceKnown
-            ? \`<button class="btn btn-primary" style="min-height:30px;font-size:.72rem;padding:0 12px;" onclick="dsOpenCheckout('\${domain}',\${ghsReg},\${ghsRenew},\${usdReg})">Register</button>\`
-            : \`<button class="btn btn-sm btn-ghost" style="font-size:.72rem;opacity:.55;cursor:not-allowed;" disabled>N/A</button>\`
-          }
-        </div>\`;
+        const registerBtn = priceKnown
+          ? '<button class="btn btn-primary" style="min-height:30px;font-size:.72rem;padding:0 12px;" onclick="dsOpenCheckout(' + JSON.stringify(domain) + ',' + ghsReg + ',' + ghsRenew + ',' + usdReg + ')">Register</button>'
+          : '<button class="btn btn-sm btn-ghost" style="font-size:.72rem;opacity:.55;cursor:not-allowed;" disabled>N/A</button>';
+        const priceEl = priceKnown
+          ? dsPriceTag(usdReg, ghsReg)
+          : '<div style="font-size:.72rem;color:var(--text-3);text-align:right;white-space:nowrap;">Price<br>unavailable</div>';
+        const sub = priceKnown ? 'Available · renews GHS ' + ghsRenew + '/yr' : 'Available · renewal price not available';
+        return '<div class="ds-avail-row ds-avail-available" style="' + ps + '">'
+          + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>'
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-weight:700;font-size:.88rem;color:var(--text);">' + safeDomain + '</div>'
+          + '<div style="font-size:.7rem;color:var(--text-3);">' + sub + '</div>'
+          + '</div>' + priceEl + registerBtn + '</div>';
       } else if (avail === 'taken') {
-        // Taken — show Joytree's own 'Try to Buy' inquiry modal, no external redirect
-        return `<div class="ds-avail-row ds-avail-taken" style="${pinnedStyle}">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:.88rem;color:var(--text);">${safeDomain}</div>
-            <div style="font-size:.7rem;color:#f87171;">Registered · may be acquirable</div>
-          </div>
-          <button class="btn btn-sm" style="min-height:30px;font-size:.72rem;padding:0 11px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);color:#fbbf24;white-space:nowrap;flex-shrink:0;" onclick="dsTryToBuy('${domain}')">Try to Buy</button>
-        </div>`;
+        return '<div class="ds-avail-row ds-avail-taken" style="' + ps + '">'
+          + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-weight:700;font-size:.88rem;color:var(--text);">' + safeDomain + '</div>'
+          + '<div style="font-size:.7rem;color:#f87171;">Registered · may be acquirable</div>'
+          + '</div>'
+          + '<button class="btn btn-sm" style="min-height:30px;font-size:.72rem;padding:0 11px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);color:#fbbf24;white-space:nowrap;flex-shrink:0;" data-domain="' + safeDomain + '" onclick="dsTryToBuy(this.dataset.domain)">Try to Buy</button>'
+          + '</div>';
       } else {
-      } else {
-        return \`<div class="ds-avail-row" style="\${pinnedStyle}">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:.88rem;color:var(--text);">\${safeDomain}</div>
-            <div style="font-size:.7rem;color:var(--text-3);">Could not confirm availability</div>
-          </div>
-          \${priceKnown ? dsPriceTag(usdReg, ghsReg) : ''}
-        </div>\`;
+        const priceEl2 = priceKnown ? dsPriceTag(usdReg, ghsReg) : '';
+        return '<div class="ds-avail-row" style="' + ps + '">'
+          + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-weight:700;font-size:.88rem;color:var(--text);">' + safeDomain + '</div>'
+          + '<div style="font-size:.7rem;color:var(--text-3);">Could not confirm availability</div>'
+          + '</div>' + priceEl2 + '</div>';
       }
     }
 
