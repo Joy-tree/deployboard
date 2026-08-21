@@ -3934,19 +3934,20 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
    RESPONSIVE — MOBILE  (≤ 768px)
 ══════════════════════════════════════════════════════════════ */
 @media(max-width:768px) {
-  /* ── Full-screen sidebar drawer on mobile ───────────────────────────── */
+  /* ── Drawer sidebar on mobile — ~80% width like Render, not full screen ── */
   #sidebar {
     position: fixed;
     left: 0; top: 0; bottom: 0;
-    /* Full viewport width — the whole screen becomes the nav drawer */
-    width: 100vw !important;
-    min-width: 0 !important;
-    max-width: 100vw !important;
+    /* 80vw: wide enough to read comfortably, narrow enough to see you're
+       in a drawer (the right ~20% stays visible as a dark scrim overlay).
+       max 320px so it doesn't get too wide on tablets. */
+    width: 80vw !important;
+    min-width: 260px !important;
+    max-width: 320px !important;
     transform: translateX(-100%);
     z-index: 300;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    /* Slightly elevated shadow so it feels like it's lifting over content */
-    box-shadow: 4px 0 40px rgba(0,0,0,0.45);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 6px 0 32px rgba(0,0,0,0.55);
     display: flex;
     flex-direction: column;
     overflow: hidden;
