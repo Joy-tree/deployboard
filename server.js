@@ -7017,6 +7017,52 @@ app.post('/api/domains/try-to-buy', requireAuth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Get Joytree registrar account balance ─────────────────────────────────
+// Called by the checkout flow before opening payment so we can warn the
+// user if we don't have enough funds to register their domain instantly.
+// Balance is cached for 5 minutes so repeated checkout attempts don't
+// hammer the upstream API.
+let _balanceCache = { usd: null, fetchedAt: 0 };
+async function getRegistrarBalance() {
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  if (_balanceCache.usd !== null && Date.now() - _balanceCache.fetchedAt < CACHE_TTL) {
+    return _balanceCache.usd;
+  }
+  if (!NAMESILO_API_KEY) return null;
+  try {
+    const data = await namesiloCall('getAccountInfo', {});
+    // NameSilo returns balance as a string like "14.23" under various keys
+    const raw = data?.balance ?? data?.account_balance ?? data?.funds ?? data?.available_funds;
+    const usd = raw !== undefined && raw !== null ? Number(parseFloat(raw)) : null;
+    if (Number.isFinite(usd)) {
+      _balanceCache = { usd, fetchedAt: Date.now() };
+      return usd;
+    }
+    return null;
+  } catch(e) {
+    console.warn('[DomainStore] getAccountInfo failed:', e.message);
+    return null;
+  }
+}
+
+app.get('/api/domains/balance-check', requireAuth, async (req, res) => {
+  try {
+    const domainPrice = Number.parseFloat(req.query.usdPrice || '0');
+    const balance = await getRegistrarBalance();
+    if (balance === null) {
+      // Can't read balance — let it proceed (worst case the registration fails
+      // and the existing payment-taken recovery flow kicks in)
+      return res.json({ ok: true, canRegister: true, balance: null });
+    }
+    // Add a small buffer ($0.50) to account for any fees/rounding
+    const canRegister = balance >= domainPrice + 0.5;
+    res.json({ ok: true, canRegister, balance, domainPrice });
+  } catch(e) {
+    // Non-fatal — don't block the purchase if balance check errors
+    res.json({ ok: true, canRegister: true, balance: null, error: e.message });
+  }
+});
+
 // ── Paystack webhook: handle domain registration payment ──────────
 // (hook into existing webhook — domain type is detected by metadata)
 // This is handled inside the existing /api/paystack/webhook route
