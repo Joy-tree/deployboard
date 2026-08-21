@@ -12978,11 +12978,12 @@ document.addEventListener('keydown', function(e){
       '.site': { usd: 2.99,  renew: 22.99 },
     };
 
-    // Convert a USD wholesale price → GHS, at cost — no markup. This is
-    // the exact NameSilo wholesale price (from the live /api/domains/tlds
-    // and /api/domains/check endpoints), just currency-converted.
+    // Convert a USD wholesale price → GHS with a 2× markup for profit.
+    // DS_MARKUP = 2 means the customer pays 2× the NameSilo wholesale price.
+    // To change margin: adjust DS_MARKUP (1 = at cost, 3 = triple, etc.)
+    const DS_MARKUP = 2;
     function dsUsdToGhs(usd) {
-      return Math.ceil(usd * DS_EXCHANGE_RATE);
+      return Math.ceil(usd * DS_EXCHANGE_RATE * DS_MARKUP);
     }
     // Show the price in Ghana cedis only.
     function dsPriceTag(usd, ghs) {
