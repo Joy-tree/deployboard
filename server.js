@@ -6960,6 +6960,32 @@ app.post('/api/domains/nameservers', requireAuth, async (req, res) => {
     if (!domain || !Array.isArray(nameservers) || !nameservers.length)
       return res.status(400).json({ error: 'domain and nameservers[] required' });
 
+    // Detect mode: joytree NS list vs custom
+    const JOYTREE_NS = ['jay.ns.cloudflare.com', 'lara.ns.cloudflare.com'];
+    const isJoytreeMode = nameservers.length === JOYTREE_NS.length &&
+      nameservers.every((ns, i) => ns.toLowerCase() === JOYTREE_NS[i].toLowerCase());
+    const nsMode = isJoytreeMode ? 'joytree' : 'custom';
+
+    // [FIX] Persist NS choice to Firebase so the cPanel UI can restore it on
+    // reload. Previously the endpoint only called NameSilo and returned —
+    // nothing was saved — so every time the page reloaded or the domain was
+    // re-selected, the UI defaulted back to 'joytree' mode and the custom NS
+    // values were lost. Now we update the matching entry in registeredDomains.
+    try {
+      const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+      const domains = Array.isArray(ws.registeredDomains) ? ws.registeredDomains : [];
+      const idx = domains.findIndex(d => String(d.domain || '').toLowerCase() === domain.toLowerCase());
+      if (idx >= 0) {
+        domains[idx].nsMode = nsMode;
+        domains[idx].customNameservers = isJoytreeMode ? [] : [...nameservers];
+        domains[idx].nameserversUpdatedAt = new Date().toISOString();
+        ws.registeredDomains = domains;
+        await writeWorkspaceToFirebase(req.user, ws);
+      }
+    } catch (fbErr) {
+      console.warn('[domains/nameservers] Firebase persist failed (non-fatal):', fbErr.message);
+    }
+
     if (!NAMESILO_API_KEY) return res.json({ ok: true, demo: true });
 
     const params = { domain };
