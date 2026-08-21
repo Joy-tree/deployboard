@@ -3168,77 +3168,79 @@ html[data-theme="light"] .dnp-btn:hover{ background:var(--jt-brand)!important; }
 
 
 /* ══════════════════════════════════════════════════════════════════
-   AUTH PAGE — light/dark clean overrides (no blue, no red)
+   AUTH PAGE — no card, floats on page background like pxxl
    ══════════════════════════════════════════════════════════════════ */
 
-/* Dark theme: all neutral dark, no blue */
-html[data-theme="dark"] .auth-input,
-html[data-theme="dark"] .auth-input:focus {
-  background: #0f0f0f !important;
-  border-color: rgba(255,255,255,.1) !important;
-  color: #f9fafb !important;
-}
-html[data-theme="dark"] .auth-tabs {
-  background: rgba(255,255,255,.04) !important;
-  border-color: rgba(255,255,255,.07) !important;
-}
-html[data-theme="dark"] .auth-tab.active {
-  background: #1a1a1a !important;
-  color: #f9fafb !important;
-}
+/* Dark theme: no card, underline inputs on dark bg */
 html[data-theme="dark"] .auth-wrap {
-  background: #0d0f10 !important;
-  border-color: rgba(255,255,255,.08) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] .auth-input {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255,255,255,.15) !important;
+  border-radius: 0 !important;
+  color: #f9fafb !important;
+}
+html[data-theme="dark"] .auth-input:focus {
+  border-bottom-color: var(--primary) !important;
+  box-shadow: none !important;
 }
 
-/* Light theme: white card, readable inputs */
+/* Light theme: floats on light page bg, dark inputs for readability */
 html[data-theme="light"] .auth-wrap {
-  background: #ffffff !important;
-  border: 1px solid rgba(0,0,0,.09) !important;
-  box-shadow: 0 20px 60px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
+html[data-theme="light"] #auth-view { background: var(--jt-bg-sunken) !important; }
 html[data-theme="light"] .auth-title { color: #111827 !important; }
 html[data-theme="light"] .auth-title-accent { color: #059669 !important; }
 html[data-theme="light"] .auth-sub { color: #6b7280 !important; }
 html[data-theme="light"] .auth-input {
-  background: #f9fafb !important;
-  border-color: rgba(0,0,0,.12) !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(0,0,0,.2) !important;
+  border-radius: 0 !important;
   color: #111827 !important;
+}
+html[data-theme="light"] .auth-input:focus {
+  border-bottom-color: #059669 !important;
+  box-shadow: none !important;
 }
 html[data-theme="light"] .auth-input::placeholder { color: #9ca3af !important; }
 html[data-theme="light"] .auth-input-icon { color: #9ca3af !important; }
-html[data-theme="light"] .auth-field-label { color: #6b7280 !important; }
+html[data-theme="light"] .auth-field-label { color: #111827 !important; }
 html[data-theme="light"] .auth-tabs {
-  background: rgba(0,0,0,.04) !important;
-  border-color: rgba(0,0,0,.08) !important;
+  background: rgba(0,0,0,.06) !important;
+  border-color: rgba(0,0,0,.1) !important;
 }
 html[data-theme="light"] .auth-tab { color: #9ca3af !important; }
 html[data-theme="light"] .auth-tab.active {
-  background: #fff !important;
+  background: rgba(0,0,0,.12) !important;
   color: #111827 !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,.1) !important;
 }
 html[data-theme="light"] .auth-divider { color: #9ca3af !important; }
 html[data-theme="light"] .auth-divider::before,
-html[data-theme="light"] .auth-divider::after { background: rgba(0,0,0,.08) !important; }
+html[data-theme="light"] .auth-divider::after { background: rgba(0,0,0,.12) !important; }
 html[data-theme="light"] .auth-trust-item { color: #6b7280 !important; }
 html[data-theme="light"] .auth-back { color: #9ca3af !important; }
 html[data-theme="light"] .auth-back:hover { color: #059669 !important; }
-
-/* GitHub + Google stay dark always (correct on both themes) */
-.auth-github, .auth-google {
-  background: #161b22 !important;
-  color: #f0f6fc !important;
+html[data-theme="light"] .auth-github,
+html[data-theme="light"] .auth-google {
+  background: rgba(0,0,0,.07) !important;
+  border-color: rgba(0,0,0,.12) !important;
+  color: #111827 !important;
 }
-html[data-theme="light"] .auth-github { background: #1c1c1c !important; }
-html[data-theme="light"] .auth-google { background: #1c1c1c !important; color: #e8eaed !important; }
 
 /* ══ Logout modal — no red anywhere ══ */
 #logoutModal .modal { border-color: var(--border) !important; box-shadow: 0 20px 60px rgba(0,0,0,.4) !important; }
 #logoutModal .modal-header { background: var(--bg-card) !important; border-bottom-color: var(--border) !important; }
 #logoutModal .modal-icon { background: var(--bg-hover) !important; border-color: var(--border) !important; color: var(--text-2) !important; }
 
-/* ══ Landing hero — no gradient on text ══ */
+/* ══ Landing hero — solid colors, no gradient clip ══ */
 html[data-theme="light"] .hero-h1 { color: #111827 !important; }
 html[data-theme="light"] .hero-h1-swap { color: #059669 !important; }
 html[data-theme="light"] .hero-h1-static { color: #111827 !important; }
