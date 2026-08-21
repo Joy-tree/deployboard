@@ -45892,11 +45892,28 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
     overlay.classList.add('open');
     card.classList.add('open');
     document.documentElement.classList.add('jt-tour-open');
+    // [FIX] The reported "stuck dark screen until several reloads" bug.
+    // jt_tour_done is only ever set inside closeTour() -- if ANY step's
+    // position calculation goes wrong (a mistimed sidebar-drawer
+    // transition, a nav item not yet in the DOM, etc.) and the card or
+    // its buttons end up unreachable, there was previously no way out
+    // except a hard reload, and since jt_tour_done never got set, the
+    // tour would just re-launch and get stuck the same way on every
+    // subsequent load too -- an infinite retry loop, not a one-off
+    // glitch, which matches "every time" rather than "sometimes".
+    // Two independent escape hatches now guarantee it can never trap
+    // someone again, regardless of what exactly goes wrong in a given
+    // step: tapping anywhere on the dark backdrop closes the tour, and
+    // a hard ceiling force-closes it if it's been open unreasonably
+    // long with no interaction at all.
+    clearTimeout(tourFailsafeTimer);
+    tourFailsafeTimer = setTimeout(function(){ if (tourActive) closeTour(); }, 20000);
     renderStep();
   }
 
   function closeTour(){
     tourActive = false;
+    clearTimeout(tourFailsafeTimer);
     overlay.classList.remove('open');
     card.classList.remove('open');
     spotlight.classList.remove('open');
@@ -45907,6 +45924,8 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
     }
     try { localStorage.setItem('jt_tour_done', '1'); } catch(_) {}
   }
+  var tourFailsafeTimer = null;
+  overlay.addEventListener('click', function(e){ if (e.target === overlay) closeTour(); });
 
   window.startJtTour = function(force){
     tourIndex = 0;
@@ -45914,12 +45933,16 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
   };
 
   nextBtn.addEventListener('click', function(){
+    clearTimeout(tourFailsafeTimer);
+    tourFailsafeTimer = setTimeout(function(){ if (tourActive) closeTour(); }, 20000);
     if (tourIndex >= JT_TOUR_STEPS.length - 1) { closeTour(); return; }
     tourIndex++;
     renderStep();
   });
   backBtn.addEventListener('click', function(){
     if (tourIndex === 0) return;
+    clearTimeout(tourFailsafeTimer);
+    tourFailsafeTimer = setTimeout(function(){ if (tourActive) closeTour(); }, 20000);
     tourIndex--;
     renderStep();
   });
