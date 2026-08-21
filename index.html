@@ -518,9 +518,7 @@ img{max-width:100%;}
   animation:fadeUp 0.6s 0.1s ease both;
 }
 .hero-h1 .accent{
-  background:linear-gradient(135deg,var(--primary),var(--cyan));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
+  color:var(--primary);
 }
 /* "Run databases." is typed in as individual letter spans, so each
    letter needs the SAME gradient sampled from one shared, viewport-fixed
@@ -1685,9 +1683,9 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
   font-weight: 600;
 }
 .nav-item.active svg { opacity:1; color: var(--primary); }
-.nav-item.logout-item{color:#fca5a5;border:1px solid rgba(239,68,68,.18);background:rgba(127,29,29,.15);font-weight:700}
-.nav-item.logout-item svg{opacity:1;color:#f87171}
-.nav-item.logout-item:hover{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.34);color:#fecaca}
+.nav-item.logout-item{color:var(--text-2);font-weight:600}
+.nav-item.logout-item svg{opacity:.7}
+.nav-item.logout-item:hover{color:var(--text);background:var(--bg-hover)}
 .nav-badge {
   margin-left: auto;
   font-size: 0.65rem;
@@ -4254,7 +4252,7 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 }
 .auth-orb-2 {
   width:320px;height:320px;bottom:-80px;right:-80px;
-  background:radial-gradient(circle, rgba(59,130,246,.25), transparent 70%);
+  background:radial-gradient(circle, rgba(16,185,129,.15), transparent 70%);
   animation-delay:3s;
 }
 .auth-orb-3 {
@@ -6776,8 +6774,8 @@ window.landingToggleTheme = function(){
       white-space: nowrap;
       color: var(--primary);
       opacity: 0;
-      transform: translateY(10px);
-      transition: opacity .45s ease, transform .45s ease;
+      transform: translateY(8px);
+      transition: opacity .4s ease, transform .4s ease;
       pointer-events: none;
     }
     .hero-h1-swap.active {
@@ -22939,26 +22937,26 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
 <!-- ── Logout confirm modal ──────────────────────────────────────────────── -->
 <div class="modal-backdrop" id="logoutModal">
-  <div class="modal" style="width:min(96vw,460px);border:1px solid rgba(248,113,113,.35);box-shadow:0 30px 80px rgba(239,68,68,.22),0 0 0 1px rgba(255,255,255,.04) inset;">
-    <div class="modal-header" style="background:radial-gradient(120% 120% at 0% 0%, rgba(239,68,68,.2) 0%, rgba(0,0,0,.95) 55%, rgba(0,0,0,.98) 100%);border-bottom:1px solid rgba(248,113,113,.2);">
-      <div class="modal-icon" style="background:rgba(239,68,68,0.18);border:1px solid rgba(248,113,113,.26);">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+  <div class="modal" style="width:min(96vw,420px);">
+    <div class="modal-header">
+      <div class="modal-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </div>
       <div>
-        <div class="modal-title">Confirm Logout</div>
-        <div class="modal-subtitle">You’re about to sign out of joytree. Any unsaved form edits may be lost.</div>
+        <div class="modal-title">Sign out</div>
+        <div class="modal-subtitle">Any unsaved changes may be lost.</div>
       </div>
       <button class="modal-close" onclick="closeLogoutModal()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;">
-      <div style="font-size:0.86rem;color:var(--text-2);line-height:1.6;">If you're on a shared device, signing out helps protect your account.</div>
-      <div style="padding:10px 12px;border-radius:10px;background:rgba(239,68,68,.08);border:1px solid rgba(248,113,113,.2);font-size:0.78rem;color:#fecaca;">Session will be cleared from this browser immediately.</div>
+      <div style="font-size:0.86rem;color:var(--text-2);line-height:1.6;">If you're on a shared device, signing out keeps your account secure.</div>
+      <div style="padding:10px 12px;border-radius:10px;background:var(--bg-hover);border:1px solid var(--border);font-size:0.78rem;color:var(--text-2);">Your session will be cleared from this browser.</div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeLogoutModal()">Stay logged in</button>
-      <button class="btn btn-danger" onclick="confirmLogout()">
+      <button class="btn btn-primary" onclick="confirmLogout()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Yes, log me out
+        Yes, sign out
       </button>
     </div>
   </div>
@@ -24161,27 +24159,6 @@ function themeSet(t) {
   // browser-local one.
   settings.theme = t;
   if (typeof queueWorkspaceSync === 'function') queueWorkspaceSync();
-  // [FIX] Force a re-render of the current page after theme switch so any
-  // JS-rendered component that stamped colors via element.style.* (JS
-  // property assignment, not HTML attribute) gets rebuilt with the correct
-  // theme. CSS [style*="..."] attribute selectors cannot catch JS-set style
-  // properties — only HTML attribute values — so those elements stay dark
-  // after a toggle unless we re-render. This also fixes the "stuck on
-  // non-dashboard pages" bug: page components that were rendered at dark-
-  // theme time and not re-rendered on toggle kept their dark JS-set colors
-  // even though data-theme="light" was correctly set on <html>.
-  // Only fire when the app is actually in app-mode (logged in) and a
-  // current page is known — no-op on landing/auth pages.
-  try {
-    if (
-      typeof currentPage !== 'undefined' &&
-      currentPage &&
-      document.documentElement.classList.contains('app-mode') &&
-      typeof showPage === 'function'
-    ) {
-      showPage(currentPage, null, true /* skipPush — URL is already correct */);
-    }
-  } catch (_) { /* page re-render is best-effort */ }
   themePickerClose();
 }
 
@@ -39281,46 +39258,42 @@ function openDbVisualizerFor(dbId, alreadyOpen) {
 // No waiting, no guessing, nothing that can hang.
 function openDbVisualizerFromSidebar() {
   try {
-    // Close sidebar first, then open the visualizer after the CSS
-    // transition completes (300ms). This prevents the sidebar's
-    // body overflow:hidden from fighting the modal's fixed positioning,
-    // which was causing the visualizer to appear invisible on mobile.
+    _dbvDbId = null;
+    _dbvEngine = null;
+    _dbvDbName = null;
+    _dbvSelectedTable = null;
+
+    const el = document.getElementById('dbVisualizer');
+    if (!el) { toast('Data Visualizer not available.', 'error'); return; }
+
+    // Open the modal immediately — it is position:fixed so it sits above
+    // everything regardless of sidebar state. Close sidebar after so the
+    // animation plays underneath the already-visible modal.
+    el.classList.add('open');
+    document.documentElement.classList.add('modal-open');
+    // Also restore body scroll (sidebar sets overflow:hidden) now that
+    // the modal is taking over full-screen.
+    document.body.style.overflow = '';
+
+    // Reset placeholders
+    ['dbvBarChart','dbvLineChart','dbvDonutChart','dbvSchemaList'].forEach(function(id) {
+      const c = document.getElementById(id);
+      if (c) c.innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
+    });
+    ['dbvStatTables','dbvStatRecords','dbvStatSelected','dbvStatRefreshed'].forEach(function(id) {
+      const c = document.getElementById(id);
+      if (c) c.textContent = '—';
+    });
+
+    // Close sidebar after modal is visible
     if (typeof closeSidebar === 'function') closeSidebar();
 
-    setTimeout(function() {
-      try {
-        _dbvDbId = null;
-        _dbvEngine = null;
-        _dbvDbName = null;
-        _dbvSelectedTable = null;
-
-        const el = document.getElementById('dbVisualizer');
-        if (!el) { toast('Data Visualizer not available.', 'error'); return; }
-
-        el.classList.add('open');
-        document.documentElement.classList.add('modal-open');
-
-        // Reset chart placeholders
-        ['dbvBarChart','dbvLineChart','dbvDonutChart','dbvSchemaList'].forEach(function(id) {
-          const c = document.getElementById(id);
-          if (c) c.innerHTML = '<div class="dbv-loading">Select a database above to load charts…</div>';
-        });
-        ['dbvStatTables','dbvStatRecords','dbvStatSelected','dbvStatRefreshed'].forEach(function(id) {
-          const c = document.getElementById(id);
-          if (c) c.textContent = '—';
-        });
-
-        // Load databases if not yet fetched, then populate dropdown
-        if (!_databases || !_databases.length) {
-          loadDatabases().then(function() { dbvPopulateDbSelect(); }).catch(function(){});
-        } else {
-          dbvPopulateDbSelect();
-        }
-      } catch(inner) {
-        console.error('[dbv] open failed:', inner);
-        toast('Could not open Data Visualizer: ' + inner.message, 'error', 8000);
-      }
-    }, 320);
+    // Load databases
+    if (!_databases || !_databases.length) {
+      loadDatabases().then(function() { dbvPopulateDbSelect(); }).catch(function(){});
+    } else {
+      dbvPopulateDbSelect();
+    }
   } catch (e) {
     console.error('[dbv] openDbVisualizerFromSidebar failed:', e);
     toast('Could not open Data Visualizer: ' + e.message, 'error', 8000);
