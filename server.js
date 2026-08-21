@@ -6221,13 +6221,13 @@ app.get('/api/domains/debug', async (req, res) => {
 
 app.get('/api/domains/tlds', requireAuth, async (req, res) => {
   try {
-    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 100, 1), 600);
-
     if (!NAMESILO_API_KEY) {
-      return res.json({ tlds: DOMAIN_STORE_FALLBACK_TLDS.slice(0, limit), demo: true });
+      return res.json({ tlds: DOMAIN_STORE_FALLBACK_TLDS, demo: true });
     }
 
     const priceData = await namesiloCall('getPrices', {});
+    // Return ALL TLDs NameSilo has — no artificial cap. Popular ones sorted
+    // first so they appear at the top of the filter chips and TLD table.
     const rows = namesiloExtractPriceRows(priceData)
       .sort((a, b) => {
         const popular = ['.com', '.net', '.org', '.io', '.xyz', '.tech', '.app', '.dev', '.co', '.site'];
@@ -6235,10 +6235,9 @@ app.get('/api/domains/tlds', requireAuth, async (req, res) => {
         const bi = popular.indexOf(b.tld);
         if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
         return a.tld.localeCompare(b.tld);
-      })
-      .slice(0, limit);
+      });
 
-    res.json({ tlds: rows.length ? rows : DOMAIN_STORE_FALLBACK_TLDS.slice(0, limit), demo: !rows.length });
+    res.json({ tlds: rows.length ? rows : DOMAIN_STORE_FALLBACK_TLDS, demo: !rows.length });
   } catch(e) {
     console.warn('[DomainStore] tlds failed:', e.message);
     res.status(502).json({ error: e.message, tlds: DOMAIN_STORE_FALLBACK_TLDS });
