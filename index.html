@@ -6818,27 +6818,20 @@ window.landingToggleTheme = function(){
   </style>
 
   <h1 class="hero-h1">
-    <span class="hero-h1-static">Ship your projects</span><br>
-    <span class="hero-h1-static">live in</span>
-    <span class="hero-h1-swap-wrap" aria-live="polite">
-      <span class="hero-h1-swap active" aria-hidden="false">seconds.</span>
-      <span class="hero-h1-swap" aria-hidden="true">minutes.</span>
-      <span class="hero-h1-swap" aria-hidden="true">one click.</span>
-      <span class="hero-h1-swap" aria-hidden="true">your way.</span>
-    </span>
+    <span class="hero-h1-static">Deploy apps.</span><br>
+    <span class="hero-h1-static">Build </span><span class="hero-h1-swap-wrap" aria-live="polite"><span class="hero-h1-swap active">APIs.</span><span class="hero-h1-swap">Databases.</span><span class="hero-h1-swap">Backends.</span><span class="hero-h1-swap">Anything.</span></span><br>
+    <span class="hero-h1-static">Ship anything.</span>
   </h1>
   <script>
   (function(){
     var items = document.querySelectorAll('.hero-h1-swap');
     if (!items.length) return;
-    var current = 0;
+    var cur = 0;
     setInterval(function(){
-      items[current].classList.remove('active');
-      items[current].setAttribute('aria-hidden','true');
-      current = (current + 1) % items.length;
-      items[current].classList.add('active');
-      items[current].setAttribute('aria-hidden','false');
-    }, 2600);
+      items[cur].classList.remove('active');
+      cur = (cur + 1) % items.length;
+      items[cur].classList.add('active');
+    }, 2400);
   })();
   </script>
 
