@@ -7032,7 +7032,29 @@ window.landingToggleTheme = function(){
     opacity:.95;
     z-index:0;
   }
-  html[data-theme="light"] .orbit-glow-ring{ opacity:.5; }
+  html[data-theme="light"] .orbit-glow-ring{ display:none; }
+
+  /* On light theme: draw clean ellipse rings via CSS pseudo-elements
+     instead of the neon glow image which needs a dark background */
+  html[data-theme="light"] .orbit-stage::before,
+  html[data-theme="light"] .orbit-stage::after {
+    content:'';
+    position:absolute;
+    left:50%;top:52%;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:0;
+  }
+  html[data-theme="light"] .orbit-stage::before {
+    width:82%;height:46%;
+    border:1.5px solid rgba(16,185,129,.35);
+    box-shadow:0 0 0 1px rgba(16,185,129,.1);
+  }
+  html[data-theme="light"] .orbit-stage::after {
+    width:110%;height:62%;
+    border:1.5px solid rgba(16,185,129,.22);
+  }
 
   /* Center: JoyTree logo core */
   .orbit-core{
@@ -7045,6 +7067,21 @@ window.landingToggleTheme = function(){
   }
   .orbit-core img{
     width:100%;height:100%;object-fit:cover;border-radius:50%;
+  }
+  /* Extra mid-ring — visible on light via CSS, hidden on dark (glow image handles it) */
+  .orbit-mid-ring {
+    position:absolute;
+    left:50%;top:52%;
+    width:60%;height:34%;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    border:1.5px solid rgba(16,185,129,.12);
+    pointer-events:none;
+    z-index:0;
+  }
+  html[data-theme="light"] .orbit-mid-ring {
+    border-color:rgba(16,185,129,.28);
+    box-shadow:0 0 12px rgba(16,185,129,.08);
   }
 
   .orbit-nodes{
@@ -7095,14 +7132,31 @@ window.landingToggleTheme = function(){
   }
 
   html[data-theme="light"] .orbit-icon{
-    background:var(--jt-bg-raised);border-color:var(--jt-border);
-    box-shadow:0 8px 20px rgba(0,0,0,.08),0 0 0 1px rgba(31,110,82,.06);
+    background:#fff;
+    border:1.5px solid rgba(16,185,129,.3);
+    box-shadow:0 6px 18px rgba(0,0,0,.10),0 0 0 1px rgba(16,185,129,.12);
+    color:#059669;
+  }
+  html[data-theme="light"] .orbit-node:hover .orbit-icon,
+  html[data-theme="light"] .orbit-node.jh-active .orbit-icon{
+    border-color:rgba(16,185,129,.6);
+    box-shadow:0 10px 28px rgba(16,185,129,.18),0 0 0 1px rgba(16,185,129,.35);
+    color:#059669;
   }
   html[data-theme="light"] .orbit-label{
-    background:var(--jt-bg-sunken);color:var(--jt-text-faint);
+    background:rgba(255,255,255,.85);
+    color:#374151;
+    border:1px solid rgba(16,185,129,.2);
   }
   html[data-theme="light"] .orbit-core{
-    background:var(--jt-bg-raised);border-color:var(--jt-border);
+    background:#fff;
+    border:1.5px solid rgba(16,185,129,.3);
+    box-shadow:0 4px 14px rgba(0,0,0,.1);
+  }
+  /* Spoke lines: darker on light theme */
+  html[data-theme="light"] .orbit-spokes{
+    stroke:rgba(16,185,129,.4) !important;
+    stroke-width:0.4 !important;
   }
 </style>
 
@@ -7112,7 +7166,7 @@ window.landingToggleTheme = function(){
 
   <div class="orbit-stage">
     <svg class="orbit-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <g stroke="rgba(16,185,129,.16)" stroke-width="0.25" stroke-dasharray="1.5,3" fill="none">
+      <g class="orbit-spokes" stroke="rgba(16,185,129,.16)" stroke-width="0.25" stroke-dasharray="1.5,3" fill="none">
         <line x1="50" y1="50" x2="50" y2="9"/>
         <line x1="50" y1="50" x2="82.06" y2="24.44"/>
         <line x1="50" y1="50" x2="89.97" y2="59.12"/>
@@ -7124,6 +7178,7 @@ window.landingToggleTheme = function(){
     </svg>
 
     <div class="orbit-glow-ring"></div>
+    <div class="orbit-mid-ring"></div>
 
     <div class="orbit-core">
       <img src="/favicon_256.png" alt="JoyTree">
