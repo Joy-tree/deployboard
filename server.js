@@ -6219,27 +6219,42 @@ app.get('/api/domains/debug', async (req, res) => {
   });
 });
 
+// Cache getPrices for 1 hour — NameSilo prices barely change day-to-day,
+// and hitting their API on every page open was the cause of the domain store
+// freezing (all 500+ TLDs fetched synchronously on every navigation).
+let _tldPriceCache = { rows: null, fetchedAt: 0 };
+const TLD_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
 app.get('/api/domains/tlds', requireAuth, async (req, res) => {
   try {
     if (!NAMESILO_API_KEY) {
       return res.json({ tlds: DOMAIN_STORE_FALLBACK_TLDS, demo: true });
     }
 
+    // Serve from cache if fresh
+    if (_tldPriceCache.rows && Date.now() - _tldPriceCache.fetchedAt < TLD_CACHE_TTL) {
+      return res.json({ tlds: _tldPriceCache.rows, cached: true });
+    }
+
     const priceData = await namesiloCall('getPrices', {});
-    // Return ALL TLDs NameSilo has — no artificial cap. Popular ones sorted
-    // first so they appear at the top of the filter chips and TLD table.
+    const popular = ['.com', '.net', '.org', '.io', '.xyz', '.tech', '.app', '.dev', '.co', '.site'];
     const rows = namesiloExtractPriceRows(priceData)
       .sort((a, b) => {
-        const popular = ['.com', '.net', '.org', '.io', '.xyz', '.tech', '.app', '.dev', '.co', '.site'];
         const ai = popular.indexOf(a.tld);
         const bi = popular.indexOf(b.tld);
         if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
         return a.tld.localeCompare(b.tld);
       });
 
+    if (rows.length) {
+      _tldPriceCache = { rows, fetchedAt: Date.now() };
+    }
+
     res.json({ tlds: rows.length ? rows : DOMAIN_STORE_FALLBACK_TLDS, demo: !rows.length });
   } catch(e) {
     console.warn('[DomainStore] tlds failed:', e.message);
+    // Serve stale cache on error rather than failing completely
+    if (_tldPriceCache.rows) return res.json({ tlds: _tldPriceCache.rows, stale: true });
     res.status(502).json({ error: e.message, tlds: DOMAIN_STORE_FALLBACK_TLDS });
   }
 });
