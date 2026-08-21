@@ -13646,6 +13646,17 @@ document.addEventListener('keydown', function(e){
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
               Connect Project
             </button>
+            <div id="dcpAttachConsole" style="display:none;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <div style="font-size:0.75rem;font-weight:700;color:var(--text-3);letter-spacing:0.05em;text-transform:uppercase;">Connection Log</div>
+                <div id="dcpAttachElapsed" style="font-size:0.72rem;color:var(--text-3);font-family:var(--font-mono);background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:20px;">0.0s</div>
+              </div>
+              <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;margin-bottom:12px;overflow:hidden;">
+                <div id="dcpAttachProgress" style="height:100%;width:0%;background:var(--primary);border-radius:2px;transition:width 0.4s ease;"></div>
+              </div>
+              <div id="dcpAttachLines" style="background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px 14px;font-family:var(--font-mono);font-size:0.75rem;line-height:1.7;max-height:240px;overflow-y:auto;color:var(--text-2);"></div>
+              <div id="dcpAttachResult" style="display:none;margin-top:12px;padding:14px 16px;border-radius:10px;font-size:0.85rem;font-weight:600;"></div>
+            </div>
           </div>
         </div>
 
@@ -14013,31 +14024,76 @@ document.addEventListener('keydown', function(e){
       };
 
       // ── Connect project → set CNAME ───────────────────────────────
-      window.dcpAttachProject = async function() {
-        if (!dcpCurrentDomain) return;
+      let _dcpAttachActive = false, _dcpAttachStartTs = 0, _dcpAttachStep = 0, _dcpAttachElapsedTimer = null;
+      window.dcpAttachProject = function() {
+        if (!dcpCurrentDomain || _dcpAttachActive) return;
         const projectId = document.getElementById('dcpProjectSelect').value;
         if (!projectId) { toast('Please select a project first.', 'error'); return; }
+
+        _dcpAttachActive = true; _dcpAttachStartTs = Date.now(); _dcpAttachStep = 0;
         const btn = document.getElementById('dcpAttachBtn');
-        btn.disabled = true; btn.textContent = 'Connecting…';
-        try {
-          const res = await apiFetch(API + '/api/domains/attach', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ domain: dcpCurrentDomain, projectId })
-          });
-          const data = await res.json();
-          if (!res.ok || !data.ok) throw new Error(data.error || 'Failed');
-          toast(`Domain connected! CNAME → ${data.targetHost}. Now apply nameservers if you haven't already.`, 'success', 9000);
-          document.getElementById('dcpLinkedProject').textContent =
-            document.getElementById('dcpProjectSelect').options[document.getElementById('dcpProjectSelect').selectedIndex].text;
-          // Reload DNS to show new CNAME
-          setTimeout(dcpLoadDns, 1000);
-        } catch(e) {
-          toast('Could not connect project: ' + e.message, 'error', 7000);
-        } finally {
+        const cons = document.getElementById('dcpAttachConsole');
+        const lines = document.getElementById('dcpAttachLines');
+        const result = document.getElementById('dcpAttachResult');
+        const progress = document.getElementById('dcpAttachProgress');
+        const elapsedEl = document.getElementById('dcpAttachElapsed');
+        btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;margin-right:6px;"></span>Connecting…';
+        if (cons) cons.style.display = 'block';
+        if (lines) lines.innerHTML = '';
+        if (result) result.style.display = 'none';
+        if (progress) { progress.style.width = '5%'; progress.style.background = 'var(--primary)'; }
+        _dcpAttachElapsedTimer = setInterval(() => { if (elapsedEl) elapsedEl.textContent = ((Date.now() - _dcpAttachStartTs) / 1000).toFixed(1) + 's'; }, 100);
+
+        function appendLog(type, message) {
+          if (!lines) return;
+          const line = document.createElement('div');
+          const colors = { log: 'var(--text-2)', step: 'var(--green)', warn: 'var(--amber)', error: 'var(--red)', done: 'var(--green)' };
+          const icons  = { log: '›', step: '✓', warn: '⚠', error: '✗', done: '✓' };
+          line.style.cssText = 'color:' + (colors[type] || 'var(--text-2)') + ';margin-bottom:2px;';
+          const ts = ((Date.now() - _dcpAttachStartTs) / 1000).toFixed(1);
+          line.innerHTML = '<span style="color:var(--text-3);margin-right:8px;">[' + ts + 's]</span><span style="margin-right:6px;">' + (icons[type] || '·') + '</span>' + escHtml(message);
+          lines.appendChild(line); lines.scrollTop = lines.scrollHeight;
+          if (type === 'step') { _dcpAttachStep = Math.min(_dcpAttachStep + 18, 85); if (progress) progress.style.width = _dcpAttachStep + '%'; }
+        }
+
+        const url = '/api/domains/attach-stream?domain=' + encodeURIComponent(dcpCurrentDomain) + '&projectId=' + encodeURIComponent(projectId) + (authToken ? '&token=' + encodeURIComponent(authToken) : '');
+        const es = new EventSource(url);
+        es.onmessage = (e) => {
+          let data; try { data = JSON.parse(e.data); } catch (_) { return; }
+          const { type, message, verified, targetHost, projectName } = data;
+          appendLog(type, message);
+          if (type === 'done' || type === 'error') {
+            es.close(); clearInterval(_dcpAttachElapsedTimer); _dcpAttachActive = false;
+            if (progress) { progress.style.width = '100%'; progress.style.background = type === 'error' ? 'var(--red)' : (verified === false ? 'var(--amber)' : 'var(--green)'); }
+            if (result) {
+              result.style.display = 'block';
+              if (type === 'done') {
+                const iv = verified !== false;
+                result.style.background = iv ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)';
+                result.style.border = iv ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(245,158,11,0.25)';
+                result.style.color = iv ? 'var(--green)' : 'var(--amber)';
+                result.innerHTML = (iv ? '✓ ' : '⚠ ') + escHtml(message);
+                document.getElementById('dcpLinkedProject').textContent = projectName || document.getElementById('dcpProjectSelect').options[document.getElementById('dcpProjectSelect').selectedIndex].text;
+                toast(iv ? 'Domain connected and verified!' : 'Domain connected — DNS still propagating', iv ? 'success' : 'info', 6000);
+                setTimeout(dcpLoadDns, 1000);
+              } else {
+                result.style.background = 'rgba(239,68,68,0.1)'; result.style.border = '1px solid rgba(239,68,68,0.25)'; result.style.color = 'var(--red)';
+                result.innerHTML = '✗ ' + escHtml(message);
+                toast('Could not connect project: ' + message, 'error', 7000);
+              }
+            }
+            btn.disabled = false;
+            btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Connect Project';
+          }
+        };
+        es.onerror = () => {
+          if (!_dcpAttachActive) return; // already handled by a done/error message
+          es.close(); clearInterval(_dcpAttachElapsedTimer); _dcpAttachActive = false;
+          appendLog('error', 'Connection to server lost.');
+          if (result) { result.style.display = 'block'; result.style.background = 'rgba(239,68,68,0.1)'; result.style.border = '1px solid rgba(239,68,68,0.25)'; result.style.color = 'var(--red)'; result.innerHTML = '✗ Connection lost — please retry.'; }
           btn.disabled = false;
           btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Connect Project';
-        }
+        };
       };
 
       // ── Add DNS record ────────────────────────────────────────────
@@ -25770,14 +25826,22 @@ async function loadMyDomainsForStartup(){
   try {
     const r = await apiFetch('/api/domains/mine');
     const data = await r.json();
-    const domains = (data && data.domains) || [];
-    const available = domains.filter(d => d && d.domain && !d.projectId);
-    if (!available.length){
-      sel.innerHTML = '<option value="">No unassigned JoyTree domains — buy one in the Domain Store, or use “I own the domain”.</option>';
+    const domains = ((data && data.domains) || []).filter(d => d && d.domain && d.status !== 'failed');
+    if (!domains.length){
+      sel.innerHTML = '<option value="">No JoyTree domains yet — buy one in the Domain Store, or use “I own the domain”.</option>';
       return;
     }
+    // [FIX] Previously filtered to ONLY domains with no projectId at all —
+    // a domain the user genuinely bought was invisible here the moment it
+    // had a projectId for ANY reason (including its own purchase flow
+    // pre-selecting one), which is exactly the "doesn't recognize a
+    // domain has already been bought" bug reported. Now every registered
+    // domain shows up; ones already pointed at a project are clearly
+    // labeled so picking one is an informed reassignment, not a silent
+    // no-op — and attachDomainAfterDeploy() below already correctly
+    // re-points an already-attached domain, this just makes it visible.
     sel.innerHTML = '<option value="">Select a domain…</option>' +
-      available.map(d => `<option value="${esc(d.domain)}">${esc(d.domain)}</option>`).join('');
+      domains.map(d => `<option value="${esc(d.domain)}">${esc(d.domain)}${d.projectId ? '  (currently → ' + esc(d.projectName || d.projectId) + ')' : ''}</option>`).join('');
   } catch(e){
     sel.innerHTML = '<option value="">Could not load your domains — try again.</option>';
   }

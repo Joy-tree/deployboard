@@ -6602,6 +6602,103 @@ async function cfCreateCustomHostname(hostname) {
 }
 
 // ── Attach domain to a project (set DNS CNAME → project subdomain) ─
+app.get('/api/domains/attach-stream', attachAuthIfPresent, async (req, res) => {
+  const domain = normalizeHostHeader(String(req.query.domain || ''));
+  const projectId = String(req.query.projectId || '').trim();
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  const startTime = Date.now();
+  function send(type, message, extra = {}) {
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    res.write(`data: ${JSON.stringify({ type, message, elapsed: parseFloat(elapsed), ...extra })}\n\n`);
+    if (res.flush) res.flush();
+  }
+  function done(ok, message, extra = {}) {
+    send(ok ? 'done' : 'error', message, extra);
+    res.end();
+  }
+
+  try {
+    if (!req.user) { done(false, 'Not signed in.'); return; }
+    if (!domain || !projectId) { done(false, 'domain and projectId required.'); return; }
+
+    send('log', `Connecting ${domain} to your project…`);
+    await new Promise(r => setTimeout(r, 150));
+
+    // 1. Validate the project exists and has a live subdomain to point at
+    send('log', 'Checking project exists…');
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    const project = (ws.projects || []).find(p => String(p.id || p._id) === String(projectId));
+    if (!project) { done(false, `Project not found.`); return; }
+    const subdomain = String(project.subdomain || '');
+    const targetHost = subdomain ? `${subdomain}.${BASE_DOMAIN}` : null;
+    if (!targetHost) { done(false, `"${project.name || projectId}" has no subdomain yet — deploy it first.`); return; }
+    send('step', `✓ Project "${project.name || subdomain}" found`);
+    await new Promise(r => setTimeout(r, 120));
+
+    // 2. Find the domain record and check if it's being MOVED from elsewhere
+    send('log', 'Checking current domain routing…');
+    ws.registeredDomains = Array.isArray(ws.registeredDomains) ? ws.registeredDomains : [];
+    const rec = ws.registeredDomains.find(d => d.domain === domain);
+    if (!rec) { done(false, `${domain} isn't a domain registered on this account.`); return; }
+    if (rec.projectId && String(rec.projectId) !== String(projectId)) {
+      const fromProject = (ws.projects || []).find(p => String(p.id || p._id) === String(rec.projectId));
+      send('step', `↺ Reassigning from "${fromProject?.name || rec.projectId}" → "${project.name || subdomain}"`);
+    } else if (rec.projectId) {
+      send('step', `✓ Already pointed at this project — refreshing routing`);
+    } else {
+      send('step', `✓ Domain is currently unattached — attaching now`);
+    }
+    await new Promise(r => setTimeout(r, 120));
+
+    // 3. Persist the new project link
+    send('log', 'Updating domain record…');
+    rec.projectId = projectId;
+    rec.attachedAt = new Date().toISOString();
+    await writeWorkspaceToFirebase(req.user, ws);
+    send('step', '✓ Domain record updated');
+    await new Promise(r => setTimeout(r, 120));
+
+    // 4. Point DNS at the project — NameSilo-managed domains get a CNAME
+    // via the NameSilo API directly (no separate routing config needed:
+    // the CNAME resolves to the project's own already-working subdomain).
+    if (NAMESILO_API_KEY) {
+      send('log', `Adding CNAME record: @ → ${targetHost}…`);
+      try {
+        await namesiloCall('dnsAddRecord', { domain, rrtype: 'CNAME', rrhost: '@', rrvalue: targetHost, rrttl: 3600 });
+        send('step', '✓ CNAME record added');
+      } catch (e) {
+        send('warn', `⚠ Could not add CNAME automatically: ${e.message} — add it manually in DNS Records below`);
+      }
+    } else {
+      send('warn', '⚠ Joytree DNS is not configured — add the CNAME manually in DNS Records below');
+    }
+    await new Promise(r => setTimeout(r, 150));
+
+    // 5. Soft-verify propagation (best-effort — DNS can take time, so a
+    // miss here is a warning, not a failure)
+    send('log', 'Checking DNS propagation…');
+    let verified = false;
+    try {
+      const v = await Promise.race([
+        verifyDomainDns(domain),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))
+      ]);
+      verified = !!v?.verified;
+    } catch (_) { /* propagation can genuinely take time — not an error */ }
+    send(verified ? 'step' : 'warn', verified ? '✓ DNS already resolving to your project' : '⚠ DNS not showing yet — this is normal, can take a few minutes to a few hours');
+
+    done(true, `${domain} is now connected to "${project.name || subdomain}"`, { targetHost, verified, projectName: project.name || subdomain });
+  } catch (e) {
+    done(false, e.message || 'Connection failed');
+  }
+});
+
 app.post('/api/domains/attach', requireAuth, async (req, res) => {
   try {
     const { projectId, byo } = req.body || {};
