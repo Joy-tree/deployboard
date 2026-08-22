@@ -3420,3 +3420,84 @@ html[data-theme="light"] .jt-leaves-fall {
 #page-settings .jt-leaves-fall {
   display: none !important;
 }
+
+
+/* ══════════════════════════════════════════════════════════════════
+   DASHBOARD — flat, no-card redesign (matches Settings page exactly)
+   Uses only the site's existing theme variables -- no invented colors.
+   ══════════════════════════════════════════════════════════════════ */
+
+.dash-header {
+  margin-bottom: 22px;
+}
+.dash-kicker {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+.dash-greeting {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.2;
+}
+.dash-subtitle {
+  font-size: .84rem;
+  color: var(--text-2);
+  margin-top: 6px;
+  line-height: 1.5;
+  max-width: 56ch;
+}
+.dash-status-row { margin-top: 12px; }
+.dash-status-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: .78rem; font-weight: 600; color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, transparent);
+  border-radius: 999px; padding: 6px 14px;
+}
+.dash-status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--primary); display: inline-block;
+}
+.dash-header-actions {
+  display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;
+}
+
+.dash-divider { height: 1px; background: var(--border); margin: 26px 0; }
+
+.dash-section-title { font-size: 1rem; font-weight: 800; color: var(--text); }
+.dash-section-sub { font-size: .8rem; color: var(--text-3); margin-top: 3px; }
+.dash-row-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+}
+
+.dash-qa-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.dash-qa-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 12px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-2);
+  font-size: .84rem; font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.dash-qa-btn:hover {
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-hover));
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--primary) 24%, var(--border));
+}
+
+@media(max-width:640px){
+  .dash-qa-grid { grid-template-columns: 1fr 1fr; }
+  .dash-header-actions .btn { flex: 1; }
+}
