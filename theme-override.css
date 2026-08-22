@@ -720,8 +720,6 @@ html[data-theme="light"] .surface-metric { background: var(--jt-bg-raised) !impo
 html[data-theme="light"] .toast { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .toast-close { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .toast-icon { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] .tree-root-orb { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] .tree-thumb-placeholder { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .webhook-event-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 /* ---------------------------------------------------------------------
    9. CORRECT THE SITE'S OWN PRE-EXISTING LIGHT THEME TO ACTUALLY MATCH DOCS.
@@ -1176,46 +1174,16 @@ html[data-theme="light"] .co-input{
 
 /* Thumbnail placeholder — was hardcoded near-black regardless of theme */
 html[data-theme="light"] .tree-node-thumb,
-html[data-theme="light"] .tree-thumb-placeholder {
-  background: var(--jt-bg-sunken) !important;
-  border-color: var(--jt-border) !important;
-}
-html[data-theme="light"] .tree-thumb-placeholder svg { opacity: .35 !important; color: var(--jt-text-faint) !important; }
-html[data-theme="light"] .tree-thumb-placeholder span { color: var(--jt-text-faint) !important; }
 
 /* "New Version" / "Redeploy" / "View" / "Visit" buttons — now solid
    deep-green fills by default (matching the Background Workers "New
    Worker" button), so no separate light-theme patch is needed for
    background/color. Just keep the hover state in sync with the light
    palette's brand tokens. */
-html[data-theme="light"] .tree-node-btn-ghost,
-html[data-theme="light"] .tree-node-btn-primary {
-  background: var(--jt-brand) !important;
-  border-color: var(--jt-brand-strong) !important;
-  color: #fff !important;
-}
-html[data-theme="light"] .tree-node-btn-ghost:hover,
-html[data-theme="light"] .tree-node-btn-primary:hover {
-  background: var(--jt-brand-strong) !important;
-}
 
 /* Delete button — solid deep red fill, white icon, visible on any theme */
-html[data-theme="light"] .tree-node-btn-danger {
-  background: var(--jt-danger) !important;
-  border-color: var(--jt-danger) !important;
-  color: #fff !important;
-}
-html[data-theme="light"] .tree-node-btn-danger:hover { filter: brightness(0.88) !important; }
 
 /* Footer strip (repo/branch/time row) and branch badge pill */
-html[data-theme="light"] .tree-node-footer {
-  background: rgba(0,0,0,.02) !important;
-  border-top-color: var(--jt-border) !important;
-}
-html[data-theme="light"] .tree-node-footer-branch {
-  background: rgba(0,0,0,.05) !important;
-  border-color: rgba(0,0,0,.09) !important;
-}
 
 
 
@@ -1751,20 +1719,9 @@ html[data-theme="light"] #cuDeleteModal .adm-cancel:hover {
    in case a cached copy of this file is still being served; matches
    the .tree-node-btn-primary treatment exactly so both read as equally
    solid, filled actions. */
-html[data-theme="light"] .tree-project-node .tree-node-btn.tree-node-btn-ghost {
-  background: var(--jt-brand) !important;
-  border-color: var(--jt-brand-strong) !important;
-  color: #fff !important;
-}
-html[data-theme="light"] .tree-project-node .tree-node-btn.tree-node-btn-ghost:hover {
-  background: var(--jt-brand-strong) !important;
-}
 /* GitHub icon in the card footer (repo name row) — fixed at 50%
    opacity unconditionally, tuned to sit subtly on a black footer strip;
    on the light footer that reads as a faint, blurry smudge. */
-html[data-theme="light"] .tree-node-footer svg[style*="opacity:.5"] {
-  opacity: .8 !important;
-}
 
 /* ---------------------------------------------------------------------
    LIVE LOGS PAGE (#page-logs) — the "Parsed Stream" / structured-logs
@@ -3741,4 +3698,70 @@ html[data-theme="light"] #page-projects .tree-project-node {
 .page-back:hover {
   color: var(--text) !important;
   background: var(--bg-hover) !important;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   PROJECTS PAGE — cards stay fully dark on BOTH themes, no exceptions.
+   Previously light theme lightened the thumbnail, footer strip, and
+   action buttons independently while the card body stayed dark --
+   producing a jarring two-tone "dark card with a beige footer" look.
+   The whole card is now one consistent dark unit matching Settings.
+   ══════════════════════════════════════════════════════════════════ */
+html[data-theme="light"] .tree-project-node,
+html[data-theme="light"] #page-projects .tree-project-node {
+  background: #111 !important;
+  border-color: rgba(255,255,255,0.09) !important;
+}
+html[data-theme="light"] .tree-node-thumb,
+html[data-theme="light"] .tree-thumb-placeholder {
+  background: #0a0a0a !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+html[data-theme="light"] .tree-thumb-placeholder svg {
+  opacity: .5 !important;
+  color: var(--text-3) !important;
+}
+html[data-theme="light"] .tree-thumb-placeholder span {
+  color: var(--text-3) !important;
+}
+html[data-theme="light"] .tree-node-name,
+html[data-theme="light"] .tree-node-url {
+  color: var(--text) !important;
+}
+html[data-theme="light"] .tree-node-footer {
+  background: #0a0a0a !important;
+  border-top-color: rgba(255,255,255,0.06) !important;
+  color: var(--text-3) !important;
+}
+html[data-theme="light"] .tree-node-footer-branch {
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: var(--text-3) !important;
+}
+html[data-theme="light"] .tree-node-footer svg {
+  color: var(--text-3) !important;
+  opacity: .6 !important;
+}
+/* Action buttons keep the site's real green primary/danger colors --
+   not a separate lighter "brand" tint invented for light theme */
+html[data-theme="light"] .tree-node-btn-ghost,
+html[data-theme="light"] .tree-node-btn-primary,
+html[data-theme="light"] .tree-project-node .tree-node-btn.tree-node-btn-ghost {
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+  color: #fff !important;
+}
+html[data-theme="light"] .tree-node-btn-ghost:hover,
+html[data-theme="light"] .tree-node-btn-primary:hover,
+html[data-theme="light"] .tree-project-node .tree-node-btn.tree-node-btn-ghost:hover {
+  background: #059669 !important;
+}
+html[data-theme="light"] .tree-node-btn-danger {
+  background: var(--red) !important;
+  border-color: var(--red) !important;
+  color: #fff !important;
+}
+html[data-theme="light"] .tree-node-btn-danger:hover {
+  filter: brightness(0.88) !important;
 }
