@@ -4031,3 +4031,19 @@ html[data-theme="light"] .dep-card-icon-btn {
 html[data-theme="light"] .dep-fw-icon {
   color: var(--text-2) !important;
 }
+
+
+/* ══════════════════════════════════════════════════════════════════
+   LANDING HERO — remove all green gradient glow effects so the hero
+   background is flat/solid dark, matching Settings' consistent dark
+   treatment. These were large radial/conic gradient blobs positioned
+   behind the hero text (.hero-glow, .hero-glow-2, .hero-orb,
+   .hero-aurora) creating a visible green haze across the top of the
+   landing page.
+   ══════════════════════════════════════════════════════════════════ */
+.hero-glow,
+.hero-glow-2,
+.hero-orb,
+.hero-aurora {
+  display: none !important;
+}
