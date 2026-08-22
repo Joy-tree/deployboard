@@ -3664,3 +3664,49 @@ html[data-theme="light"] #page-projects .tree-project-node {
   background: #111 !important;
   border-color: rgba(255,255,255,0.09) !important;
 }
+
+
+/* ══════════════════════════════════════════════════════════════════
+   PROJECTS PAGE — clean CSS grid gallery (replaces the "tree" layout)
+   No more root JOYTREE orb, no SVG trunk/branch connector lines, no
+   absolute-positioned cards with hand-computed x/y coordinates. Cards
+   are now plain grid items -- the browser handles wrapping and spacing.
+   ══════════════════════════════════════════════════════════════════ */
+.projects-grid {
+  display: grid !important;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  position: static !important;
+  min-height: 0 !important;
+  height: auto !important;
+  transform: none !important;
+}
+@media(min-width: 640px) {
+  .projects-grid { grid-template-columns: 1fr 1fr; }
+}
+@media(min-width: 1000px) {
+  .projects-grid { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+.tree-project-node {
+  position: static !important;
+  z-index: auto !important;
+  width: 100% !important;
+  left: auto !important;
+  top: auto !important;
+  background: #111 !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+}
+.tree-project-node:hover {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent) !important;
+  transform: translateY(-3px);
+}
+
+/* The old tree-root-node (JOYTREE orb) and its connector SVG are no
+   longer created by JS, but hide them defensively in case of any
+   stale render or cached DOM state. */
+.tree-root-node,
+#projectsTreeSvg {
+  display: none !important;
+}
