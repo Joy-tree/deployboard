@@ -476,10 +476,13 @@ img{max-width:100%;}
   position:relative;
   min-height:auto;
   display:flex;flex-direction:column;
-  align-items:center;justify-content:flex-start;
+  align-items:flex-start;justify-content:flex-start;
   padding:18px max(24px,6vw) 72px;
-  text-align:center;
+  text-align:left;
   overflow:hidden;
+  max-width:1180px;
+  margin:0 auto;
+  width:100%;
 }
 .hero-glow{
   position:absolute;top:-200px;left:50%;transform:translateX(-50%);
@@ -559,7 +562,7 @@ img{max-width:100%;}
   animation:fadeUp 0.6s 0.2s ease both;
 }
 .hero-actions{
-  display:flex;align-items:center;justify-content:center;gap:12px;
+  display:flex;align-items:center;justify-content:flex-start;gap:12px;
   flex-wrap:wrap;
   margin-bottom:64px;
   animation:fadeUp 0.6s 0.25s ease both;
@@ -584,7 +587,7 @@ img{max-width:100%;}
 .btn-hero-ghost svg{width:16px;height:16px;color:var(--text-2);}
 
 /* ── Hero trust bar ──────────────────────────────────────────────── */
-.hero-trust{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0.5rem 0.75rem;margin-top:1.25rem;}
+.hero-trust{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:0.5rem 0.75rem;margin-top:1.25rem;}
 .hero-trust-item{display:flex;align-items:center;gap:0.35rem;font-size:0.78rem;color:var(--text-3);font-weight:500;}
 .hero-trust-item svg{width:13px;height:13px;stroke:var(--green);flex-shrink:0;}
 .hero-trust-sep{color:var(--border);font-size:0.85rem;}
@@ -951,7 +954,7 @@ body.landing-drawer-open { overflow:hidden; }
 .hero-headline-stack > *{min-width:0;}
 .hero-kicker-pro{display:none;}
 .hero-kicker-pro i{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 14px rgba(16,185,129,.9)}
-.hero-h1{font-size:clamp(2.55rem,8.3vw,6.05rem)!important;line-height:1.03;font-weight:800;letter-spacing:-.03em;text-shadow:none;text-align:center;}
+.hero-h1{font-size:clamp(2.55rem,8.3vw,6.05rem)!important;line-height:1.03;font-weight:800;letter-spacing:-.03em;text-shadow:none;text-align:left;}
 .hero-h1 .accent{filter:none}
 .hero-sub{max-width:830px!important;font-size:clamp(1.2rem,2.15vw,1.95rem)!important;line-height:1.55;color:#9ca3af}
 .hero-actions .btn-hero-primary{
@@ -5648,7 +5651,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=34" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=35" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5694,7 +5697,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=34&recover=' + token;
+    fresh.href = 'theme-override.css?v=35&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -6006,7 +6009,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 }
 </style>
 
-<div id="verifyEmailPage" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:20px;">
+<div id="verifyEmailPage" style="display:none;">
   <div class="vp-card">
 
     <!-- Header row: logo left, status tag right -->
@@ -45655,7 +45658,7 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
 
   /* Headline: tasteful ambient glow instead of flat text (typewriter line untouched) */
   .hero-h1{
-    text-shadow: 0 0 34px rgba(16,185,129,.22), 0 0 64px rgba(34,211,238,.1) !important;
+    text-shadow: none !important;
   }
 
   /* Primary CTA: premium glow + lift, so it reads as the obvious next action */
