@@ -1852,23 +1852,10 @@ html[data-theme="light"] div[style*="z-index:20000"] [style*="background:rgba(25
 html[data-theme="light"] .auth-title {
   color: var(--jt-text) !important;
 }
-html[data-theme="light"] .auth-google {
-  background: #ffffff !important;
-  border-color: #dadce0 !important;
-  color: #3c4043 !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,.08) !important;
-}
-html[data-theme="light"] .auth-google:hover {
-  background: #f8f9fa !important;
-  border-color: #dadce0 !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,.12) !important;
-}
-html[data-theme="light"] .auth-google-text strong {
-  color: #3c4043 !important;
-}
-html[data-theme="light"] .auth-google-text span {
-  color: #5f6368 !important;
-}
+
+
+
+
 
 /* ---------------------------------------------------------------------
    LANDING PAGE — code tab bar ("deploy.sh / database.json / ...") and
@@ -3092,72 +3079,39 @@ html[data-theme="light"] .dnp-btn:hover{ background:var(--jt-brand)!important; }
 
 
 /* ══════════════════════════════════════════════════════════════════
-   AUTH PAGE — no card, floats on page background like pxxl
+   AUTH PAGE — no card, floats on page background (pxxl-style),
+   fully consolidated onto the SAME theme variables driving Settings.
+   No invented ash/grey rgba washes anywhere -- every color below is
+   var(--text), var(--text-2), var(--text-3), var(--border),
+   var(--bg-hover), var(--bg-card), or var(--primary), identical to
+   what Settings uses. Since the base .auth-* rules in index.html now
+   already reference these same variables directly, most colors switch
+   correctly automatically -- this section only needs to handle the
+   handful of things that must behave differently per theme (card-free
+   background, underline input border opacity, and the page's own
+   background tint).
    ══════════════════════════════════════════════════════════════════ */
+.auth-wrap {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+#auth-view { background: var(--bg) !important; }
 
-/* Dark theme: no card, underline inputs on dark bg */
-html[data-theme="dark"] .auth-wrap {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+/* GitHub/Google buttons: same flat var(--bg-hover) surface as every
+   other secondary button on the site (Settings' btn-ghost, dashboard
+   quick actions, etc) -- no separate darker/lighter treatment */
+.auth-github, .auth-google {
+  background: var(--bg-hover) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
 }
-html[data-theme="dark"] .auth-input {
-  background: transparent !important;
-  border: none !important;
-  border-bottom: 1px solid rgba(255,255,255,.15) !important;
-  border-radius: 0 !important;
-  color: #f9fafb !important;
-}
-html[data-theme="dark"] .auth-input:focus {
-  border-bottom-color: var(--primary) !important;
-  box-shadow: none !important;
+.auth-github:hover, .auth-google:hover {
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-hover)) !important;
 }
 
-/* Light theme: floats on light page bg, dark inputs for readability */
-html[data-theme="light"] .auth-wrap {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-html[data-theme="light"] #auth-view { background: var(--jt-bg-sunken) !important; }
-html[data-theme="light"] .auth-title { color: #111827 !important; }
-html[data-theme="light"] .auth-title-accent { color: #059669 !important; }
-html[data-theme="light"] .auth-sub { color: #6b7280 !important; }
-html[data-theme="light"] .auth-input {
-  background: transparent !important;
-  border: none !important;
-  border-bottom: 1px solid rgba(0,0,0,.2) !important;
-  border-radius: 0 !important;
-  color: #111827 !important;
-}
-html[data-theme="light"] .auth-input:focus {
-  border-bottom-color: #059669 !important;
-  box-shadow: none !important;
-}
-html[data-theme="light"] .auth-input::placeholder { color: #9ca3af !important; }
-html[data-theme="light"] .auth-input-icon { color: #9ca3af !important; }
-html[data-theme="light"] .auth-field-label { color: #111827 !important; }
-html[data-theme="light"] .auth-tabs {
-  background: rgba(0,0,0,.06) !important;
-  border-color: rgba(0,0,0,.1) !important;
-}
-html[data-theme="light"] .auth-tab { color: #9ca3af !important; }
-html[data-theme="light"] .auth-tab.active {
-  background: rgba(0,0,0,.12) !important;
-  color: #111827 !important;
-}
-html[data-theme="light"] .auth-divider { color: #9ca3af !important; }
-html[data-theme="light"] .auth-divider::before,
-html[data-theme="light"] .auth-divider::after { background: rgba(0,0,0,.12) !important; }
-html[data-theme="light"] .auth-trust-item { color: #6b7280 !important; }
-html[data-theme="light"] .auth-back { color: #9ca3af !important; }
-html[data-theme="light"] .auth-back:hover { color: #059669 !important; }
-html[data-theme="light"] .auth-github,
-html[data-theme="light"] .auth-google {
-  background: rgba(0,0,0,.07) !important;
-  border-color: rgba(0,0,0,.12) !important;
-  color: #111827 !important;
-}
+html[data-theme="light"] .auth-input::placeholder { color: var(--text-3) !important; }
+
 
 /* ══ Logout modal — no red anywhere ══ */
 #logoutModal .modal { border-color: var(--border) !important; box-shadow: 0 20px 60px rgba(0,0,0,.4) !important; }
