@@ -1812,6 +1812,110 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
 }
 .page { overflow-y:auto; overflow-x:hidden; }
 .page { display:none; height:100%; overflow-y:auto; overflow-x:hidden; padding:28px 28px; -webkit-overflow-scrolling:touch; }
+
+    /* ══════════════════════════════════════════════════════════════════
+       SETTINGS PAGE — Account Hub redesign (MythicalSystems-inspired)
+       ══════════════════════════════════════════════════════════════════ */
+    .acct-hero {
+      display:flex; align-items:center; gap:16px;
+      padding:22px; border-radius:20px;
+      background:#111; border:1px solid rgba(255,255,255,.07);
+      margin-bottom:16px;
+    }
+    .acct-hero-avatar {
+      width:64px; height:64px; border-radius:50%;
+      background:rgba(16,185,129,.14); border:2px solid rgba(16,185,129,.28);
+      display:flex; align-items:center; justify-content:center;
+      font-family:var(--font-mono); font-weight:900; font-size:1.3rem; color:#34d399;
+      flex-shrink:0; overflow:hidden; background-size:cover; background-position:center;
+    }
+    .acct-hero-avatar img { width:100%; height:100%; object-fit:cover; }
+    .acct-hero-greeting { font-size:.82rem; color:var(--text-3); margin-bottom:2px; }
+    .acct-hero-name { font-size:1.35rem; font-weight:900; letter-spacing:-0.02em; color:var(--text); line-height:1.2; }
+    .acct-hero-sub { font-size:.82rem; color:var(--text-2); margin-top:4px; line-height:1.5; }
+    .acct-hero-badges { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .acct-badge {
+      font-size:.7rem; font-weight:700; padding:4px 11px; border-radius:999px;
+      letter-spacing:.02em;
+    }
+    .acct-badge.plan { background:rgba(16,185,129,.12); color:#34d399; border:1px solid rgba(16,185,129,.25); }
+    .acct-badge.pin { background:rgba(255,255,255,.06); color:var(--text-2); border:1px solid rgba(255,255,255,.09); font-family:var(--font-mono); }
+
+    /* Quick-stat pill row (Cloud tenants / Purchases / Billing / Support style) */
+    .acct-stats-grid {
+      display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;
+    }
+    .acct-stat-card {
+      background:#111; border:1px solid rgba(255,255,255,.07); border-radius:16px;
+      padding:16px; cursor:pointer; transition:background .15s, border-color .15s;
+    }
+    .acct-stat-card:hover { background:#161616; border-color:rgba(255,255,255,.13); }
+    .acct-stat-icon {
+      width:38px; height:38px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center; margin-bottom:10px;
+    }
+    .acct-stat-icon svg { width:18px; height:18px; }
+    .acct-stat-arrow { float:right; color:var(--text-3); font-size:.9rem; margin-top:-32px; }
+    .acct-stat-value { font-size:1.5rem; font-weight:800; color:var(--text); line-height:1; margin-top:4px; }
+    .acct-stat-label { font-size:.68rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-3); margin-top:6px; }
+    .acct-stat-sub { font-size:.74rem; color:var(--text-2); margin-top:2px; }
+
+    /* Section panel — replaces the plain .card look for this page specifically */
+    .acct-panel {
+      background:#111; border:1px solid rgba(255,255,255,.07); border-radius:18px;
+      margin-bottom:14px; overflow:hidden;
+    }
+    .acct-panel-header {
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:16px 18px; border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .acct-panel-title { font-size:.95rem; font-weight:800; color:var(--text); }
+    .acct-panel-sub { font-size:.76rem; color:var(--text-3); margin-top:2px; }
+    .acct-panel-action {
+      font-size:.76rem; font-weight:700; color:#fff; background:rgba(16,185,129,.9);
+      padding:6px 13px; border-radius:9px; border:none; cursor:pointer;
+      display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+      transition:background .15s;
+    }
+    .acct-panel-action:hover { background:#0d9668; }
+    .acct-panel-action.ghost {
+      background:rgba(255,255,255,.06); color:var(--text-2); border:1px solid rgba(255,255,255,.09);
+    }
+    .acct-panel-action.ghost:hover { background:rgba(255,255,255,.1); color:var(--text); }
+    .acct-panel-body { padding:18px; }
+
+    .acct-row {
+      display:flex; align-items:center; justify-content:space-between; gap:14px;
+      padding:13px 0; border-bottom:1px solid rgba(255,255,255,.05);
+    }
+    .acct-row:last-child { border-bottom:none; }
+    .acct-row-label { font-size:.86rem; font-weight:600; color:var(--text); }
+    .acct-row-hint { font-size:.74rem; color:var(--text-3); margin-top:2px; line-height:1.4; }
+
+    .acct-toggle {
+      position:relative; width:42px; height:24px; flex-shrink:0;
+      background:rgba(255,255,255,.1); border-radius:999px; cursor:pointer;
+      transition:background .2s; border:none; padding:0;
+    }
+    .acct-toggle::after {
+      content:''; position:absolute; top:3px; left:3px; width:18px; height:18px;
+      border-radius:50%; background:#fff; transition:transform .2s;
+      box-shadow:0 1px 3px rgba(0,0,0,.3);
+    }
+    .acct-toggle.on { background:#10b981; }
+    .acct-toggle.on::after { transform:translateX(18px); }
+
+    .acct-empty {
+      text-align:center; padding:30px 16px; color:var(--text-3); font-size:.82rem;
+    }
+    .acct-empty svg { opacity:.3; margin-bottom:10px; }
+
+    @media(max-width:640px){
+      .acct-hero { flex-direction:column; text-align:center; align-items:center; }
+      .acct-hero-badges { justify-content:center; }
+      .acct-stats-grid { grid-template-columns:1fr 1fr; }
+    }
+
 /* db-query page: full-height flex column when active, no outer scroll */
 #page-db-query.active { display:flex !important; flex-direction:column !important; height:100dvh !important; padding:0 !important; overflow:hidden !important; }
 @media (max-width: 700px) {
@@ -12181,267 +12285,314 @@ document.addEventListener('keydown', function(e){
 
       <div id="settingsTabAccount" style="display:none;">
 
-        <!-- Account hero metrics -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px;">
-          <div class="card" style="padding:14px 16px;border-color:rgba(16,185,129,.18);">
-            <div style="font-family:var(--font-mono);font-size:.65rem;letter-spacing:.1em;color:#64748b;text-transform:uppercase;">Session</div>
-            <div style="font-weight:800;color:#34d399;margin-top:6px;font-size:.92rem;">🔒 Secured</div>
+        <!-- ══ Account Hero ══ -->
+        <div class="acct-hero">
+          <div class="acct-hero-avatar" id="acctHeroAvatar">
+            <img id="acctHeroAvatarImg" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIEdlbmVyYXRvcjogU1ZHIFJlcG8gTWl4ZXIgVG9vbHMgLS0+DQo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgY2xhc3M9Imljb24iICB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE3OS40NCA0MDYuNGMxNC4wNi01Ljc2IDE3LjUzLTEwMS42MyA0Ni44Ny0xMzcuNThzMTguODQgMjcuNTQgNDIuNTYgMTcuODJTMzE4IDE4Mi4xNSAzODcuNSAxMzkuOGMxNS42MS05LjU0IDI0LjU4IDMuMTUgMjAuMDYgMTguMjJzLTE2LjA4IDI5Ljg5LTAuMzIgMzkuMTcgNDEuMTUtNDcuMDggNzkuNzEtNjYuNjcgNTUuNi0xMy4zNCA2MS4yMi0xLjE3LTE3Ljc4IDIxLjE0LTMuMjIgMjkgMzkuMzItMTkuMjcgNjcuOC0yOS42OCA1MS44Ny0xOS4zNyA2MC40MS03Ljc2LTEzLjI3IDE2Ljc3IDAuMTQgMjkuNTMgNTQuNDktMjkuODkgODkuMjQtNDAuMzUgNS44IDIwLjI5IDIwLjczIDMzLjY5IDQzLjExLTcgNjQuOS0xLjQxIDEyLjUxIDIxLjMxIDM0LjczIDM4LjY1IDY2LjI4IDguMDkgNzUuNTcgMjAtMTYuMzggMTkuOTgtMzEuMTUgNjMuODMtMS40NSA3MS43NC0xOC4xIDk4LjcxLTgwLjUxIDQ5LjM2LTc5LjcxIDY2LjY3IDU1LTIgNDYgMTUuNjgtMzEgNDIuNC01My41MiA1My41Mi02MCAxMy4yNy02NC4zNyAyNS43NSA0NS42NyAxNC42NSA0MS42NiAyNi4zN2MtNi4xMyAxOC44Ni04NS44MiAzNi40NS05Ny43NyA1Ni40NXM0OS4wNiAzMi4xNSAzMS43NCA0My42NS04MS41MSA3LTk3LjcgMjQuMyA1NC44NiAxNCA0MS4wOCAzNC4xNi0zOC4zOSAyNy43LTY3Ljg3IDM0LjExLTYwLTEuODctNjYuMDcgMTcgNjUuNjEgMzEgNDguMDkgNDUuMTQtOTkuNzMtMTEuMzYtMTE1LjA5IDEuODMgNDMuMjUgMjIuNTcgMTMuOTQgMzcuMS0xMTcuMjMtOC0xMzEuMzQgMTIuOSA4MSAxMy4zOCA0Ni4zMiA0MC44My0xNDkuMTUgMTcuMDYtMTgzLjQ3IDAuOUMxMzcuNTMgODY1IDc4LjczIDc1My42NiA2OS4zOCA2OTcuMDVzLTYuMjQtNTkuNzcgMC43Ni03Ni40OSAzNi4zMiAzNC44NSAzMC45NS0xMi4wNVM3MS45MSA1NDguMDYgODIgNTExLjE5czIyLjA3IDI2LjIxIDI2LjQ2LTE4LjQgMy4xNC0xMDMuNTkgMjguNzEtMTE4LjEyYzQwLjA4LTIyLjc4IDIyLjgzIDM5LjY4IDQyLjI3IDMxLjczeiIgZmlsbD0iIzAwNzM3RiIgLz48cGF0aCBkPSJNODQ1LjQ1IDIyMC43NGMtNjUuMzktNS45NC02MTcuNzQgMjgwLjg4LTY4Mi43OCA1MjEuNiAxMjguNjUtMTg3LjQ3IDY4Mi43OC01MjEuNiA2ODIuNzgtNTIxLjZ6IiBmaWxsPSIjMDA1ODY2IiAvPjwvc3ZnPg==" style="display:none;" alt="">
+            <span id="acctHeroAvatarInitials">JG</span>
           </div>
-          <div class="card" style="padding:14px 16px;border-color:rgba(16,185,129,.18);">
-            <div style="font-family:var(--font-mono);font-size:.65rem;letter-spacing:.1em;color:#64748b;text-transform:uppercase;">2FA</div>
-            <div style="font-weight:800;color:#94a3b8;margin-top:6px;font-size:.92rem;">Coming Soon</div>
-          </div>
-          <div class="card" style="padding:14px 16px;border-color:rgba(16,185,129,.18);">
-            <div style="font-family:var(--font-mono);font-size:.65rem;letter-spacing:.1em;color:#64748b;text-transform:uppercase;">Audit Log</div>
-            <div style="font-weight:800;color:#34d399;margin-top:6px;font-size:.92rem;">✓ Active</div>
-          </div>
-          <div class="card" style="padding:14px 16px;border-color:rgba(16,185,129,.18);">
-            <div style="font-family:var(--font-mono);font-size:.65rem;letter-spacing:.1em;color:#64748b;text-transform:uppercase;">Plan</div>
-            <div style="font-weight:800;color:#86efac;margin-top:6px;font-size:.92rem;" id="accPlanBadge">Free Trial</div>
+          <div style="flex:1;min-width:0;">
+            <div class="acct-hero-greeting" id="acctHeroGreeting">Good day,</div>
+            <div class="acct-hero-name" id="acctHeroName">Your Name</div>
+            <div class="acct-hero-sub">Your personal workspace — deployments, billing, and settings in one place.</div>
+            <div class="acct-hero-badges">
+              <span class="acct-badge plan" id="acctHeroPlanBadge">Free Trial</span>
+              <span class="acct-badge pin" id="acctHeroIdBadge">ID: —</span>
+            </div>
           </div>
         </div>
 
-        <div class="two-col" style="align-items:start;gap:16px;">
-
-          <!-- LEFT column -->
-          <div style="display:flex;flex-direction:column;gap:16px;">
-
-            <!-- Profile -->
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <div class="card-title">Profile</div>
-                  <div class="card-subtitle">Your public identity on this platform</div>
-                </div>
-              </div>
-              <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
-                <!-- Avatar row -->
-                <div style="display:flex;align-items:center;gap:14px;padding:12px;background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.12);border-radius:12px;">
-                  <div id="accAvatarPreview" style="width:48px;height:48px;border-radius:14px;background:rgba(16,185,129,.18);border:1px solid rgba(16,185,129,.3);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:900;font-size:1.1rem;color:#34d399;flex-shrink:0;">JG</div>
-                  <div style="flex:1;min-width:0;">
-                    <div style="font-weight:700;font-size:.88rem;" id="accAvatarName">Your Name</div>
-                    <div style="font-size:.75rem;color:#64748b;margin-top:2px;" id="accAvatarEmail">your@email.com</div>
-                  </div>
-                </div>
-                <div class="field" style="margin:0;">
-                  <label class="field-label">Display Name</label>
-                  <input class="input" id="settingsName" placeholder="Your Name" oninput="document.getElementById('accAvatarName').textContent=this.value||'Your Name';var i=document.getElementById('accAvatarPreview');i.textContent=(this.value||'?').slice(0,2).toUpperCase();">
-                </div>
-                <div class="field" style="margin:0;">
-                  <label class="field-label">Email Address</label>
-                  <input class="input" id="settingsEmail" type="email" placeholder="you@example.com" oninput="document.getElementById('accAvatarEmail').textContent=this.value||'your@email.com';">
-                </div>
-                <div class="field" style="margin:0;">
-                  <label class="field-label">Username / Handle</label>
-                  <input class="input" id="settingsHandle" placeholder="e.g. johndoe">
-                  <div style="font-size:.75rem;color:#475569;margin-top:6px;">Used in deployment URLs and team mentions.</div>
-                </div>
-                <div class="field" style="margin:0;">
-                  <label class="field-label">Timezone</label>
-                  <div class="custom-select" id="cs_settingsTimezone">
-                    <div class="custom-select-trigger" onclick="csToggle(this)">
-                      <span class="cs-value">UTC</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <div class="custom-select-dropdown">
-                      <div class="cs-option selected" data-value="UTC" onclick="csSelect(this)">UTC</div>
-                      <div class="cs-option" data-value="Africa/Accra" onclick="csSelect(this)">Africa/Accra (GMT+0)</div>
-                      <div class="cs-option" data-value="America/New_York" onclick="csSelect(this)">America/New York (EST)</div>
-                      <div class="cs-option" data-value="America/Los_Angeles" onclick="csSelect(this)">America/Los Angeles (PST)</div>
-                      <div class="cs-option" data-value="Europe/London" onclick="csSelect(this)">Europe/London (GMT)</div>
-                      <div class="cs-option" data-value="Europe/Berlin" onclick="csSelect(this)">Europe/Berlin (CET)</div>
-                      <div class="cs-option" data-value="Asia/Tokyo" onclick="csSelect(this)">Asia/Tokyo (JST)</div>
-                    </div>
-                    <input type="hidden" id="settingsTimezone" value="UTC">
-                  </div>
-                  <div style="font-size:.75rem;color:#475569;margin-top:6px;">Affects timestamps in logs, activity feed, and cron jobs.</div>
-                </div>
-                <button class="btn btn-primary" onclick="saveAccountSettings()" style="min-height:46px;font-weight:800;">Save Profile</button>
-              </div>
+        <!-- ══ Quick Stats Grid ══ -->
+        <div class="acct-stats-grid">
+          <div class="acct-stat-card" onclick="showPage('projects')">
+            <div class="acct-stat-icon" style="background:rgba(16,185,129,.15);">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
             </div>
-
-            <!-- Preferences -->
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">Preferences</div>
-                <div class="card-subtitle">Notification and display preferences</div>
-              </div>
-              <div class="card-body" style="display:flex;flex-direction:column;gap:0;">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
-                  <div style="flex:1;min-width:0;">
-                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Deploy Success Notifications</div>
-                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Get notified when a deployment completes successfully.</div>
-                  </div>
-                  <input type="checkbox" id="prefNotifySuccess" checked style="width:42px;height:24px;accent-color:#10b981;">
-                </div>
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
-                  <div style="flex:1;min-width:0;">
-                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Deploy Failure Alerts</div>
-                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Immediate alerts when a build or deploy fails.</div>
-                  </div>
-                  <input type="checkbox" id="prefNotifyFail" checked style="width:42px;height:24px;accent-color:#10b981;">
-                </div>
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
-                  <div style="flex:1;min-width:0;">
-                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Cron Job Alerts</div>
-                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Notify when a cron job fails or misses its schedule.</div>
-                  </div>
-                  <input type="checkbox" id="prefNotifyCron" style="width:42px;height:24px;accent-color:#10b981;">
-                </div>
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
-                  <div style="flex:1;min-width:0;">
-                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Compact Log View</div>
-                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Reduce terminal font size for more lines per screen.</div>
-                  </div>
-                  <input type="checkbox" id="prefCompactLog" style="width:42px;height:24px;accent-color:#10b981;">
-                </div>
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);">
-                  <div style="flex:1;min-width:0;">
-                    <div style="font-size:.86rem;font-weight:600;color:var(--text);">Auto-scroll Terminal</div>
-                    <div style="font-size:.74rem;color:#475569;margin-top:2px;line-height:1.4;">Terminal auto-scrolls to latest output during builds.</div>
-                  </div>
-                  <input type="checkbox" id="prefAutoScroll" checked style="width:42px;height:24px;accent-color:#10b981;">
-                </div>
-                <div style="padding-top:14px;">
-                  <button class="btn btn-ghost" onclick="savePreferenceSettings()" style="width:100%;border-color:rgba(16,185,129,.2);min-height:42px;">Save Preferences</button>
-                </div>
-              </div>
-            </div>
-
+            <span class="acct-stat-arrow">→</span>
+            <div class="acct-stat-value" id="acctStatProjects">0</div>
+            <div class="acct-stat-label">Projects</div>
+            <div class="acct-stat-sub">Active workspaces</div>
           </div>
-
-          <!-- RIGHT column -->
-          <div style="display:flex;flex-direction:column;gap:16px;">
-
-            <!-- Deploy Notifications -->
-            <div class="card" id="pushNotifCard">
-              <div class="card-header"><div class="card-title">Deploy Notifications</div></div>
-              <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span style="font-size:0.82rem;color:var(--text-2);">Status</span>
-                  <span class="badge" id="pushNotifStatusBadge"><span class="badge-dot"></span>Checking…</span>
-                </div>
-                <div style="font-size:.78rem;color:var(--text-3);line-height:1.5;" id="pushNotifHint">
-                  Get a notification on your phone when a deploy finishes, success or failure — even if the app isn't open. Requires installing JoyTree as an app first (the download prompt in this same tab).
-                </div>
-                <button class="btn btn-ghost btn-sm" style="width:100%;" id="pushNotifEnableBtn" onclick="manualEnablePushNotifications()">Enable Notifications</button>
-                <button class="btn btn-ghost btn-sm" style="width:100%;" id="pushNotifTestBtn" onclick="sendTestPushNotification()" disabled>Send Test Notification</button>
-                <button class="btn btn-ghost btn-sm" style="width:100%;color:#f87171;border-color:rgba(239,68,68,.3);" id="pushNotifDisableBtn" onclick="disablePushNotifications()" disabled>Turn Off Notifications</button>
-              </div>
+          <div class="acct-stat-card" onclick="showPage('pricing')">
+            <div class="acct-stat-icon" style="background:rgba(16,185,129,.15);">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
             </div>
-
-            <!-- Security -->
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">Security</div>
-                <div class="card-subtitle">Protect your account and sessions</div>
-              </div>
-              <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
-                <!-- Active sessions -->
-                <div style="padding:12px 14px;background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.12);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-                  <div>
-                    <div style="font-size:.82rem;font-weight:700;">This device</div>
-                    <div style="font-size:.72rem;color:#64748b;margin-top:2px;">Active now · <span id="accSessionLocation">Ghana</span></div>
-                  </div>
-                  <span style="font-size:.7rem;padding:4px 10px;border-radius:999px;background:rgba(16,185,129,.14);color:#34d399;border:1px solid rgba(16,185,129,.28);font-weight:700;">CURRENT</span>
-                </div>
-                <div class="field" style="margin:0;">
-                  <label class="field-label">Change Password</label>
-                  <input class="input" type="password" id="settingsNewPassword" placeholder="New password">
-                </div>
-                <div class="field" style="margin:0;">
-                  <label class="field-label">Confirm Password</label>
-                  <input class="input" type="password" id="settingsConfirmPassword" placeholder="Repeat new password">
-                </div>
-                <button class="btn btn-ghost" onclick="toast('Password update will be available after email verification.','info')" style="min-height:44px;border-color:rgba(16,185,129,.2);">Update Password</button>
-
-                <!-- 2FA -->
-                <div style="padding:14px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.02);">
-                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
-                    <div style="font-size:.86rem;font-weight:700;">Two-Factor Authentication</div>
-                    <span style="font-size:.68rem;padding:3px 9px;border-radius:999px;background:rgba(148,163,184,.1);color:#64748b;border:1px solid rgba(148,163,184,.15);">COMING SOON</span>
-                  </div>
-                  <div style="font-size:.76rem;color:#475569;line-height:1.5;">Add a second layer of protection with TOTP-based 2FA (Google Authenticator, Authy, etc.).</div>
-                </div>
-
-                <!-- API Key -->
-                <div>
-                  <label class="field-label">Personal API Key</label>
-                  <div style="display:flex;gap:8px;margin-top:8px;">
-                    <input class="input input-mono" id="settingsApiKey" value="Loading…" readonly style="flex:1;font-size:.78rem;color:#64748b;min-height:44px;">
-                    <button class="btn btn-ghost" id="btnCopyApiKey" style="min-height:44px;padding:0 14px;border-color:rgba(16,185,129,.2);flex-shrink:0;" onclick="copyPersonalApiKey()">Copy</button>
-                    <button class="btn btn-ghost" id="btnRotateApiKey" style="min-height:44px;padding:0 14px;border-color:rgba(239,68,68,.2);color:var(--red);flex-shrink:0;" onclick="rotatePersonalApiKey()">Rotate</button>
-                  </div>
-                  <div style="font-size:.74rem;color:#475569;margin-top:6px;" id="settingsApiKeyMeta">Use this key for the Joytree REST API. Keep it secret.</div>
-                </div>
-
-                <!-- API Docs shortcut -->
-                <div style="background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.15);border-radius:10px;padding:14px 16px;display:flex;gap:14px;align-items:center;">
-                  <div style="flex:1;">
-                    <div style="font-size:.85rem;font-weight:600;color:var(--green);margin-bottom:3px;">REST API v1</div>
-                    <div style="font-size:.75rem;color:#475569;line-height:1.5;">Transfer projects to Render, pxxl, Railway or any platform. Remote control deployments, manage env vars, monitor live containers and more — all via HTTP.</div>
-                  </div>
-                  <button class="btn btn-ghost" style="flex-shrink:0;border-color:rgba(16,185,129,.3);color:var(--green);font-size:.8rem;padding:8px 14px;" onclick="openApiDocs()">View Docs</button>
-                </div>
-
-                <!-- Sign out all -->
-                <button class="btn btn-ghost" onclick="toast('All other sessions have been signed out.','success')" style="min-height:44px;border-color:rgba(239,68,68,.18);color:#f87171;font-size:.84rem;">Sign Out All Other Sessions</button>
-              </div>
+            <span class="acct-stat-arrow">→</span>
+            <div class="acct-stat-value" id="acctStatBilling">Free</div>
+            <div class="acct-stat-label">Billing</div>
+            <div class="acct-stat-sub" id="acctStatBillingSub">Nothing unpaid</div>
+          </div>
+          <div class="acct-stat-card" onclick="switchSettingsTab('domain', document.querySelector('[onclick*=domain]'))">
+            <div class="acct-stat-icon" style="background:rgba(16,185,129,.15);">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             </div>
-
-            <!-- Usage & Billing -->
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">Usage & Billing</div>
-                <div class="card-subtitle">Current plan limits and consumption</div>
-              </div>
-              <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.15);border-radius:12px;">
-                  <div>
-                    <div style="font-size:.84rem;font-weight:800;color:#d1fae5;" id="settingsPlanLabel">Free Trial</div>
-                    <div style="font-size:.73rem;color:#64748b;margin-top:2px;" id="settingsPlanSub">0.15 GB app RAM · 128MB DB memory cap · Shared vCPU · 5 projects</div>
-                  </div>
-                  <button class="btn btn-primary" style="min-height:36px;padding:0 14px;font-size:.78rem;" onclick="showPage('pricing')">Upgrade</button>
-                </div>
-                <div>
-                  <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">Projects</span><span style="font-family:var(--font-mono);color:#94a3b8;" id="settingsUsageProjects">0 / 0</span></div>
-                  <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div id="settingsUsageProjectsBar" style="height:100%;width:0%;border-radius:999px;background:#10b981;"></div></div>
-                </div>
-                <div>
-                  <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">Build Time</span><span style="font-family:var(--font-mono);color:#94a3b8;" id="settingsUsageBuild">0s / 0s</span></div>
-                  <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div id="settingsUsageBuildBar" style="height:100%;width:0%;border-radius:999px;background:#10b981;"></div></div>
-                </div>
-                <div>
-                  <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">Bandwidth</span><span style="font-family:var(--font-mono);color:#94a3b8;">8 GB / 100 GB</span></div>
-                  <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div style="height:100%;width:8%;border-radius:999px;background:#10b981;"></div></div>
-                </div>
-                <button class="btn btn-ghost" onclick="showPage('pricing')" style="min-height:42px;border-color:rgba(16,185,129,.2);font-size:.84rem;">View All Plans</button>
-              </div>
+            <span class="acct-stat-arrow">→</span>
+            <div class="acct-stat-value" id="acctStatDomains">0</div>
+            <div class="acct-stat-label">Domains</div>
+            <div class="acct-stat-sub">Connected to projects</div>
+          </div>
+          <div class="acct-stat-card" onclick="window.open('mailto:support@joytree.site')">
+            <div class="acct-stat-icon" style="background:rgba(16,185,129,.15);">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             </div>
-
-            <!-- Danger Zone -->
-            <div class="card" style="border-color:rgba(239,68,68,.18);">
-              <div class="card-header" style="border-bottom-color:rgba(239,68,68,.1);">
-                <div class="card-title" style="color:#f87171;">Danger Zone</div>
-                <div class="card-subtitle">Irreversible actions — proceed with care</div>
-              </div>
-              <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
-                <div style="font-size:.8rem;color:#64748b;padding:10px 12px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.12);border-radius:10px;">These actions are permanent and cannot be undone. All data will be deleted.</div>
-                <button class="btn btn-danger" onclick="confirmDeleteAllProjects()" style="min-height:44px;justify-content:flex-start;gap:10px;">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
-                  Delete All Projects & Deployments
-                </button>
-                <button class="btn btn-ghost" onclick="openLogoutModal()" style="min-height:44px;border-color:rgba(239,68,68,.2);color:#f87171;justify-content:flex-start;gap:10px;">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                  Sign Out of Joytree
-                </button>
-              </div>
-            </div>
-
+            <span class="acct-stat-arrow">→</span>
+            <div class="acct-stat-value">0</div>
+            <div class="acct-stat-label">Support</div>
+            <div class="acct-stat-sub">No open tickets</div>
           </div>
         </div>
+
+        <!-- ══ Profile Panel ══ -->
+        <div class="acct-panel">
+          <div class="acct-panel-header">
+            <div>
+              <div class="acct-panel-title">Profile</div>
+              <div class="acct-panel-sub">Your public identity on this platform</div>
+            </div>
+          </div>
+          <div class="acct-panel-body">
+            <div style="display:flex;align-items:center;gap:14px;padding:12px;background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.12);border-radius:12px;margin-bottom:16px;">
+              <div id="accAvatarPreview" style="width:48px;height:48px;border-radius:14px;background:rgba(16,185,129,.18);border:1px solid rgba(16,185,129,.3);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:900;font-size:1.1rem;color:#34d399;flex-shrink:0;overflow:hidden;background-size:cover;background-position:center;">JG</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:.88rem;" id="accAvatarName">Your Name</div>
+                <div style="font-size:.75rem;color:var(--text-3);margin-top:2px;" id="accAvatarEmail">your@email.com</div>
+              </div>
+            </div>
+            <div class="field" style="margin:0 0 14px;">
+              <label class="field-label">Display Name</label>
+              <input class="input" id="settingsName" placeholder="Your Name" oninput="document.getElementById('accAvatarName').textContent=this.value||'Your Name';var i=document.getElementById('accAvatarPreview');if(!i.style.backgroundImage)i.textContent=(this.value||'?').slice(0,2).toUpperCase();document.getElementById('acctHeroName').textContent=this.value||'Your Name';">
+            </div>
+            <div class="field" style="margin:0 0 14px;">
+              <label class="field-label">Email Address</label>
+              <input class="input" id="settingsEmail" type="email" placeholder="you@example.com" oninput="document.getElementById('accAvatarEmail').textContent=this.value||'your@email.com';">
+            </div>
+            <div class="field" style="margin:0 0 14px;">
+              <label class="field-label">Username / Handle</label>
+              <input class="input" id="settingsHandle" placeholder="e.g. johndoe">
+              <div class="acct-row-hint" style="margin-top:6px;">Used in deployment URLs and team mentions.</div>
+            </div>
+            <div class="field" style="margin:0 0 16px;">
+              <label class="field-label">Timezone</label>
+              <div class="custom-select" id="cs_settingsTimezone">
+                <div class="custom-select-trigger" onclick="csToggle(this)">
+                  <span class="cs-value">UTC</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="custom-select-dropdown">
+                  <div class="cs-option selected" data-value="UTC" onclick="csSelect(this)">UTC</div>
+                  <div class="cs-option" data-value="Africa/Accra" onclick="csSelect(this)">Africa/Accra (GMT+0)</div>
+                  <div class="cs-option" data-value="America/New_York" onclick="csSelect(this)">America/New York (EST)</div>
+                  <div class="cs-option" data-value="America/Los_Angeles" onclick="csSelect(this)">America/Los Angeles (PST)</div>
+                  <div class="cs-option" data-value="Europe/London" onclick="csSelect(this)">Europe/London (GMT)</div>
+                  <div class="cs-option" data-value="Europe/Berlin" onclick="csSelect(this)">Europe/Berlin (CET)</div>
+                  <div class="cs-option" data-value="Asia/Tokyo" onclick="csSelect(this)">Asia/Tokyo (JST)</div>
+                </div>
+                <input type="hidden" id="settingsTimezone" value="UTC">
+              </div>
+              <div class="acct-row-hint" style="margin-top:6px;">Affects timestamps in logs, activity feed, and cron jobs.</div>
+            </div>
+            <button class="acct-panel-action" onclick="saveAccountSettings()" style="width:100%;justify-content:center;padding:12px;font-size:.86rem;">Save Profile</button>
+          </div>
+        </div>
+
+        <!-- ══ Connected Account (GitHub) ══ -->
+        <div class="acct-panel">
+          <div class="acct-panel-header">
+            <div>
+              <div class="acct-panel-title">Connected Account</div>
+              <div class="acct-panel-sub">Sign-in provider linked to this profile</div>
+            </div>
+          </div>
+          <div class="acct-panel-body" id="acctConnectedAccountBody">
+            <div class="acct-empty">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+              <div>No GitHub account connected yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ Notifications Panel ══ -->
+        <div class="acct-panel" id="pushNotifCard">
+          <div class="acct-panel-header">
+            <div>
+              <div class="acct-panel-title">Deploy Notifications</div>
+              <div class="acct-panel-sub">Push alerts for build success and failure</div>
+            </div>
+            <span class="badge" id="pushNotifStatusBadge"><span class="badge-dot"></span>Checking…</span>
+          </div>
+          <div class="acct-panel-body">
+            <div style="font-size:.8rem;color:var(--text-3);line-height:1.55;margin-bottom:14px;" id="pushNotifHint">
+              Get a notification on your phone when a deploy finishes, success or failure — even if the app isn't open. Requires installing JoyTree as an app first (the download prompt in this same tab).
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="acct-panel-action ghost" style="width:100%;justify-content:center;padding:11px;" id="pushNotifEnableBtn" onclick="manualEnablePushNotifications()">Enable Notifications</button>
+              <button class="acct-panel-action ghost" style="width:100%;justify-content:center;padding:11px;" id="pushNotifTestBtn" onclick="sendTestPushNotification()" disabled>Send Test Notification</button>
+              <button class="acct-panel-action ghost" style="width:100%;justify-content:center;padding:11px;color:#f87171;" id="pushNotifDisableBtn" onclick="disablePushNotifications()" disabled>Turn Off Notifications</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ Preferences Panel ══ -->
+        <div class="acct-panel">
+          <div class="acct-panel-header">
+            <div>
+              <div class="acct-panel-title">Preferences</div>
+              <div class="acct-panel-sub">Notification and display preferences</div>
+            </div>
+          </div>
+          <div class="acct-panel-body" style="padding:6px 18px 18px;">
+            <div class="acct-row">
+              <div style="flex:1;min-width:0;">
+                <div class="acct-row-label">Deploy Success Notifications</div>
+                <div class="acct-row-hint">Get notified when a deployment completes successfully.</div>
+              </div>
+              <button class="acct-toggle on" id="prefNotifySuccessToggle" onclick="acctToggleSwitch(this,'prefNotifySuccess')"></button>
+              <input type="checkbox" id="prefNotifySuccess" checked style="display:none;">
+            </div>
+            <div class="acct-row">
+              <div style="flex:1;min-width:0;">
+                <div class="acct-row-label">Deploy Failure Alerts</div>
+                <div class="acct-row-hint">Immediate alerts when a build or deploy fails.</div>
+              </div>
+              <button class="acct-toggle on" id="prefNotifyFailToggle" onclick="acctToggleSwitch(this,'prefNotifyFail')"></button>
+              <input type="checkbox" id="prefNotifyFail" checked style="display:none;">
+            </div>
+            <div class="acct-row">
+              <div style="flex:1;min-width:0;">
+                <div class="acct-row-label">Cron Job Alerts</div>
+                <div class="acct-row-hint">Notify when a cron job fails or misses its schedule.</div>
+              </div>
+              <button class="acct-toggle" id="prefNotifyCronToggle" onclick="acctToggleSwitch(this,'prefNotifyCron')"></button>
+              <input type="checkbox" id="prefNotifyCron" style="display:none;">
+            </div>
+            <div class="acct-row">
+              <div style="flex:1;min-width:0;">
+                <div class="acct-row-label">Compact Log View</div>
+                <div class="acct-row-hint">Reduce terminal font size for more lines per screen.</div>
+              </div>
+              <button class="acct-toggle" id="prefCompactLogToggle" onclick="acctToggleSwitch(this,'prefCompactLog')"></button>
+              <input type="checkbox" id="prefCompactLog" style="display:none;">
+            </div>
+            <div class="acct-row">
+              <div style="flex:1;min-width:0;">
+                <div class="acct-row-label">Auto-scroll Terminal</div>
+                <div class="acct-row-hint">Terminal auto-scrolls to latest output during builds.</div>
+              </div>
+              <button class="acct-toggle on" id="prefAutoScrollToggle" onclick="acctToggleSwitch(this,'prefAutoScroll')"></button>
+              <input type="checkbox" id="prefAutoScroll" checked style="display:none;">
+            </div>
+            <button class="acct-panel-action ghost" onclick="savePreferenceSettings()" style="width:100%;justify-content:center;padding:11px;margin-top:14px;">Save Preferences</button>
+          </div>
+        </div>
+
+        <!-- ══ Security Panel ══ -->
+        <div class="acct-panel">
+          <div class="acct-panel-header">
+            <div>
+              <div class="acct-panel-title">Security</div>
+              <div class="acct-panel-sub">Protect your account and sessions</div>
+            </div>
+          </div>
+          <div class="acct-panel-body">
+            <div style="padding:12px 14px;background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.12);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;">
+              <div>
+                <div style="font-size:.82rem;font-weight:700;">This device</div>
+                <div style="font-size:.72rem;color:var(--text-3);margin-top:2px;">Active now · <span id="accSessionLocation">Ghana</span></div>
+              </div>
+              <span class="acct-badge plan">CURRENT</span>
+            </div>
+            <div class="field" style="margin:0 0 14px;">
+              <label class="field-label">Change Password</label>
+              <input class="input" type="password" id="settingsNewPassword" placeholder="New password">
+            </div>
+            <div class="field" style="margin:0 0 16px;">
+              <label class="field-label">Confirm Password</label>
+              <input class="input" type="password" id="settingsConfirmPassword" placeholder="Repeat new password">
+            </div>
+            <button class="acct-panel-action ghost" onclick="toast('Password update will be available after email verification.','info')" style="width:100%;justify-content:center;padding:11px;margin-bottom:16px;">Update Password</button>
+
+            <div style="padding:14px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.02);margin-bottom:16px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
+                <div style="font-size:.86rem;font-weight:700;">Two-Factor Authentication</div>
+                <span class="acct-badge" style="background:rgba(148,163,184,.1);color:var(--text-3);border:1px solid rgba(148,163,184,.15);">COMING SOON</span>
+              </div>
+              <div style="font-size:.76rem;color:var(--text-3);line-height:1.5;">Add a second layer of protection with TOTP-based 2FA (Google Authenticator, Authy, etc.).</div>
+            </div>
+
+            <label class="field-label">Personal API Key</label>
+            <div style="display:flex;gap:8px;margin-top:8px;margin-bottom:6px;">
+              <input class="input input-mono" id="settingsApiKey" value="Loading…" readonly style="flex:1;font-size:.78rem;color:var(--text-3);min-height:44px;">
+              <button class="acct-panel-action ghost" id="btnCopyApiKey" style="padding:0 14px;flex-shrink:0;" onclick="copyPersonalApiKey()">Copy</button>
+              <button class="acct-panel-action ghost" id="btnRotateApiKey" style="padding:0 14px;flex-shrink:0;color:var(--red);" onclick="rotatePersonalApiKey()">Rotate</button>
+            </div>
+            <div style="font-size:.74rem;color:var(--text-3);margin-bottom:16px;" id="settingsApiKeyMeta">Use this key for the Joytree REST API. Keep it secret.</div>
+
+            <div style="background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.15);border-radius:12px;padding:14px 16px;display:flex;gap:14px;align-items:center;margin-bottom:16px;">
+              <div style="flex:1;">
+                <div style="font-size:.85rem;font-weight:600;color:var(--green);margin-bottom:3px;">REST API v1</div>
+                <div style="font-size:.75rem;color:var(--text-3);line-height:1.5;">Remote control deployments, manage env vars, monitor live containers and more — all via HTTP.</div>
+              </div>
+              <button class="acct-panel-action ghost" style="flex-shrink:0;" onclick="openApiDocs()">View Docs</button>
+            </div>
+
+            <button class="acct-panel-action ghost" onclick="toast('All other sessions have been signed out.','success')" style="width:100%;justify-content:center;padding:11px;color:#f87171;">Sign Out All Other Sessions</button>
+          </div>
+        </div>
+
+        <!-- ══ Usage & Billing Panel ══ -->
+        <div class="acct-panel">
+          <div class="acct-panel-header">
+            <div>
+              <div class="acct-panel-title">Usage & Billing</div>
+              <div class="acct-panel-sub">Current plan limits and consumption</div>
+            </div>
+            <button class="acct-panel-action" onclick="showPage('pricing')">Upgrade</button>
+          </div>
+          <div class="acct-panel-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.15);border-radius:12px;margin-bottom:16px;">
+              <div>
+                <div style="font-size:.84rem;font-weight:800;color:#d1fae5;" id="settingsPlanLabel">Free Trial</div>
+                <div style="font-size:.73rem;color:var(--text-3);margin-top:2px;" id="settingsPlanSub">0.15 GB app RAM · 128MB DB memory cap · Shared vCPU · 5 projects</div>
+              </div>
+            </div>
+            <div style="margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">Projects</span><span style="font-family:var(--font-mono);color:var(--text-3);" id="settingsUsageProjects">0 / 0</span></div>
+              <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div id="settingsUsageProjectsBar" style="height:100%;width:0%;border-radius:999px;background:#10b981;"></div></div>
+            </div>
+            <div style="margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">Build Time</span><span style="font-family:var(--font-mono);color:var(--text-3);" id="settingsUsageBuild">0s / 0s</span></div>
+              <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div id="settingsUsageBuildBar" style="height:100%;width:0%;border-radius:999px;background:#10b981;"></div></div>
+            </div>
+            <div style="margin-bottom:16px;">
+              <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;"><span style="color:var(--text-2);">Bandwidth</span><span style="font-family:var(--font-mono);color:var(--text-3);">8 GB / 100 GB</span></div>
+              <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;"><div style="height:100%;width:8%;border-radius:999px;background:#10b981;"></div></div>
+            </div>
+            <button class="acct-panel-action ghost" onclick="showPage('pricing')" style="width:100%;justify-content:center;padding:11px;">View All Plans</button>
+          </div>
+        </div>
+
+        <!-- ══ Danger Zone Panel ══ -->
+        <div class="acct-panel" style="border-color:rgba(239,68,68,.18);">
+          <div class="acct-panel-header" style="border-bottom-color:rgba(239,68,68,.1);">
+            <div>
+              <div class="acct-panel-title" style="color:#f87171;">Danger Zone</div>
+              <div class="acct-panel-sub">Irreversible actions — proceed with care</div>
+            </div>
+          </div>
+          <div class="acct-panel-body">
+            <div style="font-size:.8rem;color:var(--text-3);padding:10px 12px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.12);border-radius:10px;margin-bottom:12px;">These actions are permanent and cannot be undone. All data will be deleted.</div>
+            <button class="btn btn-danger" onclick="confirmDeleteAllProjects()" style="width:100%;min-height:44px;justify-content:flex-start;gap:10px;margin-bottom:10px;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+              Delete All Projects & Deployments
+            </button>
+            <button class="acct-panel-action ghost" onclick="openLogoutModal()" style="width:100%;justify-content:flex-start;gap:10px;padding:11px 14px;color:#f87171;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Sign Out of Joytree
+            </button>
+          </div>
+        </div>
+
       </div>
-
       <div id="settingsTabReferrals" style="display:none;">
         <div class="card" style="max-width:640px;">
           <div class="card-header">
@@ -23535,6 +23686,112 @@ function applyUserProfile(user){
   if (_uid && typeof socket !== 'undefined' && socket?.connected) {
     socket.emit('auth:join', { userId: String(_uid) });
   }
+  if (typeof renderAccountHero === 'function') renderAccountHero(user);
+}
+
+// ── Account tab hero + connected-account rendering ──────────────────────────
+// Uses the REAL GitHub avatar (githubAvatarUrl) when the account is connected
+// via GitHub, falling back to this app's own default illustration SVG when
+// no GitHub avatar is available -- never a random placeholder from elsewhere.
+const ACCT_DEFAULT_AVATAR_SRC = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIEdlbmVyYXRvcjogU1ZHIFJlcG8gTWl4ZXIgVG9vbHMgLS0+DQo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgY2xhc3M9Imljb24iICB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE3OS40NCA0MDYuNGMxNC4wNi01Ljc2IDE3LjUzLTEwMS42MyA0Ni44Ny0xMzcuNThzMTguODQgMjcuNTQgNDIuNTYgMTcuODJTMzE4IDE4Mi4xNSAzODcuNSAxMzkuOGMxNS42MS05LjU0IDI0LjU4IDMuMTUgMjAuMDYgMTguMjJzLTE2LjA4IDI5Ljg5LTAuMzIgMzkuMTcgNDEuMTUtNDcuMDggNzkuNzEtNjYuNjcgNTUuNi0xMy4zNCA2MS4yMi0xLjE3LTE3Ljc4IDIxLjE0LTMuMjIgMjkgMzkuMzItMTkuMjcgNjcuOC0yOS42OCA1MS44Ny0xOS4zNyA2MC40MS03Ljc2LTEzLjI3IDE2Ljc3IDAuMTQgMjkuNTMgNTQuNDktMjkuODkgODkuMjQtNDAuMzUgNS44IDIwLjI5IDIwLjczIDMzLjY5IDQzLjExLTcgNjQuOS0xLjQxIDEyLjUxIDIxLjMxIDM0LjczIDM4LjY1IDY2LjI4IDguMDkgNzUuNTcgMjAtMTYuMzggMTkuOTgtMzEuMTUgNjMuODMtMS40NSA3MS43NC0xOC4xIDk4LjcxLTgwLjUxIDQ5LjM2LTc5LjcxIDY2LjY3IDU1LTIgNDYgMTUuNjgtMzEgNDIuNC01My41MiA1My41Mi02MCAxMy4yNy02NC4zNyAyNS43NSA0NS42NyAxNC42NSA0MS42NiAyNi4zN2MtNi4xMyAxOC44Ni04NS44MiAzNi40NS05Ny43NyA1Ni40NXM0OS4wNiAzMi4xNSAzMS43NCA0My42NS04MS41MSA3LTk3LjcgMjQuMyA1NC44NiAxNCA0MS4wOCAzNC4xNi0zOC4zOSAyNy43LTY3Ljg3IDM0LjExLTYwLTEuODctNjYuMDcgMTcgNjUuNjEgMzEgNDguMDkgNDUuMTQtOTkuNzMtMTEuMzYtMTE1LjA5IDEuODMgNDMuMjUgMjIuNTcgMTMuOTQgMzcuMS0xMTcuMjMtOC0xMzEuMzQgMTIuOSA4MSAxMy4zOCA0Ni4zMiA0MC44My0xNDkuMTUgMTcuMDYtMTgzLjQ3IDAuOUMxMzcuNTMgODY1IDc4LjczIDc1My42NiA2OS4zOCA2OTcuMDVzLTYuMjQtNTkuNzcgMC43Ni03Ni40OSAzNi4zMiAzNC44NSAzMC45NS0xMi4wNVM3MS45MSA1NDguMDYgODIgNTExLjE5czIyLjA3IDI2LjIxIDI2LjQ2LTE4LjQgMy4xNC0xMDMuNTkgMjguNzEtMTE4LjEyYzQwLjA4LTIyLjc4IDIyLjgzIDM5LjY4IDQyLjI3IDMxLjczeiIgZmlsbD0iIzAwNzM3RiIgLz48cGF0aCBkPSJNODQ1LjQ1IDIyMC43NGMtNjUuMzktNS45NC02MTcuNzQgMjgwLjg4LTY4Mi43OCA1MjEuNiAxMjguNjUtMTg3LjQ3IDY4Mi43OC01MjEuNiA2ODIuNzgtNTIxLjZ6IiBmaWxsPSIjMDA1ODY2IiAvPjwvc3ZnPg==';
+
+function renderAccountHero(user) {
+  const u = user || currentUser || {};
+  const displayName = u.githubUsername || u.name || settings.name || 'there';
+  const email = u.email || settings.email || '';
+  const avatarUrl = String(u.githubAvatarUrl || '').trim();
+
+  // Greeting based on local time of day
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning,' : hour < 18 ? 'Good afternoon,' : 'Good evening,';
+  const greetEl = document.getElementById('acctHeroGreeting');
+  if (greetEl) greetEl.textContent = greeting;
+
+  const nameEl = document.getElementById('acctHeroName');
+  if (nameEl) nameEl.textContent = displayName;
+
+  // Avatar: real GitHub photo if connected, else the default illustration
+  const img = document.getElementById('acctHeroAvatarImg');
+  const initialsEl = document.getElementById('acctHeroAvatarInitials');
+  if (img && initialsEl) {
+    if (avatarUrl) {
+      img.src = avatarUrl;
+      img.style.display = 'block';
+      initialsEl.style.display = 'none';
+    } else {
+      img.src = ACCT_DEFAULT_AVATAR_SRC;
+      img.style.display = 'block';
+      initialsEl.style.display = 'none';
+    }
+  }
+
+  // Also sync the smaller Profile-panel avatar preview with the same source
+  const preview = document.getElementById('accAvatarPreview');
+  if (preview) {
+    if (avatarUrl) {
+      preview.style.backgroundImage = `url(${avatarUrl})`;
+      preview.textContent = '';
+    } else {
+      const initials = String(displayName).split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'JG';
+      preview.style.backgroundImage = '';
+      preview.textContent = initials;
+    }
+  }
+
+  const idBadge = document.getElementById('acctHeroIdBadge');
+  if (idBadge) {
+    const uid = u.id || u._id || u.uid || '';
+    idBadge.textContent = uid ? ('ID: ' + String(uid).slice(0, 8)) : 'ID: —';
+  }
+
+  // Connected Account panel — real GitHub info if connected, empty state otherwise
+  const connBody = document.getElementById('acctConnectedAccountBody');
+  if (connBody) {
+    if (u.githubUsername) {
+      connBody.innerHTML = `
+        <div style="display:flex;align-items:center;gap:14px;padding:12px;background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.12);border-radius:12px;">
+          <div style="width:44px;height:44px;border-radius:12px;overflow:hidden;flex-shrink:0;background:rgba(16,185,129,.15);display:flex;align-items:center;justify-content:center;">
+            ${avatarUrl ? `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" alt="">` : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.5" width="22" height="22"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>`}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:.88rem;">${escHtml(u.githubUsername)}</div>
+            <div style="font-size:.75rem;color:var(--text-3);margin-top:2px;">Connected via GitHub OAuth</div>
+          </div>
+          <span class="acct-badge plan">LINKED</span>
+        </div>`;
+    } else {
+      connBody.innerHTML = `
+        <div class="acct-empty">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          <div>No GitHub account connected yet.</div>
+        </div>`;
+    }
+  }
+
+  // Plan badge in hero
+  const planBadge = document.getElementById('acctHeroPlanBadge');
+  if (planBadge) planBadge.textContent = (settings.billingPlan || 'Free Trial');
+
+  // Quick stat: projects count
+  const statProjects = document.getElementById('acctStatProjects');
+  if (statProjects) statProjects.textContent = String((projects || []).length);
+
+  // Quick stat: domains count
+  const statDomains = document.getElementById('acctStatDomains');
+  if (statDomains && typeof _databases !== 'undefined') {
+    // fall back to 0 if no domain list is tracked client-side yet
+    statDomains.textContent = '0';
+  }
+}
+
+// Simple on/off pill toggle used throughout the redesigned Account tab.
+// Keeps the existing hidden checkbox in sync so savePreferenceSettings()
+// (which reads the checkboxes) continues to work unchanged.
+function acctToggleSwitch(btn, checkboxId) {
+  const cb = document.getElementById(checkboxId);
+  const isOn = !btn.classList.contains('on');
+  btn.classList.toggle('on', isOn);
+  if (cb) cb.checked = isOn;
 }
 
 async function bootstrapSession(){
@@ -28807,6 +29064,9 @@ function switchSettingsTab(tab, el) {
     const p = document.getElementById('settingsTab' + t.charAt(0).toUpperCase() + t.slice(1));
     if (p) p.style.display = t === tab ? '' : 'none';
   });
+  // (re)render the account hero every time the Account tab is opened, so it's
+  // always current even if applyUserProfile ran before this page existed
+  if (tab === 'account' && typeof renderAccountHero === 'function') renderAccountHero(currentUser);
   document.querySelectorAll('#settingsTabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
   else {
