@@ -3798,19 +3798,20 @@ html[data-theme="light"] .tree-node-btn-danger:hover {
 .dep-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
+  border-top: 1px solid var(--border);
 }
 .dep-card {
-  background: #111;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: 16px 4px;
   cursor: pointer;
-  transition: border-color .15s, background .15s;
+  transition: background .15s;
 }
 .dep-card:hover {
-  background: #161616;
-  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+  background: var(--bg-hover);
 }
 .dep-card-top {
   display: flex;
@@ -3886,11 +3887,14 @@ html[data-theme="light"] .tree-node-btn-danger:hover {
 
 /* Consistent dark cards on light theme too -- same as Projects page */
 html[data-theme="light"] .dep-card {
-  background: #111 !important;
+  background: transparent !important;
   border-color: var(--border) !important;
 }
 html[data-theme="light"] .dep-card:hover {
-  background: #161616 !important;
+  background: var(--bg-hover) !important;
+}
+html[data-theme="light"] .dep-list {
+  border-top-color: var(--border) !important;
 }
 html[data-theme="light"] .dep-card-project,
 html[data-theme="light"] .dep-toolbar-title,
