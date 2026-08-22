@@ -5650,7 +5650,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=40" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=41" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5696,7 +5696,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=40&recover=' + token;
+    fresh.href = 'theme-override.css?v=41&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -23488,6 +23488,51 @@ function normalizeServerDeployment(sd) {
   });
 }
 
+// [FIX] Generic "re-run whatever showPage() would do for the CURRENTLY
+// active page" dispatcher, extracted so it can be called again after a
+// background data sync completes -- without hardcoding a shortlist of
+// page names that someone has to remember to keep updated forever (which
+// is exactly how the Deployments-only version of this fix under-covered
+// every other page). This mirrors showPage()'s own "Page-specific setup"
+// dispatch table 1:1 -- if a page's data-dependent render call is ever
+// added/changed in showPage(), it should be mirrored here too, but at
+// least a missed page here just means "doesn't refresh instantly after
+// a background sync," not "silently broken on every non-dashboard route."
+function rerenderCurrentPageAfterSync() {
+  const id = (typeof currentPage !== 'undefined') ? currentPage : null;
+  if (!id) return;
+  try {
+    if (id === 'projects')      { if (typeof renderProjects !== 'undefined' && renderProjects.now) renderProjects.now(); }
+    if (id === 'deployments')   { if (typeof renderDeployments === 'function') renderDeployments(); }
+    if (id === 'ai-analysis')   { if (typeof renderAiAnalysisPage === 'function') renderAiAnalysisPage(); }
+    if (id === 'env-manager')   { if (typeof renderEnvManager === 'function') renderEnvManager(); }
+    if (id === 'analytics')     { if (typeof renderAnalytics === 'function') renderAnalytics(); }
+    if (id === 'domains')       { if (typeof renderDomains === 'function') renderDomains(); if (typeof renderExternalProxies === 'function') renderExternalProxies(); }
+    if (id === 'webhooks')      { if (typeof renderWebhooks === 'function') renderWebhooks(); }
+    if (id === 'team')          { if (typeof renderTeam === 'function') renderTeam(); }
+    if (id === 'cronjobs')      { if (typeof renderCronJobs === 'function') renderCronJobs(); }
+    if (id === 'workers')       { if (typeof renderWorkers === 'function') renderWorkers(); }
+    if (id === 'streaks')       { if (typeof renderStreaks === 'function') renderStreaks(); }
+    if (id === 'usage')         { if (typeof renderUsage === 'function') renderUsage(); }
+    if (id === 'activity')      { if (typeof renderActivity === 'function') renderActivity(); }
+    if (id === 'secrets')       { if (typeof renderSecrets === 'function') renderSecrets(); }
+    if (id === 'repos')         { if (typeof renderReposPage === 'function') renderReposPage(); }
+    if (id === 'databases')     { if (typeof renderDatabasesPage === 'function') renderDatabasesPage(); }
+    if (id === 'db-editor')     { if (typeof renderDbEditorPage === 'function') renderDbEditorPage(); }
+    // db-query / db-schema / db-sdk deliberately excluded: those pages
+    // carry live in-progress editor/query state that a background data
+    // refresh should never blow away mid-edit.
+    if (id === 'realtime-api')  { if (typeof loadLogiFlowLogs === 'function') loadLogiFlowLogs(); if (typeof loadManagedApis === 'function') loadManagedApis(); }
+    // logs / settings / new-deploy / code-upload / code-ide / ssh-keys /
+    // emails / joytree-ai deliberately excluded: these are either
+    // form/editor pages with their own live state, or pages whose "render"
+    // is really a one-time initializer (initTerminal, initDeployForm etc.)
+    // that shouldn't be re-run every time a background sync tick lands.
+  } catch (e) {
+    console.warn('[rerenderCurrentPageAfterSync]', e?.message || e);
+  }
+}
+
 async function syncServerStateFromApi({ persist = false, render = false } = {}) {
   if (!hasAuthToken()) return false;
   let changed = false;
@@ -23528,20 +23573,31 @@ async function syncServerStateFromApi({ persist = false, render = false } = {}) 
     if (changed) {
       deployments.sort((a, b) => new Date(a.startedAt || 0).getTime() - new Date(b.startedAt || 0).getTime());
       if (persist) save(); else _save();
-      // [FIX] Only renderDashboard()/scheduleRenderProjects() ran here --
-      // never the Deployments page's own renderer. Reloading directly on
-      // /dashboard/deployments (or any deep link) meant this sync correctly
-      // fetched fresh server data into the `deployments` array, but the
-      // page actually on screen kept showing whatever localStorage had at
-      // the moment of the very first paint, since nothing ever told THAT
-      // page to re-render with the newly-synced data. Re-render whichever
-      // page is actually being viewed right now, not just dashboard/projects.
+      // [FIX] SYSTEMIC BUG, not just a Deployments-page thing: on a deep
+      // link boot (e.g. joytree.site/dashboard/deployments, or ANY page
+      // besides plain /dashboard), showPage(targetPage) runs FIRST, using
+      // whatever stale localStorage snapshot loaded before this fetch had
+      // any chance to finish -- that render call is what the user actually
+      // sees on screen. THIS sync then resolves afterward with real server
+      // data, but previously only ever re-rendered Dashboard/Projects
+      // (then Deployments too, after an earlier narrower fix) -- every
+      // OTHER page's own render call was never re-run, so whatever page
+      // the user actually landed/reloaded on kept showing the stale
+      // snapshot forever, no matter how many times they refreshed --
+      // because each reload just repeats the same race: stale render,
+      // then a sync that updates the DATA but never re-invokes THAT page's
+      // renderer. Reloading via the Dashboard specifically "fixed" things
+      // only because Dashboard/Projects were the two hardcoded exceptions.
+      //
+      // Fixed generically: re-run the EXACT SAME per-page dispatch that
+      // showPage() already uses for every single page in the app, driven
+      // off whichever page is actually active right now -- not a hardcoded
+      // shortlist that has to be remembered and extended by hand every
+      // time a new page is added.
       if (render) {
         renderDashboard();
         scheduleRenderProjects();
-        if (typeof currentPage !== 'undefined' && currentPage === 'deployments' && typeof renderDeployments === 'function') {
-          renderDeployments();
-        }
+        rerenderCurrentPageAfterSync();
       }
     }
     return changed;
@@ -23562,10 +23618,20 @@ function ensureProjectAutoSync() {
   // deployments on a flaky connection. 8s keeps the page feeling live
   // (a deploy finishing elsewhere still shows up quickly) without hammering
   // the API or the client every single second.
+  // [FIX] Previously gated to only run while on 'projects'/'dashboard'/
+  // 'project-detail' -- every other page (Deployments, Analytics, Domains,
+  // Webhooks, etc.) never got a background refresh at all, so only the
+  // one-time sync at boot could ever update them, and once that page's
+  // one chance came and went, it was stuck showing whatever it started
+  // with until a full page reload. A short exclude-list of pages that
+  // genuinely shouldn't be disturbed by a background data refresh (live
+  // editors/forms/terminals) is a much shorter and safer list to maintain
+  // than an allow-list that has to include every current AND future page.
+  const PAGES_EXCLUDED_FROM_BG_SYNC = ['db-query','db-schema','db-sdk','logs','new-deploy','code-upload','code-ide','ssh-keys','settings','joytree-ai','emails'];
   _projectAutoSyncTimer = setInterval(async () => {
     if (_projectAutoSyncBusy) return;
     if (!hasAuthToken()) return;
-    if (!['projects','dashboard','project-detail'].includes(currentPage)) return;
+    if (PAGES_EXCLUDED_FROM_BG_SYNC.includes(currentPage)) return;
     _projectAutoSyncBusy = true;
     try {
       await syncServerStateFromApi({ persist: true, render: true });
