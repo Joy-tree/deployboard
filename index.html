@@ -13441,30 +13441,43 @@ document.addEventListener('keydown', function(e){
       const btn = document.getElementById('dsCoPayBtn');
       btn.disabled = true; btn.textContent = 'Checking availability…';
 
-      // ── Balance check: ensure we have enough funds to register instantly ──
-      // If our registrar balance is below the domain's wholesale cost, we can't
-      // register the domain the moment payment clears — show a pre-order notice
-      // so the user can enquire before committing money.
+      // ── Balance check: MUST pass before Paystack is ever allowed to open ──
+      // This gate blocks real money changing hands for a domain we can't
+      // register instantly. It must fail SAFE: any uncertainty here (a
+      // network error, a timeout, an unexpected response) should show the
+      // pre-order flow, NOT silently let the person through to pay — the
+      // whole point breaks if a server hiccup becomes a free pass to
+      // Paystack. Only an explicit, confirmed "we have enough funds"
+      // response is allowed to continue past this point.
+      const usdPrice = dsCurrentDomain.usdWholesale;
+      let balanceConfirmedOk = false;
+
+      if (!usdPrice || !Number.isFinite(usdPrice)) {
+        // No wholesale price to check against at all — can't verify safely,
+        // so don't let this domain skip the check silently.
+        btn.disabled = false; btn.textContent = 'Pay with Mobile Money (GHS)';
+        dsCloseCheckout();
+        dsShowPreOrder(dsCurrentDomain.domain, dsCurrentDomain.priceGhs);
+        return;
+      }
+
       try {
-        const usdPrice = dsCurrentDomain.usdWholesale;
-        if (usdPrice && Number.isFinite(usdPrice)) {
-          const balRes = await apiFetch(API + '/api/domains/balance-check?usdPrice=' + encodeURIComponent(usdPrice));
-          const balData = await balRes.json().catch(() => ({}));
-          // [DEBUG] Log what the balance check actually returned so it's easy
-          // to confirm from the browser console whether this ran and what
-          // it decided, instead of it being an invisible pass/fail.
-          console.log('[balance-check]', { usdPrice, balData });
-          if (balRes.ok && balData.canRegister === false) {
-            btn.disabled = false; btn.textContent = 'Pay with Mobile Money (GHS)';
-            dsCloseCheckout();
-            dsShowPreOrder(dsCurrentDomain.domain, dsCurrentDomain.priceGhs);
-            return;
-          }
-        }
+        const balRes = await apiFetch(API + '/api/domains/balance-check?usdPrice=' + encodeURIComponent(usdPrice));
+        const balData = await balRes.json().catch(() => ({}));
+        console.log('[balance-check]', { usdPrice, balData });
+        // Require an explicit true — canRegister must be exactly true, not
+        // just "not false", so any malformed/unexpected response also fails safe.
+        balanceConfirmedOk = balRes.ok && balData.canRegister === true;
       } catch(e) {
-        // Balance check failed — proceed anyway, worst case the existing
-        // payment-taken recovery flow handles it
-        console.log('[balance-check] failed, proceeding anyway:', e.message);
+        console.log('[balance-check] request failed:', e.message);
+        balanceConfirmedOk = false;
+      }
+
+      if (!balanceConfirmedOk) {
+        btn.disabled = false; btn.textContent = 'Pay with Mobile Money (GHS)';
+        dsCloseCheckout();
+        dsShowPreOrder(dsCurrentDomain.domain, dsCurrentDomain.priceGhs);
+        return;
       }
 
       btn.textContent = 'Opening checkout…';
