@@ -579,12 +579,22 @@ html[data-theme="light"] #jtEditPromptModal .epm-textarea { background: var(--jt
 html[data-theme="light"] #lfAiVersionDrop .jt-ai-trigger { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-cronjobs #cronJobsList > div,
 html[data-theme="light"] #page-cronjobs #cronExecutionLog > div { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] #page-dashboard .stats-grid .stat-card,
-html[data-theme="light"] #page-projects .tree-project-node,
+html[data-theme="light"] html[data-theme="light"] #page-projects .tree-project-node,
 html[data-theme="light"] #page-deployments .card,
 html[data-theme="light"] #page-env-manager .card,
 html[data-theme="light"] #page-webhooks .card,
 html[data-theme="light"] #page-dashboard .card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+/* [FIX] #page-dashboard .stats-grid .stat-card was missing the
+   html[data-theme="light"] prefix that every other selector in this
+   list has -- so it was forcing the light-theme card background
+   (var(--jt-bg-raised), a light grey) onto the dashboard stat grid on
+   BOTH themes, and because ".stats-grid .stat-card" (3 selectors) has
+   higher specificity than the flat ".stat-card" rule further down in
+   this file (2 selectors), it silently won regardless of !important
+   source order. That's why the stat grid looked grey/ash instead of
+   flat and dark like the Settings quick-stats row. Removed entirely --
+   the flat #page-dashboard .stat-card rule later in this file already
+   handles both themes correctly on its own.
 html[data-theme="light"] #page-db-query .qstudio-body { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-db-query .qstudio-ct-type-dropdown { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-db-query .qstudio-db-dropdown { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
