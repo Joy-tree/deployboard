@@ -7061,20 +7061,24 @@ async function getRegistrarBalance() {
 }
 
 app.get('/api/domains/balance-check', requireAuth, async (req, res) => {
+  // [FIX] This gate exists specifically to stop Paystack from ever opening
+  // when we can't confirm we have enough registrar funds to complete the
+  // registration instantly. It MUST fail safe: any uncertainty here --
+  // missing API key, NameSilo unreachable, unparsable balance, an
+  // exception -- has to come back as canRegister:false, never true.
+  // Previously this returned canRegister:true whenever the balance
+  // couldn't be read at all, which silently defeated the whole check —
+  // exactly the "still get to Paystack" gap being fixed here.
   try {
     const domainPrice = Number.parseFloat(req.query.usdPrice || '0');
     const balance = await getRegistrarBalance();
     if (balance === null) {
-      // Can't read balance — let it proceed (worst case the registration fails
-      // and the existing payment-taken recovery flow kicks in)
-      return res.json({ ok: true, canRegister: true, balance: null });
+      return res.json({ ok: true, canRegister: false, balance: null, reason: 'balance_unavailable' });
     }
-    // Add a small buffer ($0.50) to account for any fees/rounding
     const canRegister = balance >= domainPrice + 0.5;
     res.json({ ok: true, canRegister, balance, domainPrice });
   } catch(e) {
-    // Non-fatal — don't block the purchase if balance check errors
-    res.json({ ok: true, canRegister: true, balance: null, error: e.message });
+    res.json({ ok: true, canRegister: false, balance: null, reason: 'error', error: e.message });
   }
 });
 
