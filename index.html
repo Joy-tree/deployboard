@@ -5648,44 +5648,70 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=33" id="themeOverrideLink" onerror="this.dataset.failed='1';setTimeout(function(){ var l=document.getElementById('themeOverrideLink'); if(l && l.dataset.failed){ var retry=document.createElement('link'); retry.rel='stylesheet'; retry.href='theme-override.css?v=33&retry='+Date.now(); document.head.appendChild(retry); } },300);">
+<link rel="stylesheet" href="theme-override.css?v=34" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
-// [FIX] theme-override.css sometimes failed to load entirely on slow/flaky
-// mobile connections, leaving the page rendered with zero styling from that
-// file (the raw unstyled HTML users occasionally saw). This is a large,
-// render-blocking stylesheet -- if the request itself drops or times out
-// (not a 404, just a network hiccup), the browser silently gives up with no
-// visible error and never retries on its own.
-// This watches for that exact failure and forces one retry with a fresh
-// cache-busted URL, which is enough to recover from a transient network
-// blip without needing a full page reload.
+// [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
+// unstyled even after a full page reload, on both first load AND repeat
+// visits -- proving the earlier onerror-only + single-timeout check
+// wasn't reliable. Root causes an onerror handler and a single delayed
+// check both miss: a stale/corrupted response served by an intermediate
+// cache (browser HTTP cache OR Cloudflare edge cache) that returns 200
+// with a body that parses as valid-but-empty CSS -- no network error
+// ever fires, so onerror never runs, and nothing here was actually a
+// slow-request timing problem to begin with.
+//
+// This version:
+//   1. Polls repeatedly (not just once) over several seconds, since a
+//      single fixed-delay check can itself race a slow-but-succeeding load.
+//   2. Uses a cache-buster with a truly random token on every retry
+//      attempt, not just Date.now() (which a caching layer keyed loosely
+//      could still coalesce), to guarantee each retry is an actually
+//      distinct URL any cache has never seen.
+//   3. Also explicitly requests a fresh copy with cache disabled the
+//      FIRST time verification fails, rather than assuming the plain
+//      retry URL alone is enough to bypass every caching layer between
+//      the browser and the origin.
 (function(){
-  var checked = false;
-  function verifyThemeCssLoaded(){
-    if (checked) return;
-    checked = true;
+  var VERIFY_CLASS = 'dep-toolbar'; // a class that only exists in theme-override.css
+  var EXPECTED_Z = '20';            // the z-index that class sets, if loaded
+  var attempts = 0;
+  var MAX_ATTEMPTS = 6;
+  var recovered = false;
+
+  function themeCssIsLoaded(){
     try {
       var testEl = document.createElement('div');
-      testEl.className = 'dep-toolbar'; // a class that only exists in theme-override.css
-      testEl.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;';
+      testEl.className = VERIFY_CLASS;
+      testEl.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;top:-9999px;';
       document.body.appendChild(testEl);
-      var appliedZIndex = getComputedStyle(testEl).zIndex;
+      var z = getComputedStyle(testEl).zIndex;
       document.body.removeChild(testEl);
-      // .dep-toolbar sets z-index:20 in theme-override.css -- if that never
-      // applied, the stylesheet didn't load and we force a fresh fetch.
-      if (appliedZIndex !== '20') {
-        var retry = document.createElement('link');
-        retry.rel = 'stylesheet';
-        retry.href = 'theme-override.css?v=33&recover=' + Date.now();
-        document.head.appendChild(retry);
-      }
-    } catch(e) { /* best-effort safety net, never block page load on this */ }
+      return z === EXPECTED_Z;
+    } catch(e) { return true; /* never block/loop forever on an unexpected error */ }
   }
-  if (document.readyState === 'complete') {
-    setTimeout(verifyThemeCssLoaded, 400);
-  } else {
-    window.addEventListener('load', function(){ setTimeout(verifyThemeCssLoaded, 400); });
+
+  function forceFreshReload(){
+    var token = Date.now() + '-' + Math.random().toString(36).slice(2);
+    var fresh = document.createElement('link');
+    fresh.rel = 'stylesheet';
+    fresh.href = 'theme-override.css?v=34&recover=' + token;
+    document.head.appendChild(fresh);
   }
+
+  function pollAndRecover(){
+    if (recovered) return;
+    if (themeCssIsLoaded()){ recovered = true; return; }
+    attempts++;
+    forceFreshReload();
+    if (attempts < MAX_ATTEMPTS){
+      setTimeout(pollAndRecover, 500 * attempts); // back off a little each time
+    }
+  }
+
+  function start(){ setTimeout(pollAndRecover, 350); }
+
+  if (document.readyState === 'complete') start();
+  else window.addEventListener('load', start);
 })();
 </script>
 </head>
@@ -25436,28 +25462,40 @@ function _doRenderProjectsNow() {
 // glance at. Falls back to a generic runtime icon (Node/Docker/static) when
 // nothing more specific matches. Icons are small inline SVGs so no external
 // requests or icon-font dependency is introduced.
-const DEP_FRAMEWORK_ICONS = {
-  next: '<svg viewBox="0 0 180 180" width="14" height="14"><mask id="dfm" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="180" height="180"><circle cx="90" cy="90" r="90" fill="#000"/></mask><g mask="url(#dfm)"><circle cx="90" cy="90" r="90" fill="currentColor"/><path d="M149.508 157.52L69.142 54H54v71.97h12.114V69.384l73.885 95.461a90.304 90.304 0 0 0 9.509-7.325z" fill="var(--bg-card,#0a0a0a)"/><rect x="115" y="54" width="12" height="72" fill="var(--bg-card,#0a0a0a)"/></g></svg>',
-  vite: '<svg viewBox="0 0 410 404" width="14" height="14"><path d="M399.641 59.525L215.643 388.545c-2.523 4.523-9.013 4.575-11.617.104L2.435 59.577C-.157 55.126 3.548 49.71 8.688 50.442l73.44 10.522c4.245-2.03 8.923-3.049 13.658-3.049 4.735 0 9.413 1.019 13.658 3.049l73.44-10.522c5.14-.732 8.845 4.684 6.253 9.135z" fill="#41d1ff"/></svg>',
-  react: '<svg viewBox="-11.5 -10.23174 23 20.46348" width="14" height="14"><circle r="2.05" fill="currentColor"/><g stroke="currentColor" stroke-width="1" fill="none"><ellipse rx="11" ry="4.2"/><ellipse rx="11" ry="4.2" transform="rotate(60)"/><ellipse rx="11" ry="4.2" transform="rotate(120)"/></g></svg>',
-  node: '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.985c-.275 0-.532-.074-.772-.202l-2.439-1.448c-.365-.203-.182-.276-.072-.313.496-.166.588-.202 1.101-.495.056-.037.129-.02.185.017l1.87 1.12c.074.036.166.036.221 0l7.319-4.237c.074-.036.11-.11.11-.202V7.768c0-.091-.036-.165-.11-.201l-7.319-4.219c-.073-.037-.165-.037-.221 0L4.552 7.566c-.073.036-.11.129-.11.201v8.457c0 .073.037.166.11.202l2.003 1.157c1.085.548 1.762-.095 1.762-.735V8.502c0-.11.091-.221.22-.221h.936c.108 0 .22.092.22.221v8.548c0 1.487-.789 2.352-2.222 2.352-.437 0-.771 0-1.72-.477l-1.92-1.099a1.55 1.55 0 0 1-.771-1.34V7.786c0-.552.293-1.064.771-1.339l7.317-4.237a1.637 1.637 0 0 1 1.545 0l7.317 4.237c.478.274.771.787.771 1.339v8.457c0 .551-.293 1.063-.771 1.339l-7.317 4.238c-.241.11-.516.165-.773.165z"/></svg>',
-  docker: '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M13.983 11.078h2.119a.186.186 0 0 0 .186-.185V9.006a.186.186 0 0 0-.186-.186h-2.119a.185.185 0 0 0-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 0 0 .186-.186V3.574a.186.186 0 0 0-.186-.185h-2.118a.185.185 0 0 0-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 0 0 .186-.186V6.29a.186.186 0 0 0-.186-.185h-2.118a.185.185 0 0 0-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 0 0 .184-.186V6.29a.185.185 0 0 0-.185-.185H8.1a.185.185 0 0 0-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 0 0 .185-.186V6.29a.185.185 0 0 0-.185-.185H5.136a.186.186 0 0 0-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 0 0 .186-.185V9.006a.186.186 0 0 0-.186-.186h-2.118a.185.185 0 0 0-.185.186v1.887c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 0 0 .184-.185V9.006a.185.185 0 0 0-.184-.186h-2.12a.185.185 0 0 0-.184.186v1.887c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 0 0 .185-.185V9.006a.185.185 0 0 0-.185-.186H5.136a.186.186 0 0 0-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 0 0 .184-.185V9.006a.185.185 0 0 0-.184-.186h-2.12a.186.186 0 0 0-.186.186v1.887c0 .102.084.185.186.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338 0-.676.03-1.01.087-.248-1.703-1.653-2.542-1.716-2.578l-.344-.199-.226.327c-.284.438-.49.924-.612 1.436-.235.98-.09 1.897.413 2.683-.61.34-1.595.422-1.8.425H.751a.751.751 0 0 0-.75.748 11.376 11.376 0 0 0 .692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983 0 1.965-.084 2.936-.25a12.32 12.32 0 0 0 3.833-1.389 10.507 10.507 0 0 0 2.61-2.116c1.252-1.42 1.998-3.005 2.55-4.408h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.72-1.043l.098-.288z"/></svg>',
-  html: '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M1.5 0h21l-1.91 21.563L11.977 24l-8.564-2.438L1.5 0zm7.031 9.75l-.232-2.718 10.059.003.23-2.622L5.412 4.41l.698 8.01h9.126l-.326 3.426-2.91.804-2.955-.81-.188-2.11H6.248l.33 4.171L12 19.351l5.379-1.443.744-8.157H8.531z"/></svg>',
-};
-
+// ── Framework/language icon for deployment cards — reuses the SAME
+// devicon-based system (repoLanguageIcon + detectRepoLanguage) already
+// used on the Repos page, instead of a separate hand-picked SVG set.
+// Deployments/projects don't carry a full GitHub `repo` object, so this
+// builds a minimal shim object with just the fields detectRepoLanguage
+// actually reads (name, full_name, description, topics, language) from
+// whatever signals the project record does have.
 function getDeploymentFrameworkIcon(project) {
-  if (!project) return DEP_FRAMEWORK_ICONS.node;
+  if (!project) return repoLanguageIcon({});
   const out = String(project.outputDir || '').toLowerCase();
   const build = String(project.buildCmd || '').toLowerCase();
   const isDocker = !!project.isDockerfileDeploy;
   const isStatic = project.siteType === 'static';
 
-  if (isDocker) return DEP_FRAMEWORK_ICONS.docker;
-  if (out === '.next' || build.includes('next build')) return DEP_FRAMEWORK_ICONS.next;
-  if (build.includes('vite build') || out === 'dist' && build.includes('vite')) return DEP_FRAMEWORK_ICONS.vite;
-  if (build.includes('react-scripts')) return DEP_FRAMEWORK_ICONS.react;
-  if (isStatic && !build) return DEP_FRAMEWORK_ICONS.html;
-  return DEP_FRAMEWORK_ICONS.node;
+  // Build a searchable description string from the strongest signals
+  // available so detectRepoLanguage's regex inference can do its job --
+  // same technique it already uses for repo.name/description/topics.
+  const hints = [];
+  if (isDocker) hints.push('docker dockerfile');
+  if (out === '.next' || build.includes('next build')) hints.push('nextjs next');
+  if (build.includes('vite')) hints.push('vite');
+  if (build.includes('react-scripts')) hints.push('react');
+  if (build.includes('vue')) hints.push('vue');
+  if (isStatic && !build) hints.push('html');
+  if (project.nodeVer) hints.push('nodejs node');
+
+  const shimRepo = {
+    name: project.name || '',
+    full_name: project.repoUrl || '',
+    description: hints.join(' '),
+    topics: [],
+    language: hints.length ? null : 'Node.js',
+  };
+  return repoLanguageIcon(shimRepo);
 }
 
 function renderDeployments() {
