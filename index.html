@@ -4285,14 +4285,14 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 /* Back link */
 .auth-back {
   display:inline-flex;align-items:center;gap:6px;
-  font-size:.78rem;font-weight:600;color:#4b5563;
+  font-size:.78rem;font-weight:600;color:var(--text-3);
   background:transparent;border:none;
   padding:0;margin-bottom:24px;
   cursor:pointer;
   transition:color .15s;
   text-decoration:none;
 }
-.auth-back:hover { color:#10b981; }
+.auth-back:hover { color:var(--primary); }
 .auth-back svg { width:13px;height:13px; }
 
 /* Brand */
@@ -4313,34 +4313,34 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
   font-family:var(--font-ui);
   font-size:clamp(1.6rem,6vw,2.1rem);
   font-weight:900;letter-spacing:-0.04em;
-  color:#f9fafb;line-height:1.15;
+  color:var(--text);line-height:1.15;
   margin-bottom:6px;
 }
-.auth-title .auth-title-accent { color:#10b981; }
+.auth-title .auth-title-accent { color:var(--primary); }
 .auth-sub {
-  font-size:.84rem;color:#4b5563;line-height:1.65;margin-bottom:24px;
+  font-size:.84rem;color:var(--text-2);line-height:1.65;margin-bottom:24px;
 }
 
 /* Tabs */
 .auth-tabs {
   display:grid;grid-template-columns:1fr 1fr;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.09);
+  background:var(--bg-hover);
+  border:1px solid var(--border);
   border-radius:10px;padding:4px;gap:4px;
   margin-bottom:24px;
 }
 .auth-tab {
   padding:9px 10px;border-radius:7px;
   border:none;background:transparent;
-  color:rgba(255,255,255,.38);font-size:.84rem;font-weight:700;
+  color:var(--text-3);font-size:.84rem;font-weight:700;
   cursor:pointer;letter-spacing:.01em;
   transition:background .18s, color .18s;
   position:relative;
 }
 .auth-tab::after { display:none; }
 .auth-tab.active {
-  background:rgba(255,255,255,.1);
-  color:#f9fafb;
+  background:var(--bg-card);
+  color:var(--text);
   box-shadow:0 1px 3px rgba(0,0,0,.3);
 }
 
@@ -4349,21 +4349,21 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 .auth-field-label {
   display:flex;align-items:center;justify-content:space-between;
   font-size:.78rem;font-weight:700;letter-spacing:.01em;
-  color:#fff;margin-bottom:4px;
+  color:var(--text);margin-bottom:4px;
 }
 .auth-input-wrap { position:relative; }
 .auth-input-icon {
   position:absolute;left:13px;top:50%;transform:translateY(-50%);
-  color:rgba(255,255,255,.3);pointer-events:none;
+  color:var(--text-3);pointer-events:none;
 }
 .auth-input-icon svg { width:16px;height:16px; }
 .auth-input {
   width:100%;padding:12px 14px 12px 40px;
   background:transparent;
   border:none;
-  border-bottom:1px solid rgba(255,255,255,.15);
+  border-bottom:1px solid var(--border);
   border-radius:0;
-  color:#f9fafb;font-size:.92rem;font-family:var(--font-ui);
+  color:var(--text);font-size:.92rem;font-family:var(--font-ui);
   outline:none;
   transition:border-color .18s;
   -webkit-appearance:none;
@@ -4397,7 +4397,7 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 /* Divider */
 .auth-divider {
   display:flex;align-items:center;gap:12px;
-  color:rgba(255,255,255,.3);font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text-3);font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
   margin:16px 0;
 }
 .auth-divider::before,.auth-divider::after {
@@ -4408,10 +4408,10 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 /* GitHub button */
 .auth-github {
   width:100%;padding:14px 18px;
-  background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.1);
+  background:var(--bg-hover);
+  border:1px solid var(--border);
   border-radius:12px;
-  color:#fff;font-size:.92rem;font-weight:600;
+  color:var(--text);font-size:.92rem;font-weight:600;
   cursor:pointer;
   display:flex;align-items:center;justify-content:center;gap:10px;
   transition:background .18s;
@@ -4434,9 +4434,9 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 .auth-google {
   display: flex; align-items: center; justify-content:center; gap: 10px;
   width: 100%; padding: 14px 18px;
-  background: rgba(255,255,255,.07);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,.1);
+  background: var(--bg-hover);
+  color: var(--text);
+  border: 1px solid var(--border);
   border-radius: 12px;
   font-family: var(--font-ui, inherit); font-size: .92rem; font-weight: 600;
   cursor: pointer;
@@ -4447,7 +4447,7 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 .auth-google:hover { background: rgba(255,255,255,.11); }
 .auth-google-icon { width:20px; height:20px; flex-shrink:0; }
 .auth-google-text { display:flex; flex-direction:column; align-items:flex-start; line-height:1; }
-.auth-google-text strong { font-size:.92rem; font-weight:600; color:#fff; }
+.auth-google-text strong { font-size:.92rem; font-weight:600; color:var(--text); }
 .auth-google-text span { display:none; }
 .auth-google.loading { opacity:.78; cursor:wait; pointer-events:none; }
 .auth-google-spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,.2); border-top-color:#4285f4; border-radius:50%; animation:dpSpin .7s linear infinite; display:none; flex-shrink:0; }
@@ -4462,7 +4462,7 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 }
 .auth-trust-item {
   display:flex;align-items:center;gap:5px;
-  font-size:.7rem;color:#334155;font-weight:600;
+  font-size:.7rem;color:var(--text-3);font-weight:600;
 }
 .auth-trust-item svg { width:12px;height:12px;color:#10b981;flex-shrink:0; }
 
@@ -4475,9 +4475,9 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 .auth-feat-pill {
   display:flex;align-items:center;gap:6px;
   padding:7px 14px;border-radius:999px;
-  background:#111;
-  border:1px solid rgba(255,255,255,.08);
-  font-size:.72rem;font-weight:600;color:#475569;
+  background:var(--bg-hover);
+  border:1px solid var(--border);
+  font-size:.72rem;font-weight:600;color:var(--text-3);
   letter-spacing:.04em;
 }
 .auth-feat-pill-dot { width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 8px rgba(16,185,129,.6); }
@@ -4648,8 +4648,7 @@ html[data-theme="light"] .auth-input { background: #f9fafb !important; border-co
 html[data-theme="light"] .auth-input::placeholder { color: #9ca3af !important; }
 html[data-theme="light"] .auth-input-icon { color: #9ca3af !important; }
 html[data-theme="light"] .auth-field-label { color: #6b7280 !important; }
-html[data-theme="light"] .auth-github { background: #1c1c1c !important; }
-html[data-theme="light"] .auth-google { background: #1c1c1c !important; color: #fff !important; }
+
 html[data-theme="light"] .auth-divider { color: #9ca3af !important; }
 html[data-theme="light"] .auth-divider::before,
 html[data-theme="light"] .auth-divider::after { background: rgba(0,0,0,.08) !important; }
@@ -5649,7 +5648,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=26">
+<link rel="stylesheet" href="theme-override.css?v=28">
 </head>
 <body>
 
