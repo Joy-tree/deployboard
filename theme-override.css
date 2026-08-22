@@ -3585,3 +3585,88 @@ html[data-theme="light"] .jt-leaves-fall {
   stroke: var(--red) !important;
   fill: var(--red) !important;
 }
+
+
+/* ══════════════════════════════════════════════════════════════════
+   PROJECTS PAGE — flat header, matches Dashboard/Settings dark theme.
+   Project cards themselves (.projects-grid, .tree-project-node) are
+   untouched -- only the top header/hero is flattened here.
+   ══════════════════════════════════════════════════════════════════ */
+.proj-header {
+  margin-bottom: 26px;
+}
+.proj-kicker {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin: 10px 0 6px;
+}
+.proj-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.proj-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.2;
+}
+.proj-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.proj-subtitle {
+  font-size: .84rem;
+  color: var(--text-2);
+  margin-top: 8px;
+  line-height: 1.5;
+  max-width: 62ch;
+}
+
+/* Stat strip -- flat inline row with vertical dividers, no cards,
+   same visual language as the Settings quick-stats row */
+.proj-stat-strip {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.proj-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.proj-stat-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+.proj-stat-label {
+  font-size: .74rem;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.proj-stat-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+}
+
+@media(max-width:640px){
+  .proj-title-row { flex-direction: column; align-items: flex-start; }
+  .proj-actions { width: 100%; }
+  .proj-actions .btn { flex: 1; }
+  .proj-stat-strip { gap: 14px; flex-wrap: wrap; }
+}
