@@ -616,7 +616,6 @@ html[data-theme="light"] #page-new-deploy .deploy-stepper-item { background: var
 html[data-theme="light"] #page-new-deploy .input { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-new-deploy select.input { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-new-resource #resourceSearch { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] #page-projects .app-hero .hero-metric { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-worker-create .card,
 html[data-theme="light"] #page-dockerfile-deploy .card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .auth-brand-mark { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
@@ -1218,49 +1217,7 @@ html[data-theme="light"] .tree-node-footer-branch {
   border-color: rgba(0,0,0,.09) !important;
 }
 
-/* ---------------------------------------------------------------------
-   PROJECTS PAGE — the hero banner (title + Live/Builds counters) was
-   the real culprit behind "the light color is too deep". It's set with
-   an ID-scoped rule (#page-projects .app-hero { background:#0d0d0d
-   !important }) matching the deploy-composer's intentional dark style.
-   Because that selector carries an ID, it out-specifies the earlier
-   generic `html[data-theme="light"] .app-hero` fix, so the banner
-   stayed forced near-black in light mode no matter what. Same story for
-   the kicker label and metric numbers, which were tuned pale-mint for
-   a black backdrop and nearly vanished once matched against anything
-   lighter. Re-scoped here with matching (ID + attribute) specificity so
-   it actually wins, and re-tinted to the cream/green palette.
-   --------------------------------------------------------------------- */
-html[data-theme="light"] #page-projects .app-hero {
-  background:
-    radial-gradient(ellipse 55% 44% at 8% 12%, rgba(31,110,82,.08), transparent),
-    var(--jt-bg-raised) !important;
-  border-color: var(--jt-border) !important;
-  box-shadow: 0 0 0 1px rgba(31,110,82,.04), 0 14px 44px rgba(0,0,0,.05) !important;
-}
-html[data-theme="light"] #page-projects .app-hero::after {
-  border-color: rgba(31,110,82,.14) !important;
-  box-shadow: 0 0 70px rgba(31,110,82,.06) !important;
-}
-html[data-theme="light"] #page-projects .app-hero .app-hero-kicker {
-  color: var(--jt-brand-strong) !important;
-}
-html[data-theme="light"] #page-projects .app-hero .hero-metric {
-  border-color: var(--jt-border) !important;
-  background: var(--jt-bg-sunken) !important;
-}
-html[data-theme="light"] #page-projects .app-hero .hero-metric-value {
-  color: var(--jt-text) !important;
-}
-html[data-theme="light"] #page-projects .app-hero .hero-metric-label {
-  color: var(--jt-text-faint) !important;
-}
-html[data-theme="light"] #page-projects .app-hero .app-hero-title {
-  color: var(--jt-text) !important;
-}
-html[data-theme="light"] #page-projects .app-hero .app-hero-subtitle {
-  color: var(--jt-text-dim) !important;
-}
+
 
 /* ---------------------------------------------------------------------
    SIDEBAR — a few more hardcoded-for-dark spots that don't switch:
@@ -3669,4 +3626,41 @@ html[data-theme="light"] .jt-leaves-fall {
   .proj-actions { width: 100%; }
   .proj-actions .btn { flex: 1; }
   .proj-stat-strip { gap: 14px; flex-wrap: wrap; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   PROJECTS PAGE — hardened dark-theme consistency check
+   Explicitly pins the flat header to the exact same dark tone used on
+   Dashboard/Settings, with !important so no stale or unscoped rule
+   elsewhere in this file can leak a different background onto it.
+   ══════════════════════════════════════════════════════════════════ */
+#page-projects,
+#page-projects .proj-header {
+  background: transparent !important;
+}
+#page-projects .proj-title,
+#page-projects .proj-stat-value {
+  color: var(--text) !important;
+}
+#page-projects .proj-subtitle {
+  color: var(--text-2) !important;
+}
+#page-projects .proj-kicker {
+  color: var(--primary) !important;
+}
+#page-projects .proj-stat-label {
+  color: var(--text-3) !important;
+}
+#page-projects .proj-stat-strip {
+  border-top-color: var(--border) !important;
+}
+#page-projects .proj-stat-sep {
+  background: var(--border) !important;
+}
+/* Project cards stay their own flat dark #111 on both themes -- this
+   page never adopts the light-theme jt-bg-raised grey/beige tones */
+html[data-theme="light"] #page-projects .tree-project-node {
+  background: #111 !important;
+  border-color: rgba(255,255,255,0.09) !important;
 }
