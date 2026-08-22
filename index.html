@@ -5648,7 +5648,46 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=29">
+<link rel="stylesheet" href="theme-override.css?v=30" id="themeOverrideLink" onerror="this.dataset.failed='1';setTimeout(function(){ var l=document.getElementById('themeOverrideLink'); if(l && l.dataset.failed){ var retry=document.createElement('link'); retry.rel='stylesheet'; retry.href='theme-override.css?v=30&retry='+Date.now(); document.head.appendChild(retry); } },300);">
+<script>
+// [FIX] theme-override.css sometimes failed to load entirely on slow/flaky
+// mobile connections, leaving the page rendered with zero styling from that
+// file (the raw unstyled HTML users occasionally saw). This is a large,
+// render-blocking stylesheet -- if the request itself drops or times out
+// (not a 404, just a network hiccup), the browser silently gives up with no
+// visible error and never retries on its own.
+// This watches for that exact failure and forces one retry with a fresh
+// cache-busted URL, which is enough to recover from a transient network
+// blip without needing a full page reload.
+(function(){
+  var checked = false;
+  function verifyThemeCssLoaded(){
+    if (checked) return;
+    checked = true;
+    try {
+      var testEl = document.createElement('div');
+      testEl.className = 'dep-toolbar'; // a class that only exists in theme-override.css
+      testEl.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;';
+      document.body.appendChild(testEl);
+      var appliedZIndex = getComputedStyle(testEl).zIndex;
+      document.body.removeChild(testEl);
+      // .dep-toolbar sets z-index:20 in theme-override.css -- if that never
+      // applied, the stylesheet didn't load and we force a fresh fetch.
+      if (appliedZIndex !== '20') {
+        var retry = document.createElement('link');
+        retry.rel = 'stylesheet';
+        retry.href = 'theme-override.css?v=30&recover=' + Date.now();
+        document.head.appendChild(retry);
+      }
+    } catch(e) { /* best-effort safety net, never block page load on this */ }
+  }
+  if (document.readyState === 'complete') {
+    setTimeout(verifyThemeCssLoaded, 400);
+  } else {
+    window.addEventListener('load', function(){ setTimeout(verifyThemeCssLoaded, 400); });
+  }
+})();
+</script>
 </head>
 <body>
 
