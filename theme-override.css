@@ -150,7 +150,14 @@ html[data-theme="light"] body{
   background: var(--jt-bg) !important;
 }
 #sidebar, #topbar{ background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-.card, [class$="-card"]:not(.matrix-terminal-card), [class*="-card "]{ background: var(--jt-bg-raised); border-color: var(--jt-border); }
+/* [FIX] This wildcard was silently overriding .vp-card (email
+   verification, deliberately flattened/transparent) and .dep-card
+   (deployment cards, intentionally flat #111) on BOTH themes since it
+   had no html[data-theme="light"] scoping and no exclusion for classes
+   that end in "-card" by coincidence rather than being an actual boxed
+   .card component. Added explicit :not() exclusions for every
+   intentionally-flat class discovered this way. */
+.card, [class$="-card"]:not(.matrix-terminal-card):not(.vp-card):not(.dep-card), [class*="-card "]{ background: var(--jt-bg-raised); border-color: var(--jt-border); }
 
 /* ---------------------------------------------------------------------
    4. COMMON HARDCODED DARK LITERALS — the actual reason light mode left
