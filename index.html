@@ -5649,7 +5649,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=25">
+<link rel="stylesheet" href="theme-override.css?v=26">
 </head>
 <body>
 
@@ -9536,43 +9536,42 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
     <!-- ════════ DEPLOYMENTS PAGE ════════ -->
     <div class="page" id="page-deployments">
-      <div class="app-hero">
-        <div>
-          <div class="app-hero-kicker">Build timeline</div>
-          <div class="app-hero-title">Deployments</div>
-          <div class="app-hero-subtitle">Full build history with live status, duration, branch context, terminal access, and deployment health signals.</div>
-        </div>
-        <div class="hero-metrics">
-          <div class="hero-metric"><div class="hero-metric-value" id="deployHeroTotal">0</div><div class="hero-metric-label">Total</div></div>
-          <div class="hero-metric"><div class="hero-metric-value" id="deployHeroSuccess">0</div><div class="hero-metric-label">Success</div></div>
-          <div class="hero-metric"><div class="hero-metric-value" id="deployHeroBuilding">0</div><div class="hero-metric-label">Building</div></div>
+      <div class="dep-header">
+        <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+        <div class="dep-kicker">Build Timeline</div>
+        <div class="dep-title">Deployments</div>
+        <div class="dep-subtitle">Full build history with live status, duration, branch context, and terminal access.</div>
+        <div class="dep-stat-strip">
+          <div class="dep-stat"><span class="dep-stat-value" id="deployHeroTotal">0</span><span class="dep-stat-label">Total</span></div>
+          <div class="dep-stat-sep"></div>
+          <div class="dep-stat"><span class="dep-stat-value" style="color:var(--primary);" id="deployHeroSuccess">0</span><span class="dep-stat-label">Success</span></div>
+          <div class="dep-stat-sep"></div>
+          <div class="dep-stat"><span class="dep-stat-value" style="color:#f59e0b;" id="deployHeroBuilding">0</span><span class="dep-stat-label">Building</span></div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">All Build Runs</div>
-          <div class="card-actions">
-            <div class="custom-select" id="cs_deployFilterStatus" data-onchange="renderDeployments">
-  <div class="custom-select-trigger" onclick="csToggle(this)" style="padding:6px 12px;font-size:0.78rem;min-height:32px;">
-    <span class="cs-value">All Status</span>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
-  </div>
-  <div class="custom-select-dropdown">
-    <div class="cs-option selected" data-value="" onclick="csSelect(this)">All Status</div>
-    <div class="cs-option" data-value="success" onclick="csSelect(this)">Success</div>
-    <div class="cs-option" data-value="failed" onclick="csSelect(this)">Failed</div>
-    <div class="cs-option" data-value="building" onclick="csSelect(this)">Building</div>
-  </div>
-  <input type="hidden" id="deployFilterStatus" value="">
-</div>
+
+      <div class="dep-toolbar">
+        <div class="dep-toolbar-title">All Build Runs</div>
+        <div class="custom-select" id="cs_deployFilterStatus" data-onchange="renderDeployments">
+          <div class="custom-select-trigger" onclick="csToggle(this)" style="padding:6px 12px;font-size:0.78rem;min-height:32px;">
+            <span class="cs-value">All Status</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
+          <div class="custom-select-dropdown">
+            <div class="cs-option selected" data-value="" onclick="csSelect(this)">All Status</div>
+            <div class="cs-option" data-value="success" onclick="csSelect(this)">Success</div>
+            <div class="cs-option" data-value="failed" onclick="csSelect(this)">Failed</div>
+            <div class="cs-option" data-value="building" onclick="csSelect(this)">Building</div>
+          </div>
+          <input type="hidden" id="deployFilterStatus" value="">
         </div>
-        <div class="table-wrap deployment-table-shell" id="deploymentsTable">
-          <div class="empty-state">
-            <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-            <div class="empty-title">No deployments yet</div>
-            <div class="empty-desc">Your build history will appear here once you run your first deployment.</div>
-          </div>
+      </div>
+
+      <div id="deploymentsTable">
+        <div class="empty-state">
+          <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <div class="empty-title">No deployments yet</div>
+          <div class="empty-desc">Your build history will appear here once you run your first deployment.</div>
         </div>
       </div>
     </div>
@@ -25403,6 +25402,13 @@ function _doRenderProjectsNow() {
 }
 
 function renderDeployments() {
+  // [REDESIGN] Replaced the raw horizontally-scrolling <table> (7 columns
+  // squeezed into a mobile viewport, wrapped in a boxed .card) with a
+  // stacked deploy-card list. Each card shows everything the table row
+  // did -- ID, project, branch, status, duration, started time, and the
+  // View Logs action -- but laid out to actually fit a phone screen
+  // without horizontal scrolling, matching the visual language already
+  // used for project cards on the Projects page.
   updateCoreHeroMetrics();
   const filter = document.getElementById('deployFilterStatus')?.value || '';
   const filtered = filter ? deployments.filter(d => d.status === filter) : deployments;
@@ -25416,20 +25422,38 @@ function renderDeployments() {
     </div>`;
     return;
   }
-  wrap.innerHTML = `<table><thead><tr>
-    <th>ID</th><th>Project</th><th>Branch</th><th>Status</th><th>Duration</th><th>Started</th><th>Actions</th>
-  </tr></thead><tbody>` + reversed.map(d => `
-    <tr>
-      <td class="td-mono">${d.id.slice(-8)}</td>
-      <td class="td-main">${escHtml(d.projectName||'—')}</td>
-      <td class="td-mono">${escHtml(d.branch||'main')}</td>
-      <td>${statusBadge(d.status)}</td>
-      <td>${d.duration ? d.duration+'s' : '—'}</td>
-      <td>${relTime(d.startedAt)}</td>
-      <td>
-        <button class="btn btn-ghost btn-sm" onclick="viewDeployLogs('${d.id}')">View Logs</button>
-      </td>
-    </tr>`).join('') + '</tbody></table>';
+
+  const statusDotClass = { success:'ok', failed:'err', building:'running', pending:'running' };
+
+  wrap.innerHTML = '<div class="dep-list">' + reversed.map(d => {
+    const dotCls = statusDotClass[d.status] || '';
+    return `
+    <div class="dep-card" onclick="viewDeployLogs('${d.id}')">
+      <div class="dep-card-top">
+        <div class="dep-card-identity">
+          <span class="dep-status-dot ${dotCls}"></span>
+          <span class="dep-card-project">${escHtml(d.projectName||'—')}</span>
+          <span class="dep-card-id">#${d.id.slice(-8)}</span>
+        </div>
+        ${statusBadge(d.status)}
+      </div>
+      <div class="dep-card-meta">
+        <span class="dep-meta-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+          ${escHtml(d.branch||'main')}
+        </span>
+        <span class="dep-meta-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          ${d.duration ? d.duration+'s' : '—'}
+        </span>
+        <span class="dep-meta-item dep-meta-time">${relTime(d.startedAt)}</span>
+      </div>
+      <button class="dep-card-logs-btn" onclick="event.stopPropagation();viewDeployLogs('${d.id}')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg>
+        View Logs
+      </button>
+    </div>`;
+  }).join('') + '</div>';
 }
 document.getElementById('deployFilterStatus')?.addEventListener('change', renderDeployments);
 
