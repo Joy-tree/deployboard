@@ -5648,7 +5648,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=32" id="themeOverrideLink" onerror="this.dataset.failed='1';setTimeout(function(){ var l=document.getElementById('themeOverrideLink'); if(l && l.dataset.failed){ var retry=document.createElement('link'); retry.rel='stylesheet'; retry.href='theme-override.css?v=32&retry='+Date.now(); document.head.appendChild(retry); } },300);">
+<link rel="stylesheet" href="theme-override.css?v=33" id="themeOverrideLink" onerror="this.dataset.failed='1';setTimeout(function(){ var l=document.getElementById('themeOverrideLink'); if(l && l.dataset.failed){ var retry=document.createElement('link'); retry.rel='stylesheet'; retry.href='theme-override.css?v=33&retry='+Date.now(); document.head.appendChild(retry); } },300);">
 <script>
 // [FIX] theme-override.css sometimes failed to load entirely on slow/flaky
 // mobile connections, leaving the page rendered with zero styling from that
@@ -5676,7 +5676,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
       if (appliedZIndex !== '20') {
         var retry = document.createElement('link');
         retry.rel = 'stylesheet';
-        retry.href = 'theme-override.css?v=32&recover=' + Date.now();
+        retry.href = 'theme-override.css?v=33&recover=' + Date.now();
         document.head.appendChild(retry);
       }
     } catch(e) { /* best-effort safety net, never block page load on this */ }
@@ -25429,6 +25429,37 @@ function _doRenderProjectsNow() {
   if (_statusFixed) save();
 }
 
+// ── Framework/runtime icon detection for deployment cards ───────────────────
+// No dedicated "framework" field exists on the project record, so this
+// infers a reasonable icon from the signals that DO exist: outputDir,
+// buildCmd, siteType, and dockerfile usage -- the same clues a human would
+// glance at. Falls back to a generic runtime icon (Node/Docker/static) when
+// nothing more specific matches. Icons are small inline SVGs so no external
+// requests or icon-font dependency is introduced.
+const DEP_FRAMEWORK_ICONS = {
+  next: '<svg viewBox="0 0 180 180" width="14" height="14"><mask id="dfm" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="180" height="180"><circle cx="90" cy="90" r="90" fill="#000"/></mask><g mask="url(#dfm)"><circle cx="90" cy="90" r="90" fill="currentColor"/><path d="M149.508 157.52L69.142 54H54v71.97h12.114V69.384l73.885 95.461a90.304 90.304 0 0 0 9.509-7.325z" fill="var(--bg-card,#0a0a0a)"/><rect x="115" y="54" width="12" height="72" fill="var(--bg-card,#0a0a0a)"/></g></svg>',
+  vite: '<svg viewBox="0 0 410 404" width="14" height="14"><path d="M399.641 59.525L215.643 388.545c-2.523 4.523-9.013 4.575-11.617.104L2.435 59.577C-.157 55.126 3.548 49.71 8.688 50.442l73.44 10.522c4.245-2.03 8.923-3.049 13.658-3.049 4.735 0 9.413 1.019 13.658 3.049l73.44-10.522c5.14-.732 8.845 4.684 6.253 9.135z" fill="#41d1ff"/></svg>',
+  react: '<svg viewBox="-11.5 -10.23174 23 20.46348" width="14" height="14"><circle r="2.05" fill="currentColor"/><g stroke="currentColor" stroke-width="1" fill="none"><ellipse rx="11" ry="4.2"/><ellipse rx="11" ry="4.2" transform="rotate(60)"/><ellipse rx="11" ry="4.2" transform="rotate(120)"/></g></svg>',
+  node: '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.985c-.275 0-.532-.074-.772-.202l-2.439-1.448c-.365-.203-.182-.276-.072-.313.496-.166.588-.202 1.101-.495.056-.037.129-.02.185.017l1.87 1.12c.074.036.166.036.221 0l7.319-4.237c.074-.036.11-.11.11-.202V7.768c0-.091-.036-.165-.11-.201l-7.319-4.219c-.073-.037-.165-.037-.221 0L4.552 7.566c-.073.036-.11.129-.11.201v8.457c0 .073.037.166.11.202l2.003 1.157c1.085.548 1.762-.095 1.762-.735V8.502c0-.11.091-.221.22-.221h.936c.108 0 .22.092.22.221v8.548c0 1.487-.789 2.352-2.222 2.352-.437 0-.771 0-1.72-.477l-1.92-1.099a1.55 1.55 0 0 1-.771-1.34V7.786c0-.552.293-1.064.771-1.339l7.317-4.237a1.637 1.637 0 0 1 1.545 0l7.317 4.237c.478.274.771.787.771 1.339v8.457c0 .551-.293 1.063-.771 1.339l-7.317 4.238c-.241.11-.516.165-.773.165z"/></svg>',
+  docker: '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M13.983 11.078h2.119a.186.186 0 0 0 .186-.185V9.006a.186.186 0 0 0-.186-.186h-2.119a.185.185 0 0 0-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 0 0 .186-.186V3.574a.186.186 0 0 0-.186-.185h-2.118a.185.185 0 0 0-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 0 0 .186-.186V6.29a.186.186 0 0 0-.186-.185h-2.118a.185.185 0 0 0-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 0 0 .184-.186V6.29a.185.185 0 0 0-.185-.185H8.1a.185.185 0 0 0-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 0 0 .185-.186V6.29a.185.185 0 0 0-.185-.185H5.136a.186.186 0 0 0-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 0 0 .186-.185V9.006a.186.186 0 0 0-.186-.186h-2.118a.185.185 0 0 0-.185.186v1.887c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 0 0 .184-.185V9.006a.185.185 0 0 0-.184-.186h-2.12a.185.185 0 0 0-.184.186v1.887c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 0 0 .185-.185V9.006a.185.185 0 0 0-.185-.186H5.136a.186.186 0 0 0-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 0 0 .184-.185V9.006a.185.185 0 0 0-.184-.186h-2.12a.186.186 0 0 0-.186.186v1.887c0 .102.084.185.186.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338 0-.676.03-1.01.087-.248-1.703-1.653-2.542-1.716-2.578l-.344-.199-.226.327c-.284.438-.49.924-.612 1.436-.235.98-.09 1.897.413 2.683-.61.34-1.595.422-1.8.425H.751a.751.751 0 0 0-.75.748 11.376 11.376 0 0 0 .692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983 0 1.965-.084 2.936-.25a12.32 12.32 0 0 0 3.833-1.389 10.507 10.507 0 0 0 2.61-2.116c1.252-1.42 1.998-3.005 2.55-4.408h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.72-1.043l.098-.288z"/></svg>',
+  html: '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M1.5 0h21l-1.91 21.563L11.977 24l-8.564-2.438L1.5 0zm7.031 9.75l-.232-2.718 10.059.003.23-2.622L5.412 4.41l.698 8.01h9.126l-.326 3.426-2.91.804-2.955-.81-.188-2.11H6.248l.33 4.171L12 19.351l5.379-1.443.744-8.157H8.531z"/></svg>',
+};
+
+function getDeploymentFrameworkIcon(project) {
+  if (!project) return DEP_FRAMEWORK_ICONS.node;
+  const out = String(project.outputDir || '').toLowerCase();
+  const build = String(project.buildCmd || '').toLowerCase();
+  const isDocker = !!project.isDockerfileDeploy;
+  const isStatic = project.siteType === 'static';
+
+  if (isDocker) return DEP_FRAMEWORK_ICONS.docker;
+  if (out === '.next' || build.includes('next build')) return DEP_FRAMEWORK_ICONS.next;
+  if (build.includes('vite build') || out === 'dist' && build.includes('vite')) return DEP_FRAMEWORK_ICONS.vite;
+  if (build.includes('react-scripts')) return DEP_FRAMEWORK_ICONS.react;
+  if (isStatic && !build) return DEP_FRAMEWORK_ICONS.html;
+  return DEP_FRAMEWORK_ICONS.node;
+}
+
 function renderDeployments() {
   // [REDESIGN] Replaced the raw horizontally-scrolling <table> (7 columns
   // squeezed into a mobile viewport, wrapped in a boxed .card) with a
@@ -25455,13 +25486,20 @@ function renderDeployments() {
 
   wrap.innerHTML = '<div class="dep-list">' + reversed.map(d => {
     const dotCls = statusDotClass[d.status] || '';
+    const proj = projects.find(p => (p.id || p._id) === d.projectId || p.name === d.projectName);
+    const fwIcon = getDeploymentFrameworkIcon(proj);
+    const liveUrl = proj?.liveUrl || '';
+    const repoUrl = proj?.repoUrl || '';
+    const isGitHubDeploy = d.source === 'auto' && !!repoUrl;
+
     return `
     <div class="dep-card" onclick="viewDeployLogs('${d.id}')">
       <div class="dep-card-top">
         <div class="dep-card-identity">
           <span class="dep-status-dot ${dotCls}"></span>
+          <span class="dep-fw-icon" title="Runtime">${fwIcon}</span>
           <span class="dep-card-project">${escHtml(d.projectName||'—')}</span>
-          <span class="dep-card-id">#${d.id.slice(-8)}</span>
+          <span class="dep-card-id" onclick="event.stopPropagation();copyDeployId('${d.id}')" title="Tap to copy full ID">#${d.id.slice(-8)}</span>
         </div>
         ${statusBadge(d.status)}
       </div>
@@ -25476,12 +25514,43 @@ function renderDeployments() {
         </span>
         <span class="dep-meta-item dep-meta-time">${relTime(d.startedAt)}</span>
       </div>
-      <button class="dep-card-logs-btn" onclick="event.stopPropagation();viewDeployLogs('${d.id}')">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg>
-        View Logs
-      </button>
+      <div class="dep-card-actions">
+        <button class="dep-card-logs-btn" onclick="event.stopPropagation();viewDeployLogs('${d.id}')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg>
+          Logs
+        </button>
+        ${liveUrl ? `<a class="dep-card-icon-btn" href="${liveUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Visit live site">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>` : ''}
+        ${isGitHubDeploy ? `<a class="dep-card-icon-btn" href="${repoUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="View repository">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.78-.25.78-.55 0-.27-.01-1.16-.02-2.11-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.16.08 1.76 1.19 1.76 1.19 1.03 1.75 2.7 1.25 3.36.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18.92-.26 1.91-.39 2.89-.39.98 0 1.97.13 2.89.39 2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.7 5.38-5.27 5.67.42.36.78 1.07.78 2.16 0 1.56-.02 2.82-.02 3.2 0 .3.21.66.79.55C20.21 21.38 23.5 17.07 23.5 12c0-6.35-5.15-11.5-11.5-11.5z"/></svg>
+        </a>` : ''}
+        <button class="dep-card-icon-btn dep-card-icon-btn-danger" data-dep-id="${d.id}" data-dep-name="${escHtml(d.projectName||'')}" onclick="event.stopPropagation();confirmDeleteDeployment(this.dataset.depId,this.dataset.depName)" title="Delete this deployment record">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        </button>
+      </div>
     </div>`;
   }).join('') + '</div>';
+}
+
+// ── Advanced feature: copy full deployment ID ────────────────────────────────
+function copyDeployId(id) {
+  navigator.clipboard.writeText(id).then(() => {
+    toast('Deployment ID copied: ' + id, 'success', 2500);
+  }).catch(() => {
+    toast('Could not copy — ' + id, 'error');
+  });
+}
+
+// ── Advanced feature: delete a deployment record from history ───────────────
+function confirmDeleteDeployment(id, projectName) {
+  if (!confirm(`Delete this deployment record for "${projectName}"?\n\nThis only removes it from your build history — it will NOT take the live site down or affect the running container.`)) return;
+  const idx = deployments.findIndex(d => d.id === id);
+  if (idx === -1) return;
+  deployments.splice(idx, 1);
+  save();
+  renderDeployments();
+  toast('Deployment record removed from history.', 'success');
 }
 document.getElementById('deployFilterStatus')?.addEventListener('change', renderDeployments);
 
