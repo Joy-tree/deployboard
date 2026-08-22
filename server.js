@@ -15608,7 +15608,17 @@ app.use((req, res, next) => {
   // default headers don't forbid that. Force revalidation on every request
   // for these so a code fix here is never masked by a stale cache again.
   express.static(path.join(__dirname), {
-    setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache, must-revalidate'),
+    etag: false,        // [FIX] disable ETag so there's nothing for a misbehaving
+                         // intermediary cache to "successfully revalidate" against --
+                         // no-cache alone relies on the client honoring it correctly,
+                         // which a misconfigured CDN Cache Rule can still ignore.
+    lastModified: false, // same reasoning -- remove every conditional-request signal
+                         // an edge cache could use to serve a 304 from a stale copy.
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    },
   })(req, res, next);
 });
 
