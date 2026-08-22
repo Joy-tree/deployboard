@@ -3905,3 +3905,57 @@ html[data-theme="light"] .dep-card-logs-btn {
   .dep-toolbar { flex-direction: column; align-items: flex-start; }
   .dep-stat-strip { gap: 14px; flex-wrap: wrap; }
 }
+
+
+/* ══════════════════════════════════════════════════════════════════
+   FIX: 'All Status' dropdown opening BEHIND deploy cards
+   Root cause: '#page-deployments > * { position:relative; z-index:1 }'
+   (a shared rule giving every direct page child a stacking floor for
+   background decorations) makes .dep-toolbar its own stacking context
+   at z-index:1 -- trapping the dropdown's z-index:9999 inside that
+   context instead of letting it escape above #deploymentsTable, which
+   is a SIBLING at that same z-index:1 level and simply paints later in
+   DOM order. Give the toolbar a much higher floor so its dropdown
+   always wins regardless of sibling order.
+   ══════════════════════════════════════════════════════════════════ */
+.dep-toolbar { z-index: 20 !important; }
+
+/* ══════════════════════════════════════════════════════════════════
+   DEPLOYMENTS — status filter dropdown + badges: flat dark, no green
+   gradient glow. Same consistent palette as Settings/Projects.
+   ══════════════════════════════════════════════════════════════════ */
+#cs_deployFilterStatus .custom-select-trigger {
+  background: #111 !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+#cs_deployFilterStatus .custom-select-dropdown {
+  background: #111 !important;
+  border-color: var(--border) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.5) !important;
+}
+#cs_deployFilterStatus .cs-option {
+  color: var(--text-2) !important;
+}
+#cs_deployFilterStatus .cs-option:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text) !important;
+}
+#cs_deployFilterStatus .cs-option.selected {
+  background: var(--bg-hover) !important;
+  color: var(--primary) !important;
+}
+html[data-theme="light"] #cs_deployFilterStatus .custom-select-trigger,
+html[data-theme="light"] #cs_deployFilterStatus .custom-select-dropdown {
+  background: #111 !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+html[data-theme="light"] #cs_deployFilterStatus .cs-option {
+  color: var(--text-2) !important;
+}
+/* Neutral border when open -- no green highlight glow */
+#cs_deployFilterStatus .custom-select-trigger.open,
+html[data-theme="light"] #cs_deployFilterStatus .custom-select-trigger.open {
+  border-color: var(--border) !important;
+}
