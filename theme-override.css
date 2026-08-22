@@ -3501,3 +3501,36 @@ html[data-theme="light"] .jt-leaves-fall {
   .dash-qa-grid { grid-template-columns: 1fr 1fr; }
   .dash-header-actions .btn { flex: 1; }
 }
+
+
+/* ══════════════════════════════════════════════════════════════════
+   DASHBOARD STAT GRID — flatten to match Settings quick-stats
+   (no individual card boxes, just a bordered grid with dividers)
+   ══════════════════════════════════════════════════════════════════ */
+#page-dashboard .stats-grid {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0 !important;
+  gap: 0 !important;
+}
+#page-dashboard .stat-card {
+  background: transparent !important;
+  border: none !important;
+  border-right: 1px solid var(--border) !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  padding: 16px 14px !important;
+  transition: background .15s;
+}
+#page-dashboard .stat-card:hover {
+  background: var(--bg-hover) !important;
+  border-color: var(--border) !important;
+}
+/* Remove the bottom border on the last row (3rd row: Projects Quota, Build-time Quota) */
+#page-dashboard .stat-card:nth-last-child(-n+2) {
+  border-bottom: none !important;
+}
+/* Remove the right border on the right-column items (even children in a 2-col grid) */
+#page-dashboard .stat-card:nth-child(2n) {
+  border-right: none !important;
+}
