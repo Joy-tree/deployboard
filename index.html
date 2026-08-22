@@ -5650,7 +5650,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=39" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=40" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5696,7 +5696,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=39&recover=' + token;
+    fresh.href = 'theme-override.css?v=40&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -23318,6 +23318,20 @@ let fitAddon     = null;
 let logBuffer    = [];
 let pendingDelete= null;
 let activeBuildId= null;
+// [FIX] Repeated "Deployment Successful" / "Build succeeded" toasts firing
+// every ~10-60s for a build that already finished. Root cause: on every
+// socket reconnect (mobile screen lock, network switch, backgrounded tab --
+// all very common, and Socket.IO's reconnection is aggressive by design),
+// the reconnect handler re-fetches deployment state and unconditionally
+// calls applyBuildDoneUpdate() whenever the watched deploy's status isn't
+// "building"/"pending" anymore. That function has zero awareness of
+// whether THIS exact completion was already announced, so a single build
+// that finished once could re-fire its success toast, activity log entry,
+// and webhooks on every single reconnect afterward, for as long as
+// activeBuildId stayed set to that deploy. Tracked here so the completion
+// path only ever runs once per real deployId, no matter how many times a
+// flaky connection reconnects into the same already-finished build.
+const _notifiedBuildCompletions = new Set();
 let deployLaunchNavTimer = null;
 let deployFormInitialized = false;
 let deployFormPrefillMode = false;
@@ -23514,7 +23528,21 @@ async function syncServerStateFromApi({ persist = false, render = false } = {}) 
     if (changed) {
       deployments.sort((a, b) => new Date(a.startedAt || 0).getTime() - new Date(b.startedAt || 0).getTime());
       if (persist) save(); else _save();
-      if (render) { renderDashboard(); scheduleRenderProjects(); }
+      // [FIX] Only renderDashboard()/scheduleRenderProjects() ran here --
+      // never the Deployments page's own renderer. Reloading directly on
+      // /dashboard/deployments (or any deep link) meant this sync correctly
+      // fetched fresh server data into the `deployments` array, but the
+      // page actually on screen kept showing whatever localStorage had at
+      // the moment of the very first paint, since nothing ever told THAT
+      // page to re-render with the newly-synced data. Re-render whichever
+      // page is actually being viewed right now, not just dashboard/projects.
+      if (render) {
+        renderDashboard();
+        scheduleRenderProjects();
+        if (typeof currentPage !== 'undefined' && currentPage === 'deployments' && typeof renderDeployments === 'function') {
+          renderDeployments();
+        }
+      }
     }
     return changed;
   } catch (err) {
@@ -23527,6 +23555,13 @@ let _projectAutoSyncTimer = null;
 let _projectAutoSyncBusy = false;
 function ensureProjectAutoSync() {
   if (_projectAutoSyncTimer) return;
+  // [FIX] Was polling every 1000ms (once per second) indefinitely while on
+  // Dashboard/Projects/Project-detail -- far more aggressive than needed
+  // for a background "catch up on projects/deployments" sync, and the
+  // main contributor to this repeatedly re-processing already-finished
+  // deployments on a flaky connection. 8s keeps the page feeling live
+  // (a deploy finishing elsewhere still shows up quickly) without hammering
+  // the API or the client every single second.
   _projectAutoSyncTimer = setInterval(async () => {
     if (_projectAutoSyncBusy) return;
     if (!hasAuthToken()) return;
@@ -23539,7 +23574,7 @@ function ensureProjectAutoSync() {
     } finally {
       _projectAutoSyncBusy = false;
     }
-  }, 1000);
+  }, 8000);
 }
 
 
@@ -27999,6 +28034,18 @@ function initSocket() {
     // spinning forever even though the deploy had long since finished
     // successfully on the server.
     function applyBuildDoneUpdate({ deployId, projectId, status, duration, liveUrl, source }) {
+      // [FIX] See _notifiedBuildCompletions declaration above — this is
+      // the single funnel point every completion path (socket push,
+      // reconnect catch-up, SSE fallback) goes through, so guarding here
+      // stops the repeated toast/activity-log/webhook firing regardless
+      // of which path triggered the redundant call. Key on deployId+status
+      // rather than just deployId so a genuinely different terminal state
+      // for the same id (extremely unlikely, but e.g. a corrected status)
+      // isn't silently swallowed by an earlier state's guard.
+      const _completionKey = deployId + ':' + status;
+      if (_notifiedBuildCompletions.has(_completionKey)) return;
+      _notifiedBuildCompletions.add(_completionKey);
+
       // Build has reached a terminal state via whichever transport got
       // there first (socket push, reconnect catch-up, or the SSE
       // fallback) — nothing left to stream, so tear down the fallback
