@@ -3544,3 +3544,44 @@ html[data-theme="light"] .jt-leaves-fall {
 #page-dashboard .stat-card:nth-child(2n) {
   border-right: none !important;
 }
+
+
+/* ══════════════════════════════════════════════════════════════════
+   DASHBOARD STAT ICONS — plain, no colored box, matches Settings
+   quick-stats exactly (plain neutral SVG, no background tint, no
+   green/red fill color on the icon itself except semantic failure red).
+   ══════════════════════════════════════════════════════════════════ */
+#page-dashboard .stat-icon {
+  background: transparent !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 0 !important;
+}
+#page-dashboard .stat-icon svg {
+  color: var(--text-3) !important;
+  stroke: var(--text-3) !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+#page-dashboard .stat-icon svg path,
+#page-dashboard .stat-icon svg g path {
+  fill: var(--text-3) !important;
+  stroke: none !important;
+}
+/* The two PNG icons (Total Projects folder, Projects Quota calendar)
+   were tinted green/amber via a CSS filter -- neutralize to match the
+   plain grey look of every other icon here. */
+#page-dashboard .stat-icon img {
+  filter: none !important;
+  opacity: .75;
+  /* Force to grey using a standard luminance-preserving filter */
+  -webkit-filter: grayscale(1) brightness(1.6) !important;
+  filter: grayscale(1) brightness(1.6) !important;
+}
+/* Failed Builds keeps its semantic red -- that's a status color, not decoration */
+#page-dashboard .stat-card:nth-child(3) .stat-icon svg,
+#page-dashboard .stat-card:nth-child(3) .stat-icon svg path {
+  color: var(--red) !important;
+  stroke: var(--red) !important;
+  fill: var(--red) !important;
+}
