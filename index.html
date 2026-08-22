@@ -13450,17 +13450,21 @@ document.addEventListener('keydown', function(e){
         if (usdPrice && Number.isFinite(usdPrice)) {
           const balRes = await apiFetch(API + '/api/domains/balance-check?usdPrice=' + encodeURIComponent(usdPrice));
           const balData = await balRes.json().catch(() => ({}));
+          // [DEBUG] Log what the balance check actually returned so it's easy
+          // to confirm from the browser console whether this ran and what
+          // it decided, instead of it being an invisible pass/fail.
+          console.log('[balance-check]', { usdPrice, balData });
           if (balRes.ok && balData.canRegister === false) {
             btn.disabled = false; btn.textContent = 'Pay with Mobile Money (GHS)';
-            // Close checkout modal and show pre-order modal instead
             dsCloseCheckout();
             dsShowPreOrder(dsCurrentDomain.domain, dsCurrentDomain.priceGhs);
             return;
           }
         }
-      } catch(_) {
+      } catch(e) {
         // Balance check failed — proceed anyway, worst case the existing
         // payment-taken recovery flow handles it
+        console.log('[balance-check] failed, proceeding anyway:', e.message);
       }
 
       btn.textContent = 'Opening checkout…';
@@ -38964,9 +38968,30 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
   font-family:var(--font-ui, sans-serif);
 }
 .dbv-topbar {
-  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-  padding:12px 18px;background:var(--bg-card);
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:14px 18px;background:var(--bg-card);
   border-bottom:1px solid var(--border);flex-shrink:0;
+}
+/* Group the two selectors together so they visually pair up and don't
+   drift apart from each other when the row wraps on narrow screens */
+.dbv-topbar-selects {
+  display:flex;align-items:center;gap:8px;flex:1;min-width:0;
+  flex-wrap:wrap;
+}
+/* Actions (Refresh + Close) always stay grouped on their own at the
+   right, or drop to their own full row on mobile rather than getting
+   split apart mid-row */
+.dbv-topbar-actions {
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+  margin-left:auto;
+}
+@media(max-width:640px){
+  .dbv-topbar { flex-direction:column; align-items:stretch; }
+  .dbv-topbar-title { justify-content:center; }
+  .dbv-topbar-selects { width:100%; }
+  .dbv-topbar-selects > * { flex:1; min-width:0; }
+  .dbv-topbar-actions { width:100%; margin-left:0; }
+  .dbv-topbar-actions > * { flex:1; justify-content:center; }
 }
 .dbv-topbar-title {
   font-size:.8rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
@@ -39115,18 +39140,22 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
         <div class="dbv-topbar-dot"></div>
         <span>Database Visualizer</span>
       </div>
-      <select class="dbv-table-select" id="dbvDbLabel" onchange="dbvOnDbChange()" style="min-width:150px;"></select>
-      <select class="dbv-table-select" id="dbvTableSelect" onchange="dbvOnTableChange()">
-        <option value="">Select a table/collection…</option>
-      </select>
-      <button class="dbv-refresh-btn" id="dbvRefreshBtn" onclick="dbvRefreshAll()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-        Refresh
-      </button>
-      <button class="dbv-close-btn" onclick="closeDbVisualizer()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        Close
-      </button>
+      <div class="dbv-topbar-selects">
+        <select class="dbv-table-select" id="dbvDbLabel" onchange="dbvOnDbChange()" style="min-width:150px;"></select>
+        <select class="dbv-table-select" id="dbvTableSelect" onchange="dbvOnTableChange()">
+          <option value="">Select a table/collection…</option>
+        </select>
+      </div>
+      <div class="dbv-topbar-actions">
+        <button class="dbv-refresh-btn" id="dbvRefreshBtn" onclick="dbvRefreshAll()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Refresh
+        </button>
+        <button class="dbv-close-btn" onclick="closeDbVisualizer()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Close
+        </button>
+      </div>
     </div>
 
     <div class="dbv-body" id="dbvBody">
@@ -39288,13 +39317,6 @@ function openDbVisualizerFor(dbId, alreadyOpen) {
 // the dropdown from whatever's already cached, and let the person pick.
 // No waiting, no guessing, nothing that can hang.
 function openDbVisualizerFromSidebar() {
-  // [DEBUG] Every step wrapped so a failure ANYWHERE in this sequence is
-  // visible via toast instead of silently doing nothing. If you see no
-  // toast at all when tapping this nav item, the onclick itself never
-  // fired (a different bug entirely — likely something intercepting the
-  // tap before it reaches this handler). If you DO see an error toast,
-  // it tells us exactly which line broke.
-  toast('Opening Data Visualizer…', 'success', 1500);
   try {
     _dbvDbId = null;
     _dbvEngine = null;
@@ -39302,18 +39324,7 @@ function openDbVisualizerFromSidebar() {
     _dbvSelectedTable = null;
 
     const el = document.getElementById('dbVisualizer');
-    if (!el) {
-      toast('ERROR: #dbVisualizer element not found in DOM.', 'error', 8000);
-      return;
-    }
-
-    // Check #app is actually visible — the visualizer is nested inside #app,
-    // which requires html.app-mode to render at all. If the user somehow
-    // isn't in app-mode when clicking this, the modal opens but stays hidden.
-    if (!document.documentElement.classList.contains('app-mode')) {
-      toast('ERROR: app-mode is not active — cannot show Data Visualizer.', 'error', 8000);
-      return;
-    }
+    if (!el) { toast('Data Visualizer not available.', 'error'); return; }
 
     el.classList.add('open');
     document.body.style.overflow = '';
@@ -39327,34 +39338,28 @@ function openDbVisualizerFromSidebar() {
       if (c) c.textContent = '—';
     });
 
-    if (typeof closeSidebar === 'function') {
-      closeSidebar();
-    } else {
-      toast('WARNING: closeSidebar is not defined.', 'error', 6000);
+    // [FIX] The table select only ever got themed via makeCustomSelect() when
+    // dbvPopulateTableSelect() ran, which only happens once a database with
+    // tables is actually selected. On first open (nothing selected yet) that
+    // never fires, leaving this dropdown in native OS style while the
+    // database dropdown right next to it was already themed -- the visible
+    // mismatch in the screenshot. Theme it immediately regardless.
+    if (typeof makeCustomSelect === 'function') {
+      makeCustomSelect('dbvTableSelect', 'Select a table/collection…');
     }
 
-    if (typeof dbvPopulateDbSelect !== 'function') {
-      toast('ERROR: dbvPopulateDbSelect is not defined — visualizer script may not have loaded.', 'error', 8000);
-      return;
-    }
+    if (typeof closeSidebar === 'function') closeSidebar();
 
     if (!_databases || !_databases.length) {
-      if (typeof loadDatabases !== 'function') {
-        toast('ERROR: loadDatabases is not defined.', 'error', 8000);
-        return;
-      }
-      loadDatabases().then(function() { dbvPopulateDbSelect(); }).catch(function(err){
-        toast('loadDatabases failed: ' + err.message, 'error', 8000);
-      });
+      loadDatabases().then(function() { dbvPopulateDbSelect(); }).catch(function(){});
     } else {
       dbvPopulateDbSelect();
     }
   } catch (e) {
     console.error('[dbv] openDbVisualizerFromSidebar failed:', e);
-    toast('Could not open Data Visualizer: ' + e.message, 'error', 10000);
+    toast('Could not open Data Visualizer: ' + e.message, 'error', 8000);
   }
 }
-
 function openDbVisualizer() {
   if (!_dbbDbId) return;
   _dbvDbId = _dbbDbId;
