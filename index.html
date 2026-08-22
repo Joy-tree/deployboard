@@ -434,6 +434,8 @@ img{max-width:100%;}
   .footer-links{ gap:12px; }
   .hero-actions{ flex-direction:column; align-items:stretch; }
   .hero-actions .btn-hero-primary,
+  .hero-actions .btn-hero-ghost{ width:100%; box-sizing:border-box; }
+  .hero-actions .btn-hero-primary,
   .hero-actions .btn-hero-ghost{ justify-content:center; }
   .hero-h1{ font-size:clamp(2.35rem,11vw,3.45rem); line-height:1.06; }
   .hero-typewriter-wrap{ font-size:clamp(1.22rem,5.4vw,1.7rem); }
@@ -5651,7 +5653,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=35" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=36" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5697,7 +5699,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=35&recover=' + token;
+    fresh.href = 'theme-override.css?v=36&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -45663,8 +45665,8 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
 
   /* Primary CTA: premium glow + lift, so it reads as the obvious next action */
   .btn-hero-primary{
-    box-shadow: 0 8px 26px rgba(16,185,129,.3), 0 0 0 1px rgba(16,185,129,.18) inset !important;
-    transition: transform .18s ease, box-shadow .18s ease, background .18s, border-color .18s !important;
+    box-shadow: none !important;
+    transition: transform .18s ease, background .18s, border-color .18s !important;
   }
   .btn-hero-primary:hover{
     transform: translateY(-2px);
