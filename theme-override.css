@@ -3970,3 +3970,64 @@ html[data-theme="light"] #cs_deployFilterStatus .cs-option {
 html[data-theme="light"] #cs_deployFilterStatus .custom-select-trigger.open {
   border-color: var(--border) !important;
 }
+
+
+/* ══════════════════════════════════════════════════════════════════
+   DEPLOYMENT CARDS — framework icon, action row (Logs/Visit/Repo/Delete)
+   ══════════════════════════════════════════════════════════════════ */
+.dep-fw-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+.dep-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+.dep-card-logs-btn {
+  flex: 1;
+}
+.dep-card-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; height: 34px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.dep-card-icon-btn:hover {
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-hover));
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+}
+.dep-card-icon-btn-danger:hover {
+  background: color-mix(in srgb, var(--red) 12%, var(--bg-hover));
+  color: var(--red);
+  border-color: color-mix(in srgb, var(--red) 35%, var(--border));
+}
+.dep-card-id {
+  cursor: pointer;
+  transition: color .15s;
+}
+.dep-card-id:hover {
+  color: var(--primary) !important;
+}
+
+html[data-theme="light"] .dep-card-icon-btn {
+  background: var(--bg-hover) !important;
+  border-color: var(--border) !important;
+  color: var(--text-2) !important;
+}
+html[data-theme="light"] .dep-fw-icon {
+  color: var(--text-2) !important;
+}
