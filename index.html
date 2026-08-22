@@ -5651,7 +5651,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=19">
+<link rel="stylesheet" href="theme-override.css?v=20">
 </head>
 <body>
 
@@ -9500,23 +9500,26 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
     <!-- ════════ PROJECTS PAGE ════════ -->
     <div class="page" id="page-projects">
-      <div class="app-hero">
-        <div>
-          <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button><div class="app-hero-kicker">Project fleet</div>
-          <div class="app-hero-title">Projects</div>
-          <div class="app-hero-subtitle">All hosted apps, live URLs, screenshots, repository signals, and redeploy controls in one polished command surface.</div>
+      <div class="proj-header">
+        <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+        <div class="proj-kicker">Project Fleet</div>
+        <div class="proj-title-row">
+          <div class="proj-title">Projects</div>
+          <div class="proj-actions">
+            <button class="btn btn-ghost" onclick="showPage('repos')">Import from GitHub</button>
+            <button class="btn btn-primary" onclick="showPage('new-deploy')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New Project
+            </button>
+          </div>
         </div>
-        <div class="hero-metrics">
-          <div class="hero-metric"><div class="hero-metric-value" id="projectsHeroTotal">0</div><div class="hero-metric-label">Projects</div></div>
-          <div class="hero-metric"><div class="hero-metric-value" id="projectsHeroLive">0</div><div class="hero-metric-label">Live</div></div>
-          <div class="hero-metric"><div class="hero-metric-value" id="projectsHeroBuilds">0</div><div class="hero-metric-label">Builds</div></div>
-        </div>
-        <div class="app-hero-actions" style="grid-column:1/-1;">
-          <button class="btn btn-ghost" onclick="showPage('repos')">Import from GitHub</button>
-          <button class="btn btn-primary btn-lg" onclick="showPage('new-deploy')">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            New Project
-          </button>
+        <div class="proj-subtitle">All hosted apps, live URLs, screenshots, repository signals, and redeploy controls in one command surface.</div>
+        <div class="proj-stat-strip">
+          <div class="proj-stat"><span class="proj-stat-value" id="projectsHeroTotal">0</span><span class="proj-stat-label">Projects</span></div>
+          <div class="proj-stat-sep"></div>
+          <div class="proj-stat"><span class="proj-stat-value" style="color:var(--primary);" id="projectsHeroLive">0</span><span class="proj-stat-label">Live</span></div>
+          <div class="proj-stat-sep"></div>
+          <div class="proj-stat"><span class="proj-stat-value" id="projectsHeroBuilds">0</span><span class="proj-stat-label">Builds</span></div>
         </div>
       </div>
       <div class="projects-grid" id="projectsGrid" style="padding-bottom:40px;">
