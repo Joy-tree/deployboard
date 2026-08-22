@@ -3722,25 +3722,23 @@ html[data-theme="light"] #page-projects .tree-project-node {
 .page-back {
   display: inline-flex !important;
   align-items: center !important;
-  justify-content: center !important;
-  width: 30px !important;
-  height: 30px !important;
-  border-radius: 9px !important;
-  background: var(--bg-hover) !important;
-  border: 1px solid var(--border) !important;
-  color: var(--text-2) !important;
-  margin-bottom: 10px !important;
-  padding: 0 !important;
-  font-size: 0 !important; /* collapses the "Back to Dashboard" text node to zero width */
-  gap: 0 !important;
+  gap: 5px !important;
+  height: 28px !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-3) !important;
+  margin-bottom: 8px !important;
+  padding: 0 8px 0 4px !important;
+  font-size: .76rem !important;
+  font-weight: 600 !important;
 }
 .page-back svg {
-  width: 15px !important;
-  height: 15px !important;
+  width: 13px !important;
+  height: 13px !important;
   flex-shrink: 0;
 }
 .page-back:hover {
-  background: color-mix(in srgb, var(--primary) 10%, var(--bg-hover)) !important;
-  border-color: color-mix(in srgb, var(--primary) 30%, var(--border)) !important;
   color: var(--text) !important;
+  background: var(--bg-hover) !important;
 }
