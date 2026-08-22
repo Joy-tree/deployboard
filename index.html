@@ -5650,7 +5650,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=41" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=42" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5696,7 +5696,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=41&recover=' + token;
+    fresh.href = 'theme-override.css?v=42&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -29788,6 +29788,24 @@ function statusBadge(status) {
   }
     // Kick off health check silently
     fetch(API + '/api/health', { signal: AbortSignal.timeout(2000) }).catch(()=>{});
+    // [FIX] "Increase the loading spinner time so it makes sure everything
+    // has landed well." Previously hideBootLoader(120) fired right after
+    // showDashboard() returned -- but showDashboard() calls
+    // syncServerStateFromApi() WITHOUT awaiting it (by design, so the UI
+    // isn't blocked on a slow request) -- so the spinner was disappearing
+    // 120ms after boot regardless of whether the real data sync had
+    // finished, showing a brief flash of stale localStorage content right
+    // as the loader lifted. Give the sync a real chance to land first: if
+    // we're signed in, actually wait for one full sync attempt (capped at
+    // 4s so a slow/dead network never leaves the spinner stuck) before
+    // hiding the loader, so what's revealed underneath is the synced data,
+    // not the stale placeholder.
+    if (hasAuthToken()) {
+      await Promise.race([
+        syncServerStateFromApi({ persist: true, render: true }),
+        new Promise(resolve => setTimeout(resolve, 4000))
+      ]);
+    }
   } catch (err) {
     console.warn('[boot] startup failed:', err?.message || err);
     try {
