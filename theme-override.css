@@ -3398,3 +3398,25 @@ html[data-theme="light"] #settingsTabs .tab.active {
   #settingsTabs { gap:2px; }
   #settingsTabs .tab { padding:9px 10px; font-size:.78rem; flex:1 1 auto; }
 }
+
+
+/* ══════════════════════════════════════════════════════════════════
+   LEAF DECORATIONS — reduce visual noise over text on light theme
+   The falling-leaf animation (.jt-leaves-fall, z-index:50) sits above
+   all page content including form labels and inputs. On dark theme the
+   green leaves blend into the black background enough to stay purely
+   decorative, but on light theme the same leaves at full opacity read
+   as clutter directly overlapping "Display Name", "Username / Handle",
+   "Change Password" etc, making those labels look faded/blurry where a
+   leaf happens to sit on top of the text this frame.
+   Fix: sharply reduce leaf opacity on light theme so they stay a subtle
+   background touch instead of competing with foreground text for
+   attention, and fully hide them over the Settings page specifically
+   since it's the most text/form-dense page on the site.
+   ══════════════════════════════════════════════════════════════════ */
+html[data-theme="light"] .jt-leaves-fall {
+  opacity: .22 !important;
+}
+#page-settings .jt-leaves-fall {
+  display: none !important;
+}
