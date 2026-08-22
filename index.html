@@ -5648,7 +5648,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=31" id="themeOverrideLink" onerror="this.dataset.failed='1';setTimeout(function(){ var l=document.getElementById('themeOverrideLink'); if(l && l.dataset.failed){ var retry=document.createElement('link'); retry.rel='stylesheet'; retry.href='theme-override.css?v=31&retry='+Date.now(); document.head.appendChild(retry); } },300);">
+<link rel="stylesheet" href="theme-override.css?v=32" id="themeOverrideLink" onerror="this.dataset.failed='1';setTimeout(function(){ var l=document.getElementById('themeOverrideLink'); if(l && l.dataset.failed){ var retry=document.createElement('link'); retry.rel='stylesheet'; retry.href='theme-override.css?v=32&retry='+Date.now(); document.head.appendChild(retry); } },300);">
 <script>
 // [FIX] theme-override.css sometimes failed to load entirely on slow/flaky
 // mobile connections, leaving the page rendered with zero styling from that
@@ -5676,7 +5676,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
       if (appliedZIndex !== '20') {
         var retry = document.createElement('link');
         retry.rel = 'stylesheet';
-        retry.href = 'theme-override.css?v=31&recover=' + Date.now();
+        retry.href = 'theme-override.css?v=32&recover=' + Date.now();
         document.head.appendChild(retry);
       }
     } catch(e) { /* best-effort safety net, never block page load on this */ }
@@ -5878,13 +5878,13 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 /* ── Email Verification Page ── */
 #verifyEmailPage{
   display:none;position:fixed;inset:0;z-index:9999;
-  align-items:center;justify-content:center;
-  padding:20px;
+  align-items:flex-start;justify-content:center;
+  padding:56px 20px 40px;
   background:#09090b;
-  overflow:hidden;
+  overflow-y:auto;
 }
 .vp-card{
-  width:min(94vw,420px);
+  width:min(94vw,460px);
   background:transparent;
   border:none;
   border-radius:0;
