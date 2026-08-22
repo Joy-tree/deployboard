@@ -3765,3 +3765,189 @@ html[data-theme="light"] .tree-node-btn-danger {
 html[data-theme="light"] .tree-node-btn-danger:hover {
   filter: brightness(0.88) !important;
 }
+
+
+/* ══════════════════════════════════════════════════════════════════
+   DEPLOYMENTS PAGE — flat header (matches Projects/Dashboard/Settings)
+   + card-list layout replacing the raw horizontally-scrolling table.
+   ══════════════════════════════════════════════════════════════════ */
+.dep-header { margin-bottom: 20px; }
+.dep-kicker {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin: 10px 0 6px;
+}
+.dep-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.2;
+}
+.dep-subtitle {
+  font-size: .84rem;
+  color: var(--text-2);
+  margin-top: 8px;
+  line-height: 1.5;
+  max-width: 62ch;
+}
+.dep-stat-strip {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.dep-stat { display: flex; align-items: baseline; gap: 7px; }
+.dep-stat-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+.dep-stat-label {
+  font-size: .74rem;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.dep-stat-sep { width: 1px; height: 16px; background: var(--border); }
+
+/* Toolbar row: title + status filter, flat, no card box */
+.dep-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.dep-toolbar-title {
+  font-size: .95rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+/* Card list */
+.dep-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dep-card {
+  background: #111;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.dep-card:hover {
+  background: #161616;
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+}
+.dep-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.dep-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+.dep-status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--text-3);
+  flex-shrink: 0;
+}
+.dep-status-dot.ok { background: var(--primary); }
+.dep-status-dot.err { background: var(--red); }
+.dep-status-dot.running { background: #f59e0b; animation: pulse 1.4s infinite; }
+.dep-card-project {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dep-card-id {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+.dep-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.dep-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .76rem;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+.dep-meta-item svg { flex-shrink: 0; opacity: .7; }
+.dep-meta-time { margin-left: auto; font-family: var(--font-ui); }
+.dep-card-logs-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 7px 12px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-2);
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.dep-card-logs-btn:hover {
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-hover));
+  color: var(--text);
+}
+
+/* Consistent dark cards on light theme too -- same as Projects page */
+html[data-theme="light"] .dep-card {
+  background: #111 !important;
+  border-color: var(--border) !important;
+}
+html[data-theme="light"] .dep-card:hover {
+  background: #161616 !important;
+}
+html[data-theme="light"] .dep-card-project,
+html[data-theme="light"] .dep-toolbar-title,
+html[data-theme="light"] .dep-title {
+  color: var(--text) !important;
+}
+html[data-theme="light"] .dep-card-id,
+html[data-theme="light"] .dep-meta-item,
+html[data-theme="light"] .dep-stat-label {
+  color: var(--text-3) !important;
+}
+html[data-theme="light"] .dep-card-logs-btn {
+  background: var(--bg-hover) !important;
+  border-color: var(--border) !important;
+  color: var(--text-2) !important;
+}
+
+@media(max-width:640px){
+  .dep-toolbar { flex-direction: column; align-items: flex-start; }
+  .dep-stat-strip { gap: 14px; flex-wrap: wrap; }
+}
