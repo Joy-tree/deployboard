@@ -1,3 +1,4 @@
+/* [INTEGRITY MARKER — START] */ .jt-css-integrity-start{--jt-loaded-start:1;}
 /* ==========================================================================
    JoyTree — Site-wide theme override (theme-override.css)
 
@@ -1573,7 +1574,9 @@ html[data-theme="light"] #queryRowCount { color: var(--jt-text) !important; }
    background regardless of theme, so its bold dark title text
    (var(--text), correctly dark on light theme) sat on a still-black
    box -- unreadable. Give it a light-appropriate surface too.
-   --------------------------------------------------------------------- */
+   -----------
+/* [INTEGRITY MARKER — MID] */ .jt-css-integrity-mid{--jt-loaded-mid:1;}
+---------------------------------------------------------- */
 html[data-theme="light"] #lfAiVersionDrop .jt-ai-trigger {
   background: linear-gradient(180deg, var(--jt-bg-raised), var(--jt-bg-sunken)) !important;
   border-color: rgba(6,182,212,.3) !important;
@@ -4084,3 +4087,5 @@ html[data-theme="light"] .cs-option.selected {
   color: var(--primary) !important;
   background: color-mix(in srgb, var(--primary) 10%, transparent) !important;
 }
+
+/* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
