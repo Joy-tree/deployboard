@@ -3494,21 +3494,23 @@ html[data-theme="light"] .jt-leaves-fall {
   max-width: 62ch;
 }
 
-/* Stat strip -- flat inline row with vertical dividers, no cards,
-   same visual language as the Settings quick-stats row */
+/* Stat strip -- matches #page-repos .dcx-steps exactly: a 1fr grid
+   with border-right dividers per item and one border-bottom under
+   the whole row, using the visible dcx-row-border token. */
 .proj-stat-strip {
-  display: flex;
-  align-items: center;
-  gap: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--dcx-row-border, var(--border));
   margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
 }
 .proj-stat {
   display: flex;
-  align-items: baseline;
-  gap: 7px;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-right: 1px solid var(--dcx-row-border, var(--border));
 }
+.proj-stat:last-child { border-right: none; }
 .proj-stat-value {
   font-size: 1.15rem;
   font-weight: 800;
@@ -3522,11 +3524,7 @@ html[data-theme="light"] .jt-leaves-fall {
   text-transform: uppercase;
   letter-spacing: .04em;
 }
-.proj-stat-sep {
-  width: 1px;
-  height: 16px;
-  background: var(--border);
-}
+.proj-stat-sep { display: none; }
 
 @media(max-width:640px){
   .proj-title-row { flex-direction: column; align-items: flex-start; }
@@ -3787,14 +3785,19 @@ html[data-theme="light"] .tree-node-btn-danger:hover {
   max-width: 62ch;
 }
 .dep-stat-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--dcx-row-border, var(--border));
+  margin-top: 16px;
+}
+.dep-stat {
   display: flex;
   align-items: center;
-  gap: 18px;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
+  gap: 10px;
+  padding: 14px 20px;
+  border-right: 1px solid var(--dcx-row-border, var(--border));
 }
-.dep-stat { display: flex; align-items: baseline; gap: 7px; }
+.dep-stat:last-child { border-right: none; }
 .dep-stat-value {
   font-size: 1.15rem;
   font-weight: 800;
@@ -3808,7 +3811,7 @@ html[data-theme="light"] .tree-node-btn-danger:hover {
   text-transform: uppercase;
   letter-spacing: .04em;
 }
-.dep-stat-sep { width: 1px; height: 16px; background: var(--border); }
+.dep-stat-sep { display: none; }
 
 /* Toolbar row: title + status filter, flat, no card box */
 .dep-toolbar {
@@ -7192,6 +7195,19 @@ html[data-theme="light"] #page-logs {
 #page-logs .quantum-steps .deploy-step:has(.active) {
   background: transparent !important;
   border-radius: 0 !important;
+}
+
+/* "No deployments" empty state — was a filled green-tinted rounded
+   box, now a flat outlined icon matching every other empty state
+   across the redesign */
+#page-deployments .empty-icon {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+}
+#page-deployments .empty-icon svg {
+  color: var(--text-2) !important;
+  opacity: 1 !important;
 }
 
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
