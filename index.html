@@ -24527,9 +24527,8 @@ function renderNetworkMetrics(){
     const W = 320, H = 180, p = 20;
     chart.setAttribute('viewBox', `0 0 ${W} ${H}`);
     chart.innerHTML = `
-      <rect x="${p}" y="${p}" width="${W-(p*2)}" height="${H-(p*2)}" rx="10" fill="rgba(0,0,0,.35)" stroke="rgba(148,163,184,.18)"/>
-      <text x="50%" y="48%" text-anchor="middle" dominant-baseline="middle" fill="#94a3b8" font-size="11.5" font-family="Inter, sans-serif">No project metrics yet</text>
-      <text x="50%" y="58%" text-anchor="middle" dominant-baseline="middle" fill="#64748b" font-size="10" font-family="Inter, sans-serif">Create and run a deployment to start collecting data</text>
+      <text x="50%" y="48%" text-anchor="middle" dominant-baseline="middle" fill="var(--text-2)" font-size="11.5" font-family="Inter, sans-serif">No project metrics yet</text>
+      <text x="50%" y="58%" text-anchor="middle" dominant-baseline="middle" fill="var(--text-3)" font-size="10" font-family="Inter, sans-serif">Create and run a deployment to start collecting data</text>
     `;
     document.getElementById('metricMonthTotal').textContent = `0.0 MB`;
     document.getElementById('metricHttp').textContent = `0.0 MB`;
