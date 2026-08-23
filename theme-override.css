@@ -7767,4 +7767,75 @@ html[data-theme="light"] #page-ai-analysis {
   border-color: var(--primary) !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   ENVIRONMENT VARIABLES PAGE — same flat treatment as the rest of
+   the rebuild. Header converted to dcx-header. Project Variables /
+   Add Variable / CDN / Paste from .env cards, inputs, and the custom
+   project-select dropdown all flattened. Toggle switch left as-is
+   (a real UI convention, not a boxed-card issue).
+   ══════════════════════════════════════════════════════════════════ */
+#page-env-manager {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-env-manager {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+#page-env-manager .card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-env-manager .card-header {
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+}
+#page-env-manager .card-title { color: var(--text) !important; }
+#page-env-manager .card-subtitle { color: var(--text-2) !important; }
+#page-env-manager .input,
+#page-env-manager textarea.input {
+  border-radius: 0 !important;
+}
+#page-env-manager .custom-select-trigger {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-env-manager .custom-select-trigger:hover {
+  border-color: var(--primary) !important;
+}
+#page-env-manager .custom-select-dropdown {
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-env-manager .cs-option {
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+  color: var(--text-2) !important;
+}
+#page-env-manager .cs-option:last-child { border-bottom: none !important; }
+#page-env-manager .cs-option:hover {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+#page-env-manager .cs-option.selected {
+  background: transparent !important;
+  color: var(--primary) !important;
+}
+#page-env-manager .btn-primary {
+  border-radius: 0 !important;
+}
+#page-env-manager .btn-ghost,
+#page-env-manager .btn-sm {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-env-manager .btn-ghost:hover {
+  border-color: var(--primary) !important;
+}
+#page-env-manager .btn-icon.btn-ghost {
+  border-radius: 0 !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
