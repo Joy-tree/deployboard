@@ -5671,10 +5671,26 @@ html[data-theme="light"] #page-settings {
 #page-settings .input-group .input { border-radius: 0; }
 #page-settings .custom-select-dropdown,
 #page-settings .custom-select-menu {
-  border-radius: 10px;
+  border-radius: 0;
   background: var(--bg, #000) !important;
   border: 1px solid var(--dcx-field-border) !important;
   box-shadow: 0 18px 44px rgba(0,0,0,.4);
+}
+#page-settings .cs-option {
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+  color: var(--text-2) !important;
+}
+#page-settings .cs-option:last-child { border-bottom: none !important; }
+#page-settings .cs-option:hover {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+#page-settings .cs-option.selected {
+  background: transparent !important;
+  color: var(--primary) !important;
+}
+#page-settings .cs-option.selected::after {
+  background: var(--primary) !important;
 }
 
 /* Full-width action buttons (Send Test Notification, Save Preferences,
