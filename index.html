@@ -20397,10 +20397,11 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
     <!-- ════════ ANALYTICS PAGE ════════ -->
     <div class="page" id="page-analytics">
-      <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-      <div class="page-header">
-        <div class="page-title">Analytics</div>
-        <div class="page-subtitle">Deployment stats and build health overview.</div>
+      <div class="dcx-header">
+        <button class="page-back back-link" onclick="showPage('dashboard')" style="margin-bottom:16px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+        <div class="dcx-kicker">Insights</div>
+        <div class="dcx-title">Analytics</div>
+        <div class="dcx-sub">Deployment stats and build health overview.</div>
       </div>
 
       <!-- ── KPI row ── -->
@@ -21054,19 +21055,17 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
     <!-- ════════ WEBHOOKS PAGE ════════ -->
     <div class="page" id="page-webhooks">
-      <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-      <div class="app-hero">
-        <div>
-          <div class="app-hero-kicker">Event relay</div>
-          <div class="app-hero-title">Webhooks</div>
-          <div class="app-hero-subtitle">Notify external systems when deployments start, succeed, or fail with an upgraded event-delivery command center.</div>
+      <div class="dcx-header">
+        <button class="page-back back-link" onclick="showPage('dashboard')" style="margin-bottom:16px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+        <div class="dcx-kicker">Event relay</div>
+        <div class="dcx-title">Webhooks</div>
+        <div class="dcx-sub">Notify external systems when deployments start, succeed, or fail with an upgraded event-delivery command center.</div>
+        <div class="dcx-steps" style="grid-template-columns:repeat(3,1fr);margin-top:20px;">
+          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="webhookHeroActive" style="width:auto;padding:0 6px;">0</span><span>Active</span></div>
+          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="webhookHeroEvents" style="width:auto;padding:0 6px;">3</span><span>Events</span></div>
+          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="webhookHeroDeliveries" style="width:auto;padding:0 6px;">0</span><span>Deliveries</span></div>
         </div>
-        <div class="hero-metrics">
-          <div class="hero-metric"><div class="hero-metric-value" id="webhookHeroActive">0</div><div class="hero-metric-label">Active</div></div>
-          <div class="hero-metric"><div class="hero-metric-value" id="webhookHeroEvents">3</div><div class="hero-metric-label">Events</div></div>
-          <div class="hero-metric"><div class="hero-metric-value" id="webhookHeroDeliveries">0</div><div class="hero-metric-label">Deliveries</div></div>
-        </div>
-        <div class="app-hero-actions" style="grid-column:1/-1;">
+        <div style="margin-top:18px;">
           <button class="btn btn-primary" onclick="openAddWebhookModal()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add Webhook
@@ -21633,17 +21632,17 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
     <!-- ════════ CRON JOBS PAGE ════════ -->
     <div class="page" id="page-cronjobs">
-      <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-      <div class="app-hero">
-        <div>
-          <div class="app-hero-kicker">Automation engine</div>
-          <div class="app-hero-title">Cron Jobs</div>
-          <div class="app-hero-subtitle">Run production-grade schedules, monitor results, and keep workflows reliable with a redesigned command center.</div>
+      <div class="dcx-header">
+        <button class="page-back back-link" onclick="showPage('dashboard')" style="margin-bottom:16px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+        <div class="dcx-kicker">Automation engine</div>
+        <div class="dcx-title">Cron Jobs</div>
+        <div class="dcx-sub">Run production-grade schedules, monitor results, and keep workflows reliable with a redesigned command center.</div>
+        <div style="margin-top:18px;">
+          <button class="btn btn-primary" onclick="showPage('cron-create')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Cron Job
+          </button>
         </div>
-        <button class="btn btn-primary" onclick="showPage('cron-create')" style="min-height:52px;padding-inline:24px;font-size:0.95rem;font-weight:800;">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          New Cron Job
-        </button>
       </div>
       <div class="card" style="margin-bottom:20px;">
         <div class="card-header"><div class="card-title">Active Jobs</div></div>
@@ -21675,8 +21674,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           <div class="card">
             <div class="card-header">
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:32px;height:32px;border-radius:8px;background:rgba(139,92,246,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <div style="width:32px;height:32px;border-radius:0;background:transparent;border:1px solid var(--dcx-field-border, var(--border));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 </div>
                 <div class="card-title">Basic Configuration</div>
               </div>
@@ -21717,8 +21716,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           <div class="card">
             <div class="card-header">
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:32px;height:32px;border-radius:8px;background:rgba(139,92,246,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" width="16" height="16"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <div style="width:32px;height:32px;border-radius:0;background:transparent;border:1px solid var(--dcx-field-border, var(--border));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" width="16" height="16"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 </div>
                 <div class="card-title">Schedule</div>
               </div>
