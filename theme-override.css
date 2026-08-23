@@ -4165,12 +4165,12 @@ html[data-theme="light"] .cs-option.selected {
 }
 #page-repos .repo-refresh-btn {
   background: transparent !important;
-  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border: none !important;
   color: var(--text) !important;
-  border-radius: 8px;
+  border-radius: 0;
 }
 #page-repos .repo-refresh-btn:hover {
-  border-color: var(--primary) !important;
+  color: var(--primary) !important;
 }
 
 /* Repo cards → completely flat, no border box, no fill difference
@@ -4467,6 +4467,35 @@ html[data-theme="light"] #page-new-deploy {
   line-height: 1.15;
 }
 #page-new-deploy .dcx-sub {
+  font-size: .86rem;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin-top: 8px;
+  max-width: 66ch;
+}
+
+/* #page-new-resource never got these — its dcx-header/kicker/title/sub
+   rendered with zero spacing (browser defaults only) since only
+   #page-new-deploy was ever scoped for this shared component. */
+#page-new-resource .dcx-header { margin-bottom: 22px; }
+#page-new-resource .dcx-header .back-link { margin-bottom: 16px; }
+#page-new-resource .dcx-kicker {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+#page-new-resource .dcx-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.15;
+}
+#page-new-resource .dcx-sub {
   font-size: .86rem;
   color: var(--text-2);
   line-height: 1.55;
@@ -6328,19 +6357,26 @@ html[data-theme="light"] #page-new-resource {
   --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
 }
 
-/* Search bar → flat, no glowing icon, no heavy fill */
+/* Search bar → matches #page-repos exactly: underline-only, no box,
+   green highlight on focus, icon flush left */
 #page-new-resource .resource-search-wrap .input {
   background: transparent !important;
-  border: 1px solid var(--dcx-field-border) !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  color: var(--text) !important;
   border-radius: 0 !important;
+  padding-left: 30px !important;
   box-shadow: none !important;
+  transition: border-color .15s, box-shadow .15s;
 }
 #page-new-resource .resource-search-wrap .input:focus {
-  border-color: var(--primary) !important;
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
 }
 #page-new-resource .resource-search-wrap svg {
   color: var(--text-3) !important;
   filter: none !important;
+  left: 0 !important;
 }
 
 #page-new-resource .resource-section-label {
