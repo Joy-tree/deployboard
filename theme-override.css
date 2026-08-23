@@ -4120,13 +4120,17 @@ html[data-theme="light"] .cs-option.selected {
   border-bottom: 1px solid var(--dcx-field-border, var(--border)) !important;
   color: var(--text) !important;
   border-radius: 0;
+  padding-left: 30px !important;
   transition: border-color .15s, box-shadow .15s;
 }
 #page-repos .repo-search-wrap .input:focus {
   border-bottom: 2px solid var(--primary) !important;
   box-shadow: 0 1px 0 0 var(--primary) !important;
 }
-#page-repos .repo-search-wrap svg { color: var(--text-3) !important; }
+#page-repos .repo-search-wrap svg {
+  color: var(--text-3) !important;
+  left: 0 !important;
+}
 #page-repos .repo-refresh-btn {
   background: transparent !important;
   border: 1px solid var(--dcx-field-border, var(--border)) !important;
@@ -4171,6 +4175,7 @@ html[data-theme="light"] .cs-option.selected {
   gap: 0 !important;
   border-top: 1px solid var(--dcx-row-border, var(--border)) !important;
   border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
+  border-left: 1px solid var(--dcx-row-border, var(--border)) !important;
   margin: 14px 0 !important;
 }
 #page-repos .repo-metric {
