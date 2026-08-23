@@ -11642,7 +11642,7 @@ document.addEventListener('keydown', function(e){
                   <button class="btn btn-ghost btn-sm" type="button" onclick="resetAppInstallPromptPreference()">Reset Popup Preference</button>
                 </div>
               </div>
-              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;background:transparent;color:var(--text);font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
                 <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
                 Starting deployment pipeline…
               </div>
@@ -11699,7 +11699,7 @@ document.addEventListener('keydown', function(e){
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 Save GitHub Settings
               </button>
-              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;background:transparent;color:var(--text);font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
                 <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
                 Starting deployment pipeline…
               </div>
@@ -11761,13 +11761,13 @@ document.addEventListener('keydown', function(e){
                 <input class="input input-mono" id="settingsBaseDomain" value="joytree.site" placeholder="yourdomain.com">
                 <div class="field-hint">All user sites will be hosted at <code style="font-family:var(--font-mono);">[subdomain].yourdomain.com</code></div>
               </div>
-              <div style="padding:16px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:8px;margin-bottom:12px;">
+              <div style="padding:16px;background:transparent;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;margin-bottom:12px;">
                 <div style="font-size:0.72rem;color:var(--text-3);margin-bottom:4px;">YOUR PLATFORM DOMAIN</div>
                 <div style="font-family:var(--font-mono);font-size:0.88rem;color:var(--green);">*.joytree.site</div>
                 <div style="font-size:0.72rem;color:var(--text-2);margin-top:4px;">Wildcard SSL active via Cloudflare Tunnel</div>
               </div>
               <button class="btn btn-primary admin-only" onclick="saveDomainSettings()">Save Domain Settings</button>
-              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;background:transparent;color:var(--text);font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
                 <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
                 Starting deployment pipeline…
               </div>
@@ -12241,7 +12241,7 @@ document.addEventListener('keydown', function(e){
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button class="btn btn-primary" onclick="saveEnvVar()">Save Variable</button>
               <button class="btn btn-ghost" onclick="loadEnvForProject()">Refresh List</button>
-              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;background:transparent;color:var(--text);font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
                 <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
                 Starting deployment pipeline…
               </div>
@@ -21510,7 +21510,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
               <button onclick="toggleSecretVisibility()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px;">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
-              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(16,185,129,.25);border-radius:12px;background:rgba(16,185,129,.08);color:#bbf7d0;font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
+              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;background:transparent;color:var(--text);font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
                 <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
                 Starting deployment pipeline…
               </div>
@@ -28809,19 +28809,19 @@ function renderTransferBox(d) {
   const transferUrl = d.transferUrl || '';
   const box = document.createElement('div');
   box.id = 'apiKeyTransferBox';
-  box.style.cssText = 'margin-top:14px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.18);border-radius:12px;padding:16px;';
+  box.style.cssText = 'margin-top:14px;background:transparent;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;padding:16px;';
   box.innerHTML =
     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
-      '<div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 6px var(--green);"></div>' +
-      '<div style="font-size:.82rem;font-weight:600;color:#e2e8f0;">Transfer URL &mdash; <span style="color:var(--green);">' + count + ' project' + (count===1?'':'s') + ' embedded</span></div>' +
+      '<div style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;"></div>' +
+      '<div style="font-size:.82rem;font-weight:600;color:var(--text);">Transfer URL &mdash; <span style="color:var(--primary);">' + count + ' project' + (count===1?'':'s') + ' embedded</span></div>' +
     '</div>' +
-    '<div style="font-size:.75rem;color:#64748b;margin-bottom:10px;line-height:1.5;">' +
+    '<div style="font-size:.75rem;color:var(--text-3);margin-bottom:10px;line-height:1.5;">' +
       'Paste this URL into any hosting platform (pxxl, Render, Railway&hellip;) to instantly import all your Joytree projects. ' +
-      'Your live GitHub repo links and build configs travel with it. <strong style="color:#94a3b8;">Env var values stay private</strong> &mdash; only key names are shared.' +
+      'Your live GitHub repo links and build configs travel with it. <strong style="color:var(--text-2);">Env var values stay private</strong> &mdash; only key names are shared.' +
     '</div>' +
     '<div style="display:flex;gap:8px;align-items:stretch;">' +
       '<input id="apiTransferUrlInput" class="input input-mono" value="' + escHtml(transferUrl) + '" readonly ' +
-        'style="flex:1;font-size:.71rem;color:#64748b;min-height:40px;background:rgba(0,0,0,.25);">' +
+        'style="flex:1;font-size:.71rem;color:var(--text-2);min-height:40px;background:transparent;">' +
       '<button class="btn btn-ghost" onclick="copyTransferUrl()" ' +
         'style="flex-shrink:0;min-height:40px;padding:0 14px;border-color:rgba(16,185,129,.3);color:var(--green);font-size:.8rem;">' +
         'Copy URL' +
