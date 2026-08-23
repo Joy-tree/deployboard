@@ -921,11 +921,7 @@ body.landing-drawer-open { overflow:hidden; }
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 
 
-.hero::before{
-  content:"";position:absolute;inset:-30% -15% auto;height:70%;
-  background:radial-gradient(circle at 30% 40%,rgba(16,185,129,.18),transparent 45%),radial-gradient(circle at 80% 20%,rgba(59,130,246,.2),transparent 45%);
-  filter:blur(20px);pointer-events:none;z-index:0;
-}
+.hero::before{ display:none; }
 .hero > *{position:relative;z-index:1}
 .hero > *:first-child{margin-top:0 !important;}
 .hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2{position:absolute !important;}
@@ -1027,7 +1023,7 @@ body.landing-drawer-open { overflow:hidden; }
 /* Executive-grade homepage upgrades */
 #landing-view nav{background:linear-gradient(180deg,rgba(3,8,20,.9),rgba(3,8,20,.72));border-bottom:1px solid rgba(34,197,94,.28);box-shadow:0 10px 30px rgba(0,0,0,.32)}
 .hero{min-height:auto}
-.hero::after{content:"";position:absolute;inset:auto -12% -180px;height:280px;background:radial-gradient(ellipse at center,rgba(16,185,129,.18),transparent 70%);pointer-events:none}
+.hero::after{ display:none; }
 .executive-banner{width:min(1160px,calc(100% - 40px));margin:16px auto 0;padding:16px 18px;border:1px solid rgba(34,211,238,.32);border-radius:18px;background:linear-gradient(145deg,rgba(10,20,36,.88),rgba(4,10,20,.95));display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;box-shadow:0 20px 70px rgba(0,0,0,.34)}
 .executive-banner strong{font-family:var(--font-ui);font-size:1.08rem;letter-spacing:-.04em;color:#ecfeff}
 .executive-banner span{font-size:.87rem}
@@ -5650,7 +5646,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=42" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=45" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5696,7 +5692,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=42&recover=' + token;
+    fresh.href = 'theme-override.css?v=45&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -6238,451 +6234,7 @@ window.landingToggleTheme = function(){
 
 <!-- ── HERO ──────────────────────────────────────────────────────────── -->
 
-<!-- ═══════════════ Joytree welcome loop (inline, above hero) ═══════════════ -->
-<noscript><style>.jt-welcome-loop{display:none!important}</style></noscript>
-<style>
-  .jt-welcome-loop{
-    position:relative;
-    width:100%;
-    height:clamp(168px,24vw,240px);
-    overflow:hidden;
-    display:flex; align-items:center; justify-content:center;
-    margin:0 auto 6px;
-    border-radius:14px;
-  }
-  .jt-wl-bg{
-    position:absolute; inset:0;
-    background:radial-gradient(ellipse at center,rgba(16,185,129,.07),transparent 60%),#050807;
-    pointer-events:none;
-  }
-  /* [FIX] Perfectly smooth radial gradients read as flat/synthetic ("AI
-     generated") — real light bloom is never that clean. A faint tiling
-     noise layer breaks up the smoothness without being visible as texture
-     on its own; it just stops the gradient from looking airbrushed. */
-  .jt-wl-bg::after{
-    content:''; position:absolute; inset:0;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-    opacity:.05; mix-blend-mode:overlay; pointer-events:none;
-  }
-  .jt-wl-flare{
-    position:absolute; left:50%; top:50%;
-    width:120%; height:300%;
-    transform:translate(-50%,-50%) scale(0) rotate(-4deg);
-    border-radius:50%;
-    /* [FIX] Was one perfectly centered radial-gradient circle -- the
-       textbook "AI glow" look. Three off-axis, differently-sized blobs
-       overlapping via screen blend + a touch of blur reads as an actual
-       light burst catching the scene unevenly, not a generated icon. */
-    background:
-      radial-gradient(circle at 38% 34%, rgba(255,255,255,.34) 0%, transparent 20%),
-      radial-gradient(circle at 62% 58%, rgba(167,243,208,.4) 0%, transparent 34%),
-      radial-gradient(circle at 50% 50%, rgba(52,211,153,.24) 8%, rgba(5,150,105,.14) 34%, transparent 64%);
-    mix-blend-mode:screen;
-    filter:blur(3px);
-    opacity:0; pointer-events:none;
-  }
-  .jt-wl-flare.jt-wl-flare-burst{ animation:jtWlFlareBurst 1.6s ease-out; }
-  @keyframes jtWlFlareBurst{
-    0%{ transform:translate(-50%,-50%) scale(0); opacity:0; }
-    30%{ opacity:.7; }
-    100%{ transform:translate(-50%,-50%) scale(1); opacity:0; }
-  }
-
-  .jt-wl-leaves{ position:absolute; inset:0; pointer-events:none; z-index:3; }
-  .jt-wl-leaf{ position:absolute; will-change:transform,opacity; }
-  .jt-wl-leaf svg{ display:block; width:100%; height:100%; }
-
-  .jt-wl-leaf.jt-wl-clearing{
-    animation-timing-function:cubic-bezier(.33,0,.18,1);
-    animation-fill-mode:forwards;
-  }
-  /* [FIX] Every leaf previously shared ONE animation (jtWlLeafClear) --
-     identical straight-line vector, only the destination point differed.
-     That uniformity is exactly what reads as computer-generated: real
-     falling leaves flutter and drift sideways as they go, don't move at a
-     constant rate, and blur slightly at peak speed. Three distinct paths
-     (assigned randomly per leaf in JS below) each with their own
-     mid-flight wobble, a body-turn each way of rotation rather than one
-     steady spin, a slight shrink for departing depth, and the faintest
-     motion blur through the fastest part of the fall replace that one
-     shared curve. */
-  .jt-wl-leaf.jt-wl-clearing.v1{ animation-name:jtWlLeafClear1; }
-  .jt-wl-leaf.jt-wl-clearing.v2{ animation-name:jtWlLeafClear2; }
-  .jt-wl-leaf.jt-wl-clearing.v3{ animation-name:jtWlLeafClear3; }
-  @keyframes jtWlLeafClear1{
-    0%{   transform:rotate(var(--start-rot,0deg)) translate(0,0) scale(1); opacity:1; filter:blur(0px); }
-    24%{  transform:rotate(calc(var(--start-rot,0deg) + 16deg)) translate(calc(var(--fall-x,0px) * .35),24%) scale(.98); opacity:1; filter:blur(.3px); }
-    58%{  transform:rotate(calc(var(--start-rot,0deg) + 95deg)) translate(calc(var(--fall-x,0px) * -.45),72%) scale(.93); opacity:.88; filter:blur(.7px); }
-    100%{ transform:rotate(var(--fall-rot,220deg)) translate(var(--fall-x,0px),160%) scale(.85); opacity:0; filter:blur(0px); }
-  }
-  @keyframes jtWlLeafClear2{
-    0%{   transform:rotate(var(--start-rot,0deg)) translate(0,0) scale(1); opacity:1; filter:blur(0px); }
-    30%{  transform:rotate(calc(var(--start-rot,0deg) - 22deg)) translate(calc(var(--fall-x,0px) * -.5),32%) scale(.97); opacity:1; filter:blur(.4px); }
-    66%{  transform:rotate(calc(var(--start-rot,0deg) + 55deg)) translate(calc(var(--fall-x,0px) * .6),84%) scale(.91); opacity:.82; filter:blur(.6px); }
-    100%{ transform:rotate(var(--fall-rot,220deg)) translate(var(--fall-x,0px),160%) scale(.84); opacity:0; filter:blur(0px); }
-  }
-  @keyframes jtWlLeafClear3{
-    0%{   transform:rotate(var(--start-rot,0deg)) translate(0,0) scale(1); opacity:1; filter:blur(0px); }
-    40%{  transform:rotate(calc(var(--start-rot,0deg) + 28deg)) translate(calc(var(--fall-x,0px) * .22),46%) scale(.95); opacity:1; filter:blur(.5px); }
-    72%{  transform:rotate(calc(var(--start-rot,0deg) - 40deg)) translate(calc(var(--fall-x,0px) * -.3),96%) scale(.89); opacity:.78; filter:blur(.6px); }
-    100%{ transform:rotate(var(--fall-rot,220deg)) translate(var(--fall-x,0px),160%) scale(.86); opacity:0; filter:blur(0px); }
-  }
-
-  .jt-wl-leaf.jt-wl-gathering{
-    animation-timing-function:cubic-bezier(.22,.7,.25,1);
-    animation-fill-mode:forwards;
-    opacity:0;
-  }
-  .jt-wl-leaf.jt-wl-gathering.v1{ animation-name:jtWlLeafGather1; }
-  .jt-wl-leaf.jt-wl-gathering.v2{ animation-name:jtWlLeafGather2; }
-  .jt-wl-leaf.jt-wl-gathering.v3{ animation-name:jtWlLeafGather3; }
-  @keyframes jtWlLeafGather1{
-    0%{   transform:rotate(var(--gather-start-rot,0deg)) translate(var(--gather-x,0px),-160%) scale(.85); opacity:0; filter:blur(.5px); }
-    42%{  transform:rotate(calc(var(--gather-start-rot,0deg) - 20deg)) translate(calc(var(--gather-x,0px) * .4),-52%) scale(.95); opacity:.85; filter:blur(.3px); }
-    76%{  transform:rotate(calc(var(--rest-rot,0deg) + 11deg)) translate(calc(var(--gather-x,0px) * -.16),-7%) scale(1.02); opacity:1; filter:blur(0px); }
-    100%{ transform:rotate(var(--rest-rot,0deg)) translate(0,0) scale(1); opacity:1; filter:blur(0px); }
-  }
-  @keyframes jtWlLeafGather2{
-    0%{   transform:rotate(var(--gather-start-rot,0deg)) translate(var(--gather-x,0px),-160%) scale(.84); opacity:0; filter:blur(.6px); }
-    48%{  transform:rotate(calc(var(--gather-start-rot,0deg) + 24deg)) translate(calc(var(--gather-x,0px) * -.36),-46%) scale(.94); opacity:.8; filter:blur(.4px); }
-    80%{  transform:rotate(calc(var(--rest-rot,0deg) - 9deg)) translate(calc(var(--gather-x,0px) * .14),-6%) scale(1.03); opacity:1; filter:blur(0px); }
-    100%{ transform:rotate(var(--rest-rot,0deg)) translate(0,0) scale(1); opacity:1; filter:blur(0px); }
-  }
-  @keyframes jtWlLeafGather3{
-    0%{   transform:rotate(var(--gather-start-rot,0deg)) translate(var(--gather-x,0px),-160%) scale(.86); opacity:0; filter:blur(.4px); }
-    38%{  transform:rotate(calc(var(--gather-start-rot,0deg) + 14deg)) translate(calc(var(--gather-x,0px) * .3),-60%) scale(.93); opacity:.75; filter:blur(.5px); }
-    74%{  transform:rotate(calc(var(--rest-rot,0deg) + 8deg)) translate(calc(var(--gather-x,0px) * -.2),-9%) scale(1.02); opacity:1; filter:blur(0px); }
-    100%{ transform:rotate(var(--rest-rot,0deg)) translate(0,0) scale(1); opacity:1; filter:blur(0px); }
-  }
-
-  .jt-wl-text{
-    position:relative; z-index:1;
-    display:flex; flex-direction:column; align-items:center; gap:4px;
-    text-align:center; padding:0 20px;
-    opacity:0;
-    transition:opacity .6s ease;
-  }
-  .jt-wl-text.jt-wl-text-visible{ opacity:1; }
-  .jt-wl-kicker{
-    font-family:var(--font-ui);
-    font-size:clamp(.68rem,1.6vw,.85rem);
-    letter-spacing:.1em; text-transform:uppercase;
-    color:#a7f3d0; opacity:.85;
-    max-width:min(90%,420px); line-height:1.5;
-  }
-  .jt-wl-title{
-    font-family:var(--font-ui); font-weight:800; letter-spacing:-.02em;
-    font-size:clamp(2rem,7vw,4.2rem);
-    background:linear-gradient(135deg,#22c55e,#10b981);
-    -webkit-background-clip:text; background-clip:text;
-    -webkit-text-fill-color:transparent; color:transparent;
-    /* [FIX] Was a 5-stop gradient cycling through itself on an infinite
-       pulse, plus a multi-stage drop-shadow animation breathing brighter
-       and dimmer forever -- that combination is what reads as "AI slop":
-       real product wordmarks don't glow-pulse. One static, subtle
-       ambient glow (matching the treatment already used on .hero-h1
-       elsewhere on this page) reads as a considered brand choice instead
-       of a special effect. */
-    filter:drop-shadow(0 0 22px rgba(16,185,129,.22)) drop-shadow(0 0 46px rgba(6,182,212,.12));
-  }
-
-  /* [FIX] These were flat CSS crossed-bars -- reads as "a glow effect",
-     not an actual star. Real sparkle/star-field photography (per the
-     reference images) has two ingredients: sharp star shapes with real
-     points/rays, and a scattering of small soft glowing orbs ("planets")
-     of varying size. .jt-wl-spark now renders a real 4-point star SVG
-     (green-white, with a tight glow instead of a blown-out blur), and
-     .jt-wl-planet renders a small round glowing orb with a faint halo
-     ring instead -- the two mixed together across the scatter. */
-  .jt-wl-sparks{ position:absolute; inset:-30px -50px; pointer-events:none; z-index:1; }
-  .jt-wl-spark{
-    position:absolute;
-    width:18px; height:18px;
-    opacity:0;
-  }
-  .jt-wl-spark-sm{ width:11px; height:11px; }
-  .jt-wl-spark svg{
-    display:block; width:100%; height:100%;
-    filter:drop-shadow(0 0 3px rgba(74,222,128,.9)) drop-shadow(0 0 8px rgba(34,197,94,.55));
-  }
-  .jt-wl-planet{
-    border-radius:50%;
-    background:radial-gradient(circle at 34% 30%, #ecfdf5 0%, #4ade80 40%, #15803d 78%, transparent 100%);
-    box-shadow:0 0 7px rgba(74,222,128,.6), 0 0 15px rgba(34,197,94,.32);
-  }
-  .jt-wl-planet::after{
-    content:'';
-    position:absolute; inset:-45%;
-    border-radius:50%;
-    border:1px solid rgba(74,222,128,.3);
-  }
-  .jt-wl-text.jt-wl-text-visible .jt-wl-spark{
-    animation:jtWlSparkTwinkle 2.6s ease-in-out infinite;
-  }
-  @keyframes jtWlSparkTwinkle{
-    0%,100%{ opacity:0;   transform:scale(.35) rotate(0deg); }
-    50%{     opacity:.95; transform:scale(1) rotate(10deg); }
-  }
-  .jt-wl-text.jt-wl-text-visible .jt-wl-planet{
-    animation-name:jtWlPlanetTwinkle;
-  }
-  @keyframes jtWlPlanetTwinkle{
-    0%,100%{ opacity:0;   transform:scale(.5); }
-    50%{     opacity:.85; transform:scale(1); }
-  }
-
-  @media (max-width:600px){
-    .jt-welcome-loop{ height:clamp(148px,36vw,200px); margin-bottom:2px; }
-    .jt-wl-kicker{ letter-spacing:.22em; }
-  }
-
-  @media (prefers-reduced-motion: reduce){
-    .jt-wl-leaves, .jt-wl-flare{ display:none; }
-    .jt-wl-text{ opacity:1; transform:none; transition:none; }
-    .jt-wl-text .jt-wl-title{ animation:none!important; }
-    .jt-wl-spark{ display:none; }
-  }
-</style>
-
-<script>
-(function(){
-  var root = document.getElementById('jtWelcomeLoop');
-  if (!root) return;
-
-  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  var leavesContainer = document.getElementById('jtWlLeaves');
-  var textEl = document.getElementById('jtWlText');
-  var flareEl = document.getElementById('jtWlFlare');
-
-  // Build the sparkle points once — they just twinkle in/out with the text.
-  // [FIX] Sparkles were flat CSS crossed-bars, which reads as a generic
-  // "glow effect" rather than an actual star. Real sparkle/star-field
-  // photography (what was asked for) has two ingredients: sharp 4-point
-  // star shapes with real rays, and a scattering of small soft glowing
-  // orbs (distant "planets") of varying size. Built both here: most points
-  // render an actual star SVG (crisp rays + a tiny glow, not a blur blob),
-  // and a handful render as small round glowing planet dots instead.
-  var STAR_SVG = '<svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="#eafff5" d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>';
-  (function buildSparks(){
-    var POS = [
-      {top:'4%', left:'6%'}, {top:'68%', left:'2%'}, {top:'8%', left:'92%'},
-      {top:'74%', left:'94%'}, {top:'-8%', left:'40%'}, {top:'100%', left:'58%'},
-      {top:'36%', left:'-4%', planet:true}, {top:'30%', left:'102%'}, {top:'-2%', left:'18%'},
-      {top:'92%', left:'22%', planet:true}, {top:'50%', left:'96%'}, {top:'56%', left:'-2%'},
-      {top:'16%', left:'30%', sm:true}, {top:'82%', left:'38%', sm:true},
-      {top:'22%', left:'66%', sm:true, planet:true}, {top:'86%', left:'70%', sm:true},
-      {top:'46%', left:'12%', sm:true}, {top:'42%', left:'86%', sm:true, planet:true},
-      {top:'-4%', left:'76%', sm:true}, {top:'104%', left:'10%', sm:true},
-      {top:'14%', left:'50%'}, {top:'78%', left:'54%', planet:true},
-      {top:'62%', left:'106%', sm:true}, {top:'26%', left:'-8%', sm:true}
-    ];
-    var wrap = document.createElement('div');
-    wrap.className = 'jt-wl-sparks';
-    POS.forEach(function(pos, i){
-      var s = document.createElement('span');
-      s.className = 'jt-wl-spark' + (pos.sm ? ' jt-wl-spark-sm' : '') + (pos.planet ? ' jt-wl-planet' : '');
-      if (!pos.planet) s.innerHTML = STAR_SVG;
-      s.style.top = pos.top;
-      s.style.left = pos.left;
-      s.style.animationDelay = (i * 0.16).toFixed(2) + 's';
-      wrap.appendChild(s);
-    });
-    textEl.appendChild(wrap);
-  })();
-
-  if (reduceMotion) {
-    // Static, calm fallback — no loop, no leaves, just the brand text.
-    textEl.classList.add('jt-wl-text-visible');
-    return;
-  }
-
-  var GREENS = ['#14532d', '#166534', '#15803d', '#0f3d20', '#1b5e34', '#1f7a3f'];
-  var TYPES  = ['jt-leaf-a', 'jt-leaf-b1', 'jt-leaf-b2', 'jt-leaf-c1', 'jt-leaf-c2'];
-
-  function rand(min, max){ return Math.random() * (max - min) + min; }
-  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-  // [FIX] Randomly assigns one of the three fall/rise motion variants added
-  // above per leaf, so neighboring leaves don't all move along the exact
-  // same path -- see the jtWlLeafClear1/2/3 and jtWlLeafGather1/2/3
-  // keyframe comments for why that uniformity was the main giveaway.
-  var VARIANTS = ['v1', 'v2', 'v3'];
-  function pickVariant(){ return pick(VARIANTS); }
-
-  function tileGrid(){
-    var w = root.clientWidth || 800;
-    var h = root.clientHeight || 200;
-    // [FIX] Fewer, slightly bigger tiles -- combined with never rebuilding
-    // this grid again after the first build, this keeps the number of
-    // simultaneously-animating elements down without visibly thinning the
-    // leaf coverage.
-    var size = Math.max(54, Math.min(100, w / 9));
-    var cols = Math.ceil(w / (size * 0.72)) + 1;
-    var rows = Math.ceil(h / (size * 0.72)) + 1;
-    var cx = cols / 2, cy = rows / 2;
-    var tiles = [];
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        var jx = (Math.random() - 0.5) * size * 0.5;
-        var jy = (Math.random() - 0.5) * size * 0.5;
-        var x = c * size * 0.72 - size * 0.3 + jx;
-        var y = r * size * 0.72 - size * 0.3 + jy;
-        var dist = Math.sqrt(Math.pow(c - cx, 2) + Math.pow(r - cy, 2));
-        tiles.push({ x: x, y: y, size: size * (0.85 + Math.random() * 0.4), dist: dist });
-      }
-    }
-    return tiles;
-  }
-
-  function buildLeaves(tiles){
-    leavesContainer.innerHTML = '';
-    var frag = document.createDocumentFragment();
-    var items = [];
-    tiles.forEach(function(t){
-      var el = document.createElement('div');
-      el.className = 'jt-wl-leaf';
-      el.style.left = t.x + 'px';
-      el.style.top = t.y + 'px';
-      el.style.width = t.size + 'px';
-      el.style.height = t.size + 'px';
-      el.style.color = pick(GREENS);
-      // [FIX] Every leaf previously stacked in DOM/grid order regardless of
-      // size -- a "closer" (bigger) leaf could end up layered BEHIND a
-      // "farther" (smaller) one, which flattens the illusion of depth. Bigger
-      // tiles are meant to read as nearer to the viewer, so they now
-      // consistently layer on top.
-      el.style.zIndex = Math.round(t.size);
-      var restRot = Math.floor(rand(-16, 16));
-      el.style.transform = 'rotate(' + restRot + 'deg)';
-      el.innerHTML = '<svg><use href="#' + pick(TYPES) + '"></use></svg>';
-      frag.appendChild(el);
-      items.push({ el: el, dist: t.dist, restRot: restRot });
-    });
-    leavesContainer.appendChild(frag);
-    return items;
-  }
-
-  var maxDist = 1, leaves = [];
-  var cycleTimers = [];
-  var hasStarted = false;
-
-  function after(ms, fn){ cycleTimers.push(setTimeout(fn, ms)); }
-
-  function computeMaxDist(items){
-    var m = 1;
-    for (var i = 0; i < items.length; i++) if (items[i].dist > m) m = items[i].dist;
-    return m;
-  }
-
-  function clearLeaves(items, maxD){
-    for (var i = 0; i < items.length; i++) {
-      var item = items[i];
-      var startRot = item.restRot || 0;
-      item.el.style.setProperty('--start-rot', startRot + 'deg');
-      item.el.style.setProperty('--fall-x', Math.round(rand(-22, 22)) + 'px');
-      item.el.style.setProperty('--fall-rot', (startRot + rand(-32, 32)) + 'deg');
-      var delay = (item.dist / maxD) * 0.6 + Math.random() * 0.14;
-      var dur = rand(1.9, 2.5);
-      item.el.style.animationDelay = delay.toFixed(2) + 's';
-      item.el.style.animationDuration = dur.toFixed(2) + 's';
-      item.el.classList.remove('jt-wl-gathering', 'v1', 'v2', 'v3');
-      item.el.classList.add('jt-wl-clearing', pickVariant());
-    }
-  }
-
-  function gatherLeaves(items, maxD){
-    // [FIX] This used to call buildLeaves(tiles) here, which wipes the
-    // container and creates a brand-new set of leaf elements (each with
-    // its own inline SVG) from scratch. That happened on every single loop
-    // iteration, forever, for as long as the banner had ever been started
-    // -- destroying and recreating ~100 DOM nodes every ~11.5s is exactly
-    // the kind of repeating layout/paint cost that reads as "the site
-    // lags sometimes". The leaves never actually need to be destroyed:
-    // animation-fill-mode:forwards already leaves them sitting invisible
-    // in place once they finish clearing, so "gathering" them back is just
-    // re-triggering the SAME elements' gather animation from scratch --
-    // no new nodes, no innerHTML reset, ever, after the very first build.
-    for (var i = 0; i < items.length; i++) {
-      var item = items[i];
-      var restRot = item.restRot || 0;
-      var gatherStartRot = restRot + Math.floor(rand(-32, 32));
-      item.el.style.setProperty('--gather-start-rot', gatherStartRot + 'deg');
-      item.el.style.setProperty('--gather-x', Math.round(rand(-22, 22)) + 'px');
-      item.el.style.setProperty('--rest-rot', restRot + 'deg');
-      var delay = (item.dist / maxD) * 0.6 + Math.random() * 0.14;
-      var dur = rand(1.9, 2.5);
-      item.el.style.animationDelay = delay.toFixed(2) + 's';
-      item.el.style.animationDuration = dur.toFixed(2) + 's';
-      item.el.classList.remove('jt-wl-clearing', 'v1', 'v2', 'v3');
-      void item.el.offsetWidth; // force a reflow so the animation restarts cleanly on the reused element
-      item.el.classList.add('jt-wl-gathering', pickVariant());
-    }
-  }
-
-  // [FIX] The actual bug: an IntersectionObserver used to tear the banner
-  // down (wipe the leaves, hide the text) the instant it scrolled out of
-  // view, then rebuild it from a blank "covered" state on scroll back --
-  // so scrolling down a little mid-reveal and quickly back up would snap
-  // straight back to covered and restart the whole thing. The loop itself
-  // isn't the problem and should keep running indefinitely; what needed to
-  // change is that it should never be paused/reset by scroll position at
-  // all. So: use the observer only to lazily fire the very first start
-  // (no point animating a banner that's never been scrolled to), then
-  // disconnect it for good. From then on the cycle is driven purely by its
-  // own timers -- nothing here ever looks at scroll position again, so
-  // leaving and returning to the banner mid-reveal just shows it exactly
-  // where it actually is, never covered-and-restarted.
-  function runCycle(){
-    if (!leaves.length) {
-      var tiles = tileGrid();
-      leaves = buildLeaves(tiles); // only ever runs once, the very first time
-      maxDist = computeMaxDist(leaves);
-    }
-
-    after(900, function(){
-      clearLeaves(leaves, maxDist);
-      textEl.classList.add('jt-wl-text-visible');
-      flareEl.classList.remove('jt-wl-flare-burst');
-      void flareEl.offsetWidth;
-      flareEl.classList.add('jt-wl-flare-burst');
-    });
-    after(7800, function(){
-      textEl.classList.remove('jt-wl-text-visible');
-    });
-    after(8100, function(){
-      gatherLeaves(leaves, maxDist); // same elements every time -- nothing rebuilt
-    });
-    after(11500, function(){
-      runCycle(); // loop — this is intentional and permanent, not a bug
-    });
-  }
-
-  function start(){
-    if (hasStarted) return;
-    hasStarted = true;
-    runCycle();
-  }
-
-  // Lazily trigger the very first play once the banner is actually on
-  // screen, then stop watching entirely — no further visibility checks,
-  // ever, so nothing can pause/reset the loop based on scroll again.
-  var io = new IntersectionObserver(function(entries){
-    entries.forEach(function(entry){
-      if (entry.isIntersecting && !hasStarted) {
-        start();
-        io.disconnect();
-      }
-    });
-  }, {threshold:0.35});
-  io.observe(root);
-})();
-</script>
-<!-- ═══════════════ /Joytree welcome loop ═══════════════ -->
-
 <section class="hero">
-  <div class="hero-glow"></div>
-  <div class="hero-glow-2"></div>
-
   <style>
     /* ── New hero: clean, single-focus, no background photo ── */
     .hero-chip{
@@ -8238,6 +7790,85 @@ window.landingToggleTheme = function(){
     </div>
   </div>
 </section>
+<!-- ── LIVE PLATFORM STATS ─────────────────────────────────────────── -->
+<section class="jt-stats-strip" id="jt-live-stats">
+  <div class="jt-stats-kicker">Right now, on Joytree</div>
+  <div class="jt-stats-row">
+    <div class="jt-stat-item">
+      <div class="jt-stat-value" id="jtStatDeployments">—</div>
+      <div class="jt-stat-label">Total Deploys Shipped</div>
+    </div>
+    <div class="jt-stat-sep"></div>
+    <div class="jt-stat-item">
+      <div class="jt-stat-value" id="jtStatProjects">—</div>
+      <div class="jt-stat-label">Projects Hosted</div>
+    </div>
+    <div class="jt-stat-sep"></div>
+    <div class="jt-stat-item">
+      <div class="jt-stat-value" id="jtStatUptime">—</div>
+      <div class="jt-stat-label">Build Success Rate</div>
+    </div>
+    <div class="jt-stat-sep"></div>
+    <div class="jt-stat-item">
+      <div class="jt-stat-value">&lt;60s</div>
+      <div class="jt-stat-label">Typical Deploy Time</div>
+    </div>
+  </div>
+</section>
+<script>
+(function(){
+  // Real counter, pulled from the platform's own live MongoDB data via
+  // /api/public/stats -- not a hardcoded/fake number. Polls periodically
+  // so a visitor watching the landing page sees the count actually move
+  // as real deploys happen elsewhere on the platform, without needing to
+  // refresh. Animates each update by counting up/down to the new value
+  // rather than snapping, so the change itself is visible.
+  function animateValue(el, from, to, duration) {
+    if (from === to) { el.textContent = to.toLocaleString(); return; }
+    const start = performance.now();
+    function tick(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const current = Math.round(from + (to - from) * eased);
+      el.textContent = current.toLocaleString();
+      if (t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  let lastDeployments = null, lastProjects = null, lastUptime = null;
+
+  async function refreshLiveStats() {
+    try {
+      const res = await fetch('/api/public/stats', { signal: AbortSignal.timeout(6000) });
+      const d = await res.json();
+      if (!d.ok) return;
+
+      const depEl = document.getElementById('jtStatDeployments');
+      const projEl = document.getElementById('jtStatProjects');
+      const upEl = document.getElementById('jtStatUptime');
+      if (depEl && lastDeployments !== d.totalDeployments) {
+        animateValue(depEl, lastDeployments ?? d.totalDeployments, d.totalDeployments, 900);
+        lastDeployments = d.totalDeployments;
+      }
+      if (projEl && lastProjects !== d.totalProjects) {
+        animateValue(projEl, lastProjects ?? d.totalProjects, d.totalProjects, 900);
+        lastProjects = d.totalProjects;
+      }
+      if (upEl && lastUptime !== d.uptimePct) {
+        upEl.textContent = d.uptimePct.toFixed(1) + '%';
+        lastUptime = d.uptimePct;
+      }
+    } catch (e) {
+      // Fail quiet -- landing page still reads fine without live numbers
+    }
+  }
+
+  refreshLiveStats();
+  setInterval(refreshLiveStats, 20000);
+})();
+</script>
+
 <!-- ── HOW IT WORKS ────────────────────────────────────────────────── -->
 <section class="how-section neon-beam-border" id="how-it-works">
   <div class="reveal text-center" style="max-width:600px;margin:0 auto 56px;">
@@ -45816,18 +45447,9 @@ INSERT IGNORE INTO Feedback (User_ID,Product_ID,Rating,Comment) VALUES
      of leaving the hero looking flat, plus a slow cheap breathing pulse (opacity
      only — no layout/paint cost beyond what's already there). */
   @media (max-width:768px){
-    .hero::before{
-      background:
-        radial-gradient(circle at 28% 28%,rgba(16,185,129,.3),transparent 52%),
-        radial-gradient(circle at 76% 18%,rgba(34,211,238,.26),transparent 52%);
-      animation: jtHeroBreathe 6s ease-in-out infinite;
-    }
-    .hero::after{
-      background:radial-gradient(ellipse at center,rgba(16,185,129,.28),transparent 70%);
-    }
-    @keyframes jtHeroBreathe{ 0%,100%{opacity:.72} 50%{opacity:1} }
-
-    .home-logo-showcase{ margin:4px auto 10px; }
+    .hero::before{ display:none; }
+    .hero::after{ display:none; }
+        .home-logo-showcase{ margin:4px auto 10px; }
     .home-logo-showcase img{ width:60px; height:60px; }
     .home-logo-showcase .home-logo-name{ font-size:1.28rem; }
 
