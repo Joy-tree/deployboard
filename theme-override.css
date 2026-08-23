@@ -7200,12 +7200,14 @@ html[data-theme="light"] #page-logs {
 /* "No deployments" empty state — was a filled green-tinted rounded
    box, now a flat outlined icon matching every other empty state
    across the redesign */
-#page-deployments .empty-icon {
+#page-deployments .empty-icon,
+#page-dashboard .empty-icon {
   background: transparent !important;
   border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
-#page-deployments .empty-icon svg {
+#page-deployments .empty-icon svg,
+#page-dashboard .empty-icon svg {
   color: var(--text-2) !important;
   opacity: 1 !important;
 }
