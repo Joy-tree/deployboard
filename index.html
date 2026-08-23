@@ -5646,7 +5646,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=48" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=49" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5719,7 +5719,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=48&recover=' + token;
+    fresh.href = 'theme-override.css?v=49&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -33126,62 +33126,42 @@ function initPWAInstallPrompt(){
     // enumerate every possible "don't do it now" case up front. The
     // in-flight-OAuth flag is kept as an explicit extra guard in case
     // any browser ever reports a tab as still "visible" mid-redirect.
-    let jtSwUpdatePending = false;
-    function jtTryReloadIfSafe() {
-      if (!jtSwUpdatePending) return;
+    // [FIX] Consolidated into ONE controllerchange handler instead of two
+    // separate, overlapping listeners on the same event (a backgrounded-
+    // tab-only version, plus a later "reload immediately regardless"
+    // version added on top of it) -- the second listener always fired
+    // first in practice and reloaded unconditionally, which silently made
+    // the first listener's entire background-only gating dead code. That
+    // kind of duplicate-listener drift is exactly the sort of thing that
+    // happens when a fix gets layered on top of an earlier one instead of
+    // replacing it -- consolidating avoids two pieces of logic quietly
+    // fighting (or one making the other pointless) the next time either
+    // needs to change again.
+    //
+    // Real-world reasoning for reloading IMMEDIATELY, regardless of tab
+    // visibility, the moment control changes at all:
+    //   - A visible, foregrounded tab reloading the instant a new worker
+    //     takes over is jarring mid-interaction, BUT
+    //   - This app is not the kind of long-lived dashboard where someone
+    //     free-types into a field for minutes uninterrupted; it's a
+    //     deploy/build console. The in-flight-OAuth guard below still
+    //     protects the one genuinely fragile moment (a single-use OAuth
+    //     code mid-exchange).
+    //   - Reloading immediately closes the EXACT gap reported: a fresh
+    //     session on any deep link staying stale until a LATER,
+    //     coincidental navigation to Dashboard finally benefits from an
+    //     update that had already finished activating in the background.
+    //     Waiting for the tab to background first reintroduces that same
+    //     gap for anyone who doesn't background the tab before navigating
+    //     elsewhere within the app.
+    navigator.serviceWorker.addEventListener('controllerchange', function onSwControllerChange(){
       if (window._jtOAuthExchangeInFlight === true) return;
-      if (document.visibilityState !== 'hidden') return;
       let already = false;
       try { already = sessionStorage.getItem('jt_sw_reloaded') === '1'; } catch (_) {}
       if (already) return;
       try { sessionStorage.setItem('jt_sw_reloaded', '1'); } catch (_) {}
       window.location.reload();
-    }
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      jtSwUpdatePending = true;
-      jtTryReloadIfSafe();
     });
-    document.addEventListener('visibilitychange', jtTryReloadIfSafe);
-
-    // [FIX] The controllerchange listener above only helps a TAB that's
-    // already open when a new worker activates -- it does nothing for a
-    // completely fresh browser session (browser fully closed, then
-    // reopened) whose very first request may still be served/controlled
-    // by an old worker registration for however long it takes THIS load's
-    // registration+update+activate cycle to finish in the background.
-    // That gap is exactly the "route deep-links load stale, only a
-    // Dashboard reload afterwards fixes it" pattern -- by the time the
-    // Dashboard reload happens, the new worker has finished activating
-    // from the FIRST page's registration call, so it looks like Dashboard
-    // specifically "fixes" things, when really it's just the first
-    // reload to happen AFTER the worker update finished in the
-    // background, regardless of which page that reload lands on.
-    //
-    // Close that gap directly: if this load's controller is a DIFFERENT
-    // worker than the one that ends up active moments later (i.e. an
-    // update was waiting and just took over), do one single, one-time
-    // hard reload of THIS SPECIFIC PAGE right now -- not a future tab,
-    // not after backgrounding, immediately -- so a fresh session never
-    // has to rely on "revisit Dashboard eventually" to get correct
-    // behavior. Guarded by sessionStorage so it can only ever fire once
-    // per tab, never loops.
-    (function forceFreshSessionReloadIfControllerChanged(){
-      try {
-        if (sessionStorage.getItem('jt_sw_fresh_reloaded') === '1') return;
-      } catch(_) {}
-      const controllerAtLoad = navigator.serviceWorker.controller;
-      navigator.serviceWorker.ready.then((reg) => {
-        // Give any in-flight activate a brief moment to finish, then check
-        // whether the controller actually changed out from under this load.
-        setTimeout(() => {
-          const controllerNow = navigator.serviceWorker.controller;
-          if (controllerAtLoad && controllerNow && controllerAtLoad !== controllerNow) {
-            try { sessionStorage.setItem('jt_sw_fresh_reloaded', '1'); } catch(_) {}
-            window.location.reload();
-          }
-        }, 600);
-      }).catch(()=>{});
-    })();
   }
   const card = document.getElementById('installPromptCard');
   const btnInstall = document.getElementById('installPromptInstall');
