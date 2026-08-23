@@ -6263,4 +6263,81 @@ html[data-theme="light"] #page-deployments {
   background: var(--primary) !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   NEW RESOURCE PAGE — same flat treatment as the rest of the rebuild.
+   Header converted to the shared dcx-header system. Search bar loses
+   its glowing green icon and heavy fill. Resource cards lose the
+   gradient background, the top rainbow ::before bar, and the box
+   shadow — now thin-bordered boxes with proper spacing, matching
+   Repos/Deployments/Dashboard.
+   ══════════════════════════════════════════════════════════════════ */
+#page-new-resource {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-new-resource {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+
+/* Search bar → flat, no glowing icon, no heavy fill */
+#page-new-resource .resource-search-wrap .input {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-new-resource .resource-search-wrap .input:focus {
+  border-color: var(--primary) !important;
+}
+#page-new-resource .resource-search-wrap svg {
+  color: var(--text-3) !important;
+  filter: none !important;
+}
+
+#page-new-resource .resource-section-label {
+  color: var(--primary) !important;
+}
+
+/* Resource cards → flat, thin border, no gradient fill/glow/rainbow bar */
+#page-new-resource .resource-card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+#page-new-resource .resource-card::before {
+  display: none !important;
+}
+#page-new-resource .resource-card:hover {
+  background: transparent !important;
+  border-color: var(--primary) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+#page-new-resource .resource-grid {
+  gap: 12px !important;
+}
+#page-new-resource .resource-icon {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-new-resource .resource-icon img,
+#page-new-resource .resource-icon svg {
+  filter: none !important;
+}
+#page-new-resource .resource-card-title { color: var(--text) !important; }
+#page-new-resource .resource-card-desc { color: var(--text-2) !important; }
+#page-new-resource .resource-card-tags span {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-3) !important;
+}
+#page-new-resource .resource-arrow { color: var(--text-3) !important; }
+#page-new-resource .resource-card:hover .resource-arrow { color: var(--primary) !important; }
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
