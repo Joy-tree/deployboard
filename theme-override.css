@@ -573,7 +573,7 @@ html[data-theme="light"] .streak-timeline-row em { color: var(--jt-text-faint) !
 html[data-theme="light"] .surface-kicker { color: var(--jt-brand-strong) !important; }
 html[data-theme="light"] .surface-sub { color: var(--jt-text-faint) !important; }
 html[data-theme="light"] .surface-title { color: var(--jt-text) !important; }
-html[data-theme="light"] .tree-node-status-pill.pill-idle { color: var(--jt-text-faint) !important; }
+html[data-theme="light"] .tree-node-status-pill.pill-idle { color: #9ca3af !important; }
 html[data-theme="light"] .vp-sub { color: var(--jt-text-faint) !important; }
 html[data-theme="light"] .vp-sub strong { color: var(--jt-text-faint) !important; }/* ---------------------------------------------------------------------
    8. LIGHT-MODE BACKGROUND OVERRIDES — same systematic scan, this time for
@@ -3681,27 +3681,37 @@ html[data-theme="light"] .tree-thumb-placeholder {
 }
 html[data-theme="light"] .tree-thumb-placeholder svg {
   opacity: .5 !important;
-  color: var(--text-3) !important;
+  color: #9ca3af !important;
 }
 html[data-theme="light"] .tree-thumb-placeholder span {
-  color: var(--text-3) !important;
+  color: #9ca3af !important;
 }
-html[data-theme="light"] .tree-node-name,
+/* [FIX] Real bug found: these previously used var(--text), which on
+   light theme resolves to a DARK color (correct for light page
+   backgrounds) -- but this card's body deliberately stays dark (#111)
+   on BOTH themes (matching Vercel/Netlify project card conventions), so
+   forcing dark text onto a dark card produced near-invisible text,
+   exactly what was reported. These need permanent light values that
+   never follow the page's own theme, since the card itself never
+   changes color. */
+html[data-theme="light"] .tree-node-name {
+  color: #f5f5f5 !important;
+}
 html[data-theme="light"] .tree-node-url {
-  color: var(--text) !important;
+  color: #67e8f9 !important;
 }
 html[data-theme="light"] .tree-node-footer {
   background: #0a0a0a !important;
   border-top-color: rgba(255,255,255,0.06) !important;
-  color: var(--text-3) !important;
+  color: #9ca3af !important;
 }
 html[data-theme="light"] .tree-node-footer-branch {
   background: rgba(255,255,255,0.06) !important;
   border-color: rgba(255,255,255,0.1) !important;
-  color: var(--text-3) !important;
+  color: #9ca3af !important;
 }
 html[data-theme="light"] .tree-node-footer svg {
-  color: var(--text-3) !important;
+  color: #9ca3af !important;
   opacity: .6 !important;
 }
 /* Action buttons keep the site's real green primary/danger colors --
