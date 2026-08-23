@@ -4477,9 +4477,45 @@ html[data-theme="light"] #page-new-deploy {
   max-width: 66ch;
 }
 
-/* #page-new-resource never got these — its dcx-header/kicker/title/sub
-   rendered with zero spacing (browser defaults only) since only
-   #page-new-deploy was ever scoped for this shared component. */
+/* #page-databases never got these either — same missing-scope bug
+   as #page-new-resource above. Its hero (kicker/title/sub) rendered
+   with zero spacing since only #page-new-deploy was ever scoped. */
+#page-databases .dcx-header { margin-bottom: 22px; }
+#page-databases .dcx-header .back-link { margin-bottom: 16px; }
+#page-databases .dcx-kicker {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+#page-databases .dcx-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.15;
+}
+#page-databases .dcx-sub {
+  font-size: .86rem;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin-top: 8px;
+  max-width: 66ch;
+}
+#page-databases .btn-primary {
+  border-radius: 0 !important;
+}
+#page-databases .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-databases .btn-ghost:hover {
+  border-color: var(--primary) !important;
+}
 #page-new-resource .dcx-header { margin-bottom: 22px; }
 #page-new-resource .dcx-header .back-link { margin-bottom: 16px; }
 #page-new-resource .dcx-kicker {
