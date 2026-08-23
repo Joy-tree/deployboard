@@ -3948,40 +3948,61 @@ html[data-theme="light"] .dep-card-logs-btn {
    DEPLOYMENTS — status filter dropdown + badges: flat dark, no green
    gradient glow. Same consistent palette as Settings/Projects.
    ══════════════════════════════════════════════════════════════════ */
+/* ── Status filter dropdown — themed properly for dark AND light ── */
+/* Dark (default) */
 #cs_deployFilterStatus .custom-select-trigger {
-  background: #111 !important;
-  border-color: var(--border) !important;
-  color: var(--text) !important;
+  background: var(--jt-bg-raised, #111) !important;
+  border-color: var(--jt-border, var(--border)) !important;
+  color: var(--jt-text, var(--text)) !important;
+  border-radius: 10px !important;
 }
 #cs_deployFilterStatus .custom-select-dropdown {
-  background: #111 !important;
-  border-color: var(--border) !important;
+  background: var(--jt-bg-raised, #111) !important;
+  border-color: var(--jt-border, var(--border)) !important;
+  border-radius: 12px !important;
   box-shadow: 0 12px 32px rgba(0,0,0,.5) !important;
 }
 #cs_deployFilterStatus .cs-option {
-  color: var(--text-2) !important;
+  color: var(--jt-text-dim, var(--text-2)) !important;
+  border-radius: 8px !important;
 }
 #cs_deployFilterStatus .cs-option:hover {
-  background: var(--bg-hover) !important;
-  color: var(--text) !important;
+  background: color-mix(in srgb, var(--primary) 10%, transparent) !important;
+  color: var(--jt-text, var(--text)) !important;
 }
 #cs_deployFilterStatus .cs-option.selected {
-  background: var(--bg-hover) !important;
+  background: color-mix(in srgb, var(--primary) 14%, transparent) !important;
   color: var(--primary) !important;
 }
-html[data-theme="light"] #cs_deployFilterStatus .custom-select-trigger,
+/* Neutral border when open — no green highlight glow */
+#cs_deployFilterStatus .custom-select-trigger.open {
+  border-color: var(--jt-border, var(--border)) !important;
+}
+
+/* Light theme override — use the proper light palette, NOT #111 */
+html[data-theme="light"] #cs_deployFilterStatus .custom-select-trigger {
+  background: var(--jt-bg-sunken, #EFF3EC) !important;
+  border-color: var(--jt-border, #DCE3D8) !important;
+  color: var(--jt-text, #16211B) !important;
+}
 html[data-theme="light"] #cs_deployFilterStatus .custom-select-dropdown {
-  background: #111 !important;
-  border-color: var(--border) !important;
-  color: var(--text) !important;
+  background: var(--jt-bg-raised, #FAFAF8) !important;
+  border-color: var(--jt-border, #DCE3D8) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12) !important;
 }
 html[data-theme="light"] #cs_deployFilterStatus .cs-option {
-  color: var(--text-2) !important;
+  color: var(--jt-text-dim, #4A5A50) !important;
 }
-/* Neutral border when open -- no green highlight glow */
-#cs_deployFilterStatus .custom-select-trigger.open,
+html[data-theme="light"] #cs_deployFilterStatus .cs-option:hover {
+  background: var(--jt-brand-tint, #E4F1EA) !important;
+  color: var(--jt-brand, #1F6E52) !important;
+}
+html[data-theme="light"] #cs_deployFilterStatus .cs-option.selected {
+  background: var(--jt-brand-tint, #E4F1EA) !important;
+  color: var(--jt-brand-strong, #145A41) !important;
+}
 html[data-theme="light"] #cs_deployFilterStatus .custom-select-trigger.open {
-  border-color: var(--border) !important;
+  border-color: var(--jt-border, #DCE3D8) !important;
 }
 
 
@@ -3994,6 +4015,16 @@ html[data-theme="light"] #cs_deployFilterStatus .custom-select-trigger.open {
   justify-content: center;
   width: 18px; height: 18px;
   color: var(--text-2);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+/* Constrain devicon <img> and inline <svg> to the 18×18 box */
+.dep-fw-icon img,
+.dep-fw-icon svg {
+  width: 18px !important;
+  height: 18px !important;
+  object-fit: contain;
+  display: block;
   flex-shrink: 0;
 }
 .dep-card-actions {
