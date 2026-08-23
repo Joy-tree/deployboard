@@ -7587,4 +7587,154 @@ html[data-theme="light"] #page-project-detail {
   border-bottom-color: var(--dcx-row-border) !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   CREATE DATABASE PAGE — same flat treatment as the rest of the
+   rebuild. Hero, engine picker dropdown, form card, inputs, custom
+   dropdowns (Memory/Link to Project), and footer buttons all lose
+   their filled #111/rgba(255,255,255,...) backgrounds and rounded
+   corners for thin borders and dividers only. Per-engine icon colors
+   (MySQL orange, MongoDB green, etc) stay as a legitimate category
+   signal, matching the language-badge reasoning used elsewhere.
+   ══════════════════════════════════════════════════════════════════ */
+#page-db-create {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-db-create {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+
+/* Hero — flat, no fill, sharp corners */
+#page-db-create .app-hero {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-db-create .app-hero-kicker { color: var(--primary) !important; }
+#page-db-create .app-hero-title { color: var(--text) !important; }
+#page-db-create .app-hero-subtitle { color: var(--text-2) !important; }
+#page-db-create .hero-status-pill {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+#page-db-create .hero-status-pill::before {
+  box-shadow: none !important;
+}
+#page-db-create .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-db-create .btn-ghost:hover {
+  border-color: var(--primary) !important;
+}
+
+/* Database Type section label */
+#page-db-create .db-create-section-title { color: var(--text) !important; }
+
+/* Engine picker dropdown — flat trigger and menu, no green-tint fill */
+#page-db-create .db-engine-dropdown-trigger {
+  border-radius: 0 !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-db-create .db-engine-dropdown-trigger:hover,
+#page-db-create .db-engine-dropdown.open .db-engine-dropdown-trigger {
+  border-color: var(--primary) !important;
+  background: transparent !important;
+}
+#page-db-create .db-engine-dropdown-menu {
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-top: none !important;
+  border-radius: 0 !important;
+}
+#page-db-create .db-engine-menu-item {
+  border-top: 1px solid var(--dcx-row-border) !important;
+  background: transparent !important;
+}
+#page-db-create .db-engine-menu-item:hover,
+#page-db-create .db-engine-menu-item.selected {
+  background: transparent !important;
+  color: var(--primary) !important;
+}
+#page-db-create .db-engine-btn-name { color: var(--text) !important; }
+#page-db-create .db-engine-dropdown.open .db-engine-menu-item.selected .db-engine-btn-name,
+#page-db-create .db-engine-menu-item.selected .db-engine-btn-name {
+  color: var(--primary) !important;
+}
+
+/* Configuration / Advanced form cards — flat, no fill */
+#page-db-create .db-create-form {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-db-create .db-create-divider {
+  background: var(--dcx-row-border) !important;
+}
+#page-db-create .db-create-input,
+#page-db-create .db-create-select {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-db-create .db-create-input:focus,
+#page-db-create .db-create-select:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+#page-db-create .db-create-select option { background: var(--bg, #000) !important; }
+
+/* Custom dropdowns (Memory Limit, Link to Project) */
+#page-db-create .cdd-trigger {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-db-create .cdd-trigger:hover {
+  border-color: var(--primary) !important;
+  background: transparent !important;
+}
+#page-db-create .cdd.cdd-open .cdd-trigger {
+  border-color: var(--primary) !important;
+  background: transparent !important;
+}
+#page-db-create .cdd-menu {
+  background: var(--bg, #000) !important;
+  border-color: var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-db-create .cdd-item {
+  border-top: 1px solid var(--dcx-row-border) !important;
+  background: transparent !important;
+}
+#page-db-create .cdd-item:hover,
+#page-db-create .cdd-item-selected {
+  background: transparent !important;
+  color: var(--primary) !important;
+}
+#page-db-create .cdd-check-on {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+/* Footer actions — sharp corners */
+#page-db-create .db-create-cancel {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+  color: var(--text-2) !important;
+}
+#page-db-create .db-create-cancel:hover {
+  border-color: var(--primary) !important;
+  color: var(--text) !important;
+}
+#page-db-create .db-create-submit {
+  border-radius: 0 !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
