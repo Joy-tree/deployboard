@@ -4349,10 +4349,19 @@ html[data-theme="light"] #page-repos .repo-refresh-btn {
   border: 1px solid var(--jt-border, rgba(255,255,255,.07)) !important;
   border-radius: 18px !important;
   padding: 20px !important;
+  min-height: 330px !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 #page-code-upload .cu-file-card:hover {
   border-color: color-mix(in srgb, var(--primary) 35%, var(--jt-border, transparent)) !important;
   transform: translateY(-3px);
+}
+#page-code-upload .cu-file-meta {
+  flex: 1;
+}
+#page-code-upload .cu-file-actions {
+  margin-top: auto;
 }
 #page-code-upload .cu-lang-badge {
   width: 56px !important; height: 56px !important;
