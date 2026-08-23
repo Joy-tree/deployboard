@@ -3305,7 +3305,12 @@ html[data-theme="light"] #settingsTabs .tab.active {
 html[data-theme="light"] .jt-leaves-fall {
   opacity: .22 !important;
 }
-#page-settings .jt-leaves-fall {
+/* Hide leaves everywhere inside the app shell — they belong on the
+   landing page only. The #jtLeavesFall container floats at z-index:50
+   over all content; hiding it when app-mode is active kills the visual
+   noise on ALL dashboard pages (projects, deployments, repos, etc.)
+   without touching the landing page animation. */
+html.app-mode .jt-leaves-fall {
   display: none !important;
 }
 
