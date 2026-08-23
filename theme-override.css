@@ -6072,4 +6072,97 @@ html[data-theme="light"] #page-code-upload {
 }
 
 
+/* ══════════════════════════════════════════════════════════════════
+   DASHBOARD PAGE — same flat treatment as Repos/Upload/Settings/New
+   Deployment. Stat cards, Quick Actions tiles, and header buttons all
+   had filled #111 backgrounds with rounded corners — the exact "AI
+   generated card" look flagged everywhere else. Flattened to thin
+   borders only, sharp corners, no fill.
+   ══════════════════════════════════════════════════════════════════ */
+#page-dashboard {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-dashboard {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+
+/* Header buttons — Browse Repos / New Deployment */
+#page-dashboard .dash-header-actions .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-dashboard .dash-header-actions .btn-ghost:hover {
+  border-color: var(--primary) !important;
+}
+#page-dashboard .dash-header-actions .btn-primary {
+  border-radius: 0 !important;
+}
+
+/* KPI stat cards (Total Projects, Successful Deploys, Failed Builds,
+   Avg Build Time, Projects Quota, Build-Time Quota) → flat, thin
+   border only, sharp corners, no fill */
+#page-dashboard .stat-card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-dashboard .stat-card:hover {
+  border-color: var(--primary) !important;
+  background: transparent !important;
+}
+
+/* Quick Actions grid → flat outlined tiles instead of filled boxes */
+#page-dashboard .dash-qa-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  border: 1px solid var(--dcx-field-border);
+}
+#page-dashboard .dash-qa-btn {
+  background: transparent !important;
+  border-radius: 0 !important;
+  min-height: 54px !important;
+}
+#page-dashboard .dash-qa-btn:hover {
+  background: transparent !important;
+  color: var(--primary) !important;
+}
+
+/* Deploy-status confirmation box under Quick Actions */
+#page-dashboard #deployLaunchStatus {
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+/* Section dividers — .dash-divider had zero CSS anywhere (rendered as
+   an invisible collapsed div), so give it real height/spacing too */
+#page-dashboard .dash-divider {
+  height: 1px;
+  background: var(--dcx-row-border) !important;
+  margin: 24px 0;
+}
+
+/* View all / btn-sm ghost buttons throughout dashboard sections */
+#page-dashboard .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-dashboard .btn-ghost:hover {
+  border-color: var(--primary) !important;
+}
+
+/* Network Metrics selects */
+#page-dashboard .input {
+  border-radius: 0 !important;
+}
+
+@media(max-width:640px){
+  #page-dashboard .dash-qa-grid { grid-template-columns: 1fr; }
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
