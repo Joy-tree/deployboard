@@ -7740,6 +7740,24 @@ html[data-theme="light"] #page-project-detail {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   DIAGNOSTIC — TEMPORARY, undo once we confirm this is a caching/
+   deploy issue and not a CSS bug. Strips every border, background,
+   radius, and shadow from EVERY element on this page, no exceptions,
+   so if the page still shows boxes/tint after this ships, that proves
+   it's not this stylesheet doing it (nothing left in here to blame) —
+   it's an old cached copy of this file (or the page's HTML) being
+   served instead of what's actually on `main`. Remove this whole
+   block once that's confirmed. */
+#page-project-detail * {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
    CREATE DATABASE PAGE — same flat treatment as the rest of the
    rebuild. Hero, engine picker dropdown, form card, inputs, custom
    dropdowns (Memory/Link to Project), and footer buttons all lose
