@@ -4120,6 +4120,11 @@ html[data-theme="light"] .cs-option.selected {
   border-bottom: 1px solid var(--dcx-field-border, var(--border)) !important;
   color: var(--text) !important;
   border-radius: 0;
+  transition: border-color .15s, box-shadow .15s;
+}
+#page-repos .repo-search-wrap .input:focus {
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
 }
 #page-repos .repo-search-wrap svg { color: var(--text-3) !important; }
 #page-repos .repo-refresh-btn {
@@ -4138,16 +4143,18 @@ html[data-theme="light"] .cs-option.selected {
    matching the dcx-* system used everywhere else on this rebuild. */
 #page-repos .repo-card {
   background: transparent !important;
-  border: none !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
-  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
   box-shadow: none !important;
-  padding-bottom: 28px !important;
-  margin-bottom: 4px !important;
+  padding: 20px !important;
 }
 #page-repos .repo-card:hover {
-  border-bottom-color: var(--primary) !important;
+  border-color: var(--primary) !important;
   transform: none;
+}
+#page-repos .repo-grid {
+  display: grid !important;
+  gap: 20px !important;
 }
 #page-repos .repo-lang-emblem {
   background: transparent !important;
@@ -4205,7 +4212,7 @@ html[data-theme="light"] .cs-option.selected {
 }
 #page-repos .repo-import-btn {
   box-shadow: none !important;
-  border-radius: 8px !important;
+  border-radius: 0 !important;
 }
 #page-repos .repo-loading,
 #page-repos .repo-empty { color: var(--text-2) !important; }
@@ -5155,5 +5162,407 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
   #page-dockerfile-deploy .dcx-step-item ,  #page-worker-create .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); }
   #page-dockerfile-deploy .dcx-step-item:last-child ,  #page-worker-create .dcx-step-item:last-child { border-bottom: none; }
 }
+
+
+
+/* ══════════════════════════════════════════════════════════════════
+   REPOSITORIES PAGE — reuses the same dcx-* variables as New
+   Deployment/Dockerfile/Worker so the hero header, step-style stat
+   strip, and group-box toolbar look and behave identically.
+   ══════════════════════════════════════════════════════════════════ */
+#page-repos {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-repos {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   NEW DEPLOYMENT PAGE — genuinely flat (dcx-*), no card outlines.
+   Previous passes kept drawing a full border around field groups,
+   which reads as a card no matter how thin the line is. The actual
+   fix: remove those group outlines entirely. Structure comes only
+   from typography (section titles) and thin horizontal dividers
+   between logical zones — never a box that encloses content on all
+   four sides. Inputs are borderless at rest (just a bottom line, like
+   an underline field) and light up green only while focused/typing —
+   that's the one moment color is earned, not a resting-state signal.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Composer header — flat, no box ── */
+#page-repos .dcx-header { margin-bottom: 22px; }
+#page-repos .dcx-header .back-link { margin-bottom: 16px; }
+#page-repos .dcx-kicker {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+#page-repos .dcx-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.15;
+}
+#page-repos .dcx-sub {
+  font-size: .86rem;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin-top: 8px;
+  max-width: 66ch;
+}
+
+/* ── Group "boxes" — no border at all anymore. Just a flat block with
+      spacing, separated from what follows by a thin bottom divider,
+      the exact same technique Settings uses between its sections. ── */
+#page-repos .dcx-group-box {
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+#page-repos .dcx-group-box-1 { padding-bottom: 4px; }
+#page-repos .dcx-group-box-1 .dcx-steps { margin: -20px -20px 20px; }
+#page-repos .dcx-group-box-collapse { padding: 0; }
+#page-repos .dcx-group-box-collapse .dcx-collapse-summary { padding: 18px 20px; margin: 0; }
+#page-repos .dcx-group-box-collapse .dcx-collapse-body { padding: 0 20px 20px; }
+#page-repos .dcx-group-box-collapse[open] .dcx-collapse-summary {
+  border-bottom: 1px solid var(--dcx-row-border);
+  margin-bottom: 0;
+}
+#page-repos .dcx-page-body { margin-top: 0; }
+
+/* ── Progress steps — flat row, thin divider between items only ── */
+#page-repos .dcx-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--dcx-row-border);
+}
+#page-repos .dcx-step-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-right: 1px solid var(--dcx-row-border);
+  color: var(--text-2);
+  font-size: .82rem;
+  font-weight: 700;
+}
+#page-repos .dcx-step-item:last-child { border-right: none; }
+#page-repos .dcx-step-badge {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--text-3) 12%, transparent);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: .74rem;
+  flex-shrink: 0;
+}
+
+/* ── Section title/subtitle — flat typography, no box ── */
+#page-repos .dcx-section-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
+}
+#page-repos .dcx-section-sub {
+  font-size: .82rem;
+  color: var(--text-3);
+  margin-top: 4px;
+}
+#page-repos .dcx-divider {
+  height: 1px;
+  background: var(--dcx-row-border);
+  margin: 24px 0;
+}
+
+/* ── Fields — genuinely borderless at rest. Underline-only style:
+      no border on any side except a subtle bottom hairline, no
+      background fill. Lights up green ONLY while focused/typing. ── */
+#page-repos .field { margin-bottom: 22px; }
+#page-repos .field-label {
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: block;
+}
+#page-repos .field-hint {
+  font-size: .78rem;
+  line-height: 1.5;
+  margin-top: 8px;
+  color: var(--text-3);
+}
+#page-repos .input,#page-repos select.input,#page-repos .custom-select-trigger,#page-repos .custom-select-btn {
+  min-height: 46px;
+  border-radius: 0;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  color: var(--text) !important;
+  font-size: .92rem;
+  padding: 0 2px;
+  box-shadow: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+#page-repos .input::placeholder { color: var(--text-3); }
+#page-repos .input:hover,#page-repos .custom-select-trigger:hover {
+  border-bottom-color: color-mix(in srgb, var(--text-2) 55%, var(--dcx-field-border));
+}
+/* The one moment color is earned: focused or actively being typed in */
+#page-repos .input:focus,#page-repos .custom-select-trigger.open {
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+}
+#page-repos .input-group .input { border-radius: 0; }
+#page-repos .dcx-domain-suffix {
+  display: flex; align-items: center;
+  padding: 0 2px;
+  min-height: 46px;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+#page-repos .custom-select-dropdown,#page-repos .custom-select-menu {
+  border-radius: 0;
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  box-shadow: 0 18px 44px rgba(0,0,0,.4);
+  max-height: 300px;
+}
+
+/* ── Small functional zones (custom domain picker, upload dropzone,
+      file-ready state, upload badge, env panel) — no border box
+      either. Separated purely by spacing + a thin top/bottom rule,
+      matching how Settings' "This device" / "Change Password" rows
+      sit flat with only hairline separators. ── */
+#page-repos .dcx-inline-box {
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  padding: 18px;
+}
+
+#page-repos .dcx-upload-section { margin: 6px 0 22px; }
+#page-repos .dcx-or-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+#page-repos .dcx-or-divider span { flex: 1; height: 1px; background: var(--dcx-row-border); }
+#page-repos .dcx-or-divider em {
+  font-style: normal;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+#page-repos .dcx-dropzone {
+  border: 1px dashed var(--dcx-field-border);
+  border-radius: 0;
+  padding: 30px 18px;
+  text-align: center;
+  cursor: pointer;
+  background: transparent;
+  transition: border-color .15s;
+}
+#page-repos .dcx-dropzone:hover,#page-repos .dcx-dropzone.drag-over {
+  border-color: var(--primary);
+}
+#page-repos .dcx-dropzone-icon {
+  width: 38px; height: 38px;
+  margin: 0 auto 12px;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--text-3) 10%, transparent);
+  display: flex; align-items: center; justify-content: center;
+}
+#page-repos .dcx-dropzone-icon svg { width: 18px; height: 18px; color: var(--primary); }
+#page-repos .dcx-dropzone-label { font-size: .86rem; font-weight: 700; color: var(--text); }
+#page-repos .dcx-dropzone-sub { font-size: .74rem; color: var(--text-3); margin-top: 6px; }
+#page-repos .dcx-file-ready {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#page-repos .dcx-file-ready-name { font-size: .82rem; font-weight: 700; color: var(--primary); }
+#page-repos .dcx-file-ready-size { font-size: .72rem; color: var(--text-3); margin-top: 1px; }
+#page-repos .dcx-file-ready-remove {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-3); padding: 2px 6px; font-size: .8rem; border-radius: 6px;
+}
+#page-repos .dcx-file-ready-remove:hover { color: var(--text); }
+#page-repos .dcx-upload-badge {
+  padding: 16px 18px;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── Build Settings collapse — flat accordion, title/sub left,
+      chevron right ── */
+#page-repos .dcx-collapse { border: none; }
+#page-repos .dcx-collapse-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+#page-repos .dcx-collapse-summary::-webkit-details-marker { display: none; }
+#page-repos .dcx-collapse-chevron {
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  color: var(--text-3);
+  transition: transform .18s ease, color .18s ease;
+  flex-shrink: 0;
+}
+#page-repos .dcx-collapse-chevron svg { width: 17px; height: 17px; }
+#page-repos .dcx-collapse[open] .dcx-collapse-chevron {
+  transform: rotate(90deg);
+  color: var(--primary);
+}
+
+/* Env vars sub-panel — flat, thin top rule only, no box */
+#page-repos .env-settings-panel {
+  margin-top: 10px;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  padding: 20px;
+}
+#page-repos .env-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+#page-repos .env-settings-title { font-size: .96rem; font-weight: 800; color: var(--text); }
+#page-repos .env-settings-subtitle { font-size: .8rem; color: var(--text-2); margin-top: 3px; }
+
+/* ── Right column: Deployment Summary — flat too, no box. Just
+      title + rows with thin dividers + button, matching everything
+      else on the page. ── */
+#page-repos .dcx-summary-panel {
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  padding: 22px;
+}
+#page-repos .dcx-summary-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+#page-repos .dcx-summary-rows { display: flex; flex-direction: column; }
+#page-repos .dcx-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--dcx-row-border);
+  font-size: .82rem;
+  color: var(--text-2);
+}
+#page-repos .dcx-summary-row:last-child { border-bottom: none; }
+#page-repos .dcx-summary-value { color: var(--text); font-weight: 700; font-size: .82rem; }
+#page-repos .dcx-deploy-btn {
+  width: 100%;
+  margin-top: 18px;
+  min-height: 50px;
+  border-radius: 0;
+  font-size: .94rem;
+  font-weight: 800;
+  box-shadow: none;
+}
+#page-repos .dcx-launch-status {
+  display: none;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  color: var(--text);
+  font-size: .8rem;
+  font-weight: 600;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+#page-repos .dcx-launch-spinner {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  border-top-color: var(--primary);
+  display: inline-block;
+  animation: dpSpin .7s linear infinite;
+}
+#page-repos .dcx-summary-footnote {
+  font-size: .72rem;
+  color: var(--text-3);
+  text-align: center;
+  line-height: 1.5;
+  margin-top: 14px;
+}
+
+/* ── Repo-select dropdown items ── */
+#page-repos .custom-select-item.repo-select-item {
+  display: flex; align-items: center; gap: 10px; padding: 12px;
+}
+#page-repos .repo-select-icon {
+  width: 32px; height: 32px; border-radius: 0;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  font-weight: 900;
+}
+#page-repos .repo-select-main { font-weight: 800; color: var(--text); font-size: .84rem; }
+#page-repos .repo-select-sub { font-family: var(--font-mono); font-size: .68rem; color: var(--text-3); margin-top: 2px; }
+#page-repos .custom-select-item.branch-select-item {
+  display: flex; align-items: center; justify-content: space-between; font-family: var(--font-mono);
+}
+#page-repos .custom-select-item.branch-select-item::after {
+  content: 'branch'; font-size: .62rem; color: var(--text-3);
+  background: color-mix(in srgb, var(--text-3) 12%, transparent); border-radius: 999px; padding: 2px 6px;
+}
+
+/* ── Layout ── */
+#page-repos .dcx-layout { align-items: start; gap: 32px; }
+#page-repos .dcx-layout > div:first-child { min-width: 0; }
+#page-repos .dcx-summary-col { position: sticky; top: 14px; }
+@media(max-width:1099px){ #page-new-deploy .dcx-summary-col { position: relative; top: auto; margin-top: 0; } }
+@media(min-width:1100px){ #page-new-deploy .dcx-layout { grid-template-columns: minmax(0,1fr) minmax(300px,360px); } }
+#page-repos #summaryUrl,#page-repos #summaryName { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
+
+@media(max-width:768px){
+  #page-repos .dcx-layout { display: block; }
+}
+@media(max-width:640px){
+  #page-repos .dcx-steps { grid-template-columns: 1fr; }
+  #page-repos .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); }
+  #page-repos .dcx-step-item:last-child { border-bottom: none; }
+}
+
 
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
