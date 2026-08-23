@@ -5571,4 +5571,74 @@ html[data-theme="light"] #page-repos {
 }
 
 
+/* ══════════════════════════════════════════════════════════════════
+   SETTINGS PAGE — input fields adopt the same underline-style, no-fill
+   treatment used by New Deployment/Dockerfile/Worker/Repos. Settings
+   already has the right flat structure (acct-section/.acct-row
+   dividers) — the only thing missing was the fields themselves still
+   being the site's default filled rounded boxes. This scopes the same
+   dcx-* input styling to Settings without touching its layout.
+   ══════════════════════════════════════════════════════════════════ */
+#page-settings {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+}
+html[data-theme="light"] #page-settings {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+}
+#page-settings .input,
+#page-settings select.input,
+#page-settings .custom-select-trigger,
+#page-settings .custom-select-btn {
+  min-height: 46px;
+  border-radius: 0;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  color: var(--text) !important;
+  font-size: .92rem;
+  padding: 0 2px;
+  box-shadow: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+#page-settings .input::placeholder { color: var(--text-3); }
+#page-settings .input:hover,
+#page-settings .custom-select-trigger:hover {
+  border-bottom-color: color-mix(in srgb, var(--text-2) 55%, var(--dcx-field-border));
+}
+#page-settings .input:focus,
+#page-settings .custom-select-trigger.open {
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+}
+#page-settings .input-group .input { border-radius: 0; }
+#page-settings .custom-select-dropdown,
+#page-settings .custom-select-menu {
+  border-radius: 10px;
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  box-shadow: 0 18px 44px rgba(0,0,0,.4);
+}
+
+/* Full-width action buttons (Send Test Notification, Save Preferences,
+   Update Password, etc) → keep as bordered buttons (that's normal for
+   an action, not a field) but sharp-cornered and clearly visible,
+   matching the flat aesthetic instead of the soft-rounded default */
+#page-settings .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-settings .btn-ghost:hover {
+  border-color: var(--primary) !important;
+  background: transparent !important;
+}
+#page-settings .btn-primary {
+  border-radius: 0 !important;
+}
+
+/* Personal API Key field + Copy/Rotate buttons */
+#page-settings .btn-sm {
+  border-radius: 0 !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
