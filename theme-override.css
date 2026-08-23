@@ -317,11 +317,6 @@ html[data-theme="light"] #page-env-manager .page-header::before { color: var(--j
 html[data-theme="light"] #page-new-deploy .btn-ghost.btn-sm { color: var(--jt-text-dim) !important; }
 html[data-theme="light"] #page-new-deploy .btn-ghost.btn-sm:hover { color: var(--jt-text) !important; }
 html[data-theme="light"] #page-new-deploy .custom-select-trigger { color: var(--jt-text) !important; }
-html[data-theme="light"] #page-new-deploy .deploy-hero-kicker { color: var(--jt-brand-strong) !important; }
-html[data-theme="light"] #page-new-deploy .deploy-hero-sub { color: var(--jt-text-faint) !important; }
-html[data-theme="light"] #page-new-deploy .deploy-hero-title { color: var(--jt-text) !important; }
-html[data-theme="light"] #page-new-deploy .deploy-stepper-item { color: var(--jt-text) !important; font-weight: 700 !important; }
-html[data-theme="light"] #page-new-deploy .settings-collapse-chevron { color: var(--jt-text-faint) !important; }
 html[data-theme="light"] #page-new-resource .resource-section-label { color: var(--jt-brand-strong) !important; }
 html[data-theme="light"] #page-settings .page-header::before { color: var(--jt-brand-strong) !important; font-weight: 700 !important; }
 html[data-theme="light"] .alert-error { color: var(--jt-danger) !important; }
@@ -620,7 +615,6 @@ html[data-theme="light"] #page-new-deploy .custom-select-btn { background: var(-
 html[data-theme="light"] #page-new-deploy .custom-select-dropdown { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-new-deploy .custom-select-menu { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-new-deploy .custom-select-trigger { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] #page-new-deploy .deploy-stepper-item { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-new-deploy .input { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-new-deploy select.input { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] #page-new-resource #resourceSearch { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
@@ -2089,7 +2083,6 @@ html[data-theme="light"] #page-db-schema .schema-hero-badge { color: var(--jt-br
 html[data-theme="light"] #page-db-schema .schema-node-arrow { color: var(--jt-brand-strong) !important; }
 html[data-theme="light"] #page-db-schema .schema-tip-label { color: var(--jt-brand-strong) !important; }
 html[data-theme="light"] #page-domain-add .wizard-hero::before { color: var(--jt-brand-strong) !important; }
-html[data-theme="light"] #page-new-deploy .deploy-hero-kicker { color: var(--jt-brand-strong) !important; }
 html[data-theme="light"] #page-new-resource .resource-section-label { color: var(--jt-brand-strong) !important; }
 html[data-theme="light"] .app-hero-kicker { color: var(--jt-brand-strong) !important; }
 html[data-theme="light"] .code-block .cs { color: var(--jt-brand-strong) !important; }
@@ -4492,7 +4485,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   width: 24px; height: 24px;
   border-radius: 8px;
   display: grid; place-items: center;
-  background: var(--jt-bg-sunken, var(--bg-hover));
+  background: var(--jt-bg-sunken);
   color: var(--primary);
   font-family: var(--font-mono);
   font-weight: 800;
@@ -4540,8 +4533,8 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 #page-new-deploy .custom-select-btn {
   min-height: 48px;
   border-radius: 12px;
-  background: var(--jt-bg-raised, #111) !important;
-  border: 1px solid var(--jt-border, rgba(255,255,255,.1)) !important;
+  background: var(--jt-bg-raised) !important;
+  border: 1px solid var(--jt-border) !important;
   color: var(--text) !important;
   font-size: .92rem;
   padding: 0 16px;
@@ -4556,8 +4549,8 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   display: flex; align-items: center;
   padding: 0 14px;
   min-height: 48px;
-  background: var(--jt-bg-sunken, var(--bg-hover)) !important;
-  border: 1px solid var(--jt-border, rgba(255,255,255,.1)) !important;
+  background: var(--jt-bg-sunken) !important;
+  border: 1px solid var(--jt-border) !important;
   border-left: none;
   border-radius: 0 12px 12px 0;
   font-family: var(--font-mono);
@@ -4568,8 +4561,8 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 #page-new-deploy .custom-select-dropdown,
 #page-new-deploy .custom-select-menu {
   border-radius: 14px;
-  background: var(--jt-bg-raised, #111) !important;
-  border: 1px solid var(--jt-border, rgba(255,255,255,.1)) !important;
+  background: var(--jt-bg-raised) !important;
+  border: 1px solid var(--jt-border) !important;
   box-shadow: 0 18px 44px rgba(0,0,0,.32);
   max-height: 300px;
 }
@@ -4577,10 +4570,10 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 /* Inline box (Deploy to your own domain) — flat token panel, not
    a green-tinted card */
 #page-new-deploy .dcx-inline-box {
-  border: 1px solid var(--jt-border, rgba(255,255,255,.08));
+  border: 1px solid var(--jt-border);
   border-radius: 14px;
   padding: 16px;
-  background: var(--jt-bg-raised, #111);
+  background: var(--jt-bg-raised);
 }
 
 /* ── Source picker: labeled divider + dropzone ── */
@@ -4608,12 +4601,12 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   white-space: nowrap;
 }
 #page-new-deploy .dcx-dropzone {
-  border: 1px dashed var(--jt-border, rgba(255,255,255,.12));
+  border: 1px dashed var(--jt-border);
   border-radius: 14px;
   padding: 26px 18px;
   text-align: center;
   cursor: pointer;
-  background: var(--jt-bg-raised, #111);
+  background: var(--jt-bg-raised);
   transition: border-color .15s;
 }
 #page-new-deploy .dcx-dropzone:hover,
@@ -4624,8 +4617,8 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   width: 40px; height: 40px;
   margin: 0 auto 10px;
   border-radius: 12px;
-  background: var(--jt-bg-sunken, var(--bg-hover));
-  border: 1px solid var(--jt-border, rgba(255,255,255,.08));
+  background: var(--jt-bg-sunken);
+  border: 1px solid var(--jt-border);
   display: flex; align-items: center; justify-content: center;
 }
 #page-new-deploy .dcx-dropzone-icon svg { width: 20px; height: 20px; color: var(--primary); }
@@ -4642,8 +4635,8 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 #page-new-deploy .dcx-file-ready {
   margin-top: 10px;
   padding: 12px 16px;
-  background: var(--jt-bg-raised, #111);
-  border: 1px solid var(--jt-border, rgba(255,255,255,.08));
+  background: var(--jt-bg-raised);
+  border: 1px solid var(--jt-border);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -4658,8 +4651,8 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 #page-new-deploy .dcx-file-ready-remove:hover { color: var(--text); }
 #page-new-deploy .dcx-upload-badge {
   padding: 14px 18px;
-  background: var(--jt-bg-raised, #111);
-  border: 1px solid var(--jt-border, rgba(255,255,255,.08));
+  background: var(--jt-bg-raised);
+  border: 1px solid var(--jt-border);
   border-radius: 14px;
   display: flex;
   align-items: center;
@@ -4728,8 +4721,8 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
       action anchor (same reasoning Settings applies to its Platform
       Settings card). Uses clean jt-* tokens, no green glow/shadow. ── */
 #page-new-deploy .dcx-summary-panel {
-  background: var(--jt-bg-raised, #111);
-  border: 1px solid var(--jt-border, rgba(255,255,255,.08));
+  background: var(--jt-bg-raised);
+  border: 1px solid var(--jt-border);
   border-radius: 18px;
   padding: 22px;
 }
@@ -4772,9 +4765,9 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   display: none;
   margin-top: 10px;
   padding: 10px 12px;
-  border: 1px solid var(--jt-border, rgba(255,255,255,.1));
+  border: 1px solid var(--jt-border);
   border-radius: 10px;
-  background: var(--jt-bg-sunken, var(--bg-hover));
+  background: var(--jt-bg-sunken);
   color: var(--text);
   font-size: .8rem;
   font-weight: 600;
@@ -4816,7 +4809,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 }
 #page-new-deploy .custom-select-item.branch-select-item::after {
   content: 'branch'; font-size: .62rem; color: var(--text-3);
-  border: 1px solid var(--jt-border, rgba(148,163,184,.12)); border-radius: 999px; padding: 2px 6px;
+  border: 1px solid var(--jt-border); border-radius: 999px; padding: 2px 6px;
 }
 
 /* ── Layout: two-column composer grid ── */
