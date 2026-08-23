@@ -7690,6 +7690,28 @@ html[data-theme="light"] #page-project-detail {
   border: none !important;
 }
 
+/* Tip/callout boxes (Redeployment "Click Redeploy Stored Files…",
+   Auto Deploy Pipeline explainer, pipeline error) — these used the
+   site-wide .alert-info/.alert-error classes, which are hardcoded
+   green/red tinted pills with rounded corners. That's the one spot
+   the flattening pass missed: everything else on this page went
+   through the neutral dcx-* hairline system, but these boxes kept
+   their own color straight from the base stylesheet. Stripped to
+   plain flat text on the page surface with a neutral hairline
+   border, no tint, no fill, sharp corners — matching New Deployment. */
+#page-project-detail .alert {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+#page-project-detail .alert strong { color: var(--text) !important; }
+#page-project-detail .alert code {
+  background: var(--bg-hover) !important;
+  color: var(--text) !important;
+  border-radius: 0 !important;
+}
+
 /* Deployment History table */
 #page-project-detail .table-wrap {
   border-color: var(--dcx-field-border) !important;
