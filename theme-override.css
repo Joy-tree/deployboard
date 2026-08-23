@@ -4419,10 +4419,19 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
    Three clearly bordered green group boxes, matching the exact zones
    marked up: (1) Repository steps + Project Details + source picker,
    (2) Build Settings accordion, (3) Deployment Summary. Everything
-   INSIDE each box stays flat/transparent (inputs, dropdowns, fields
-   have no fill of their own) — only the outer group boundary and a
-   few small functional boxes (dropzone, env panel) carry a border.
+   INSIDE each box stays flat/transparent — but every individual field
+   and mini-box (inputs, dropzone, env panel, etc.) still needs its OWN
+   visible outline so it reads as a distinct control, not just empty
+   space. var(--border) alone is too close to the page background on
+   dark theme to be legible here, so a dedicated lighter token is used
+   for every inner line on this page.
    ══════════════════════════════════════════════════════════════════ */
+#page-new-deploy {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 45%, transparent);
+}
+html[data-theme="light"] #page-new-deploy {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 55%, transparent);
+}
 
 /* ── Composer header — flat, no box ── */
 #page-new-deploy .dcx-header { margin-bottom: 22px; }
@@ -4492,7 +4501,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   width: 22px; height: 22px;
   border-radius: 6px;
   display: grid; place-items: center;
-  border: 1px solid var(--border);
+  border: 1px solid var(--dcx-field-border);
   color: var(--text-3);
   font-family: var(--font-mono);
   font-weight: 800;
@@ -4540,7 +4549,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   min-height: 48px;
   border-radius: 8px;
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   color: var(--text) !important;
   font-size: .92rem;
   padding: 0 14px;
@@ -4550,7 +4559,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 #page-new-deploy .input::placeholder { color: var(--text-3); }
 #page-new-deploy .input:hover,
 #page-new-deploy .custom-select-trigger:hover {
-  border-color: color-mix(in srgb, var(--text-3) 60%, var(--border));
+  border-color: color-mix(in srgb, var(--text-2) 50%, var(--dcx-field-border));
 }
 #page-new-deploy .input:focus {
   border-color: var(--primary) !important;
@@ -4562,7 +4571,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   padding: 0 14px;
   min-height: 48px;
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-left: none;
   border-radius: 0 8px 8px 0;
   font-family: var(--font-mono);
@@ -4574,7 +4583,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 #page-new-deploy .custom-select-menu {
   border-radius: 10px;
   background: var(--bg, #000) !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   box-shadow: 0 18px 44px rgba(0,0,0,.4);
   max-height: 300px;
 }
@@ -4583,7 +4592,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
       upload dropzone, file-ready state, upload badge) — thin neutral
       border, not the green group-box line ── */
 #page-new-deploy .dcx-inline-box {
-  border: 1px solid var(--border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 10px;
   padding: 18px;
 }
@@ -4605,7 +4614,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   white-space: nowrap;
 }
 #page-new-deploy .dcx-dropzone {
-  border: 1px dashed var(--border);
+  border: 1px dashed var(--dcx-field-border);
   border-radius: 10px;
   padding: 30px 18px;
   text-align: center;
@@ -4621,7 +4630,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   width: 38px; height: 38px;
   margin: 0 auto 12px;
   border-radius: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--dcx-field-border);
   display: flex; align-items: center; justify-content: center;
 }
 #page-new-deploy .dcx-dropzone-icon svg { width: 18px; height: 18px; color: var(--primary); }
@@ -4630,7 +4639,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 #page-new-deploy .dcx-file-ready {
   margin-top: 12px;
   padding: 14px 16px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -4645,7 +4654,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 #page-new-deploy .dcx-file-ready-remove:hover { color: var(--text); }
 #page-new-deploy .dcx-upload-badge {
   padding: 16px 18px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -4681,7 +4690,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 /* Env vars sub-panel — its own thin-bordered box inside Build Settings */
 #page-new-deploy .env-settings-panel {
   margin-top: 6px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 10px;
   padding: 20px;
 }
@@ -4734,7 +4743,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   display: none;
   margin-top: 10px;
   padding: 10px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 8px;
   color: var(--text);
   font-size: .8rem;
@@ -4766,7 +4775,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 #page-new-deploy .repo-select-icon {
   width: 32px; height: 32px; border-radius: 8px;
   display: grid; place-items: center;
-  border: 1px solid var(--border);
+  border: 1px solid var(--dcx-field-border);
   color: var(--primary);
   font-weight: 900;
 }
@@ -4777,7 +4786,7 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 }
 #page-new-deploy .custom-select-item.branch-select-item::after {
   content: 'branch'; font-size: .62rem; color: var(--text-3);
-  border: 1px solid var(--border); border-radius: 999px; padding: 2px 6px;
+  border: 1px solid var(--dcx-field-border); border-radius: 999px; padding: 2px 6px;
 }
 
 /* ── Layout ── */
