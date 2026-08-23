@@ -20561,32 +20561,33 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
     <!-- ════════ DOMAINS PAGE ════════ -->
     <div class="page" id="page-domains">
-      <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-      <div class="surface-hero">
-        <div>
-          <div class="surface-kicker">Routing & SSL</div><div class="surface-title">Domains Control Center</div>
-          <div class="surface-sub">A fully redesigned domain cockpit for wildcard routing, DNS verification, and launch-ready SSL at scale.</div>
-        </div>
-        <div class="surface-metrics">
-          <div class="surface-metric"><div class="surface-metric-value" id="domainHeroProjects">0</div><div class="surface-metric-label">Project URLs</div></div>
-          <div class="surface-metric"><div class="surface-metric-value" id="domainHeroCustom">0</div><div class="surface-metric-label">Custom Domains</div></div>
-          <div class="surface-metric"><button class="btn btn-primary" onclick="showPage('domain-add',this)" style="width:100%;min-height:50px;font-weight:800;">Add Domain</button></div>
+      <div class="dcx-header">
+        <button class="page-back back-link" onclick="showPage('dashboard')" style="margin-bottom:16px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+        <div class="dcx-kicker">Routing & SSL</div>
+        <div class="dcx-title">Domains Control Center</div>
+        <div class="dcx-sub">A fully redesigned domain cockpit for wildcard routing, DNS verification, and launch-ready SSL at scale.</div>
+        <div class="dcx-steps" style="grid-template-columns:repeat(3,1fr);margin-top:20px;">
+          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="domainHeroProjects" style="width:auto;padding:0 6px;">0</span><span>Project URLs</span></div>
+          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="domainHeroCustom" style="width:auto;padding:0 6px;">0</span><span>Custom Domains</span></div>
+          <div class="dcx-step-item" style="justify-content:center;">
+            <button class="btn btn-primary" onclick="showPage('domain-add',this)" style="width:100%;min-height:44px;font-weight:800;">Add Domain</button>
+          </div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;" id="domainQuickStats">
-        <div class="card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">Wildcard</div><div style="margin-top:6px;font-family:var(--font-mono);font-size:.82rem;color:var(--green);" id="domainWildcardMini">*.joytree.site</div></div>
-        <div class="card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">SSL Status</div><div style="margin-top:6px;font-size:.9rem;font-weight:700;color:#d1fae5;">Auto-managed via Cloudflare</div></div>
+        <div class="card domain-mini-card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">Wildcard</div><div style="margin-top:6px;font-family:var(--font-mono);font-size:.82rem;color:var(--primary);" id="domainWildcardMini">*.joytree.site</div></div>
+        <div class="card domain-mini-card" style="padding:14px 16px;"><div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;">SSL Status</div><div style="margin-top:6px;font-size:.9rem;font-weight:700;color:var(--text);">Auto-managed via Cloudflare</div></div>
       </div>
 
       <!-- Wildcard -->
-      <div class="card" style="margin-bottom:20px;">
+      <div class="card domain-section-card" style="margin-bottom:20px;">
         <div class="card-header">
           <div class="card-title">Wildcard Subdomain</div>
           <div class="card-subtitle">Auto-assigned to every project — zero config needed</div>
         </div>
         <div class="card-body">
-          <div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.18);border-radius:8px;flex-wrap:wrap;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" width="20" height="20" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+          <div class="domain-wildcard-row" style="display:flex;align-items:center;gap:12px;padding:14px;flex-wrap:wrap;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" width="20" height="20" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
             <div style="flex:1;min-width:0;">
               <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text);word-break:break-all;" id="domainWildcardDisplay">*.joytree.site</div>
               <div style="font-size:0.72rem;color:var(--text-2);margin-top:3px;">Wildcard SSL • Cloudflare Tunnel • Always active</div>
@@ -20597,7 +20598,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       </div>
 
       <!-- Project subdomains -->
-      <div class="card" style="margin-bottom:20px;">
+      <div class="card domain-section-card" style="margin-bottom:20px;">
         <div class="card-header">
           <div class="card-title">Project Subdomains</div>
           <div class="card-subtitle">Auto-generated live URL for every deployed project</div>
@@ -20608,7 +20609,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       </div>
 
       <!-- Custom domains list -->
-      <div class="card">
+      <div class="card domain-section-card">
         <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           <div>
             <div class="card-title">Custom Domains</div>
