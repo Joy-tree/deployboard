@@ -4542,6 +4542,95 @@ html[data-theme="light"] #page-new-deploy {
   max-width: 66ch;
 }
 
+/* #page-analytics, #page-webhooks, #page-cronjobs never got these
+   either — same missing-scope bug caught repeatedly above. Their
+   dcx-header rendered with zero spacing (raw stacked text). */
+#page-analytics .dcx-header,
+#page-webhooks .dcx-header,
+#page-cronjobs .dcx-header { margin-bottom: 22px; }
+#page-analytics .dcx-header .back-link,
+#page-webhooks .dcx-header .back-link,
+#page-cronjobs .dcx-header .back-link { margin-bottom: 16px; }
+#page-analytics .dcx-kicker,
+#page-webhooks .dcx-kicker,
+#page-cronjobs .dcx-kicker {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+#page-analytics .dcx-title,
+#page-webhooks .dcx-title,
+#page-cronjobs .dcx-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.15;
+}
+#page-analytics .dcx-sub,
+#page-webhooks .dcx-sub,
+#page-cronjobs .dcx-sub {
+  font-size: .86rem;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin-top: 8px;
+  max-width: 66ch;
+}
+
+/* #page-webhooks, #page-domain-store, #page-databases also use the
+   flat inline stat-strip (.dcx-steps/.dcx-step-item/.dcx-step-badge)
+   in their HTML but that component was likewise never scoped for
+   them — same bug, different component. */
+#page-webhooks .dcx-steps,
+#page-domain-store .dcx-steps,
+#page-databases .dcx-steps {
+  display: grid;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border));
+}
+#page-webhooks .dcx-step-item,
+#page-domain-store .dcx-step-item,
+#page-databases .dcx-step-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-right: 1px solid var(--dcx-row-border, var(--border));
+  color: var(--text-2);
+  font-size: .82rem;
+  font-weight: 700;
+}
+#page-webhooks .dcx-step-item:last-child,
+#page-domain-store .dcx-step-item:last-child,
+#page-databases .dcx-step-item:last-child { border-right: none; }
+#page-webhooks .dcx-step-badge,
+#page-domain-store .dcx-step-badge,
+#page-databases .dcx-step-badge {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--text-3) 12%, transparent);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: .74rem;
+  flex-shrink: 0;
+}
+@media(max-width:640px){
+  #page-webhooks .dcx-step-item,
+  #page-domain-store .dcx-step-item,
+  #page-databases .dcx-step-item {
+    border-right: none;
+    border-bottom: 1px solid var(--dcx-row-border, var(--border));
+  }
+  #page-webhooks .dcx-step-item:last-child,
+  #page-domain-store .dcx-step-item:last-child,
+  #page-databases .dcx-step-item:last-child { border-bottom: none; }
+}
+
 /* ── Group "boxes" — no border at all anymore. Just a flat block with
       spacing, separated from what follows by a thin bottom divider,
       the exact same technique Settings uses between its sections. ── */
