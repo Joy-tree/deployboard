@@ -6543,4 +6543,147 @@ html[data-theme="light"] #page-projects {
   border-color: var(--primary) !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   DATABASE INSTANCES PAGE — same flat treatment as the rest of the
+   rebuild. Header converted to dcx-header (was a boxed green-glow
+   hero with a decorative circle). Stat tiles, toolbar, dropdowns, and
+   database cards all lose their filled backgrounds/rounded corners/
+   glow shadows for thin borders only. The colored top accent bar per
+   engine (mongodb green, postgres blue, etc) is a legitimate category
+   signal like the language badges elsewhere, so it stays — everything
+   else around it goes flat.
+   ══════════════════════════════════════════════════════════════════ */
+#page-databases {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-databases {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+
+/* Stat tiles → flat, thin border, sharp corners */
+#page-databases .db-stat-card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-databases .db-stat-card:hover {
+  border-color: var(--primary) !important;
+  transform: none;
+}
+#page-databases .db-stat-value { color: var(--text) !important; }
+
+/* Toolbar → flat, no boxed fill */
+#page-databases .db-toolbar {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+  border-radius: 0 !important;
+  padding: 0 0 16px !important;
+}
+#page-databases .db-toolbar-title { color: var(--text) !important; }
+
+/* Engine/Status dropdowns → flat trigger, flat dark menu, no green glow */
+#page-databases .db-custom-dropdown-btn {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+  box-shadow: none !important;
+}
+#page-databases .db-custom-dropdown-btn:hover {
+  border-color: var(--primary) !important;
+  background: transparent !important;
+  color: var(--text) !important;
+}
+#page-databases .db-custom-dropdown.open .db-custom-dropdown-btn {
+  border-color: var(--primary) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+}
+#page-databases .db-custom-dropdown-panel {
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 18px 44px rgba(0,0,0,.4) !important;
+}
+#page-databases .db-dd-item {
+  color: var(--text-2) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+}
+#page-databases .db-dd-item:last-child { border-bottom: none !important; }
+#page-databases .db-dd-item:hover {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+#page-databases .db-dd-item.active { color: var(--primary) !important; }
+
+/* Database cards → flat, thin border, no fill/glow-shadow. The
+   per-engine accent bar stays as a legitimate category color. */
+#page-databases .db-card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-databases .db-card:hover {
+  border-color: var(--primary) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+#page-databases .db-engine-icon {
+  border-radius: 0 !important;
+}
+#page-databases .db-card-name { color: var(--text) !important; }
+#page-databases .db-meta-chip {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+#page-databases .db-conn-strip {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-3) !important;
+}
+
+/* Action buttons (Stop/Restart/Recreate/Logs/Browse) → flat outlined,
+   keep amber Recreate / red Delete as intentional status color, not
+   a filled background */
+#page-databases .db-btn {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+#page-databases .db-btn:hover {
+  background: transparent !important;
+  border-color: var(--primary) !important;
+  color: var(--text) !important;
+}
+#page-databases .db-btn.danger {
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+}
+#page-databases .db-btn.danger:hover {
+  border-color: var(--jt-danger, #ef4444) !important;
+  background: transparent !important;
+}
+#page-databases .db-btn.primary {
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+}
+#page-databases .db-btn.primary:hover {
+  border-color: var(--primary) !important;
+  background: transparent !important;
+}
+
+/* Empty state */
+#page-databases .db-empty {
+  background: transparent !important;
+  border: 1px dashed var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
