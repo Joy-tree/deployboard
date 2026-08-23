@@ -5647,7 +5647,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=52" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=53" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5720,7 +5720,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=52&recover=' + token;
+    fresh.href = 'theme-override.css?v=53&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -32939,10 +32939,24 @@ async function enableDeployNotifFromPrompt() {
 
 async function initDeployPushNotifications(registration) {
   _pushSwRegistration = registration;
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  if (!isStandalone) { console.log('[push] Not running as an installed app -- skipping auto-subscribe (use Settings -> General -> Enable Notifications to opt in manually).'); return; }
-  const result = await subscribeToPushNotifications();
-  console.log('[push] Auto-subscribe result:', result);
+  // [FIX] This used to call subscribeToPushNotifications() -> which calls
+  // Notification.requestPermission() -- automatically, with NO user
+  // gesture, on every single service worker registration (i.e. every app
+  // launch while installed as a standalone PWA). Browsers actively
+  // penalize sites that request notification permission repeatedly
+  // without a direct user interaction -- Chrome's abusive-notification-
+  // request heuristics can silently and PERMANENTLY downgrade a site to
+  // "blocked," which cannot be undone by any code on this page, only by
+  // the user manually re-allowing it in their browser's site settings.
+  // That's exactly the reported regression: after the routing revert
+  // caused more frequent full reloads (and therefore more frequent SW
+  // registrations, each silently calling requestPermission() again),
+  // Chrome's heuristic tripped and blocked notifications outright.
+  // Only PREPARE the registration here; never request permission without
+  // an explicit tap on "Enable Notifications" (see
+  // manualEnablePushNotifications / the Settings page button), which
+  // already existed as the correct, gesture-driven path this whole time.
+  console.log('[push] Service worker ready. Notifications require an explicit "Enable Notifications" tap -- no longer auto-requested on launch.');
 }
 
 const PUSH_STATUS_MESSAGES = {
