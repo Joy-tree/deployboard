@@ -7592,162 +7592,13 @@ html[data-theme="light"] #page-project-detail {
   --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
 }
 
-/* Hero — flat, no fill, sharp corners */
-#page-project-detail .pd-hero {
-  background: transparent !important;
-  border: 1px solid var(--dcx-field-border) !important;
-  border-radius: 0 !important;
-}
-#page-project-detail .pd-hero a { color: var(--primary) !important; }
-
-/* Action buttons (Redeploy / Upload New Version, Live Logs, Delete) */
-#page-project-detail .btn-primary,
-#page-project-detail .btn-sm {
-  border-radius: 0 !important;
-}
-#page-project-detail .btn-ghost {
-  border-radius: 0 !important;
-  border-color: var(--dcx-field-border) !important;
-  background: transparent !important;
-}
-#page-project-detail .btn-ghost:hover {
-  border-color: var(--primary) !important;
-}
-#page-project-detail .btn-danger {
-  border-radius: 0 !important;
-  background: transparent !important;
-  border-color: var(--dcx-field-border) !important;
-  color: var(--text-2) !important;
-}
-#page-project-detail .btn-danger:hover {
-  border-color: var(--jt-danger, #ef4444) !important;
-  color: var(--jt-danger, #ef4444) !important;
-  background: transparent !important;
-}
-
-/* Meta chips (Status / Deployments / Runtime / Source) — was a
-   green-tinted filled box, now flat outlined */
-#page-project-detail .pd-meta .chip {
-  background: transparent !important;
-  border: 1px solid var(--dcx-field-border) !important;
-  border-radius: 0 !important;
-  color: var(--text-2) !important;
-}
-#page-project-detail .pd-meta .chip strong { color: var(--text) !important; }
-
-/* Section boxes (Configuration, Redeployment/Auto Deploy Pipeline,
-   Environment Variables, Runtime Logs, Deployment History) — each one
-   is a thin-line box, same as New Deployment's .dcx-group-box: flat
-   transparent fill (no color, no gradient), a single 1px hairline
-   border in the neutral field-border tone, sharp corners, consistent
-   internal padding. Stacked with a plain gap between them (no nested
-   dividers on top of the box border). */
-#page-project-detail #projectDetailContent > div[style*="flex-direction:column"] {
-  gap: 20px !important;
-}
-#page-project-detail .card {
-  background: transparent !important;
-  border: 1px solid var(--dcx-field-border) !important;
-  border-radius: 0 !important;
-  padding: 20px !important;
-  margin: 0 !important;
-}
-#page-project-detail .card-header {
-  border-bottom: 1px solid var(--dcx-row-border) !important;
-  padding: 0 0 14px !important;
-  margin: 0 0 14px !important;
-}
-#page-project-detail .card-title { color: var(--text) !important; font-size: 1rem !important; font-weight: 800 !important; }
-#page-project-detail .card-subtitle { color: var(--text-3) !important; margin-top: 3px !important; }
-/* Row/body wrappers the JS renders with their own inline padding
-   (e.g. Redeployment's "padding:14px 16px", Env Vars' "padding:12px
-   16px") were sized to sit inside a zero-padding card. The box now
-   carries 20px padding itself, so drop the left/right half of that
-   inline padding to avoid double-insetting content; keep top/bottom
-   since those still separate stacked rows inside one box. */
-#page-project-detail .card > div[style*="padding:14px 16px"],
-#page-project-detail .card > div[style*="padding: 14px 16px"],
-#page-project-detail .card > div[style*="padding:12px 16px"],
-#page-project-detail .card > div[style*="padding: 12px 16px"] {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-#page-project-detail .input {
-  border-radius: 0 !important;
-}
-
-/* Config rows inside Configuration card */
-#page-project-detail .pd-config-row {
-  border-bottom-color: var(--dcx-row-border) !important;
-}
-
-/* Generic chips used inside Auto Deploy Pipeline (Pipeline / Last
-   check / Last deploy trigger) — same flat treatment as pd-meta */
-#page-project-detail .chip {
-  background: transparent !important;
-  border: 1px solid var(--dcx-field-border) !important;
-  border-radius: 0 !important;
-  color: var(--text-2) !important;
-}
-#page-project-detail .chip strong { color: var(--text) !important; }
-
-/* "Add / Update Variable" sub-row inside the Environment Variables
-   section — was inline border-top:1px solid var(--border), now
-   matches the same hairline tone as every other divider on this page */
-#page-project-detail [style*="border-top:1px solid var(--border)"] {
-  border-top-color: var(--dcx-row-border) !important;
-}
-
-/* Runtime Logs terminal pane */
-#page-project-detail .jt-runtime-log-pane {
-  background: var(--bg, #000) !important;
-  border: none !important;
-}
-
-/* Tip/callout boxes (Redeployment "Click Redeploy Stored Files…",
-   Auto Deploy Pipeline explainer, pipeline error) — these used the
-   site-wide .alert-info/.alert-error classes, which are hardcoded
-   green/red tinted pills with rounded corners. Every section box now
-   already has its own hairline border, so giving the alert a second
-   border on top of that would nest a box inside a box — instead these
-   drop to plain flat text with no border/fill of their own, exactly
-   like New Deployment's field-hint text, and just get a touch more
-   color for the label so it doesn't disappear as body copy. */
-#page-project-detail .alert {
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  color: var(--text-2) !important;
-}
-#page-project-detail .alert strong { color: var(--text) !important; }
-#page-project-detail .alert code {
-  background: var(--bg-hover) !important;
-  color: var(--text) !important;
-  border-radius: 0 !important;
-}
-
-/* Deployment History table — already sits inside its own section box,
-   so the table-wrap doesn't need a second border around it too. */
-#page-project-detail .table-wrap {
-  border: none !important;
-}
-#page-project-detail table th {
-  border-bottom-color: var(--dcx-row-border) !important;
-}
-#page-project-detail table td {
-  border-bottom-color: var(--dcx-row-border) !important;
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   DIAGNOSTIC — TEMPORARY, undo once we confirm this is a caching/
-   deploy issue and not a CSS bug. Strips every border, background,
-   radius, and shadow from EVERY element on this page, no exceptions,
-   so if the page still shows boxes/tint after this ships, that proves
-   it's not this stylesheet doing it (nothing left in here to blame) —
-   it's an old cached copy of this file (or the page's HTML) being
-   served instead of what's actually on `main`. Remove this whole
-   block once that's confirmed. */
+/* Everything on this page sits directly on the page background —
+   no cards, no chips, no boxes, no borders, no dividers anywhere.
+   This single wildcard rule is intentionally the ONLY rule on this
+   page that touches background/border, so nothing can out-specificity
+   it and quietly bring a box back. Do not add page-specific .card /
+   .chip / .card-header border or background rules below this point —
+   add color/typography/spacing rules only. */
 #page-project-detail * {
   background: transparent !important;
   background-color: transparent !important;
@@ -7756,6 +7607,66 @@ html[data-theme="light"] #page-project-detail {
   border-radius: 0 !important;
   box-shadow: none !important;
 }
+
+#page-project-detail .pd-hero a { color: var(--primary) !important; }
+
+/* Action buttons (Redeploy / Upload New Version, Live Logs, Delete) */
+#page-project-detail .btn-primary,
+#page-project-detail .btn-sm,
+#page-project-detail .btn-ghost,
+#page-project-detail .btn-danger,
+#page-project-detail .input {
+  border-radius: 0 !important;
+}
+#page-project-detail .btn-danger {
+  color: var(--text-2) !important;
+}
+#page-project-detail .btn-danger:hover {
+  color: var(--jt-danger, #ef4444) !important;
+}
+
+/* Meta chips (Status / Deployments / Runtime / Source) — flat text,
+   no box */
+#page-project-detail .pd-meta .chip { color: var(--text-2) !important; }
+#page-project-detail .pd-meta .chip strong { color: var(--text) !important; }
+
+#page-project-detail #projectDetailContent > div[style*="flex-direction:column"] {
+  gap: 20px !important;
+}
+#page-project-detail .card {
+  padding: 20px !important;
+  margin: 0 !important;
+}
+#page-project-detail .card-header {
+  padding: 0 0 14px !important;
+  margin: 0 0 14px !important;
+}
+#page-project-detail .card-title { color: var(--text) !important; font-size: 1rem !important; font-weight: 800 !important; }
+#page-project-detail .card-subtitle { color: var(--text-3) !important; margin-top: 3px !important; }
+#page-project-detail .card > div[style*="padding:14px 16px"],
+#page-project-detail .card > div[style*="padding: 14px 16px"],
+#page-project-detail .card > div[style*="padding:12px 16px"],
+#page-project-detail .card > div[style*="padding: 12px 16px"] {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Generic chips used inside Auto Deploy Pipeline (Pipeline / Last
+   check / Last deploy trigger) — flat text, no box */
+#page-project-detail .chip { color: var(--text-2) !important; }
+#page-project-detail .chip strong { color: var(--text) !important; }
+
+/* Runtime Logs terminal pane keeps a subtle fill so log text stays
+   readable, but no border */
+#page-project-detail .jt-runtime-log-pane {
+  background: var(--bg, #000) !important;
+}
+
+/* Tip/callout boxes (Redeployment "Click Redeploy Stored Files…",
+   Auto Deploy Pipeline explainer, pipeline error) — plain flat text */
+#page-project-detail .alert { color: var(--text-2) !important; padding: 0 !important; }
+#page-project-detail .alert strong { color: var(--text) !important; }
+#page-project-detail .alert code { color: var(--text) !important; }
 
 /* ══════════════════════════════════════════════════════════════════
    CREATE DATABASE PAGE — same flat treatment as the rest of the
