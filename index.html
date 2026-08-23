@@ -21527,11 +21527,11 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
     <!-- ════════ NEW RESOURCE PAGE ════════ -->
     <div class="page" id="page-new-resource">
-      <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-      <div class="resource-hero">
-        <div class="resource-hero-kicker">Launch center</div>
-        <div class="resource-hero-title">New Resource</div>
-        <div class="resource-hero-sub">Choose a runtime, automation job, or container workflow. Each option is tuned for joytree builds, live logs, custom domains, and one-click redeploys.</div>
+      <div class="dcx-header">
+        <button class="page-back back-link" onclick="showPage('dashboard')" style="margin-bottom:16px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+        <div class="dcx-kicker">Launch center</div>
+        <div class="dcx-title">New Resource</div>
+        <div class="dcx-sub">Choose a runtime, automation job, or container workflow. Each option is tuned for joytree builds, live logs, custom domains, and one-click redeploys.</div>
       </div>
       <div class="resource-search-wrap">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -21568,7 +21568,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       <div class="resource-section-label">Automation</div>
       <div id="resourceGrid2" class="resource-grid">
         <div class="resource-card" data-tags="cron job schedule timer automation http" onclick="showPage('cronjobs')">
-          <div class="resource-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" fill="rgba(139,92,246,.16)"/><path d="M12 7v5l3 2"/><path d="M4 4l3 3M20 4l-3 3"/></svg></div>
+          <div class="resource-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/><path d="M4 4l3 3M20 4l-3 3"/></svg></div>
           <div class="resource-card-copy"><div class="resource-card-title">Cron Job</div><div class="resource-card-desc">Schedule HTTP requests and deployment maintenance tasks.</div><div class="resource-card-tags"><span>interval</span><span>webhook</span><span>monitor</span></div></div>
           <div class="resource-arrow">›</div>
         </div>
