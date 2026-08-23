@@ -27,6 +27,53 @@
     } catch (e) {}
   })();
   </script>
+  <style id="jt-early-page-visibility"></style>
+  <script>
+  // [FIX] THE ACTUAL ROOT CAUSE of "every route except /dashboard shows a
+  // broken/unstyled flash on load or reload": #page-dashboard was the ONLY
+  // page with class="page active" hardcoded directly in the static HTML
+  // (every other page has just class="page", which the .page{display:none}
+  // base rule hides by default). That hardcoded class means Dashboard is
+  // ALREADY showing the correct thing the instant the browser parses that
+  // div -- before any JavaScript has run at all -- so any delay in JS
+  // execution (slow device, slow network, a service worker doing its own
+  // work first) is invisible on that one route, papered over by static
+  // markup that already matches reality.
+  // On every other route (e.g. /dashboard/deployments), that exact same
+  // JS-execution delay is fully exposed: the static HTML shows NOTHING
+  // matching the URL (Dashboard is hidden by JS only once it runs, and the
+  // real target page doesn't get its .active class until showPage() also
+  // finishes running) -- so for however long that gap lasts, the visitor
+  // sees a page with no page actually marked visible, or a transitional
+  // state, which is exactly the "plain unstyled dump of text" and "giant
+  // unconstrained icon" artifacts reported.
+  // Fixed by determining the correct initial page SYNCHRONOUSLY, before
+  // first paint, from the URL alone -- same technique already used above
+  // for the dark/light theme flash -- and injecting a tiny scoped <style>
+  // that shows THAT page instead of unconditionally trusting a hardcoded
+  // "dashboard is active" class that's wrong for every other route.
+  (function () {
+    try {
+      var path = (window.location.pathname || '').replace(/\/$/, '');
+      var seg = path.replace(/^\/dashboard\/?/, '');
+      // Keep this list of slugs in sync with VALID_PAGES / DASHBOARD_PAGES
+      // elsewhere -- worst case of a mismatch here is simply "no early
+      // style applied, falls back to the pre-fix flash for that one page",
+      // never a wrong page shown, since the ids are exact matches only.
+      var known = ['dashboard','projects','deployments','repos','new-resource','new-deploy',
+        'logs','ai-analysis','env-manager','domains','analytics','webhooks','cronjobs','workers',
+        'streaks','team','usage','activity','secrets','settings','docs','faq','support','forum',
+        'domain-add','cron-create','dockerfile-deploy','pricing','databases','db-create','db-editor',
+        'db-detail','checkout','domain-cpanel','db-query','db-sdk','code-ide','joytree-ai','founders'];
+      var target = (seg && known.indexOf(seg) !== -1) ? seg : 'dashboard';
+      if (target !== 'dashboard') {
+        var css = '#page-dashboard{display:none !important;} #page-' + target + '{display:block !important;}';
+        var styleEl = document.getElementById('jt-early-page-visibility');
+        if (styleEl) styleEl.textContent = css;
+      }
+    } catch (e) {}
+  })();
+  </script>
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -5646,7 +5693,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=49" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=50" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5719,7 +5766,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=49&recover=' + token;
+    fresh.href = 'theme-override.css?v=50&recover=' + token;
     document.head.appendChild(fresh);
   }
 
