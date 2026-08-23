@@ -6999,4 +6999,199 @@ html[data-theme="light"] #sidebar {
   border-radius: 0 !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   LIVE LOGS PAGE — same flat treatment as the rest of the rebuild.
+   Header buttons, project-info hero, chip pills, the "matrix" panel
+   shown during active deploys, the terminal frame, structured-logs
+   accordion, and the build-progress steps all lose their gradient
+   fills, glow shadows, and rounded corners for thin borders/lines
+   only. The matrix panel's animated rain effect stays functional
+   (it's a real visualization, not decoration) but its frame,
+   badge, and topbar go flat like every other panel on this page.
+   ══════════════════════════════════════════════════════════════════ */
+#page-logs {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-logs {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+
+/* Header action buttons — Restart / Stop / Clear / Download */
+#page-logs .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-logs .btn-ghost:hover {
+  border-color: var(--primary) !important;
+}
+#page-logs .jt-restart-btn,
+#page-logs button[style*="border-color:rgba(239,68,68"] {
+  border-color: var(--dcx-field-border) !important;
+  color: var(--text-2) !important;
+}
+#page-logs button[style*="border-color:rgba(239,68,68"]:hover {
+  border-color: var(--jt-danger, #ef4444) !important;
+  color: var(--jt-danger, #ef4444) !important;
+}
+
+/* Project info hero (No project selected / Repo / Branch / Date chips) */
+#page-logs .logs-hero {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+  border-radius: 0 !important;
+  padding: 0 0 16px !important;
+}
+#page-logs .logs-hero-title { color: var(--text) !important; }
+#page-logs .logs-chip {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+#page-logs .logs-chip a { color: var(--primary) !important; }
+#page-logs .btn-primary {
+  border-radius: 0 !important;
+}
+#page-logs .manual-menu-list {
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 18px 44px rgba(0,0,0,.4) !important;
+}
+#page-logs .manual-item {
+  border-radius: 0 !important;
+}
+#page-logs .manual-item:hover {
+  background: transparent !important;
+  color: var(--primary) !important;
+}
+
+/* Deploy-notification prompt card */
+#page-logs .dnp-card {
+  border-radius: 0 !important;
+}
+
+/* Matrix panel (shown during active deploys) — flat frame, no
+   gradient fill or glow shadow. The rain animation inside stays. */
+#page-logs .matrix-terminal-card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-logs .matrix-topbar {
+  background: transparent !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+}
+#page-logs .matrix-badge {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+
+/* Log filter toolbar row (select / live tail / search / order / copy) */
+#page-logs > div > .card {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+  border-radius: 0 !important;
+}
+#page-logs .input {
+  border-radius: 0 !important;
+}
+
+/* Terminal frame */
+#page-logs .terminal-topbar {
+  border-radius: 0 !important;
+}
+#page-logs .terminal-wrap {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-logs .terminal-wrap.active-deploy {
+  box-shadow: none !important;
+}
+#page-logs .terminal-wrap.active-deploy::before {
+  display: none !important;
+}
+#page-logs .terminal-empty-card {
+  border-radius: 0 !important;
+}
+#page-logs .terminal-idle-chips span {
+  border-radius: 0 !important;
+}
+
+/* Structured Logs accordion — was purple-gradient, now flat */
+#page-logs .structured-log-card {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-logs .structured-log-toggle {
+  background: transparent !important;
+}
+#page-logs .structured-log-toggle:hover {
+  background: transparent !important;
+  color: var(--primary) !important;
+}
+#page-logs .structured-log-count {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+
+/* Build Progress panel — flat, sharp corners, no glow */
+#page-logs .quantum-build {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-logs .quantum-build-toggle {
+  border-bottom-color: var(--dcx-row-border) !important;
+}
+#page-logs .quantum-build.open .quantum-build-toggle {
+  border-bottom-color: var(--dcx-row-border) !important;
+}
+#page-logs .quantum-pulse-mark {
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+  box-shadow: none !important;
+}
+#page-logs .quantum-pulse-mark span {
+  box-shadow: none !important;
+}
+#page-logs .quantum-steps .deploy-step:not(:last-child)::after {
+  background: var(--dcx-row-border) !important;
+}
+#page-logs .quantum-steps .step-icon {
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+}
+#page-logs .quantum-steps .step-icon.done {
+  background: transparent !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+#page-logs .quantum-steps .step-icon.active {
+  background: transparent !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+  box-shadow: none !important;
+}
+#page-logs .quantum-steps .step-icon.error {
+  background: transparent !important;
+  border-color: var(--jt-danger, #ef4444) !important;
+}
+#page-logs .quantum-steps .deploy-step:has(.active) {
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
