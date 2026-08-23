@@ -12165,10 +12165,11 @@ document.addEventListener('keydown', function(e){
 
     <!-- ════════ ENV MANAGER PAGE ════════ -->
     <div class="page" id="page-env-manager">
-      <div class="page-header">
-        <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-        <div class="page-title">Environment Variables</div>
-        <div class="page-subtitle">Manage per-project secrets and runtime configuration values.</div>
+      <div class="dcx-header">
+        <button class="page-back back-link" onclick="showPage('dashboard')" style="margin-bottom:16px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+        <div class="dcx-kicker">Secrets & Config</div>
+        <div class="dcx-title">Environment Variables</div>
+        <div class="dcx-sub">Manage per-project secrets and runtime configuration values.</div>
       </div>
 
       <div class="two-col" style="align-items:start;">
@@ -12222,7 +12223,7 @@ document.addEventListener('keydown', function(e){
               <button class="btn btn-primary" onclick="saveEnvVar()">Save Variable</button>
               <button class="btn btn-ghost" onclick="loadEnvForProject()">Refresh List</button>
               <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;background:transparent;color:var(--text);font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
-                <span style="width:10px;height:10px;border-radius:50%;border:2px solid rgba(187,247,208,.45);border-top-color:#34d399;display:inline-block;animation:dpSpin .7s linear infinite;"></span>
+                <span style="width:10px;height:10px;border-radius:50%;border:2px solid color-mix(in srgb, var(--primary) 35%, transparent);border-top-color:var(--primary);display:inline-block;animation:dpSpin .7s linear infinite;"></span>
                 Starting deployment pipeline…
               </div>
             </div>
@@ -24212,7 +24213,7 @@ function renderAiAnalysisPage() {
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="15 18 9 12 15 6"/></svg> Back to Logs
         </button>
         <div>
-          <div style="font-size:.68rem;font-weight:700;letter-spacing:.12em;color:#22c55e;text-transform:uppercase;margin-bottom:2px;">Tree AI Diagnostics</div>
+          <div style="font-size:.68rem;font-weight:700;letter-spacing:.12em;color:var(--primary);text-transform:uppercase;margin-bottom:2px;">Tree AI Diagnostics</div>
           <div style="font-size:1.45rem;font-weight:800;color:var(--text);line-height:1.1;">AI Analysis</div>
         </div>
         <div style="margin-left:auto;font-family:var(--font-mono);font-size:.7rem;color:var(--text-3);">
