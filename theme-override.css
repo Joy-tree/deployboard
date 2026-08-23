@@ -7212,4 +7212,26 @@ html[data-theme="light"] #page-logs {
   opacity: 1 !important;
 }
 
+/* Repos page — GitHub-not-connected state ("Continue with GitHub" /
+   "Reconnect GitHub" buttons, and the empty-state message shown when
+   no repos load). These use the generic site-wide .btn-primary/
+   .btn-ghost/.repo-empty-actions classes, which were never scoped to
+   this page and kept their rounded corners. */
+#page-repos .btn-primary {
+  border-radius: 0 !important;
+}
+#page-repos .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-repos .btn-ghost:hover {
+  border-color: var(--primary) !important;
+}
+#page-repos .repo-empty-actions .btn {
+  border-radius: 0 !important;
+}
+#page-repos .repo-empty strong { color: var(--text) !important; }
+#page-repos .repo-empty span { color: var(--text-2) !important; }
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
