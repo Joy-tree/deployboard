@@ -12366,39 +12366,28 @@ document.addEventListener('keydown', function(e){
 
     <!-- ════════ DOMAIN STORE PAGE ════════ -->
     <div class="page" id="page-domain-store">
-      <button class="page-back" onclick="showPage('dashboard')">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
-        Back to Dashboard
-      </button>
-
-      <!-- Hero -->
-      <div style="border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:28px 24px 24px;background:#111;margin-bottom:20px;">
-        <div style="font-size:.68rem;color:var(--primary);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px;">Domain Marketplace</div>
-        <div style="font-size:1.6rem;font-weight:900;color:var(--text);line-height:1.2;margin-bottom:10px;">Buy &amp; Manage Domains</div>
-        <div style="font-size:.88rem;color:var(--text-2);line-height:1.6;margin-bottom:20px;">Search, register, and manage domains directly with Joytree. Pay in GHS via Mobile Money.</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-          <div style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 12px;">
-            <div style="font-size:1.4rem;font-weight:900;color:var(--text);" id="dsStatRegistered">0</div>
-            <div style="font-size:.67rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-top:3px;">Your Domains</div>
-          </div>
-          <div style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 12px;">
-            <div style="font-size:1.4rem;font-weight:900;color:var(--text);" id="dsStatExpiring">0</div>
-            <div style="font-size:.67rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-top:3px;">Expiring Soon</div>
-          </div>
-          <div style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 12px;">
-            <div style="font-size:1.4rem;font-weight:900;color:var(--green);" id="dsStatActive">0</div>
-            <div style="font-size:.67rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-top:3px;">Active</div>
-          </div>
+      <div class="dcx-header">
+        <button class="page-back back-link" onclick="showPage('dashboard')" style="margin-bottom:16px;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
+          Back to Dashboard
+        </button>
+        <div class="dcx-kicker">Domain Marketplace</div>
+        <div class="dcx-title">Buy &amp; Manage Domains</div>
+        <div class="dcx-sub">Search, register, and manage domains directly with Joytree. Pay in GHS via Mobile Money.</div>
+        <div class="dcx-steps" style="grid-template-columns:repeat(3,1fr);margin-top:20px;">
+          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="dsStatRegistered" style="width:auto;padding:0 6px;">0</span><span>Your Domains</span></div>
+          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="dsStatExpiring" style="width:auto;padding:0 6px;">0</span><span>Expiring Soon</span></div>
+          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="dsStatActive" style="width:auto;padding:0 6px;color:var(--primary);">0</span><span>Active</span></div>
         </div>
       </div>
 
 
       <!-- Search bar -->
-      <div style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;background:#111;padding:20px;margin-bottom:16px;">
+      <div class="dcx-group-box" style="margin-bottom:16px;">
         <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;font-weight:600;">Search Domain Availability</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <input id="dsSearchInput" type="text" placeholder="yourbrand.com" style="flex:1;min-width:0;background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px 14px;color:var(--text);font-size:.9rem;outline:none;" onkeydown="if(event.key==='Enter')dsSearch()">
-          <button class="btn btn-primary" onclick="dsSearch()" style="white-space:nowrap;min-width:100px;" id="dsSearchBtn">
+          <input id="dsSearchInput" class="input" type="text" placeholder="yourbrand.com" style="flex:1;min-width:0;" onkeydown="if(event.key==='Enter')dsSearch()">
+          <button class="btn btn-primary" onclick="dsSearch()" style="white-space:nowrap;min-width:100px;border-radius:0;" id="dsSearchBtn">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             Check
           </button>
@@ -12415,7 +12404,7 @@ document.addEventListener('keydown', function(e){
       </div>
 
       <!-- Pricing table -->
-      <div style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;background:#111;padding:20px;margin-bottom:16px;">
+      <div class="dcx-group-box" style="margin-bottom:16px;">
         <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;font-weight:600;">Popular Extensions &amp; Pricing</div>
         <div id="dsPricingTable">
           <table style="width:100%;border-collapse:collapse;font-size:.82rem;table-layout:fixed;">
@@ -12425,7 +12414,7 @@ document.addEventListener('keydown', function(e){
               <col style="width:33%;">
             </colgroup>
             <thead>
-              <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+              <tr style="border-bottom:1px solid var(--dcx-row-border, var(--border));">
                 <th style="text-align:left;padding:8px 6px;color:var(--text-3);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;">Extension</th>
                 <th style="text-align:right;padding:8px 6px;color:var(--text-3);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;">Register</th>
                 <th style="text-align:right;padding:8px 6px;color:var(--text-3);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;">Renew</th>
@@ -12437,10 +12426,10 @@ document.addEventListener('keydown', function(e){
       </div>
 
       <!-- Your registered domains -->
-      <div style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;background:#111;padding:20px;margin-bottom:16px;">
+      <div class="dcx-group-box" style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
           <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;">Your Registered Domains</div>
-          <button class="btn btn-sm btn-ghost" onclick="dsLoadMyDomains()" style="font-size:.72rem;">
+          <button class="btn btn-sm btn-ghost" onclick="dsLoadMyDomains()" style="font-size:.72rem;border-radius:0;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
             Refresh
           </button>
@@ -12451,20 +12440,20 @@ document.addEventListener('keydown', function(e){
       </div>
 
       <!-- DNS Management Panel (shown when a domain is selected) -->
-      <div id="dsDnsPanel" style="display:none;border:1px solid rgba(16,185,129,0.2);border-radius:16px;background:#0d0d0d;padding:20px;margin-bottom:16px;">
+      <div id="dsDnsPanel" class="dcx-group-box" style="display:none;margin-bottom:16px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
           <div>
             <div style="font-size:.72rem;color:var(--primary);text-transform:uppercase;letter-spacing:.08em;font-weight:600;">DNS Manager</div>
             <div style="font-size:.95rem;font-weight:800;color:var(--text);margin-top:3px;" id="dsDnsDomain">—</div>
           </div>
-          <button class="btn btn-sm btn-ghost" onclick="document.getElementById('dsDnsPanel').style.display='none'">Close</button>
+          <button class="btn btn-sm btn-ghost" onclick="document.getElementById('dsDnsPanel').style.display='none'" style="border-radius:0;">Close</button>
         </div>
         <!-- Cloudflare nameservers notice -->
-        <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:14px;margin-bottom:16px;">
+        <div style="border:1px solid var(--dcx-field-border, var(--border));padding:14px;margin-bottom:16px;">
           <div style="font-size:.75rem;font-weight:700;color:var(--primary);margin-bottom:6px;">Point to Joytree / Cloudflare Nameservers</div>
           <div style="font-size:.78rem;color:var(--text-2);line-height:1.65;margin-bottom:10px;">Set these nameservers at your registrar to activate Cloudflare DNS and free SSL:</div>
           <div style="display:flex;flex-direction:column;gap:6px;" id="dsDnsNsList"></div>
-          <button class="btn btn-sm btn-primary" onclick="dsSaveNameservers()" style="margin-top:12px;" id="dsDnsNsBtn">
+          <button class="btn btn-sm btn-primary" onclick="dsSaveNameservers()" style="margin-top:12px;border-radius:0;" id="dsDnsNsBtn">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
             Apply Nameservers via Joytree
           </button>
@@ -12479,19 +12468,19 @@ document.addEventListener('keydown', function(e){
         </div>
         <div id="dsDnsRecordsTable" style="margin-bottom:14px;"></div>
         <!-- Add record form -->
-        <div style="border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px;background:#111;">
+        <div class="dcx-inline-box">
           <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:10px;">Add DNS Record</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-            <select id="dsDnsType" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;min-width:0;width:100%;">
+            <select id="dsDnsType" class="input" style="min-width:0;width:100%;">
               <option>A</option><option>AAAA</option><option>CNAME</option><option>MX</option><option>TXT</option><option>NS</option>
             </select>
-            <input id="dsDnsHost" type="text" placeholder="Host (@ for root)" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;outline:none;min-width:0;width:100%;">
+            <input id="dsDnsHost" class="input" type="text" placeholder="Host (@ for root)" style="min-width:0;width:100%;">
           </div>
           <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:10px;">
-            <input id="dsDnsValue" type="text" placeholder="Value / Points to" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;outline:none;min-width:0;width:100%;">
-            <input id="dsDnsTtl" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="TTL (3600)" value="3600" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;outline:none;min-width:0;width:100%;">
+            <input id="dsDnsValue" class="input" type="text" placeholder="Value / Points to" style="min-width:0;width:100%;">
+            <input id="dsDnsTtl" class="input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="TTL (3600)" value="3600" style="min-width:0;width:100%;">
           </div>
-          <button class="btn btn-primary" onclick="dsDnsAddRecord()" style="width:100%;">
+          <button class="btn btn-primary" onclick="dsDnsAddRecord()" style="width:100%;border-radius:0;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add Record
           </button>
@@ -12500,35 +12489,35 @@ document.addEventListener('keydown', function(e){
 
       <!-- Checkout modal trigger area (hidden) -->
       <div id="dsDomainCheckoutModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
-        <div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:20px;width:min(95vw,440px);padding:28px;position:relative;max-height:90vh;overflow-y:auto;">
-          <button onclick="dsCloseCheckout()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.07);border:none;border-radius:8px;padding:6px 10px;color:var(--text-2);cursor:pointer;font-size:.82rem;">✕</button>
+        <div style="background:var(--bg, #000);border:1px solid var(--dcx-field-border, var(--border));border-radius:0;width:min(95vw,440px);padding:28px;position:relative;max-height:90vh;overflow-y:auto;">
+          <button onclick="dsCloseCheckout()" style="position:absolute;top:14px;right:14px;background:transparent;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;padding:6px 10px;color:var(--text-2);cursor:pointer;font-size:.82rem;">✕</button>
           <div style="font-size:.68rem;color:var(--primary);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px;">Domain Registration</div>
           <div style="font-size:1.25rem;font-weight:900;color:var(--text);margin-bottom:4px;" id="dsCheckoutDomain">—</div>
           <div style="font-size:.82rem;color:var(--text-2);margin-bottom:20px;">1-year registration — includes free DNS management</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
-            <div style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;">
+            <div style="border:1px solid var(--dcx-field-border, var(--border));padding:12px;">
               <div style="font-size:.68rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;">Price (GHS)</div>
               <div style="font-size:1.3rem;font-weight:900;color:var(--primary);margin-top:4px;" id="dsCheckoutPrice">—</div>
             </div>
-            <div style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;">
+            <div style="border:1px solid var(--dcx-field-border, var(--border));padding:12px;">
               <div style="font-size:.68rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;">Renews</div>
               <div style="font-size:.88rem;font-weight:700;color:var(--text);margin-top:4px;" id="dsCheckoutRenew">Annually</div>
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
-            <input id="dsCoFirstName" type="text" placeholder="First Name" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:var(--text);font-size:.88rem;outline:none;">
-            <input id="dsCoLastName" type="text" placeholder="Last Name" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:var(--text);font-size:.88rem;outline:none;">
-            <input id="dsCoEmail" type="email" placeholder="Email address" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:var(--text);font-size:.88rem;outline:none;">
-            <input id="dsCoPhone" type="tel" placeholder="Phone (MoMo number)" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:var(--text);font-size:.88rem;outline:none;">
+            <input id="dsCoFirstName" class="input" type="text" placeholder="First Name">
+            <input id="dsCoLastName" class="input" type="text" placeholder="Last Name">
+            <input id="dsCoEmail" class="input" type="email" placeholder="Email address">
+            <input id="dsCoPhone" class="input" type="tel" placeholder="Phone (MoMo number)">
           </div>
           <!-- Auto-connect to project -->
-          <div style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;margin-bottom:18px;">
+          <div style="border:1px solid var(--dcx-field-border, var(--border));padding:12px;margin-bottom:18px;">
             <div style="font-size:.72rem;color:var(--text-3);margin-bottom:6px;">Attach to a Joytree project (optional)</div>
-            <select id="dsCoProject" style="background:#0a0a0a;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;width:100%;">
+            <select id="dsCoProject" class="input" style="width:100%;">
               <option value="">— None —</option>
             </select>
           </div>
-          <button class="btn btn-primary" onclick="dsProceedPayment()" style="width:100%;min-height:46px;font-size:.95rem;font-weight:800;" id="dsCoPayBtn">
+          <button class="btn btn-primary" onclick="dsProceedPayment()" style="width:100%;min-height:46px;font-size:.95rem;font-weight:800;border-radius:0;" id="dsCoPayBtn">
             Pay with Mobile Money (GHS)
           </button>
           <div style="margin-top:10px;font-size:.7rem;color:var(--text-3);text-align:center;">Secured by Paystack · MTN MoMo · Telecel Cash · AT Money</div>
@@ -12538,12 +12527,12 @@ document.addEventListener('keydown', function(e){
 
       <!-- ════════ TRY TO BUY MODAL ════════ -->
       <div id="dsTryToBuyModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;">
-        <div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:20px;width:min(95vw,420px);padding:28px;position:relative;">
-          <button onclick="document.getElementById('dsTryToBuyModal').style.display='none';" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.07);border:none;border-radius:8px;padding:6px 10px;color:var(--text-2);cursor:pointer;font-size:.82rem;">✕</button>
-          <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" width="20" height="20"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <div style="background:var(--bg, #000);border:1px solid var(--dcx-field-border, var(--border));border-radius:0;width:min(95vw,420px);padding:28px;position:relative;">
+          <button onclick="document.getElementById('dsTryToBuyModal').style.display='none';" style="position:absolute;top:14px;right:14px;background:transparent;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;padding:6px 10px;color:var(--text-2);cursor:pointer;font-size:.82rem;">✕</button>
+          <div style="width:44px;height:44px;border-radius:0;background:transparent;border:1px solid var(--dcx-field-border, var(--border));display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--jt-accent, #f59e0b)" stroke-width="2" width="20" height="20"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
           </div>
-          <div style="font-size:.65rem;color:#f59e0b;text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:6px;">Domain Acquisition</div>
+          <div style="font-size:.65rem;color:var(--jt-accent, #f59e0b);text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:6px;">Domain Acquisition</div>
           <div style="font-size:1.1rem;font-weight:900;color:var(--text);margin-bottom:4px;" id="dsTryToBuyDomain">—</div>
           <div style="font-size:.82rem;color:var(--text-2);line-height:1.55;margin-bottom:20px;">This domain is currently registered. We can attempt to acquire it on your behalf through backorder or direct negotiation. Submit your interest and we'll reach out.</div>
           <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
@@ -12604,18 +12593,18 @@ document.addEventListener('keydown', function(e){
     <!-- ════════ DOMAIN STORE STYLES ════════ -->
     <style>
     .ds-tld-btn {
-      background:#0d0d0d; border:1px solid rgba(255,255,255,0.1); border-radius:6px;
+      background:transparent; border:1px solid var(--dcx-field-border, var(--border)); border-radius:0;
       padding:4px 10px; color:var(--text-2); font-size:.72rem; cursor:pointer;
       transition:background .15s, color .15s, border-color .15s;
     }
-    .ds-tld-btn:hover { background:rgba(255,255,255,0.07); color:var(--text); }
-    .ds-tld-btn.ds-tld-active { background:rgba(16,185,129,0.12); color:var(--primary); border-color:rgba(16,185,129,0.3); }
-    .ds-avail-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; background:#0d0d0d; border:1px solid rgba(255,255,255,0.07); margin-bottom:6px; flex-wrap:wrap; }
-    .ds-avail-available { border-color:rgba(16,185,129,0.25); }
+    .ds-tld-btn:hover { background:transparent; color:var(--text); border-color:var(--primary); }
+    .ds-tld-btn.ds-tld-active { background:transparent; color:var(--primary); border-color:var(--primary); }
+    .ds-avail-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:0; background:transparent; border:1px solid var(--dcx-field-border, var(--border)); margin-bottom:6px; flex-wrap:wrap; }
+    .ds-avail-available { border-color:color-mix(in srgb, var(--primary) 45%, transparent); }
     .ds-avail-taken { opacity:1; }
-    .ds-domain-row { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.06); flex-wrap:wrap; }
+    .ds-domain-row { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--dcx-row-border, var(--border)); flex-wrap:wrap; }
     .ds-domain-row:last-child { border-bottom:none; }
-    .ds-dns-record-row { display:grid; grid-template-columns:52px 1fr 1fr 36px; gap:6px; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:.72rem; }
+    .ds-dns-record-row { display:grid; grid-template-columns:52px 1fr 1fr 36px; gap:6px; align-items:center; padding:6px 0; border-bottom:1px solid var(--dcx-row-border, var(--border)); font-size:.72rem; }
     .ds-dns-record-row:last-child { border-bottom:none; }
     .ds-dns-record-row .ds-ttl-col { display:none; }
     @media(min-width:520px){ .ds-dns-record-row { grid-template-columns:52px 1fr 1fr 52px 36px; } .ds-dns-record-row .ds-ttl-col { display:block; } }
