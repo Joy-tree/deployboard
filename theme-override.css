@@ -6453,6 +6453,12 @@ html[data-theme="light"] #page-projects {
   border-radius: 0 !important;
 }
 
+/* Any primary button on this page (including "Create First Project"
+   in the empty state) — sharp corners */
+#page-projects .btn-primary {
+  border-radius: 0 !important;
+}
+
 /* Thumbnail and footer — sharp corners, no leftover rounding from the
    old boxed-card radius */
 #page-projects .tree-node-thumb { border-radius: 0 !important; }
