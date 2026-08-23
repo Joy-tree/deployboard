@@ -3186,6 +3186,41 @@ async function refreshHealthCache() {
 refreshHealthCache(); // prime at startup
 try { setInterval(refreshHealthCache, 60_000).unref(); } catch(_) {}
 
+// ── Public, unauthenticated platform stats (landing page live counters) ────
+// Cached briefly server-side so a busy landing page can't hammer MongoDB
+// with a count() query on every single visitor -- this number only needs
+// to be "real and moving", not updated on every millisecond.
+let _publicStatsCache = { ts: 0, data: null };
+app.get('/api/public/stats', async (req, res) => {
+  try {
+    const CACHE_MS = 15_000;
+    if (_publicStatsCache.data && (Date.now() - _publicStatsCache.ts) < CACHE_MS) {
+      return res.json(_publicStatsCache.data);
+    }
+    const [totalDeployments, successDeployments, totalProjects] = await Promise.all([
+      Deployment.countDocuments({}).catch(() => 0),
+      Deployment.countDocuments({ status: 'success' }).catch(() => 0),
+      Project.countDocuments({}).catch(() => 0),
+    ]);
+    const uptimePct = totalDeployments > 0
+      ? Math.round((successDeployments / totalDeployments) * 1000) / 10
+      : 99.9;
+    const data = {
+      ok: true,
+      totalDeployments,
+      totalProjects,
+      uptimePct,
+      generatedAt: new Date().toISOString(),
+    };
+    _publicStatsCache = { ts: Date.now(), data };
+    res.json(data);
+  } catch (e) {
+    // Fail soft -- the landing page counter should never break the page
+    // over a stats query hiccup, just show its own honest fallback.
+    res.status(200).json({ ok: false, error: e.message });
+  }
+});
+
 app.get('/api/health', (req, res) => {
   // Fast path: never blocks on shell or network. Kick a background refresh
   // if the cache is stale, but always respond immediately.
