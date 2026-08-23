@@ -4429,10 +4429,12 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 #page-new-deploy {
   --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
   --dcx-group-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 55%, var(--border));
 }
 html[data-theme="light"] #page-new-deploy {
   --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
   --dcx-group-border: color-mix(in srgb, var(--text-2) 35%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 50%, var(--border));
 }
 
 /* ── Composer header — flat, no box ── */
@@ -4477,7 +4479,7 @@ html[data-theme="light"] #page-new-deploy {
 #page-new-deploy .dcx-group-box-collapse .dcx-collapse-summary { padding: 18px 20px; margin: 0; }
 #page-new-deploy .dcx-group-box-collapse .dcx-collapse-body { padding: 0 20px 20px; }
 #page-new-deploy .dcx-group-box-collapse[open] .dcx-collapse-summary {
-  border-bottom: 1px solid var(--dcx-group-border);
+  border-bottom: 1px solid var(--dcx-row-border);
 }
 #page-new-deploy .dcx-page-body { margin-top: 0; }
 
@@ -4486,14 +4488,14 @@ html[data-theme="light"] #page-new-deploy {
 #page-new-deploy .dcx-steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-bottom: 1px solid var(--dcx-group-border);
+  border-bottom: 1px solid var(--dcx-row-border);
 }
 #page-new-deploy .dcx-step-item {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 14px 20px;
-  border-right: 1px solid var(--dcx-group-border);
+  border-right: 1px solid var(--dcx-row-border);
   color: var(--text-2);
   font-size: .82rem;
   font-weight: 700;
@@ -4524,7 +4526,7 @@ html[data-theme="light"] #page-new-deploy {
 }
 #page-new-deploy .dcx-divider {
   height: 1px;
-  background: var(--dcx-group-border);
+  background: var(--dcx-row-border);
   margin: 24px 0;
 }
 
@@ -4605,7 +4607,7 @@ html[data-theme="light"] #page-new-deploy {
   gap: 12px;
   margin-bottom: 18px;
 }
-#page-new-deploy .dcx-or-divider span { flex: 1; height: 1px; background: var(--dcx-group-border); }
+#page-new-deploy .dcx-or-divider span { flex: 1; height: 1px; background: var(--dcx-row-border); }
 #page-new-deploy .dcx-or-divider em {
   font-style: normal;
   font-size: .72rem;
@@ -4726,7 +4728,7 @@ html[data-theme="light"] #page-new-deploy {
   justify-content: space-between;
   gap: 12px;
   padding: 11px 0;
-  border-bottom: 1px solid var(--dcx-group-border);
+  border-bottom: 1px solid var(--dcx-row-border);
   font-size: .82rem;
   color: var(--text-2);
 }
@@ -4805,7 +4807,7 @@ html[data-theme="light"] #page-new-deploy {
 }
 @media(max-width:640px){
   #page-new-deploy .dcx-steps { grid-template-columns: 1fr; }
-  #page-new-deploy .dcx-step-item { border-right: none; border-bottom: 1px solid var(--dcx-group-border); }
+  #page-new-deploy .dcx-step-item { border-right: none; border-bottom: 1px solid var(--dcx-row-border); }
   #page-new-deploy .dcx-step-item:last-child { border-bottom: none; }
   #page-new-deploy .dcx-group-box { padding: 16px; border-radius: 14px; }
   #page-new-deploy .dcx-group-box-1 .dcx-steps { margin: -16px -16px 16px; }
