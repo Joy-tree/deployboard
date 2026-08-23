@@ -4143,19 +4143,19 @@ html[data-theme="light"] .cs-option.selected {
    matching the dcx-* system used everywhere else on this rebuild. */
 #page-repos .repo-card {
   background: transparent !important;
-  border: none !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
-  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
   box-shadow: none !important;
-  padding: 0 0 24px !important;
+  padding: 18px !important;
+  min-height: 0 !important;
 }
 #page-repos .repo-card:hover {
-  border-bottom-color: var(--primary) !important;
+  border-color: var(--primary) !important;
   transform: none;
 }
 #page-repos .repo-grid {
   display: grid !important;
-  gap: 4px !important;
+  gap: 16px !important;
 }
 #page-repos .repo-lang-emblem {
   background: transparent !important;
