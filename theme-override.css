@@ -4843,6 +4843,7 @@ html[data-theme="light"] #page-new-deploy {
 }
 
 /* ── Layout ── */
+#page-new-deploy { max-width: 1180px; margin-left: auto; margin-right: auto; }
 #page-new-deploy .dcx-layout { align-items: start; gap: 32px; }
 #page-new-deploy .dcx-layout > div:first-child { min-width: 0; }
 #page-new-deploy .dcx-summary-col { position: sticky; top: 14px; }
@@ -5241,6 +5242,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
 }
 
 /* ── Layout ── */
+#page-dockerfile-deploy , #page-worker-create { max-width: 1180px; margin-left: auto; margin-right: auto; }
 #page-dockerfile-deploy .dcx-layout ,#page-worker-create .dcx-layout { align-items: start; gap: 32px; }
 #page-dockerfile-deploy .dcx-layout > div:first-child ,#page-worker-create .dcx-layout > div:first-child { min-width: 0; }
 #page-dockerfile-deploy .dcx-summary-col ,#page-worker-create .dcx-summary-col { position: sticky; top: 14px; }
@@ -7313,6 +7315,20 @@ html[data-theme="light"] #page-domains {
 }
 #page-domains .btn-ghost:hover {
   border-color: var(--primary) !important;
+}
+
+/* Live Logs terminal HUD pills (edge:/port:/latency:/trace: shown
+   during active deploys) — was a brownish-dark rgba(1,12,7,.72) fill
+   with a green glow shadow, now flat theme tokens */
+#page-logs .terminal-hud span {
+  color: var(--primary) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+  background: var(--bg, #000) !important;
+  box-shadow: none !important;
+}
+#page-logs .structured-log-card.open .structured-log-body {
+  border-top-color: var(--dcx-row-border) !important;
 }
 
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
