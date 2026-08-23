@@ -25154,7 +25154,6 @@ function _doRenderProjectsNow() {
 // whatever signals the project record does have.
 function getDeploymentFrameworkIcon(project) {
   if (!project) return repoLanguageIcon({});
-  console.log('[JT-ICON]', project.name, {siteType:project.siteType, buildCmd:project.buildCmd, startCmd:project.startCmd, nodeVer:project.nodeVer, isDockerfileDeploy:project.isDockerfileDeploy});
   const build  = String(project.buildCmd  || '').toLowerCase();
   const start  = String(project.startCmd  || '').toLowerCase();
   const out    = String(project.outputDir || '').toLowerCase();
