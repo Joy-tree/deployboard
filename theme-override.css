@@ -4366,6 +4366,7 @@ html[data-theme="light"] .cs-option.selected {
 
 /* Empty state → theme tokens instead of hardcoded slate */
 #page-code-upload .cu-empty { color: var(--text-2) !important; }
+#page-code-upload .cu-empty-icon { color: var(--text-3) !important; }
 #page-code-upload .cu-empty-title { color: var(--text) !important; }
 #page-code-upload .cu-empty-sub { color: var(--text-3) !important; }
 
