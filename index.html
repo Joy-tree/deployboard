@@ -3043,8 +3043,8 @@ html[data-theme="light"] #app{--cyan:var(--jt-brand-strong);}
   min-height:54px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:#111;font-weight:700;
 }
 #page-env-manager .custom-select-dropdown{border:1px solid rgba(255,255,255,.1);border-radius:14px;background:#111}
-#page-env-manager .cs-option{font-weight:600}
-#page-env-manager .cs-option:hover,#page-env-manager .cs-option.selected{background:rgba(16,185,129,.12);color:#d1fae5}
+#page-env-manager .cs-option{font-weight:600;color:var(--text-2);}
+#page-env-manager .cs-option:hover,#page-env-manager .cs-option.selected{background:rgba(16,185,129,.12);color:var(--primary);}
 #page-env-manager .card,#page-settings .card,#page-analytics .card,#page-cronjobs .card{border-color:rgba(16,185,129,.14);border-radius:20px}
 #page-cronjobs #cronJobsList > div,#page-cronjobs #cronExecutionLog > div{
   border-radius:12px;margin:8px 10px;background:rgba(0,0,0,.45);border:1px solid rgba(16,185,129,.1)
@@ -3607,9 +3607,9 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
   background:#111;
   box-shadow:0 18px 54px rgba(0,0,0,.48);
 }
-#page-new-deploy .cs-option{color:#cbd5e1;}
+#page-new-deploy .cs-option{color:var(--text-2);}
 #page-new-deploy .cs-option:hover,
-#page-new-deploy .cs-option.selected{background:rgba(16,185,129,.14);color:#d1fae5;}
+#page-new-deploy .cs-option.selected{background:rgba(16,185,129,.14);color:var(--primary);}
 #page-new-deploy select.input{
   background-color:#111;
 }
@@ -5646,7 +5646,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=46" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=47" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5670,39 +5670,66 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 //      retry URL alone is enough to bypass every caching layer between
 //      the browser and the origin.
 (function(){
-  var VERIFY_CLASS = 'dep-toolbar'; // a class that only exists in theme-override.css
-  var EXPECTED_Z = '20';            // the z-index that class sets, if loaded
+  // [FIX v3] The v2 check only verified ONE rule (.dep-toolbar's z-index),
+  // positioned near the END of a 220KB+ CSS file. A TRUNCATED download --
+  // a genuinely common failure on a flaky mobile connection, where the
+  // response cuts off partway through instead of failing outright or
+  // returning garbage -- can leave the file's early/middle rules fully
+  // applied while everything after the truncation point is silently
+  // missing, or vice versa. Checking only one rule near the end meant
+  // this recovery script itself could report "loaded fine" purely by
+  // coincidence of WHERE in the file the truncation happened to land,
+  // relative to that one checked rule -- exactly the inconsistent
+  // partial-styling symptom reported (some elements styled correctly,
+  // others plain/unstyled, on the SAME page load).
+  //
+  // Fixed by checking THREE dedicated marker rules deliberately placed
+  // at the very start, middle, and end of theme-override.css (see the
+  // "[INTEGRITY MARKER]" comments in that file) -- a truncation
+  // anywhere in the file will now cause at least one of these three to
+  // fail, regardless of exactly where the cut lands.
+  var MARKERS = ['jt-css-integrity-start', 'jt-css-integrity-mid', 'jt-css-integrity-end'];
+  var VAR_NAMES = ['--jt-loaded-start', '--jt-loaded-mid', '--jt-loaded-end'];
   var attempts = 0;
   var MAX_ATTEMPTS = 6;
   var recovered = false;
 
-  function themeCssIsLoaded(){
+  function allMarkersPresent(){
     try {
       var testEl = document.createElement('div');
-      testEl.className = VERIFY_CLASS;
       testEl.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;top:-9999px;';
+      MARKERS.forEach(function(cls){ testEl.classList.add(cls); });
       document.body.appendChild(testEl);
-      var z = getComputedStyle(testEl).zIndex;
+      var cs = getComputedStyle(testEl);
+      var allPresent = VAR_NAMES.every(function(v){ return cs.getPropertyValue(v).trim() === '1'; });
       document.body.removeChild(testEl);
-      return z === EXPECTED_Z;
-    } catch(e) { return true; /* never block/loop forever on an unexpected error */ }
+      return allPresent;
+    } catch(e) {
+      // [FIX] Previously this caught ANY unexpected error (including the
+      // check simply running too early, before document.body exists) and
+      // treated it as "assume loaded fine" -- which could permanently
+      // disable the whole recovery mechanism on exactly the runs where
+      // it's needed most. Now an inability to even RUN the check is
+      // treated the same as "not loaded" -- fail safe, not fail silent.
+      return false;
+    }
   }
 
   function forceFreshReload(){
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=46&recover=' + token;
+    fresh.href = 'theme-override.css?v=47&recover=' + token;
     document.head.appendChild(fresh);
   }
 
   function pollAndRecover(){
     if (recovered) return;
-    if (themeCssIsLoaded()){ recovered = true; return; }
+    if (document.body && allMarkersPresent()){ recovered = true; return; }
     attempts++;
     forceFreshReload();
     if (attempts < MAX_ATTEMPTS){
-      setTimeout(pollAndRecover, 500 * attempts); // back off a little each time
+      setTimeout(pollAndRecover, 500 * attempts);
     }
   }
 
