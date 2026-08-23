@@ -7331,4 +7331,53 @@ html[data-theme="light"] #page-domains {
   border-top-color: var(--dcx-row-border) !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   DOMAIN STORE PAGE — same flat treatment as the rest of the rebuild.
+   Hero already converted to dcx-header in the HTML; this covers the
+   TLD chips, availability/domain rows (already flattened inline in
+   HTML) plus the remaining badge/button classes shared with other
+   pages that still need per-page scoping here.
+   ══════════════════════════════════════════════════════════════════ */
+#page-domain-store {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-domain-store {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+#page-domain-store .badge-success {
+  background: transparent !important;
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent) !important;
+  color: var(--primary) !important;
+}
+#page-domain-store .badge-success .badge-dot { background: var(--primary) !important; }
+#page-domain-store .badge-warning {
+  background: transparent !important;
+  border-color: color-mix(in srgb, var(--jt-accent, #f59e0b) 45%, transparent) !important;
+  color: var(--jt-accent, #f59e0b) !important;
+}
+#page-domain-store .badge-warning .badge-dot { background: var(--jt-accent, #f59e0b) !important; }
+#page-domain-store .badge-error {
+  background: transparent !important;
+  border-color: color-mix(in srgb, var(--jt-danger, #ef4444) 45%, transparent) !important;
+  color: var(--jt-danger, #ef4444) !important;
+}
+#page-domain-store .badge-error .badge-dot { background: var(--jt-danger, #ef4444) !important; }
+#page-domain-store .btn-primary,
+#page-domain-store .btn-sm {
+  border-radius: 0 !important;
+}
+#page-domain-store .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-domain-store .btn-ghost:hover {
+  border-color: var(--primary) !important;
+}
+#page-domain-store .input {
+  border-radius: 0 !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
