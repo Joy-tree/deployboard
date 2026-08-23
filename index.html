@@ -3079,16 +3079,13 @@ html[data-theme="light"] #app{--cyan:var(--jt-brand-strong);}
 .resource-card{position:relative;display:flex;align-items:center;gap:16px;min-height:132px;padding:18px;border-radius:20px;background:linear-gradient(145deg,rgba(0,0,0,.95),rgba(8,13,24,.95));border:1px solid rgba(16,185,129,.12);box-shadow:0 14px 38px rgba(0,0,0,.18);overflow:hidden;transform:none;}
 .resource-card::before{content:'';position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--primary),var(--cyan),var(--purple));opacity:.65}.resource-card:hover{transform:translateY(-3px);border-color:rgba(16,185,129,.38);background:linear-gradient(145deg,rgba(0,0,0,.98),rgba(11,18,33,.98));box-shadow:0 22px 58px rgba(0,0,0,.28)}
 .resource-icon{width:76px;height:76px;border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.015))!important;border:1px solid rgba(148,163,184,.14)!important;box-shadow:inset 0 0 26px rgba(255,255,255,.035),0 10px 28px rgba(0,0,0,.18)}.resource-icon img,.resource-icon svg{width:46px;height:46px;object-fit:contain;filter:drop-shadow(0 8px 15px rgba(0,0,0,.25))}.resource-card-copy{min-width:0;flex:1}.resource-card-title{font-size:1.05rem;font-weight:800;color:var(--text);line-height:1.15}.resource-card-desc{font-size:.84rem;color:var(--text-2);margin-top:6px;line-height:1.4}.resource-card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.resource-card-tags span{font-family:var(--font-mono);font-size:.62rem;color:var(--text-3);border:1px solid rgba(148,163,184,.12);background:rgba(148,163,184,.06);border-radius:999px;padding:4px 7px}.resource-arrow{margin-left:auto;color:var(--text-3);font-size:1.6rem;transition:transform .15s,color .15s}.resource-card:hover .resource-arrow{transform:translateX(4px);color:var(--cyan)}
-#page-new-deploy .page-header{display:none}#page-new-deploy .two-col{gap:18px}#page-new-deploy .card{border-radius:22px;border-color:rgba(255,255,255,.07);background:#0d0d0d;box-shadow:none;overflow:visible}#page-new-deploy .card-header{padding:20px 24px;background:transparent;border-radius:22px 22px 0 0}#page-new-deploy .card-title{font-size:1.02rem}#page-new-deploy .card-subtitle{font-size:.86rem;margin-top:4px}#page-new-deploy .card-body{padding:24px}#page-new-deploy .field{margin-bottom:22px}#page-new-deploy .field-label{font-size:.9rem;letter-spacing:.01em;margin-bottom:9px;display:flex;align-items:center;gap:8px}#page-new-deploy .field-label::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--primary);box-shadow:0 0 14px rgba(16,185,129,.55)}#page-new-deploy .input{min-height:54px;border-radius:15px;border-color:rgba(255,255,255,.1);background:#111;font-size:1rem;padding:0 18px;box-shadow:none}#page-new-deploy .input:focus{border-color:rgba(16,185,129,.55);box-shadow:0 0 0 4px rgba(16,185,129,.08)}#page-new-deploy .field-hint{font-size:.82rem;line-height:1.5;margin-top:9px;color:#64748b}#page-new-deploy .input-group .input{border-radius:15px 0 0 15px}#page-new-deploy #domainSuffix{min-height:54px;border-color:rgba(255,255,255,.1)!important;background:#111!important;border-radius:0 15px 15px 0!important;font-size:.82rem!important}
-.deploy-stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 18px}.deploy-stepper-item{padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:#111;display:flex;align-items:center;gap:10px;color:var(--text);font-size:.78rem;font-weight:700}.deploy-stepper-badge{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;background:#1a1a1a;color:var(--green);font-family:var(--font-mono);font-weight:800}.deploy-side-panel{position:relative;overflow:hidden}.deploy-side-panel::after{display:none}#page-new-deploy #deployBtn{min-height:56px;border-radius:16px;font-size:1rem;font-weight:800;box-shadow:none}
-#page-new-deploy .custom-select-btn{height:54px;border-radius:15px;border-color:rgba(255,255,255,.1);background:#111;font-size:.92rem;padding:0 16px;box-shadow:none}#page-new-deploy .custom-select-menu{border-radius:16px;border-color:rgba(255,255,255,.1);background:#111;box-shadow:0 18px 54px rgba(0,0,0,.48);max-height:300px}.custom-select-item.repo-select-item{display:flex;align-items:center;gap:10px;padding:12px}.repo-select-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(16,185,129,.12);color:var(--green);font-weight:900}.repo-select-main{font-weight:800;color:var(--text);font-size:.84rem}.repo-select-sub{font-family:var(--font-mono);font-size:.68rem;color:var(--text-3);margin-top:2px}.custom-select-item.branch-select-item{display:flex;align-items:center;justify-content:space-between;font-family:var(--font-mono)}.custom-select-item.branch-select-item::after{content:'branch';font-size:.62rem;color:var(--text-3);border:1px solid rgba(148,163,184,.12);border-radius:999px;padding:2px 6px}
-@media(max-width:768px){.resource-grid{grid-template-columns:1fr}.resource-card{min-height:118px}.deploy-stepper{grid-template-columns:1fr}#page-new-deploy .card-body{padding:20px}#page-new-deploy .two-col{display:block}#page-new-deploy .two-col>div{margin-bottom:16px}}
-@media(min-width:1100px){#page-new-deploy .two-col{grid-template-columns:minmax(0,1fr) minmax(300px,360px)}}
+#page-new-deploy .page-header{display:none}#page-new-deploy .two-col{gap:0}
+@media(max-width:768px){.resource-grid{grid-template-columns:1fr}.resource-card{min-height:118px}#page-new-deploy .two-col{display:block}}
+@media(min-width:1100px){#page-new-deploy .two-col{grid-template-columns:minmax(0,1fr) minmax(300px,360px);gap:40px}}
 #page-new-deploy .two-col > div{min-width:0}
-#page-new-deploy .deploy-side-panel{position:sticky;top:14px}
-@media(max-width:1099px){#page-new-deploy .deploy-side-panel{position:relative;top:auto}}
+#page-new-deploy .dcx-summary-col{position:sticky;top:14px}
+@media(max-width:1099px){#page-new-deploy .dcx-summary-col{position:relative;top:auto;margin-top:28px}}
 #page-new-deploy #summaryUrl,#page-new-deploy #summaryName{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
-#page-new-deploy .settings-collapse{border:1px solid rgba(255,255,255,.07);border-radius:22px;background:#0d0d0d;box-shadow:none;overflow:visible}#page-new-deploy .settings-collapse-summary{min-height:72px;padding:0 24px;display:flex;align-items:center;gap:14px;list-style:none;cursor:pointer;color:var(--text);user-select:none}#page-new-deploy .settings-collapse-summary::-webkit-details-marker{display:none}#page-new-deploy .settings-collapse-chevron{width:30px;height:30px;display:grid;place-items:center;color:#94a3b8;transition:transform .18s ease,color .18s ease;flex-shrink:0}#page-new-deploy .settings-collapse-chevron svg{width:26px;height:26px}#page-new-deploy .settings-collapse-title{font-size:1.02rem;font-weight:800;letter-spacing:.01em}#page-new-deploy .settings-collapse[open] .settings-collapse-chevron{transform:rotate(90deg);color:var(--green)}#page-new-deploy .settings-collapse[open] .settings-collapse-summary{border-bottom:1px solid rgba(255,255,255,.07);background:transparent;border-radius:22px 22px 0 0}#page-new-deploy .settings-collapse-body{padding:24px}#page-new-deploy .env-settings-panel{margin-top:8px;padding-top:22px;border-top:1px solid rgba(255,255,255,.07)}#page-new-deploy .env-settings-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}#page-new-deploy .env-settings-title{font-size:1.02rem;font-weight:800;color:var(--text)}#page-new-deploy .env-settings-subtitle{font-size:.86rem;color:var(--text-2);margin-top:4px}@media(max-width:640px){#page-new-deploy .settings-collapse-summary{min-height:72px;padding:0 18px}#page-new-deploy .settings-collapse-body{padding:20px}#page-new-deploy .env-settings-header{align-items:flex-start;flex-direction:column}#page-new-deploy .env-settings-header .btn{width:100%}}
 
 /* Deployments table responsive containment */
 /* ══════════════════════════════════════════════════════════════════
@@ -9246,7 +9243,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
     <!-- ════════ NEW DEPLOY PAGE ════════ -->
     <div class="page" id="page-new-deploy">
-      <div class="page-header">
+      <div class="page-header" style="display:none;">
         <div class="back-link" onclick="showPage('projects')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           Back to Projects
@@ -9254,32 +9251,33 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         <div class="page-title">New Deployment</div>
         <div class="page-subtitle">Connect a GitHub repository and configure your build settings.</div>
       </div>
-      <div class="deploy-hero">
-        <div class="back-link" id="deployHeroBackLink" onclick="deployHeroBack()" style="position:relative;z-index:1;margin-bottom:14px;">
+
+      <!-- ══ Composer header — flat, identity-row style like Account tab ══ -->
+      <div class="dcx-header">
+        <div class="back-link" id="deployHeroBackLink" onclick="deployHeroBack()">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           <span id="deployHeroBackText">Back to Projects</span>
         </div>
-        <div class="deploy-hero-kicker">Deployment composer</div>
-        <div class="deploy-hero-title">New Deployment</div>
-        <div class="deploy-hero-sub">Import a GitHub repo, choose a branch, tune build commands, and ship with live logs, automatic SSL, routing, and deployment history.</div>
-        <div class="deploy-stepper">
-          <div class="deploy-stepper-item"><span class="deploy-stepper-badge">1</span><span>Repository</span></div>
-          <div class="deploy-stepper-item"><span class="deploy-stepper-badge">2</span><span>Build config</span></div>
-          <div class="deploy-stepper-item"><span class="deploy-stepper-badge">3</span><span>Launch</span></div>
-        </div>
+        <div class="dcx-kicker">Deployment composer</div>
+        <div class="dcx-title" id="deployHeroTitleText">New Deployment</div>
+        <div class="dcx-sub">Import a GitHub repo, choose a branch, tune build commands, and ship with live logs, automatic SSL, routing, and deployment history.</div>
       </div>
 
-      <div class="two-col" style="align-items:start;">
+      <!-- ══ Progress row — flat inline steps, one bordered strip (matches .acct-quickstats) ══ -->
+      <div class="dcx-steps">
+        <div class="dcx-step-item"><span class="dcx-step-badge">1</span><span>Repository</span></div>
+        <div class="dcx-step-item"><span class="dcx-step-badge">2</span><span>Build config</span></div>
+        <div class="dcx-step-item"><span class="dcx-step-badge">3</span><span>Launch</span></div>
+      </div>
+
+      <div class="two-col dcx-layout" style="align-items:start;">
         <!-- Left: form -->
-        <div style="display:flex;flex-direction:column;gap:16px;">
-          <div class="card">
-            <div class="card-header">
-              <div>
-                <div class="card-title">Project Details</div>
-                <div class="card-subtitle">Basic configuration for this deployment</div>
-              </div>
-            </div>
-            <div class="card-body">
+        <div>
+          <!-- ══ Project Details — flat section, no card ══ -->
+          <div class="dcx-section">
+            <div class="dcx-section-title">Project Details</div>
+            <div class="dcx-section-sub">Basic configuration for this deployment</div>
+            <div style="margin-top:18px;">
               <div class="field">
                 <label class="field-label">Project Name</label>
                 <input class="input" id="deployProjectName" placeholder="my-awesome-app" autocomplete="off">
@@ -9290,7 +9288,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <label class="field-label">Subdomain</label>
                 <div class="input-group">
                   <input class="input input-mono" id="deploySubdomain" placeholder="my-app" autocomplete="off" oninput="updateSubdomainPreview()">
-                  <span style="display:flex;align-items:center;padding:0 12px;background:rgba(99,179,237,0.05);border:1.5px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-family:var(--font-mono);font-size:0.8rem;color:var(--text-3);white-space:nowrap;" id="domainSuffix">.joytree.site</span>
+                  <span class="dcx-domain-suffix" id="domainSuffix">.joytree.site</span>
                 </div>
                 <div class="field-hint">Preview: <span class="td-mono" id="subdomainPreview">—</span></div>
                 <div class="field-hint" id="subdomainAvailability">Status: enter a subdomain</div>
@@ -9298,7 +9296,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
               <!-- ── DOMAIN STARTUP: deploy onto a custom domain (only shown when launched from the Domain Startup card) ── -->
               <div class="field" id="domainStartupField" style="display:none;">
-                <div style="border:1px solid var(--jt-border, rgba(255,255,255,.08));border-radius:14px;padding:16px;background:var(--jt-bg-raised, #111);">
+                <div class="dcx-inline-box">
                   <label class="field-label" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color:var(--primary);"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.8 5.6 3.8 9S14.5 18.4 12 21C9.5 18.4 8.2 15.4 8.2 12S9.5 5.6 12 3z"/></svg>
                     Deploy to your own domain
@@ -9318,6 +9316,8 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                   </div>
                 </div>
               </div>
+
+              <!-- ══ Source picker — GitHub URL/select, then a labeled divider, then upload dropzone ══ -->
               <div class="field" id="deployRepoField">
                 <label class="field-label">GitHub Repository URL</label>
                 <input class="input input-mono" id="deployRepoUrl" placeholder="https://github.com/username/repo" autocomplete="off">
@@ -9327,30 +9327,31 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 <div class="field-hint">Public or private repos supported. For private repos ensure your GitHub token is configured.</div>
               </div>
 
-              <!-- ── OR: Upload a file directly from this form ── -->
-              <div id="deployFormUploadSection" style="margin:-4px 0 20px;">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                  <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
-                  <span style="font-size:0.74rem;font-weight:700;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;">or upload your project</span>
-                  <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
+              <div id="deployFormUploadSection" class="dcx-upload-section">
+                <div class="dcx-or-divider">
+                  <span></span>
+                  <em>or upload your project</em>
+                  <span></span>
                 </div>
-                <div id="deployFormDropzone" onclick="document.getElementById('deployFormFileInput').click()" ondragover="deployFormDragOver(event)" ondragleave="deployFormDragLeave(event)" ondrop="deployFormDrop(event)"
-                  style="border:1px dashed var(--jt-border, rgba(255,255,255,.1));border-radius:16px;padding:22px 18px;text-align:center;cursor:pointer;background:var(--jt-bg-raised, #111);transition:border-color .15s;">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="26" height="26" style="display:block;margin:0 auto 8px;color:var(--primary);opacity:.85;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  <div style="font-size:.85rem;font-weight:700;color:var(--text);" id="deployFormDropzoneLabel">Drop your ZIP / HTML here, or click to browse</div>
-                  <div style="font-size:.72rem;color:var(--text-3);margin-top:4px;">.html · .zip · .tar.gz · .tgz · Max 250 MB</div>
+                <div id="deployFormDropzone" class="dcx-dropzone" onclick="document.getElementById('deployFormFileInput').click()" ondragover="deployFormDragOver(event)" ondragleave="deployFormDragLeave(event)" ondrop="deployFormDrop(event)">
+                  <div class="dcx-dropzone-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  </div>
+                  <div class="dcx-dropzone-label" id="deployFormDropzoneLabel">Drop your ZIP / HTML here, or click to browse</div>
+                  <div class="dcx-dropzone-sub">.html · .zip · .tar.gz · .tgz · Max 250 MB</div>
                 </div>
                 <input type="file" id="deployFormFileInput" accept=".html,.htm,.zip,.tar.gz,.tgz" style="display:none" onchange="deployFormHandleFile(this.files[0])">
                 <!-- File ready state — hidden until a file is selected -->
-                <div id="deployFormUploadReady" style="display:none;margin-top:10px;padding:12px 16px;background:var(--jt-bg-raised, #111);border:1px solid var(--jt-border, rgba(255,255,255,.08));border-radius:12px;display:none;align-items:center;gap:12px;">
+                <div id="deployFormUploadReady" class="dcx-file-ready" style="display:none;">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="color:var(--primary);"><polyline points="20 6 9 17 4 12"/></svg>
                   <div style="flex:1;min-width:0;">
-                    <div style="font-size:.82rem;font-weight:700;color:var(--primary);" id="deployFormUploadFileName">file.zip</div>
-                    <div style="font-size:.72rem;color:var(--text-3);margin-top:1px;" id="deployFormUploadFileSize">0 B</div>
+                    <div class="dcx-file-ready-name" id="deployFormUploadFileName">file.zip</div>
+                    <div class="dcx-file-ready-size" id="deployFormUploadFileSize">0 B</div>
                   </div>
-                  <button onclick="deployFormClearFile(event)" style="background:none;border:none;cursor:pointer;color:var(--text-3);padding:2px 6px;font-size:.8rem;border-radius:6px;" title="Remove file">✕</button>
+                  <button onclick="deployFormClearFile(event)" class="dcx-file-ready-remove" title="Remove file">✕</button>
                 </div>
               </div>
+
               <div class="field" id="deployBranchField">
                 <label class="field-label">Branch</label>
                 <select class="input input-mono" id="deployBranch" style="height:44px;">
@@ -9358,24 +9359,29 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
                 </select>
               </div>
               <!-- Upload source badge — shown only when deploying from IDE/upload -->
-              <div id="deployUploadSourceBadge" style="display:none;padding:14px 18px;background:var(--jt-bg-raised, #111);border:1px solid var(--jt-border, rgba(255,255,255,.08));border-radius:14px;display:none;align-items:center;gap:12px;">
+              <div id="deployUploadSourceBadge" class="dcx-upload-badge" style="display:none;">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="color:var(--primary);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 <div>
                   <div style="font-size:.83rem;font-weight:700;color:var(--primary);">Deploying from File Upload</div>
                   <div style="font-size:.76rem;color:var(--text-3);margin-top:2px;" id="deployUploadSourceName">Project files ready</div>
                 </div>
               </div>
-            </div>
+          </div>
           </div>
 
-          <details class="settings-collapse build-settings-collapse">
-            <summary class="settings-collapse-summary">
-              <span class="settings-collapse-chevron" aria-hidden="true">
+          <div class="dcx-divider"></div>
+
+          <details class="dcx-collapse build-settings-collapse">
+            <summary class="dcx-collapse-summary">
+              <div>
+                <div class="dcx-section-title">Build Settings</div>
+                <div class="dcx-section-sub">Runtime, commands, and environment variables</div>
+              </div>
+              <span class="dcx-collapse-chevron" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
               </span>
-              <span class="settings-collapse-title">Build Settings</span>
             </summary>
-            <div class="settings-collapse-body">
+            <div class="dcx-collapse-body">
               <div class="field">
                 <label class="field-label">Runtime / Framework</label>
                 <div class="custom-select" id="cs_deployRuntime" data-onchange="onRuntimeChange">
@@ -9668,43 +9674,39 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         </div>
 
         <!-- Right: summary + deploy btn -->
-        <div style="display:flex;flex-direction:column;gap:16px;position:sticky;top:0;">
-          <div class="card deploy-side-panel">
-            <div class="card-header">
-              <div class="card-title">Deployment Summary</div>
+        <div class="dcx-summary-col">
+          <div class="dcx-summary-panel">
+            <div class="dcx-summary-title">Deployment Summary</div>
+            <div class="dcx-summary-rows">
+              <div class="dcx-summary-row">
+                <span>Project</span>
+                <span class="dcx-summary-value" id="summaryName">—</span>
+              </div>
+              <div class="dcx-summary-row">
+                <span>URL</span>
+                <span class="dcx-summary-value td-mono" id="summaryUrl">—</span>
+              </div>
+              <div class="dcx-summary-row">
+                <span>Branch</span>
+                <span class="dcx-summary-value td-mono" id="summaryBranch">main</span>
+              </div>
+              <div class="dcx-summary-row">
+                <span>Node.js</span>
+                <span class="dcx-summary-value" id="summaryNode">18 LTS</span>
+              </div>
             </div>
-            <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;">
-                <span style="color:var(--text-2);">Project</span>
-                <span style="color:var(--text);font-weight:600;" id="summaryName">—</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;">
-                <span style="color:var(--text-2);">URL</span>
-                <span class="td-mono" style="font-size:0.75rem;" id="summaryUrl">—</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;">
-                <span style="color:var(--text-2);">Branch</span>
-                <span class="td-mono" style="font-size:0.75rem;" id="summaryBranch">main</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;">
-                <span style="color:var(--text-2);">Node.js</span>
-                <span style="color:var(--text);font-weight:600;" id="summaryNode">18 LTS</span>
-              </div>
-              <div class="divider" style="margin:4px 0;"></div>
-              <button class="btn btn-primary btn-lg" style="width:100%;" onclick="startDeployment()" id="deployBtn">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
-                Deploy Now
-              </button>
-              <div id="deployLaunchStatus" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid var(--jt-border, rgba(255,255,255,.1));border-radius:12px;background:var(--jt-bg-sunken, #1a1a1a);color:var(--text);font-size:.82rem;font-weight:600;align-items:center;gap:8px;justify-content:center;">
-                <span style="width:10px;height:10px;border-radius:50%;border:2px solid color-mix(in srgb, var(--primary) 35%, transparent);border-top-color:var(--primary);display:inline-block;animation:dpSpin .7s linear infinite;"></span>
-                Starting deployment pipeline…
-              </div>
-              <div style="font-size:0.72rem;color:var(--text-3);text-align:center;line-height:1.4;">
-                Deployment will start immediately. Build logs will stream in real-time.
-              </div>
+            <button class="btn btn-primary btn-lg dcx-deploy-btn" onclick="startDeployment()" id="deployBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+              Deploy Now
+            </button>
+            <div id="deployLaunchStatus" class="dcx-launch-status" style="display:none;">
+              <span class="dcx-launch-spinner"></span>
+              Starting deployment pipeline…
+            </div>
+            <div class="dcx-summary-footnote">
+              Deployment will start immediately. Build logs will stream in real-time.
             </div>
           </div>
-
         </div>
       </div>
     </div>
