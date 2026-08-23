@@ -28065,7 +28065,7 @@ function showProjectDetail(projectId) {
           _configRow('Branch',   '<span style="font-family:var(--font-mono);font-size:0.82rem;">' + escHtml(isUploadProj ? 'upload' : (p.branch||'main')) + '</span>') +
           _configRow('Install',  '<span style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-2);">' + escHtml(p.installCmd||'npm install') + '</span>') +
           _configRow('Build',    '<span style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-2);">' + escHtml(p.buildCmd||'—') + '</span>') +
-          (p.startCmd ? _configRow('Start', '<span style="font-family:var(--font-mono);font-size:0.82rem;color:var(--amber);">' + escHtml(p.startCmd) + '</span>') : '') +
+          (p.startCmd ? _configRow('Start', '<span style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-2);">' + escHtml(p.startCmd) + '</span>') : '') +
           _configRow('Site Type','<span class="badge ' + (p.siteType==='server'?'badge-building':'badge-success') + '" style="font-size:0.68rem;">' + (p.siteType||'static') + '</span>') +
           _configRow('Output Dir','<span style="font-family:var(--font-mono);font-size:0.82rem;">' + escHtml(p.outputDir||'dist') + '</span>') +
           _configRow('Node.js',  '<span style="font-weight:600;font-size:0.82rem;">' + escHtml(p.nodeVer||'18') + '</span>') +
