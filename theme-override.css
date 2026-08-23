@@ -4427,10 +4427,12 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
    for every inner line on this page.
    ══════════════════════════════════════════════════════════════════ */
 #page-new-deploy {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 45%, transparent);
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-group-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
 }
 html[data-theme="light"] #page-new-deploy {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 55%, transparent);
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-group-border: color-mix(in srgb, var(--text-2) 35%, var(--border));
 }
 
 /* ── Composer header — flat, no box ── */
@@ -4463,7 +4465,7 @@ html[data-theme="light"] #page-new-deploy {
 /* ── Group boxes — the visible, clearly-drawn green outline that
       structures the page, exactly matching the marked-up zones ── */
 #page-new-deploy .dcx-group-box {
-  border: 1.5px solid var(--primary);
+  border: 1.5px solid var(--dcx-group-border);
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 24px;
@@ -4707,7 +4709,7 @@ html[data-theme="light"] #page-new-deploy {
 /* ── Right column: Deployment Summary — its own visible green group
       box, exposed lines like the other two ── */
 #page-new-deploy .dcx-summary-panel {
-  border: 1.5px solid var(--primary);
+  border: 1.5px solid var(--dcx-group-border);
   border-radius: 16px;
   padding: 22px;
 }
