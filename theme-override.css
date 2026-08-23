@@ -4424,4 +4424,183 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   #page-code-upload .cu-dropzone { padding: 32px 18px !important; }
 }
 
+
+/* ══════════════════════════════════════════════════════════════════
+   NEW DEPLOYMENT PAGE (page-new-deploy) — total flat redesign.
+   Covers BOTH paths (GitHub repo import and file upload) since they
+   share the exact same form. No boxed cards anywhere, no green
+   gradient hero, no green-glow field-label dots, no boxed stepper
+   pills — everything reads as one continuous flat surface using the
+   same jt-* tokens Settings/Projects/Deployments/Repos already use.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Hero → flat header, no green border/glow/shadow box */
+#page-new-deploy .deploy-hero {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin-bottom: 28px !important;
+  overflow: visible !important;
+}
+#page-new-deploy .deploy-hero-kicker {
+  color: var(--primary) !important;
+  font-size: .7rem !important;
+}
+#page-new-deploy .deploy-hero-title {
+  color: var(--text) !important;
+  font-size: 1.5rem !important;
+  letter-spacing: -0.02em !important;
+}
+#page-new-deploy .deploy-hero-sub {
+  color: var(--text-2) !important;
+  font-size: .84rem !important;
+  max-width: 62ch;
+}
+
+/* Stepper → flat inline row, no individually boxed pill cards */
+#page-new-deploy .deploy-stepper {
+  display: flex !important;
+  gap: 22px !important;
+  margin: 20px 0 0 !important;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  background: none !important;
+}
+#page-new-deploy .deploy-stepper-item {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+  gap: 8px !important;
+}
+#page-new-deploy .deploy-stepper-badge {
+  background: var(--jt-bg-sunken, #1a1a1a) !important;
+  color: var(--primary) !important;
+  width: 24px !important; height: 24px !important;
+}
+
+/* Sections → no boxed .card. Flat blocks separated by a divider line,
+   matching the Settings page's section rhythm. */
+#page-new-deploy .card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding-bottom: 8px !important;
+  margin-bottom: 8px !important;
+}
+#page-new-deploy .card-header {
+  padding: 0 0 16px !important;
+  background: transparent !important;
+}
+#page-new-deploy .card-title {
+  color: var(--text) !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+}
+#page-new-deploy .card-subtitle {
+  color: var(--text-2) !important;
+}
+#page-new-deploy .card-body {
+  padding: 0 0 24px !important;
+}
+/* Deployment Summary panel on the right keeps a subtle container so the
+   sticky Deploy button reads as an anchored action, not floating text,
+   but stays flat/tokenized instead of a boxed hero-style card */
+#page-new-deploy .deploy-side-panel {
+  background: var(--jt-bg-raised, #111) !important;
+  border: 1px solid var(--jt-border, rgba(255,255,255,.07)) !important;
+  border-radius: 18px !important;
+  padding: 20px !important;
+  margin-bottom: 0 !important;
+}
+#page-new-deploy .deploy-side-panel .card-header {
+  padding: 0 0 14px !important;
+}
+#page-new-deploy .deploy-side-panel .card-body {
+  padding: 0 !important;
+}
+
+/* Field labels → remove the green glowing dot bullet, keep it plain */
+#page-new-deploy .field-label::before {
+  display: none !important;
+}
+#page-new-deploy .field-label {
+  color: var(--text) !important;
+}
+#page-new-deploy .field-hint {
+  color: var(--text-3) !important;
+}
+
+/* Inputs, selects, textareas → same tokens as Settings inputs */
+#page-new-deploy .input,
+#page-new-deploy .custom-select-trigger,
+#page-new-deploy .custom-select-btn,
+#page-new-deploy select.input {
+  background: var(--jt-bg-raised, #111) !important;
+  border: 1px solid var(--jt-border, rgba(255,255,255,.1)) !important;
+  color: var(--text) !important;
+}
+#page-new-deploy .input:focus {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--jt-border, transparent)) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent) !important;
+}
+#page-new-deploy .custom-select-dropdown,
+#page-new-deploy .custom-select-menu {
+  background: var(--jt-bg-raised, #111) !important;
+  border: 1px solid var(--jt-border, rgba(255,255,255,.1)) !important;
+}
+#page-new-deploy #domainSuffix {
+  background: var(--jt-bg-sunken, #111) !important;
+  border-color: var(--jt-border, rgba(255,255,255,.1)) !important;
+  color: var(--text-3) !important;
+}
+
+/* Build Settings collapse (accordion) → flat, no boxed panel */
+#page-new-deploy .settings-collapse {
+  background: transparent !important;
+  border: none !important;
+  border-top: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  padding-top: 8px;
+}
+#page-new-deploy .settings-collapse-summary {
+  color: var(--text) !important;
+}
+#page-new-deploy .settings-collapse-body {
+  padding: 16px 0 0 !important;
+}
+#page-new-deploy .env-settings-panel {
+  border-top: 1px solid var(--border) !important;
+}
+
+/* Deploy button → keep solid, just remove the extra shadow glow */
+#page-new-deploy #deployBtn {
+  box-shadow: none !important;
+}
+
+/* Summary row values */
+#page-new-deploy .deploy-side-panel .td-mono { color: var(--text) !important; }
+#page-new-deploy .deploy-side-panel .divider { background: var(--border) !important; }
+
+/* Light theme */
+html[data-theme="light"] #page-new-deploy .input,
+html[data-theme="light"] #page-new-deploy .custom-select-trigger,
+html[data-theme="light"] #page-new-deploy .custom-select-dropdown,
+html[data-theme="light"] #page-new-deploy #domainSuffix {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-new-deploy .deploy-side-panel {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+
+@media(max-width:640px){
+  #page-new-deploy .deploy-stepper { flex-direction: column; gap: 10px !important; }
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
