@@ -22045,7 +22045,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         </div>
         <div id="cuFileGrid" class="cu-file-grid">
           <div class="cu-empty" id="cuEmptyState">
-            <div class="cu-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" width="52" height="52"><rect x="8" y="22" width="48" height="34" rx="5" fill="#1e293b" stroke="#334155" stroke-width="1.5"/><path d="M8 27h48" stroke="#334155" stroke-width="1.5"/><path d="M24 22V14a8 8 0 0 1 16 0v8" stroke="#475569" stroke-width="1.5" stroke-linecap="round"/><circle cx="32" cy="40" r="5" fill="#334155" stroke="#475569" stroke-width="1.5"/><path d="M32 37v3l2 2" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cu-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" width="52" height="52"><rect x="8" y="22" width="48" height="34" rx="5" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"/><path d="M8 27h48" stroke="currentColor" stroke-width="1.5" opacity=".5"/><path d="M24 22V14a8 8 0 0 1 16 0v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".65"/><circle cx="32" cy="40" r="5" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"/><path d="M32 37v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/></svg></div>
             <div class="cu-empty-title">No uploads yet</div>
             <div class="cu-empty-sub">Your uploaded projects will appear here once extracted.</div>
           </div>
@@ -41450,7 +41450,7 @@ function _renderCuGrid() {
         </div>
         <div class="cu-meta-item">
           <div class="cu-meta-label">Status</div>
-          <div class="cu-meta-value" style="color:${extracted?'#10b981':extracting?'#f59e0b':err?'#ef4444':'#64748b'}">${extracted?'Extracted':extracting?'Extracting…':err?'Error':'Pending'}</div>
+          <div class="cu-meta-value" style="color:${extracted?'var(--primary)':extracting?'var(--jt-accent, #f59e0b)':err?'var(--jt-danger, #ef4444)':'var(--text-3)'}">${extracted?'Extracted':extracting?'Extracting…':err?'Error':'Pending'}</div>
         </div>
       </div>
       <div class="cu-file-actions">
