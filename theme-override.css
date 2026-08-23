@@ -4119,4 +4119,173 @@ html[data-theme="light"] .cs-option.selected {
   background: color-mix(in srgb, var(--primary) 10%, transparent) !important;
 }
 
+
+/* ══════════════════════════════════════════════════════════════════
+   REPOSITORIES PAGE — flat redesign, matching Projects/Deployments/
+   Settings. No boxed hero card, no boxed toolbar card, no grey/ash/
+   brown tones — everything reads off the same jt-* token system.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Hero → flat header, same treatment as .proj-header / .dep-header */
+#page-repos .repo-hero {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin-bottom: 26px !important;
+  display: block !important;
+}
+#page-repos .repo-hero-kicker {
+  color: var(--primary) !important;
+  font-size: .7rem;
+  margin: 0 0 8px;
+}
+#page-repos .repo-hero-title {
+  color: var(--text) !important;
+  font-size: 1.5rem !important;
+  letter-spacing: -0.02em !important;
+}
+#page-repos .repo-hero-subtitle {
+  color: var(--text-2) !important;
+  font-size: .84rem;
+  margin-top: 8px;
+  max-width: 62ch;
+}
+/* Stat strip — flat inline row with vertical dividers, exactly like
+   .proj-stat-strip, replacing the three separately-boxed repo-stat cards */
+#page-repos .repo-stats {
+  display: flex !important;
+  align-items: center;
+  gap: 18px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  grid-template-columns: unset !important;
+  min-width: 0 !important;
+}
+#page-repos .repo-stat {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+#page-repos .repo-stat:not(:last-child)::after {
+  content: '';
+  width: 1px; height: 16px;
+  background: var(--border);
+  margin-left: 18px;
+}
+#page-repos .repo-stat-value {
+  color: var(--text) !important;
+  font-size: 1.15rem !important;
+}
+#page-repos .repo-stat-label {
+  color: var(--text-3) !important;
+}
+
+/* Toolbar (search + refresh) → flat, no card wrapper */
+#page-repos > .card:has(.repo-toolbar) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin-bottom: 22px !important;
+}
+#page-repos > .card:has(.repo-toolbar) .card-body {
+  padding: 0 !important;
+}
+#page-repos .repo-search-wrap .input {
+  background: var(--jt-bg-raised, #111) !important;
+  border: 1px solid var(--jt-border, var(--border)) !important;
+  color: var(--text) !important;
+  border-radius: 12px;
+}
+#page-repos .repo-search-wrap svg { color: var(--jt-text-faint, var(--text-3)) !important; }
+#page-repos .repo-refresh-btn {
+  background: var(--jt-bg-raised, #111) !important;
+  border: 1px solid var(--jt-border, var(--border)) !important;
+  color: var(--text) !important;
+}
+#page-repos .repo-refresh-btn:hover {
+  background: var(--bg-hover) !important;
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border)) !important;
+}
+
+/* Repo cards → clean tokens, no hardcoded #111/#1a1a1a/grey/brown */
+#page-repos .repo-card {
+  background: var(--jt-bg-raised, #111) !important;
+  border: 1px solid var(--jt-border, rgba(255,255,255,.07)) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+#page-repos .repo-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--jt-border, transparent)) !important;
+  transform: translateY(-3px);
+}
+#page-repos .repo-lang-emblem {
+  background: var(--jt-bg-sunken, #1a1a1a) !important;
+  border: 1px solid var(--jt-border, rgba(255,255,255,.08)) !important;
+}
+#page-repos .repo-title { color: var(--text) !important; }
+#page-repos .repo-fullname { color: var(--primary) !important; }
+#page-repos .repo-desc { color: var(--text-2) !important; }
+#page-repos .repo-metric {
+  background: var(--jt-bg-sunken, #1a1a1a) !important;
+  border: 1px solid var(--jt-border, rgba(255,255,255,.07)) !important;
+}
+#page-repos .repo-metric-label { color: var(--text-3) !important; }
+#page-repos .repo-metric-value { color: var(--text) !important; }
+#page-repos .repo-language-row { color: var(--text-2) !important; }
+#page-repos .repo-language-row span[style*="color:var(--cyan)"] { color: var(--text) !important; }
+#page-repos .repo-language-list { color: var(--text-3) !important; }
+#page-repos .repo-language-row a { color: var(--primary) !important; }
+#page-repos .repo-pill {
+  border-color: var(--jt-border, rgba(148,163,184,.12)) !important;
+  background: var(--jt-bg-sunken, rgba(148,163,184,.07)) !important;
+  color: var(--text-2) !important;
+}
+#page-repos .repo-pill.green {
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent) !important;
+  background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+  color: var(--primary) !important;
+}
+#page-repos .repo-pill.red {
+  border-color: color-mix(in srgb, var(--jt-danger, #ef4444) 30%, transparent) !important;
+  background: color-mix(in srgb, var(--jt-danger, #ef4444) 12%, transparent) !important;
+  color: var(--jt-danger, #ef4444) !important;
+}
+#page-repos .repo-pill.amber {
+  border-color: color-mix(in srgb, var(--jt-accent, #f59e0b) 30%, transparent) !important;
+  background: color-mix(in srgb, var(--jt-accent, #f59e0b) 12%, transparent) !important;
+  color: var(--jt-accent, #f59e0b) !important;
+}
+#page-repos .repo-import-btn {
+  box-shadow: none !important;
+}
+#page-repos .repo-loading,
+#page-repos .repo-empty { color: var(--text-2) !important; }
+#page-repos .repo-empty strong { color: var(--text) !important; }
+
+/* Light theme — repo cards stay readable, no grey/beige mismatch */
+html[data-theme="light"] #page-repos .repo-card {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-repos .repo-lang-emblem,
+html[data-theme="light"] #page-repos .repo-metric {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-repos .repo-search-wrap .input,
+html[data-theme="light"] #page-repos .repo-refresh-btn {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+
+@media(max-width:640px){
+  #page-repos .repo-stats { gap: 14px; flex-wrap: wrap; }
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
