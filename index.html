@@ -31169,10 +31169,12 @@ function renderDfBuildArgs() {
     return;
   }
   el.innerHTML = dfBuildArgs.map((a, i) => `
-    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
-      <input class="input input-mono" placeholder="ARG_NAME" value="${a.key}" oninput="dfBuildArgs[${i}].key=this.value" style="flex:1;font-size:0.8rem;">
-      <input class="input input-mono" placeholder="value" value="${a.value}" oninput="dfBuildArgs[${i}].value=this.value" style="flex:1;font-size:0.8rem;">
-      <button onclick="dfBuildArgs.splice(${i},1);renderDfBuildArgs();" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:var(--red);border-radius:6px;padding:6px 8px;cursor:pointer;flex-shrink:0;">✕</button>
+    <div class="env-row">
+      <input class="input input-mono" placeholder="ARG_NAME" value="${a.key}" oninput="dfBuildArgs[${i}].key=this.value">
+      <input class="input input-mono" placeholder="value" value="${a.value}" oninput="dfBuildArgs[${i}].value=this.value">
+      <button class="btn btn-icon btn-ghost" onclick="dfBuildArgs.splice(${i},1);renderDfBuildArgs();">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>`).join('');
 }
 
@@ -31557,10 +31559,12 @@ function renderWorkerEnvList() {
     return;
   }
   el.innerHTML = workerEnvVars.map((v, i) => `
-    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
-      <input class="input input-mono" placeholder="KEY" value="${v.key}" oninput="workerEnvVars[${i}].key=this.value" style="flex:1;font-size:0.8rem;">
-      <input class="input input-mono" placeholder="value" value="${v.value}" oninput="workerEnvVars[${i}].value=this.value" style="flex:1;font-size:0.8rem;">
-      <button onclick="workerEnvVars.splice(${i},1);renderWorkerEnvList();" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:var(--red);border-radius:6px;padding:6px 8px;cursor:pointer;flex-shrink:0;">✕</button>
+    <div class="env-row">
+      <input class="input input-mono" placeholder="KEY" value="${v.key}" oninput="workerEnvVars[${i}].key=this.value">
+      <input class="input input-mono" placeholder="value" value="${v.value}" oninput="workerEnvVars[${i}].value=this.value">
+      <button class="btn btn-icon btn-ghost" onclick="workerEnvVars.splice(${i},1);renderWorkerEnvList();">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>`).join('');
 }
 
