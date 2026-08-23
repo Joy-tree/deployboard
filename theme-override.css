@@ -7737,4 +7737,34 @@ html[data-theme="light"] #page-db-create {
   border-radius: 0 !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   AI ANALYSIS PAGE — same flat treatment as the rest of the rebuild.
+   The empty state and every populated-analysis section (loading
+   skeleton, summary banner, root cause, fix steps, code snippet,
+   prevention tip, raw error log) were flattened directly in their
+   inline styles since this page is built entirely as JS template
+   literals with no reusable classes. This block just supplies the
+   page-scoped variables those inline styles reference, plus sharp
+   corners on the shared .btn-primary/.btn-ghost action buttons.
+   ══════════════════════════════════════════════════════════════════ */
+#page-ai-analysis {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-ai-analysis {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+#page-ai-analysis .btn-primary {
+  border-radius: 0 !important;
+}
+#page-ai-analysis .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-ai-analysis .btn-ghost:hover {
+  border-color: var(--primary) !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
