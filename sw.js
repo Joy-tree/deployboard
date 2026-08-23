@@ -35,6 +35,20 @@ self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
+// [FIX] Respond to the page explicitly asking a waiting worker to
+// activate immediately, rather than only relying on self.skipWaiting()
+// running automatically on install (which a browser can still delay
+// activating for an already-open tab until that tab's next navigation).
+// This is what index.html's registration logic posts to a worker sitting
+// in "waiting" state, so a fresh browser session that happens to still
+// have an old worker registered picks up THIS version's no-cache-storage
+// behavior as early as possible, instead of only on some future visit.
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('activate', (event) => {
   // Clean up any Cache Storage entries left behind by earlier versions
   // of this service worker, so nothing stale can ever be read from them
