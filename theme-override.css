@@ -4469,20 +4469,19 @@ html[data-theme="light"] #page-new-deploy {
       spacing, separated from what follows by a thin bottom divider,
       the exact same technique Settings uses between its sections. ── */
 #page-new-deploy .dcx-group-box {
-  border: none;
-  padding: 0;
-  margin-bottom: 28px;
-  padding-bottom: 28px;
-  border-bottom: 1px solid var(--dcx-row-border);
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
-#page-new-deploy .dcx-group-box:last-of-type { border-bottom: none; }
-#page-new-deploy .dcx-group-box-1 .dcx-steps { margin: 0 0 24px; }
-#page-new-deploy .dcx-group-box-collapse { padding-bottom: 0; }
-#page-new-deploy .dcx-group-box-collapse .dcx-collapse-summary { padding: 4px 0 8px; margin: 0; }
-#page-new-deploy .dcx-group-box-collapse .dcx-collapse-body { padding: 0 0 8px; }
+#page-new-deploy .dcx-group-box-1 { padding-bottom: 4px; }
+#page-new-deploy .dcx-group-box-1 .dcx-steps { margin: -20px -20px 20px; }
+#page-new-deploy .dcx-group-box-collapse { padding: 0; }
+#page-new-deploy .dcx-group-box-collapse .dcx-collapse-summary { padding: 18px 20px; margin: 0; }
+#page-new-deploy .dcx-group-box-collapse .dcx-collapse-body { padding: 0 20px 20px; }
 #page-new-deploy .dcx-group-box-collapse[open] .dcx-collapse-summary {
   border-bottom: 1px solid var(--dcx-row-border);
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 #page-new-deploy .dcx-page-body { margin-top: 0; }
 
@@ -4490,16 +4489,19 @@ html[data-theme="light"] #page-new-deploy {
 #page-new-deploy .dcx-steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--dcx-row-border);
 }
 #page-new-deploy .dcx-step-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px 12px 0;
+  padding: 14px 20px;
+  border-right: 1px solid var(--dcx-row-border);
   color: var(--text-2);
   font-size: .82rem;
   font-weight: 700;
 }
+#page-new-deploy .dcx-step-item:last-child { border-right: none; }
 #page-new-deploy .dcx-step-badge {
   width: 22px; height: 22px;
   border-radius: 6px;
@@ -4600,10 +4602,9 @@ html[data-theme="light"] #page-new-deploy {
       matching how Settings' "This device" / "Change Password" rows
       sit flat with only hairline separators. ── */
 #page-new-deploy .dcx-inline-box {
-  border: none;
-  padding: 0;
-  border-top: 1px solid var(--dcx-row-border);
-  padding-top: 18px;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 12px;
+  padding: 18px;
 }
 
 #page-new-deploy .dcx-upload-section { margin: 6px 0 22px; }
@@ -4648,8 +4649,9 @@ html[data-theme="light"] #page-new-deploy {
 #page-new-deploy .dcx-dropzone-sub { font-size: .74rem; color: var(--text-3); margin-top: 6px; }
 #page-new-deploy .dcx-file-ready {
   margin-top: 12px;
-  padding: 12px 0;
-  border-top: 1px solid var(--dcx-row-border);
+  padding: 14px 16px;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -4662,8 +4664,9 @@ html[data-theme="light"] #page-new-deploy {
 }
 #page-new-deploy .dcx-file-ready-remove:hover { color: var(--text); }
 #page-new-deploy .dcx-upload-badge {
-  padding: 12px 0;
-  border-top: 1px solid var(--dcx-row-border);
+  padding: 16px 18px;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -4698,9 +4701,9 @@ html[data-theme="light"] #page-new-deploy {
 /* Env vars sub-panel — flat, thin top rule only, no box */
 #page-new-deploy .env-settings-panel {
   margin-top: 10px;
-  border: none;
-  border-top: 1px solid var(--dcx-row-border);
-  padding: 20px 0 0;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 14px;
+  padding: 20px;
 }
 #page-new-deploy .env-settings-header {
   display: flex;
@@ -4716,8 +4719,9 @@ html[data-theme="light"] #page-new-deploy {
       title + rows with thin dividers + button, matching everything
       else on the page. ── */
 #page-new-deploy .dcx-summary-panel {
-  border: none;
-  padding: 0;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 14px;
+  padding: 22px;
 }
 #page-new-deploy .dcx-summary-title {
   font-size: 1rem;
@@ -4750,8 +4754,9 @@ html[data-theme="light"] #page-new-deploy {
 #page-new-deploy .dcx-launch-status {
   display: none;
   margin-top: 10px;
-  padding: 10px 0;
-  border-top: 1px solid var(--dcx-row-border);
+  padding: 10px 12px;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 8px;
   color: var(--text);
   font-size: .8rem;
   font-weight: 600;
@@ -4810,7 +4815,7 @@ html[data-theme="light"] #page-new-deploy {
 }
 @media(max-width:640px){
   #page-new-deploy .dcx-steps { grid-template-columns: 1fr; }
-  #page-new-deploy .dcx-step-item { padding: 10px 0; border-bottom: 1px solid var(--dcx-row-border); }
+  #page-new-deploy .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); }
   #page-new-deploy .dcx-step-item:last-child { border-bottom: none; }
 }
 
