@@ -3079,13 +3079,9 @@ html[data-theme="light"] #app{--cyan:var(--jt-brand-strong);}
 .resource-card{position:relative;display:flex;align-items:center;gap:16px;min-height:132px;padding:18px;border-radius:20px;background:linear-gradient(145deg,rgba(0,0,0,.95),rgba(8,13,24,.95));border:1px solid rgba(16,185,129,.12);box-shadow:0 14px 38px rgba(0,0,0,.18);overflow:hidden;transform:none;}
 .resource-card::before{content:'';position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--primary),var(--cyan),var(--purple));opacity:.65}.resource-card:hover{transform:translateY(-3px);border-color:rgba(16,185,129,.38);background:linear-gradient(145deg,rgba(0,0,0,.98),rgba(11,18,33,.98));box-shadow:0 22px 58px rgba(0,0,0,.28)}
 .resource-icon{width:76px;height:76px;border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.015))!important;border:1px solid rgba(148,163,184,.14)!important;box-shadow:inset 0 0 26px rgba(255,255,255,.035),0 10px 28px rgba(0,0,0,.18)}.resource-icon img,.resource-icon svg{width:46px;height:46px;object-fit:contain;filter:drop-shadow(0 8px 15px rgba(0,0,0,.25))}.resource-card-copy{min-width:0;flex:1}.resource-card-title{font-size:1.05rem;font-weight:800;color:var(--text);line-height:1.15}.resource-card-desc{font-size:.84rem;color:var(--text-2);margin-top:6px;line-height:1.4}.resource-card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.resource-card-tags span{font-family:var(--font-mono);font-size:.62rem;color:var(--text-3);border:1px solid rgba(148,163,184,.12);background:rgba(148,163,184,.06);border-radius:999px;padding:4px 7px}.resource-arrow{margin-left:auto;color:var(--text-3);font-size:1.6rem;transition:transform .15s,color .15s}.resource-card:hover .resource-arrow{transform:translateX(4px);color:var(--cyan)}
-#page-new-deploy .page-header{display:none}#page-new-deploy .two-col{gap:0}
-@media(max-width:768px){.resource-grid{grid-template-columns:1fr}.resource-card{min-height:118px}#page-new-deploy .two-col{display:block}}
-@media(min-width:1100px){#page-new-deploy .two-col{grid-template-columns:minmax(0,1fr) minmax(300px,360px);gap:40px}}
+#page-new-deploy .page-header{display:none}
+@media(max-width:768px){.resource-grid{grid-template-columns:1fr}.resource-card{min-height:118px}}
 #page-new-deploy .two-col > div{min-width:0}
-#page-new-deploy .dcx-summary-col{position:sticky;top:14px}
-@media(max-width:1099px){#page-new-deploy .dcx-summary-col{position:relative;top:auto;margin-top:28px}}
-#page-new-deploy #summaryUrl,#page-new-deploy #summaryName{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
 
 /* Deployments table responsive containment */
 /* ══════════════════════════════════════════════════════════════════
@@ -9263,12 +9259,13 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         <div class="dcx-sub">Import a GitHub repo, choose a branch, tune build commands, and ship with live logs, automatic SSL, routing, and deployment history.</div>
       </div>
 
-      <!-- ══ Progress row — flat inline steps, one bordered strip (matches .acct-quickstats) ══ -->
-      <div class="dcx-steps">
-        <div class="dcx-step-item"><span class="dcx-step-badge">1</span><span>Repository</span></div>
-        <div class="dcx-step-item"><span class="dcx-step-badge">2</span><span>Build config</span></div>
-        <div class="dcx-step-item"><span class="dcx-step-badge">3</span><span>Launch</span></div>
-      </div>
+      <!-- ══ Group box 1: Repository step + Project Details + source picker ══ -->
+      <div class="dcx-group-box dcx-group-box-1">
+        <div class="dcx-steps">
+          <div class="dcx-step-item"><span class="dcx-step-badge">1</span><span>Repository</span></div>
+          <div class="dcx-step-item"><span class="dcx-step-badge">2</span><span>Build config</span></div>
+          <div class="dcx-step-item"><span class="dcx-step-badge">3</span><span>Launch</span></div>
+        </div>
 
       <div class="two-col dcx-layout" style="align-items:start;">
         <!-- Left: form -->
@@ -9368,9 +9365,18 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               </div>
           </div>
           </div>
+        </div>
+      </div>
+      </div>
+      <!-- ══ /Group box 1 ══ -->
 
-          <div class="dcx-divider"></div>
+      <div class="dcx-page-body">
+      <div class="two-col dcx-layout" style="align-items:start;">
+        <!-- Left: form -->
+        <div>
 
+          <!-- ══ Group box 2: Build Settings accordion ══ -->
+          <div class="dcx-group-box dcx-group-box-collapse">
           <details class="dcx-collapse build-settings-collapse">
             <summary class="dcx-collapse-summary">
               <div>
@@ -9671,6 +9677,8 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
               </div>
             </div>
           </details>
+          </div>
+          <!-- ══ /Group box 2 ══ -->
         </div>
 
         <!-- Right: summary + deploy btn -->
@@ -9708,6 +9716,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
 
