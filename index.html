@@ -2208,7 +2208,7 @@ textarea.input { resize: vertical; min-height: 80px; }
 .structured-log-chevron svg{width:15px;height:15px;transition:transform .22s ease;color:#94a3b8;}
 .structured-log-card.open .structured-log-chevron svg{transform:rotate(180deg);}
 .structured-log-body{max-height:0;overflow:hidden;transition:max-height .28s ease,border-color .2s ease;border-top:1px solid transparent;}
-.structured-log-card.open .structured-log-body{max-height:320px;border-top-color:rgba(139,92,246,.16);}
+.structured-log-card.open .structured-log-body{max-height:320px;border-top-color:var(--border);}
 .structured-log-list{max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:14px 16px;}
 .structured-log-list:empty::before{content:'Structured log lines will appear when a real deployment starts.';display:block;padding:18px;text-align:center;color:var(--text-3);font-size:.8rem;border:1px dashed rgba(148,163,184,.14);border-radius:14px;}
 
@@ -27227,7 +27227,7 @@ function renderStructuredLogs() {
   if (!wrap) return;
   const lines = logBuffer.slice(-120);
   if (countEl) countEl.textContent = lines.length + (lines.length === 1 ? ' line' : ' lines');
-  wrap.innerHTML = lines.map((line, idx) => `<div onclick="copyLogLine(${idx})" style="font-family:var(--font-mono);font-size:0.78rem;padding:8px 10px;border:1px solid rgba(139,92,246,0.25);border-radius:8px;background:rgba(0,0,0,0.6);cursor:pointer;white-space:pre-wrap;">${escHtml(line)}</div>`).join('');
+  wrap.innerHTML = lines.map((line, idx) => `<div onclick="copyLogLine(${idx})" style="font-family:var(--font-mono);font-size:0.78rem;padding:8px 10px;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;background:transparent;cursor:pointer;white-space:pre-wrap;">${escHtml(line)}</div>`).join('');
 }
 function copyLogLine(idx){
   const line = logBuffer.slice(-120)[idx] || '';
