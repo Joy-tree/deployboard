@@ -7838,4 +7838,256 @@ html[data-theme="light"] #page-env-manager {
   border-radius: 0 !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   ANALYTICS PAGE — flat treatment. KPI cards, charts panel, Top
+   Projects, Build Duration, Success/Failure, Build Insights cards
+   all flattened. Chart colors (success green / failed red) and the
+   donut ring stay as meaningful data signals, not decoration.
+   ══════════════════════════════════════════════════════════════════ */
+#page-analytics {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-analytics {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+#page-analytics .card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-analytics .card-header {
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+}
+#page-analytics .card-title { color: var(--text) !important; }
+#page-analytics .card-subtitle { color: var(--text-2) !important; }
+
+/* ══════════════════════════════════════════════════════════════════
+   WEBHOOKS PAGE + ADD WEBHOOK MODAL — flat treatment. Header
+   converted to dcx-header above. Active Webhooks / Delivery Log /
+   Available Events cards flattened. Modal kept boxed (real overlay
+   dialog) but sharpened and de-filled.
+   ══════════════════════════════════════════════════════════════════ */
+#page-webhooks {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-webhooks {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+#page-webhooks .card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-webhooks .card-header {
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+}
+#page-webhooks .card-title { color: var(--text) !important; }
+#page-webhooks .card-subtitle { color: var(--text-2) !important; }
+#page-webhooks .btn-primary {
+  border-radius: 0 !important;
+}
+#page-webhooks .webhook-event-card {
+  border-radius: 0 !important;
+}
+#page-webhooks .badge-success {
+  background: transparent !important;
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent) !important;
+  color: var(--primary) !important;
+}
+#page-webhooks .badge-success .badge-dot { background: var(--primary) !important; }
+
+/* Add Webhook modal — kept boxed as a real dialog, flattened */
+#addWebhookModal .modal {
+  border-radius: 0 !important;
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  box-shadow: none !important;
+}
+#addWebhookModal .modal-header {
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
+}
+#addWebhookModal .modal-icon {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+}
+#addWebhookModal .modal-icon svg { color: var(--primary) !important; }
+#addWebhookModal .modal-title { color: var(--text) !important; }
+#addWebhookModal .modal-subtitle { color: var(--text-2) !important; }
+#addWebhookModal .modal-footer {
+  border-top: 1px solid var(--dcx-row-border, var(--border)) !important;
+}
+#addWebhookModal .btn-primary {
+  border-radius: 0 !important;
+}
+#addWebhookModal .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border, var(--border)) !important;
+  background: transparent !important;
+}
+#addWebhookModal .input {
+  border-radius: 0 !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   CRON JOBS PAGE + CREATE CRON JOB PAGE — flat treatment. Header
+   converted to dcx-header above. Active Jobs / Recent Executions
+   cards, Basic Configuration / Schedule cards, purple icon boxes
+   (already flattened inline), preset chips, and inputs flattened.
+   ══════════════════════════════════════════════════════════════════ */
+#page-cronjobs {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-cronjobs {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+#page-cronjobs .card,
+#page-cron-create .card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+}
+#page-cronjobs .card-header,
+#page-cron-create .card-header {
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
+}
+#page-cronjobs .card-title,
+#page-cron-create .card-title { color: var(--text) !important; }
+#page-cron-create .wizard-hero {
+  border-radius: 0 !important;
+}
+#page-cron-create .wizard-hero::after {
+  display: none !important;
+}
+#page-cron-create .input,
+#page-cron-create .custom-select-trigger {
+  border-radius: 0 !important;
+}
+#page-cron-create .cron-preset {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border-color: var(--dcx-field-border, var(--border)) !important;
+}
+#page-cron-create .cron-preset:hover {
+  background: transparent !important;
+  border-color: var(--primary) !important;
+}
+#page-cron-create .btn-primary,
+#page-cron-create .btn-sm {
+  border-radius: 0 !important;
+}
+#page-cron-create .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border, var(--border)) !important;
+  background: transparent !important;
+}
+#page-cron-create .btn-ghost:hover {
+  border-color: var(--primary) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   DEPLOY STREAKS PAGE — the most heavily "AI generated" page in the
+   app: radial gradients, glowing rings, glowing text-shadows, and
+   box-shadows throughout. Flattened to the same flat/lines system
+   as everywhere else. Heatmap intensity colors stay meaningful.
+   ══════════════════════════════════════════════════════════════════ */
+#page-streaks {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-streaks {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+#page-streaks .streak-command-hero {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-streaks .streak-command-hero::after {
+  display: none !important;
+}
+#page-streaks .streak-orbital-core {
+  width: auto !important;
+  height: auto !important;
+}
+#page-streaks .streak-ring {
+  display: none !important;
+}
+#page-streaks .streak-core-number {
+  text-shadow: none !important;
+  color: var(--text) !important;
+}
+#page-streaks .streak-core-label {
+  position: static !important;
+  margin-top: 8px;
+  color: var(--text-3) !important;
+}
+#page-streaks .streak-metric-card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-streaks .streak-metric-card.primary {
+  border-color: var(--primary) !important;
+  box-shadow: none !important;
+}
+#page-streaks .streak-metric-card span { color: var(--text-3) !important; }
+#page-streaks .streak-metric-card strong { color: var(--text) !important; }
+#page-streaks .streak-metric-card em { color: var(--text-2) !important; }
+#page-streaks .streak-activity-card,
+#page-streaks .streak-timeline-card,
+#page-streaks .streak-achievement-card {
+  background: transparent !important;
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+}
+#page-streaks .streak-intel-card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-streaks .streak-intel-card span { color: var(--primary) !important; }
+#page-streaks .streak-intel-card strong { color: var(--text) !important; }
+#page-streaks .streak-intel-card p { color: var(--text-2) !important; }
+#page-streaks .streak-timeline-row {
+  background: transparent !important;
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+}
+#page-streaks .streak-timeline-row span,
+#page-streaks .streak-timeline-row em { color: var(--text-2) !important; }
+#page-streaks .streak-modules div {
+  background: transparent !important;
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+}
+#page-streaks .streak-modules b { color: var(--text) !important; }
+#page-streaks .streak-modules span { color: var(--text-2) !important; }
+#page-streaks .streak-legend { color: var(--text-3) !important; }
+#page-streaks .btn-primary {
+  border-radius: 0 !important;
+}
+#page-streaks .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-streaks .btn-ghost:hover {
+  border-color: var(--primary) !important;
+}
+@media(max-width:900px){
+  #page-streaks .streak-command-hero { grid-template-columns: 1fr !important; }
+  #page-streaks .streak-mission-grid { grid-template-columns: repeat(2,1fr) !important; }
+  #page-streaks .streak-ops-layout,
+  #page-streaks .streak-bottom-grid { grid-template-columns: 1fr !important; }
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
