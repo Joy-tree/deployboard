@@ -4413,20 +4413,19 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 }
 
 
+
 /* ══════════════════════════════════════════════════════════════════
-   NEW DEPLOYMENT PAGE — Render-style flat design (dcx-*).
-   The key technique Render actually uses, that the previous pass
-   missed: NOTHING has a filled background that differs from the page.
-   Inputs sit flush on the page surface with only a thin 1px border —
-   they are NOT a separately-shaded "raised" box. Visual separation
-   comes entirely from hairline borders drawn around logical groups
-   (a labeled rectangle containing a title + description + controls),
-   never from background-color contrast. This is what makes it read
-   as deliberately designed rather than AI-generated boilerplate.
+   NEW DEPLOYMENT PAGE — Render-style grouped structure (dcx-*).
+   Three clearly bordered green group boxes, matching the exact zones
+   marked up: (1) Repository steps + Project Details + source picker,
+   (2) Build Settings accordion, (3) Deployment Summary. Everything
+   INSIDE each box stays flat/transparent (inputs, dropdowns, fields
+   have no fill of their own) — only the outer group boundary and a
+   few small functional boxes (dropzone, env panel) carry a border.
    ══════════════════════════════════════════════════════════════════ */
 
 /* ── Composer header — flat, no box ── */
-#page-new-deploy .dcx-header { margin-bottom: 26px; }
+#page-new-deploy .dcx-header { margin-bottom: 22px; }
 #page-new-deploy .dcx-header .back-link { margin-bottom: 16px; }
 #page-new-deploy .dcx-kicker {
   font-family: var(--font-mono);
@@ -4452,19 +4451,37 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   max-width: 66ch;
 }
 
-/* ── Progress steps — flat inline row, dividers only, no fill ── */
+/* ── Group boxes — the visible, clearly-drawn green outline that
+      structures the page, exactly matching the marked-up zones ── */
+#page-new-deploy .dcx-group-box {
+  border: 1.5px solid var(--primary);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+#page-new-deploy .dcx-group-box-1 { padding-bottom: 4px; }
+#page-new-deploy .dcx-group-box-1 .dcx-steps { margin: -20px -20px 20px; }
+#page-new-deploy .dcx-group-box-1 .two-col { padding-bottom: 16px; }
+#page-new-deploy .dcx-group-box-collapse { padding: 0; }
+#page-new-deploy .dcx-group-box-collapse .dcx-collapse-summary { padding: 18px 20px; margin: 0; }
+#page-new-deploy .dcx-group-box-collapse .dcx-collapse-body { padding: 0 20px 20px; }
+#page-new-deploy .dcx-group-box-collapse[open] .dcx-collapse-summary {
+  border-bottom: 1px solid var(--border);
+}
+#page-new-deploy .dcx-page-body { margin-top: 0; }
+
+/* ── Progress steps — flat row inside group box 1, dividers between
+      items, no fill of its own ── */
 #page-new-deploy .dcx-steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  margin-bottom: 32px;
 }
 #page-new-deploy .dcx-step-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 16px;
+  padding: 14px 20px;
   border-right: 1px solid var(--border);
   color: var(--text-2);
   font-size: .82rem;
@@ -4497,11 +4514,11 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 #page-new-deploy .dcx-divider {
   height: 1px;
   background: var(--border);
-  margin: 32px 0;
+  margin: 24px 0;
 }
 
-/* ── Fields — Render technique: label above, input flush on the page
-      surface with ONLY a thin border, no fill color difference at all ── */
+/* ── Fields — flush on the group-box surface, only a hairline border,
+      no fill of their own ── */
 #page-new-deploy .field { margin-bottom: 22px; }
 #page-new-deploy .field-label {
   font-size: .85rem;
@@ -4562,23 +4579,14 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   max-height: 300px;
 }
 
-/* ── Labeled group boxes — the ONLY bordered rectangles on the page.
-      Used for: custom domain picker, upload dropzone, upload badge,
-      environment variables panel. Thin border, transparent fill,
-      exactly the Render "Environment Variables" box treatment. ── */
-#page-new-deploy .dcx-group-box {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 20px;
-}
-
+/* ── Small functional boxes inside group 1 (custom domain picker,
+      upload dropzone, file-ready state, upload badge) — thin neutral
+      border, not the green group-box line ── */
 #page-new-deploy .dcx-inline-box {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 18px;
 }
-
-/* ── Source picker: labeled divider + dropzone ── */
 #page-new-deploy .dcx-upload-section { margin: 6px 0 22px; }
 #page-new-deploy .dcx-or-divider {
   display: flex;
@@ -4644,8 +4652,8 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   gap: 12px;
 }
 
-/* ── Build Settings collapse — flat accordion, title/sub left, chevron
-      right, no boxed panel ── */
+/* ── Build Settings accordion header — inside its own green group
+      box; summary row is title/sub left, chevron right ── */
 #page-new-deploy .dcx-collapse { border: none; }
 #page-new-deploy .dcx-collapse-summary {
   display: flex;
@@ -4655,7 +4663,6 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   list-style: none;
   cursor: pointer;
   user-select: none;
-  padding: 4px 0 8px;
 }
 #page-new-deploy .dcx-collapse-summary::-webkit-details-marker { display: none; }
 #page-new-deploy .dcx-collapse-chevron {
@@ -4670,12 +4677,10 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
   transform: rotate(90deg);
   color: var(--primary);
 }
-#page-new-deploy .dcx-collapse-body { padding: 18px 0 8px; }
 
-/* Env vars sub-panel — becomes a labeled group box, like Render's
-   "Environment Variables" rectangle */
+/* Env vars sub-panel — its own thin-bordered box inside Build Settings */
 #page-new-deploy .env-settings-panel {
-  margin-top: 10px;
+  margin-top: 6px;
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 20px;
@@ -4690,13 +4695,11 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 #page-new-deploy .env-settings-title { font-size: .96rem; font-weight: 800; color: var(--text); }
 #page-new-deploy .env-settings-subtitle { font-size: .8rem; color: var(--text-2); margin-top: 3px; }
 
-/* ── Right column: Deployment Summary — kept as the one deliberate
-      bordered box since it's a persistent action anchor, using the
-      exact same thin-border-no-fill technique as everything else,
-      not a separately shaded "raised" panel ── */
+/* ── Right column: Deployment Summary — its own visible green group
+      box, exposed lines like the other two ── */
 #page-new-deploy .dcx-summary-panel {
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 1.5px solid var(--primary);
+  border-radius: 16px;
   padding: 22px;
 }
 #page-new-deploy .dcx-summary-title {
@@ -4778,12 +4781,23 @@ html[data-theme="light"] #page-code-upload .cu-meta-item {
 }
 
 /* ── Layout ── */
-#page-new-deploy .dcx-layout { align-items: start; }
+#page-new-deploy .dcx-layout { align-items: start; gap: 32px; }
+#page-new-deploy .dcx-layout > div:first-child { min-width: 0; }
+#page-new-deploy .dcx-summary-col { position: sticky; top: 14px; }
+@media(max-width:1099px){ #page-new-deploy .dcx-summary-col { position: relative; top: auto; margin-top: 0; } }
+@media(min-width:1100px){ #page-new-deploy .dcx-layout { grid-template-columns: minmax(0,1fr) minmax(300px,360px); } }
+#page-new-deploy #summaryUrl,
+#page-new-deploy #summaryName { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
 
+@media(max-width:768px){
+  #page-new-deploy .dcx-layout { display: block; }
+}
 @media(max-width:640px){
   #page-new-deploy .dcx-steps { grid-template-columns: 1fr; }
   #page-new-deploy .dcx-step-item { border-right: none; border-bottom: 1px solid var(--border); }
   #page-new-deploy .dcx-step-item:last-child { border-bottom: none; }
+  #page-new-deploy .dcx-group-box { padding: 16px; border-radius: 14px; }
+  #page-new-deploy .dcx-group-box-1 .dcx-steps { margin: -16px -16px 16px; }
 }
 
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
