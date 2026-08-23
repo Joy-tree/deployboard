@@ -7416,4 +7416,68 @@ html[data-theme="light"] #page-domain-store {
   border-radius: 0 !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   DROPDOWN CONSISTENCY — every dropdown menu site-wide should read
+   as a clean list of full-width rows with a visible divider between
+   each option, matching the "All engines" dropdown on the Databases
+   page. New Deployment's Runtime/Framework dropdown (.cs-option) and
+   Live Logs' Manual Deploy menu (.manual-item) had either a nearly
+   invisible divider or none at all — fixed to match.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* New Deployment / Dockerfile / Worker — all .custom-select dropdowns
+   (Runtime, Site Type, Node Version, Working Directory, etc.) */
+#page-new-deploy .cs-option,
+#page-dockerfile-deploy .cs-option,
+#page-worker-create .cs-option {
+  padding: 12px 16px !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
+  color: var(--text-2) !important;
+}
+#page-new-deploy .cs-option:last-child,
+#page-dockerfile-deploy .cs-option:last-child,
+#page-worker-create .cs-option:last-child {
+  border-bottom: none !important;
+}
+#page-new-deploy .cs-option:hover,
+#page-dockerfile-deploy .cs-option:hover,
+#page-worker-create .cs-option:hover {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+#page-new-deploy .cs-option.selected,
+#page-dockerfile-deploy .cs-option.selected,
+#page-worker-create .cs-option.selected {
+  background: transparent !important;
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+}
+#page-new-deploy .cs-option.selected::after,
+#page-dockerfile-deploy .cs-option.selected::after,
+#page-worker-create .cs-option.selected::after {
+  background: var(--primary) !important;
+}
+
+/* Live Logs — Manual Deploy menu, had no row dividers at all */
+#page-logs .manual-menu-list {
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: 0 18px 40px rgba(0,0,0,.45) !important;
+}
+#page-logs .manual-item {
+  padding: 12px 16px !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
+  color: var(--text-2) !important;
+}
+#page-logs .manual-item:last-child {
+  border-bottom: none !important;
+}
+#page-logs .manual-item:hover {
+  background: transparent !important;
+  color: var(--primary) !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
