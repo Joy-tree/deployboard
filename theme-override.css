@@ -7480,4 +7480,111 @@ html[data-theme="light"] #page-domain-store {
   color: var(--primary) !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   PROJECT DETAIL PAGE (click into a project from Projects) — same
+   flat treatment as the rest of the rebuild. Hero was a filled #0d0d0d
+   rounded box, meta chips (Status/Deployments/Runtime/Source) had a
+   green-tinted border and filled dark background, section cards used
+   the site default rounded/filled look. Flattened throughout.
+   ══════════════════════════════════════════════════════════════════ */
+#page-project-detail {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-project-detail {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+
+/* Hero — flat, no fill, sharp corners */
+#page-project-detail .pd-hero {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-project-detail .pd-hero a { color: var(--primary) !important; }
+
+/* Action buttons (Redeploy / Upload New Version, Live Logs, Delete) */
+#page-project-detail .btn-primary,
+#page-project-detail .btn-sm {
+  border-radius: 0 !important;
+}
+#page-project-detail .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-project-detail .btn-ghost:hover {
+  border-color: var(--primary) !important;
+}
+#page-project-detail .btn-danger {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+  color: var(--text-2) !important;
+}
+#page-project-detail .btn-danger:hover {
+  border-color: var(--jt-danger, #ef4444) !important;
+  color: var(--jt-danger, #ef4444) !important;
+  background: transparent !important;
+}
+
+/* Meta chips (Status / Deployments / Runtime / Source) — was a
+   green-tinted filled box, now flat outlined */
+#page-project-detail .pd-meta .chip {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+#page-project-detail .pd-meta .chip strong { color: var(--text) !important; }
+
+/* Section cards (Configuration, Redeployment/Auto Deploy Pipeline,
+   Environment Variables, Runtime Logs, Deployment History) */
+#page-project-detail .card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-project-detail .card-header {
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+}
+#page-project-detail .card-title { color: var(--text) !important; }
+#page-project-detail .card-subtitle { color: var(--text-2) !important; }
+#page-project-detail .input {
+  border-radius: 0 !important;
+}
+
+/* Config rows inside Configuration card */
+#page-project-detail .pd-config-row {
+  border-bottom-color: var(--dcx-row-border) !important;
+}
+
+/* Generic chips used inside Auto Deploy Pipeline (Pipeline / Last
+   check / Last deploy trigger) — same flat treatment as pd-meta */
+#page-project-detail .chip {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+#page-project-detail .chip strong { color: var(--text) !important; }
+
+/* Runtime Logs terminal pane */
+#page-project-detail .jt-runtime-log-pane {
+  background: var(--bg, #000) !important;
+  border: none !important;
+}
+
+/* Deployment History table */
+#page-project-detail .table-wrap {
+  border-color: var(--dcx-field-border) !important;
+}
+#page-project-detail table th {
+  border-bottom-color: var(--dcx-row-border) !important;
+}
+#page-project-detail table td {
+  border-bottom-color: var(--dcx-row-border) !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
