@@ -9187,20 +9187,18 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
     </div>
 
     <div class="page" id="page-repos">
-      <div class="repo-hero">
-        <div>
-          <div class="repo-hero-kicker">GitHub workspace</div>
-          <div class="repo-hero-title">Repositories</div>
-          <div class="repo-hero-subtitle">Browse live GitHub metadata, inspect stack signals, and import the right repository into a deployment-ready workflow.</div>
-        </div>
-        <div class="repo-stats" aria-label="Repository summary">
-          <div class="repo-stat"><div class="repo-stat-value" id="repoStatTotal">—</div><div class="repo-stat-label">Total</div></div>
-          <div class="repo-stat"><div class="repo-stat-value" id="repoStatPrivate">—</div><div class="repo-stat-label">Private</div></div>
-          <div class="repo-stat"><div class="repo-stat-value" id="repoStatLanguages">—</div><div class="repo-stat-label">Stacks</div></div>
+      <div class="dcx-header">
+        <div class="dcx-kicker">GitHub workspace</div>
+        <div class="dcx-title">Repositories</div>
+        <div class="dcx-sub">Browse live GitHub metadata, inspect stack signals, and import the right repository into a deployment-ready workflow.</div>
+        <div class="dcx-steps" style="grid-template-columns:repeat(3,1fr);margin-top:20px;">
+          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="repoStatTotal" style="width:auto;padding:0 6px;">—</span><span>Total</span></div>
+          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="repoStatPrivate" style="width:auto;padding:0 6px;">—</span><span>Private</span></div>
+          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="repoStatLanguages" style="width:auto;padding:0 6px;">—</span><span>Stacks</span></div>
         </div>
       </div>
-      <div class="card" style="margin-bottom:16px;">
-        <div class="card-body repo-toolbar">
+      <div class="dcx-group-box" style="margin-bottom:24px;">
+        <div class="repo-toolbar">
           <div class="repo-search-wrap">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input class="input" id="repoSearchInput" placeholder="Search by repository, language, topic, or description…" oninput="renderReposPage()">
