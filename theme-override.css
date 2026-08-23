@@ -4288,4 +4288,131 @@ html[data-theme="light"] #page-repos .repo-refresh-btn {
   #page-repos .repo-stats { gap: 14px; flex-wrap: wrap; }
 }
 
+
+/* ══════════════════════════════════════════════════════════════════
+   CODE UPLOAD PAGE — flat redesign, matching Repos/Projects/Settings.
+   Dropzone loses the green gradient hover glow, Browse Files becomes
+   a big standard rectangle button, and uploaded-project cards are
+   stretched/enlarged like repo cards with a big full-width primary
+   action button (matches .repo-import-btn treatment).
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Dropzone → flat, no green gradient wash on hover/drag */
+#page-code-upload .cu-dropzone {
+  background: var(--jt-bg-raised, #111) !important;
+  border: 1px dashed var(--jt-border, rgba(255,255,255,.1)) !important;
+  border-radius: 18px !important;
+  padding: 44px 24px !important;
+}
+#page-code-upload .cu-dropzone:hover,
+#page-code-upload .cu-dropzone.drag-over {
+  background: var(--jt-bg-raised, #111) !important;
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--jt-border, transparent)) !important;
+}
+#page-code-upload .cu-dropzone-icon {
+  background: var(--jt-bg-sunken, rgba(16,185,129,.08)) !important;
+  border: 1px solid var(--jt-border, rgba(16,185,129,.18)) !important;
+}
+#page-code-upload .cu-dropzone-icon svg { color: var(--primary) !important; }
+#page-code-upload .cu-dropzone-title { color: var(--text) !important; }
+#page-code-upload .cu-dropzone-sub { color: var(--text-2) !important; }
+#page-code-upload .cu-fmt-chip {
+  background: var(--jt-bg-sunken, rgba(255,255,255,.04)) !important;
+  border: 1px solid var(--jt-border, rgba(255,255,255,.08)) !important;
+  color: var(--text-3) !important;
+}
+
+/* Browse Files → big standard rectangle button, no pill shape */
+#page-code-upload .cu-browse-btn {
+  display: flex !important;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto 16px;
+  padding: 14px 24px !important;
+  border-radius: 12px !important;
+  justify-content: center;
+  font-size: .92rem !important;
+  background: var(--primary) !important;
+}
+#page-code-upload .cu-browse-btn:hover {
+  filter: brightness(1.06);
+  background: var(--primary) !important;
+}
+
+/* Uploaded project cards → stretched/enlarged like repo cards, clean tokens */
+#page-code-upload .cu-file-grid {
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+  gap: 18px !important;
+}
+#page-code-upload .cu-file-card {
+  background: var(--jt-bg-raised, #111) !important;
+  border: 1px solid var(--jt-border, rgba(255,255,255,.07)) !important;
+  border-radius: 18px !important;
+  padding: 20px !important;
+}
+#page-code-upload .cu-file-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--jt-border, transparent)) !important;
+  transform: translateY(-3px);
+}
+#page-code-upload .cu-lang-badge {
+  width: 56px !important; height: 56px !important;
+  border-radius: 14px !important;
+  background: var(--jt-bg-sunken, rgba(255,255,255,.04)) !important;
+  border: 1px solid var(--jt-border, rgba(255,255,255,.08)) !important;
+}
+#page-code-upload .cu-lang-badge img { width: 32px; height: 32px; }
+#page-code-upload .cu-file-name { color: var(--text) !important; }
+#page-code-upload .cu-meta-item {
+  background: var(--jt-bg-sunken, rgba(255,255,255,.03)) !important;
+  border: 1px solid var(--jt-border, rgba(255,255,255,.06)) !important;
+}
+#page-code-upload .cu-meta-label { color: var(--text-3) !important; }
+#page-code-upload .cu-meta-value { color: var(--text) !important; }
+
+/* Open IDE / Extract → big primary action (matches .repo-import-btn),
+   delete stays a compact square icon button beside it */
+#page-code-upload .cu-file-actions {
+  display: flex;
+  gap: 10px !important;
+}
+#page-code-upload .cu-btn-extract {
+  flex: 1;
+  min-height: 50px !important;
+  border-radius: 12px !important;
+  font-size: .9rem !important;
+  background: var(--primary) !important;
+}
+#page-code-upload .cu-btn-extract:hover:not(:disabled) {
+  filter: brightness(1.06);
+  background: var(--primary) !important;
+}
+#page-code-upload .cu-btn-del {
+  width: 50px !important; height: 50px !important;
+  border-radius: 12px !important;
+  flex-shrink: 0;
+}
+
+/* Empty state → theme tokens instead of hardcoded slate */
+#page-code-upload .cu-empty { color: var(--text-2) !important; }
+#page-code-upload .cu-empty-title { color: var(--text) !important; }
+#page-code-upload .cu-empty-sub { color: var(--text-3) !important; }
+
+/* Light theme */
+html[data-theme="light"] #page-code-upload .cu-dropzone,
+html[data-theme="light"] #page-code-upload .cu-file-card {
+  background: var(--jt-bg-raised) !important;
+  border-color: var(--jt-border) !important;
+}
+html[data-theme="light"] #page-code-upload .cu-dropzone-icon,
+html[data-theme="light"] #page-code-upload .cu-lang-badge,
+html[data-theme="light"] #page-code-upload .cu-meta-item {
+  background: var(--jt-bg-sunken) !important;
+  border-color: var(--jt-border) !important;
+}
+
+@media(max-width:640px){
+  #page-code-upload .cu-file-grid { grid-template-columns: 1fr !important; }
+  #page-code-upload .cu-dropzone { padding: 32px 18px !important; }
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
