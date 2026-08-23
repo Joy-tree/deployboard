@@ -4231,46 +4231,49 @@ html[data-theme="light"] .cs-option.selected {
 
 
 /* ══════════════════════════════════════════════════════════════════
-   CODE UPLOAD PAGE — flat redesign, matching Repos/Projects/Settings.
-   Dropzone loses the green gradient hover glow, Browse Files becomes
-   a big standard rectangle button, and uploaded-project cards are
-   stretched/enlarged like repo cards with a big full-width primary
-   action button (matches .repo-import-btn treatment).
+   CODE UPLOAD PAGE — full flat redesign, matching Repos exactly.
+   Header uses dcx-* classes now (shared with Repos/New Deployment/
+   Dockerfile/Worker). Dropzone, project cards, and metric rows all
+   use transparent backgrounds with thin borders only — no filled
+   rounded boxes anywhere. Delete button loses the red fill for a
+   neutral outlined style.
    ══════════════════════════════════════════════════════════════════ */
 
-/* Dropzone → flat, no green gradient wash on hover/drag */
+/* Dropzone → flat, no fill, thin dashed border */
 #page-code-upload .cu-dropzone {
-  background: var(--jt-bg-raised, #111) !important;
-  border: 1px dashed var(--jt-border, rgba(255,255,255,.1)) !important;
-  border-radius: 18px !important;
+  background: transparent !important;
+  border: 1px dashed var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
   padding: 44px 24px !important;
 }
 #page-code-upload .cu-dropzone:hover,
 #page-code-upload .cu-dropzone.drag-over {
-  background: var(--jt-bg-raised, #111) !important;
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--jt-border, transparent)) !important;
+  background: transparent !important;
+  border-color: var(--primary) !important;
 }
 #page-code-upload .cu-dropzone-icon {
-  background: var(--jt-bg-sunken, rgba(16,185,129,.08)) !important;
-  border: 1px solid var(--jt-border, rgba(16,185,129,.18)) !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
 }
 #page-code-upload .cu-dropzone-icon svg { color: var(--primary) !important; }
 #page-code-upload .cu-dropzone-title { color: var(--text) !important; }
 #page-code-upload .cu-dropzone-sub { color: var(--text-2) !important; }
 #page-code-upload .cu-fmt-chip {
-  background: var(--jt-bg-sunken, rgba(255,255,255,.04)) !important;
-  border: 1px solid var(--jt-border, rgba(255,255,255,.08)) !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
   color: var(--text-3) !important;
 }
 
-/* Browse Files → big standard rectangle button, no pill shape */
+/* Browse Files → flat rectangle button, sharp corners */
 #page-code-upload .cu-browse-btn {
   display: flex !important;
   width: 100%;
   max-width: 320px;
   margin: 0 auto 16px;
   padding: 14px 24px !important;
-  border-radius: 12px !important;
+  border-radius: 0 !important;
   justify-content: center;
   font-size: .92rem !important;
   background: var(--primary) !important;
@@ -4280,55 +4283,66 @@ html[data-theme="light"] .cs-option.selected {
   background: var(--primary) !important;
 }
 
-/* Uploaded project cards → stretched/enlarged like repo cards, clean tokens */
+/* Uploaded project cards → flat, thin border only, no fill */
 #page-code-upload .cu-file-grid {
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
-  gap: 18px !important;
+  gap: 16px !important;
 }
 #page-code-upload .cu-file-card {
-  background: var(--jt-bg-raised, #111) !important;
-  border: 1px solid var(--jt-border, rgba(255,255,255,.07)) !important;
-  border-radius: 18px !important;
-  padding: 20px !important;
-  min-height: 330px !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+  padding: 18px !important;
+  min-height: 0 !important;
   display: flex !important;
   flex-direction: column !important;
 }
 #page-code-upload .cu-file-card:hover {
-  border-color: color-mix(in srgb, var(--primary) 35%, var(--jt-border, transparent)) !important;
-  transform: translateY(-3px);
+  border-color: var(--primary) !important;
+  transform: none;
 }
 #page-code-upload .cu-file-meta {
   flex: 1;
+  display: flex !important;
+  gap: 0 !important;
+  border-top: 1px solid var(--dcx-row-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
+  border-left: 1px solid var(--dcx-row-border, var(--border)) !important;
+  margin: 14px 0 !important;
 }
 #page-code-upload .cu-file-actions {
   margin-top: auto;
 }
 #page-code-upload .cu-lang-badge {
-  width: 56px !important; height: 56px !important;
-  border-radius: 14px !important;
-  background: var(--jt-bg-sunken, rgba(255,255,255,.04)) !important;
-  border: 1px solid var(--jt-border, rgba(255,255,255,.08)) !important;
+  width: 44px !important; height: 44px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
 }
-#page-code-upload .cu-lang-badge img { width: 32px; height: 32px; }
+#page-code-upload .cu-lang-badge img { width: 26px; height: 26px; }
 #page-code-upload .cu-file-name { color: var(--text) !important; }
 #page-code-upload .cu-meta-item {
-  background: var(--jt-bg-sunken, rgba(255,255,255,.03)) !important;
-  border: 1px solid var(--jt-border, rgba(255,255,255,.06)) !important;
+  background: transparent !important;
+  border: none !important;
+  border-right: 1px solid var(--dcx-row-border, var(--border)) !important;
+  border-radius: 0 !important;
+  flex: 1;
+  padding: 9px 10px !important;
 }
+#page-code-upload .cu-meta-item:last-child { border-right: none !important; }
 #page-code-upload .cu-meta-label { color: var(--text-3) !important; }
 #page-code-upload .cu-meta-value { color: var(--text) !important; }
 
-/* Open IDE / Extract → big primary action (matches .repo-import-btn),
-   delete stays a compact square icon button beside it */
+/* Open IDE / Extract → flat primary action, delete becomes a neutral
+   outlined icon button (was solid red) */
 #page-code-upload .cu-file-actions {
   display: flex;
   gap: 10px !important;
 }
 #page-code-upload .cu-btn-extract {
   flex: 1;
-  min-height: 50px !important;
-  border-radius: 12px !important;
+  min-height: 48px !important;
+  border-radius: 0 !important;
   font-size: .9rem !important;
   background: var(--primary) !important;
 }
@@ -4337,9 +4351,17 @@ html[data-theme="light"] .cs-option.selected {
   background: var(--primary) !important;
 }
 #page-code-upload .cu-btn-del {
-  width: 50px !important; height: 50px !important;
-  border-radius: 12px !important;
+  width: 48px !important; height: 48px !important;
+  border-radius: 0 !important;
   flex-shrink: 0;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  color: var(--text-2) !important;
+}
+#page-code-upload .cu-btn-del:hover {
+  border-color: var(--jt-danger, #ef4444) !important;
+  color: var(--jt-danger, #ef4444) !important;
+  filter: none;
 }
 
 /* Empty state → theme tokens instead of hardcoded slate */
@@ -4347,22 +4369,11 @@ html[data-theme="light"] .cs-option.selected {
 #page-code-upload .cu-empty-title { color: var(--text) !important; }
 #page-code-upload .cu-empty-sub { color: var(--text-3) !important; }
 
-/* Light theme */
-html[data-theme="light"] #page-code-upload .cu-dropzone,
-html[data-theme="light"] #page-code-upload .cu-file-card {
-  background: var(--jt-bg-raised) !important;
-  border-color: var(--jt-border) !important;
-}
-html[data-theme="light"] #page-code-upload .cu-dropzone-icon,
-html[data-theme="light"] #page-code-upload .cu-lang-badge,
-html[data-theme="light"] #page-code-upload .cu-meta-item {
-  background: var(--jt-bg-sunken) !important;
-  border-color: var(--jt-border) !important;
-}
-
 @media(max-width:640px){
   #page-code-upload .cu-file-grid { grid-template-columns: 1fr !important; }
   #page-code-upload .cu-dropzone { padding: 32px 18px !important; }
+  #page-code-upload .cu-file-meta { flex-wrap: wrap; }
+  #page-code-upload .cu-meta-item { flex: 1 1 33%; }
 }
 
 
@@ -5640,5 +5651,410 @@ html[data-theme="light"] #page-settings {
 #page-settings .btn-sm {
   border-radius: 0 !important;
 }
+
+
+
+
+
+/* ══════════════════════════════════════════════════════════════════
+   CODE UPLOAD PAGE — reuses the same dcx-* variables/classes as New
+   Deployment/Repos so the header, stat strip, and every input field
+   look and behave identically. The dropzone/card-specific rules live
+   in the CODE UPLOAD PAGE section above.
+   ══════════════════════════════════════════════════════════════════ */
+#page-code-upload {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #page-code-upload {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   NEW DEPLOYMENT PAGE — genuinely flat (dcx-*), no card outlines.
+   Previous passes kept drawing a full border around field groups,
+   which reads as a card no matter how thin the line is. The actual
+   fix: remove those group outlines entirely. Structure comes only
+   from typography (section titles) and thin horizontal dividers
+   between logical zones — never a box that encloses content on all
+   four sides. Inputs are borderless at rest (just a bottom line, like
+   an underline field) and light up green only while focused/typing —
+   that's the one moment color is earned, not a resting-state signal.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Composer header — flat, no box ── */
+#page-code-upload .dcx-header { margin-bottom: 22px; }
+#page-code-upload .dcx-header .back-link { margin-bottom: 16px; }
+#page-code-upload .dcx-kicker {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+#page-code-upload .dcx-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.15;
+}
+#page-code-upload .dcx-sub {
+  font-size: .86rem;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin-top: 8px;
+  max-width: 66ch;
+}
+
+/* ── Group "boxes" — no border at all anymore. Just a flat block with
+      spacing, separated from what follows by a thin bottom divider,
+      the exact same technique Settings uses between its sections. ── */
+#page-code-upload .dcx-group-box {
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+#page-code-upload .dcx-group-box-1 { padding-bottom: 4px; }
+#page-code-upload .dcx-group-box-1 .dcx-steps { margin: -20px -20px 20px; }
+#page-code-upload .dcx-group-box-collapse { padding: 0; }
+#page-code-upload .dcx-group-box-collapse .dcx-collapse-summary { padding: 18px 20px; margin: 0; }
+#page-code-upload .dcx-group-box-collapse .dcx-collapse-body { padding: 0 20px 20px; }
+#page-code-upload .dcx-group-box-collapse[open] .dcx-collapse-summary {
+  border-bottom: 1px solid var(--dcx-row-border);
+  margin-bottom: 0;
+}
+#page-code-upload .dcx-page-body { margin-top: 0; }
+
+/* ── Progress steps — flat row, thin divider between items only ── */
+#page-code-upload .dcx-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--dcx-row-border);
+}
+#page-code-upload .dcx-step-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-right: 1px solid var(--dcx-row-border);
+  color: var(--text-2);
+  font-size: .82rem;
+  font-weight: 700;
+}
+#page-code-upload .dcx-step-item:last-child { border-right: none; }
+#page-code-upload .dcx-step-badge {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--text-3) 12%, transparent);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: .74rem;
+  flex-shrink: 0;
+}
+
+/* ── Section title/subtitle — flat typography, no box ── */
+#page-code-upload .dcx-section-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
+}
+#page-code-upload .dcx-section-sub {
+  font-size: .82rem;
+  color: var(--text-3);
+  margin-top: 4px;
+}
+#page-code-upload .dcx-divider {
+  height: 1px;
+  background: var(--dcx-row-border);
+  margin: 24px 0;
+}
+
+/* ── Fields — genuinely borderless at rest. Underline-only style:
+      no border on any side except a subtle bottom hairline, no
+      background fill. Lights up green ONLY while focused/typing. ── */
+#page-code-upload .field { margin-bottom: 22px; }
+#page-code-upload .field-label {
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: block;
+}
+#page-code-upload .field-hint {
+  font-size: .78rem;
+  line-height: 1.5;
+  margin-top: 8px;
+  color: var(--text-3);
+}
+#page-code-upload .input,#page-code-upload select.input,#page-code-upload .custom-select-trigger,#page-code-upload .custom-select-btn {
+  min-height: 46px;
+  border-radius: 0;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  color: var(--text) !important;
+  font-size: .92rem;
+  padding: 0 2px;
+  box-shadow: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+#page-code-upload .input::placeholder { color: var(--text-3); }
+#page-code-upload .input:hover,#page-code-upload .custom-select-trigger:hover {
+  border-bottom-color: color-mix(in srgb, var(--text-2) 55%, var(--dcx-field-border));
+}
+/* The one moment color is earned: focused or actively being typed in */
+#page-code-upload .input:focus,#page-code-upload .custom-select-trigger.open {
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+}
+#page-code-upload .input-group .input { border-radius: 0; }
+#page-code-upload .dcx-domain-suffix {
+  display: flex; align-items: center;
+  padding: 0 2px;
+  min-height: 46px;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+#page-code-upload .custom-select-dropdown,#page-code-upload .custom-select-menu {
+  border-radius: 0;
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  box-shadow: 0 18px 44px rgba(0,0,0,.4);
+  max-height: 300px;
+}
+
+/* ── Small functional zones (custom domain picker, upload dropzone,
+      file-ready state, upload badge, env panel) — no border box
+      either. Separated purely by spacing + a thin top/bottom rule,
+      matching how Settings' "This device" / "Change Password" rows
+      sit flat with only hairline separators. ── */
+#page-code-upload .dcx-inline-box {
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  padding: 18px;
+}
+
+#page-code-upload .dcx-upload-section { margin: 6px 0 22px; }
+#page-code-upload .dcx-or-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+#page-code-upload .dcx-or-divider span { flex: 1; height: 1px; background: var(--dcx-row-border); }
+#page-code-upload .dcx-or-divider em {
+  font-style: normal;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+#page-code-upload .dcx-dropzone {
+  border: 1px dashed var(--dcx-field-border);
+  border-radius: 0;
+  padding: 30px 18px;
+  text-align: center;
+  cursor: pointer;
+  background: transparent;
+  transition: border-color .15s;
+}
+#page-code-upload .dcx-dropzone:hover,#page-code-upload .dcx-dropzone.drag-over {
+  border-color: var(--primary);
+}
+#page-code-upload .dcx-dropzone-icon {
+  width: 38px; height: 38px;
+  margin: 0 auto 12px;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--text-3) 10%, transparent);
+  display: flex; align-items: center; justify-content: center;
+}
+#page-code-upload .dcx-dropzone-icon svg { width: 18px; height: 18px; color: var(--primary); }
+#page-code-upload .dcx-dropzone-label { font-size: .86rem; font-weight: 700; color: var(--text); }
+#page-code-upload .dcx-dropzone-sub { font-size: .74rem; color: var(--text-3); margin-top: 6px; }
+#page-code-upload .dcx-file-ready {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#page-code-upload .dcx-file-ready-name { font-size: .82rem; font-weight: 700; color: var(--primary); }
+#page-code-upload .dcx-file-ready-size { font-size: .72rem; color: var(--text-3); margin-top: 1px; }
+#page-code-upload .dcx-file-ready-remove {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-3); padding: 2px 6px; font-size: .8rem; border-radius: 6px;
+}
+#page-code-upload .dcx-file-ready-remove:hover { color: var(--text); }
+#page-code-upload .dcx-upload-badge {
+  padding: 16px 18px;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── Build Settings collapse — flat accordion, title/sub left,
+      chevron right ── */
+#page-code-upload .dcx-collapse { border: none; }
+#page-code-upload .dcx-collapse-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+#page-code-upload .dcx-collapse-summary::-webkit-details-marker { display: none; }
+#page-code-upload .dcx-collapse-chevron {
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  color: var(--text-3);
+  transition: transform .18s ease, color .18s ease;
+  flex-shrink: 0;
+}
+#page-code-upload .dcx-collapse-chevron svg { width: 17px; height: 17px; }
+#page-code-upload .dcx-collapse[open] .dcx-collapse-chevron {
+  transform: rotate(90deg);
+  color: var(--primary);
+}
+
+/* Env vars sub-panel — flat, thin top rule only, no box */
+#page-code-upload .env-settings-panel {
+  margin-top: 10px;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  padding: 20px;
+}
+#page-code-upload .env-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+#page-code-upload .env-settings-title { font-size: .96rem; font-weight: 800; color: var(--text); }
+#page-code-upload .env-settings-subtitle { font-size: .8rem; color: var(--text-2); margin-top: 3px; }
+
+/* ── Right column: Deployment Summary — flat too, no box. Just
+      title + rows with thin dividers + button, matching everything
+      else on the page. ── */
+#page-code-upload .dcx-summary-panel {
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  padding: 22px;
+}
+#page-code-upload .dcx-summary-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+#page-code-upload .dcx-summary-rows { display: flex; flex-direction: column; }
+#page-code-upload .dcx-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--dcx-row-border);
+  font-size: .82rem;
+  color: var(--text-2);
+}
+#page-code-upload .dcx-summary-row:last-child { border-bottom: none; }
+#page-code-upload .dcx-summary-value { color: var(--text); font-weight: 700; font-size: .82rem; }
+#page-code-upload .dcx-deploy-btn {
+  width: 100%;
+  margin-top: 18px;
+  min-height: 50px;
+  border-radius: 0;
+  font-size: .94rem;
+  font-weight: 800;
+  box-shadow: none;
+}
+#page-code-upload .dcx-launch-status {
+  display: none;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--dcx-field-border);
+  border-radius: 0;
+  color: var(--text);
+  font-size: .8rem;
+  font-weight: 600;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+#page-code-upload .dcx-launch-spinner {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  border-top-color: var(--primary);
+  display: inline-block;
+  animation: dpSpin .7s linear infinite;
+}
+#page-code-upload .dcx-summary-footnote {
+  font-size: .72rem;
+  color: var(--text-3);
+  text-align: center;
+  line-height: 1.5;
+  margin-top: 14px;
+}
+
+/* ── Repo-select dropdown items ── */
+#page-code-upload .custom-select-item.repo-select-item {
+  display: flex; align-items: center; gap: 10px; padding: 12px;
+}
+#page-code-upload .repo-select-icon {
+  width: 32px; height: 32px; border-radius: 0;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  font-weight: 900;
+}
+#page-code-upload .repo-select-main { font-weight: 800; color: var(--text); font-size: .84rem; }
+#page-code-upload .repo-select-sub { font-family: var(--font-mono); font-size: .68rem; color: var(--text-3); margin-top: 2px; }
+#page-code-upload .custom-select-item.branch-select-item {
+  display: flex; align-items: center; justify-content: space-between; font-family: var(--font-mono);
+}
+#page-code-upload .custom-select-item.branch-select-item::after {
+  content: 'branch'; font-size: .62rem; color: var(--text-3);
+  background: color-mix(in srgb, var(--text-3) 12%, transparent); border-radius: 999px; padding: 2px 6px;
+}
+
+/* ── Layout ── */
+#page-code-upload .dcx-layout { align-items: start; gap: 32px; }
+#page-code-upload .dcx-layout > div:first-child { min-width: 0; }
+#page-code-upload .dcx-summary-col { position: sticky; top: 14px; }
+@media(max-width:1099px){ #page-new-deploy .dcx-summary-col { position: relative; top: auto; margin-top: 0; } }
+@media(min-width:1100px){ #page-new-deploy .dcx-layout { grid-template-columns: minmax(0,1fr) minmax(300px,360px); } }
+#page-code-upload #summaryUrl,#page-code-upload #summaryName { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
+
+@media(max-width:768px){
+  #page-code-upload .dcx-layout { display: block; }
+}
+@media(max-width:640px){
+  #page-code-upload .dcx-steps { grid-template-columns: 1fr; }
+  #page-code-upload .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); }
+  #page-code-upload .dcx-step-item:last-child { border-bottom: none; }
+}
+
 
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
