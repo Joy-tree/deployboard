@@ -17732,14 +17732,13 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 #dbRefreshIcon.spinning { animation: dbRefreshSpin .7s linear infinite; }
     </style>
 
-      <button class="page-back" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+      <button class="page-back back-link" onclick="showPage('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
       <!-- Hero -->
-      <div class="db-hero">
-        <div class="db-hero-orb"></div>
-        <div class="db-hero-kicker">joytree data layer</div>
-        <div class="db-hero-title">Database Instances</div>
-        <div class="db-hero-sub">Spin up real Docker-backed databases in seconds — MongoDB, PostgreSQL, MySQL, Redis. Each gets its own container, persistent volume, and live connection string injected into your projects.</div>
-        <div class="db-hero-actions">
+      <div class="dcx-header">
+        <div class="dcx-kicker">joytree data layer</div>
+        <div class="dcx-title">Database Instances</div>
+        <div class="dcx-sub">Spin up real Docker-backed databases in seconds — MongoDB, PostgreSQL, MySQL, Redis. Each gets its own container, persistent volume, and live connection string injected into your projects.</div>
+        <div class="db-hero-actions" style="margin-top:18px;">
           <button class="btn btn-primary" onclick="showPage('db-create')" style="gap:8px;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Create Database
