@@ -3276,8 +3276,6 @@ html[data-theme="light"] #app{--cyan:var(--jt-brand-strong);}
 .resource-hero,
 #page-domain-add .wizard-hero,
 #page-cron-create .wizard-hero,
-#page-worker-create .config-hero,
-#page-dockerfile-deploy .config-hero,
 #page-analytics .page-header,
 #page-env-manager .page-header {
   background: #0d0d0d !important;
@@ -3297,8 +3295,6 @@ html[data-theme="light"] #app{--cyan:var(--jt-brand-strong);}
 /* Decorative circle for surface, resource, config, wizard heroes */
 .surface-hero::after,
 .resource-hero::after,
-#page-worker-create .config-hero::after,
-#page-dockerfile-deploy .config-hero::after,
 #page-domain-add .wizard-hero::after,
 #page-cron-create .wizard-hero::after {
   content: '' !important;
@@ -3311,15 +3307,11 @@ html[data-theme="light"] #app{--cyan:var(--jt-brand-strong);}
   box-shadow: 0 0 60px rgba(16,185,129,.08);
   pointer-events: none;
 }
-.surface-hero, .resource-hero,
-#page-worker-create .config-hero,
-#page-dockerfile-deploy .config-hero { overflow: hidden; position: relative; }
+.surface-hero, .resource-hero { overflow: hidden; position: relative; }
 #page-domain-add .wizard-hero, #page-cron-create .wizard-hero { overflow: hidden; position: relative; }
 
 /* ── Kicker colors for pages that previously used --cyan ───────── */
-.resource-hero-kicker,
-#page-worker-create .config-kicker,
-#page-dockerfile-deploy .config-kicker { color: #86efac !important; }
+.resource-hero-kicker { color: #86efac !important; }
 
 /* ── page-header kicker badge via ::before ──────────────────────── */
 #page-analytics .page-header::before {
@@ -3668,29 +3660,18 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 #page-domain-add .input,#page-cron-create .input{min-height:54px;border-radius:14px}
 #page-domain-add .btn-primary,#page-cron-create .btn-primary{min-height:54px;font-size:.95rem;font-weight:800}
 
-/* Worker create + Dockerfile deploy consistency/responsiveness */
-#page-worker-create .page-header,#page-dockerfile-deploy .page-header{display:none}
-#page-worker-create .config-hero,#page-dockerfile-deploy .config-hero{
-  position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.07);border-radius:22px;padding:20px;margin-bottom:16px;
-  background:#0d0d0d;
-}
-#page-worker-create .config-kicker,#page-dockerfile-deploy .config-kicker{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);margin-bottom:6px}
-#page-worker-create .config-title,#page-dockerfile-deploy .config-title{font-family:var(--font-ui);font-size:clamp(1.5rem,4vw,2.1rem);font-weight:800;letter-spacing:-.04em;line-height:1.1}
-#page-worker-create .config-sub,#page-dockerfile-deploy .config-sub{margin-top:8px;color:var(--text-2);font-size:.9rem}
-#page-worker-create .card,#page-dockerfile-deploy .card{border-radius:22px;border-color:rgba(255,255,255,.07);background:#111}
-#page-worker-create .card-header,#page-dockerfile-deploy .card-header{padding:18px 20px;background:transparent}
-#page-worker-create .card-body,#page-dockerfile-deploy .card-body{padding:20px}
-#page-worker-create .input,#page-dockerfile-deploy .input{min-height:52px;border-radius:14px}
-#page-worker-create .two-col,#page-dockerfile-deploy .two-col{gap:16px}
-@media(min-width:1100px){#page-worker-create .two-col,#page-dockerfile-deploy .two-col{grid-template-columns:minmax(0,1fr) minmax(300px,380px)}}
-#page-worker-create .two-col > *,#page-dockerfile-deploy .two-col > *,#page-worker-create .card,#page-dockerfile-deploy .card,#page-worker-create .field,#page-dockerfile-deploy .field,#page-worker-create .field > div,#page-dockerfile-deploy .field > div{min-width:0;max-width:100%}
+/* Worker create + Dockerfile deploy: responsive overflow handling only —
+   visual design (hero, boxes, inputs) now lives in the dcx-* system in
+   theme-override.css, shared with #page-new-deploy. */
+#page-worker-create .two-col > *,#page-dockerfile-deploy .two-col > *,#page-worker-create .field,#page-dockerfile-deploy .field,#page-worker-create .field > div,#page-dockerfile-deploy .field > div{min-width:0;max-width:100%}
 #page-worker-create .input,#page-worker-create select.input,#page-dockerfile-deploy .input,#page-dockerfile-deploy select.input{width:100%;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-#page-worker-create .config-title,#page-dockerfile-deploy .config-title,#page-worker-create .config-sub,#page-dockerfile-deploy .config-sub{overflow-wrap:anywhere}
+#page-worker-create .dcx-title,#page-dockerfile-deploy .dcx-title,#page-worker-create .dcx-sub,#page-dockerfile-deploy .dcx-sub{overflow-wrap:anywhere}
 #page-dockerfile-deploy #dfSubdomain{flex:1 1 auto;min-width:0}
 #page-dockerfile-deploy #dfSubdomain + span{min-width:0;max-width:45%;overflow:hidden;text-overflow:ellipsis}
-@media(max-width:900px){#page-worker-create .two-col,#page-dockerfile-deploy .two-col{grid-template-columns:1fr}#page-worker-create .page-back,#page-dockerfile-deploy .page-back{margin-bottom:10px}}
-@media(max-width:768px){#page-worker-create,#page-dockerfile-deploy{padding-left:10px;padding-right:10px}#page-worker-create .config-hero,#page-dockerfile-deploy .config-hero{padding:18px 16px;border-radius:20px;margin-bottom:14px}#page-worker-create .config-title,#page-dockerfile-deploy .config-title{font-size:clamp(1.75rem,9vw,2.45rem);letter-spacing:-.03em}#page-worker-create .config-sub,#page-dockerfile-deploy .config-sub{font-size:.95rem;line-height:1.65}#page-worker-create .card-header,#page-dockerfile-deploy .card-header{padding:16px}#page-worker-create .card-body,#page-dockerfile-deploy .card-body{padding:16px!important}#page-worker-create .input,#page-dockerfile-deploy .input{min-height:54px;font-size:.9rem;padding-left:14px;padding-right:14px}#page-worker-create select.input,#page-dockerfile-deploy select.input{font-size:.82rem}#page-dockerfile-deploy #dfSubdomain + span{max-width:38%;font-size:.7rem;padding-left:8px;padding-right:8px}#workerEnvList,#dfBuildArgsList{padding-left:16px!important;padding-right:16px!important}}
+@media(max-width:900px){#page-worker-create .page-back,#page-dockerfile-deploy .page-back{margin-bottom:10px}}
+@media(max-width:768px){#page-worker-create,#page-dockerfile-deploy{padding-left:10px;padding-right:10px}#page-dockerfile-deploy #dfSubdomain + span{max-width:38%;font-size:.7rem;padding-left:8px;padding-right:8px}#workerEnvList,#dfBuildArgsList{padding-left:0!important;padding-right:0!important}}
 @media(max-width:520px){#page-worker-create .field > div[style*="display:flex"],#page-dockerfile-deploy .field > div[style*="display:flex"]{gap:6px!important}#workerEnvList > div[style*="display:flex"],#dfBuildArgsList > div[style*="display:flex"]{display:grid!important;grid-template-columns:1fr auto;align-items:center}#workerEnvList > div[style*="display:flex"] input:first-child,#dfBuildArgsList > div[style*="display:flex"] input:first-child{grid-column:1 / -1}#workerEnvList > div[style*="display:flex"] input,#dfBuildArgsList > div[style*="display:flex"] input{min-width:0}}
+
 
 
 /* ── Futuristic back buttons + quantum build + streak command center ───── */
@@ -21598,36 +21579,26 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
     <!-- ════════ DOCKERFILE DEPLOY PAGE ════════ -->
     <div class="page" id="page-dockerfile-deploy">
-      <button class="page-back" onclick="showPage('new-resource')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to New Resource</button>
-      <div class="config-hero">
-        <div class="config-kicker">Container release</div>
-        <div class="config-title">Deploy with Dockerfile</div>
-        <div class="config-sub">Configure repository, Dockerfile path, build args, and launch settings from a mobile-friendly deployment surface.</div>
+      <div class="dcx-header">
+        <button class="page-back back-link" onclick="showPage('new-resource')" style="margin-bottom:16px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to New Resource</button>
+        <div class="dcx-kicker">Container release</div>
+        <div class="dcx-title">Deploy with Dockerfile</div>
+        <div class="dcx-sub">Configure repository, Dockerfile path, build args, and launch settings from a mobile-friendly deployment surface.</div>
       </div>
-      <div class="page-header page-header-row">
+      <div class="dcx-layout two-col" style="align-items:start;">
         <div>
-          <div class="page-title">Deploy with Dockerfile</div>
-          <div class="page-subtitle">Point to a GitHub repo containing a Dockerfile.</div>
-        </div>
-        <span style="display:flex;align-items:center;gap:6px;font-size:0.78rem;font-weight:700;padding:6px 12px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.2);border-radius:8px;color:var(--cyan);">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="2" y="8" width="6" height="5" rx="1"/><rect x="9" y="8" width="6" height="5" rx="1"/><rect x="16" y="8" width="6" height="5" rx="1"/><path d="M3 13v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/></svg>
-          Docker
-        </span>
-      </div>
-      <div class="two-col" style="align-items:start;">
-        <div style="display:flex;flex-direction:column;gap:16px;">
-          <div class="card">
-            <div class="card-header"><div class="card-title">Repository</div></div>
-            <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+          <div class="dcx-group-box">
+            <div class="dcx-section-title">Repository</div>
+            <div style="margin-top:18px;">
               <div class="field">
                 <label class="field-label">Project Name</label>
                 <input class="input" id="dfProjectName" placeholder="my-docker-app">
               </div>
               <div class="field">
                 <label class="field-label">Subdomain</label>
-                <div style="display:flex;">
-                  <input class="input input-mono" id="dfSubdomain" placeholder="my-docker-app" style="border-radius:8px 0 0 8px;">
-                  <span style="display:flex;align-items:center;padding:0 10px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-left:none;border-radius:0 8px 8px 0;font-size:0.75rem;color:var(--text-3);white-space:nowrap;">.joytree.site</span>
+                <div class="input-group">
+                  <input class="input input-mono" id="dfSubdomain" placeholder="my-docker-app">
+                  <span class="dcx-domain-suffix">.joytree.site</span>
                 </div>
               </div>
               <div class="field">
@@ -21657,9 +21628,9 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
               </div>
             </div>
           </div>
-          <div class="card">
-            <div class="card-header"><div class="card-title">Port Configuration</div></div>
-            <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+          <div class="dcx-group-box">
+            <div class="dcx-section-title">Port Configuration</div>
+            <div style="margin-top:18px;">
               <div class="field">
                 <label class="field-label">Exposed Port</label>
                 <input class="input input-mono" id="dfPort" type="number" placeholder="3000" value="3000" min="1" max="65535">
@@ -21668,25 +21639,25 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
             </div>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:16px;">
-          <div class="card">
-            <div class="card-header"><div class="card-title">Build Args</div><button class="btn btn-ghost btn-sm" onclick="addDfBuildArg()">+ Add</button></div>
-            <div id="dfBuildArgsList" style="padding:0 20px 16px;">
+        <div class="dcx-summary-col">
+          <div class="dcx-group-box">
+            <div class="dcx-section-title" style="display:flex;align-items:center;justify-content:space-between;">Build Args<button class="btn btn-ghost btn-sm" onclick="addDfBuildArg()">+ Add</button></div>
+            <div id="dfBuildArgsList" style="margin-top:16px;">
               <div style="color:var(--text-3);font-size:0.82rem;text-align:center;padding:16px 0;">No build args yet.</div>
             </div>
           </div>
-          <div class="card">
-            <div class="card-header"><div class="card-title">Deployment Summary</div></div>
-            <div class="card-body" style="display:flex;flex-direction:column;gap:8px;font-size:0.82rem;">
-              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-2);">Type</span><span style="color:var(--cyan);font-weight:600;">Dockerfile</span></div>
-              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-2);">Runtime</span><span style="color:var(--text);">Custom Docker image</span></div>
-              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-2);">SSL</span><span style="color:var(--green);">Auto via Cloudflare</span></div>
+          <div class="dcx-summary-panel">
+            <div class="dcx-summary-title">Deployment Summary</div>
+            <div class="dcx-summary-rows">
+              <div class="dcx-summary-row"><span>Type</span><span class="dcx-summary-value" style="color:var(--primary);">Dockerfile</span></div>
+              <div class="dcx-summary-row"><span>Runtime</span><span class="dcx-summary-value">Custom Docker image</span></div>
+              <div class="dcx-summary-row"><span>SSL</span><span class="dcx-summary-value" style="color:var(--primary);">Auto via Cloudflare</span></div>
             </div>
+            <button class="btn btn-primary dcx-deploy-btn" onclick="deployDockerfile()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              Deploy with Dockerfile
+            </button>
           </div>
-          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;" onclick="deployDockerfile()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            Deploy with Dockerfile
-          </button>
         </div>
       </div>
     </div>
@@ -21862,75 +21833,73 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
     <!-- ════════ CREATE WORKER PAGE ════════ -->
     <div class="page" id="page-worker-create">
-      <button class="page-back" onclick="showPage('workers')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Workers</button>
-      <div class="config-hero">
-        <div class="config-kicker">Async compute</div>
-        <div class="config-title">New Background Worker</div>
-        <div class="config-sub">Set repo, branch, install/build/start commands, and env variables in a fully responsive worker configuration flow.</div>
+      <div class="dcx-header">
+        <button class="page-back back-link" onclick="showPage('workers')" style="margin-bottom:16px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Workers</button>
+        <div class="dcx-kicker">Async compute</div>
+        <div class="dcx-title">New Background Worker</div>
+        <div class="dcx-sub">Set repo, branch, install/build/start commands, and env variables in a fully responsive worker configuration flow.</div>
       </div>
-      <div class="page-header">
-        <div class="page-title">New Background Worker</div>
-        <div class="page-subtitle">Deploy a process that runs continuously without a web port.</div>
-      </div>
-      <div class="two-col" style="align-items:start;">
-        <div class="card">
-          <div class="card-header"><div class="card-title">Configuration</div></div>
-          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
-            <div class="field">
-              <label class="field-label">Worker Name</label>
-              <input class="input" id="workerName" placeholder="email-queue-processor">
-            </div>
-            <div class="field">
-              <label class="field-label">GitHub Repository URL</label>
-              <input class="input input-mono" id="workerRepo" placeholder="https://github.com/username/repo">
-              <select class="input input-mono" id="workerRepoSelect" style="margin-top:8px;"><option value="">Or choose from connected GitHub repositories…</option></select>
-            </div>
-            <div class="field">
-              <label class="field-label">Branch</label>
-              <input class="input input-mono" id="workerBranch" value="main">
-              <select class="input input-mono" id="workerBranchSelect" style="margin-top:8px;"><option value="main">main</option></select>
-            </div>
-            <div class="field">
-              <label class="field-label">Install Command</label>
-              <input class="input input-mono" id="workerInstall" value="npm install" placeholder="npm install">
-            </div>
-            <div class="field">
-              <label class="field-label">Build Command</label>
-              <input class="input input-mono" id="workerBuild" value="echo skip" placeholder="echo skip or npm run build">
-            </div>
-            <div class="field">
-              <label class="field-label">Start Command</label>
-              <input class="input input-mono" id="workerStart" placeholder="node worker.js or npm run worker">
-              <div class="field-hint">This command runs your worker. It should NOT start an HTTP server.</div>
-            </div>
-            <div class="field">
-              <label class="field-label">Working Directory <span style="color:var(--text-3);font-weight:400;">(optional)</span></label>
-              <div style="display:flex;gap:8px;align-items:center;">
-                <input class="input input-mono" id="workerWorkingDir" list="workerWorkingDirList" placeholder="e.g. joytree-worker or services/worker" style="flex:1;">
-                <button class="btn btn-ghost btn-sm" type="button" onclick="suggestWorkingDirs('workerRepo','workerBranch','workerWorkingDir','workerWorkingDirList')">Browse</button>
+      <div class="dcx-layout two-col" style="align-items:start;">
+        <div>
+          <div class="dcx-group-box">
+            <div class="dcx-section-title">Configuration</div>
+            <div style="margin-top:18px;">
+              <div class="field">
+                <label class="field-label">Worker Name</label>
+                <input class="input" id="workerName" placeholder="email-queue-processor">
               </div>
-              <datalist id="workerWorkingDirList"></datalist>
-              <select class="input input-mono" id="workerWorkingDirSelect" style="margin-top:8px;display:none;" onchange="selectWorkingDirValue('workerWorkingDir', this.value)"></select>
-              <div class="field-hint">Browse repo folders or type manually. Install/build/start commands run from this directory when set.</div>
+              <div class="field">
+                <label class="field-label">GitHub Repository URL</label>
+                <input class="input input-mono" id="workerRepo" placeholder="https://github.com/username/repo">
+                <select class="input input-mono" id="workerRepoSelect" style="margin-top:8px;"><option value="">Or choose from connected GitHub repositories…</option></select>
+              </div>
+              <div class="field">
+                <label class="field-label">Branch</label>
+                <input class="input input-mono" id="workerBranch" value="main">
+                <select class="input input-mono" id="workerBranchSelect" style="margin-top:8px;"><option value="main">main</option></select>
+              </div>
+              <div class="field">
+                <label class="field-label">Install Command</label>
+                <input class="input input-mono" id="workerInstall" value="npm install" placeholder="npm install">
+              </div>
+              <div class="field">
+                <label class="field-label">Build Command</label>
+                <input class="input input-mono" id="workerBuild" value="echo skip" placeholder="echo skip or npm run build">
+              </div>
+              <div class="field">
+                <label class="field-label">Start Command</label>
+                <input class="input input-mono" id="workerStart" placeholder="node worker.js or npm run worker">
+                <div class="field-hint">This command runs your worker. It should NOT start an HTTP server.</div>
+              </div>
+              <div class="field">
+                <label class="field-label">Working Directory <span style="color:var(--text-3);font-weight:400;">(optional)</span></label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input class="input input-mono" id="workerWorkingDir" list="workerWorkingDirList" placeholder="e.g. joytree-worker or services/worker" style="flex:1;">
+                  <button class="btn btn-ghost btn-sm" type="button" onclick="suggestWorkingDirs('workerRepo','workerBranch','workerWorkingDir','workerWorkingDirList')">Browse</button>
+                </div>
+                <datalist id="workerWorkingDirList"></datalist>
+                <select class="input input-mono" id="workerWorkingDirSelect" style="margin-top:8px;display:none;" onchange="selectWorkingDirValue('workerWorkingDir', this.value)"></select>
+                <div class="field-hint">Browse repo folders or type manually. Install/build/start commands run from this directory when set.</div>
+              </div>
             </div>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:16px;">
-          <div class="card">
-            <div class="card-header"><div class="card-title">Environment Variables</div><button class="btn btn-ghost btn-sm" onclick="addWorkerEnv()">+ Add</button></div>
-            <div id="workerEnvList" style="padding:0 20px 16px;">
+        <div class="dcx-summary-col">
+          <div class="dcx-group-box">
+            <div class="dcx-section-title" style="display:flex;align-items:center;justify-content:space-between;">Environment Variables<button class="btn btn-ghost btn-sm" onclick="addWorkerEnv()">+ Add</button></div>
+            <div id="workerEnvList" style="margin-top:16px;">
               <div style="color:var(--text-3);font-size:0.82rem;text-align:center;padding:16px 0;">No env vars yet.</div>
             </div>
           </div>
-          <div class="card">
-            <div class="card-header"><div class="card-title">Note</div></div>
-            <div class="card-body" style="font-size:0.82rem;color:var(--text-2);display:flex;flex-direction:column;gap:8px;">
-              <div style="display:flex;gap:8px;"><span style="color:var(--green);flex-shrink:0;">✓</span> No port or HTTP server needed</div>
-              <div style="display:flex;gap:8px;"><span style="color:var(--green);flex-shrink:0;">✓</span> Auto-restarts if it crashes</div>
-              <div style="display:flex;gap:8px;"><span style="color:var(--green);flex-shrink:0;">✓</span> Logs visible in Live Logs</div>
+          <div class="dcx-group-box">
+            <div class="dcx-section-title">Note</div>
+            <div style="font-size:0.82rem;color:var(--text-2);display:flex;flex-direction:column;gap:8px;margin-top:16px;">
+              <div style="display:flex;gap:8px;"><span style="color:var(--primary);flex-shrink:0;">✓</span> No port or HTTP server needed</div>
+              <div style="display:flex;gap:8px;"><span style="color:var(--primary);flex-shrink:0;">✓</span> Auto-restarts if it crashes</div>
+              <div style="display:flex;gap:8px;"><span style="color:var(--primary);flex-shrink:0;">✓</span> Logs visible in Live Logs</div>
             </div>
           </div>
-          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;" onclick="deployWorker()">
+          <button class="btn btn-primary dcx-deploy-btn" onclick="deployWorker()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
             Deploy Worker
           </button>
