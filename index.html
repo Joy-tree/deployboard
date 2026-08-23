@@ -25154,28 +25154,43 @@ function _doRenderProjectsNow() {
 // whatever signals the project record does have.
 function getDeploymentFrameworkIcon(project) {
   if (!project) return repoLanguageIcon({});
-  const out = String(project.outputDir || '').toLowerCase();
-  const build = String(project.buildCmd || '').toLowerCase();
+  const out    = String(project.outputDir || '').toLowerCase();
+  const build  = String(project.buildCmd  || '').toLowerCase();
+  const start  = String(project.startCmd  || '').toLowerCase();
+  const name   = String(project.name      || '').toLowerCase();
+  const repo   = String(project.repoUrl   || '').toLowerCase();
   const isDocker = !!project.isDockerfileDeploy;
   const isStatic = project.siteType === 'static';
 
-  // Build a searchable description string from the strongest signals
-  // available so detectRepoLanguage's regex inference can do its job --
-  // same technique it already uses for repo.name/description/topics.
+  // Build a searchable description string from every available signal so
+  // detectRepoLanguage's regex patterns can do their job. The project name
+  // and repo URL path are valuable extra clues for upload-type projects that
+  // have no repoUrl with language metadata (e.g. "react-dashboard" → React).
   const hints = [];
-  if (isDocker) hints.push('docker dockerfile');
-  if (out === '.next' || build.includes('next build')) hints.push('nextjs next');
-  if (build.includes('vite')) hints.push('vite');
-  if (build.includes('react-scripts')) hints.push('react');
-  if (build.includes('vue')) hints.push('vue');
-  if (isStatic && !build) hints.push('html');
-  if (project.nodeVer) hints.push('nodejs node');
+  if (isDocker)                                           hints.push('docker dockerfile');
+  if (out === '.next' || build.includes('next build'))   hints.push('nextjs next');
+  if (build.includes('vite'))                             hints.push('vite');
+  if (build.includes('react-scripts'))                   hints.push('react');
+  if (build.includes('vue-cli') || build.includes('vue')) hints.push('vue');
+  if (build.includes('svelte'))                           hints.push('svelte');
+  if (build.includes('angular'))                          hints.push('angular');
+  if (isStatic && !build && !start)                       hints.push('html');
+  if (project.nodeVer)                                    hints.push('nodejs node');
+  // Infer from start command (e.g. "python app.py", "ruby server.rb")
+  if (start.includes('python') || start.includes('flask') || start.includes('django') || start.includes('uvicorn') || start.includes('gunicorn')) hints.push('python');
+  if (start.includes('ruby')   || start.includes('rails'))  hints.push('ruby');
+  if (start.includes('php'))                               hints.push('php');
+  if (start.includes('go ') || start.match(/\bgo\b/))      hints.push('golang');
 
   const shimRepo = {
     name: project.name || '',
-    full_name: project.repoUrl || '',
+    // Pass repo path + project name as full_name so detectRepoLanguage's
+    // haystack regex picks up language names embedded in the project name
+    // (e.g. project named "react-dashboard" → React icon).
+    full_name: repo || name,
     description: hints.join(' '),
     topics: [],
+    // Only use the Node.js language fallback if we truly have no other signal
     language: hints.length ? null : 'Node.js',
   };
   return repoLanguageIcon(shimRepo);
