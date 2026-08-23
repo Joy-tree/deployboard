@@ -6686,4 +6686,249 @@ html[data-theme="light"] #page-databases {
   border-radius: 0 !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   LANDING PAGE (#landing-view) — flatten everything, no exceptions.
+   Every gradient fill, radial glow blob, box-shadow, and rounded
+   corner across the marketing page removed/sharpened to match the
+   plain black + thin-line style used throughout the dashboard
+   rebuild. The literal glowing-ring PNG asset in the network diagram
+   is hidden and replaced with the same flat CSS-drawn rings the
+   codebase already uses as its own light-theme fallback.
+   ══════════════════════════════════════════════════════════════════ */
+#landing-view {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+}
+html[data-theme="light"] #landing-view {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+}
+
+/* Hero — remove the two radial glow blobs entirely */
+#landing-view .hero-glow,
+#landing-view .hero-glow-2 {
+  display: none !important;
+}
+#landing-view .btn-hero-primary {
+  border-radius: 0 !important;
+}
+#landing-view .btn-hero-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#landing-view .btn-hero-ghost:hover {
+  border-color: var(--primary) !important;
+  background: transparent !important;
+}
+
+/* Hero top marquee (scrolling "STATIC · SERVER · DOCKER" cards) and
+   the rotating shift-card underneath it — gradient fills removed */
+#landing-view .hero-top-marquee {
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#landing-view .hero-top-card {
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#landing-view .hero-shift-card {
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+
+/* Credibility stat row (99.98% / <60s / 24/7) */
+#landing-view .cred-card {
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+
+/* Home product cards (Managed Databases, Realtime API Builder, etc) */
+#landing-view .home-product-card {
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#landing-view .home-product-card:hover {
+  border-color: var(--primary) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+#landing-view .neon-beam-border {
+  border-color: var(--dcx-field-border) !important;
+}
+#landing-view .neon-beam-border::after {
+  display: none !important;
+}
+
+/* Feature cards (GitHub Deploy, Databases, Cron, etc) — grid already
+   uses shared 1px lines (kept), just remove the top gradient glow bar
+   and the per-feature colored icon fills */
+#landing-view .feature-card::before {
+  display: none !important;
+}
+#landing-view .feature-icon {
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+  color: var(--text-2) !important;
+}
+
+/* Network diagram ("Everything connects back to JoyTree") — hide the
+   glowing neon-ring PNG asset and use the flat CSS-drawn ellipse
+   rings that already exist as the codebase's own light-theme
+   fallback, now applied on dark theme too for full consistency */
+#landing-view .orbit-glow-ring {
+  display: none !important;
+}
+#landing-view .orbit-stage::before,
+#landing-view .orbit-stage::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 50% !important; top: 52% !important;
+  transform: translate(-50%,-50%) !important;
+  border-radius: 50% !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+#landing-view .orbit-stage::before {
+  width: 82% !important; height: 46% !important;
+  border: 1.5px solid var(--dcx-field-border) !important;
+  box-shadow: none !important;
+}
+#landing-view .orbit-stage::after {
+  width: 110% !important; height: 62% !important;
+  border: 1.5px solid var(--dcx-row-border) !important;
+}
+#landing-view .orbit-mid-ring {
+  border-color: var(--dcx-row-border) !important;
+  box-shadow: none !important;
+}
+#landing-view .orbit-core {
+  box-shadow: none !important;
+}
+#landing-view .orbit-icon {
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+  color: var(--text-2) !important;
+  box-shadow: none !important;
+}
+#landing-view .orbit-node:hover .orbit-icon,
+#landing-view .orbit-node.jh-active .orbit-icon {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+  box-shadow: none !important;
+}
+
+/* Pricing cards — remove gradient fill on the "Popular" card, the
+   lift-transform, and the glow box-shadow. Ribbon badge stays as a
+   plain text label with a thin border instead of a filled pill. */
+#landing-view .ld-price-card {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+}
+#landing-view .ld-price-card:hover {
+  transform: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: none !important;
+}
+#landing-view .ld-price-card.popular {
+  background: transparent !important;
+  border-color: var(--primary) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+#landing-view .ld-price-card.popular:hover {
+  transform: none !important;
+}
+#landing-view .ld-price-badge {
+  background: transparent !important;
+  border: 1px solid var(--primary) !important;
+  border-radius: 0 !important;
+  color: var(--primary) !important;
+}
+#landing-view .ld-price-btn {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+}
+#landing-view .ld-price-card.popular .ld-price-btn {
+  border-radius: 0 !important;
+}
+
+/* Story slider — flat progress bar fill, sharp frame corners, no
+   glow border/shadow. The caption gradient stays: it's a legibility
+   scrim for white text over a photo, not decorative flourish. */
+#landing-view .jt-story-seg i {
+  background: var(--primary) !important;
+  border-radius: 0 !important;
+}
+#landing-view .jt-story-seg {
+  border-radius: 0 !important;
+}
+#landing-view .jt-story-frame {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  box-shadow: none !important;
+}
+
+/* Footer CTA — remove the radial glow blob, sharpen corners */
+#landing-view .cta-glow {
+  display: none !important;
+}
+#landing-view .cta-section {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+}
+
+/* Hero typewriter gradient text ("Run databases.") — solid color
+   instead of a green-to-cyan text-clip gradient */
+#landing-view .hero-chip-word {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  color: var(--primary) !important;
+}
+#landing-view .hero-preview {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  box-shadow: none !important;
+}
+
+/* Story slider dot indicators — solid color instead of gradient */
+#landing-view .jt-story-dot.is-active {
+  background: var(--primary) !important;
+  border-radius: 0 !important;
+}
+#landing-view .jt-story-dot {
+  border-radius: 0 !important;
+}
+
+/* Screenshot mockup frames (browser/phone device illustrations) —
+   remove the glow shadows. Sharpen the browser frame; the phone
+   frame keeps its rounded corners since that's the actual device
+   shape being illustrated, not a decorative style choice. */
+#landing-view .sc-browser {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  box-shadow: none !important;
+}
+#landing-view .sc-browser img {
+  border-radius: 0 !important;
+}
+#landing-view .sc-phone {
+  box-shadow: none !important;
+  border-color: var(--dcx-field-border) !important;
+}
+
+/* Orbit diagram icon hover/active states — remove glow shadows */
+#landing-view .orbit-icon:hover,
+#landing-view .orbit-node.jh-active .orbit-icon {
+  box-shadow: none !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
