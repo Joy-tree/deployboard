@@ -22009,17 +22009,15 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
     <!-- ═══ CODE UPLOAD PAGE ═══ -->
     <div class="page" id="page-code-upload">
       <div class="cu-wrap">
-        <div class="repo-hero">
-          <div>
-            <button class="page-back" onclick="showPage('dashboard')" style="margin-bottom:10px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
-            <div class="repo-hero-kicker">No GitHub Required</div>
-            <div class="repo-hero-title">Code Upload</div>
-            <div class="repo-hero-subtitle">Upload a single HTML file or a ZIP archive. We'll extract, analyze, and deploy it — just like GitHub, without the GitHub.</div>
-          </div>
-          <div class="repo-stats" aria-label="Upload summary">
-            <div class="repo-stat"><div class="repo-stat-value" id="cuStatProjects">0</div><div class="repo-stat-label">Projects</div></div>
-            <div class="repo-stat"><div class="repo-stat-value" id="cuStatFiles">0</div><div class="repo-stat-label">Files</div></div>
-            <div class="repo-stat"><div class="repo-stat-value" id="cuStatSize">0 B</div><div class="repo-stat-label">Total Size</div></div>
+        <div class="dcx-header">
+          <button class="page-back back-link" onclick="showPage('dashboard')" style="margin-bottom:16px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
+          <div class="dcx-kicker">No GitHub Required</div>
+          <div class="dcx-title">Code Upload</div>
+          <div class="dcx-sub">Upload a single HTML file or a ZIP archive. We'll extract, analyze, and deploy it — just like GitHub, without the GitHub.</div>
+          <div class="dcx-steps" style="grid-template-columns:repeat(3,1fr);margin-top:20px;">
+            <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="cuStatProjects" style="width:auto;padding:0 6px;">0</span><span>Projects</span></div>
+            <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="cuStatFiles" style="width:auto;padding:0 6px;">0</span><span>Files</span></div>
+            <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="cuStatSize" style="width:auto;padding:0 6px;">0 B</span><span>Total Size</span></div>
           </div>
         </div>
         <div class="cu-dropzone" id="cuDropzone" onclick="document.getElementById('cuFileInput').click()" ondragover="cuOnDragOver(event)" ondragleave="cuOnDragLeave(event)" ondrop="cuOnDrop(event)">
@@ -22037,7 +22035,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
             <span class="cu-fmt-chip">.zip</span>
             <span class="cu-fmt-chip">.tar.gz</span>
             <span class="cu-fmt-chip">.tgz</span>
-            <span style="font-size:.72rem;color:#334155;margin-left:4px;">Max 250 MB</span>
+            <span style="font-size:.72rem;color:var(--text-3);margin-left:4px;">Max 250 MB</span>
           </div>
         </div>
         <input type="file" id="cuFileInput" accept=".html,.htm,.zip,.tar.gz,.tgz" style="display:none" onchange="cuHandleFileSelect(this.files[0])">
