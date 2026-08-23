@@ -5646,7 +5646,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=47" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=48" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5719,7 +5719,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=47&recover=' + token;
+    fresh.href = 'theme-override.css?v=48&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -7817,85 +7817,6 @@ window.landingToggleTheme = function(){
     </div>
   </div>
 </section>
-<!-- ── LIVE PLATFORM STATS ─────────────────────────────────────────── -->
-<section class="jt-stats-strip" id="jt-live-stats">
-  <div class="jt-stats-kicker">Right now, on Joytree</div>
-  <div class="jt-stats-row">
-    <div class="jt-stat-item">
-      <div class="jt-stat-value" id="jtStatDeployments">—</div>
-      <div class="jt-stat-label">Total Deploys Shipped</div>
-    </div>
-    <div class="jt-stat-sep"></div>
-    <div class="jt-stat-item">
-      <div class="jt-stat-value" id="jtStatProjects">—</div>
-      <div class="jt-stat-label">Projects Hosted</div>
-    </div>
-    <div class="jt-stat-sep"></div>
-    <div class="jt-stat-item">
-      <div class="jt-stat-value" id="jtStatUptime">—</div>
-      <div class="jt-stat-label">Build Success Rate</div>
-    </div>
-    <div class="jt-stat-sep"></div>
-    <div class="jt-stat-item">
-      <div class="jt-stat-value">&lt;60s</div>
-      <div class="jt-stat-label">Typical Deploy Time</div>
-    </div>
-  </div>
-</section>
-<script>
-(function(){
-  // Real counter, pulled from the platform's own live MongoDB data via
-  // /api/public/stats -- not a hardcoded/fake number. Polls periodically
-  // so a visitor watching the landing page sees the count actually move
-  // as real deploys happen elsewhere on the platform, without needing to
-  // refresh. Animates each update by counting up/down to the new value
-  // rather than snapping, so the change itself is visible.
-  function animateValue(el, from, to, duration) {
-    if (from === to) { el.textContent = to.toLocaleString(); return; }
-    const start = performance.now();
-    function tick(now) {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      const current = Math.round(from + (to - from) * eased);
-      el.textContent = current.toLocaleString();
-      if (t < 1) requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  }
-
-  let lastDeployments = null, lastProjects = null, lastUptime = null;
-
-  async function refreshLiveStats() {
-    try {
-      const res = await fetch('/api/public/stats', { signal: AbortSignal.timeout(6000) });
-      const d = await res.json();
-      if (!d.ok) return;
-
-      const depEl = document.getElementById('jtStatDeployments');
-      const projEl = document.getElementById('jtStatProjects');
-      const upEl = document.getElementById('jtStatUptime');
-      if (depEl && lastDeployments !== d.totalDeployments) {
-        animateValue(depEl, lastDeployments ?? d.totalDeployments, d.totalDeployments, 900);
-        lastDeployments = d.totalDeployments;
-      }
-      if (projEl && lastProjects !== d.totalProjects) {
-        animateValue(projEl, lastProjects ?? d.totalProjects, d.totalProjects, 900);
-        lastProjects = d.totalProjects;
-      }
-      if (upEl && lastUptime !== d.uptimePct) {
-        upEl.textContent = d.uptimePct.toFixed(1) + '%';
-        lastUptime = d.uptimePct;
-      }
-    } catch (e) {
-      // Fail quiet -- landing page still reads fine without live numbers
-    }
-  }
-
-  refreshLiveStats();
-  setInterval(refreshLiveStats, 20000);
-})();
-</script>
-
 <!-- ── HOW IT WORKS ────────────────────────────────────────────────── -->
 <section class="how-section neon-beam-border" id="how-it-works">
   <div class="reveal text-center" style="max-width:600px;margin:0 auto 56px;">
@@ -33140,7 +33061,44 @@ function initPWAInstallPrompt(){
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')
-        .then(reg => { initDeployPushNotifications(reg); })
+        .then(reg => {
+          initDeployPushNotifications(reg);
+          // [FIX] REAL bug behind "everything is stale except after a
+          // Dashboard reload, on a fresh browser session, not just a
+          // long-open tab": a service worker update is only DETECTED on
+          // navigation, and even once detected, the new worker sits
+          // "waiting" -- it does not take over the CURRENT page load at
+          // all, only future ones, unless explicitly told to. That means
+          // reopening the browser after fully closing it starts a brand
+          // new page load that can still be served/controlled by
+          // whatever OLD service worker was left registered from a
+          // previous visit (potentially from before this exact file's
+          // cache-elimination fix ever shipped), for that entire first
+          // session, no matter how many times that page alone is
+          // reloaded -- because each of those reloads is still checking
+          // in with the SAME stale worker. The controllerchange+visibility
+          // reload logic further below only ever helps the NEXT tab/visit,
+          // never the one currently loading.
+          //
+          // Force an update check immediately on every registration, and
+          // if a new worker is already sitting in "installed/waiting"
+          // state from some earlier visit, tell it to activate right now
+          // rather than waiting for a future controllerchange that may
+          // never come for a single-page-per-session visitor.
+          reg.update().catch(()=>{});
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+          reg.addEventListener('updatefound', () => {
+            const installing = reg.installing;
+            if (!installing) return;
+            installing.addEventListener('statechange', () => {
+              if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+                installing.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+        })
         .catch(()=>{});
     });
 
@@ -33184,6 +33142,46 @@ function initPWAInstallPrompt(){
       jtTryReloadIfSafe();
     });
     document.addEventListener('visibilitychange', jtTryReloadIfSafe);
+
+    // [FIX] The controllerchange listener above only helps a TAB that's
+    // already open when a new worker activates -- it does nothing for a
+    // completely fresh browser session (browser fully closed, then
+    // reopened) whose very first request may still be served/controlled
+    // by an old worker registration for however long it takes THIS load's
+    // registration+update+activate cycle to finish in the background.
+    // That gap is exactly the "route deep-links load stale, only a
+    // Dashboard reload afterwards fixes it" pattern -- by the time the
+    // Dashboard reload happens, the new worker has finished activating
+    // from the FIRST page's registration call, so it looks like Dashboard
+    // specifically "fixes" things, when really it's just the first
+    // reload to happen AFTER the worker update finished in the
+    // background, regardless of which page that reload lands on.
+    //
+    // Close that gap directly: if this load's controller is a DIFFERENT
+    // worker than the one that ends up active moments later (i.e. an
+    // update was waiting and just took over), do one single, one-time
+    // hard reload of THIS SPECIFIC PAGE right now -- not a future tab,
+    // not after backgrounding, immediately -- so a fresh session never
+    // has to rely on "revisit Dashboard eventually" to get correct
+    // behavior. Guarded by sessionStorage so it can only ever fire once
+    // per tab, never loops.
+    (function forceFreshSessionReloadIfControllerChanged(){
+      try {
+        if (sessionStorage.getItem('jt_sw_fresh_reloaded') === '1') return;
+      } catch(_) {}
+      const controllerAtLoad = navigator.serviceWorker.controller;
+      navigator.serviceWorker.ready.then((reg) => {
+        // Give any in-flight activate a brief moment to finish, then check
+        // whether the controller actually changed out from under this load.
+        setTimeout(() => {
+          const controllerNow = navigator.serviceWorker.controller;
+          if (controllerAtLoad && controllerNow && controllerAtLoad !== controllerNow) {
+            try { sessionStorage.setItem('jt_sw_fresh_reloaded', '1'); } catch(_) {}
+            window.location.reload();
+          }
+        }, 600);
+      }).catch(()=>{});
+    })();
   }
   const card = document.getElementById('installPromptCard');
   const btnInstall = document.getElementById('installPromptInstall');
