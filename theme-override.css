@@ -7619,7 +7619,17 @@ html[data-theme="light"] #page-project-detail {
 #page-project-detail .input {
   border-radius: 0 !important;
 }
+
+/* [FIX] Live Logs / Delete sat as bare floating text with no box at
+   all, next to a solid-filled Upload/Redeploy button — inconsistent
+   with the boxed-line treatment used everywhere else on this page.
+   Same hairline --dcx-field-border as the meta chips below, no color
+   tint, sharp corners (matches the rest of the page's language). */
+#page-project-detail .btn-ghost {
+  border: 1px solid var(--dcx-field-border) !important;
+}
 #page-project-detail .btn-danger {
+  border: 1px solid var(--dcx-field-border) !important;
   color: var(--text-2) !important;
 }
 #page-project-detail .btn-danger:hover {
