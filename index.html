@@ -5055,12 +5055,23 @@ html[data-theme="dark"] #app,
 html[data-theme="dark"] #app [id^="page-"] { background: #0a0a0a !important; }
 html[data-theme="dark"] #sidebar           { background: #111 !important; }
 html[data-theme="dark"] #topbar            { background: #111 !important; }
-html[data-theme="dark"] #app .card,
-html[data-theme="dark"] #app .app-hero,
-html[data-theme="dark"] #app .stat-card,
-html[data-theme="dark"] #app .tree-project-node,
-html[data-theme="dark"] #app .dash-qa-btn,
-html[data-theme="dark"] #app .webhook-event-card { background: #111 !important; border-color: rgba(255,255,255,.07) !important; }
+/* [REMOVED — see BLUEPRINT comment in theme-override.css] The two rules
+   that used to sit here (targeting .card/.app-hero/.stat-card/
+   .tree-project-node/.dash-qa-btn/.webhook-event-card/.section/
+   .how-section/.flow-section/.snippet-section/.cta-section/
+   .home-product-card/.hero-visual-card/.feature-card/.how-card/
+   .flow-step/.snippet-card/.surface-hero/.wizard-hero/.quantum-build/
+   .streak-command-hero/.streak-metric-card/.streak-intel-card/
+   .streak-timeline-row/.streak-modules/.geo-intel-card/.geo-intel-map/
+   .terminal-wrap/.terminal-body/.hero-terminal with
+   html[data-theme="dark"] .X { background:#111114!important; ... })
+   were a 2-selector-deep dark-theme rule that beat every page-scoped
+   dcx-* flat-redesign override (e.g. #page-domains .card, #page-streaks
+   .streak-metric-card, #landing-view .home-product-card) on specificity,
+   silently re-filling every one of those elements with #111114 and a
+   border regardless of what the per-page CSS said. Every class this
+   rule touched now has its own correct page-scoped flat treatment —
+   this global rule is dead weight that was actively fighting it. */
 html[data-theme="dark"] .deployment-table-shell tbody tr { background: #111 !important; }
 body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.inscription-strip::before,.inscription-strip::after,.section::before,.how-section::before,.flow-section::before,.snippet-section::before,.cta-section::before{display:none!important;content:none!important;}
 /* Remove all animated/spinning border gimmicks */
@@ -5069,14 +5080,7 @@ body::before,.hero-cosmic-grid,.hero-orb,.hero-aurora,.hero-glow,.hero-glow-2,.i
 .hero-grid-shell,.hero-rail,.hero-command-grid,.cred-grid,.onboard-ticker,.hero-top-marquee,.hero-ship-strip,.hero-shift-zone,.pro-signature,.executive-banner,.inscription-strip{display:none!important;}
 #app *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;text-shadow:none!important;}
 html[data-theme="dark"] #landing-view nav,html[data-theme="dark"] .topbar,html[data-theme="dark"] .app-sidebar,html[data-theme="dark"] .app-header,html[data-theme="dark"] .modal,html[data-theme="dark"] .drawer{background:#09090b!important;border-color:var(--border)!important;}
-html[data-theme="dark"] .section,html[data-theme="dark"] .how-section,html[data-theme="dark"] .flow-section,html[data-theme="dark"] .snippet-section,html[data-theme="dark"] .cta-section,html[data-theme="dark"] .home-product-card,html[data-theme="dark"] .hero-visual-card,html[data-theme="dark"] .feature-card,html[data-theme="dark"] .how-card,html[data-theme="dark"] .flow-step,html[data-theme="dark"] .snippet-card,html[data-theme="dark"] .card,html[data-theme="dark"] .tree-project-node,html[data-theme="dark"] .stat-card,html[data-theme="dark"] .surface-hero,html[data-theme="dark"] .app-hero,html[data-theme="dark"] .wizard-hero,html[data-theme="dark"] .quantum-build,html[data-theme="dark"] .streak-command-hero,html[data-theme="dark"] .terminal-empty-card.empty-logs-polished,html[data-theme="dark"] .webhook-event-card,html[data-theme="dark"] .streak-metric-card,html[data-theme="dark"] .streak-intel-card,html[data-theme="dark"] .streak-timeline-row,html[data-theme="dark"] .streak-modules div,html[data-theme="dark"] .geo-intel-card,html[data-theme="dark"] .geo-intel-map,html[data-theme="dark"] .terminal-wrap,html[data-theme="dark"] .terminal-body,html[data-theme="dark"] .hero-terminal{
-  background:#111114!important;
-  background-image:none!important;
-  border:1px solid var(--border)!important;
-  box-shadow:none!important;
-}
 .hero::after,.streak-command-hero:after,.quantum-build:before,.geo-intel-card::before,.terminal-wrap.active-deploy::before,.terminal-wrap::after,.matrix-stage::before,.matrix-stage::after{display:none!important;content:none!important;}
-html[data-theme="dark"] .btn,html[data-theme="dark"] .btn-nav,html[data-theme="dark"] .btn-hero-ghost,html[data-theme="dark"] .btn-nav-menu{background:#111114!important;border:1px solid var(--border)!important;color:var(--text)!important;box-shadow:none!important;}
 .btn-primary,.btn-nav-primary,.btn-hero-primary{background:var(--primary)!important;border-color:var(--primary)!important;color:#052e16!important;}
 html[data-theme="dark"] .table-shell tbody tr,html[data-theme="dark"] .deployment-table-shell tbody tr{background:#111114!important;box-shadow:none!important;}
 
