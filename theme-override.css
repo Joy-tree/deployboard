@@ -5555,12 +5555,12 @@ html[data-theme="light"] #page-repos {
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  border-right: 1px solid var(--dcx-row-border);
+  border-right: 1px solid var(--dcx-row-border) !important;
   color: var(--text);
   font-size: .82rem;
   font-weight: 700;
 }
-#page-repos .dcx-step-item:last-child { border-right: none; }
+#page-repos .dcx-step-item:last-child { border-right: none !important; }
 #page-repos .dcx-step-badge {
   min-width: 24px; height: 22px;
   padding: 0 6px;
@@ -6052,12 +6052,12 @@ html[data-theme="light"] #page-code-upload {
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  border-right: 1px solid var(--dcx-row-border);
+  border-right: 1px solid var(--dcx-row-border) !important;
   color: var(--text);
   font-size: .82rem;
   font-weight: 700;
 }
-#page-code-upload .dcx-step-item:last-child { border-right: none; }
+#page-code-upload .dcx-step-item:last-child { border-right: none !important; }
 #page-code-upload .dcx-step-badge {
   min-width: 24px; height: 22px;
   padding: 0 6px;
@@ -8200,13 +8200,17 @@ html[data-theme="light"] #page-db-create {
 #page-db-create .db-create-input,
 #page-db-create .db-create-select {
   background: transparent !important;
-  border: 1px solid var(--dcx-field-border) !important;
+  border: none !important;
+  border-bottom: 1px solid color-mix(in srgb,var(--text-3) 38%,var(--border)) !important;
   border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 11px 2px !important;
 }
 #page-db-create .db-create-input:focus,
 #page-db-create .db-create-select:focus {
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 1px var(--primary) !important;
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+  outline: none !important;
 }
 #page-db-create .db-create-select option { background: var(--bg, #000) !important; }
 
