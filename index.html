@@ -4946,7 +4946,7 @@ html[data-theme="light"] #app .repo-stat-label { color: var(--jt-text-faint) !im
 
 /* ── LIGHT: Domain list rows (JS-generated .list-row) ── */
 html[data-theme="light"] #app .list-row { border-bottom-color: rgba(0,0,0,.06) !important; }
-html[data-theme="light"] #page-domains .list-row { background: transparent !important; }
+html[data-theme="light"] #page-domains.pg-domains-v2 .list-row { background: transparent !important; }
 
 /* ── LIGHT: Build Progress / deploy stepper ── */
 html[data-theme="light"] #app .deploy-stepper-item { background: var(--jt-bg-sunken) !important; border-color: rgba(0,0,0,.08) !important; color: #475569 !important; }
@@ -5632,7 +5632,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=60" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=61" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -20562,7 +20562,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
     </div>
 
     <!-- ════════ DOMAINS PAGE ════════ -->
-    <div class="page" id="page-domains">
+    <div class="page pg-domains-v2" id="page-domains">
       <div class="dcx-header">
         <button class="page-back back-link" onclick="showPage('dashboard')" style="margin-bottom:16px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard</button>
         <div class="dcx-kicker">Routing & SSL</div>

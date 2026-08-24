@@ -7380,11 +7380,11 @@ html[data-theme="light"] #page-logs {
    Repos hero's own stat strip rather than the boxed-card look this
    page had before.
    ══════════════════════════════════════════════════════════════════ */
-#page-domains {
+#page-domains.pg-domains-v2 {
   --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
   --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
 }
-html[data-theme="light"] #page-domains {
+html[data-theme="light"] #page-domains.pg-domains-v2 {
   --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
   --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
 }
@@ -7392,12 +7392,12 @@ html[data-theme="light"] #page-domains {
 /* Hero stat strip — mirrors #page-repos exactly: flat grid of
    badge+label pairs, thin vertical dividers between items, one
    bottom rule closing off the whole strip. No box. */
-#page-domains .dcx-steps {
+#page-domains.pg-domains-v2 .dcx-steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   border-bottom: 1px solid var(--dcx-row-border);
 }
-#page-domains .dcx-step-item {
+#page-domains.pg-domains-v2 .dcx-step-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -7407,8 +7407,8 @@ html[data-theme="light"] #page-domains {
   font-size: .82rem;
   font-weight: 700;
 }
-#page-domains .dcx-step-item:last-child { border-right: none; }
-#page-domains .dcx-step-badge {
+#page-domains.pg-domains-v2 .dcx-step-item:last-child { border-right: none; }
+#page-domains.pg-domains-v2 .dcx-step-badge {
   width: 22px; height: 22px;
   border-radius: 6px;
   display: grid; place-items: center;
@@ -7420,34 +7420,34 @@ html[data-theme="light"] #page-domains {
   flex-shrink: 0;
 }
 @media(max-width:760px){
-  #page-domains .dcx-steps { grid-template-columns: 1fr; }
-  #page-domains .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); }
-  #page-domains .dcx-step-item:last-child { border-bottom: none; }
+  #page-domains.pg-domains-v2 .dcx-steps { grid-template-columns: 1fr; }
+  #page-domains.pg-domains-v2 .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); }
+  #page-domains.pg-domains-v2 .dcx-step-item:last-child { border-bottom: none; }
 }
 
 /* Mini stat row (Wildcard / SSL Status) — was a pair of boxed cards,
    now a flat two-up row divided by a single vertical hairline, same
    language as the hero strip above it. */
-#page-domains #domainQuickStats {
+#page-domains.pg-domains-v2 #domainQuickStats {
   border-top: 1px solid var(--dcx-row-border);
   border-bottom: 1px solid var(--dcx-row-border);
 }
-#page-domains .domain-mini-card {
+#page-domains.pg-domains-v2 .domain-mini-card {
   background: transparent !important;
   border: none !important;
   border-radius: 0 !important;
   padding: 14px 16px !important;
 }
-#page-domains .domain-mini-card:first-child {
+#page-domains.pg-domains-v2 .domain-mini-card:first-child {
   border-right: 1px solid var(--dcx-row-border) !important;
   padding-left: 0 !important;
 }
-#page-domains .domain-mini-card:last-child {
+#page-domains.pg-domains-v2 .domain-mini-card:last-child {
   padding-right: 0 !important;
 }
 @media(max-width:760px){
-  #page-domains #domainQuickStats { grid-template-columns: 1fr !important; }
-  #page-domains .domain-mini-card:first-child {
+  #page-domains.pg-domains-v2 #domainQuickStats { grid-template-columns: 1fr !important; }
+  #page-domains.pg-domains-v2 .domain-mini-card:first-child {
     border-right: none !important;
     border-bottom: 1px solid var(--dcx-row-border) !important;
   }
@@ -7457,22 +7457,22 @@ html[data-theme="light"] #page-domains {
    Domains) — flat, no fill, no box. Each section is separated from
    the one before it by a single top rule; the header's own bottom
    border does the rest, same as everywhere else in this rebuild. */
-#page-domains .domain-section-card {
+#page-domains.pg-domains-v2 .domain-section-card {
   background: transparent !important;
   border: none !important;
   border-top: 1px solid var(--dcx-row-border) !important;
   border-radius: 0 !important;
   padding-top: 4px !important;
 }
-#page-domains .card-header {
+#page-domains.pg-domains-v2 .card-header {
   border-bottom: 1px solid var(--dcx-row-border) !important;
 }
-#page-domains .card-title { color: var(--text) !important; }
-#page-domains .card-subtitle { color: var(--text-2) !important; }
+#page-domains.pg-domains-v2 .card-title { color: var(--text) !important; }
+#page-domains.pg-domains-v2 .card-subtitle { color: var(--text-2) !important; }
 
 /* Wildcard active row — was a green-tinted filled box, now flat text
    on the page background, closed off top/bottom by hairlines only */
-#page-domains .domain-wildcard-row {
+#page-domains.pg-domains-v2 .domain-wildcard-row {
   background: transparent !important;
   border: none !important;
   border-top: 1px solid var(--dcx-row-border) !important;
@@ -7482,39 +7482,39 @@ html[data-theme="light"] #page-domains {
 
 /* List rows (project subdomains, custom domains) — visible divider,
    no surrounding box */
-#page-domains .list-row {
+#page-domains.pg-domains-v2 .list-row {
   border-bottom-color: var(--dcx-row-border) !important;
 }
-#page-domains .list-shell {
+#page-domains.pg-domains-v2 .list-shell {
   background: transparent !important;
   border: none !important;
   border-radius: 0 !important;
 }
 
 /* Verified / DNS Pending badges — outlined instead of filled tint */
-#page-domains .badge-success {
+#page-domains.pg-domains-v2 .badge-success {
   background: transparent !important;
   border-color: color-mix(in srgb, var(--primary) 45%, transparent) !important;
   color: var(--primary) !important;
 }
-#page-domains .badge-success .badge-dot { background: var(--primary) !important; }
-#page-domains .badge-pending {
+#page-domains.pg-domains-v2 .badge-success .badge-dot { background: var(--primary) !important; }
+#page-domains.pg-domains-v2 .badge-pending {
   background: transparent !important;
   border-color: color-mix(in srgb, var(--jt-accent, #f59e0b) 45%, transparent) !important;
   color: var(--jt-accent, #f59e0b) !important;
 }
-#page-domains .badge-pending .badge-dot { background: var(--jt-accent, #f59e0b) !important; }
+#page-domains.pg-domains-v2 .badge-pending .badge-dot { background: var(--jt-accent, #f59e0b) !important; }
 
 /* Add Domain button + primary buttons */
-#page-domains .btn-primary {
+#page-domains.pg-domains-v2 .btn-primary {
   border-radius: 0 !important;
 }
-#page-domains .btn-ghost {
+#page-domains.pg-domains-v2 .btn-ghost {
   border-radius: 0 !important;
   border-color: var(--dcx-field-border) !important;
   background: transparent !important;
 }
-#page-domains .btn-ghost:hover {
+#page-domains.pg-domains-v2 .btn-ghost:hover {
   border-color: var(--primary) !important;
 }
 
