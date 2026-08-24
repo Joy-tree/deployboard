@@ -3645,10 +3645,21 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 .pd-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
 .pd-meta .chip{padding:10px;border:1px solid rgba(16,185,129,.14);border-radius:12px;background:rgba(0,0,0,.45);font-size:.72rem;color:var(--text-2)}
 .pd-meta .chip strong{display:block;color:#d1fae5;font-size:.96rem;margin-top:2px}
-.pd-config-row{display:flex;justify-content:space-between;gap:14px;padding:12px 16px;border-bottom:1px solid rgba(16,185,129,.08);align-items:flex-start}
-.pd-config-row .k{color:var(--text-2);font-size:.82rem}
-.pd-config-row .v{max-width:70%;text-align:right;word-break:break-word}
-@media(max-width:760px){.pd-actions,.pd-meta{grid-template-columns:1fr}.pd-config-row .v{max-width:100%;text-align:left}}
+/* pdx- classes below are brand-new, used ONLY inside the rebuilt
+   Project Detail sections (showProjectDetail). No other selector
+   anywhere in this file or in theme-override.css references the
+   pdx- prefix, so nothing legacy/cached can ever paint a background
+   or border onto these elements. If you need to restyle these
+   sections, edit here — do not reintroduce .card/.chip/.table-wrap
+   on this page. */
+.pdx-row{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid var(--border);align-items:flex-start;background:transparent}
+.pdx-row .pdx-row-k{color:var(--text-2);font-size:.82rem}
+.pdx-row .pdx-row-v{max-width:70%;text-align:right;word-break:break-word}
+.pdx-chip{padding:0;border:none;border-radius:0;background:transparent;font-size:.72rem;color:var(--text-2)}
+.pdx-chip strong{display:block;color:var(--text);font-size:.85rem;margin-top:2px;font-weight:700}
+.pdx-table-wrap{overflow-x:auto;background:transparent;border:none}
+.pdx-log-pane{background:#111111;border:none;color:#6ee7b7;border-radius:0}
+@media(max-width:760px){.pd-actions,.pd-meta{grid-template-columns:1fr}.pdx-row .pdx-row-v{max-width:100%;text-align:left}}
 
 /* Create Domain + Create Cron major redesign */
 #page-domain-add .wizard-hero,#page-cron-create .wizard-hero{padding:20px;border:1px solid rgba(255,255,255,.07);border-radius:22px;margin-bottom:16px;background:#0d0d0d}
@@ -28051,10 +28062,11 @@ function showProjectDetail(projectId) {
       '</div>' +
     '</div>' +
 
-    // ── Config card — stacks on mobile
-    '<div style="display:flex;flex-direction:column;gap:16px;">' +
-      '<div class="card">' +
-        '<div class="card-header"><div class="card-title">Configuration</div>' +
+    // ── Config section — flat, no cards, no boxes. Stacks on mobile.
+    '<div style="display:flex;flex-direction:column;gap:32px;">' +
+      '<div>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">' +
+          '<div style="font-size:1rem;font-weight:800;color:var(--text);">Configuration</div>' +
           '<button class="btn btn-ghost btn-sm" data-id="' + p.id + '" onclick="showEditProject(this.dataset.id)">Edit</button>' +
         '</div>' +
         '<div style="display:flex;flex-direction:column;">' +
@@ -28073,46 +28085,48 @@ function showProjectDetail(projectId) {
       '</div>' +
 
       (isUploadProj
-        ? '<div class="card">' +
-            '<div class="card-header"><div class="card-title">Redeployment</div><div class="card-subtitle">This project was deployed via file upload.</div></div>' +
-            '<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">' +
-              '<div class="alert alert-info" style="font-size:0.82rem;margin:0;">Click <strong>↻ Redeploy Stored Files</strong> to instantly redeploy from your stored files — no re-upload needed. To deploy different code, use <strong>Upload New Archive</strong> with the same subdomain (<code>' + escHtml(p.subdomain) + '</code>).</div>' +
+        ? '<div>' +
+            '<div style="font-size:1rem;font-weight:800;color:var(--text);margin-bottom:4px;">Redeployment</div>' +
+            '<div style="font-size:0.78rem;color:var(--text-3);margin-bottom:14px;">This project was deployed via file upload.</div>' +
+            '<div style="display:flex;flex-direction:column;gap:10px;">' +
+              '<div style="font-size:0.82rem;color:var(--text-2);">Click <strong style="color:var(--text);">↻ Redeploy Stored Files</strong> to instantly redeploy from your stored files — no re-upload needed. To deploy different code, use <strong style="color:var(--text);">Upload New Archive</strong> with the same subdomain (<code>' + escHtml(p.subdomain) + '</code>).</div>' +
               '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
                 '<button class="btn btn-primary btn-sm" onclick="redeploy(\'' + p.id + '\'">↻ Redeploy Stored Files</button>' +
                 '<button class="btn btn-ghost btn-sm" onclick="showPage(\'code-upload\')">Upload New Archive →</button>' +
               '</div>' +
             '</div>' +
           '</div>'
-        : '<div class="card">' +
-            '<div class="card-header"><div class="card-title">Auto Deploy Pipeline</div><div class="card-subtitle">OAuth-based polling. No GitHub App installation or repository webhook required.</div></div>' +
-            '<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">' +
+        : '<div>' +
+            '<div style="font-size:1rem;font-weight:800;color:var(--text);margin-bottom:4px;">Auto Deploy Pipeline</div>' +
+            '<div style="font-size:0.78rem;color:var(--text-3);margin-bottom:14px;">OAuth-based polling. No GitHub App installation or repository webhook required.</div>' +
+            '<div style="display:flex;flex-direction:column;gap:10px;">' +
               '<label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--text-2);">' +
                 '<input type="checkbox" ' + (p.autoDeployEnabled ? 'checked' : '') + ' onchange="toggleProjectAutoDeploy(\'' + p.id + '\', this.checked)"> Watch this repo branch with my connected GitHub OAuth account' +
               '</label>' +
-              '<div class="alert alert-info" style="font-size:0.78rem;margin:0;">joytree checks the latest commit SHA for <strong>' + escHtml(p.branch || 'main') + '</strong> on a schedule. When GitHub has a newer SHA than the last checked SHA, this project is automatically redeployed using your OAuth token, so private repositories keep working without webhooks.</div>' +
+              '<div style="font-size:0.78rem;color:var(--text-2);">joytree checks the latest commit SHA for <strong style="color:var(--text);">' + escHtml(p.branch || 'main') + '</strong> on a schedule. When GitHub has a newer SHA than the last checked SHA, this project is automatically redeployed using your OAuth token, so private repositories keep working without webhooks.</div>' +
               '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;">' +
-                '<div class="chip">Pipeline<strong>' + escHtml(p.autoDeployEnabled ? (p.autoDeployStatus || 'watching') : 'disabled') + '</strong></div>' +
-                '<div class="chip">Last check<strong>' + escHtml(p.autoDeployLastCheckedAt ? relTime(p.autoDeployLastCheckedAt) : '—') + '</strong></div>' +
-                '<div class="chip">Last deploy trigger<strong>' + escHtml(p.autoDeployLastTriggeredAt ? relTime(p.autoDeployLastTriggeredAt) : '—') + '</strong></div>' +
+                '<div class="pdx-chip">Pipeline<strong>' + escHtml(p.autoDeployEnabled ? (p.autoDeployStatus || 'watching') : 'disabled') + '</strong></div>' +
+                '<div class="pdx-chip">Last check<strong>' + escHtml(p.autoDeployLastCheckedAt ? relTime(p.autoDeployLastCheckedAt) : '—') + '</strong></div>' +
+                '<div class="pdx-chip">Last deploy trigger<strong>' + escHtml(p.autoDeployLastTriggeredAt ? relTime(p.autoDeployLastTriggeredAt) : '—') + '</strong></div>' +
               '</div>' +
-              (p.autoDeployLastError ? '<div class="alert alert-error" style="font-size:0.76rem;margin:0;">Pipeline warning: ' + escHtml(p.autoDeployLastError) + '</div>' : '') +
+              (p.autoDeployLastError ? '<div style="font-size:0.76rem;color:var(--jt-danger,#ef4444);">Pipeline warning: ' + escHtml(p.autoDeployLastError) + '</div>' : '') +
               '<button class="btn btn-primary btn-sm" onclick="checkProjectAutoDeployNow(\'' + p.id + '\')">Check GitHub now</button>' +
             '</div>' +
           '</div>') +
 
-      // ── Environment Variables card
-      '<div class="card" id="pdEnvCard-' + p.id + '">' +
-        '<div class="card-header">' +
+      // ── Environment Variables
+      '<div id="pdEnvCard-' + p.id + '">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px;">' +
           '<div>' +
-            '<div class="card-title">Environment Variables</div>' +
-            '<div class="card-subtitle">Injected into every deployment of this project</div>' +
+            '<div style="font-size:1rem;font-weight:800;color:var(--text);">Environment Variables</div>' +
+            '<div style="font-size:0.78rem;color:var(--text-3);margin-top:4px;">Injected into every deployment of this project</div>' +
           '</div>' +
           '<button class="btn btn-ghost btn-sm" onclick="pdRefreshEnv(\'' + p.id + '\')">↻ Refresh</button>' +
         '</div>' +
-        '<div id="pdEnvList-' + p.id + '" style="padding:12px 16px;">' +
+        '<div id="pdEnvList-' + p.id + '" style="padding:12px 0;">' +
           '<div style="font-size:0.8rem;color:var(--text-3);">Loading…</div>' +
         '</div>' +
-        '<div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;">' +
+        '<div style="padding-top:10px;display:flex;flex-direction:column;gap:10px;">' +
           '<div style="font-size:0.75rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-3);">Add / Update Variable</div>' +
           '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
             '<input id="pdEnvKey-' + p.id + '" class="input input-mono" placeholder="VARIABLE_NAME" style="flex:1;min-width:130px;font-size:0.8rem;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase().replace(/\\s/g,\'_\')">' +
@@ -28124,26 +28138,26 @@ function showProjectDetail(projectId) {
       '</div>' +
 
       // ── Runtime Logs (live Docker container output after deployment)
-      '<div class="card" id="runtimeLogsCard-' + p.id + '">' +
-        '<div class="card-header">' +
+      '<div id="runtimeLogsCard-' + p.id + '">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px;">' +
           '<div>' +
-            '<div class="card-title">Runtime Logs</div>' +
-            '<div class="card-subtitle">Live output from the deployed Docker container, like Render logs.</div>' +
+            '<div style="font-size:1rem;font-weight:800;color:var(--text);">Runtime Logs</div>' +
+            '<div style="font-size:0.78rem;color:var(--text-3);margin-top:4px;">Live output from the deployed Docker container, like Render logs.</div>' +
           '</div>' +
           '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
             '<button class="btn btn-primary btn-sm" id="runtimeLogsToggle-' + p.id + '" onclick="toggleRuntimeLogs(\'' + p.id + '\')">▶ Stream logs</button>' +
             '<button class="btn btn-ghost btn-sm" onclick="clearRuntimeLogs(\'' + p.id + '\')">Clear</button>' +
           '</div>' +
         '</div>' +
-        '<div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:0.75rem;color:var(--text-3);font-family:var(--font-mono);" id="runtimeLogsStatus-' + p.id + '">Disconnected · click Stream logs to follow app output after deployment.</div>' +
-        '<pre id="runtimeLogsOutput-' + p.id + '" class="jt-runtime-log-pane" style="margin:0;min-height:260px;max-height:460px;overflow:auto;padding:16px;font-family:var(--font-mono);font-size:0.76rem;line-height:1.65;white-space:pre-wrap;word-break:break-word;">Runtime logs will appear here…</pre>' +
+        '<div style="padding:10px 0;font-size:0.75rem;color:var(--text-3);font-family:var(--font-mono);" id="runtimeLogsStatus-' + p.id + '">Disconnected · click Stream logs to follow app output after deployment.</div>' +
+        '<pre id="runtimeLogsOutput-' + p.id + '" class="pdx-log-pane" style="margin:0;min-height:260px;max-height:460px;overflow:auto;padding:16px;font-family:var(--font-mono);font-size:0.76rem;line-height:1.65;white-space:pre-wrap;word-break:break-word;">Runtime logs will appear here…</pre>' +
       '</div>' +
 
       // ── Deployment History
-      '<div class="card">' +
-        '<div class="card-header"><div class="card-title">Deployment History</div></div>' +
+      '<div>' +
+        '<div style="font-size:1rem;font-weight:800;color:var(--text);margin-bottom:14px;">Deployment History</div>' +
         (deploys.length ?
-          '<div class="table-wrap"><table><thead><tr><th>Status</th><th>Duration</th><th>When</th><th></th></tr></thead><tbody>' +
+          '<div class="pdx-table-wrap"><table><thead><tr><th>Status</th><th>Duration</th><th>When</th><th></th></tr></thead><tbody>' +
           deploys.map(d =>
             '<tr>' +
               '<td>' + statusBadge(d.status) + '</td>' +
@@ -28152,7 +28166,7 @@ function showProjectDetail(projectId) {
               '<td><button class="btn btn-ghost btn-sm" data-id="' + d.id + '" onclick="viewDeployLogs(this.dataset.id)">Logs</button></td>' +
             '</tr>'
           ).join('') + '</tbody></table></div>'
-        : '<div style="padding:24px;text-align:center;color:var(--text-3);font-size:0.82rem;">No deployments yet.</div>') +
+        : '<div style="padding:24px 0;text-align:center;color:var(--text-3);font-size:0.82rem;">No deployments yet.</div>') +
       '</div>' +
     '</div>';
 
@@ -28472,9 +28486,9 @@ if (typeof socket !== 'undefined' && socket) {
 }
 
 function _configRow(label, valueHtml) {
-  return '<div class="pd-config-row">' +
-    '<span class="k">' + label + '</span>' +
-    '<div class="v">' + valueHtml + '</div>' +
+  return '<div class="pdx-row">' +
+    '<span class="pdx-row-k">' + label + '</span>' +
+    '<div class="pdx-row-v">' + valueHtml + '</div>' +
   '</div>';
 }
 
