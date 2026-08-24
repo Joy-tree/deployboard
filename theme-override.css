@@ -3500,7 +3500,10 @@ html[data-theme="light"] .jt-leaves-fall {
 .proj-stat-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  border-top:    1px solid var(--dcx-row-border, var(--border));
   border-bottom: 1px solid var(--dcx-row-border, var(--border));
+  border-left:   1px solid var(--dcx-row-border, var(--border));
+  border-right:  1px solid var(--dcx-row-border, var(--border));
   margin-top: 18px;
 }
 .proj-stat {
@@ -3563,6 +3566,20 @@ html[data-theme="light"] .jt-leaves-fall {
 #page-projects .proj-stat-sep {
   background: var(--border) !important;
 }
+
+/* Project cards — green left+right accent lines on the bottom info
+   section (.tree-node-body + .tree-node-footer), mirroring the same
+   domain-section left-accent language used elsewhere in the redesign. */
+#page-projects .tree-project-node .tree-node-body {
+  border-left:  2px solid var(--primary) !important;
+  border-right: 2px solid var(--primary) !important;
+}
+#page-projects .tree-project-node .tree-node-footer {
+  border-left:  2px solid var(--primary) !important;
+  border-right: 2px solid var(--primary) !important;
+  border-bottom: 2px solid var(--primary) !important;
+}
+
 /* Project cards stay their own flat dark #111 on both themes -- this
    page never adopts the light-theme jt-bg-raised grey/beige tones */
 html[data-theme="light"] #page-projects .tree-project-node {
@@ -3787,7 +3804,10 @@ html[data-theme="light"] .tree-node-btn-danger:hover {
 .dep-stat-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  border-top:    1px solid var(--dcx-row-border, var(--border));
   border-bottom: 1px solid var(--dcx-row-border, var(--border));
+  border-left:   1px solid var(--dcx-row-border, var(--border));
+  border-right:  1px solid var(--dcx-row-border, var(--border));
   margin-top: 16px;
 }
 .dep-stat {
@@ -5459,11 +5479,14 @@ html[data-theme="light"] #page-repos {
 }
 #page-repos .dcx-page-body { margin-top: 0; }
 
-/* ── Progress steps — flat row, thin divider between items only ── */
+/* ── Progress steps — fully boxed stat strip ── */
 #page-repos .dcx-steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  border-top:    1px solid var(--dcx-row-border);
   border-bottom: 1px solid var(--dcx-row-border);
+  border-left:   1px solid var(--dcx-row-border);
+  border-right:  1px solid var(--dcx-row-border);
 }
 #page-repos .dcx-step-item {
   display: flex;
@@ -5952,11 +5975,14 @@ html[data-theme="light"] #page-code-upload {
 }
 #page-code-upload .dcx-page-body { margin-top: 0; }
 
-/* ── Progress steps — flat row, thin divider between items only ── */
+/* ── Progress steps — fully boxed stat strip ── */
 #page-code-upload .dcx-steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  border-top:    1px solid var(--dcx-row-border);
   border-bottom: 1px solid var(--dcx-row-border);
+  border-left:   1px solid var(--dcx-row-border);
+  border-right:  1px solid var(--dcx-row-border);
 }
 #page-code-upload .dcx-step-item {
   display: flex;
