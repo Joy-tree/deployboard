@@ -7488,6 +7488,19 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
   margin-top: var(--dcx-section-gap) !important;
 }
 
+/* Project Subdomains + Custom Domains sections get a full 3-sided
+   frame (left · right · bottom) to group their rows visually.
+   The card-header's left-accent bar + bottom hairline already close
+   the top, so the three sides complete the rectangle. */
+#page-domains.pg-domains-v2 .domain-section-card:not(:first-of-type) {
+  border-left:   1px solid var(--dcx-row-border) !important;
+  border-right:  1px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+  padding-left:  12px !important;
+  padding-right: 12px !important;
+  padding-bottom: 4px !important;
+}
+
 /* Section heading — left accent bar + label + subtitle */
 #page-domains.pg-domains-v2 .card-header {
   padding: 0 0 12px 0 !important;
