@@ -749,8 +749,7 @@ html[data-theme="light"] #app .cu-file-card { background: var(--jt-bg-raised) !i
 html[data-theme="light"] #app .custom-select-btn,
 html[data-theme="light"] #app .custom-select-menu,
 html[data-theme="light"] #app .px-plan,
-html[data-theme="light"] #app .co-form-card,
-html[data-theme="light"] #app .co-summary { background: var(--jt-bg-raised) !important; color: var(--jt-text) !important; }
+/* co-form-card and co-summary are now transparent — no override needed */
 html[data-theme="light"] #app .custom-select-dropdown,
 html[data-theme="light"] #app .btn-ghost { background: var(--jt-bg-sunken) !important; color: var(--jt-text) !important; }
 html[data-theme="light"] #app .db-btn { background: var(--jt-bg-sunken) !important; color: var(--jt-text-dim) !important; }
