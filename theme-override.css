@@ -5531,7 +5531,7 @@ html[data-theme="light"] #page-repos {
   margin-bottom: 20px;
 }
 #page-repos .dcx-group-box-1 { padding-bottom: 4px; }
-#page-repos .dcx-group-box-1 .dcx-steps { margin: -20px -20px 20px; }
+#page-repos .dcx-group-box-1 .dcx-steps { margin: 0 0 16px 0; }
 #page-repos .dcx-group-box-collapse { padding: 0; }
 #page-repos .dcx-group-box-collapse .dcx-collapse-summary { padding: 18px 20px; margin: 0; }
 #page-repos .dcx-group-box-collapse .dcx-collapse-body { padding: 0 20px 20px; }
@@ -6028,7 +6028,7 @@ html[data-theme="light"] #page-code-upload {
   margin-bottom: 20px;
 }
 #page-code-upload .dcx-group-box-1 { padding-bottom: 4px; }
-#page-code-upload .dcx-group-box-1 .dcx-steps { margin: -20px -20px 20px; }
+#page-code-upload .dcx-group-box-1 .dcx-steps { margin: 0 0 16px 0; }
 #page-code-upload .dcx-group-box-collapse { padding: 0; }
 #page-code-upload .dcx-group-box-collapse .dcx-collapse-summary { padding: 18px 20px; margin: 0; }
 #page-code-upload .dcx-group-box-collapse .dcx-collapse-body { padding: 0 20px 20px; }
