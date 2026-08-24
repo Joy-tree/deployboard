@@ -1430,12 +1430,18 @@ html[data-theme="dark"] .app-hero { background: #111 !important; border-color: r
 html[data-theme="dark"] .hero-metric { background: #1a1a1a !important; border-color: rgba(255,255,255,.07) !important; }
 html[data-theme="dark"] #sidebar { background: #111 !important; }
 html[data-theme="dark"] #topbar { background: #111 !important; }
-html[data-theme="dark"] #page-dashboard .card,
-html[data-theme="dark"] #page-deployments .card,
-html[data-theme="dark"] #page-env-manager .card,
-html[data-theme="dark"] #page-webhooks .card { background: #111 !important; border-color: rgba(255,255,255,.07) !important; }
+/* [REMOVED] html[data-theme="dark"] #page-dashboard/.deployments/.env-manager/
+   .webhooks .card and .dash-qa-btn force-fills — a THIRD copy of the same
+   background:#111!important pattern already removed twice elsewhere in this
+   file (search "REMOVED" in this file's <style> block for the other two).
+   This one was still winning specifically on Dashboard because it's a
+   2-selector html[data-theme="dark"] #page-X rule, which beats the
+   1-selector #page-dashboard .card / .dash-qa-btn rules in
+   theme-override.css even though that file loads after this one —
+   !important vs !important ties are broken by specificity, not load
+   order. Every one of these classes already has its correct flat
+   treatment in theme-override.css. */
 html[data-theme="dark"] .deployment-table-shell tbody tr { background: #111 !important; }
-html[data-theme="dark"] .dash-qa-btn { background: #111 !important; }
 
 /* Theme toggle button */
 .theme-toggle-btn {
@@ -3004,7 +3010,20 @@ textarea.input { resize: vertical; min-height: 80px; }
 #page-dashboard > *,#page-projects > *,#page-deployments > *,#page-env-manager > *,#page-webhooks > *{position:relative;z-index:1}
 .app-hero{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1.4fr) auto;gap:18px;align-items:center;margin-bottom:22px;padding:22px;border:1px solid rgba(255,255,255,.07);border-radius:24px;background:#0d0d0d;box-shadow:none}
 .app-hero::after{display:none}.app-hero-kicker{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#86efac;margin-bottom:8px}.app-hero-title{font-family:var(--font-ui);font-size:clamp(1.65rem,3vw,2.45rem);font-weight:800;letter-spacing:-.04em;color:#f8fafc;line-height:1.1}.app-hero-subtitle{max-width:720px;margin-top:10px;color:#94a3b8;font-size:.95rem;line-height:1.55}.app-hero-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.hero-metrics{display:grid;grid-template-columns:repeat(3,minmax(92px,1fr));gap:10px;min-width:min(420px,42vw)}.hero-metric{padding:14px 16px;border:1px solid rgba(255,255,255,.07);border-radius:16px;background:#111;box-shadow:none}.hero-metric-value{font-family:var(--font-mono);font-size:1.35rem;font-weight:800;color:#d1fae5;line-height:1}.hero-metric-label{margin-top:5px;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#64748b}.hero-status-pill{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 11px;border:1px solid rgba(16,185,129,.24);border-radius:999px;background:rgba(16,185,129,.08);font-size:.75rem;font-weight:700;color:#bbf7d0}.hero-status-pill::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 14px rgba(16,185,129,.8);animation:pulse 1.5s infinite}
-#page-dashboard .stats-grid .stat-card,#page-projects .tree-project-node,#page-deployments .card,#page-env-manager .card,#page-webhooks .card,#page-dashboard .card{border-color:rgba(255,255,255,.07);background:#111;box-shadow:none;border-radius:20px}#page-dashboard .card:hover,#page-deployments .card:hover,#page-env-manager .card:hover,#page-webhooks .card:hover{border-color:rgba(255,255,255,.14);box-shadow:none}#page-dashboard .card-header,#page-deployments .card-header,#page-env-manager .card-header,#page-webhooks .card-header{background:transparent;border-bottom-color:rgba(255,255,255,.07)}#page-dashboard .network-metrics-grid{display:flex;gap:10px;flex-wrap:wrap}.dash-qa-btn{min-height:58px;background:#111}.dash-qa-btn:hover{background:rgba(16,185,129,.1);transform:translateY(-1px)}#page-projects .projects-grid{}.deployment-table-shell{overflow:hidden}.deployment-table-shell table{border-collapse:separate;border-spacing:0 8px;padding:8px 12px 14px}.deployment-table-shell thead th{border:0;color:#64748b;text-transform:uppercase;font-size:.66rem;letter-spacing:.09em}.deployment-table-shell tbody tr{background:#111;box-shadow:none}.deployment-table-shell tbody td{border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06)}.deployment-table-shell tbody td:first-child{border-left:1px solid rgba(255,255,255,.06);border-radius:12px 0 0 12px}.deployment-table-shell tbody td:last-child{border-right:1px solid rgba(255,255,255,.06);border-radius:0 12px 12px 0}.env-command-card{position:relative;overflow:hidden}.env-command-card::after{content:'ENV';position:absolute;right:18px;bottom:-18px;font-family:var(--font-mono);font-size:4rem;font-weight:800;color:rgba(16,185,129,.035);pointer-events:none}.webhook-event-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.webhook-event-card{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#111;border:1px solid rgba(255,255,255,.07);border-radius:14px;gap:10px}.webhook-event-card:hover{border-color:rgba(16,185,129,.26);background:rgba(16,185,129,.055)}@media(max-width:900px){.app-hero{grid-template-columns:1fr}.app-hero-actions{justify-content:flex-start}.hero-metrics{min-width:0;width:100%;grid-template-columns:repeat(3,1fr)}}@media(max-width:640px){.hero-metrics{grid-template-columns:1fr}.app-hero{padding:18px;border-radius:20px}.app-hero-title{font-size:1.55rem}}
+/* [REMOVED — duplicate of the global force-fill rule already removed
+   near html[data-theme="dark"] .card above, just re-declared without
+   the theme attribute this time so it kept winning even after that
+   fix. #page-dashboard .stat-card, #page-projects .tree-project-node,
+   #page-deployments/.env-manager/.webhooks .card, .dash-qa-btn, and
+   .webhook-event-card all already have their own correct flat
+   treatment in theme-override.css — this was still overriding it via
+   higher/equal specificity + later source order in this file's own
+   <style> block, which loads BEFORE theme-override.css but these
+   were three-compound-selector rules beating the page-scoped ones.
+   #page-dashboard .card-header / .network-metrics-grid / the
+   deployment-table-shell/env-command-card/webhook-event-grid rules
+   below are unrelated layout rules and were left in place. */
+#page-dashboard .card-header,#page-deployments .card-header,#page-env-manager .card-header,#page-webhooks .card-header{background:transparent;border-bottom-color:rgba(255,255,255,.07)}#page-dashboard .network-metrics-grid{display:flex;gap:10px;flex-wrap:wrap}#page-projects .projects-grid{}.deployment-table-shell{overflow:hidden}.deployment-table-shell table{border-collapse:separate;border-spacing:0 8px;padding:8px 12px 14px}.deployment-table-shell thead th{border:0;color:#64748b;text-transform:uppercase;font-size:.66rem;letter-spacing:.09em}.deployment-table-shell tbody tr{background:#111;box-shadow:none}.deployment-table-shell tbody td{border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06)}.deployment-table-shell tbody td:first-child{border-left:1px solid rgba(255,255,255,.06);border-radius:12px 0 0 12px}.deployment-table-shell tbody td:last-child{border-right:1px solid rgba(255,255,255,.06);border-radius:0 12px 12px 0}.env-command-card{position:relative;overflow:hidden}.env-command-card::after{content:'ENV';position:absolute;right:18px;bottom:-18px;font-family:var(--font-mono);font-size:4rem;font-weight:800;color:rgba(16,185,129,.035);pointer-events:none}.webhook-event-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}@media(max-width:900px){.app-hero{grid-template-columns:1fr}.app-hero-actions{justify-content:flex-start}.hero-metrics{min-width:0;width:100%;grid-template-columns:repeat(3,1fr)}}@media(max-width:640px){.hero-metrics{grid-template-columns:1fr}.app-hero{padding:18px;border-radius:20px}.app-hero-title{font-size:1.55rem}}
 
 /* Global app gradient unification: green-forward, reduced blue tint */
 #app{--cyan:#34d399;}
