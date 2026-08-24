@@ -7457,56 +7457,50 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
 }
 
 /* ── Mini stat pair (Wildcard · SSL Status) ─────────────────────── */
-/* Shown inline under the hero, two columns divided by a hairline    */
+/* Mini stat pair (Wildcard · SSL Status) — fully framed 4-sided box */
 #page-domains.pg-domains-v2 #domainQuickStats {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
+  border-top:    1px solid var(--dcx-row-border) !important;
   border-bottom: 1px solid var(--dcx-row-border) !important;
+  border-left:   1px solid var(--dcx-row-border) !important;
+  border-right:  1px solid var(--dcx-row-border) !important;
 }
-#page-domains.pg-domains-v2 .domain-mini-card { padding: 16px 0 !important; }
+#page-domains.pg-domains-v2 .domain-mini-card { padding: 16px 12px !important; }
 #page-domains.pg-domains-v2 .domain-mini-card:first-child {
   border-right: 1px solid var(--dcx-row-border) !important;
-  padding-right: 16px !important;
 }
-#page-domains.pg-domains-v2 .domain-mini-card:last-child { padding-left: 16px !important; }
 @media(max-width:540px){
   #page-domains.pg-domains-v2 #domainQuickStats { grid-template-columns: 1fr !important; }
   #page-domains.pg-domains-v2 .domain-mini-card:first-child {
     border-right: none !important;
     border-bottom: 1px solid var(--dcx-row-border) !important;
-    padding-right: 0 !important;
   }
 }
 
 /* ── Sections (Wildcard Subdomain / Project Subdomains / Custom Domains)
-   Each section is visually grouped by:
-     • 28px breathing room above it
-     • a green left-accent bar on the section heading
-     • a hairline rule under the heading separating it from its rows
-     • rows only get a bottom rule — no extra lines above them       ── */
+   All three get a full 4-sided border frame so they read as contained
+   groups on the bare page background. Green left-accent on card-header
+   overrides the left border to show the accent colour. ── */
 #page-domains.pg-domains-v2 .domain-section-card {
   margin-top: var(--dcx-section-gap) !important;
-}
-
-/* Project Subdomains + Custom Domains sections get a full 3-sided
-   frame (left · right · bottom) to group their rows visually.
-   The card-header's left-accent bar + bottom hairline already close
-   the top, so the three sides complete the rectangle. */
-#page-domains.pg-domains-v2 .domain-section-card:not(:first-of-type) {
+  border-top:    1px solid var(--dcx-row-border) !important;
   border-left:   1px solid var(--dcx-row-border) !important;
   border-right:  1px solid var(--dcx-row-border) !important;
   border-bottom: 1px solid var(--dcx-row-border) !important;
   padding-left:  12px !important;
   padding-right: 12px !important;
-  padding-bottom: 4px !important;
+  padding-bottom: 8px !important;
 }
 
-/* Section heading — left accent bar + label + subtitle */
+/* Section heading — green left-accent bar overrides section border-left */
 #page-domains.pg-domains-v2 .card-header {
-  padding: 0 0 12px 0 !important;
+  padding: 12px 0 12px 12px !important;
   border-bottom: 1px solid var(--dcx-row-border) !important;
-  padding-left: 12px !important;
   border-left: 3px solid var(--primary) !important;
+  margin-left: -12px !important;
+  margin-right: -12px !important;
+  padding-right: 12px !important;
 }
 #page-domains.pg-domains-v2 .card-title {
   color: var(--text) !important;
@@ -7522,13 +7516,6 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
 /* Wildcard section — the heading already has a left accent bar, so
    add a matching right hairline + bottom border to fully frame it,
    mirroring the same 3-sided treatment the other two sections get. */
-#page-domains.pg-domains-v2 .domain-section-card:first-of-type {
-  border-right:  1px solid var(--dcx-row-border) !important;
-  border-bottom: 1px solid var(--dcx-row-border) !important;
-  padding-right: 12px !important;
-  padding-bottom: 4px !important;
-}
-
 /* Wildcard active row — no extra top line, just breathing room */
 #page-domains.pg-domains-v2 .domain-wildcard-row {
   padding: 16px 0 !important;
