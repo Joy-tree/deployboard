@@ -5655,7 +5655,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=69" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=70" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5728,7 +5728,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=69&recover=' + token;
+    fresh.href = 'theme-override.css?v=70&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -15634,9 +15634,9 @@ async function runDatabaseDiff() {
 
 /* Form card */
 .db-create-form{
-  background:#111;
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:20px;overflow:visible;
+  background:transparent;
+  border:1px solid color-mix(in srgb,var(--text-3) 38%,var(--border));
+  border-radius:0;overflow:visible;
   margin-bottom:20px;
 }
 .db-create-form-section{
@@ -15644,46 +15644,52 @@ async function runDatabaseDiff() {
 }
 .db-create-form-section:last-child{padding-bottom:20px;}
 .db-create-divider{
-  height:1px;background:rgba(255,255,255,.06);margin:0 20px;
+  height:1px;background:color-mix(in srgb,var(--text-3) 20%,transparent);margin:0 20px;
 }
 .db-create-label{
   display:flex;align-items:center;gap:5px;
-  font-size:.78rem;font-weight:700;color:#94a3b8;
+  font-size:.78rem;font-weight:700;color:var(--text-3);
   text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;
 }
 .db-create-label-req{color:#ef4444;font-size:.8rem;}
+/* Underline-only inputs — no box, no fill, green on focus */
 .db-create-input{
-  width:100%;padding:11px 14px;
-  background:rgba(0,0,0,.45);
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:10px;font-size:.88rem;color:var(--text);
-  font-family:var(--font-ui);transition:border-color .15s;
+  width:100%;padding:11px 2px;
+  background:transparent;
+  border:none;
+  border-bottom:1px solid color-mix(in srgb,var(--text-3) 38%,var(--border));
+  border-radius:0;font-size:.88rem;color:var(--text);
+  font-family:var(--font-ui);
+  transition:border-color .15s,box-shadow .15s;
   box-sizing:border-box;
 }
 .db-create-input:focus{
-  outline:none;border-color:rgba(16,185,129,.45);
-  box-shadow:0 0 0 3px rgba(16,185,129,.08);
+  outline:none;
+  border-bottom:2px solid var(--primary);
+  box-shadow:0 1px 0 0 var(--primary);
 }
-.db-create-input::placeholder{color:rgba(148,163,184,.4);}
+.db-create-input::placeholder{color:var(--text-3);opacity:.6;}
 .db-create-hint{
-  font-size:.71rem;color:rgba(100,116,139,.8);
+  font-size:.71rem;color:var(--text-3);
   margin-top:6px;line-height:1.5;
 }
 .db-create-select{
-  width:100%;padding:11px 14px;
-  background:rgba(0,0,0,.35);
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:10px;font-size:.88rem;color:var(--text);
+  width:100%;padding:11px 2px;
+  background:transparent;
+  border:none;
+  border-bottom:1px solid color-mix(in srgb,var(--text-3) 38%,var(--border));
+  border-radius:0;font-size:.88rem;color:var(--text);
   font-family:var(--font-ui);cursor:pointer;
-  transition:border-color .15s;box-sizing:border-box;
+  transition:border-color .15s,box-shadow .15s;box-sizing:border-box;
   -webkit-appearance:none;appearance:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 14px center;
-  padding-right:36px;
+  background-repeat:no-repeat;background-position:right 4px center;
+  padding-right:28px;
 }
 .db-create-select:focus{
-  outline:none;border-color:rgba(16,185,129,.45);
-  box-shadow:0 0 0 3px rgba(16,185,129,.08);
+  outline:none;
+  border-bottom:2px solid var(--primary);
+  box-shadow:0 1px 0 0 var(--primary);
 }
 .db-create-select option{background:#0d1512;color:var(--text);}
 
@@ -15692,15 +15698,15 @@ async function runDatabaseDiff() {
   display:flex;gap:10px;align-items:center;
 }
 .db-create-cancel{
-  padding:11px 20px;border-radius:10px;
-  border:1px solid rgba(255,255,255,.1);
-  background:transparent;color:#94a3b8;
+  padding:11px 20px;border-radius:0;
+  border:1px solid color-mix(in srgb,var(--text-3) 38%,var(--border));
+  background:transparent;color:var(--text-2);
   font-size:.86rem;font-weight:600;cursor:pointer;
   transition:all .15s;
 }
-.db-create-cancel:hover{border-color:rgba(255,255,255,.2);color:var(--text);}
+.db-create-cancel:hover{border-color:var(--primary);color:var(--text);}
 .db-create-submit{
-  flex:1;padding:13px 20px;border-radius:10px;
+  flex:1;padding:13px 20px;border-radius:0;
   background:#10b981;
   border:1px solid #10b981;
   color:#fff;font-size:.9rem;font-weight:700;
