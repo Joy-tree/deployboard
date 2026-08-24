@@ -1150,11 +1150,28 @@ html[data-theme="light"] .px-btn:hover{
    Framework Guides / Our Core Team fixes above -- a real form field, so
    it gets the same sunken treatment already applied site-wide to inputs
    in section 11. */
-html[data-theme="light"] .co-input{
-  background: var(--jt-bg-sunken) !important;
-  border-color: var(--jt-border) !important;
-  color: var(--jt-text) !important;
+/* Checkout inputs — high-specificity ID-scoped rules beat any global
+   html[data-theme] #app .input or .co-input overrides */
+html[data-theme="dark"]  #coFormFlat .co-input,
+html[data-theme="light"] #coFormFlat .co-input,
+#coFormFlat .co-input {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid color-mix(in srgb,var(--text-3) 38%,var(--border)) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 10px 2px !important;
+  color: var(--text) !important;
+  height: auto !important;
 }
+html[data-theme="dark"]  #coFormFlat .co-input:focus,
+html[data-theme="light"] #coFormFlat .co-input:focus,
+#coFormFlat .co-input:focus {
+  outline: none !important;
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+}
+#coFormFlat .co-input::placeholder { color: var(--text-3) !important; opacity: .5 !important; }
 
 /* ---------------------------------------------------------------------
    PROJECTS PAGE — project tree cards (.tree-project-node and children).
