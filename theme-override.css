@@ -4987,6 +4987,32 @@ html[data-theme="light"] #page-new-deploy {
   background: color-mix(in srgb, var(--text-3) 12%, transparent); border-radius: 999px; padding: 2px 6px;
 }
 
+/* ── Buttons — flat, sharp corners, no fill on ghost ── */
+#page-new-deploy .btn-ghost,
+#page-new-deploy .btn-ghost.btn-sm {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  color: var(--text-2) !important;
+  box-shadow: none !important;
+}
+#page-new-deploy .btn-ghost:hover,
+#page-new-deploy .btn-ghost.btn-sm:hover {
+  border-color: var(--primary) !important;
+  color: var(--text) !important;
+  background: transparent !important;
+}
+#page-new-deploy .btn-primary {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-new-deploy .btn-secondary {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  color: var(--text-2) !important;
+}
+
 /* ── Layout ── */
 #page-new-deploy { max-width: 1180px; margin-left: auto; margin-right: auto; }
 #page-new-deploy .dcx-layout { align-items: start; gap: 32px; }
@@ -5357,6 +5383,38 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
   display: inline-block;
   animation: dpSpin .7s linear infinite;
 }
+/* ── Buttons — flat, sharp corners, no fill on ghost ── */
+#page-dockerfile-deploy .btn-ghost,
+#page-dockerfile-deploy .btn-ghost.btn-sm,
+#page-worker-create .btn-ghost,
+#page-worker-create .btn-ghost.btn-sm {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  color: var(--text-2) !important;
+  box-shadow: none !important;
+}
+#page-dockerfile-deploy .btn-ghost:hover,
+#page-dockerfile-deploy .btn-ghost.btn-sm:hover,
+#page-worker-create .btn-ghost:hover,
+#page-worker-create .btn-ghost.btn-sm:hover {
+  border-color: var(--primary) !important;
+  color: var(--text) !important;
+  background: transparent !important;
+}
+#page-dockerfile-deploy .btn-primary,
+#page-worker-create .btn-primary {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-dockerfile-deploy .btn-secondary,
+#page-worker-create .btn-secondary {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  color: var(--text-2) !important;
+}
+
 #page-dockerfile-deploy .dcx-summary-footnote ,#page-worker-create .dcx-summary-footnote {
   font-size: .72rem;
   color: var(--text-3);
@@ -6579,6 +6637,62 @@ html[data-theme="light"] #page-new-resource {
 }
 #page-new-resource .resource-arrow { color: var(--text-3) !important; }
 #page-new-resource .resource-card:hover .resource-arrow { color: var(--primary) !important; }
+
+/* ══════════════════════════════════════════════════════════════════
+   DATABASE CREATE FORM — flat underline inputs, same language as
+   new-deploy. Remove the rounded dark-filled box treatment from
+   .db-create-input and match the underline-only focus-green style.
+   ══════════════════════════════════════════════════════════════════ */
+.db-create-form {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+}
+.db-create-input,
+.db-create-select {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border, rgba(255,255,255,.15)) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 11px 2px !important;
+  color: var(--text) !important;
+  font-size: .88rem !important;
+  transition: border-color .15s, box-shadow .15s !important;
+}
+.db-create-input:focus,
+.db-create-select:focus {
+  outline: none !important;
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+}
+.db-create-input::placeholder { color: var(--text-3) !important; }
+.db-create-label {
+  color: var(--text-3) !important;
+}
+.db-create-divider {
+  background: var(--dcx-row-border, rgba(255,255,255,.06)) !important;
+}
+.db-create-submit {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.db-create-cancel {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border, rgba(255,255,255,.1)) !important;
+  background: transparent !important;
+}
+.db-create-cancel:hover {
+  border-color: var(--primary) !important;
+  color: var(--text) !important;
+}
+/* Select arrow needs re-targeting since bg changed */
+.db-create-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 2px center !important;
+  padding-right: 28px !important;
+}
 
 /* ══════════════════════════════════════════════════════════════════
    PROJECTS PAGE — card container flattened above (no fill, no box
