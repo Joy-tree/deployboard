@@ -7519,6 +7519,16 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
   margin-top: 2px !important;
 }
 
+/* Wildcard section — the heading already has a left accent bar, so
+   add a matching right hairline + bottom border to fully frame it,
+   mirroring the same 3-sided treatment the other two sections get. */
+#page-domains.pg-domains-v2 .domain-section-card:first-of-type {
+  border-right:  1px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+  padding-right: 12px !important;
+  padding-bottom: 4px !important;
+}
+
 /* Wildcard active row — no extra top line, just breathing room */
 #page-domains.pg-domains-v2 .domain-wildcard-row {
   padding: 16px 0 !important;
