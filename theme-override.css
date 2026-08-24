@@ -4609,7 +4609,10 @@ html[data-theme="light"] #page-new-deploy {
 #page-domain-store .dcx-steps,
 #page-databases .dcx-steps {
   display: grid;
+  border-top:    1px solid var(--dcx-row-border, var(--border));
   border-bottom: 1px solid var(--dcx-row-border, var(--border));
+  border-left:   1px solid var(--dcx-row-border, var(--border));
+  border-right:  1px solid var(--dcx-row-border, var(--border));
 }
 #page-webhooks .dcx-step-item,
 #page-domain-store .dcx-step-item,
@@ -4617,9 +4620,9 @@ html[data-theme="light"] #page-new-deploy {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 20px;
+  padding: 14px 16px;
   border-right: 1px solid var(--dcx-row-border, var(--border));
-  color: var(--text-2);
+  color: var(--text);
   font-size: .82rem;
   font-weight: 700;
 }
@@ -4629,11 +4632,12 @@ html[data-theme="light"] #page-new-deploy {
 #page-webhooks .dcx-step-badge,
 #page-domain-store .dcx-step-badge,
 #page-databases .dcx-step-badge {
-  width: 22px; height: 22px;
-  border-radius: 6px;
+  min-width: 24px; height: 22px;
+  padding: 0 6px;
+  border-radius: 4px;
   display: grid; place-items: center;
-  background: color-mix(in srgb, var(--text-3) 12%, transparent);
-  color: var(--text-3);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
   font-family: var(--font-mono);
   font-weight: 800;
   font-size: .74rem;
@@ -7720,11 +7724,87 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
    ══════════════════════════════════════════════════════════════════ */
 #page-domain-store {
   --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
 }
 html[data-theme="light"] #page-domain-store {
   --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-row-border:   color-mix(in srgb, var(--text-2) 32%, var(--border));
+}
+
+/* ── Hero: kicker / title / subtitle — same tokens as every other page ── */
+#page-domain-store .dcx-header { margin-bottom: 4px; }
+#page-domain-store .dcx-kicker {
+  font-family: var(--font-mono) !important;
+  font-size: .7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .14em !important;
+  text-transform: uppercase !important;
+  color: var(--primary) !important;
+  margin-bottom: 8px !important;
+}
+#page-domain-store .dcx-title {
+  font-size: 1.6rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--text) !important;
+  line-height: 1.15 !important;
+}
+#page-domain-store .dcx-sub {
+  font-size: .86rem !important;
+  color: var(--text-2) !important;
+  line-height: 1.55 !important;
+  margin-top: 8px !important;
+}
+
+/* ── Group boxes — flat hairline border, sharp corners ── */
+#page-domain-store .dcx-group-box {
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  padding: 20px !important;
+}
+
+/* ── Pricing table rows — clean hairline dividers, no gradient fills ── */
+#page-domain-store table {
+  border-collapse: collapse !important;
+}
+#page-domain-store table thead tr {
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+}
+#page-domain-store table tbody tr {
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+  background: transparent !important;
+}
+#page-domain-store table tbody tr:last-child {
+  border-bottom: none !important;
+}
+#page-domain-store table td,
+#page-domain-store table th {
+  background: transparent !important;
+}
+/* TLD extension cell — use var(--primary) directly, no cyan mapping confusion */
+#page-domain-store table td:first-child {
+  color: var(--primary) !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 700 !important;
+}
+
+/* ── Search input ── */
+#page-domain-store .input {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  box-shadow: none !important;
+}
+#page-domain-store .input:focus {
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+}
+
+/* ── TLD filter chips — outlined, no fill ── */
+#page-domain-store #dsTldFilters span[style] {
+  border-radius: 0 !important;
+  background: transparent !important;
 }
 #page-domain-store .badge-success {
   background: transparent !important;
