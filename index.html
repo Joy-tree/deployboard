@@ -3054,7 +3054,7 @@ html[data-theme="light"] #app{--cyan:var(--jt-brand-strong);}
 /* Settings page: flat header, no card box (matches pxxl/MythicalSystems style) */
 #page-settings .page-header{ margin-bottom:22px; }
 #page-analytics .page-title,#page-settings .page-title,#page-env-manager .page-title,#page-cronjobs .page-title{font-family:var(--font-ui);font-weight:800;letter-spacing:-.04em}
-#page-env-manager .form-label,#page-settings .field-label,#page-cronjobs .card-title{font-weight:800;color:#e5fdf3}
+#page-env-manager .form-label,#page-settings .field-label,#page-cronjobs .card-title{font-weight:700;color:var(--text-3)}
 #page-env-manager .input,#page-settings .input,#page-cronjobs .input{
   min-height:52px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:#111;
 }
@@ -3297,9 +3297,9 @@ html[data-theme="light"] #app{--cyan:var(--jt-brand-strong);}
 #page-cron-create .wizard-hero,
 #page-analytics .page-header,
 #page-env-manager .page-header {
-  background: #0d0d0d !important;
-  border-color: rgba(255,255,255,.07) !important;
-  box-shadow: 0 14px 44px rgba(0,0,0,.28) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 #page-settings .page-header {
   background: transparent !important;
@@ -5655,7 +5655,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=80" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=81" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5728,7 +5728,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=80&recover=' + token;
+    fresh.href = 'theme-override.css?v=81&recover=' + token;
     document.head.appendChild(fresh);
   }
 
