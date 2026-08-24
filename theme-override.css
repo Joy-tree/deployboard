@@ -6654,11 +6654,42 @@ html[data-theme="light"] #page-new-resource {
   border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
+/* High-specificity ID-scoped rules to beat any global .input rules */
+#dbCreateFormFlat .db-create-input,
+#dbCreateFormFlat2 .db-create-input,
+#dbCreateFormFlat .db-create-select,
+#dbCreateFormFlat2 .db-create-select,
+html[data-theme="dark"]  #dbCreateFormFlat .db-create-input,
+html[data-theme="dark"]  #dbCreateFormFlat2 .db-create-input,
+html[data-theme="light"] #dbCreateFormFlat .db-create-input,
+html[data-theme="light"] #dbCreateFormFlat2 .db-create-input {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid color-mix(in srgb,var(--text-3) 38%,var(--border)) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 11px 2px !important;
+  color: var(--text) !important;
+  font-size: .88rem !important;
+  transition: border-color .15s, box-shadow .15s !important;
+}
+#dbCreateFormFlat .db-create-input:focus,
+#dbCreateFormFlat2 .db-create-input:focus,
+#dbCreateFormFlat .db-create-select:focus,
+#dbCreateFormFlat2 .db-create-select:focus {
+  outline: none !important;
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+}
+#dbCreateFormFlat .db-create-input::placeholder,
+#dbCreateFormFlat2 .db-create-input::placeholder { color: var(--text-3) !important; opacity: .6 !important; }
+
+/* Keep the plain class rules as fallback */
 .db-create-input,
 .db-create-select {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--dcx-field-border, rgba(255,255,255,.15)) !important;
+  border-bottom: 1px solid color-mix(in srgb,var(--text-3) 38%,var(--border)) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding: 11px 2px !important;

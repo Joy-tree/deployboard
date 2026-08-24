@@ -5655,7 +5655,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=75" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=76" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5728,7 +5728,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=75&recover=' + token;
+    fresh.href = 'theme-override.css?v=76&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -18024,7 +18024,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         <div style="margin-top:28px;margin-bottom:8px;">
           <div class="db-create-section-title">Configuration</div>
         </div>
-        <div class="db-create-form">
+        <div class="db-create-form" id="dbCreateFormFlat">
 
           <!-- Database Name -->
           <div class="db-create-form-section">
