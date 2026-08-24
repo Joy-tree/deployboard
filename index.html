@@ -5632,7 +5632,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=59" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=60" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5705,7 +5705,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=59&recover=' + token;
+    fresh.href = 'theme-override.css?v=60&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -28062,11 +28062,12 @@ function showProjectDetail(projectId) {
       '</div>' +
     '</div>' +
 
-    // ── Config section — flat, no cards, no boxes. Stacks on mobile.
-    '<div style="display:flex;flex-direction:column;gap:32px;">' +
-      '<div>' +
+    // ── Config sections — same thin-line dcx-group-box treatment as
+    // New Deployment. Stacks on mobile.
+    '<div>' +
+      '<div class="dcx-group-box">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">' +
-          '<div style="font-size:1rem;font-weight:800;color:var(--text);">Configuration</div>' +
+          '<div class="dcx-section-title">Configuration</div>' +
           '<button class="btn btn-ghost btn-sm" data-id="' + p.id + '" onclick="showEditProject(this.dataset.id)">Edit</button>' +
         '</div>' +
         '<div style="display:flex;flex-direction:column;">' +
@@ -28085,9 +28086,9 @@ function showProjectDetail(projectId) {
       '</div>' +
 
       (isUploadProj
-        ? '<div>' +
-            '<div style="font-size:1rem;font-weight:800;color:var(--text);margin-bottom:4px;">Redeployment</div>' +
-            '<div style="font-size:0.78rem;color:var(--text-3);margin-bottom:14px;">This project was deployed via file upload.</div>' +
+        ? '<div class="dcx-group-box">' +
+            '<div class="dcx-section-title">Redeployment</div>' +
+            '<div class="dcx-section-sub" style="margin-bottom:14px;">This project was deployed via file upload.</div>' +
             '<div style="display:flex;flex-direction:column;gap:10px;">' +
               '<div style="font-size:0.82rem;color:var(--text-2);">Click <strong style="color:var(--text);">↻ Redeploy Stored Files</strong> to instantly redeploy from your stored files — no re-upload needed. To deploy different code, use <strong style="color:var(--text);">Upload New Archive</strong> with the same subdomain (<code>' + escHtml(p.subdomain) + '</code>).</div>' +
               '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
@@ -28096,9 +28097,9 @@ function showProjectDetail(projectId) {
               '</div>' +
             '</div>' +
           '</div>'
-        : '<div>' +
-            '<div style="font-size:1rem;font-weight:800;color:var(--text);margin-bottom:4px;">Auto Deploy Pipeline</div>' +
-            '<div style="font-size:0.78rem;color:var(--text-3);margin-bottom:14px;">OAuth-based polling. No GitHub App installation or repository webhook required.</div>' +
+        : '<div class="dcx-group-box">' +
+            '<div class="dcx-section-title">Auto Deploy Pipeline</div>' +
+            '<div class="dcx-section-sub" style="margin-bottom:14px;">OAuth-based polling. No GitHub App installation or repository webhook required.</div>' +
             '<div style="display:flex;flex-direction:column;gap:10px;">' +
               '<label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--text-2);">' +
                 '<input type="checkbox" ' + (p.autoDeployEnabled ? 'checked' : '') + ' onchange="toggleProjectAutoDeploy(\'' + p.id + '\', this.checked)"> Watch this repo branch with my connected GitHub OAuth account' +
@@ -28115,47 +28116,47 @@ function showProjectDetail(projectId) {
           '</div>') +
 
       // ── Environment Variables
-      '<div id="pdEnvCard-' + p.id + '">' +
-        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px;">' +
+      '<div class="dcx-group-box" id="pdEnvCard-' + p.id + '">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;">' +
           '<div>' +
-            '<div style="font-size:1rem;font-weight:800;color:var(--text);">Environment Variables</div>' +
-            '<div style="font-size:0.78rem;color:var(--text-3);margin-top:4px;">Injected into every deployment of this project</div>' +
+            '<div class="dcx-section-title">Environment Variables</div>' +
+            '<div class="dcx-section-sub">Injected into every deployment of this project</div>' +
           '</div>' +
           '<button class="btn btn-ghost btn-sm" onclick="pdRefreshEnv(\'' + p.id + '\')">↻ Refresh</button>' +
         '</div>' +
-        '<div id="pdEnvList-' + p.id + '" style="padding:12px 0;">' +
+        '<div id="pdEnvList-' + p.id + '">' +
           '<div style="font-size:0.8rem;color:var(--text-3);">Loading…</div>' +
         '</div>' +
-        '<div style="padding-top:10px;display:flex;flex-direction:column;gap:10px;">' +
+        '<div style="margin-top:6px;display:flex;flex-direction:column;gap:10px;">' +
           '<div style="font-size:0.75rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-3);">Add / Update Variable</div>' +
-          '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-            '<input id="pdEnvKey-' + p.id + '" class="input input-mono" placeholder="VARIABLE_NAME" style="flex:1;min-width:130px;font-size:0.8rem;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase().replace(/\\s/g,\'_\')">' +
-            '<input id="pdEnvVal-' + p.id + '" class="input input-mono" placeholder="value" style="flex:2;min-width:160px;font-size:0.8rem;">' +
+          '<div style="display:flex;gap:14px;flex-wrap:wrap;">' +
+            '<input id="pdEnvKey-' + p.id + '" class="input input-mono" placeholder="VARIABLE_NAME" style="flex:1;min-width:130px;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase().replace(/\\s/g,\'_\')">' +
+            '<input id="pdEnvVal-' + p.id + '" class="input input-mono" placeholder="value" style="flex:2;min-width:160px;">' +
             '<button class="btn btn-primary btn-sm" onclick="pdSaveEnvVar(\'' + p.id + '\')">Save</button>' +
           '</div>' +
-          '<div style="font-size:0.73rem;color:var(--text-3);">Variables are encrypted at rest and injected at build & runtime. Changes apply on next deploy.</div>' +
+          '<div class="dcx-section-sub">Variables are encrypted at rest and injected at build & runtime. Changes apply on next deploy.</div>' +
         '</div>' +
       '</div>' +
 
       // ── Runtime Logs (live Docker container output after deployment)
-      '<div id="runtimeLogsCard-' + p.id + '">' +
-        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px;">' +
+      '<div class="dcx-group-box" id="runtimeLogsCard-' + p.id + '">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;">' +
           '<div>' +
-            '<div style="font-size:1rem;font-weight:800;color:var(--text);">Runtime Logs</div>' +
-            '<div style="font-size:0.78rem;color:var(--text-3);margin-top:4px;">Live output from the deployed Docker container, like Render logs.</div>' +
+            '<div class="dcx-section-title">Runtime Logs</div>' +
+            '<div class="dcx-section-sub">Live output from the deployed Docker container, like Render logs.</div>' +
           '</div>' +
           '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
             '<button class="btn btn-primary btn-sm" id="runtimeLogsToggle-' + p.id + '" onclick="toggleRuntimeLogs(\'' + p.id + '\')">▶ Stream logs</button>' +
             '<button class="btn btn-ghost btn-sm" onclick="clearRuntimeLogs(\'' + p.id + '\')">Clear</button>' +
           '</div>' +
         '</div>' +
-        '<div style="padding:10px 0;font-size:0.75rem;color:var(--text-3);font-family:var(--font-mono);" id="runtimeLogsStatus-' + p.id + '">Disconnected · click Stream logs to follow app output after deployment.</div>' +
+        '<div style="font-size:0.75rem;color:var(--text-3);font-family:var(--font-mono);margin-bottom:10px;" id="runtimeLogsStatus-' + p.id + '">Disconnected · click Stream logs to follow app output after deployment.</div>' +
         '<pre id="runtimeLogsOutput-' + p.id + '" class="pdx-log-pane" style="margin:0;min-height:260px;max-height:460px;overflow:auto;padding:16px;font-family:var(--font-mono);font-size:0.76rem;line-height:1.65;white-space:pre-wrap;word-break:break-word;">Runtime logs will appear here…</pre>' +
       '</div>' +
 
       // ── Deployment History
-      '<div>' +
-        '<div style="font-size:1rem;font-weight:800;color:var(--text);margin-bottom:14px;">Deployment History</div>' +
+      '<div class="dcx-group-box">' +
+        '<div class="dcx-section-title" style="margin-bottom:14px;">Deployment History</div>' +
         (deploys.length ?
           '<div class="pdx-table-wrap"><table><thead><tr><th>Status</th><th>Duration</th><th>When</th><th></th></tr></thead><tbody>' +
           deploys.map(d =>

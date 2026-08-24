@@ -7592,13 +7592,14 @@ html[data-theme="light"] #page-project-detail {
   --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
 }
 
-/* Everything on this page sits directly on the page background —
-   no cards, no chips, no boxes, no borders, no dividers anywhere.
-   This single wildcard rule is intentionally the ONLY rule on this
-   page that touches background/border, so nothing can out-specificity
-   it and quietly bring a box back. Do not add page-specific .card /
-   .chip / .card-header border or background rules below this point —
-   add color/typography/spacing rules only. */
+/* Everything on this page sits directly on the page background by
+   default — no random cards, no filled chips, no drop shadows. The
+   Configuration/Redeployment/Env Vars/Runtime Logs/Deployment History
+   sections DO get a deliberate thin-line box via .dcx-group-box below
+   (same treatment as New Deployment) — that's the one intentional
+   exception, added with higher specificity so it wins over this
+   wildcard. Do not add .card/.chip/.alert/.jt-runtime-log-pane rules
+   below this point — those classes are no longer used on this page. */
 #page-project-detail * {
   background: transparent !important;
   background-color: transparent !important;
@@ -7630,43 +7631,82 @@ html[data-theme="light"] #page-project-detail {
 #page-project-detail .pd-meta .chip { color: var(--text-2) !important; }
 #page-project-detail .pd-meta .chip strong { color: var(--text) !important; }
 
-#page-project-detail #projectDetailContent > div[style*="flex-direction:column"] {
-  gap: 20px !important;
+#page-project-detail #projectDetailContent > div {
+  display: flex;
+  flex-direction: column;
 }
-#page-project-detail .card {
+
+/* ── Section boxes — same thin-line dcx-group-box treatment as the
+   New Deployment page, scoped only to #page-project-detail so no
+   other page's .dcx-group-box rule (new-deploy/repos/code-upload/
+   dockerfile-deploy) and no old .card rule can ever touch this. ── */
+#page-project-detail .dcx-group-box {
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
   padding: 20px !important;
-  margin: 0 !important;
+  margin-bottom: 20px !important;
 }
-#page-project-detail .card-header {
-  padding: 0 0 14px !important;
-  margin: 0 0 14px !important;
+#page-project-detail .dcx-section-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
 }
-#page-project-detail .card-title { color: var(--text) !important; font-size: 1rem !important; font-weight: 800 !important; }
-#page-project-detail .card-subtitle { color: var(--text-3) !important; margin-top: 3px !important; }
-#page-project-detail .card > div[style*="padding:14px 16px"],
-#page-project-detail .card > div[style*="padding: 14px 16px"],
-#page-project-detail .card > div[style*="padding:12px 16px"],
-#page-project-detail .card > div[style*="padding: 12px 16px"] {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+#page-project-detail .dcx-section-sub {
+  font-size: .82rem;
+  color: var(--text-3);
+  margin-top: 4px;
 }
 
 /* Generic chips used inside Auto Deploy Pipeline (Pipeline / Last
-   check / Last deploy trigger) — flat text, no box */
-#page-project-detail .chip { color: var(--text-2) !important; }
-#page-project-detail .chip strong { color: var(--text) !important; }
+   check / Last deploy trigger) — flat text, no box, brand-new class
+   so nothing legacy can touch it */
+#page-project-detail .pdx-chip { padding: 0 !important; color: var(--text-2) !important; }
+#page-project-detail .pdx-chip strong { color: var(--text) !important; display: block; margin-top: 2px; font-weight: 700; }
 
 /* Runtime Logs terminal pane keeps a subtle fill so log text stays
-   readable, but no border */
-#page-project-detail .jt-runtime-log-pane {
-  background: var(--bg, #000) !important;
+   readable — a deliberate exception since a log console legitimately
+   needs contrast, unlike a card */
+#page-project-detail .pdx-log-pane {
+  background: #111111 !important;
+  color: #6ee7b7 !important;
 }
 
-/* Tip/callout boxes (Redeployment "Click Redeploy Stored Files…",
-   Auto Deploy Pipeline explainer, pipeline error) — plain flat text */
-#page-project-detail .alert { color: var(--text-2) !important; padding: 0 !important; }
-#page-project-detail .alert strong { color: var(--text) !important; }
-#page-project-detail .alert code { color: var(--text) !important; }
+/* Deployment History table — no card wrapper, just the table itself */
+#page-project-detail .pdx-table-wrap { overflow-x: auto; }
+#page-project-detail .pdx-table-wrap thead tr { border-bottom: 1px solid var(--dcx-row-border) !important; }
+#page-project-detail .pdx-table-wrap tbody tr { border-bottom: 1px solid var(--border) !important; }
+#page-project-detail .pdx-table-wrap th { color: var(--text-3) !important; text-align: left; padding: 8px 6px; font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
+#page-project-detail .pdx-table-wrap td { padding: 10px 6px; }
+
+/* Configuration key/value rows — thin divider between rows, same
+   line weight as the rest of this page's dividers. The base rule
+   lives in index.html (unscoped, no !important); this page-scoped
+   !important override is what actually wins against the wildcard. */
+#page-project-detail .pdx-row { border-bottom: 1px solid var(--dcx-row-border) !important; }
+#page-project-detail .pdx-row:last-child { border-bottom: none !important; }
+
+/* Env Var / repo URL inputs — same borderless underline style as
+   New Deployment's inputs, not the default filled/boxed .input */
+#page-project-detail .input,
+#page-project-detail select.input {
+  min-height: 46px;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  color: var(--text) !important;
+  font-size: .85rem;
+  padding: 0 2px;
+  box-shadow: none;
+  transition: border-color .15s;
+}
+#page-project-detail .input::placeholder { color: var(--text-3); }
+#page-project-detail .input:hover {
+  border-bottom-color: color-mix(in srgb, var(--text-2) 55%, var(--dcx-field-border)) !important;
+}
+#page-project-detail .input:focus {
+  border-bottom: 2px solid var(--primary) !important;
+}
 
 /* ══════════════════════════════════════════════════════════════════
    CREATE DATABASE PAGE — same flat treatment as the rest of the
