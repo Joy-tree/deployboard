@@ -5550,19 +5550,20 @@ html[data-theme="light"] #page-repos {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 20px;
+  padding: 14px 16px;
   border-right: 1px solid var(--dcx-row-border);
-  color: var(--text-2);
+  color: var(--text);
   font-size: .82rem;
   font-weight: 700;
 }
 #page-repos .dcx-step-item:last-child { border-right: none; }
 #page-repos .dcx-step-badge {
-  width: 22px; height: 22px;
-  border-radius: 6px;
+  min-width: 24px; height: 22px;
+  padding: 0 6px;
+  border-radius: 4px;
   display: grid; place-items: center;
-  background: color-mix(in srgb, var(--text-3) 12%, transparent);
-  color: var(--text-3);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
   font-family: var(--font-mono);
   font-weight: 800;
   font-size: .74rem;
@@ -6046,19 +6047,20 @@ html[data-theme="light"] #page-code-upload {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 20px;
+  padding: 14px 16px;
   border-right: 1px solid var(--dcx-row-border);
-  color: var(--text-2);
+  color: var(--text);
   font-size: .82rem;
   font-weight: 700;
 }
 #page-code-upload .dcx-step-item:last-child { border-right: none; }
 #page-code-upload .dcx-step-badge {
-  width: 22px; height: 22px;
-  border-radius: 6px;
+  min-width: 24px; height: 22px;
+  padding: 0 6px;
+  border-radius: 4px;
   display: grid; place-items: center;
-  background: color-mix(in srgb, var(--text-3) 12%, transparent);
-  color: var(--text-3);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
   font-family: var(--font-mono);
   font-weight: 800;
   font-size: .74rem;
