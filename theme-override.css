@@ -7626,9 +7626,33 @@ html[data-theme="light"] #page-project-detail {
   color: var(--jt-danger, #ef4444) !important;
 }
 
-/* Meta chips (Status / Deployments / Runtime / Source) — flat text,
-   no box */
-#page-project-detail .pd-meta .chip { color: var(--text-2) !important; }
+/* [FIX] The page-wide "#page-project-detail *" flatten rule above also
+   strips this button's green fill (it's ID-scoped so it outranks the
+   plain-class .btn-primary background rule), while that same global
+   rule's color:#052e16 (near-black) still wins on the color property —
+   leaving near-black text on a transparent background, i.e. an
+   invisible button. Restoring the fill here, scoped to this page with
+   matching ID-level specificity, fixes it without touching the
+   near-black text color, which is the correct readable combo once
+   there's an actual green background under it again. */
+#page-project-detail .btn-primary {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+#page-project-detail .btn-primary:hover {
+  filter: brightness(1.12);
+}
+
+/* [FIX] Meta chips (Status / Deployments / Runtime / Source) previously
+   flattened to plain text with no box at all. Boxed to match the same
+   thin hairline treatment used everywhere else on this page (and on
+   New Deployment): 1px --dcx-field-border, sharp corners, no fill. */
+#page-project-detail .pd-meta .chip {
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  padding: 12px !important;
+  color: var(--text-2) !important;
+}
 #page-project-detail .pd-meta .chip strong { color: var(--text) !important; }
 
 #page-project-detail #projectDetailContent > div {
