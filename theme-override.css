@@ -3382,8 +3382,10 @@ html[data-theme="light"] .jt-leaves-fall {
    (no individual card boxes, just a bordered grid with dividers)
    ══════════════════════════════════════════════════════════════════ */
 #page-dashboard .stats-grid {
-  border-top: 1px solid var(--border);
+  border-top:    1px solid var(--border);
   border-bottom: 1px solid var(--border);
+  border-left:   1px solid var(--border);
+  border-right:  1px solid var(--border);
   border-radius: 0 !important;
   gap: 0 !important;
 }
