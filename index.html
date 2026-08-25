@@ -4299,13 +4299,13 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
   display:flex;align-items:center;gap:10px;margin-bottom:26px;
 }
 .auth-brand-mark {
-  width:34px;height:34px;border-radius:50%;
+  width:34px;height:34px;border-radius:0;
   background:transparent;
   display:flex;align-items:center;justify-content:center;
-  border:1px solid rgba(16,185,129,.3);
+  border:1px solid var(--border);
   flex-shrink:0;overflow:hidden;
 }
-.auth-brand-mark img { width:100%;height:100%;object-fit:cover;border-radius:50%; }
+.auth-brand-mark img { width:100%;height:100%;object-fit:cover;border-radius:0; }
 
 /* Heading */
 .auth-title {
@@ -4323,24 +4323,28 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 /* Tabs */
 .auth-tabs {
   display:grid;grid-template-columns:1fr 1fr;
-  background:var(--bg-hover);
-  border:1px solid var(--border);
-  border-radius:10px;padding:4px;gap:4px;
+  background:transparent;
+  border:none;
+  border-bottom:1px solid var(--border);
+  border-radius:0;padding:0;gap:0;
   margin-bottom:24px;
 }
 .auth-tab {
-  padding:9px 10px;border-radius:7px;
+  padding:9px 10px;border-radius:0;
   border:none;background:transparent;
+  border-bottom:2px solid transparent;
   color:var(--text-3);font-size:.84rem;font-weight:700;
   cursor:pointer;letter-spacing:.01em;
-  transition:background .18s, color .18s;
+  transition:color .18s, border-color .18s;
   position:relative;
+  margin-bottom:-1px;
 }
 .auth-tab::after { display:none; }
 .auth-tab.active {
-  background:var(--bg-card);
+  background:transparent;
   color:var(--text);
-  box-shadow:0 1px 3px rgba(0,0,0,.3);
+  border-bottom-color:var(--primary);
+  box-shadow:none;
 }
 
 /* Fields */
@@ -4382,15 +4386,15 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 /* Submit button */
 .auth-submit {
   width:100%;padding:14px 20px;margin-top:8px;
-  background:#10b981;
-  border:none;border-radius:12px;
-  color:#fff;font-size:.95rem;font-weight:800;letter-spacing:.01em;
+  background:var(--primary);
+  border:1px solid var(--primary);border-radius:0;
+  color:#052e16;font-size:.95rem;font-weight:800;letter-spacing:.01em;
   cursor:pointer;
-  transition:background .18s;
+  transition:background .18s, border-color .18s;
   display:flex;align-items:center;justify-content:center;gap:8px;
   font-family:var(--font-ui);
 }
-.auth-submit:hover { background:#059669; }
+.auth-submit:hover { background:color-mix(in srgb,var(--primary) 80%,transparent); border-color:var(--primary); }
 .auth-submit svg { width:16px;height:16px; }
 
 /* Divider */
@@ -4401,24 +4405,24 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 }
 .auth-divider::before,.auth-divider::after {
   content:'';flex:1;height:1px;
-  background:rgba(255,255,255,.12);
+  background:var(--border);
 }
 
 /* GitHub button */
 .auth-github {
   width:100%;padding:14px 18px;
-  background:var(--bg-hover);
+  background:transparent;
   border:1px solid var(--border);
-  border-radius:12px;
+  border-radius:0;
   color:var(--text);font-size:.92rem;font-weight:600;
   cursor:pointer;
   display:flex;align-items:center;justify-content:center;gap:10px;
-  transition:background .18s;
+  transition:border-color .18s;
   font-family:var(--font-ui);
   margin-bottom:10px;
 }
 .auth-github::before { display:none; }
-.auth-github:hover { background:rgba(255,255,255,.11); }
+.auth-github:hover { border-color:var(--primary); background:transparent; }
 .auth-github-icon { width:20px;height:20px;flex-shrink:0; }
 .auth-github-text { display:flex;flex-direction:column;align-items:flex-start;line-height:1; }
 .auth-github-text strong { font-size:.92rem;font-weight:600; }
@@ -4433,17 +4437,17 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 .auth-google {
   display: flex; align-items: center; justify-content:center; gap: 10px;
   width: 100%; padding: 14px 18px;
-  background: var(--bg-hover);
+  background: transparent;
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 0;
   font-family: var(--font-ui, inherit); font-size: .92rem; font-weight: 600;
   cursor: pointer;
-  transition: background .18s;
+  transition: border-color .18s;
   margin-top: 0;
 }
 .auth-google::before { display:none; }
-.auth-google:hover { background: rgba(255,255,255,.11); }
+.auth-google:hover { border-color: var(--primary); background: transparent; }
 .auth-google-icon { width:20px; height:20px; flex-shrink:0; }
 .auth-google-text { display:flex; flex-direction:column; align-items:flex-start; line-height:1; }
 .auth-google-text strong { font-size:.92rem; font-weight:600; color:var(--text); }
@@ -4457,7 +4461,7 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 .auth-trust {
   display:flex;align-items:center;justify-content:center;gap:16px;
   flex-wrap:wrap;margin-top:22px;padding-top:18px;
-  border-top:1px solid rgba(56,189,248,.08);
+  border-top:1px solid var(--border);
 }
 .auth-trust-item {
   display:flex;align-items:center;gap:5px;
@@ -4473,13 +4477,13 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 }
 .auth-feat-pill {
   display:flex;align-items:center;gap:6px;
-  padding:7px 14px;border-radius:999px;
-  background:var(--bg-hover);
+  padding:7px 14px;border-radius:0;
+  background:transparent;
   border:1px solid var(--border);
   font-size:.72rem;font-weight:600;color:var(--text-3);
   letter-spacing:.04em;
 }
-.auth-feat-pill-dot { width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 8px rgba(16,185,129,.6); }
+.auth-feat-pill-dot { width:6px;height:6px;border-radius:50%;background:var(--primary); }
 
 .btn-github{display:flex;align-items:center;justify-content:center;gap:10px}
 .btn-github svg{width:18px;height:18px}
@@ -5651,7 +5655,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=104" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=105" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5724,7 +5728,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=104&recover=' + token;
+    fresh.href = 'theme-override.css?v=105&recover=' + token;
     document.head.appendChild(fresh);
   }
 
