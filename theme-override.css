@@ -9586,7 +9586,17 @@ html[data-theme="light"] #page-streaks {
    ══════════════════════════════════════════════════════════════════ */
 
 /* Feature cards, how-cards, flow-steps, snippet-cards — kill the
-   #111114 fill + 16px radius, go flat with a hairline */
+   #111114 fill + 16px radius, go flat with a hairline. Theme-scoped
+   selectors added defensively so this always wins regardless of
+   where else #111114 might be declared with !important. */
+html[data-theme="dark"]  #landing-view .feature-card,
+html[data-theme="light"] #landing-view .feature-card,
+html[data-theme="dark"]  #landing-view .how-card,
+html[data-theme="light"] #landing-view .how-card,
+html[data-theme="dark"]  #landing-view .flow-step,
+html[data-theme="light"] #landing-view .flow-step,
+html[data-theme="dark"]  #landing-view .snippet-card,
+html[data-theme="light"] #landing-view .snippet-card,
 #landing-view .feature-card,
 #landing-view .how-card,
 #landing-view .flow-step,
