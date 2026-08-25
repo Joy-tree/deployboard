@@ -10038,10 +10038,10 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 /* Brighten the section/row divider lines on both pages — the
    original --dcx-row-border mix was too subtle to see clearly */
 #page-db-migration {
-  --dcx-row-border: rgba(255,255,255,0.30) !important;
+  --dcx-row-border: rgba(255,255,255,0.65) !important;
 }
 #page-db-diff {
-  --dcx-row-border: rgba(255,255,255,0.30) !important;
+  --dcx-row-border: rgba(255,255,255,0.65) !important;
 }
 /* mig-source-opts grid divider + diff-source-opts grid divider */
 #page-db-migration .mig-source-opt,
@@ -10515,7 +10515,7 @@ html[data-theme="light"] #page-domain-add .input,
    Straight solid white at fixed opacity, no color-mix, no green tint:
    matches the crisp, high-contrast hairline look of Render's dashboard. */
 :root {
-  --dcx-field-border: rgba(255,255,255,0.28) !important;
-  --dcx-row-border: rgba(255,255,255,0.34) !important;
+  --dcx-field-border: rgba(255,255,255,0.55) !important;
+  --dcx-row-border: rgba(255,255,255,0.65) !important;
 }
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
