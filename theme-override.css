@@ -2810,7 +2810,7 @@ html[data-theme="light"] .sdk-test-indicator.idle {
 .code-block .cn { color: #6ee7b7 !important; }
 .alert-info {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-left: 3px solid color-mix(in srgb,#2dd4bf 50%,transparent) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
@@ -2818,7 +2818,7 @@ html[data-theme="light"] .sdk-test-indicator.idle {
 .alert-info strong { color: #5eead4 !important; }
 .alert-success {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-left: 3px solid color-mix(in srgb,var(--primary) 55%,transparent) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
@@ -2826,7 +2826,7 @@ html[data-theme="light"] .sdk-test-indicator.idle {
 .alert-success strong { color: var(--primary) !important; }
 .alert-warning {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-left: 3px solid color-mix(in srgb,#f59e0b 55%,transparent) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
@@ -2834,7 +2834,7 @@ html[data-theme="light"] .sdk-test-indicator.idle {
 .alert-warning strong { color: #fbbf24 !important; }
 .alert-error {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-left: 3px solid color-mix(in srgb,#f87171 55%,transparent) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
@@ -3142,7 +3142,7 @@ html[data-theme="light"] .dnp-btn:hover{ background:var(--jt-brand)!important; }
    quick actions, etc) -- no separate darker/lighter treatment */
 .auth-github, .auth-google {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   color: var(--text) !important;
 }
@@ -3274,7 +3274,7 @@ html[data-theme="light"] .hero-trust-item { color: #4b5563 !important; }
   display: flex;
   align-items: center;
   gap: 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255,255,255,0.9);
   margin-bottom: 22px;
   background: transparent;
   border-top: none;
@@ -3334,7 +3334,7 @@ html[data-theme="light"] #settingsTabReferrals [style*="border-radius"] {
 }
 #settingsTabReferrals .card {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
 }
 #settingsTabReferrals #referralLink,
 #settingsTabReferrals input[readonly] {
@@ -3350,7 +3350,7 @@ html[data-theme="light"] #settingsTabReferrals [style*="border-radius"] {
    ══════════════════════════════════════════════════════════════════ */
 #settingsTabGithub .card {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
 }
 #settingsTabGithub .btn-primary { border-radius: 0 !important; box-shadow: none !important; }
@@ -3366,13 +3366,13 @@ html[data-theme="light"] #settingsTabReferrals [style*="border-radius"] {
    ══════════════════════════════════════════════════════════════════ */
 #settingsTabAccount .card {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
 }
 #settingsTabAccount .acct-qs-item {
   border-radius: 0 !important;
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
 }
 #settingsTabAccount .acct-qs-item:hover {
   border-color: var(--primary) !important;
@@ -3499,7 +3499,7 @@ html[data-theme="light"] .jt-leaves-fall {
   display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;
 }
 
-.dash-divider { height: 1px; background: var(--border); margin: 26px 0; }
+.dash-divider { height: 1px; background: rgba(255,255,255,0.9); margin: 26px 0; }
 
 .dash-section-title { font-size: 1rem; font-weight: 800; color: var(--text); }
 .dash-section-sub { font-size: .8rem; color: var(--text-3); margin-top: 3px; }
@@ -3539,8 +3539,8 @@ html[data-theme="light"] .jt-leaves-fall {
    (no individual card boxes, just a bordered grid with dividers)
    ══════════════════════════════════════════════════════════════════ */
 #page-dashboard .stats-grid {
-  border-top:    1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  border-top:    1px solid rgba(255,255,255,0.9);
+  border-bottom: 1px solid rgba(255,255,255,0.9);
   border-left:   1px solid var(--border);
   border-right:  1px solid var(--border);
   border-radius: 0 !important;
@@ -3549,8 +3549,8 @@ html[data-theme="light"] .jt-leaves-fall {
 #page-dashboard .stat-card {
   background: transparent !important;
   border: none !important;
-  border-right: 1px solid var(--border) !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-right: 1px solid rgba(255,255,255,0.9) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   padding: 16px 14px !important;
   transition: background .15s;
@@ -4012,12 +4012,12 @@ html[data-theme="light"] .tree-node-btn-danger:hover {
   display: flex;
   flex-direction: column;
   gap: 0;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(255,255,255,0.9);
 }
 .dep-card {
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255,255,255,0.9);
   border-radius: 0;
   padding: 16px 4px;
   cursor: pointer;
@@ -8234,7 +8234,7 @@ html[data-theme="light"] #page-project-detail {
 /* Deployment History table — no card wrapper, just the table itself */
 #page-project-detail .pdx-table-wrap { overflow-x: auto; }
 #page-project-detail .pdx-table-wrap thead tr { border-bottom: 1px solid var(--dcx-row-border) !important; }
-#page-project-detail .pdx-table-wrap tbody tr { border-bottom: 1px solid var(--border) !important; }
+#page-project-detail .pdx-table-wrap tbody tr { border-bottom: 1px solid rgba(255,255,255,0.9) !important; }
 #page-project-detail .pdx-table-wrap th { color: var(--text-3) !important; text-align: left; padding: 8px 6px; font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
 #page-project-detail .pdx-table-wrap td { padding: 10px 6px; }
 
@@ -8498,7 +8498,7 @@ html[data-theme="dark"]  #page-env-manager .card,
 html[data-theme="light"] #page-env-manager .card,
 #page-env-manager .card {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
 }
 #page-env-manager .card {
@@ -9020,7 +9020,7 @@ html[data-theme="light"] #page-webhooks {
 #page-workers .surface-hero {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding: 0 0 24px !important;
@@ -9041,17 +9041,17 @@ html[data-theme="light"] #page-webhooks {
 #page-workers .surface-sub { color: var(--text-2) !important; font-size: .9rem !important; }
 #page-workers .card {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
 }
-#page-workers .card-header { border-bottom: 1px solid var(--border) !important; }
+#page-workers .card-header { border-bottom: 1px solid rgba(255,255,255,0.9) !important; }
 #page-workers .card-title { color: var(--text) !important; }
 #page-workers .list-shell { background: transparent !important; border-radius: 0 !important; }
 #page-workers .btn-primary { border-radius: 0 !important; }
 /* Alert info box — flat, no blue tint */
 #page-workers .alert {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   border-left: 3px solid var(--primary) !important;
   color: var(--text-2) !important;
@@ -9078,7 +9078,7 @@ html[data-theme="dark"]  #page-db-migration .mig-source-opt,
 html[data-theme="light"] #page-db-migration .mig-source-opt,
 #page-db-migration .mig-source-opt {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   transform: none !important;
@@ -9125,7 +9125,7 @@ html[data-theme="dark"]  #page-db-migration .mig-job,
 html[data-theme="light"] #page-db-migration .mig-job,
 #page-db-migration .mig-job {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -9134,7 +9134,7 @@ html[data-theme="dark"]  #page-db-migration .mig-card,
 html[data-theme="light"] #page-db-migration .mig-card,
 #page-db-migration .mig-card {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -9185,7 +9185,7 @@ html[data-theme="dark"]  #page-db-diff .diff-card,
 html[data-theme="light"] #page-db-diff .diff-card,
 #page-db-diff .diff-card {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -9193,7 +9193,7 @@ html[data-theme="dark"]  #page-db-diff .diff-source-opt,
 html[data-theme="light"] #page-db-diff .diff-source-opt,
 #page-db-diff .diff-source-opt {
   background: transparent !important;
-  border-right: 1px solid var(--border) !important;
+  border-right: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -9331,7 +9331,7 @@ html[data-theme="light"] #page-analytics .card,
 #page-analytics .page-header {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding: 0 0 20px !important;
@@ -9399,7 +9399,7 @@ html[data-theme="light"] #page-usage .card,
 #page-usage .page-header {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding: 0 0 20px !important;
@@ -9423,7 +9423,7 @@ html[data-theme="light"] #page-realtime-api .app-hero,
   background: transparent !important;
   background-image: none !important;
   border: none !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding-bottom: 20px !important;
@@ -9628,7 +9628,7 @@ html[data-theme="light"] #landing-view .snippet-card,
 #landing-view .flow-step,
 #landing-view .snippet-card {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -9646,7 +9646,7 @@ html[data-theme="light"] #landing-view .snippet-card,
    colour-washed rounded boxes */
 #landing-view .feature-icon {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   color: var(--primary) !important;
 }
@@ -9672,7 +9672,7 @@ html[data-theme="light"] #landing-view .snippet-card,
 }
 #landing-view .how-code-wrap {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
 }
 
@@ -9680,7 +9680,7 @@ html[data-theme="light"] #landing-view .snippet-card,
    fill boxes, go flat hairline */
 #landing-view .infra-logo {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
 }
 #landing-view .infra-logo:hover {
@@ -9698,7 +9698,7 @@ html[data-theme="light"] #landing-view .snippet-card,
 }
 #landing-view .btn-hero-ghost {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
 }
 #landing-view .btn-hero-ghost:hover {
   border-color: var(--primary) !important;
@@ -9715,7 +9715,7 @@ html[data-theme="light"] #landing-view .snippet-card,
    ══════════════════════════════════════════════════════════════════ */
 .install-prompt {
   background: var(--bg, #000) !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: 0 -4px 24px rgba(0,0,0,.35) !important;
 }
@@ -9773,7 +9773,7 @@ html[data-theme="light"] #page-secrets .card,
 #page-secrets .app-hero {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding-bottom: 20px !important;
@@ -9795,7 +9795,7 @@ html[data-theme="light"] #page-db-schema .app-hero,
 #page-db-schema .app-hero {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding-bottom: 20px !important;
@@ -9856,7 +9856,7 @@ html[data-theme="light"] #page-db-sdk .app-hero,
 #page-db-sdk .app-hero {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding-bottom: 20px !important;
@@ -9921,7 +9921,7 @@ html[data-theme="light"] #page-db-sdk .card,
 #page-team .page-header {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding: 0 0 20px !important;
@@ -10062,7 +10062,7 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 .dbv-shell { background: transparent !important; }
 .dbv-topbar {
   background: transparent !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
 }
 .dbv-topbar-dbname {
   background: transparent !important;
@@ -10088,12 +10088,12 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 }
 .dbv-stat-card {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
 }
 .dbv-card {
   background: transparent !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
 }
 
@@ -10103,7 +10103,7 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 #page-db-query .qstudio-sidebar,
 #page-db-query [class*="qstudio-side"] {
   background: transparent !important;
-  border-right: 1px solid var(--border) !important;
+  border-right: 1px solid rgba(255,255,255,0.9) !important;
 }
 #page-db-query .custom-select-btn,
 #page-db-query .dbv-table-select {
@@ -10374,7 +10374,7 @@ html[data-theme="light"] #page-domain-add .wizard-hero,
 #page-domain-add .wizard-hero {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding: 0 0 20px !important;
