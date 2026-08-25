@@ -3249,7 +3249,7 @@ html[data-theme="light"] .hero-trust-item { color: #4b5563 !important; }
 
 .acct-inline-notice {
   display:flex; align-items:center; justify-content:space-between; gap:12px;
-  padding:12px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  padding:12px 0; border-top:1px solid rgba(255,255,255,0.9); border-bottom:1px solid rgba(255,255,255,0.9);
 }
 
 .acct-progress {
@@ -3384,7 +3384,7 @@ html[data-theme="light"] #settingsTabReferrals [style*="border-radius"] {
    SSH KEYS PAGE (#page-ssh-keys)
    ══════════════════════════════════════════════════════════════════ */
 #page-ssh-keys {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
 }
 #page-ssh-keys .dcx-kicker { color: var(--primary) !important; }
 html[data-theme="dark"]  #page-ssh-keys .card,
@@ -3413,7 +3413,7 @@ html[data-theme="light"] #page-ssh-keys .card,
    FOUNDERS PAGE (#page-founders)
    ══════════════════════════════════════════════════════════════════ */
 #page-founders {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
 }
 html[data-theme="dark"]  #page-founders .card,
 html[data-theme="light"] #page-founders .card,
@@ -3541,8 +3541,8 @@ html[data-theme="light"] .jt-leaves-fall {
 #page-dashboard .stats-grid {
   border-top:    1px solid rgba(255,255,255,0.9);
   border-bottom: 1px solid rgba(255,255,255,0.9);
-  border-left:   1px solid var(--border);
-  border-right:  1px solid var(--border);
+  border-left:   1px solid rgba(255,255,255,0.9);
+  border-right:  1px solid rgba(255,255,255,0.9);
   border-radius: 0 !important;
   gap: 0 !important;
 }
@@ -4609,12 +4609,12 @@ html[data-theme="light"] .cs-option.selected {
    lines and the underline-field style used throughout this page.
    ══════════════════════════════════════════════════════════════════ */
 #page-new-deploy {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-new-deploy {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -5204,12 +5204,12 @@ html[data-theme="light"] #page-new-deploy {
    all three deployment-composer pages look and behave consistently.
    ══════════════════════════════════════════════════════════════════ */
 #page-dockerfile-deploy ,#page-worker-create {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page-worker-create {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -5633,12 +5633,12 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
    strip, and group-box toolbar look and behave identically.
    ══════════════════════════════════════════════════════════════════ */
 #page-repos {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-repos {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -6040,12 +6040,12 @@ html[data-theme="light"] #page-repos {
    dcx-* input styling to Settings without touching its layout.
    ══════════════════════════════════════════════════════════════════ */
 #page-settings {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-settings {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 #page-settings .input,
 #page-settings select.input,
@@ -6130,12 +6130,12 @@ html[data-theme="light"] #page-settings {
    in the CODE UPLOAD PAGE section above.
    ══════════════════════════════════════════════════════════════════ */
 #page-code-upload {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-code-upload {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -6536,12 +6536,12 @@ html[data-theme="light"] #page-code-upload {
    borders only, sharp corners, no fill.
    ══════════════════════════════════════════════════════════════════ */
 #page-dashboard {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-dashboard {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 /* Header buttons — Browse Repos / New Deployment */
@@ -6630,12 +6630,12 @@ html[data-theme="light"] #page-dashboard {
    everywhere else.
    ══════════════════════════════════════════════════════════════════ */
 #page-deployments {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-deployments {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 /* Each deployment card → its own thin bordered box, reasonable gap
@@ -6728,12 +6728,12 @@ html[data-theme="light"] #page-deployments {
    Repos/Deployments/Dashboard.
    ══════════════════════════════════════════════════════════════════ */
 #page-new-resource {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-new-resource {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 /* Search bar → matches #page-repos exactly: underline-only, no box,
@@ -6898,12 +6898,12 @@ html[data-theme="light"] #dbCreateFormFlat2 .db-create-input {
    on the card still reads as a rounded filled box.
    ══════════════════════════════════════════════════════════════════ */
 #page-projects {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-projects {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 /* Header buttons — Import from GitHub / New Project */
@@ -7026,12 +7026,12 @@ html[data-theme="light"] #page-projects {
    else around it goes flat.
    ══════════════════════════════════════════════════════════════════ */
 #page-databases {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-databases {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 /* Stat tiles → flat, thin border, sharp corners */
@@ -7168,12 +7168,12 @@ html[data-theme="light"] #page-databases {
    codebase already uses as its own light-theme fallback.
    ══════════════════════════════════════════════════════════════════ */
 #landing-view {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #landing-view {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 /* Hero — remove the two radial glow blobs entirely */
@@ -7412,12 +7412,12 @@ html[data-theme="light"] #landing-view {
    outline instead.
    ══════════════════════════════════════════════════════════════════ */
 #sidebar {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #sidebar {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 #sidebar .nav-item {
@@ -7477,12 +7477,12 @@ html[data-theme="light"] #sidebar {
    badge, and topbar go flat like every other panel on this page.
    ══════════════════════════════════════════════════════════════════ */
 #page-logs {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-logs {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 /* Header action buttons — Restart / Stop / Clear / Download */
@@ -7709,13 +7709,13 @@ html[data-theme="light"] #page-logs {
    re-add lines with higher specificity than the wildcard.
    ══════════════════════════════════════════════════════════════════ */
 #page-domains.pg-domains-v2 {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
   --dcx-section-gap: 32px;
 }
 html[data-theme="light"] #page-domains.pg-domains-v2 {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 32%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
 }
 
 /* ── Step 1: flatten everything on this page ─────────────────────── */
@@ -7914,12 +7914,12 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
    pages that still need per-page scoping here.
    ══════════════════════════════════════════════════════════════════ */
 #page-domain-store {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-domain-store {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 32%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
 }
 
 /* ── Hero: kicker / title / subtitle — same tokens as every other page ── */
@@ -8110,12 +8110,12 @@ html[data-theme="light"] #page-domain-store {
    same 1px hairline box, flat transparent fill, sharp corners.
    ══════════════════════════════════════════════════════════════════ */
 #page-project-detail {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-project-detail {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 /* Everything on this page sits directly on the page background by
@@ -8278,12 +8278,12 @@ html[data-theme="light"] #page-project-detail {
    signal, matching the language-badge reasoning used elsewhere.
    ══════════════════════════════════════════════════════════════════ */
 #page-db-create {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-db-create {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 
 /* Hero — flat, no fill, sharp corners */
@@ -8433,12 +8433,12 @@ html[data-theme="light"] #page-db-create {
    corners on the shared .btn-primary/.btn-ghost action buttons.
    ══════════════════════════════════════════════════════════════════ */
 #page-ai-analysis {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-ai-analysis {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 #page-ai-analysis .btn-primary {
   border-radius: 0 !important;
@@ -8460,12 +8460,12 @@ html[data-theme="light"] #page-ai-analysis {
    (a real UI convention, not a boxed-card issue).
    ══════════════════════════════════════════════════════════════════ */
 #page-env-manager {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-env-manager {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 /* High-specificity to beat inline <style> dark fills */
 html[data-theme="dark"]  #page-env-manager .input,
@@ -8594,12 +8594,12 @@ html[data-theme="light"] #page-env-manager .card,
    donut ring stay as meaningful data signals, not decoration.
    ══════════════════════════════════════════════════════════════════ */
 #page-analytics {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-analytics {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 #page-analytics .card {
   background: transparent !important;
@@ -8619,12 +8619,12 @@ html[data-theme="light"] #page-analytics {
    dialog) but sharpened and de-filled.
    ══════════════════════════════════════════════════════════════════ */
 #page-webhooks {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-webhooks {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 #page-webhooks .card {
   background: transparent !important;
@@ -8701,8 +8701,8 @@ html[data-theme="light"] #page-webhooks {
    DOMAIN MANAGE PAGE (custom domain detail: Overview/DNS/Reassign/Danger)
    ══════════════════════════════════════════════════════════════════ */
 #page-domain-manage {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
 }
 /* Flatten all inline-styled divs */
 #page-domain-manage [style*="background"] {
@@ -8874,8 +8874,8 @@ html[data-theme="light"] #page-webhooks {
    re-add only the intentional hairlines.
    ══════════════════════════════════════════════════════════════════ */
 #page-domain-cpanel {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
 }
 /* Flatten everything */
 #page-domain-cpanel [style]:not(.btn):not(.btn-primary):not(.btn-ghost):not(button) {
@@ -9070,8 +9070,8 @@ html[data-theme="light"] #page-webhooks {
    inline <style> block which loads after theme-override.css
    ══════════════════════════════════════════════════════════════════ */
 #page-db-migration {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
 }
 /* Source option cards — kill the dark fill */
 html[data-theme="dark"]  #page-db-migration .mig-source-opt,
@@ -9178,7 +9178,7 @@ html[data-theme="light"] #page-db-migration .mig-card,
    DATABASE COMPARISON (DIFF) PAGE — !important to beat inline <style>
    ══════════════════════════════════════════════════════════════════ */
 #page-db-diff {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
 }
 /* Kill dark fills on diff-card and diff-source-opt */
 html[data-theme="dark"]  #page-db-diff .diff-card,
@@ -9242,12 +9242,12 @@ html[data-theme="light"] #page-db-diff .diff-input:focus,
    (already flattened inline), preset chips, and inputs flattened.
    ══════════════════════════════════════════════════════════════════ */
 #page-cronjobs {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-cronjobs {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 #page-cronjobs .card,
 #page-cron-create .card {
@@ -9313,8 +9313,8 @@ html[data-theme="light"] #page-cronjobs {
    ANALYTICS PAGE (Activity Log)
    ══════════════════════════════════════════════════════════════════ */
 #page-analytics {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
 }
 /* Flatten all inline-styled divs */
 html[data-theme="dark"]  #page-analytics .card,
@@ -9355,8 +9355,8 @@ html[data-theme="light"] #page-analytics .card,
    USAGE & LIMITS PAGE
    ══════════════════════════════════════════════════════════════════ */
 #page-usage {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
 }
 /* Plan banner — kill the green gradient fill */
 html[data-theme="dark"]  #page-usage [style*="linear-gradient"],
@@ -9413,8 +9413,8 @@ html[data-theme="light"] #page-usage .card,
    REALTIME API BUILDER PAGE (#page-realtime-api)
    ══════════════════════════════════════════════════════════════════ */
 #page-realtime-api {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
 }
 /* Hero (app-hero) — kill the dark fill and gradient */
 html[data-theme="dark"]  #page-realtime-api .app-hero,
@@ -9511,12 +9511,12 @@ html[data-theme="light"] #page-realtime-api .card,
    as everywhere else. Heatmap intensity colors stay meaningful.
    ══════════════════════════════════════════════════════════════════ */
 #page-streaks {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 html[data-theme="light"] #page-streaks {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
-  --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border: rgba(255,255,255,0.9);
 }
 #page-streaks .streak-command-hero {
   background: transparent !important;
@@ -9757,8 +9757,8 @@ html[data-theme="light"] #landing-view .snippet-card,
    SECRETS PAGE (#page-secrets)
    ══════════════════════════════════════════════════════════════════ */
 #page-secrets {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
 }
 html[data-theme="dark"]  #page-secrets .card,
 html[data-theme="light"] #page-secrets .card,
@@ -9787,8 +9787,8 @@ html[data-theme="light"] #page-secrets .card,
    SCHEMA EXPLORER PAGE (#page-db-schema)
    ══════════════════════════════════════════════════════════════════ */
 #page-db-schema {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
 }
 html[data-theme="dark"]  #page-db-schema .app-hero,
 html[data-theme="light"] #page-db-schema .app-hero,
@@ -9848,8 +9848,8 @@ html[data-theme="light"] #page-db-schema .card,
    SDK STUDIO PAGE (#page-db-sdk)
    ══════════════════════════════════════════════════════════════════ */
 #page-db-sdk {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
 }
 html[data-theme="dark"]  #page-db-sdk .app-hero,
 html[data-theme="light"] #page-db-sdk .app-hero,
@@ -9914,8 +9914,8 @@ html[data-theme="light"] #page-db-sdk .card,
    TEAM PAGE (#page-team)
    ══════════════════════════════════════════════════════════════════ */
 #page-team {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
-  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-row-border:   rgba(255,255,255,0.9);
 }
 /* Page header */
 #page-team .page-header {
@@ -10283,7 +10283,7 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
    String / Actions / Quick SDK cards.
    ══════════════════════════════════════════════════════════════════ */
 #page-db-detail {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
 }
 /* Quick-stat pills in the hero (Port / RAM / Created date) —
    inline-styled rgba(255,255,255,.04) filled boxes */
@@ -10367,7 +10367,7 @@ html[data-theme="light"] #page-db-detail .db-btn,
    domain?) still had #0d0d0d fills, glow shadows, and rounded pills.
    ══════════════════════════════════════════════════════════════════ */
 #page-domain-add {
-  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+  --dcx-field-border: rgba(255,255,255,0.85);
 }
 html[data-theme="dark"]  #page-domain-add .wizard-hero,
 html[data-theme="light"] #page-domain-add .wizard-hero,
