@@ -7504,10 +7504,9 @@ html[data-theme="light"] #page-logs {
 /* Project info hero (No project selected / Repo / Branch / Date chips) */
 #page-logs .logs-hero {
   background: transparent !important;
-  border: none !important;
-  border-bottom: 1px solid var(--dcx-row-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
-  padding: 0 0 16px !important;
+  padding: 18px !important;
 }
 #page-logs .logs-hero-title { color: var(--text) !important; }
 #page-logs .logs-chip {
@@ -7562,7 +7561,6 @@ html[data-theme="light"] #page-logs {
 #page-logs > div > .card {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--dcx-row-border) !important;
   border-radius: 0 !important;
 }
 #page-logs .input {
