@@ -5655,7 +5655,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=105" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=106" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5728,7 +5728,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=105&recover=' + token;
+    fresh.href = 'theme-override.css?v=106&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -15627,27 +15627,30 @@ async function runDatabaseDiff() {
 .db-card-body{padding:22px;}
 .db-card-header{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
 .db-engine-icon{
-  width:44px;height:44px;border-radius:12px;
+  width:44px;height:44px;border-radius:0;
   display:flex;align-items:center;justify-content:center;
   font-size:1.2rem;flex-shrink:0;font-weight:800;font-family:var(--font-mono);
+  border:1px solid var(--border);
+  background:transparent;
 }
-.db-engine-icon.mongodb  {background:rgba(0,237,100,.1);border:1px solid rgba(0,237,100,.2);color:#00ed64;}
-.db-engine-icon.postgres {background:rgba(51,103,145,.15);border:1px solid rgba(51,103,145,.3);color:#6f9fc9;}
-.db-engine-icon.mysql    {background:rgba(242,145,17,.1);border:1px solid rgba(242,145,17,.2);color:#f29111;}
-.db-engine-icon.redis    {background:rgba(220,56,44,.1);border:1px solid rgba(220,56,44,.2);color:#dc382c;}
+.db-engine-icon.mongodb  {border-color:rgba(0,237,100,.3);color:#00ed64;}
+.db-engine-icon.postgres {border-color:rgba(51,103,145,.4);color:#6f9fc9;}
+.db-engine-icon.mysql    {border-color:rgba(242,145,17,.3);color:#f29111;}
+.db-engine-icon.redis    {border-color:rgba(220,56,44,.3);color:#dc382c;}
 .db-card-name{font-weight:800;font-size:1.05rem;color:var(--text);margin-bottom:3px;}
 .db-card-engine{font-size:.75rem;color:var(--text-3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.06em;}
 .db-status-pill{
   display:inline-flex;align-items:center;gap:5px;
-  padding:4px 10px;border-radius:999px;font-size:.68rem;font-weight:700;
+  padding:4px 10px;border-radius:0;font-size:.68rem;font-weight:700;
   letter-spacing:.04em;text-transform:uppercase;
+  background:transparent;
 }
-.db-status-pill.running     {background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);color:#34d399;}
-.db-status-pill.stopped     {background:rgba(107,114,128,.1);border:1px solid rgba(107,114,128,.2);color:#9ca3af;}
-.db-status-pill.provisioning{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:#fbbf24;}
-.db-status-pill.error       {background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#ef4444;}
+.db-status-pill.running     {border:1px solid rgba(16,185,129,.4);color:#34d399;}
+.db-status-pill.stopped     {border:1px solid rgba(107,114,128,.3);color:#9ca3af;}
+.db-status-pill.provisioning{border:1px solid rgba(245,158,11,.4);color:#fbbf24;}
+.db-status-pill.error       {border:1px solid rgba(239,68,68,.4);color:#ef4444;}
 .db-status-dot{width:5px;height:5px;border-radius:50%;}
-.db-status-dot.running{background:#34d399;box-shadow:0 0 6px rgba(52,211,153,.6);}
+.db-status-dot.running{background:#34d399;}
 .db-status-dot.stopped{background:#6b7280;}
 .db-status-dot.provisioning{background:#fbbf24;animation:dbStatusPulse 1.2s ease-in-out infinite;}
 .db-status-dot.error{background:#ef4444;}
@@ -21055,11 +21058,11 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
           </a>
         </div>
       </div>
-      <div style="display:flex;gap:4px;margin-bottom:16px;background:rgba(255,255,255,0.04);border-radius:10px;padding:4px;">
-        <button onclick="dmSwitchTab('overview')" id="dmTab-overview" style="flex:1;padding:8px 4px;border-radius:8px;border:none;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all .2s;background:var(--primary);color:#fff;">Overview</button>
-        <button onclick="dmSwitchTab('dns')" id="dmTab-dns" style="flex:1;padding:8px 4px;border-radius:8px;border:none;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all .2s;background:transparent;color:var(--text-2);">DNS Guide</button>
-        <button onclick="dmSwitchTab('reassign')" id="dmTab-reassign" style="flex:1;padding:8px 4px;border-radius:8px;border:none;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all .2s;background:transparent;color:var(--text-2);">Reassign</button>
-        <button onclick="dmSwitchTab('danger')" id="dmTab-danger" style="flex:1;padding:8px 4px;border-radius:8px;border:none;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all .2s;background:transparent;color:var(--text-2);">Danger</button>
+      <div style="display:flex;gap:0;margin-bottom:16px;background:transparent;border-radius:0;padding:0;border-bottom:1px solid var(--border);">
+        <button onclick="dmSwitchTab('overview')" id="dmTab-overview" style="flex:1;padding:8px 4px;border-radius:0;border:none;border-bottom:2px solid var(--primary);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all .2s;background:transparent;color:var(--text);">Overview</button>
+        <button onclick="dmSwitchTab('dns')" id="dmTab-dns" style="flex:1;padding:8px 4px;border-radius:0;border:none;border-bottom:2px solid transparent;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all .2s;background:transparent;color:var(--text-2);">DNS Guide</button>
+        <button onclick="dmSwitchTab('reassign')" id="dmTab-reassign" style="flex:1;padding:8px 4px;border-radius:0;border:none;border-bottom:2px solid transparent;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all .2s;background:transparent;color:var(--text-2);">Reassign</button>
+        <button onclick="dmSwitchTab('danger')" id="dmTab-danger" style="flex:1;padding:8px 4px;border-radius:0;border:none;border-bottom:2px solid transparent;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all .2s;background:transparent;color:var(--text-2);">Danger</button>
       </div>
       <div id="dmPane-overview">
         <div class="card" style="margin-bottom:14px;">
@@ -30570,7 +30573,7 @@ function dmSwitchTab(tab) {
   ['overview','dns','reassign','danger'].forEach(t=>{
     const pane=document.getElementById('dmPane-'+t), btn=document.getElementById('dmTab-'+t);
     if(pane) pane.style.display=t===tab?'':'none';
-    if(btn){btn.style.background=t===tab?'var(--primary)':'transparent';btn.style.color=t===tab?'#fff':'var(--text-2)';}
+    if(btn){btn.style.background='transparent';btn.style.borderBottom=t===tab?'2px solid var(--primary)':'2px solid transparent';btn.style.color=t===tab?'var(--text)':'var(--text-2)';}
   });
 }
 
@@ -30585,7 +30588,7 @@ const _dmGuides = {
 function dmShowScenario(sc) {
   ['cloudflare','namecheap','godaddy','google','other'].forEach(s=>{
     const btn=document.getElementById('dmSc-'+s); if(!btn) return;
-    btn.style.background=s===sc?'rgba(16,185,129,0.12)':'transparent';
+    btn.style.background='transparent';
     btn.style.borderColor=s===sc?'var(--primary)':'var(--border)';
     btn.style.color=s===sc?'var(--primary)':'var(--text-2)';
   });
@@ -33407,9 +33410,9 @@ function dbEngineIconHtml(engine) {
   const c = dbEngineColor(engine);
   const svgFile = DB_ENGINE_SVG[engine];
   if (svgFile) {
-    return `<div class="db-engine-icon ${engine}" style="background:${c.bg};border:1px solid ${c.border};padding:9px;"><img src="/icons/${svgFile}.svg" alt="${engine}" style="width:100%;height:100%;object-fit:contain;"></div>`;
+    return `<div class="db-engine-icon ${engine}" style="padding:9px;"><img src="/icons/${svgFile}.svg" alt="${engine}" style="width:100%;height:100%;object-fit:contain;"></div>`;
   }
-  return `<div class="db-engine-icon ${engine}" style="background:${c.bg};border:1px solid ${c.border};color:${c.text};">${DB_ENGINE_ICONS[engine]||'DB'}</div>`;
+  return `<div class="db-engine-icon ${engine}" style="color:${c.text};">${DB_ENGINE_ICONS[engine]||'DB'}</div>`;
 }
 
 // ── Load from server ──────────────────────────────────────────────
@@ -34221,11 +34224,11 @@ function openDbDetail(id) {
       </div>
       <!-- quick stat pills -->
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">
-        <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(255,255,255,.04);font-size:.72rem;color:#94a3b8;">
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border:1px solid var(--border);border-radius:0;background:transparent;font-size:.72rem;color:var(--text-3);">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           Port ${db.internalPort||'—'}
         </div>
-        <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(255,255,255,.04);font-size:.72rem;color:#94a3b8;">
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border:1px solid var(--border);border-radius:0;background:transparent;font-size:.72rem;color:var(--text-3);">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"/></svg>
           ${db.memory||'512m'} RAM
           ${isAdminEmail() ? `
@@ -34233,7 +34236,7 @@ function openDbDetail(id) {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
           </button>` : ''}
         </div>
-        <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(255,255,255,.04);font-size:.72rem;color:#94a3b8;">
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border:1px solid var(--border);border-radius:0;background:transparent;font-size:.72rem;color:var(--text-3);">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           ${date}
         </div>
