@@ -9558,4 +9558,47 @@ html[data-theme="light"] #page-streaks {
   border-radius: 0 !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   INSTALL APP PROMPT — flat card, no dark fill/glow, sharp corners
+   ══════════════════════════════════════════════════════════════════ */
+.install-prompt {
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 -4px 24px rgba(0,0,0,.35) !important;
+}
+.install-prompt-logo {
+  border-radius: 0 !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  background: transparent !important;
+}
+.install-prompt-title { color: var(--text) !important; }
+.install-prompt-sub { color: var(--text-2) !important; opacity: 1 !important; }
+.install-prompt-actions .btn-ghost {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  color: var(--text-2) !important;
+}
+.install-prompt-actions .btn-ghost:hover {
+  border-color: var(--primary) !important;
+  color: var(--text) !important;
+}
+.install-prompt-actions .btn-primary {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SIDEBAR USER CHIP — ensure avatar always renders (gradient
+   placeholder fallback if GitHub avatar/initials fail to load),
+   flat square not rounded
+   ══════════════════════════════════════════════════════════════════ */
+.user-avatar {
+  border-radius: 3px !important;
+  background: color-mix(in srgb,var(--primary) 18%,transparent) !important;
+  color: var(--primary) !important;
+  border: 1px solid color-mix(in srgb,var(--primary) 32%,transparent) !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
