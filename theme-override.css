@@ -3198,13 +3198,13 @@ html[data-theme="light"] .hero-trust-item { color: #4b5563 !important; }
 /* Quick stats — flat inline row, no card boxes, just dividers */
 .acct-quickstats {
   display:grid; grid-template-columns:repeat(4,1fr);
-  border-top:2px solid var(--dcx-row-border, var(--border)); border-bottom:2px solid var(--dcx-row-border, var(--border));
+  border-top:1px solid var(--dcx-row-border, var(--border)); border-bottom:1px solid var(--dcx-row-border, var(--border));
   margin-bottom:22px;
 }
 .acct-qs-item {
   display:flex; align-items:center; gap:9px;
   padding:14px 10px; cursor:pointer;
-  border-right:2px solid var(--dcx-row-border, var(--border));
+  border-right:1px solid var(--dcx-row-border, var(--border));
   transition:background .15s;
 }
 .acct-qs-item:last-child { border-right:none; }
@@ -3214,7 +3214,7 @@ html[data-theme="light"] .hero-trust-item { color: #4b5563 !important; }
 .acct-qs-label { font-size:.66rem; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
 
 /* Section divider between flat blocks */
-.acct-divider { height:2px; background:var(--dcx-row-border, var(--border)); margin:26px 0; }
+.acct-divider { height:1px; background:var(--dcx-row-border, var(--border)); margin:26px 0; }
 
 /* Section block — no card, just spacing + typography on the page bg */
 .acct-section-title { font-size:1rem; font-weight:800; color:var(--text); }
@@ -3224,7 +3224,7 @@ html[data-theme="light"] .hero-trust-item { color: #4b5563 !important; }
 
 .acct-row {
   display:flex; align-items:center; justify-content:space-between; gap:14px;
-  padding:13px 0; border-bottom:2px solid var(--dcx-row-border, var(--border));
+  padding:13px 0; border-bottom:1px solid var(--dcx-row-border, var(--border));
 }
 .acct-row-label { font-size:.86rem; font-weight:600; color:var(--text); }
 .acct-row-hint { font-size:.74rem; color:var(--text-3); margin-top:2px; line-height:1.4; }
@@ -3262,7 +3262,7 @@ html[data-theme="light"] .hero-trust-item { color: #4b5563 !important; }
 @media(max-width:640px){
   .acct-quickstats { grid-template-columns:1fr 1fr; }
   .acct-qs-item:nth-child(2) { border-right:none; }
-  .acct-qs-item:nth-child(1), .acct-qs-item:nth-child(2) { border-bottom:2px solid var(--dcx-row-border, var(--border)); }
+  .acct-qs-item:nth-child(1), .acct-qs-item:nth-child(2) { border-bottom:1px solid var(--dcx-row-border, var(--border)); }
 }
 
 
@@ -3340,7 +3340,7 @@ html[data-theme="light"] #settingsTabReferrals [style*="border-radius"] {
 #settingsTabReferrals input[readonly] {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
 #settingsTabReferrals .btn-primary { border-radius: 0 !important; box-shadow: none !important; }
@@ -3357,7 +3357,7 @@ html[data-theme="light"] #settingsTabReferrals [style*="border-radius"] {
 #settingsTabGithub .input {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
 
@@ -3391,11 +3391,11 @@ html[data-theme="dark"]  #page-ssh-keys .card,
 html[data-theme="light"] #page-ssh-keys .card,
 #page-ssh-keys .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
-#page-ssh-keys .card-header { border-bottom: 2px solid var(--dcx-field-border) !important; }
+#page-ssh-keys .card-header { border-bottom: 1px solid var(--dcx-field-border) !important; }
 #page-ssh-keys .btn-primary { border-radius: 0 !important; box-shadow: none !important; }
 #page-ssh-keys .btn-ghost, #page-ssh-keys .btn-sm {
   border-radius: 0 !important;
@@ -3405,7 +3405,7 @@ html[data-theme="light"] #page-ssh-keys .card,
 /* SSH command block */
 #page-ssh-keys pre, #page-ssh-keys code {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 
@@ -3421,7 +3421,7 @@ html[data-theme="light"] #page-founders .card,
 html[data-theme="dark"]  #page-founders [style*="border-radius"],
 html[data-theme="light"] #page-founders [style*="border-radius"] {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -3659,10 +3659,10 @@ html[data-theme="light"] .jt-leaves-fall {
 .proj-stat-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-top:    2px solid var(--dcx-row-border, var(--border));
-  border-bottom: 2px solid var(--dcx-row-border, var(--border));
-  border-left:   2px solid var(--dcx-row-border, var(--border));
-  border-right:  2px solid var(--dcx-row-border, var(--border));
+  border-top:    1px solid var(--dcx-row-border, var(--border));
+  border-bottom: 1px solid var(--dcx-row-border, var(--border));
+  border-left:   1px solid var(--dcx-row-border, var(--border));
+  border-right:  1px solid var(--dcx-row-border, var(--border));
   margin-top: 18px;
 }
 .proj-stat {
@@ -3670,7 +3670,7 @@ html[data-theme="light"] .jt-leaves-fall {
   align-items: center;
   gap: 10px;
   padding: 14px 20px;
-  border-right: 2px solid var(--dcx-row-border, var(--border));
+  border-right: 1px solid var(--dcx-row-border, var(--border));
 }
 .proj-stat:last-child { border-right: none; }
 .proj-stat-value {
@@ -3777,7 +3777,7 @@ html[data-theme="light"] #page-projects .tree-project-node {
   top: auto !important;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-row-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
   border-radius: 0 !important;
   padding-bottom: 18px !important;
 }
@@ -3787,7 +3787,7 @@ html[data-theme="light"] #page-projects .tree-project-node {
 }
 @media(min-width: 640px) {
   .tree-project-node {
-    border-right: 2px solid var(--dcx-row-border, var(--border)) !important;
+    border-right: 1px solid var(--dcx-row-border, var(--border)) !important;
     padding-right: 18px !important;
   }
   .tree-project-node:hover {
@@ -3800,14 +3800,14 @@ html[data-theme="light"] #page-projects .tree-project-node {
 }
 @media(min-width: 1000px) {
   .tree-project-node {
-    border-right: 2px solid var(--dcx-row-border, var(--border)) !important;
+    border-right: 1px solid var(--dcx-row-border, var(--border)) !important;
     padding-right: 18px !important;
   }
   .tree-project-node:hover {
     border-right-color: var(--primary) !important;
   }
   .projects-grid > .tree-project-node:nth-child(2n) {
-    border-right: 2px solid var(--dcx-row-border, var(--border)) !important;
+    border-right: 1px solid var(--dcx-row-border, var(--border)) !important;
     padding-right: 18px !important;
   }
   .projects-grid > .tree-project-node:nth-child(3n) {
@@ -3963,10 +3963,10 @@ html[data-theme="light"] .tree-node-btn-danger:hover {
 .dep-stat-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-top:    2px solid var(--dcx-row-border, var(--border));
-  border-bottom: 2px solid var(--dcx-row-border, var(--border));
-  border-left:   2px solid var(--dcx-row-border, var(--border));
-  border-right:  2px solid var(--dcx-row-border, var(--border));
+  border-top:    1px solid var(--dcx-row-border, var(--border));
+  border-bottom: 1px solid var(--dcx-row-border, var(--border));
+  border-left:   1px solid var(--dcx-row-border, var(--border));
+  border-right:  1px solid var(--dcx-row-border, var(--border));
   margin-top: 16px;
 }
 .dep-stat {
@@ -3974,7 +3974,7 @@ html[data-theme="light"] .tree-node-btn-danger:hover {
   align-items: center;
   gap: 10px;
   padding: 14px 20px;
-  border-right: 2px solid var(--dcx-row-border, var(--border));
+  border-right: 1px solid var(--dcx-row-border, var(--border));
 }
 .dep-stat:last-child { border-right: none; }
 .dep-stat-value {
@@ -4331,7 +4331,7 @@ html[data-theme="light"] .cs-option.selected {
 #page-repos .repo-search-wrap .input {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-field-border, var(--border)) !important;
   color: var(--text) !important;
   border-radius: 0;
   padding-left: 30px !important;
@@ -4361,7 +4361,7 @@ html[data-theme="light"] .cs-option.selected {
    matching the dcx-* system used everywhere else on this rebuild. */
 #page-repos .repo-card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding: 18px !important;
@@ -4377,7 +4377,7 @@ html[data-theme="light"] .cs-option.selected {
 }
 #page-repos .repo-lang-emblem {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
 #page-repos .repo-title { color: var(--text) !important; }
@@ -4387,16 +4387,16 @@ html[data-theme="light"] .cs-option.selected {
 #page-repos .repo-meta-grid {
   display: flex !important;
   gap: 0 !important;
-  border-top: 2px solid var(--dcx-row-border, var(--border)) !important;
-  border-bottom: 2px solid var(--dcx-row-border, var(--border)) !important;
-  border-left: 2px solid var(--dcx-row-border, var(--border)) !important;
-  border-right: 2px solid var(--dcx-row-border, var(--border)) !important;
+  border-top: 1px solid var(--dcx-row-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
+  border-left: 1px solid var(--dcx-row-border, var(--border)) !important;
+  border-right: 1px solid var(--dcx-row-border, var(--border)) !important;
   margin: 14px 0 !important;
 }
 #page-repos .repo-metric {
   background: transparent !important;
   border: none !important;
-  border-right: 2px solid var(--dcx-row-border, var(--border)) !important;
+  border-right: 1px solid var(--dcx-row-border, var(--border)) !important;
   border-radius: 0 !important;
   flex: 1;
   padding: 9px 10px !important;
@@ -4443,7 +4443,7 @@ html[data-theme="light"] .cs-option.selected {
   #page-repos .repo-meta-grid { flex-wrap: wrap; }
   #page-repos .repo-metric {
     flex: 1 1 33.333%;
-    border-bottom: 2px solid var(--dcx-row-border, var(--border)) !important;
+    border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
   }
   #page-repos .repo-metric:nth-child(3n) { border-right: none !important; }
   #page-repos .repo-metric:nth-last-child(-n+3) { border-bottom: none !important; }
@@ -4473,7 +4473,7 @@ html[data-theme="light"] .cs-option.selected {
 }
 #page-code-upload .cu-dropzone-icon {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
 #page-code-upload .cu-dropzone-icon svg { color: var(--primary) !important; }
@@ -4481,7 +4481,7 @@ html[data-theme="light"] .cs-option.selected {
 #page-code-upload .cu-dropzone-sub { color: var(--text-2) !important; }
 #page-code-upload .cu-fmt-chip {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
   color: var(--text-3) !important;
 }
@@ -4510,7 +4510,7 @@ html[data-theme="light"] .cs-option.selected {
 }
 #page-code-upload .cu-file-card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
   padding: 18px !important;
   min-height: 0 !important;
@@ -4525,10 +4525,10 @@ html[data-theme="light"] .cs-option.selected {
   flex: 1;
   display: flex !important;
   gap: 0 !important;
-  border-top: 2px solid var(--dcx-row-border, var(--border)) !important;
-  border-bottom: 2px solid var(--dcx-row-border, var(--border)) !important;
-  border-left: 2px solid var(--dcx-row-border, var(--border)) !important;
-  border-right: 2px solid var(--dcx-row-border, var(--border)) !important;
+  border-top: 1px solid var(--dcx-row-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
+  border-left: 1px solid var(--dcx-row-border, var(--border)) !important;
+  border-right: 1px solid var(--dcx-row-border, var(--border)) !important;
   margin: 14px 0 !important;
 }
 #page-code-upload .cu-file-actions {
@@ -4538,14 +4538,14 @@ html[data-theme="light"] .cs-option.selected {
   width: 44px !important; height: 44px !important;
   border-radius: 0 !important;
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
 }
 #page-code-upload .cu-lang-badge img { width: 26px; height: 26px; }
 #page-code-upload .cu-file-name { color: var(--text) !important; }
 #page-code-upload .cu-meta-item {
   background: transparent !important;
   border: none !important;
-  border-right: 2px solid var(--dcx-row-border, var(--border)) !important;
+  border-right: 1px solid var(--dcx-row-border, var(--border)) !important;
   border-radius: 0 !important;
   flex: 1;
   padding: 9px 10px !important;
@@ -4576,7 +4576,7 @@ html[data-theme="light"] .cs-option.selected {
   border-radius: 0 !important;
   flex-shrink: 0;
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   color: var(--text-2) !important;
 }
 #page-code-upload .cu-btn-del:hover {
@@ -4597,7 +4597,7 @@ html[data-theme="light"] .cs-option.selected {
   #page-code-upload .cu-file-meta { flex-wrap: wrap; }
   #page-code-upload .cu-meta-item {
     flex: 1 1 50%;
-    border-bottom: 2px solid var(--dcx-row-border, var(--border)) !important;
+    border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
   }
   #page-code-upload .cu-meta-item:nth-child(2n) { border-right: none !important; }
   #page-code-upload .cu-meta-item:nth-last-child(-n+2) { border-bottom: none !important; }
@@ -4768,10 +4768,10 @@ html[data-theme="light"] #page-new-deploy {
 #page-domain-store .dcx-steps,
 #page-databases .dcx-steps {
   display: grid;
-  border-top:    2px solid var(--dcx-row-border, var(--border));
-  border-bottom: 2px solid var(--dcx-row-border, var(--border));
-  border-left:   2px solid var(--dcx-row-border, var(--border));
-  border-right:  2px solid var(--dcx-row-border, var(--border));
+  border-top:    1px solid var(--dcx-row-border, var(--border));
+  border-bottom: 1px solid var(--dcx-row-border, var(--border));
+  border-left:   1px solid var(--dcx-row-border, var(--border));
+  border-right:  1px solid var(--dcx-row-border, var(--border));
 }
 #page-webhooks .dcx-step-item,
 #page-domain-store .dcx-step-item,
@@ -4780,7 +4780,7 @@ html[data-theme="light"] #page-new-deploy {
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  border-right: 2px solid var(--dcx-row-border, var(--border));
+  border-right: 1px solid var(--dcx-row-border, var(--border));
   color: var(--text);
   font-size: .82rem;
   font-weight: 700;
@@ -4807,7 +4807,7 @@ html[data-theme="light"] #page-new-deploy {
   #page-domain-store .dcx-step-item,
   #page-databases .dcx-step-item {
     border-right: none;
-    border-bottom: 2px solid var(--dcx-row-border, var(--border));
+    border-bottom: 1px solid var(--dcx-row-border, var(--border));
   }
   #page-webhooks .dcx-step-item:last-child,
   #page-domain-store .dcx-step-item:last-child,
@@ -4818,7 +4818,7 @@ html[data-theme="light"] #page-new-deploy {
       spacing, separated from what follows by a thin bottom divider,
       the exact same technique Settings uses between its sections. ── */
 #page-new-deploy .dcx-group-box {
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 20px;
   margin-bottom: 20px;
@@ -4829,7 +4829,7 @@ html[data-theme="light"] #page-new-deploy {
 #page-new-deploy .dcx-group-box-collapse .dcx-collapse-summary { padding: 18px 20px; margin: 0; }
 #page-new-deploy .dcx-group-box-collapse .dcx-collapse-body { padding: 0 20px 20px; }
 #page-new-deploy .dcx-group-box-collapse[open] .dcx-collapse-summary {
-  border-bottom: 2px solid var(--dcx-row-border);
+  border-bottom: 1px solid var(--dcx-row-border);
   margin-bottom: 0;
 }
 #page-new-deploy .dcx-page-body { margin-top: 0; }
@@ -4838,14 +4838,14 @@ html[data-theme="light"] #page-new-deploy {
 #page-new-deploy .dcx-steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-bottom: 2px solid var(--dcx-row-border);
+  border-bottom: 1px solid var(--dcx-row-border);
 }
 #page-new-deploy .dcx-step-item {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 14px 20px;
-  border-right: 2px solid var(--dcx-row-border);
+  border-right: 1px solid var(--dcx-row-border);
   color: var(--text-2);
   font-size: .82rem;
   font-weight: 700;
@@ -4905,7 +4905,7 @@ html[data-theme="light"] #page-new-deploy {
   border-radius: 0;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   color: var(--text) !important;
   font-size: .92rem;
   padding: 0 2px;
@@ -4930,7 +4930,7 @@ html[data-theme="light"] #page-new-deploy {
   min-height: 46px;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   font-family: var(--font-mono);
   font-size: .8rem;
   color: var(--text-3);
@@ -4940,7 +4940,7 @@ html[data-theme="light"] #page-new-deploy {
 #page-new-deploy .custom-select-menu {
   border-radius: 0;
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   box-shadow: 0 18px 44px rgba(0,0,0,.4);
   max-height: 300px;
 }
@@ -4951,7 +4951,7 @@ html[data-theme="light"] #page-new-deploy {
       matching how Settings' "This device" / "Change Password" rows
       sit flat with only hairline separators. ── */
 #page-new-deploy .dcx-inline-box {
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 18px;
 }
@@ -4963,7 +4963,7 @@ html[data-theme="light"] #page-new-deploy {
   gap: 12px;
   margin-bottom: 18px;
 }
-#page-new-deploy .dcx-or-divider span { flex: 1; height: 2px; background: var(--dcx-row-border); }
+#page-new-deploy .dcx-or-divider span { flex: 1; height: 1px; background: var(--dcx-row-border); }
 #page-new-deploy .dcx-or-divider em {
   font-style: normal;
   font-size: .72rem;
@@ -4999,7 +4999,7 @@ html[data-theme="light"] #page-new-deploy {
 #page-new-deploy .dcx-file-ready {
   margin-top: 12px;
   padding: 14px 16px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -5014,7 +5014,7 @@ html[data-theme="light"] #page-new-deploy {
 #page-new-deploy .dcx-file-ready-remove:hover { color: var(--text); }
 #page-new-deploy .dcx-upload-badge {
   padding: 16px 18px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -5050,7 +5050,7 @@ html[data-theme="light"] #page-new-deploy {
 /* Env vars sub-panel — flat, thin top rule only, no box */
 #page-new-deploy .env-settings-panel {
   margin-top: 10px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 20px;
 }
@@ -5068,7 +5068,7 @@ html[data-theme="light"] #page-new-deploy {
       title + rows with thin dividers + button, matching everything
       else on the page. ── */
 #page-new-deploy .dcx-summary-panel {
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 22px;
 }
@@ -5085,7 +5085,7 @@ html[data-theme="light"] #page-new-deploy {
   justify-content: space-between;
   gap: 12px;
   padding: 11px 0;
-  border-bottom: 2px solid var(--dcx-row-border);
+  border-bottom: 1px solid var(--dcx-row-border);
   font-size: .82rem;
   color: var(--text-2);
 }
@@ -5104,7 +5104,7 @@ html[data-theme="light"] #page-new-deploy {
   display: none;
   margin-top: 10px;
   padding: 10px 12px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   color: var(--text);
   font-size: .8rem;
@@ -5155,7 +5155,7 @@ html[data-theme="light"] #page-new-deploy {
 #page-new-deploy .btn-ghost.btn-sm {
   border-radius: 0 !important;
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   color: var(--text-2) !important;
   box-shadow: none !important;
 }
@@ -5172,7 +5172,7 @@ html[data-theme="light"] #page-new-deploy {
 #page-new-deploy .btn-secondary {
   border-radius: 0 !important;
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   color: var(--text-2) !important;
 }
 
@@ -5191,7 +5191,7 @@ html[data-theme="light"] #page-new-deploy {
 }
 @media(max-width:640px){
   #page-new-deploy .dcx-steps { grid-template-columns: 1fr; }
-  #page-new-deploy .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 2px solid var(--dcx-row-border); }
+  #page-new-deploy .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); }
   #page-new-deploy .dcx-step-item:last-child { border-bottom: none; }
 }
 
@@ -5250,7 +5250,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
       spacing, separated from what follows by a thin bottom divider,
       the exact same technique Settings uses between its sections. ── */
 #page-dockerfile-deploy .dcx-group-box ,#page-worker-create .dcx-group-box {
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 20px;
   margin-bottom: 20px;
@@ -5261,7 +5261,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
 #page-dockerfile-deploy .dcx-group-box-collapse .dcx-collapse-summary ,#page-worker-create .dcx-group-box-collapse .dcx-collapse-summary { padding: 18px 20px; margin: 0; }
 #page-dockerfile-deploy .dcx-group-box-collapse .dcx-collapse-body ,#page-worker-create .dcx-group-box-collapse .dcx-collapse-body { padding: 0 20px 20px; }
 #page-dockerfile-deploy .dcx-group-box-collapse[open] .dcx-collapse-summary ,#page-worker-create .dcx-group-box-collapse[open] .dcx-collapse-summary {
-  border-bottom: 2px solid var(--dcx-row-border);
+  border-bottom: 1px solid var(--dcx-row-border);
   margin-bottom: 0;
 }
 #page-dockerfile-deploy .dcx-page-body ,#page-worker-create .dcx-page-body { margin-top: 0; }
@@ -5270,14 +5270,14 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
 #page-dockerfile-deploy .dcx-steps ,#page-worker-create .dcx-steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-bottom: 2px solid var(--dcx-row-border);
+  border-bottom: 1px solid var(--dcx-row-border);
 }
 #page-dockerfile-deploy .dcx-step-item ,#page-worker-create .dcx-step-item {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 14px 20px;
-  border-right: 2px solid var(--dcx-row-border);
+  border-right: 1px solid var(--dcx-row-border);
   color: var(--text-2);
   font-size: .82rem;
   font-weight: 700;
@@ -5334,7 +5334,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
   border-radius: 0;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   color: var(--text) !important;
   font-size: .92rem;
   padding: 0 2px;
@@ -5357,7 +5357,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
   min-height: 46px;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   font-family: var(--font-mono);
   font-size: .8rem;
   color: var(--text-3);
@@ -5366,7 +5366,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
 #page-dockerfile-deploy .custom-select-dropdown,#page-worker-create .custom-select-dropdown,#page-dockerfile-deploy .custom-select-menu ,#page-worker-create .custom-select-menu {
   border-radius: 0;
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   box-shadow: 0 18px 44px rgba(0,0,0,.4);
   max-height: 300px;
 }
@@ -5377,7 +5377,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
       matching how Settings' "This device" / "Change Password" rows
       sit flat with only hairline separators. ── */
 #page-dockerfile-deploy .dcx-inline-box ,#page-worker-create .dcx-inline-box {
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 18px;
 }
@@ -5389,7 +5389,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
   gap: 12px;
   margin-bottom: 18px;
 }
-#page-dockerfile-deploy .dcx-or-divider span ,#page-worker-create .dcx-or-divider span { flex: 1; height: 2px; background: var(--dcx-row-border); }
+#page-dockerfile-deploy .dcx-or-divider span ,#page-worker-create .dcx-or-divider span { flex: 1; height: 1px; background: var(--dcx-row-border); }
 #page-dockerfile-deploy .dcx-or-divider em ,#page-worker-create .dcx-or-divider em {
   font-style: normal;
   font-size: .72rem;
@@ -5424,7 +5424,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
 #page-dockerfile-deploy .dcx-file-ready ,#page-worker-create .dcx-file-ready {
   margin-top: 12px;
   padding: 14px 16px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -5439,7 +5439,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
 #page-dockerfile-deploy .dcx-file-ready-remove:hover ,#page-worker-create .dcx-file-ready-remove:hover { color: var(--text); }
 #page-dockerfile-deploy .dcx-upload-badge ,#page-worker-create .dcx-upload-badge {
   padding: 16px 18px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -5475,7 +5475,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
 /* Env vars sub-panel — flat, thin top rule only, no box */
 #page-dockerfile-deploy .env-settings-panel ,#page-worker-create .env-settings-panel {
   margin-top: 10px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 20px;
 }
@@ -5493,7 +5493,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
       title + rows with thin dividers + button, matching everything
       else on the page. ── */
 #page-dockerfile-deploy .dcx-summary-panel ,#page-worker-create .dcx-summary-panel {
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 22px;
 }
@@ -5510,7 +5510,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
   justify-content: space-between;
   gap: 12px;
   padding: 11px 0;
-  border-bottom: 2px solid var(--dcx-row-border);
+  border-bottom: 1px solid var(--dcx-row-border);
   font-size: .82rem;
   color: var(--text-2);
 }
@@ -5529,7 +5529,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
   display: none;
   margin-top: 10px;
   padding: 10px 12px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   color: var(--text);
   font-size: .8rem;
@@ -5553,7 +5553,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
 #page-worker-create .btn-ghost.btn-sm {
   border-radius: 0 !important;
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   color: var(--text-2) !important;
   box-shadow: none !important;
 }
@@ -5574,7 +5574,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
 #page-worker-create .btn-secondary {
   border-radius: 0 !important;
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   color: var(--text-2) !important;
 }
 
@@ -5621,7 +5621,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
 }
 @media(max-width:640px){
   #page-dockerfile-deploy .dcx-steps ,  #page-worker-create .dcx-steps { grid-template-columns: 1fr; }
-  #page-dockerfile-deploy .dcx-step-item ,  #page-worker-create .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 2px solid var(--dcx-row-border); }
+  #page-dockerfile-deploy .dcx-step-item ,  #page-worker-create .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); }
   #page-dockerfile-deploy .dcx-step-item:last-child ,  #page-worker-create .dcx-step-item:last-child { border-bottom: none; }
 }
 
@@ -5684,7 +5684,7 @@ html[data-theme="light"] #page-repos {
       spacing, separated from what follows by a thin bottom divider,
       the exact same technique Settings uses between its sections. ── */
 #page-repos .dcx-group-box {
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 20px;
   margin-bottom: 20px;
@@ -5695,7 +5695,7 @@ html[data-theme="light"] #page-repos {
 #page-repos .dcx-group-box-collapse .dcx-collapse-summary { padding: 18px 20px; margin: 0; }
 #page-repos .dcx-group-box-collapse .dcx-collapse-body { padding: 0 20px 20px; }
 #page-repos .dcx-group-box-collapse[open] .dcx-collapse-summary {
-  border-bottom: 2px solid var(--dcx-row-border);
+  border-bottom: 1px solid var(--dcx-row-border);
   margin-bottom: 0;
 }
 #page-repos .dcx-page-body { margin-top: 0; }
@@ -5704,17 +5704,17 @@ html[data-theme="light"] #page-repos {
 #page-repos .dcx-steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-top:    2px solid var(--dcx-row-border);
-  border-bottom: 2px solid var(--dcx-row-border);
-  border-left:   2px solid var(--dcx-row-border);
-  border-right:  2px solid var(--dcx-row-border);
+  border-top:    1px solid var(--dcx-row-border);
+  border-bottom: 1px solid var(--dcx-row-border);
+  border-left:   1px solid var(--dcx-row-border);
+  border-right:  1px solid var(--dcx-row-border);
 }
 #page-repos .dcx-step-item {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  border-right: 2px solid var(--dcx-row-border) !important;
+  border-right: 1px solid var(--dcx-row-border) !important;
   color: var(--text);
   font-size: .82rem;
   font-weight: 700;
@@ -5772,7 +5772,7 @@ html[data-theme="light"] #page-repos {
   border-radius: 0;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   color: var(--text) !important;
   font-size: .92rem;
   padding: 0 2px;
@@ -5795,7 +5795,7 @@ html[data-theme="light"] #page-repos {
   min-height: 46px;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   font-family: var(--font-mono);
   font-size: .8rem;
   color: var(--text-3);
@@ -5804,7 +5804,7 @@ html[data-theme="light"] #page-repos {
 #page-repos .custom-select-dropdown,#page-repos .custom-select-menu {
   border-radius: 0;
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   box-shadow: 0 18px 44px rgba(0,0,0,.4);
   max-height: 300px;
 }
@@ -5815,7 +5815,7 @@ html[data-theme="light"] #page-repos {
       matching how Settings' "This device" / "Change Password" rows
       sit flat with only hairline separators. ── */
 #page-repos .dcx-inline-box {
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 18px;
 }
@@ -5827,7 +5827,7 @@ html[data-theme="light"] #page-repos {
   gap: 12px;
   margin-bottom: 18px;
 }
-#page-repos .dcx-or-divider span { flex: 1; height: 2px; background: var(--dcx-row-border); }
+#page-repos .dcx-or-divider span { flex: 1; height: 1px; background: var(--dcx-row-border); }
 #page-repos .dcx-or-divider em {
   font-style: normal;
   font-size: .72rem;
@@ -5862,7 +5862,7 @@ html[data-theme="light"] #page-repos {
 #page-repos .dcx-file-ready {
   margin-top: 12px;
   padding: 14px 16px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -5877,7 +5877,7 @@ html[data-theme="light"] #page-repos {
 #page-repos .dcx-file-ready-remove:hover { color: var(--text); }
 #page-repos .dcx-upload-badge {
   padding: 16px 18px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -5913,7 +5913,7 @@ html[data-theme="light"] #page-repos {
 /* Env vars sub-panel — flat, thin top rule only, no box */
 #page-repos .env-settings-panel {
   margin-top: 10px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 20px;
 }
@@ -5931,7 +5931,7 @@ html[data-theme="light"] #page-repos {
       title + rows with thin dividers + button, matching everything
       else on the page. ── */
 #page-repos .dcx-summary-panel {
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 22px;
 }
@@ -5948,7 +5948,7 @@ html[data-theme="light"] #page-repos {
   justify-content: space-between;
   gap: 12px;
   padding: 11px 0;
-  border-bottom: 2px solid var(--dcx-row-border);
+  border-bottom: 1px solid var(--dcx-row-border);
   font-size: .82rem;
   color: var(--text-2);
 }
@@ -5967,7 +5967,7 @@ html[data-theme="light"] #page-repos {
   display: none;
   margin-top: 10px;
   padding: 10px 12px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   color: var(--text);
   font-size: .8rem;
@@ -6026,7 +6026,7 @@ html[data-theme="light"] #page-repos {
 }
 @media(max-width:640px){
   #page-repos .dcx-steps { grid-template-columns: 1fr; }
-  #page-repos .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 2px solid var(--dcx-row-border); }
+  #page-repos .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); }
   #page-repos .dcx-step-item:last-child { border-bottom: none; }
 }
 
@@ -6055,7 +6055,7 @@ html[data-theme="light"] #page-settings {
   border-radius: 0;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   color: var(--text) !important;
   font-size: .92rem;
   padding: 0 2px;
@@ -6077,11 +6077,11 @@ html[data-theme="light"] #page-settings {
 #page-settings .custom-select-menu {
   border-radius: 0;
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   box-shadow: 0 18px 44px rgba(0,0,0,.4);
 }
 #page-settings .cs-option {
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
   color: var(--text-2) !important;
 }
 #page-settings .cs-option:last-child { border-bottom: none !important; }
@@ -6181,7 +6181,7 @@ html[data-theme="light"] #page-code-upload {
       spacing, separated from what follows by a thin bottom divider,
       the exact same technique Settings uses between its sections. ── */
 #page-code-upload .dcx-group-box {
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 20px;
   margin-bottom: 20px;
@@ -6192,7 +6192,7 @@ html[data-theme="light"] #page-code-upload {
 #page-code-upload .dcx-group-box-collapse .dcx-collapse-summary { padding: 18px 20px; margin: 0; }
 #page-code-upload .dcx-group-box-collapse .dcx-collapse-body { padding: 0 20px 20px; }
 #page-code-upload .dcx-group-box-collapse[open] .dcx-collapse-summary {
-  border-bottom: 2px solid var(--dcx-row-border);
+  border-bottom: 1px solid var(--dcx-row-border);
   margin-bottom: 0;
 }
 #page-code-upload .dcx-page-body { margin-top: 0; }
@@ -6201,17 +6201,17 @@ html[data-theme="light"] #page-code-upload {
 #page-code-upload .dcx-steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-top:    2px solid var(--dcx-row-border);
-  border-bottom: 2px solid var(--dcx-row-border);
-  border-left:   2px solid var(--dcx-row-border);
-  border-right:  2px solid var(--dcx-row-border);
+  border-top:    1px solid var(--dcx-row-border);
+  border-bottom: 1px solid var(--dcx-row-border);
+  border-left:   1px solid var(--dcx-row-border);
+  border-right:  1px solid var(--dcx-row-border);
 }
 #page-code-upload .dcx-step-item {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  border-right: 2px solid var(--dcx-row-border) !important;
+  border-right: 1px solid var(--dcx-row-border) !important;
   color: var(--text);
   font-size: .82rem;
   font-weight: 700;
@@ -6269,7 +6269,7 @@ html[data-theme="light"] #page-code-upload {
   border-radius: 0;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   color: var(--text) !important;
   font-size: .92rem;
   padding: 0 2px;
@@ -6292,7 +6292,7 @@ html[data-theme="light"] #page-code-upload {
   min-height: 46px;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   font-family: var(--font-mono);
   font-size: .8rem;
   color: var(--text-3);
@@ -6301,7 +6301,7 @@ html[data-theme="light"] #page-code-upload {
 #page-code-upload .custom-select-dropdown,#page-code-upload .custom-select-menu {
   border-radius: 0;
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   box-shadow: 0 18px 44px rgba(0,0,0,.4);
   max-height: 300px;
 }
@@ -6312,7 +6312,7 @@ html[data-theme="light"] #page-code-upload {
       matching how Settings' "This device" / "Change Password" rows
       sit flat with only hairline separators. ── */
 #page-code-upload .dcx-inline-box {
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 18px;
 }
@@ -6324,7 +6324,7 @@ html[data-theme="light"] #page-code-upload {
   gap: 12px;
   margin-bottom: 18px;
 }
-#page-code-upload .dcx-or-divider span { flex: 1; height: 2px; background: var(--dcx-row-border); }
+#page-code-upload .dcx-or-divider span { flex: 1; height: 1px; background: var(--dcx-row-border); }
 #page-code-upload .dcx-or-divider em {
   font-style: normal;
   font-size: .72rem;
@@ -6359,7 +6359,7 @@ html[data-theme="light"] #page-code-upload {
 #page-code-upload .dcx-file-ready {
   margin-top: 12px;
   padding: 14px 16px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -6374,7 +6374,7 @@ html[data-theme="light"] #page-code-upload {
 #page-code-upload .dcx-file-ready-remove:hover { color: var(--text); }
 #page-code-upload .dcx-upload-badge {
   padding: 16px 18px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -6410,7 +6410,7 @@ html[data-theme="light"] #page-code-upload {
 /* Env vars sub-panel — flat, thin top rule only, no box */
 #page-code-upload .env-settings-panel {
   margin-top: 10px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 20px;
 }
@@ -6428,7 +6428,7 @@ html[data-theme="light"] #page-code-upload {
       title + rows with thin dividers + button, matching everything
       else on the page. ── */
 #page-code-upload .dcx-summary-panel {
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   padding: 22px;
 }
@@ -6445,7 +6445,7 @@ html[data-theme="light"] #page-code-upload {
   justify-content: space-between;
   gap: 12px;
   padding: 11px 0;
-  border-bottom: 2px solid var(--dcx-row-border);
+  border-bottom: 1px solid var(--dcx-row-border);
   font-size: .82rem;
   color: var(--text-2);
 }
@@ -6464,7 +6464,7 @@ html[data-theme="light"] #page-code-upload {
   display: none;
   margin-top: 10px;
   padding: 10px 12px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
   border-radius: 0;
   color: var(--text);
   font-size: .8rem;
@@ -6523,7 +6523,7 @@ html[data-theme="light"] #page-code-upload {
 }
 @media(max-width:640px){
   #page-code-upload .dcx-steps { grid-template-columns: 1fr; }
-  #page-code-upload .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 2px solid var(--dcx-row-border); }
+  #page-code-upload .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); }
   #page-code-upload .dcx-step-item:last-child { border-bottom: none; }
 }
 
@@ -6562,7 +6562,7 @@ html[data-theme="light"] #page-dashboard {
    border only, sharp corners, no fill */
 #page-dashboard .stat-card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-dashboard .stat-card:hover {
@@ -6575,7 +6575,7 @@ html[data-theme="light"] #page-dashboard {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1px;
-  border: 2px solid var(--dcx-field-border);
+  border: 1px solid var(--dcx-field-border);
 }
 #page-dashboard .dash-qa-btn {
   background: transparent !important;
@@ -6589,7 +6589,7 @@ html[data-theme="light"] #page-dashboard {
 
 /* Deploy-status confirmation box under Quick Actions */
 #page-dashboard #deployLaunchStatus {
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   background: transparent !important;
 }
@@ -6642,7 +6642,7 @@ html[data-theme="light"] #page-deployments {
    between cards instead of a single bottom-line-only list */
 #page-deployments .dep-card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   padding: 16px !important;
   margin-bottom: 12px;
@@ -6656,7 +6656,7 @@ html[data-theme="light"] #page-deployments {
 /* Logs button + icon buttons → flat, sharp corners, no fill */
 #page-deployments .dep-card-logs-btn {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
 }
@@ -6667,7 +6667,7 @@ html[data-theme="light"] #page-deployments {
 }
 #page-deployments .dep-card-icon-btn {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
 }
@@ -6686,7 +6686,7 @@ html[data-theme="light"] #page-deployments {
    selected-row wash, sharp corners throughout */
 #page-deployments #cs_deployFilterStatus .custom-select-trigger {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text) !important;
 }
@@ -6698,12 +6698,12 @@ html[data-theme="light"] #page-deployments {
 }
 #page-deployments #cs_deployFilterStatus .custom-select-dropdown {
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: 0 18px 44px rgba(0,0,0,.4) !important;
 }
 #page-deployments #cs_deployFilterStatus .cs-option {
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
   color: var(--text-2) !important;
 }
 #page-deployments #cs_deployFilterStatus .cs-option:last-child { border-bottom: none !important; }
@@ -6741,7 +6741,7 @@ html[data-theme="light"] #page-new-resource {
 #page-new-resource .resource-search-wrap .input {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   color: var(--text) !important;
   border-radius: 0 !important;
   padding-left: 30px !important;
@@ -6765,7 +6765,7 @@ html[data-theme="light"] #page-new-resource {
 /* Resource cards → flat, thin border, no gradient fill/glow/rainbow bar */
 #page-new-resource .resource-card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   transform: none !important;
@@ -6784,7 +6784,7 @@ html[data-theme="light"] #page-new-resource {
 }
 #page-new-resource .resource-icon {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -6796,7 +6796,7 @@ html[data-theme="light"] #page-new-resource {
 #page-new-resource .resource-card-desc { color: var(--text-2) !important; }
 #page-new-resource .resource-card-tags span {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text-3) !important;
 }
@@ -6810,7 +6810,7 @@ html[data-theme="light"] #page-new-resource {
    ══════════════════════════════════════════════════════════════════ */
 .db-create-form {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
 /* High-specificity ID-scoped rules to beat any global .input rules */
@@ -6934,7 +6934,7 @@ html[data-theme="light"] #page-projects {
 }
 #page-projects .tree-node-footer-branch {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 
@@ -6956,7 +6956,7 @@ html[data-theme="light"] #page-projects {
 #page-dashboard #metricProjectSelect,
 #page-dashboard #metricRangeSelect {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
   color: var(--text) !important;
 }
@@ -6965,13 +6965,13 @@ html[data-theme="light"] #page-projects {
 }
 #page-dashboard .network-metrics-grid .custom-select-menu {
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
   box-shadow: 0 18px 44px rgba(0,0,0,.4) !important;
 }
 #page-dashboard .network-metrics-grid .custom-select-item {
   color: var(--text-2) !important;
-  border-bottom: 2px solid var(--dcx-row-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
 }
 #page-dashboard .network-metrics-grid .custom-select-item:last-child { border-bottom: none !important; }
 #page-dashboard .network-metrics-grid .custom-select-item:hover {
@@ -6998,7 +6998,7 @@ html[data-theme="light"] #page-projects {
 }
 #page-dashboard .metric-usage-head {
   background: transparent !important;
-  border-bottom: 2px solid var(--dcx-row-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
   color: var(--text) !important;
 }
 #page-dashboard .metric-usage-row {
@@ -7037,7 +7037,7 @@ html[data-theme="light"] #page-databases {
 /* Stat tiles → flat, thin border, sharp corners */
 #page-databases .db-stat-card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-databases .db-stat-card:hover {
@@ -7050,7 +7050,7 @@ html[data-theme="light"] #page-databases {
 #page-databases .db-toolbar {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
   border-radius: 0 !important;
   padding: 0 0 16px !important;
 }
@@ -7059,7 +7059,7 @@ html[data-theme="light"] #page-databases {
 /* Engine/Status dropdowns → flat trigger, flat dark menu, no green glow */
 #page-databases .db-custom-dropdown-btn {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
   box-shadow: none !important;
@@ -7076,13 +7076,13 @@ html[data-theme="light"] #page-databases {
 }
 #page-databases .db-custom-dropdown-panel {
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: 0 18px 44px rgba(0,0,0,.4) !important;
 }
 #page-databases .db-dd-item {
   color: var(--text-2) !important;
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
 }
 #page-databases .db-dd-item:last-child { border-bottom: none !important; }
 #page-databases .db-dd-item:hover {
@@ -7095,7 +7095,7 @@ html[data-theme="light"] #page-databases {
    per-engine accent bar stays as a legitimate category color. */
 #page-databases .db-card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-databases .db-card:hover {
@@ -7109,13 +7109,13 @@ html[data-theme="light"] #page-databases {
 #page-databases .db-card-name { color: var(--text) !important; }
 #page-databases .db-meta-chip {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
 }
 #page-databases .db-conn-strip {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text-3) !important;
 }
@@ -7125,7 +7125,7 @@ html[data-theme="light"] #page-databases {
    a filled background */
 #page-databases .db-btn {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
 }
@@ -7439,7 +7439,7 @@ html[data-theme="light"] #sidebar {
    instead of a filled solid pill */
 #sidebar .nav-badge {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   color: var(--text-2) !important;
   border-radius: 0 !important;
 }
@@ -7508,14 +7508,14 @@ html[data-theme="light"] #page-logs {
 #page-logs .logs-hero {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
   border-radius: 0 !important;
   padding: 0 0 16px !important;
 }
 #page-logs .logs-hero-title { color: var(--text) !important; }
 #page-logs .logs-chip {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
 }
@@ -7525,7 +7525,7 @@ html[data-theme="light"] #page-logs {
 }
 #page-logs .manual-menu-list {
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: 0 18px 44px rgba(0,0,0,.4) !important;
 }
@@ -7546,17 +7546,17 @@ html[data-theme="light"] #page-logs {
    gradient fill or glow shadow. The rain animation inside stays. */
 #page-logs .matrix-terminal-card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
 #page-logs .matrix-topbar {
   background: transparent !important;
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
 }
 #page-logs .matrix-badge {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
 }
@@ -7565,7 +7565,7 @@ html[data-theme="light"] #page-logs {
 #page-logs > div > .card {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
   border-radius: 0 !important;
 }
 #page-logs .input {
@@ -7608,7 +7608,7 @@ html[data-theme="light"] #page-logs {
 }
 #page-logs .structured-log-count {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
 }
@@ -7616,7 +7616,7 @@ html[data-theme="light"] #page-logs {
 /* Build Progress panel — flat, sharp corners, no glow */
 #page-logs .quantum-build {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -7667,7 +7667,7 @@ html[data-theme="light"] #page-logs {
 #page-deployments .empty-icon,
 #page-dashboard .empty-icon {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
 #page-deployments .empty-icon svg,
@@ -7758,15 +7758,15 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
   display: grid !important;
   grid-template-columns: repeat(3, 1fr) !important;
   margin-top: 20px !important;
-  border-top: 2px solid var(--dcx-row-border) !important;
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-top: 1px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
 }
 #page-domains.pg-domains-v2 .dcx-step-item {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
   padding: 14px 16px !important;
-  border-right: 2px solid var(--dcx-row-border) !important;
+  border-right: 1px solid var(--dcx-row-border) !important;
   color: var(--text-2) !important;
   font-size: .82rem !important;
   font-weight: 700 !important;
@@ -7788,7 +7788,7 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
   #page-domains.pg-domains-v2 .dcx-steps { grid-template-columns: 1fr !important; }
   #page-domains.pg-domains-v2 .dcx-step-item {
     border-right: none !important;
-    border-bottom: 2px solid var(--dcx-row-border) !important;
+    border-bottom: 1px solid var(--dcx-row-border) !important;
   }
   #page-domains.pg-domains-v2 .dcx-step-item:last-child { border-bottom: none !important; }
 }
@@ -7798,20 +7798,20 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
 #page-domains.pg-domains-v2 #domainQuickStats {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
-  border-top:    2px solid var(--dcx-row-border) !important;
-  border-bottom: 2px solid var(--dcx-row-border) !important;
-  border-left:   2px solid var(--dcx-row-border) !important;
-  border-right:  2px solid var(--dcx-row-border) !important;
+  border-top:    1px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+  border-left:   1px solid var(--dcx-row-border) !important;
+  border-right:  1px solid var(--dcx-row-border) !important;
 }
 #page-domains.pg-domains-v2 .domain-mini-card { padding: 16px 12px !important; }
 #page-domains.pg-domains-v2 .domain-mini-card:first-child {
-  border-right: 2px solid var(--dcx-row-border) !important;
+  border-right: 1px solid var(--dcx-row-border) !important;
 }
 @media(max-width:540px){
   #page-domains.pg-domains-v2 #domainQuickStats { grid-template-columns: 1fr !important; }
   #page-domains.pg-domains-v2 .domain-mini-card:first-child {
     border-right: none !important;
-    border-bottom: 2px solid var(--dcx-row-border) !important;
+    border-bottom: 1px solid var(--dcx-row-border) !important;
   }
 }
 
@@ -7821,10 +7821,10 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
    overrides the left border to show the accent colour. ── */
 #page-domains.pg-domains-v2 .domain-section-card {
   margin-top: var(--dcx-section-gap) !important;
-  border-top:    2px solid var(--dcx-row-border) !important;
-  border-left:   2px solid var(--dcx-row-border) !important;
-  border-right:  2px solid var(--dcx-row-border) !important;
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-top:    1px solid var(--dcx-row-border) !important;
+  border-left:   1px solid var(--dcx-row-border) !important;
+  border-right:  1px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
   padding-left:  12px !important;
   padding-right: 12px !important;
   padding-bottom: 8px !important;
@@ -7833,7 +7833,7 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
 /* Section heading — green left-accent bar overrides section border-left */
 #page-domains.pg-domains-v2 .card-header {
   padding: 12px 0 12px 12px !important;
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
   border-left: 3px solid var(--primary) !important;
   margin-left: -12px !important;
   margin-right: -12px !important;
@@ -7862,7 +7862,7 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
 /* List rows — bottom divider only; last row drops it naturally
    because there's nothing after to separate from */
 #page-domains.pg-domains-v2 .list-row {
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
 }
 
 /* Verified / DNS Pending badges — outlined instead of filled tint */
@@ -7885,7 +7885,7 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
   border-color: var(--primary) !important;
 }
 #page-domains.pg-domains-v2 .btn-ghost {
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   color: var(--text-2) !important;
 }
 #page-domains.pg-domains-v2 .btn-ghost:hover {
@@ -7897,7 +7897,7 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
    with a green glow shadow, now flat theme tokens */
 #page-logs .terminal-hud span {
   color: var(--primary) !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
   background: var(--bg, #000) !important;
   box-shadow: none !important;
@@ -7949,7 +7949,7 @@ html[data-theme="light"] #page-domain-store {
 
 /* ── Group boxes — flat hairline border, sharp corners ── */
 #page-domain-store .dcx-group-box {
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   padding: 20px !important;
 }
@@ -7959,10 +7959,10 @@ html[data-theme="light"] #page-domain-store {
   border-collapse: collapse !important;
 }
 #page-domain-store table thead tr {
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
 }
 #page-domain-store table tbody tr {
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
   background: transparent !important;
 }
 #page-domain-store table tbody tr:last-child {
@@ -7984,7 +7984,7 @@ html[data-theme="light"] #page-domain-store {
   border-radius: 0 !important;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   box-shadow: none !important;
 }
 #page-domain-store .input:focus {
@@ -8046,7 +8046,7 @@ html[data-theme="light"] #page-domain-store {
 #page-dockerfile-deploy .cs-option,
 #page-worker-create .cs-option {
   padding: 12px 16px !important;
-  border-bottom: 2px solid var(--dcx-row-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
   color: var(--text-2) !important;
 }
 #page-new-deploy .cs-option:last-child,
@@ -8076,7 +8076,7 @@ html[data-theme="light"] #page-domain-store {
 /* Live Logs — Manual Deploy menu, had no row dividers at all */
 #page-logs .manual-menu-list {
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
   padding: 0 !important;
   box-shadow: 0 18px 40px rgba(0,0,0,.45) !important;
@@ -8084,7 +8084,7 @@ html[data-theme="light"] #page-domain-store {
 #page-logs .manual-item {
   padding: 12px 16px !important;
   border-radius: 0 !important;
-  border-bottom: 2px solid var(--dcx-row-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
   color: var(--text-2) !important;
 }
 #page-logs .manual-item:last-child {
@@ -8152,10 +8152,10 @@ html[data-theme="light"] #page-project-detail {
    Same hairline --dcx-field-border as the meta chips below, no color
    tint, sharp corners (matches the rest of the page's language). */
 #page-project-detail .btn-ghost {
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
 }
 #page-project-detail .btn-danger {
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   color: var(--text-2) !important;
 }
 #page-project-detail .btn-danger:hover {
@@ -8184,7 +8184,7 @@ html[data-theme="light"] #page-project-detail {
    thin hairline treatment used everywhere else on this page (and on
    New Deployment): 1px --dcx-field-border, sharp corners, no fill. */
 #page-project-detail .pd-meta .chip {
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   padding: 12px !important;
   color: var(--text-2) !important;
@@ -8201,7 +8201,7 @@ html[data-theme="light"] #page-project-detail {
    other page's .dcx-group-box rule (new-deploy/repos/code-upload/
    dockerfile-deploy) and no old .card rule can ever touch this. ── */
 #page-project-detail .dcx-group-box {
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   padding: 20px !important;
   margin-bottom: 20px !important;
@@ -8233,7 +8233,7 @@ html[data-theme="light"] #page-project-detail {
 
 /* Deployment History table — no card wrapper, just the table itself */
 #page-project-detail .pdx-table-wrap { overflow-x: auto; }
-#page-project-detail .pdx-table-wrap thead tr { border-bottom: 2px solid var(--dcx-row-border) !important; }
+#page-project-detail .pdx-table-wrap thead tr { border-bottom: 1px solid var(--dcx-row-border) !important; }
 #page-project-detail .pdx-table-wrap tbody tr { border-bottom: 1px solid var(--border) !important; }
 #page-project-detail .pdx-table-wrap th { color: var(--text-3) !important; text-align: left; padding: 8px 6px; font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
 #page-project-detail .pdx-table-wrap td { padding: 10px 6px; }
@@ -8242,7 +8242,7 @@ html[data-theme="light"] #page-project-detail {
    line weight as the rest of this page's dividers. The base rule
    lives in index.html (unscoped, no !important); this page-scoped
    !important override is what actually wins against the wildcard. */
-#page-project-detail .pdx-row { border-bottom: 2px solid var(--dcx-row-border) !important; }
+#page-project-detail .pdx-row { border-bottom: 1px solid var(--dcx-row-border) !important; }
 #page-project-detail .pdx-row:last-child { border-bottom: none !important; }
 
 /* Env Var / repo URL inputs — same borderless underline style as
@@ -8253,7 +8253,7 @@ html[data-theme="light"] #page-project-detail {
   border-radius: 0 !important;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   color: var(--text) !important;
   font-size: .85rem;
   padding: 0 2px;
@@ -8289,7 +8289,7 @@ html[data-theme="light"] #page-db-create {
 /* Hero — flat, no fill, sharp corners */
 #page-db-create .app-hero {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-db-create .app-hero-kicker { color: var(--primary) !important; }
@@ -8297,7 +8297,7 @@ html[data-theme="light"] #page-db-create {
 #page-db-create .app-hero-subtitle { color: var(--text-2) !important; }
 #page-db-create .hero-status-pill {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
 }
@@ -8319,7 +8319,7 @@ html[data-theme="light"] #page-db-create {
 /* Engine picker dropdown — flat trigger and menu, no green-tint fill */
 #page-db-create .db-engine-dropdown-trigger {
   border-radius: 0 !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   background: transparent !important;
 }
 #page-db-create .db-engine-dropdown-trigger:hover,
@@ -8329,12 +8329,12 @@ html[data-theme="light"] #page-db-create {
 }
 #page-db-create .db-engine-dropdown-menu {
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-top: none !important;
   border-radius: 0 !important;
 }
 #page-db-create .db-engine-menu-item {
-  border-top: 2px solid var(--dcx-row-border) !important;
+  border-top: 1px solid var(--dcx-row-border) !important;
   background: transparent !important;
 }
 #page-db-create .db-engine-menu-item:hover,
@@ -8351,7 +8351,7 @@ html[data-theme="light"] #page-db-create {
 /* Configuration / Advanced form cards — flat, no fill */
 #page-db-create .db-create-form {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-db-create .db-create-divider {
@@ -8394,7 +8394,7 @@ html[data-theme="light"] #page-db-create {
   border-radius: 0 !important;
 }
 #page-db-create .cdd-item {
-  border-top: 2px solid var(--dcx-row-border) !important;
+  border-top: 1px solid var(--dcx-row-border) !important;
   background: transparent !important;
 }
 #page-db-create .cdd-item:hover,
@@ -8473,7 +8473,7 @@ html[data-theme="light"] #page-env-manager .input,
 #page-env-manager .input {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   min-height: unset !important;
@@ -8490,7 +8490,7 @@ html[data-theme="light"] #page-env-manager .custom-select-trigger,
 #page-env-manager .custom-select-trigger {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   min-height: unset !important;
 }
@@ -8503,11 +8503,11 @@ html[data-theme="light"] #page-env-manager .card,
 }
 #page-env-manager .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-env-manager .card-header {
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
 }
 #page-env-manager .card-title { color: var(--text) !important; }
 #page-env-manager .card-subtitle { color: var(--text-2) !important; }
@@ -8515,7 +8515,7 @@ html[data-theme="light"] #page-env-manager .card,
 #page-env-manager textarea.input {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding-left: 2px !important;
@@ -8535,7 +8535,7 @@ html[data-theme="light"] #page-env-manager .card,
 #page-env-manager .custom-select-trigger {
   border-radius: 0 !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   background: transparent !important;
   padding-left: 2px !important;
 }
@@ -8545,11 +8545,11 @@ html[data-theme="light"] #page-env-manager .card,
 }
 #page-env-manager .custom-select-dropdown {
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-env-manager .cs-option {
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
   color: var(--text-2) !important;
 }
 #page-env-manager .cs-option:last-child { border-bottom: none !important; }
@@ -8603,11 +8603,11 @@ html[data-theme="light"] #page-analytics {
 }
 #page-analytics .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-analytics .card-header {
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
 }
 #page-analytics .card-title { color: var(--text) !important; }
 #page-analytics .card-subtitle { color: var(--text-2) !important; }
@@ -8628,11 +8628,11 @@ html[data-theme="light"] #page-webhooks {
 }
 #page-webhooks .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-webhooks .card-header {
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
 }
 #page-webhooks .card-title { color: var(--text) !important; }
 #page-webhooks .card-subtitle { color: var(--text-2) !important; }
@@ -8643,7 +8643,7 @@ html[data-theme="light"] #page-webhooks {
   border-radius: 0 !important;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
   padding: 14px 0 !important;
 }
 #page-webhooks .webhook-event-card:last-child {
@@ -8668,22 +8668,22 @@ html[data-theme="light"] #page-webhooks {
 #addWebhookModal .modal {
   border-radius: 0 !important;
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   box-shadow: none !important;
 }
 #addWebhookModal .modal-header {
-  border-bottom: 2px solid var(--dcx-row-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
 }
 #addWebhookModal .modal-icon {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
 #addWebhookModal .modal-icon svg { color: var(--primary) !important; }
 #addWebhookModal .modal-title { color: var(--text) !important; }
 #addWebhookModal .modal-subtitle { color: var(--text-2) !important; }
 #addWebhookModal .modal-footer {
-  border-top: 2px solid var(--dcx-row-border, var(--border)) !important;
+  border-top: 1px solid var(--dcx-row-border, var(--border)) !important;
 }
 #addWebhookModal .btn-primary {
   border-radius: 0 !important;
@@ -8718,18 +8718,18 @@ html[data-theme="light"] #page-webhooks {
 /* Cards */
 #page-domain-manage .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-domain-manage .card-header {
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
 }
 #page-domain-manage .card-title { color: var(--text) !important; }
 #page-domain-manage .card-subtitle { color: var(--text-2) !important; }
 /* Tab bar — sharp flat, active = green fill */
 #page-domain-manage [style*="rgba(255,255,255,0.04)"] {
   background: transparent !important;
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
   padding: 0 !important;
   gap: 0 !important;
 }
@@ -8796,7 +8796,7 @@ html[data-theme="light"] #page-webhooks {
 #page-domain-manage [style*="Select a project"] {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -8804,7 +8804,7 @@ html[data-theme="light"] #page-webhooks {
 #page-domain-manage [style*="position:absolute"],
 #page-domain-manage [style*="position: absolute"] {
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: 0 12px 32px rgba(0,0,0,.45) !important;
 }
@@ -8812,7 +8812,7 @@ html[data-theme="light"] #page-webhooks {
 #page-domain-manage button[onclick*="dmRunDiag"],
 #page-domain-manage .btn:not(.btn-primary):not(.btn-ghost) {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text) !important;
 }
@@ -8852,7 +8852,7 @@ html[data-theme="light"] #page-webhooks {
 #page-domain-manage .btn-sm {
   border-radius: 0 !important;
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   color: var(--text-2) !important;
 }
 #page-domain-manage .btn-ghost:hover {
@@ -8864,7 +8864,7 @@ html[data-theme="light"] #page-webhooks {
   border-radius: 0 !important;
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -8894,7 +8894,7 @@ html[data-theme="light"] #page-webhooks {
 }
 /* Stat mini-grid cells */
 #page-domain-cpanel div[style*="border:1px solid rgba(255,255,255,0.06)"] {
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   background: transparent !important;
 }
@@ -8918,7 +8918,7 @@ html[data-theme="light"] #page-webhooks {
 #page-domain-cpanel select {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text) !important;
   padding: 9px 2px !important;
@@ -8934,7 +8934,7 @@ html[data-theme="light"] #page-webhooks {
 #page-domain-cpanel #dcpDomainSelectBtn {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   padding-left: 2px !important;
 }
@@ -8959,7 +8959,7 @@ html[data-theme="light"] #page-webhooks {
 #page-domain-cpanel .dcp-ns-input-row input {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 /* DNS record type badge → flat teal chip */
@@ -8998,7 +8998,7 @@ html[data-theme="light"] #page-webhooks {
 #page-domain-cpanel .btn-sm {
   border-radius: 0 !important;
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   color: var(--text-2) !important;
 }
 #page-domain-cpanel .btn-ghost:hover {
@@ -9011,7 +9011,7 @@ html[data-theme="light"] #page-webhooks {
 #page-domain-cpanel .cpanel-tabs {
   background: transparent !important;
   border-radius: 0 !important;
-  border-bottom: 2px solid var(--dcx-row-border) !important;
+  border-bottom: 1px solid var(--dcx-row-border) !important;
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -9104,7 +9104,7 @@ html[data-theme="light"] #page-db-migration .mig-select,
 #page-db-migration .mig-select {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   color: var(--text) !important;
@@ -9153,7 +9153,7 @@ html[data-theme="light"] #page-db-migration .mig-card,
 /* Job log terminal */
 #page-db-migration .mig-job-logs {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--primary) !important;
 }
@@ -9211,7 +9211,7 @@ html[data-theme="light"] #page-db-diff .diff-input,
 #page-db-diff .diff-input {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   color: var(--text) !important;
@@ -9231,7 +9231,7 @@ html[data-theme="light"] #page-db-diff .diff-input:focus,
 #page-db-diff .btn-ghost { border-radius: 0 !important; background: transparent !important; border-color: var(--dcx-field-border) !important; }
 /* Results table */
 #page-db-diff table { border-collapse: collapse !important; }
-#page-db-diff thead tr { border-bottom: 2px solid var(--dcx-field-border) !important; }
+#page-db-diff thead tr { border-bottom: 1px solid var(--dcx-field-border) !important; }
 #page-db-diff tbody tr { border-bottom: 1px solid color-mix(in srgb,var(--border) 50%,transparent) !important; background: transparent !important; }
 #page-db-diff td, #page-db-diff th { background: transparent !important; }
 
@@ -9252,14 +9252,14 @@ html[data-theme="light"] #page-cronjobs {
 #page-cronjobs .card,
 #page-cron-create .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
 /* Job list items and execution log rows */
 #page-cronjobs #cronJobsList > div,
 #page-cronjobs #cronExecutionLog > div {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -9269,11 +9269,11 @@ html[data-theme="light"] #page-cronjobs {
 #page-cronjobs .badge-error   { background: color-mix(in srgb,#f87171 10%,transparent) !important; border: 1px solid color-mix(in srgb,#f87171 28%,transparent) !important; color: #f87171 !important; border-radius: 3px !important; }
 #page-cronjobs .btn-primary { border-radius: 0 !important; }
 #page-cronjobs .btn-ghost, #page-cronjobs .btn-sm { border-radius: 0 !important; background: transparent !important; border-color: var(--dcx-field-border) !important; }
-#page-cronjobs .input { background: transparent !important; border: none !important; border-bottom: 2px solid var(--dcx-field-border) !important; border-radius: 0 !important; box-shadow: none !important; }
+#page-cronjobs .input { background: transparent !important; border: none !important; border-bottom: 1px solid var(--dcx-field-border) !important; border-radius: 0 !important; box-shadow: none !important; }
 #page-cronjobs .input:focus { border-bottom: 2px solid var(--primary) !important; box-shadow: 0 1px 0 0 var(--primary) !important; }
 #page-cronjobs .card-header,
 #page-cron-create .card-header {
-  border-bottom: 2px solid var(--dcx-row-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
 }
 #page-cronjobs .card-title,
 #page-cron-create .card-title { color: var(--text) !important; }
@@ -9321,11 +9321,11 @@ html[data-theme="dark"]  #page-analytics .card,
 html[data-theme="light"] #page-analytics .card,
 #page-analytics .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
-#page-analytics .card-header { border-bottom: 2px solid var(--dcx-row-border) !important; }
+#page-analytics .card-header { border-bottom: 1px solid var(--dcx-row-border) !important; }
 #page-analytics .card-title  { color: var(--text) !important; }
 /* Hero (page-header) */
 #page-analytics .page-header {
@@ -9364,7 +9364,7 @@ html[data-theme="light"] #page-usage [style*="linear-gradient"],
 #page-usage [style*="linear-gradient"] {
   background: transparent !important;
   background-image: none !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-left: 3px solid var(--primary) !important;
   border-radius: 0 !important;
 }
@@ -9381,11 +9381,11 @@ html[data-theme="dark"]  #page-usage .card,
 html[data-theme="light"] #page-usage .card,
 #page-usage .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
-#page-usage .card-header { border-bottom: 2px solid var(--dcx-row-border) !important; }
+#page-usage .card-header { border-bottom: 1px solid var(--dcx-row-border) !important; }
 #page-usage .card-title  { color: var(--text) !important; }
 /* Progress bars — flat, no radius */
 #page-usage [style*="border-radius:3px"] {
@@ -9459,11 +9459,11 @@ html[data-theme="dark"]  #page-realtime-api .card,
 html[data-theme="light"] #page-realtime-api .card,
 #page-realtime-api .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
-#page-realtime-api .card-header { border-bottom: 2px solid var(--dcx-row-border) !important; }
+#page-realtime-api .card-header { border-bottom: 1px solid var(--dcx-row-border) !important; }
 /* Prompt textarea */
 #page-realtime-api .input,
 #page-realtime-api textarea {
@@ -9475,7 +9475,7 @@ html[data-theme="light"] #page-realtime-api .card,
 #page-realtime-api .jt-ai-option {
   border-radius: 0 !important;
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
 }
 #page-realtime-api .jt-ai-option.active,
 #page-realtime-api .jt-ai-option.selected {
@@ -9520,7 +9520,7 @@ html[data-theme="light"] #page-streaks {
 }
 #page-streaks .streak-command-hero {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -9545,7 +9545,7 @@ html[data-theme="light"] #page-streaks {
 }
 #page-streaks .streak-metric-card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-streaks .streak-metric-card.primary {
@@ -9564,7 +9564,7 @@ html[data-theme="light"] #page-streaks {
 }
 #page-streaks .streak-intel-card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-streaks .streak-intel-card span { color: var(--primary) !important; }
@@ -9721,7 +9721,7 @@ html[data-theme="light"] #landing-view .snippet-card,
 }
 .install-prompt-logo {
   border-radius: 0 !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   background: transparent !important;
 }
 .install-prompt-title { color: var(--text) !important; }
@@ -9729,7 +9729,7 @@ html[data-theme="light"] #landing-view .snippet-card,
 .install-prompt-actions .btn-ghost {
   border-radius: 0 !important;
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   color: var(--text-2) !important;
 }
 .install-prompt-actions .btn-ghost:hover {
@@ -9764,11 +9764,11 @@ html[data-theme="dark"]  #page-secrets .card,
 html[data-theme="light"] #page-secrets .card,
 #page-secrets .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
-#page-secrets .card-header { border-bottom: 2px solid var(--dcx-row-border) !important; }
+#page-secrets .card-header { border-bottom: 1px solid var(--dcx-row-border) !important; }
 #page-secrets .card-title  { color: var(--text) !important; }
 #page-secrets .app-hero {
   background: transparent !important;
@@ -9828,11 +9828,11 @@ html[data-theme="dark"]  #page-db-schema .card,
 html[data-theme="light"] #page-db-schema .card,
 #page-db-schema .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
-#page-db-schema .card-header { border-bottom: 2px solid var(--dcx-row-border) !important; }
+#page-db-schema .card-header { border-bottom: 1px solid var(--dcx-row-border) !important; }
 /* DB type badge (MDB / M avatar) */
 #page-db-schema [style*="border-radius:50%"],
 #page-db-schema [style*="border-radius: 50%"] {
@@ -9891,7 +9891,7 @@ html[data-theme="light"] #page-db-sdk .hero-status-pill,
 #page-db-sdk .custom-select-trigger {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 /* Code block cards */
@@ -9899,7 +9899,7 @@ html[data-theme="dark"]  #page-db-sdk .card,
 html[data-theme="light"] #page-db-sdk .card,
 #page-db-sdk .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -9934,11 +9934,11 @@ html[data-theme="dark"]  #page-team .card,
 html[data-theme="light"] #page-team .card,
 #page-team .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
-#page-team .card-header { border-bottom: 2px solid var(--dcx-row-border) !important; }
+#page-team .card-header { border-bottom: 1px solid var(--dcx-row-border) !important; }
 #page-team .card-title  { color: var(--text) !important; }
 #page-team .card-subtitle { color: var(--text-2) !important; }
 /* Member rows */
@@ -9977,7 +9977,7 @@ html[data-theme="light"] #page-team [id="teamOwnerAvatar"],
 #inviteModal .input {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #inviteModal .input:focus {
@@ -10038,10 +10038,10 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 /* Brighten the section/row divider lines on both pages — the
    original --dcx-row-border mix was too subtle to see clearly */
 #page-db-migration {
-  --dcx-row-border: rgba(255,255,255,0.65) !important;
+  --dcx-row-border: rgba(255,255,255,0.9) !important;
 }
 #page-db-diff {
-  --dcx-row-border: rgba(255,255,255,0.65) !important;
+  --dcx-row-border: rgba(255,255,255,0.9) !important;
 }
 /* mig-source-opts grid divider + diff-source-opts grid divider */
 #page-db-migration .mig-source-opt,
@@ -10128,7 +10128,7 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
    ══════════════════════════════════════════════════════════════════ */
 #lfAiVersionDrop .jt-ai-trigger {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -10146,7 +10146,7 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 #lfAiVersionDrop.open .jt-ai-chevron { color: var(--primary) !important; }
 #lfAiVersionMenu {
   background: var(--bg, #000) !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
   box-shadow: 0 16px 40px rgba(0,0,0,.5) !important;
 }
@@ -10180,13 +10180,13 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
    ══════════════════════════════════════════════════════════════════ */
 .sdk-env-panel {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
 .sdk-env-header {
   background: transparent !important;
-  border-bottom: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border-bottom: 1px solid var(--dcx-field-border, var(--border)) !important;
 }
 .sdk-env-header-icon {
   border-radius: 3px !important;
@@ -10209,7 +10209,7 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 }
 .sdk-env-row {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
 .sdk-env-row:hover {
@@ -10219,12 +10219,12 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 .sdk-env-key {
   color: var(--primary) !important;
   background: transparent !important;
-  border-right: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border-right: 1px solid var(--dcx-field-border, var(--border)) !important;
 }
 .sdk-env-val { color: var(--text-3) !important; }
 .sdk-env-val.has-value { color: var(--text-2) !important; }
 .sdk-env-copy {
-  border-left: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border-left: 1px solid var(--dcx-field-border, var(--border)) !important;
   color: var(--text-3) !important;
 }
 .sdk-env-copy:hover { color: var(--primary) !important; background: color-mix(in srgb,var(--primary) 6%,transparent) !important; }
@@ -10237,10 +10237,10 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
    ══════════════════════════════════════════════════════════════════ */
 .schema-explorer-block {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
-.schema-explorer-head { border-bottom: 2px solid var(--dcx-field-border, var(--border)) !important; }
+.schema-explorer-head { border-bottom: 1px solid var(--dcx-field-border, var(--border)) !important; }
 .schema-engine-badge {
   border-radius: 3px !important;
   background: color-mix(in srgb,var(--primary) 12%,transparent) !important;
@@ -10249,13 +10249,13 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 }
 .schema-tip-card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
 .schema-tip-label { color: var(--primary) !important; }
 .schema-tip-code {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
 .schema-tip-copy {
@@ -10271,10 +10271,10 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 }
 .schema-conn-card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
-.schema-conn-head { border-bottom: 2px solid var(--dcx-field-border, var(--border)) !important; }
+.schema-conn-head { border-bottom: 1px solid var(--dcx-field-border, var(--border)) !important; }
 .schema-conn-row { border-bottom-color: color-mix(in srgb,var(--text-3) 18%,transparent) !important; }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -10309,7 +10309,7 @@ html[data-theme="dark"]  #page-db-detail .db-detail-card,
 html[data-theme="light"] #page-db-detail .db-detail-card,
 #page-db-detail .db-detail-card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-db-detail .db-detail-card-title { color: var(--text) !important; }
@@ -10319,7 +10319,7 @@ html[data-theme="light"] #page-db-detail .db-detail-card,
 /* Connection string code block */
 #page-db-detail .db-code-block {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 /* Action buttons (Stop/Restart/View Logs/Link to Project/Delete) */
@@ -10327,7 +10327,7 @@ html[data-theme="dark"]  #page-db-detail .db-btn,
 html[data-theme="light"] #page-db-detail .db-btn,
 #page-db-detail .db-btn {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
 }
@@ -10391,11 +10391,11 @@ html[data-theme="dark"]  #page-domain-add .card,
 html[data-theme="light"] #page-domain-add .card,
 #page-domain-add .card {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
-#page-domain-add .card-header { border-bottom: 2px solid var(--dcx-field-border) !important; }
+#page-domain-add .card-header { border-bottom: 1px solid var(--dcx-field-border) !important; }
 /* Domain name / project inputs — kill the dark #000 filled box */
 html[data-theme="dark"]  #page-domain-add .input,
 html[data-theme="light"] #page-domain-add .input,
@@ -10403,7 +10403,7 @@ html[data-theme="light"] #page-domain-add .input,
 #page-domain-add select {
   background: transparent !important;
   border: none !important;
-  border-bottom: 2px solid var(--dcx-field-border) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 #page-domain-add .input:focus {
@@ -10420,14 +10420,14 @@ html[data-theme="light"] #page-domain-add .input,
 }
 /* CNAME table */
 #page-domain-add table { border-collapse: collapse !important; }
-#page-domain-add thead tr { border-bottom: 2px solid var(--dcx-field-border) !important; }
+#page-domain-add thead tr { border-bottom: 1px solid var(--dcx-field-border) !important; }
 #page-domain-add td, #page-domain-add th { background: transparent !important; }
 /* Green tip boxes ('Just bought a fresh domain?', 'SSL is automatic') —
    were filled rgba(16,185,129,.06-.08) boxes, same AI-look pattern
    fixed elsewhere. Flatten to left-accent hairline. */
 #page-domain-add div[style*="rgba(16,185,129"] {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-left: 3px solid color-mix(in srgb,#2dd4bf 50%,transparent) !important;
   border-radius: 0 !important;
 }
@@ -10449,7 +10449,7 @@ html[data-theme="light"] #page-domain-add .input,
   padding: 8px 14px;
   border-radius: 0 !important;
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border, var(--border)) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
   color: var(--text-2) !important;
   font-size: .82rem;
   font-weight: 600;
@@ -10469,19 +10469,19 @@ html[data-theme="light"] #page-domain-add .input,
 /* Kill the blue-black #00090f fill — sit on page background */
 #page-logs .terminal-wrap {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-top: none !important;
 }
 #page-logs .terminal-topbar {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
 }
 
 /* term-tag LIVE badge — flat, no green fill */
 #page-logs .term-tag {
   background: transparent !important;
-  border: 2px solid var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   color: var(--primary) !important;
 }
@@ -10515,7 +10515,7 @@ html[data-theme="light"] #page-domain-add .input,
    Straight solid white at fixed opacity, no color-mix, no green tint:
    matches the crisp, high-contrast hairline look of Render's dashboard. */
 :root {
-  --dcx-field-border: rgba(255,255,255,0.55) !important;
-  --dcx-row-border: rgba(255,255,255,0.65) !important;
+  --dcx-field-border: rgba(255,255,255,0.85) !important;
+  --dcx-row-border: rgba(255,255,255,0.9) !important;
 }
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
