@@ -5655,7 +5655,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=113" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=114" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5728,7 +5728,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=113&recover=' + token;
+    fresh.href = 'theme-override.css?v=114&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -15977,13 +15977,14 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 .db-editor-sidebar-header{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:.85rem;color:var(--text);}
 .db-editor-db-list{flex:1;overflow-y:auto;padding:8px;}
 .db-editor-db-item{
-  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
-  cursor:pointer;margin-bottom:2px;transition:background .15s;
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:0;
+  border-left:2px solid transparent;
+  cursor:pointer;margin-bottom:0;transition:border-color .15s,background .15s;
 }
-.db-editor-db-item:hover{background:rgba(16,185,129,.06);}
-.db-editor-db-item.active{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.22);}
+.db-editor-db-item:hover{background:transparent;border-left-color:var(--border);}
+.db-editor-db-item.active{background:transparent;border:none;border-left:2px solid var(--primary);}
 .db-editor-db-icon{font-size:.85rem;font-weight:800;font-family:var(--font-mono);
-  width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  width:30px;height:30px;border-radius:0;border:1px solid var(--border);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .db-editor-main{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;}
 .db-editor-toolbar{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
 .db-editor-query-box{
@@ -18933,33 +18934,18 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       .sdk-hero-banner {
         position: relative;
         overflow: hidden;
-        border-radius: 22px;
+        border-radius: 0;
         margin-bottom: 20px;
         padding: 28px 28px 24px;
-        background: #111;
-        border: 1px solid rgba(255,255,255,.08);
+        background: transparent;
+        border: 1px solid var(--border);
         display: grid;
         grid-template-columns: minmax(0,1.5fr) auto;
         gap: 18px;
         align-items: center;
       }
-      .sdk-hero-banner::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background-image: radial-gradient(rgba(16,185,129,.045) 1px, transparent 1px);
-        background-size: 24px 24px;
-        pointer-events: none;
-      }
-      .sdk-hero-banner::after {
-        content: '';
-        position: absolute;
-        top: -60px; right: -40px;
-        width: 280px; height: 280px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(16,185,129,.12) 0%, transparent 70%);
-        pointer-events: none;
-      }
+      .sdk-hero-banner::before { display: none; }
+      .sdk-hero-banner::after { display: none; }
       .sdk-hero-kicker {
         font-family: var(--font-mono);
         font-size: .69rem;
@@ -18992,21 +18978,19 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         gap: 7px;
         margin-top: 14px;
         padding: 6px 13px;
-        border: 1px solid rgba(16,185,129,.26);
-        border-radius: 999px;
-        background: rgba(16,185,129,.07);
+        border: 1px solid var(--border);
+        border-radius: 0;
+        background: transparent;
         font-size: .72rem;
         font-weight: 700;
-        color: #bbf7d0;
+        color: var(--primary);
         position: relative;
       }
       .sdk-hero-pill::before {
         content: '';
         width: 7px; height: 7px;
         border-radius: 50%;
-        background: #34d399;
-        box-shadow: 0 0 12px rgba(52,211,153,.8);
-        animation: pulse 1.6s infinite;
+        background: var(--primary);
       }
       .sdk-hero-actions {
         display: flex;
@@ -19034,9 +19018,9 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         gap: 12px;
       }
       .sdk-sidebar-card {
-        background: #111;
-        border: 1px solid rgba(255,255,255,.07);
-        border-radius: 16px;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 0;
         overflow: visible;
       }
       /* Override the global !important db-collapse-wrap background inside SDK sidebar */
@@ -19058,8 +19042,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         align-items: center;
         justify-content: space-between;
         padding: 12px 14px;
-        border-bottom: 1px solid rgba(255,255,255,.06);
-        background: #0d0d0d;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
       }
       .sdk-sidebar-label {
         font-size: .7rem;
@@ -19079,13 +19063,13 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         border-radius: 6px;
         transition: color .15s, background .15s;
       }
-      .sdk-sidebar-collapse:hover { color: #94a3b8; background: rgba(255,255,255,.05); }
+      .sdk-sidebar-collapse:hover { color: var(--text); background: transparent; }
 
       /* ── Quick Actions Sidebar Card ── */
       .sdk-quick-actions {
-        background: #111;
-        border: 1px solid rgba(255,255,255,.07);
-        border-radius: 16px;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 0;
         overflow: hidden;
       }
       .sdk-action-btn {
@@ -19105,19 +19089,19 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         border-bottom: 1px solid rgba(255,255,255,.04);
       }
       .sdk-action-btn:last-child { border-bottom: none; }
-      .sdk-action-btn:hover { background: rgba(16,185,129,.06); color: #a7f3d0; }
+      .sdk-action-btn:hover { background: transparent; color: var(--primary); border-color: var(--primary); }
       .sdk-action-icon {
         width: 30px; height: 30px;
-        border-radius: 8px;
-        background: rgba(255,255,255,.05);
-        border: 1px solid rgba(255,255,255,.07);
+        border-radius: 0;
+        background: transparent;
+        border: 1px solid var(--border);
         display: flex; align-items: center; justify-content: center;
         flex-shrink: 0;
-        transition: all .15s;
+        transition: border-color .15s;
       }
       .sdk-action-btn:hover .sdk-action-icon {
-        background: rgba(16,185,129,.1);
-        border-color: rgba(16,185,129,.25);
+        background: transparent;
+        border-color: var(--primary);
       }
       .sdk-action-icon svg { width: 14px; height: 14px; }
       .sdk-action-meta { flex: 1; min-width: 0; }
@@ -19136,12 +19120,12 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         align-items: center;
         gap: 5px;
         padding: 4px 9px;
-        border-radius: 999px;
-        border: 1px solid rgba(16,185,129,.26);
-        background: rgba(16,185,129,.06);
+        border-radius: 0;
+        border: 1px solid var(--border);
+        background: transparent;
         font-size: .65rem;
         font-weight: 700;
-        color: #86efac;
+        color: var(--primary);
         letter-spacing: .04em;
       }
       .sdk-cap-badge::before {
@@ -19167,36 +19151,41 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         gap: 12px;
         flex-wrap: wrap;
         padding: 10px 14px;
-        background: #111;
-        border: 1px solid rgba(255,255,255,.07);
-        border-radius: 16px;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 0;
       }
       .sdk-lang-tabs {
         display: flex;
-        gap: 3px;
-        background: #0a0a0a;
-        border-radius: 10px;
-        padding: 3px;
-        border: 1px solid rgba(255,255,255,.06);
+        gap: 0;
+        background: transparent;
+        border-radius: 0;
+        padding: 0;
+        border: none;
+        border-bottom: 1px solid var(--border);
       }
       .sdk-lang-tab {
         padding: 7px 16px;
-        border-radius: 8px;
+        border-radius: 0;
+        border-bottom: 2px solid transparent;
         font-size: .78rem;
         font-weight: 700;
         cursor: pointer;
-        color: #475569;
-        transition: all .18s;
-        border: none;
+        color: var(--text-3);
+        transition: color .15s, border-color .15s;
+        border-top: none; border-left: none; border-right: none;
         background: none;
         letter-spacing: .01em;
       }
+      .sdk-lang-tab:not(.active):hover { color: var(--text-2); background: transparent; }
       .sdk-lang-tab.active {
-        background: #1a1a1a;
-        color: #e2e8f0;
-        box-shadow: 0 1px 6px rgba(0,0,0,.5);
+        background: transparent;
+        color: var(--text);
+        border-bottom: 2px solid var(--primary);
+        margin-bottom: -1px;
+        box-shadow: none;
       }
-      .sdk-lang-tab:not(.active):hover { color: #94a3b8; background: rgba(255,255,255,.04); }
+      /* sdk-lang-tab hover handled above */
 
       .sdk-lang-bar-right {
         display: flex;
@@ -19215,18 +19204,18 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       .sdk-fw-trigger {
         display: flex; align-items: center; gap: 8px;
         padding: 7px 11px;
-        background: #0d0d0d;
-        border: 1px solid rgba(255,255,255,.1);
-        border-radius: 10px;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 0;
         cursor: pointer;
-        font-size: .76rem; font-weight: 700; color: #e2e8f0;
+        font-size: .76rem; font-weight: 700; color: var(--text);
         font-family: var(--font-ui);
-        transition: border-color .15s, background .15s;
+        transition: border-color .15s;
         white-space: nowrap; user-select: none;
       }
       .sdk-fw-trigger:hover, .sdk-fw-trigger.open {
-        border-color: rgba(16,185,129,.35);
-        background: rgba(16,185,129,.06);
+        border-color: var(--primary);
+        background: transparent;
       }
       .sdk-fw-trigger-chevron { margin-left: auto; color: #475569; transition: transform .18s; display: flex; }
       .sdk-fw-trigger-chevron svg { width: 11px; height: 11px; }
@@ -19234,11 +19223,11 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       .sdk-fw-menu {
         position: absolute; top: calc(100% + 5px); right: 0;
         min-width: 185px;
-        background: #141414;
-        border: 1px solid rgba(255,255,255,.1);
-        border-radius: 13px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 0;
         overflow: hidden;
-        box-shadow: 0 14px 44px rgba(0,0,0,.65), 0 0 0 1px rgba(16,185,129,.06);
+        box-shadow: 0 8px 24px rgba(0,0,0,.4);
         z-index: 400;
         opacity: 0; transform: translateY(-5px) scale(.97);
         pointer-events: none;
@@ -19254,28 +19243,31 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         font-family: var(--font-ui);
       }
       .sdk-fw-option:last-child { border-bottom: none; }
-      .sdk-fw-option:hover { background: rgba(16,185,129,.07); color: #e2e8f0; }
-      .sdk-fw-option.active { color: #34d399; background: rgba(16,185,129,.08); }
+      .sdk-fw-option:hover { background: transparent; color: var(--text); border-left: 2px solid var(--primary); }
+      .sdk-fw-option.active { color: var(--primary); background: transparent; border-left: 2px solid var(--primary); }
       .sdk-fw-option-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
       /* ── Framework Guide Accordion ── */
       .sdk-guides-accordion { display: flex; flex-direction: column; padding: 10px 12px 12px; gap: 0; }
       .sdk-guide-item {
-        border: 1px solid rgba(255,255,255,.06);
-        border-radius: 12px; overflow: hidden;
-        margin-bottom: 6px; transition: border-color .18s;
+        border: 1px solid var(--border);
+        border-radius: 0; overflow: hidden;
+        margin-bottom: 0;
+        border-bottom: none;
+        transition: border-color .18s;
       }
-      .sdk-guide-item:last-child { margin-bottom: 0; }
-      .sdk-guide-item.open { border-color: rgba(16,185,129,.28); }
+      .sdk-guide-item:last-child { border-bottom: 1px solid var(--border); }
+      .sdk-guide-item.open { border-color: var(--primary); }
       .sdk-guide-trigger {
         display: flex; align-items: center; gap: 12px;
         padding: 11px 14px; cursor: pointer;
-        background: #0d0d0d; transition: background .15s; user-select: none;
+        background: transparent; transition: background .15s; user-select: none;
       }
-      .sdk-guide-trigger:hover { background: rgba(16,185,129,.04); }
-      .sdk-guide-item.open .sdk-guide-trigger { background: rgba(16,185,129,.06); }
+      .sdk-guide-trigger:hover { background: transparent; }
+      .sdk-guide-item.open .sdk-guide-trigger { background: transparent; }
       .sdk-guide-icon {
-        width: 30px; height: 30px; border-radius: 8px;
+        width: 30px; height: 30px; border-radius: 0;
+        border: 1px solid var(--border);
         display: flex; align-items: center; justify-content: center;
         font-size: .78rem; font-weight: 800; font-family: var(--font-mono); flex-shrink: 0;
       }
@@ -19288,22 +19280,22 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       .sdk-guide-body {
         max-height: 0; overflow: hidden;
         transition: max-height .32s cubic-bezier(.4,0,.2,1);
-        background: #090909;
-        border-top-width: 0px; border-top-style: solid; border-top-color: rgba(255,255,255,.06);
+        background: transparent;
+        border-top-width: 0px; border-top-style: solid; border-top-color: var(--border);
       }
       .sdk-guide-item.open .sdk-guide-body { max-height: 1400px; border-top-width: 1px; }
       .sdk-guide-body-inner { padding: 14px; }
       .sdk-guide-install-line {
         display: flex; align-items: center; gap: 8px;
-        background: #0d0d0d; border: 1px solid rgba(16,185,129,.14);
-        border-radius: 9px; padding: 9px 12px;
+        background: transparent; border: 1px solid var(--border);
+        border-radius: 0; padding: 9px 12px;
         font-family: var(--font-mono); font-size: .69rem; margin-bottom: 12px;
       }
       .sdk-guide-install-line .pfx { color: #34d399; font-weight: 700; user-select: none; }
       .sdk-guide-install-line .cmd { color: #94a3b8; }
       .sdk-guide-code-block {
-        background: #111; border: 1px solid rgba(255,255,255,.07);
-        border-radius: 9px; padding: 10px 12px;
+        background: transparent; border: 1px solid var(--border);
+        border-radius: 0; padding: 10px 12px;
         font-family: var(--font-mono); font-size: .69rem;
         color: #94a3b8; line-height: 1.65; overflow-x: auto; white-space: pre;
       }
@@ -19315,11 +19307,11 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       .sdk-guide-use-btn {
         display: inline-flex; align-items: center; gap: 6px;
         padding: 7px 14px; border-radius: 9px; margin-top: 10px;
-        background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.25);
-        color: #34d399; font-size: .72rem; font-weight: 700; cursor: pointer;
-        transition: all .15s; font-family: var(--font-ui);
+        background: transparent; border: 1px solid var(--primary);
+        color: var(--primary); font-size: .72rem; font-weight: 700; cursor: pointer;
+        transition: border-color .15s; font-family: var(--font-ui);
       }
-      .sdk-guide-use-btn:hover { background: rgba(16,185,129,.18); border-color: rgba(16,185,129,.4); }
+      .sdk-guide-use-btn:hover { background: transparent; border-color: var(--primary); }
 
       /* Hide legacy grid */
       .sdk-guides-grid { display: none; }
@@ -19327,9 +19319,9 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
       /* ── Snippet Block ── */
       .sdk-snippet-shell {
-        background: #111;
-        border: 1px solid rgba(255,255,255,.07);
-        border-radius: 16px;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 0;
         overflow: hidden;
       }
       .sdk-snippet-header {
@@ -19337,8 +19329,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         align-items: center;
         justify-content: space-between;
         padding: 12px 16px;
-        background: #0d0d0d;
-        border-bottom: 1px solid rgba(255,255,255,.06);
+        background: transparent;
+        border-bottom: 1px solid var(--border);
       }
       .sdk-snippet-filename {
         display: flex;
@@ -19363,17 +19355,17 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         align-items: center;
         gap: 6px;
         padding: 5px 12px;
-        border-radius: 7px;
-        border: 1px solid rgba(255,255,255,.09);
-        background: rgba(255,255,255,.04);
-        color: #64748b;
+        border-radius: 0;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-3);
         font-size: .7rem;
         font-weight: 700;
         cursor: pointer;
-        transition: all .15s;
+        transition: border-color .15s;
         font-family: var(--font-ui);
       }
-      .sdk-snippet-copy-btn:hover { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.3); color: #86efac; }
+      .sdk-snippet-copy-btn:hover { background: transparent; border-color: var(--primary); color: var(--primary); }
       .sdk-snippet-copy-btn svg { width: 12px; height: 12px; }
       .sdk-snippet-body {
         padding: 18px 20px;
@@ -19395,8 +19387,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         align-items: center;
         gap: 10px;
         padding: 10px 16px;
-        background: #0a0a0a;
-        border-top: 1px solid rgba(255,255,255,.05);
+        background: transparent;
+        border-top: 1px solid var(--border);
         font-family: var(--font-mono);
         font-size: .72rem;
         color: #475569;
@@ -19406,27 +19398,27 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 
       /* ── Env Vars Panel — Professional redesign ── */
       .sdk-env-panel {
-        background: #0d0d0d;
-        border: 1px solid rgba(255,255,255,.09);
-        border-radius: 18px;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 0;
         overflow: hidden;
-        box-shadow: 0 4px 24px rgba(0,0,0,.35);
+        box-shadow: none;
       }
       .sdk-env-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 14px 18px;
-        background: linear-gradient(90deg,rgba(16,185,129,.06) 0%,rgba(6,182,212,.04) 100%);
-        border-bottom: 1px solid rgba(255,255,255,.07);
+        background: transparent;
+        border-bottom: 1px solid var(--border);
         gap: 10px;
       }
       .sdk-env-header-left { display: flex; align-items: center; gap: 10px; }
       .sdk-env-header-icon {
         width: 28px; height: 28px; border-radius: 8px;
-        background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.25);
+        background: transparent; border: 1px solid var(--border);
         display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        color: #34d399;
+        color: var(--primary);
       }
       .sdk-env-header-icon svg { width: 13px; height: 13px; }
       .sdk-env-title {
@@ -19452,8 +19444,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       @keyframes envDotPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
       .sdk-env-badge {
         padding: 3px 9px; border-radius: 999px;
-        background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.2);
-        font-size: .62rem; font-weight: 700; color: #34d399; letter-spacing: .06em;
+        background: transparent; border: 1px solid var(--border);
+        font-size: .62rem; font-weight: 700; color: var(--primary); letter-spacing: .06em;
         text-transform: uppercase; white-space: nowrap;
       }
       .sdk-env-rows { padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
@@ -19462,22 +19454,22 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         grid-template-columns: auto 1fr auto;
         align-items: center;
         gap: 0;
-        background: #111;
-        border: 1px solid rgba(255,255,255,.06);
-        border-radius: 12px;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 0;
         overflow: hidden;
-        transition: border-color .18s, box-shadow .18s;
+        transition: border-color .18s;
       }
-      .sdk-env-row:hover { border-color: rgba(16,185,129,.25); box-shadow: 0 0 0 1px rgba(16,185,129,.08); }
+      .sdk-env-row:hover { border-color: var(--primary); box-shadow: none; }
       .sdk-env-key {
         font-family: var(--font-mono);
         font-size: .71rem;
         font-weight: 700;
         color: #7dd3fc;
         padding: 11px 12px;
-        border-right: 1px solid rgba(255,255,255,.06);
+        border-right: 1px solid var(--border);
         white-space: nowrap;
-        background: rgba(125,211,252,.04);
+        background: transparent;
         min-width: 0;
       }
       .sdk-env-val {
@@ -19511,14 +19503,14 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         white-space: nowrap;
       }
       .sdk-env-copy svg { width: 10px; height: 10px; flex-shrink: 0; }
-      .sdk-env-copy:hover { background: rgba(16,185,129,.08); color: #86efac; }
+      .sdk-env-copy:hover { background: transparent; color: var(--primary); }
       .sdk-env-copy.copied { color: #34d399; }
 
       /* ── Connection Test Panel ── */
       .sdk-test-panel {
-        background: #111;
-        border: 1px solid rgba(255,255,255,.07);
-        border-radius: 16px;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 0;
         overflow: hidden;
       }
       .sdk-test-header {
@@ -19526,8 +19518,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         align-items: center;
         justify-content: space-between;
         padding: 12px 16px;
-        background: #0d0d0d;
-        border-bottom: 1px solid rgba(255,255,255,.06);
+        background: transparent;
+        border-bottom: 1px solid var(--border);
       }
       .sdk-test-title {
         font-size: .72rem;
@@ -19542,9 +19534,9 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         align-items: center;
         gap: 10px;
         padding: 12px 14px;
-        border-radius: 10px;
-        border: 1px solid rgba(255,255,255,.06);
-        background: #0d0d0d;
+        border-radius: 0;
+        border: 1px solid var(--border);
+        background: transparent;
         margin-bottom: 12px;
         font-size: .78rem;
       }
@@ -19560,16 +19552,16 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
       .sdk-test-run-btn {
         width: 100%;
         padding: 10px;
-        border-radius: 10px;
-        border: 1px solid rgba(16,185,129,.3);
-        background: rgba(16,185,129,.08);
-        color: #34d399;
+        border-radius: 0;
+        border: 1px solid var(--primary);
+        background: var(--primary);
+        color: #052e16;
         font-weight: 700;
         font-size: .8rem;
         cursor: pointer;
-        transition: all .18s;
+        transition: background .15s;
       }
-      .sdk-test-run-btn:hover { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.5); }
+      .sdk-test-run-btn:hover { background: color-mix(in srgb,var(--primary) 80%,transparent); }
 
       /* ── Framework Guides ── */
       .sdk-guides-grid {
@@ -19584,19 +19576,20 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
         align-items: flex-start;
         gap: 6px;
         padding: 12px;
-        border: 1px solid rgba(255,255,255,.06);
-        border-radius: 12px;
-        background: #0d0d0d;
+        border: 1px solid var(--border);
+        border-radius: 0;
+        background: transparent;
         cursor: pointer;
-        transition: all .18s;
+        transition: border-color .18s;
       }
       .sdk-guide-card:hover {
-        border-color: rgba(16,185,129,.25);
-        background: rgba(16,185,129,.05);
+        border-color: var(--primary);
+        background: transparent;
       }
       .sdk-guide-icon {
         width: 32px; height: 32px;
-        border-radius: 8px;
+        border-radius: 0;
+        border: 1px solid var(--border);
         display: flex; align-items: center; justify-content: center;
         font-size: .82rem;
         font-weight: 800;
@@ -20052,12 +20045,12 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
               </div>
               <!-- Legacy grid kept for JS compat (hidden) -->
               <div class="sdk-guides-grid" id="sdkFrameworkGuides">
-                <div class="sdk-guide-card" onclick="sdkLoadFrameworkGuide('express')"><div class="sdk-guide-icon" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:#f59e0b;">Ex</div><div class="sdk-guide-name">Express.js</div></div>
-                <div class="sdk-guide-card" onclick="sdkLoadFrameworkGuide('nextjs')"><div class="sdk-guide-icon" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#e2e8f0;">Nx</div><div class="sdk-guide-name">Next.js</div></div>
-                <div class="sdk-guide-card" onclick="sdkLoadFrameworkGuide('fastapi')"><div class="sdk-guide-icon" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#60a5fa;">FA</div><div class="sdk-guide-name">FastAPI</div></div>
-                <div class="sdk-guide-card" onclick="sdkLoadFrameworkGuide('prisma')"><div class="sdk-guide-icon" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);color:#34d399;">Pr</div><div class="sdk-guide-name">Prisma ORM</div></div>
-                <div class="sdk-guide-card" onclick="sdkLoadFrameworkGuide('drizzle')"><div class="sdk-guide-icon" style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.2);color:#c084fc;">Dr</div><div class="sdk-guide-name">Drizzle ORM</div></div>
-                <div class="sdk-guide-card" onclick="sdkLoadFrameworkGuide('django')"><div class="sdk-guide-icon" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;">Dj</div><div class="sdk-guide-name">Django</div></div>
+                <div class="sdk-guide-card" onclick="sdkLoadFrameworkGuide('express')"><div class="sdk-guide-icon" style="color:#f59e0b;">Ex</div><div class="sdk-guide-name">Express.js</div></div>
+                <div class="sdk-guide-card" onclick="sdkLoadFrameworkGuide('nextjs')"><div class="sdk-guide-icon" style="color:#e2e8f0;">Nx</div><div class="sdk-guide-name">Next.js</div></div>
+                <div class="sdk-guide-card" onclick="sdkLoadFrameworkGuide('fastapi')"><div class="sdk-guide-icon" style="color:#60a5fa;">FA</div><div class="sdk-guide-name">FastAPI</div></div>
+                <div class="sdk-guide-card" onclick="sdkLoadFrameworkGuide('prisma')"><div class="sdk-guide-icon" style="color:#34d399;">Pr</div><div class="sdk-guide-name">Prisma ORM</div></div>
+                <div class="sdk-guide-card" onclick="sdkLoadFrameworkGuide('drizzle')"><div class="sdk-guide-icon" style="color:#c084fc;">Dr</div><div class="sdk-guide-name">Drizzle ORM</div></div>
+                <div class="sdk-guide-card" onclick="sdkLoadFrameworkGuide('django')"><div class="sdk-guide-icon" style="color:#34d399;">Dj</div><div class="sdk-guide-name">Django</div></div>
               </div>
               <!-- New accordion -->
               <div class="sdk-guides-accordion" id="sdkGuidesAccordion">
@@ -20065,7 +20058,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                 <!-- Express.js -->
                 <div class="sdk-guide-item" id="sdkGuideItem-express">
                   <div class="sdk-guide-trigger" onclick="sdkToggleGuide('express')">
-                    <div class="sdk-guide-icon" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:#f59e0b;">Ex</div>
+                    <div class="sdk-guide-icon" style="color:#f59e0b;">Ex</div>
                     <div class="sdk-guide-trigger-text">
                       <div class="sdk-guide-name">Express.js</div>
                       <div class="sdk-guide-desc">Node.js REST API — MongoDB, Postgres, Redis</div>
@@ -20087,7 +20080,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                 <!-- Next.js -->
                 <div class="sdk-guide-item" id="sdkGuideItem-nextjs">
                   <div class="sdk-guide-trigger" onclick="sdkToggleGuide('nextjs')">
-                    <div class="sdk-guide-icon" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#e2e8f0;">Nx</div>
+                    <div class="sdk-guide-icon" style="color:#e2e8f0;">Nx</div>
                     <div class="sdk-guide-trigger-text">
                       <div class="sdk-guide-name">Next.js</div>
                       <div class="sdk-guide-desc">App Router + Server Actions DB setup</div>
@@ -20109,7 +20102,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                 <!-- FastAPI -->
                 <div class="sdk-guide-item" id="sdkGuideItem-fastapi">
                   <div class="sdk-guide-trigger" onclick="sdkToggleGuide('fastapi')">
-                    <div class="sdk-guide-icon" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#60a5fa;">FA</div>
+                    <div class="sdk-guide-icon" style="color:#60a5fa;">FA</div>
                     <div class="sdk-guide-trigger-text">
                       <div class="sdk-guide-name">FastAPI</div>
                       <div class="sdk-guide-desc">Async Python with SQLAlchemy + uvicorn</div>
@@ -20131,7 +20124,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                 <!-- Prisma ORM -->
                 <div class="sdk-guide-item" id="sdkGuideItem-prisma">
                   <div class="sdk-guide-trigger" onclick="sdkToggleGuide('prisma')">
-                    <div class="sdk-guide-icon" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);color:#34d399;">Pr</div>
+                    <div class="sdk-guide-icon" style="color:#34d399;">Pr</div>
                     <div class="sdk-guide-trigger-text">
                       <div class="sdk-guide-name">Prisma ORM</div>
                       <div class="sdk-guide-desc">Type-safe ORM with auto-migrations</div>
@@ -20153,7 +20146,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                 <!-- Drizzle ORM -->
                 <div class="sdk-guide-item" id="sdkGuideItem-drizzle">
                   <div class="sdk-guide-trigger" onclick="sdkToggleGuide('drizzle')">
-                    <div class="sdk-guide-icon" style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.2);color:#c084fc;">Dr</div>
+                    <div class="sdk-guide-icon" style="color:#c084fc;">Dr</div>
                     <div class="sdk-guide-trigger-text">
                       <div class="sdk-guide-name">Drizzle ORM</div>
                       <div class="sdk-guide-desc">Lightweight TypeScript-first ORM</div>
@@ -20175,7 +20168,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                 <!-- Django -->
                 <div class="sdk-guide-item" id="sdkGuideItem-django">
                   <div class="sdk-guide-trigger" onclick="sdkToggleGuide('django')">
-                    <div class="sdk-guide-icon" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;">Dj</div>
+                    <div class="sdk-guide-icon" style="color:#34d399;">Dj</div>
                     <div class="sdk-guide-trigger-text">
                       <div class="sdk-guide-name">Django</div>
                       <div class="sdk-guide-desc">settings.py DATABASES block with env</div>
@@ -34924,7 +34917,7 @@ function renderDbEditorDbList() {
     const c = dbEngineColor(db.engine);
     const isActive = _editorSelectedDb && _editorSelectedDb.id === db.id;
     return `<div class="db-editor-db-item ${isActive?'active':''}" onclick="selectEditorDb('${db.id}')">
-      <div class="db-editor-db-icon" style="background:${c.bg};border:1px solid ${c.border};color:${c.text};">${DB_ENGINE_ICONS[db.engine]||'DB'}</div>
+      <div class="db-editor-db-icon" style="color:${c.text};">${DB_ENGINE_ICONS[db.engine]||'DB'}</div>
       <div style="min-width:0;">
         <div style="font-size:.82rem;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${db.name}</div>
         <div style="font-size:.68rem;color:var(--text-3);font-family:var(--font-mono);">${db.engine} · ${db.status}</div>
