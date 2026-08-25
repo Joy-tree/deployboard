@@ -9461,4 +9461,101 @@ html[data-theme="light"] #page-streaks {
   #page-streaks .streak-bottom-grid { grid-template-columns: 1fr !important; }
 }
 
+
+/* ══════════════════════════════════════════════════════════════════
+   PUBLIC LANDING PAGE (#landing-view) — flat redesign
+   Strips coloured icon washes, rounded card fills, pill-shaped tags,
+   and glow borders. Uses the same flat/hairline language as the
+   authenticated dashboard.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Feature cards, how-cards, flow-steps, snippet-cards — kill the
+   #111114 fill + 16px radius, go flat with a hairline */
+#landing-view .feature-card,
+#landing-view .how-card,
+#landing-view .flow-step,
+#landing-view .snippet-card {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#landing-view .feature-card:hover,
+#landing-view .how-card:hover,
+#landing-view .flow-step:hover,
+#landing-view .snippet-card:hover {
+  border-color: var(--primary) !important;
+  transform: none !important;
+  background: color-mix(in srgb,var(--primary) 3%,transparent) !important;
+}
+#landing-view .feature-card::before { display: none !important; }
+
+/* Feature icons — neutral flat squares instead of purple/amber/cyan/red
+   colour-washed rounded boxes */
+#landing-view .feature-icon {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  color: var(--primary) !important;
+}
+
+/* Feature tags ("Git + PAT Auth" etc.) — flat teal chip, not purple pill */
+#landing-view .feature-tag {
+  background: color-mix(in srgb,#2dd4bf 10%,transparent) !important;
+  color: #5eead4 !important;
+  border: 1px solid color-mix(in srgb,#2dd4bf 28%,transparent) !important;
+  border-radius: 3px !important;
+}
+
+/* How-it-works step numbers (01/02/03/04) — flat square badge */
+#landing-view .how-step-num {
+  border-radius: 3px !important;
+  background: color-mix(in srgb,var(--primary) 10%,transparent) !important;
+  border: 1px solid color-mix(in srgb,var(--primary) 28%,transparent) !important;
+}
+#landing-view .how-step.active .how-step-num {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #052e16 !important;
+}
+#landing-view .how-code-wrap {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+}
+
+/* Trusted infrastructure logo tiles — kill rounded border-radius:16px
+   fill boxes, go flat hairline */
+#landing-view .infra-logo {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+}
+#landing-view .infra-logo:hover {
+  border-color: var(--primary) !important;
+  background: color-mix(in srgb,var(--primary) 4%,transparent) !important;
+  transform: none !important;
+}
+#landing-view .infra-logo-cloudflare { background: transparent !important; }
+
+/* Hero primary/ghost buttons — sharp corners */
+#landing-view .btn-hero-primary,
+#landing-view .btn-hero-ghost {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#landing-view .btn-hero-ghost {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+}
+#landing-view .btn-hero-ghost:hover {
+  border-color: var(--primary) !important;
+}
+
+/* Deploy code snippet tabs (deploy.sh / database.json / api-prompt.txt) */
+#landing-view .snippet-tab,
+#landing-view [class*="snippet-tab"] {
+  border-radius: 0 !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
