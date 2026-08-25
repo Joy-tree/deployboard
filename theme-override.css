@@ -10513,4 +10513,88 @@ html[data-theme="light"] #page-domain-add .input,
   --dcx-field-border: rgba(255,255,255,0.85) !important;
   --dcx-row-border: rgba(255,255,255,0.9) !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   DEPLOY SUCCESS MODAL (default/dark) — flat rebuild, no card, no
+   gradient, no color fills. Same two-step technique used across this
+   rebuild: (1) flatten the card and every descendant, (2) re-add
+   ONLY thickened white hairline dividers (2px) to structure the
+   sections — stat row, URL row, screenshot panel, info grid, action
+   row. The existing html[data-theme="light"] rules above already
+   re-skin this for light mode with higher specificity, so this only
+   takes effect in the default/dark state.
+   ══════════════════════════════════════════════════════════════════ */
+.deploy-success-card,
+.deploy-success-card * {
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.deploy-success-card {
+  border: 2px solid rgba(255,255,255,.18) !important;
+}
+.deploy-success-header {
+  border-bottom: 2px solid rgba(255,255,255,.18) !important;
+}
+.dss-icon-core {
+  border: 2px solid rgba(255,255,255,.22) !important;
+}
+.dss-icon-core svg { stroke: #fff !important; }
+.deploy-success-title { color: #fff !important; }
+.deploy-success-sub { color: rgba(255,255,255,.5) !important; }
+.dss-stats {
+  gap: 0 !important;
+  margin-top: 1rem !important;
+}
+.dss-stat {
+  padding: 0 .8rem !important;
+  border-right: 2px solid rgba(255,255,255,.18) !important;
+  color: rgba(255,255,255,.7) !important;
+}
+.dss-stat:last-child { border-right: none !important; }
+.dss-stat svg { stroke: rgba(255,255,255,.7) !important; }
+.deploy-success-url-box {
+  border-bottom: 2px solid rgba(255,255,255,.18) !important;
+  padding: 0.75rem 0 !important;
+}
+.deploy-success-url-box a { color: #fff !important; }
+.dss-copy-btn:hover { color: #fff !important; }
+.deploy-ss-wrap {
+  border: 2px solid rgba(255,255,255,.18) !important;
+}
+.dss-loader-arc { stroke: #fff !important; }
+.dss-loader-arc-bg { stroke: rgba(255,255,255,.15) !important; }
+.deploy-ss-loading p { color: rgba(255,255,255,.5) !important; }
+.dss-ss-label { color: #fff !important; }
+.dss-ss-label::before { background: #fff !important; }
+.dss-info-grid {
+  gap: 0 !important;
+  border-top: 2px solid rgba(255,255,255,.18) !important;
+  border-left: 2px solid rgba(255,255,255,.18) !important;
+}
+.dss-info-cell {
+  border-right: 2px solid rgba(255,255,255,.18) !important;
+  border-bottom: 2px solid rgba(255,255,255,.18) !important;
+  padding: 0.65rem 0.85rem !important;
+}
+.dss-info-label { color: rgba(255,255,255,.45) !important; }
+.dss-info-val { color: #fff !important; }
+.dss-info-val.green { color: #fff !important; }
+.dss-btn-visit {
+  background: #10b981 !important;
+  color: #052e16 !important;
+}
+.dss-btn-visit svg { stroke: #052e16 !important; }
+.dss-btn-back {
+  border: 2px solid rgba(255,255,255,.18) !important;
+  color: rgba(255,255,255,.7) !important;
+}
+.dss-btn-back:hover { border-color: rgba(255,255,255,.32) !important; color: #fff !important; }
+.deploy-ss-close {
+  border: 2px solid rgba(255,255,255,.18) !important;
+  color: rgba(255,255,255,.6) !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}

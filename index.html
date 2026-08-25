@@ -5655,7 +5655,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=114" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=115" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5725,10 +5725,20 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
   }
 
   function forceFreshReload(){
+    // [FIX] This hardcoded a fixed version number ('?v=114'), which goes
+    // stale the moment anyone bumps the real <link>'s version -- every
+    // time recovery actually fires (built specifically for flaky mobile
+    // connections), it would silently reload that frozen OLD file and
+    // append it as the LAST <link> in <head>, overriding every newer
+    // rule shipped since on any tied specificity, with no visible error.
+    // Now it reads whatever version is actually on the page's own
+    // <link> right now, so recovery can never regress to a stale file.
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
+    var current = document.getElementById('themeOverrideLink');
+    var baseHref = current ? current.href.split('?')[0] : 'theme-override.css';
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=114&recover=' + token;
+    fresh.href = baseHref + '?recover=' + token;
     document.head.appendChild(fresh);
   }
 
