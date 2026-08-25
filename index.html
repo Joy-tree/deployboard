@@ -5655,7 +5655,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=101" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=102" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5728,7 +5728,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=101&recover=' + token;
+    fresh.href = 'theme-override.css?v=102&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -8802,7 +8802,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
   <div class="sidebar-bottom">
     <div class="user-chip" onclick="showPage('settings')">
-      <div class="user-avatar" id="sidebarAvatar">JG</div>
+      <div class="user-avatar" id="sidebarAvatar"><img id="sidebarAvatarImg" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
       <div class="user-info">
         <div class="user-name" id="sidebarName">James Good</div>
         <div class="user-role">Free Plan</div>
@@ -8852,7 +8852,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           </button>
         </div>
       </div>
-      <div class="user-avatar" style="width:32px;height:32px;font-size:0.78rem;cursor:pointer;" id="topbarAvatar" onclick="showPage('settings')">JG</div>
+      <div class="user-avatar" style="width:32px;height:32px;font-size:0.78rem;cursor:pointer;" id="topbarAvatar" onclick="showPage('settings')"><img id="topbarAvatarImg" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
       <div class="notif-panel" id="notifPanel"></div>
     </div>
   </div>
@@ -23364,35 +23364,18 @@ function ensureProjectAutoSync() {
 
 function setUserAvatar(el, user, fallback='JG') {
   if (!el) return;
-  const source = (user && (user.githubUsername || user.name || user.email)) || fallback || 'JG';
-  const initials = String(source).split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'JG';
-  const src = String(user?.githubAvatarUrl || '').trim();
-  if (src) {
-    // Preload the image before committing to it — if it fails (404,
-    // revoked token, network error), fall back to initials instead
-    // of leaving the avatar blank.
-    const probe = new Image();
-    probe.onload = () => {
-      el.textContent = '';
-      el.style.backgroundImage = `url(${src})`;
-      el.style.backgroundColor = 'transparent';
-    };
-    probe.onerror = () => {
-      el.textContent = initials;
-      el.style.backgroundImage = '';
-      el.style.backgroundColor = '';
-    };
-    probe.src = src;
-    // Show initials immediately while the probe loads, so the
-    // avatar is never blank even momentarily.
-    el.textContent = initials;
-    el.style.backgroundImage = '';
-    el.style.backgroundColor = '';
-    return;
-  }
-  el.textContent = initials;
-  el.style.backgroundImage = '';
-  el.style.backgroundColor = '';
+  // Same approach as renderAccountHero's #acctHeroAvatarImg, which
+  // works reliably: a real <img> tag with src set directly to either
+  // the GitHub avatar URL or a self-contained base64 SVG fallback
+  // that never depends on the network. No text initials, no
+  // background-image, no probing — the browser's own <img> broken-
+  // image handling (falling through to ACCT_DEFAULT_AVATAR_SRC via
+  // onerror) replaces all of that.
+  const img = el.querySelector('img');
+  if (!img) return;
+  const avatarUrl = String(user?.githubAvatarUrl || '').trim();
+  img.onerror = () => { img.onerror = null; img.src = ACCT_DEFAULT_AVATAR_SRC; };
+  img.src = avatarUrl || ACCT_DEFAULT_AVATAR_SRC;
 }
 
 function applyUserProfile(user){
