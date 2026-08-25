@@ -5655,7 +5655,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=100" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=101" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5728,7 +5728,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=100&recover=' + token;
+    fresh.href = 'theme-override.css?v=101&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -23397,11 +23397,12 @@ function setUserAvatar(el, user, fallback='JG') {
 
 function applyUserProfile(user){
   currentUser = user || null;
-  setUserAvatar(document.getElementById('sidebarAvatar'), user, settings.name || settings.email || 'JG');
-  setUserAvatar(document.getElementById('topbarAvatar'), user, settings.name || settings.email || 'JG');
-  document.getElementById('sidebarName').textContent = user?.githubUsername || user?.name || settings.name || 'User';
+  const safeSettings = (typeof settings === 'object' && settings) ? settings : {};
+  setUserAvatar(document.getElementById('sidebarAvatar'), user, safeSettings.name || safeSettings.email || 'JG');
+  setUserAvatar(document.getElementById('topbarAvatar'), user, safeSettings.name || safeSettings.email || 'JG');
+  document.getElementById('sidebarName').textContent = user?.githubUsername || user?.name || safeSettings.name || 'User';
   const adminEmail = 'projectvpn89@gmail.com';
-  const meEmail = String(user?.email || settings.email || '').trim().toLowerCase();
+  const meEmail = String(user?.email || safeSettings.email || '').trim().toLowerCase();
   const isWebhookAdmin = meEmail === adminEmail;
   const generalTabBtn = document.getElementById('settingsGeneralTabBtn');
   if (generalTabBtn) generalTabBtn.style.display = isWebhookAdmin ? '' : 'none';
