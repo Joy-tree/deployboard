@@ -10028,4 +10028,123 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
   border-color: color-mix(in srgb,var(--text-3) 42%,var(--border)) !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   DATA VISUALIZER PANEL (.dbv-shell)
+   Stat cards, chart cards, topbar dbname pill, table selects,
+   refresh/close buttons — all had rounded var(--bg-card) fills.
+   ══════════════════════════════════════════════════════════════════ */
+.dbv-shell { background: transparent !important; }
+.dbv-topbar {
+  background: transparent !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+.dbv-topbar-dbname {
+  background: transparent !important;
+  border-radius: 0 !important;
+  border-color: var(--border) !important;
+}
+.dbv-table-select {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid color-mix(in srgb,var(--text-3) 42%,var(--border)) !important;
+  border-radius: 0 !important;
+}
+.dbv-refresh-btn {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: 1px solid color-mix(in srgb,var(--primary) 35%,transparent) !important;
+}
+.dbv-refresh-btn:hover { background: color-mix(in srgb,var(--primary) 10%,transparent) !important; }
+.dbv-close-btn {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border-color: var(--border) !important;
+}
+.dbv-stat-card {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+}
+.dbv-card {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   QUERY STUDIO (#page-db-query) — sidebar icon strip + top selector
+   ══════════════════════════════════════════════════════════════════ */
+#page-db-query .qstudio-sidebar,
+#page-db-query [class*="qstudio-side"] {
+  background: transparent !important;
+  border-right: 1px solid var(--border) !important;
+}
+#page-db-query .custom-select-btn,
+#page-db-query .dbv-table-select {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid color-mix(in srgb,var(--text-3) 42%,var(--border)) !important;
+  border-radius: 0 !important;
+}
+#page-db-query .btn-primary { border-radius: 0 !important; box-shadow: none !important; }
+#page-db-query .btn-ghost, #page-db-query .btn-sm {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border-color: var(--dcx-field-border, var(--border)) !important;
+}
+/* Awaiting query / result panels */
+#page-db-query [style*="border-radius"] { border-radius: 0 !important; }
+
+/* ══════════════════════════════════════════════════════════════════
+   REALTIME API — AI Version dropdown trigger + menu
+   Kill the dark linear-gradient trigger fill, cyan glow border,
+   and coloured icon washes (purple v3, amber v4, blue v2)
+   ══════════════════════════════════════════════════════════════════ */
+#lfAiVersionDrop .jt-ai-trigger {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#lfAiVersionDrop .jt-ai-trigger:hover,
+#lfAiVersionDrop.open .jt-ai-trigger {
+  border-color: var(--primary) !important;
+  box-shadow: none !important;
+}
+#lfAiVersionDrop .jt-ai-trigger-icon {
+  background: color-mix(in srgb,var(--primary) 12%,transparent) !important;
+  border: 1px solid color-mix(in srgb,var(--primary) 30%,transparent) !important;
+  border-radius: 3px !important;
+}
+#lfAiVersionDrop .jt-ai-chevron { color: var(--text-3) !important; }
+#lfAiVersionDrop.open .jt-ai-chevron { color: var(--primary) !important; }
+#lfAiVersionMenu {
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.5) !important;
+}
+.jt-ai-option:hover { background: color-mix(in srgb,var(--primary) 6%,transparent) !important; }
+.jt-ai-option.selected { background: color-mix(in srgb,var(--primary) 10%,transparent) !important; }
+.jt-ai-option-icon {
+  border-radius: 3px !important;
+}
+/* Neutralise the per-version colour washes — all icons use the same
+   muted teal/green language instead of purple/blue/amber */
+.jt-ai-option-icon.v1,
+.jt-ai-option-icon.v2,
+.jt-ai-option-icon.v3,
+.jt-ai-option-icon.v4 {
+  background: color-mix(in srgb,var(--primary) 12%,transparent) !important;
+  border: 1px solid color-mix(in srgb,var(--primary) 28%,transparent) !important;
+}
+.jt-ai-option-check {
+  border-radius: 3px !important;
+  border-color: var(--dcx-field-border, var(--border)) !important;
+}
+.jt-ai-option.selected .jt-ai-option-check {
+  border-color: var(--primary) !important;
+  background: var(--primary) !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}

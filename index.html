@@ -5655,7 +5655,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=97" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=98" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5728,7 +5728,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=97&recover=' + token;
+    fresh.href = 'theme-override.css?v=98&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -18296,7 +18296,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
               </div>
               <div class="jt-ai-option" data-value="v2" id="lfAiV2Option" onclick="lfAiDropSelectV2(this)">
                 <div class="jt-ai-option-icon v2">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#67e8f9" stroke-width="2" width="16" height="16"><path d="M18 16l4-4-4-4"/><path d="M6 8l-4 4 4 4"/><line x1="14" y1="4" x2="10" y2="20"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" width="16" height="16"><path d="M18 16l4-4-4-4"/><path d="M6 8l-4 4 4 4"/><line x1="14" y1="4" x2="10" y2="20"/></svg>
                 </div>
                 <div class="jt-ai-option-body">
                   <div class="jt-ai-option-name">Joytree AI v2</div>
@@ -18308,7 +18308,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
               </div>
               <div class="jt-ai-option" data-value="v3" id="lfAiV3Option" onclick="lfAiDropSelectV3(this)">
                 <div class="jt-ai-option-icon v3">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" width="16" height="16"><path d="M12 2v20"/><path d="M2 12h20"/><path d="M5 5l14 14"/><path d="M19 5L5 19"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" width="16" height="16"><path d="M12 2v20"/><path d="M2 12h20"/><path d="M5 5l14 14"/><path d="M19 5L5 19"/></svg>
                 </div>
                 <div class="jt-ai-option-body">
                   <div class="jt-ai-option-name">Joytree AI v3</div>
@@ -18319,8 +18319,8 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
                 </div>
               </div>
               <div class="jt-ai-option" data-value="v4" id="lfAiV4Option" onclick="lfAiDropSelectV4(this)">
-                <div class="jt-ai-option-icon v4" style="background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(239,68,68,.1));border:1px solid rgba(251,191,36,.3);">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" width="16" height="16"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <div class="jt-ai-option-icon v4">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" width="16" height="16"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                 </div>
                 <div class="jt-ai-option-body">
                   <div class="jt-ai-option-name">Joytree AI v4</div>
@@ -37684,10 +37684,8 @@ function lfAiDropSelect(el) {
   if (trigDesc) trigDesc.textContent = desc.length > 50 ? desc.slice(0, 50) + '…' : desc;
   if (trigIcon) {
     trigIcon.className = 'jt-ai-trigger-icon';
-    if (value === 'v4') { trigIcon.style.background='linear-gradient(135deg,rgba(251,191,36,.12),rgba(239,68,68,.1))'; trigIcon.style.borderColor='rgba(251,191,36,.3)'; }
-    else if (value === 'v3') { trigIcon.style.background='rgba(168,85,247,.12)'; trigIcon.style.borderColor='rgba(168,85,247,.28)'; }
-    else if (value === 'v2') { trigIcon.style.background='rgba(56,189,248,.1)'; trigIcon.style.borderColor='rgba(56,189,248,.2)'; }
-    else { trigIcon.style.background='rgba(16,185,129,.12)'; trigIcon.style.borderColor='rgba(16,185,129,.2)'; }
+    trigIcon.style.background = 'color-mix(in srgb, var(--primary) 12%, transparent)';
+    trigIcon.style.borderColor = 'color-mix(in srgb, var(--primary) 28%, transparent)';
     trigIcon.innerHTML = iconHtml;
   }
   // Update badge
