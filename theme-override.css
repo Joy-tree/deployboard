@@ -10147,4 +10147,108 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
   background: var(--primary) !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   SDK STUDIO — Environment Variables panel
+   Was: #0d0d0d rounded card, gradient header strip, filled dark
+   rows, blue-ish key color, rounded pill badge with glow dot.
+   ══════════════════════════════════════════════════════════════════ */
+.sdk-env-panel {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.sdk-env-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--dcx-field-border, var(--border)) !important;
+}
+.sdk-env-header-icon {
+  border-radius: 3px !important;
+  background: color-mix(in srgb,var(--primary) 12%,transparent) !important;
+  border-color: color-mix(in srgb,var(--primary) 28%,transparent) !important;
+  color: var(--primary) !important;
+}
+.sdk-env-title { color: var(--text) !important; }
+.sdk-env-subtitle { color: var(--text-3) !important; }
+.sdk-env-live-dot {
+  background: var(--primary) !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+.sdk-env-badge {
+  border-radius: 3px !important;
+  background: color-mix(in srgb,#2dd4bf 12%,transparent) !important;
+  border: 1px solid color-mix(in srgb,#2dd4bf 32%,transparent) !important;
+  color: #5eead4 !important;
+}
+.sdk-env-row {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+}
+.sdk-env-row:hover {
+  border-color: var(--primary) !important;
+  box-shadow: none !important;
+}
+.sdk-env-key {
+  color: var(--primary) !important;
+  background: transparent !important;
+  border-right: 1px solid var(--dcx-field-border, var(--border)) !important;
+}
+.sdk-env-val { color: var(--text-3) !important; }
+.sdk-env-val.has-value { color: var(--text-2) !important; }
+.sdk-env-copy {
+  border-left: 1px solid var(--dcx-field-border, var(--border)) !important;
+  color: var(--text-3) !important;
+}
+.sdk-env-copy:hover { color: var(--primary) !important; background: color-mix(in srgb,var(--primary) 6%,transparent) !important; }
+.sdk-env-copy.copied { color: var(--primary) !important; }
+
+/* ══════════════════════════════════════════════════════════════════
+   SCHEMA EXPLORER — Introspection Query card + Connection Details
+   Was: dark #0d0d0d cards, near-black #030712 code box (the blue
+   tinted box from the screenshot), rounded corners throughout.
+   ══════════════════════════════════════════════════════════════════ */
+.schema-explorer-block {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+}
+.schema-explorer-head { border-bottom: 1px solid var(--dcx-field-border, var(--border)) !important; }
+.schema-engine-badge {
+  border-radius: 3px !important;
+  background: color-mix(in srgb,var(--primary) 12%,transparent) !important;
+  border: 1px solid color-mix(in srgb,var(--primary) 28%,transparent) !important;
+  color: var(--primary) !important;
+}
+.schema-tip-card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+}
+.schema-tip-label { color: var(--primary) !important; }
+.schema-tip-code {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+}
+.schema-tip-copy {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border-color: var(--dcx-field-border, var(--border)) !important;
+  color: var(--text-3) !important;
+}
+.schema-tip-copy:hover {
+  background: color-mix(in srgb,var(--primary) 6%,transparent) !important;
+  border-color: var(--primary) !important;
+  color: var(--text) !important;
+}
+.schema-conn-card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-radius: 0 !important;
+}
+.schema-conn-head { border-bottom: 1px solid var(--dcx-field-border, var(--border)) !important; }
+.schema-conn-row { border-bottom-color: color-mix(in srgb,var(--text-3) 18%,transparent) !important; }
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}

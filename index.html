@@ -5655,7 +5655,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=98" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=99" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5728,7 +5728,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=98&recover=' + token;
+    fresh.href = 'theme-override.css?v=99&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -35896,17 +35896,31 @@ function sdkRenderEnvPanel(db) {
     { key: 'DB_NAME', val: db.name || db.id || 'unknown', copy: db.name || db.id || '', desc: 'Your database name' },
     { key: 'NODE_ENV', val: 'production', copy: 'production', desc: 'Runtime environment' },
   ];
-  rows.innerHTML = vars.map(v => `
+  rows.innerHTML = vars.map((v,i) => `
     <div class="sdk-env-row">
       <div class="sdk-env-key">${v.key}</div>
       <div class="sdk-env-val ${v.val && v.val !== '(not available)' ? 'has-value' : ''}" title="${v.desc}">${v.val}</div>
-      <button class="sdk-env-copy" onclick="(function(btn,val){navigator.clipboard.writeText(${JSON.stringify(v.copy)}).then(()=>{btn.innerHTML='<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'2.5\\' width=\\'10\\' height=\\'10\\'><polyline points=\\'20 6 9 17 4 12\\'/></svg> Copied!';btn.classList.add(\\'copied\\');setTimeout(()=>{btn.innerHTML='<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'2.5\\' width=\\'10\\' height=\\'10\\'><rect x=\\'9\\' y=\\'9\\' width=\\'13\\' height=\\'13\\' rx=\\'2\\' ry=\\'2\\'/><path d=\\'M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1\\'/></svg> Copy';btn.classList.remove(\\'copied\\')},1800)}).catch(()=>toast('Copy failed','error'))})(this)">
+      <button class="sdk-env-copy" data-copy-val="${escHtml(v.copy)}" onclick="sdkEnvCopyClick(this)">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="10" height="10"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
         Copy
       </button>
     </div>`).join('');
   // Also update open guide bodies with real snippet data
   sdkUpdateGuideContents(db);
+}
+
+function sdkEnvCopyClick(btn) {
+  const val = btn.getAttribute('data-copy-val') || '';
+  navigator.clipboard.writeText(val).then(() => {
+    const copiedIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+    const defaultIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="10" height="10"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/></svg> Copy';
+    btn.innerHTML = copiedIcon;
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerHTML = defaultIcon;
+      btn.classList.remove('copied');
+    }, 1800);
+  }).catch(() => toast('Copy failed', 'error'));
 }
 
 // ── Custom Framework Dropdown ─────────────────────────────────
