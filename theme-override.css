@@ -8325,6 +8325,40 @@ html[data-theme="light"] #page-env-manager {
   --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
   --dcx-row-border: color-mix(in srgb, var(--text-2) 40%, var(--border));
 }
+/* High-specificity to beat inline <style> dark fills */
+html[data-theme="dark"]  #page-env-manager .input,
+html[data-theme="light"] #page-env-manager .input,
+#page-env-manager .input {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  min-height: unset !important;
+}
+html[data-theme="dark"]  #page-env-manager .input:focus,
+html[data-theme="light"] #page-env-manager .input:focus,
+#page-env-manager .input:focus {
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+  outline: none !important;
+}
+html[data-theme="dark"]  #page-env-manager .custom-select-trigger,
+html[data-theme="light"] #page-env-manager .custom-select-trigger,
+#page-env-manager .custom-select-trigger {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  min-height: unset !important;
+}
+html[data-theme="dark"]  #page-env-manager .card,
+html[data-theme="light"] #page-env-manager .card,
+#page-env-manager .card {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+}
 #page-env-manager .card {
   background: transparent !important;
   border: 1px solid var(--dcx-field-border) !important;
