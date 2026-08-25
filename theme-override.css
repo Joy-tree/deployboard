@@ -2951,7 +2951,7 @@ html[data-theme="light"] .sdk-test-indicator.idle {
    This block closes the one remaining gap the variable fix doesn't
    reach: the runtime log viewer's own panel background/text.
    ═══════════════════════════════════════════════════════════════════════ */
-#page-cronjobs .card { background: #111111 !important; border-color: rgba(255,255,255,.07) !important; }
+/* cron card flat rule is now in the dedicated #page-cronjobs block below — removed stale #111 fill */
 
 .jt-runtime-log-pane {
   background: #111111 !important;
@@ -8614,6 +8614,33 @@ html[data-theme="light"] #page-webhooks {
   border-radius: 0 !important;
   background: transparent !important;
 }
+/* Select/dropdown inside domain manage */
+#page-domain-manage select,
+#page-domain-manage .custom-select-trigger,
+#page-domain-manage [style*="Select a project"] {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+/* Dropdown menu */
+#page-domain-manage [style*="position:absolute"],
+#page-domain-manage [style*="position: absolute"] {
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.45) !important;
+}
+/* Run Diagnostics button — currently white-filled, make outlined */
+#page-domain-manage button[onclick*="dmRunDiag"],
+#page-domain-manage .btn:not(.btn-primary):not(.btn-ghost) {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text) !important;
+}
+
 /* Progress bar area */
 #page-domain-manage [style*="rgba(0,0,0,0.3)"],
 #page-domain-manage [style*="rgba(0,0,0,0.35)"] {
@@ -8925,6 +8952,22 @@ html[data-theme="light"] #page-cronjobs {
   border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
+/* Job list items and execution log rows */
+#page-cronjobs #cronJobsList > div,
+#page-cronjobs #cronExecutionLog > div {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+/* Cron status badges — flat teal/amber/red chips */
+#page-cronjobs .badge-success { background: color-mix(in srgb,#2dd4bf 12%,transparent) !important; border: 1px solid color-mix(in srgb,#2dd4bf 35%,transparent) !important; color: #5eead4 !important; border-radius: 3px !important; }
+#page-cronjobs .badge-warning { background: color-mix(in srgb,#f59e0b 10%,transparent) !important; border: 1px solid color-mix(in srgb,#f59e0b 28%,transparent) !important; color: #fbbf24 !important; border-radius: 3px !important; }
+#page-cronjobs .badge-error   { background: color-mix(in srgb,#f87171 10%,transparent) !important; border: 1px solid color-mix(in srgb,#f87171 28%,transparent) !important; color: #f87171 !important; border-radius: 3px !important; }
+#page-cronjobs .btn-primary { border-radius: 0 !important; }
+#page-cronjobs .btn-ghost, #page-cronjobs .btn-sm { border-radius: 0 !important; background: transparent !important; border-color: var(--dcx-field-border) !important; }
+#page-cronjobs .input { background: transparent !important; border: none !important; border-bottom: 1px solid var(--dcx-field-border) !important; border-radius: 0 !important; box-shadow: none !important; }
+#page-cronjobs .input:focus { border-bottom: 2px solid var(--primary) !important; box-shadow: 0 1px 0 0 var(--primary) !important; }
 #page-cronjobs .card-header,
 #page-cron-create .card-header {
   border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
