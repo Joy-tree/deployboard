@@ -2816,6 +2816,30 @@ html[data-theme="light"] .sdk-test-indicator.idle {
   color: var(--text-2) !important;
 }
 .alert-info strong { color: #5eead4 !important; }
+.alert-success {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-left: 3px solid color-mix(in srgb,var(--primary) 55%,transparent) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+.alert-success strong { color: var(--primary) !important; }
+.alert-warning {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-left: 3px solid color-mix(in srgb,#f59e0b 55%,transparent) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+.alert-warning strong { color: #fbbf24 !important; }
+.alert-error {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-left: 3px solid color-mix(in srgb,#f87171 55%,transparent) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+.alert-error strong { color: #f87171 !important; }
 .qstudio-raw-output .info { color: #6ee7b7 !important; }
 .schema-tip-code { color: #6ee7b7 !important; }
 
@@ -10250,5 +10274,189 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 }
 .schema-conn-head { border-bottom: 1px solid var(--dcx-field-border, var(--border)) !important; }
 .schema-conn-row { border-bottom-color: color-mix(in srgb,var(--text-3) 18%,transparent) !important; }
+
+/* ══════════════════════════════════════════════════════════════════
+   DATABASE DETAIL PAGE (#page-db-detail) — the JS-rendered instance
+   detail view: hero, quick-stat pills, Instance Details / Connection
+   String / Actions / Quick SDK cards.
+   ══════════════════════════════════════════════════════════════════ */
+#page-db-detail {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+}
+/* Quick-stat pills in the hero (Port / RAM / Created date) —
+   inline-styled rgba(255,255,255,.04) filled boxes */
+#page-db-detail div[style*="rgba(255,255,255,.08)"][style*="border-radius:8px"] {
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+/* RUNNING status pill — flat teal chip instead of green glow pill */
+#page-db-detail .db-status-pill,
+.db-status-pill.running {
+  border-radius: 3px !important;
+  background: color-mix(in srgb,#2dd4bf 12%,transparent) !important;
+  border: 1px solid color-mix(in srgb,#2dd4bf 32%,transparent) !important;
+  color: #5eead4 !important;
+}
+.db-status-dot.running {
+  background: #5eead4 !important;
+  box-shadow: none !important;
+}
+/* Instance Details / Connection String / Actions / Quick SDK cards */
+html[data-theme="dark"]  #page-db-detail .db-detail-card,
+html[data-theme="light"] #page-db-detail .db-detail-card,
+#page-db-detail .db-detail-card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-db-detail .db-detail-card-title { color: var(--text) !important; }
+#page-db-detail .db-detail-card-title svg { color: var(--primary) !important; }
+#page-db-detail .db-detail-row { border-bottom-color: color-mix(in srgb,var(--text-3) 18%,transparent) !important; }
+#page-db-detail .db-detail-val[style*="color:#34d399"] { color: var(--primary) !important; }
+/* Connection string code block */
+#page-db-detail .db-code-block {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+/* Action buttons (Stop/Restart/View Logs/Link to Project/Delete) */
+html[data-theme="dark"]  #page-db-detail .db-btn,
+html[data-theme="light"] #page-db-detail .db-btn,
+#page-db-detail .db-btn {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+#page-db-detail .db-btn:hover {
+  border-color: var(--primary) !important;
+  background: color-mix(in srgb,var(--primary) 6%,transparent) !important;
+  color: var(--text) !important;
+}
+#page-db-detail .db-btn.primary {
+  background: color-mix(in srgb,var(--primary) 12%,transparent) !important;
+  border-color: color-mix(in srgb,var(--primary) 30%,transparent) !important;
+  color: var(--primary) !important;
+}
+#page-db-detail .db-btn.danger {
+  background: transparent !important;
+  border-color: color-mix(in srgb,#f87171 30%,transparent) !important;
+  color: #f87171 !important;
+}
+#page-db-detail .db-btn.danger:hover {
+  background: color-mix(in srgb,#f87171 8%,transparent) !important;
+}
+/* Quick SDK language tabs (Node.js / Python) */
+#page-db-detail .sdk-lang-tab {
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+#page-db-detail .sdk-lang-tab.active {
+  background: color-mix(in srgb,var(--primary) 10%,transparent) !important;
+  color: var(--primary) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   CONNECT CUSTOM DOMAIN PAGE (#page-domain-add)
+   Was already partially tokenised via .wizard-title/.wizard-sub, but
+   wizard-hero itself, the numbered step circles, registrar tab pills,
+   and the green tip boxes (SSL is automatic, Just bought a fresh
+   domain?) still had #0d0d0d fills, glow shadows, and rounded pills.
+   ══════════════════════════════════════════════════════════════════ */
+#page-domain-add {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 42%, var(--border));
+}
+html[data-theme="dark"]  #page-domain-add .wizard-hero,
+html[data-theme="light"] #page-domain-add .wizard-hero,
+#page-domain-add .wizard-hero {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 0 20px !important;
+}
+#page-domain-add .wizard-hero::after,
+#page-domain-add .wizard-hero::before { display: none !important; }
+/* Numbered step circles (1/2/3) — already primary-filled circles,
+   just square them off to match the flat redesign language */
+#page-domain-add div[style*="border-radius:50%"][style*="background:var(--primary)"] {
+  border-radius: 3px !important;
+}
+/* Cards */
+html[data-theme="dark"]  #page-domain-add .card,
+html[data-theme="light"] #page-domain-add .card,
+#page-domain-add .card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-domain-add .card-header { border-bottom: 1px solid var(--dcx-field-border) !important; }
+/* Domain name / project inputs — kill the dark #000 filled box */
+html[data-theme="dark"]  #page-domain-add .input,
+html[data-theme="light"] #page-domain-add .input,
+#page-domain-add .input,
+#page-domain-add select {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-domain-add .input:focus {
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+  outline: none !important;
+}
+/* Registrar tabs (Cloudflare/Namecheap/GoDaddy/Google Domains/Other) */
+#page-domain-add button[onclick*="dmSetRegistrar"],
+#page-domain-add [class*="registrar-tab"] {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+}
+/* CNAME table */
+#page-domain-add table { border-collapse: collapse !important; }
+#page-domain-add thead tr { border-bottom: 1px solid var(--dcx-field-border) !important; }
+#page-domain-add td, #page-domain-add th { background: transparent !important; }
+/* Green tip boxes ('Just bought a fresh domain?', 'SSL is automatic') —
+   were filled rgba(16,185,129,.06-.08) boxes, same AI-look pattern
+   fixed elsewhere. Flatten to left-accent hairline. */
+#page-domain-add div[style*="rgba(16,185,129"] {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-left: 3px solid color-mix(in srgb,#2dd4bf 50%,transparent) !important;
+  border-radius: 0 !important;
+}
+/* Transfer/Cancel buttons */
+#page-domain-add .btn-primary { border-radius: 0 !important; box-shadow: none !important; }
+#page-domain-add .btn-ghost {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+}
+/* .btn-secondary has no base CSS anywhere — falls back to browser
+   default white button (this was the plain white 'Import External
+   Site' button in the screenshot). Define it properly, flat outlined
+   matching every other secondary action in the redesign. */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  color: var(--text-2) !important;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.btn-secondary:hover {
+  border-color: var(--primary) !important;
+  color: var(--text) !important;
+}
 
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
