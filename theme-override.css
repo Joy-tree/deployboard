@@ -10459,4 +10459,44 @@ html[data-theme="light"] #page-domain-add .input,
   color: var(--text) !important;
 }
 
+
+/* ══════════════════════════════════════════════════════════════════
+   LOGS PAGE — terminal background + topbar + empty-space fix
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Kill the blue-black #00090f fill — sit on page background */
+#page-logs .terminal-wrap {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-top: none !important;
+}
+#page-logs .terminal-topbar {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+
+/* term-tag LIVE badge — flat, no green fill */
+#page-logs .term-tag {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--primary) !important;
+}
+
+/* Constrain #terminal height so an empty terminal doesn't leave a
+   huge blank hole. min-height keeps it usable when active. */
+#page-logs #terminal {
+  min-height: 180px !important;
+  height: auto !important;
+  max-height: clamp(180px, 45vh, 600px) !important;
+}
+
+/* filter bar card — transparent flat */
+#page-logs .card {
+  background: transparent !important;
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+}
+#page-logs .card .input { border-radius: 0 !important; }
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}

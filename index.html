@@ -2109,18 +2109,18 @@ textarea.input { resize: vertical; min-height: 80px; }
 
 /* ── Terminal ──────────────────────────────────────────────────────────── */
 .terminal-wrap {
-  background: #00090f;
+  background: transparent;
   border-radius: 0 0 var(--radius) var(--radius);
-  border: 1px solid rgba(16,185,129,0.15);
+  border: 1px solid var(--border);
   border-top: none;
   overflow: hidden;
   position: relative;
   flex: 1;
 }
 .terminal-topbar {
-  background: linear-gradient(180deg, #001a0d 0%, #000f08 100%);
-  border: 1px solid rgba(16,185,129,0.15);
-  border-bottom: 1px solid rgba(16,185,129,0.08);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   border-radius: var(--radius) var(--radius) 0 0;
   padding: 11px 16px;
   display: flex; align-items: center; gap: 10px;
@@ -2136,9 +2136,9 @@ textarea.input { resize: vertical; min-height: 80px; }
 }
 .term-status { margin-left:auto; }
 .term-tag {
-  font-family:var(--font-mono); font-size:0.65rem; color:rgba(16,185,129,0.9);
-  background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2);
-  border-radius:4px; padding:2px 8px; letter-spacing:0.08em; font-weight:600;
+  font-family:var(--font-mono); font-size:0.65rem; color:var(--primary);
+  background:transparent; border:1px solid var(--border);
+  border-radius:0; padding:2px 8px; letter-spacing:0.08em; font-weight:600;
 }
 /* The terminal itself — tall, professional like Render/Vercel */
 #terminal {
@@ -3258,8 +3258,8 @@ html[data-theme="light"] #app{--cyan:var(--jt-brand-strong);}
    ══════════════════════════════════════════════════════════════════ */
 #page-logs .card,
 #page-logs .build-steps-collapse:not(.quantum-build) {
-  background: #111 !important;
-  border-color: rgba(16,185,129,.14) !important;
+  background: transparent !important;
+  border-color: var(--border) !important;
 }
    ══════════════════════════════════════════════════════════════════ */
 
@@ -5651,7 +5651,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=103" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=104" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5724,7 +5724,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=103&recover=' + token;
+    fresh.href = 'theme-override.css?v=104&recover=' + token;
     document.head.appendChild(fresh);
   }
 
