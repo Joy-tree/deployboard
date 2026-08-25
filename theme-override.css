@@ -7322,9 +7322,10 @@ html[data-theme="light"] #sidebar {
   background: transparent !important;
 }
 #sidebar .user-avatar {
-  background: transparent !important;
-  border-color: var(--dcx-field-border) !important;
-  border-radius: 0 !important;
+  background: color-mix(in srgb,var(--primary) 18%,transparent) !important;
+  color: var(--primary) !important;
+  border-color: color-mix(in srgb,var(--primary) 32%,transparent) !important;
+  border-radius: 3px !important;
 }
 
 /* ══════════════════════════════════════════════════════════════════
