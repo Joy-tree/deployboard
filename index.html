@@ -5655,7 +5655,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=92" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=93" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5728,7 +5728,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=92&recover=' + token;
+    fresh.href = 'theme-override.css?v=93&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -23365,15 +23365,32 @@ function ensureProjectAutoSync() {
 
 function setUserAvatar(el, user, fallback='JG') {
   if (!el) return;
-  const src = String(user?.githubAvatarUrl || '').trim();
-  if (src) {
-    el.textContent = '';
-    el.style.backgroundImage = `url(${src})`;
-    el.style.backgroundColor = 'transparent';
-    return;
-  }
   const source = (user && (user.githubUsername || user.name || user.email)) || fallback || 'JG';
   const initials = String(source).split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'JG';
+  const src = String(user?.githubAvatarUrl || '').trim();
+  if (src) {
+    // Preload the image before committing to it — if it fails (404,
+    // revoked token, network error), fall back to initials instead
+    // of leaving the avatar blank.
+    const probe = new Image();
+    probe.onload = () => {
+      el.textContent = '';
+      el.style.backgroundImage = `url(${src})`;
+      el.style.backgroundColor = 'transparent';
+    };
+    probe.onerror = () => {
+      el.textContent = initials;
+      el.style.backgroundImage = '';
+      el.style.backgroundColor = '';
+    };
+    probe.src = src;
+    // Show initials immediately while the probe loads, so the
+    // avatar is never blank even momentarily.
+    el.textContent = initials;
+    el.style.backgroundImage = '';
+    el.style.backgroundColor = '';
+    return;
+  }
   el.textContent = initials;
   el.style.backgroundImage = '';
   el.style.backgroundColor = '';
