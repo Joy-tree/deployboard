@@ -26932,11 +26932,11 @@ function _showRedeployGithubBanner(p) {
   if (!repoField) return;
   const banner = document.createElement('div');
   banner.id = '_redeployGithubBanner';
-  banner.style.cssText = 'margin-bottom:14px;padding:12px 16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:12px;font-size:0.83rem;color:#10b981;display:flex;align-items:flex-start;gap:10px;';
+  banner.style.cssText = 'margin-bottom:14px;padding:12px 16px;background:transparent;border:1px solid var(--dcx-field-border,rgba(255,255,255,.12));border-left:3px solid var(--primary);border-radius:0;font-size:0.83rem;color:var(--text-2);display:flex;align-items:flex-start;gap:10px;';
   banner.innerHTML =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
     + '<div style="flex:1;min-width:0;">'
-    + '<div>Redeploying <strong>' + escHtml(p.name || p.subdomain) + '</strong> — subdomain <code style="background:rgba(16,185,129,0.15);padding:1px 5px;border-radius:4px;">' + escHtml(p.subdomain) + '</code> is locked.</div>'
+    + '<div>Redeploying <strong>' + escHtml(p.name || p.subdomain) + '</strong> — subdomain <code style="background:transparent;padding:1px 5px;border:1px solid var(--dcx-field-border,rgba(255,255,255,.15));border-radius:0;">' + escHtml(p.subdomain) + '</code> is locked.</div>'
     + '<div style="margin-top:6px;font-size:0.78rem;color:var(--text-2);">Change branch or settings below, then click Deploy. To deploy as a <em>new project</em> with a different name, click Edit.</div>'
     + '</div>'
     + '<button onclick="_unlockRedeployFields()" style="flex-shrink:0;padding:5px 12px;border-radius:8px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.12);color:#10b981;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">✏ Edit</button>';
@@ -27044,11 +27044,11 @@ function _triggerNewVersionUploadFlowEditable(existingProject) {
     if (!existing) {
       const banner = document.createElement('div');
       banner.id = '_newVersionBanner';
-      banner.style.cssText = 'margin-bottom:12px;padding:12px 16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:12px;font-size:0.84rem;color:#10b981;display:flex;align-items:flex-start;gap:10px;';
+      banner.style.cssText = 'margin-bottom:12px;padding:12px 16px;background:transparent;border:1px solid var(--dcx-field-border,rgba(255,255,255,.12));border-left:3px solid var(--primary);border-radius:0;font-size:0.84rem;color:var(--text-2);display:flex;align-items:flex-start;gap:10px;';
       banner.innerHTML =
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
         + '<div style="flex:1;min-width:0;">'
-        + '<div>Uploading new version of <strong>' + escHtml(existingProject.name || existingProject.subdomain) + '</strong> → <code style="background:rgba(16,185,129,0.15);padding:1px 5px;border-radius:4px;">' + escHtml(existingProject.subdomain) + '</code></div>'
+        + '<div>Uploading new version of <strong>' + escHtml(existingProject.name || existingProject.subdomain) + '</strong> → <code style="background:transparent;padding:1px 5px;border:1px solid var(--dcx-field-border,rgba(255,255,255,.15));border-radius:0;">' + escHtml(existingProject.subdomain) + '</code></div>'
         + '<div style="margin-top:4px;font-size:0.78rem;color:var(--text-2);">Drop your updated archive below. To deploy as a new project, click Edit.</div>'
         + '</div>'
         + '<button onclick="_unlockRedeployFields()" style="flex-shrink:0;padding:5px 12px;border-radius:8px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.12);color:#10b981;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">✏ Edit</button>';
@@ -43464,9 +43464,9 @@ function _triggerNewVersionUploadFlow(existingProject) {
     if (!existing) {
       const banner = document.createElement('div');
       banner.id = '_newVersionBanner';
-      banner.style.cssText = 'margin-bottom:12px;padding:12px 16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:12px;font-size:0.84rem;color:#10b981;display:flex;align-items:center;gap:10px;';
+      banner.style.cssText = 'margin-bottom:12px;padding:12px 16px;background:transparent;border:1px solid var(--dcx-field-border,rgba(255,255,255,.12));border-left:3px solid var(--primary);border-radius:0;font-size:0.84rem;color:var(--text-2);display:flex;align-items:center;gap:10px;';
       banner.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
-        + '<span>Uploading a <strong>new version</strong> of <strong>' + escHtml(existingProject.name || existingProject.subdomain) + '</strong>. The same subdomain <code style="background:rgba(16,185,129,0.15);padding:1px 5px;border-radius:4px;">' + escHtml(existingProject.subdomain) + '</code> will be reused — no reconfiguration needed.</span>';
+        + '<span>Uploading a <strong>new version</strong> of <strong>' + escHtml(existingProject.name || existingProject.subdomain) + '</strong>. The same subdomain <code style="background:transparent;padding:1px 5px;border:1px solid var(--dcx-field-border,rgba(255,255,255,.15));border-radius:0;">' + escHtml(existingProject.subdomain) + '</code> will be reused — no reconfiguration needed.</span>';
       dropzone.parentNode.insertBefore(banner, dropzone);
     }
   }
@@ -43552,7 +43552,7 @@ function cideOpenDeployPage() {
     // Show upload source badge (below the GitHub field, above branch)
     const badge    = document.getElementById('deployUploadSourceBadge');
     const badgeName = document.getElementById('deployUploadSourceName');
-    if (badge) badge.style.cssText = 'display:flex;padding:14px 18px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:14px;align-items:center;gap:12px;margin-bottom:0;';
+    if (badge) badge.style.cssText = 'display:flex;padding:14px 18px;background:transparent;border:1px solid var(--dcx-field-border,rgba(255,255,255,.12));border-radius:0;align-items:center;gap:12px;margin-bottom:0;';
     if (badgeName) badgeName.textContent = title ? `"${title}" — files ready to deploy` : 'Project files ready to deploy';
 
     // Update hero copy
