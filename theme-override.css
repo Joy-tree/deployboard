@@ -381,8 +381,6 @@ html[data-theme="light"] .dbb-node-val-obj { color: var(--jt-text-faint) !import
 html[data-theme="light"] .dbb-node-val-str { color: var(--jt-accent) !important; }
 html[data-theme="light"] .dbb-shell { color: var(--jt-text) !important; }
 html[data-theme="light"] .dbb-topbar-dbname { color: var(--jt-text-faint) !important; }
-html[data-theme="light"] .deploy-ss-close:hover { color: var(--jt-text) !important; }
-html[data-theme="light"] .deploy-success-title { color: var(--jt-text) !important; }
 html[data-theme="light"] .diff-card-label { color: var(--jt-text) !important; }
 html[data-theme="light"] .diff-collection-name { color: var(--jt-text) !important; }
 html[data-theme="light"] .diff-field label { color: var(--jt-text-faint) !important; }
@@ -395,9 +393,6 @@ html[data-theme="light"] .diff-input { color: var(--jt-text) !important; }
 html[data-theme="light"] .diff-source-opt { color: var(--jt-text-faint) !important; }
 html[data-theme="light"] .diff-source-opt.active { color: var(--jt-text) !important; }
 html[data-theme="light"] .diff-stat.unchanged b { color: var(--jt-text-faint) !important; }
-html[data-theme="light"] .dss-btn-back { color: var(--jt-text-faint) !important; }
-html[data-theme="light"] .dss-btn-back:hover { color: var(--jt-text) !important; }
-html[data-theme="light"] .dss-info-val { color: var(--jt-text) !important; }
 html[data-theme="light"] .executive-banner span { color: var(--jt-info) !important; }
 html[data-theme="light"] .forum-feature-title { color: var(--jt-text) !important; }
 html[data-theme="light"] .forum-quote-name { color: var(--jt-text-faint) !important; }
@@ -642,7 +637,6 @@ html[data-theme="light"] .db-studio-head { background: var(--jt-bg-raised) !impo
 html[data-theme="light"] .db-toolbar { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .deploy-stepper-badge { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .deploy-stepper-item { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] .deploy-success-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .deployment-table-shell tbody tr { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .diff-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .diff-collection { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
@@ -1926,46 +1920,28 @@ html[data-theme="light"] .matrix-overlay-text { color: var(--jt-text) !important
    every remaining background/border, and bumping text size/weight for
    a clearer, bolder result as requested.
    --------------------------------------------------------------------- */
-html[data-theme="light"] .deploy-success-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; box-shadow: 0 24px 64px rgba(0,0,0,.18) !important; }
-html[data-theme="light"] .deploy-success-header { background: var(--jt-bg-raised) !important; border-bottom-color: var(--jt-border) !important; }
-html[data-theme="light"] .deploy-success-body { background: var(--jt-bg-raised) !important; }
-html[data-theme="light"] .deploy-success-title { color: var(--jt-text) !important; font-size: 1.28rem !important; font-weight: 800 !important; }
-html[data-theme="light"] .deploy-success-sub { color: var(--jt-text-dim) !important; font-size: .9rem !important; font-weight: 600 !important; }
-
-html[data-theme="light"] .dss-stat {
-  background: var(--jt-bg-sunken) !important;
-  border-color: var(--jt-border) !important;
-  color: var(--jt-brand-strong) !important;
-  font-size: .76rem !important;
-  font-weight: 700 !important;
+html[data-theme="light"] .deploy-success-card,
+html[data-theme="light"] .deploy-success-header,
+html[data-theme="light"] .deploy-success-body,
+html[data-theme="light"] .deploy-success-title,
+html[data-theme="light"] .deploy-success-sub,
+html[data-theme="light"] .deploy-success-url-box,
+html[data-theme="light"] .deploy-success-url-box a,
+html[data-theme="light"] .dss-copy-btn,
+html[data-theme="light"] .deploy-ss-wrap,
+html[data-theme="light"] .dss-loader-arc-bg,
+html[data-theme="light"] .deploy-ss-loading p,
+html[data-theme="light"] .dss-info-cell,
+html[data-theme="light"] .dss-info-label,
+html[data-theme="light"] .dss-info-val,
+html[data-theme="light"] .dss-btn-back,
+html[data-theme="light"] .dss-btn-visit,
+html[data-theme="light"] .deploy-ss-close {
+  /* Intentionally not themed. The deploy-success overlay's backdrop
+     has always been a dark scrim regardless of light/dark mode, so
+     this card stays the same quiet ink-on-black "certificate" in
+     both — see the base rules in index.html. */
 }
-html[data-theme="light"] .dss-stat svg { stroke: var(--jt-brand-strong) !important; }
-
-html[data-theme="light"] .deploy-success-url-box { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] .deploy-success-url-box a { color: #0E7490 !important; font-size: .82rem !important; font-weight: 700 !important; }
-html[data-theme="light"] .dss-copy-btn { color: var(--jt-text-faint) !important; }
-html[data-theme="light"] .dss-copy-btn:hover { color: var(--jt-brand-strong) !important; }
-
-html[data-theme="light"] .deploy-ss-wrap { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] .dss-loader-arc-bg { stroke: rgba(0,0,0,.08) !important; }
-html[data-theme="light"] .deploy-ss-loading p { color: var(--jt-text-dim) !important; font-weight: 700 !important; font-size: .8rem !important; }
-
-html[data-theme="light"] .dss-info-cell { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] .dss-info-label { color: var(--jt-text-faint) !important; font-weight: 700 !important; }
-html[data-theme="light"] .dss-info-val { color: var(--jt-text) !important; font-size: .88rem !important; font-weight: 800 !important; }
-html[data-theme="light"] .dss-info-val.green { color: var(--jt-brand-strong) !important; }
-
-html[data-theme="light"] .dss-btn-back {
-  background: var(--jt-bg-sunken) !important;
-  border-color: var(--jt-border) !important;
-  color: var(--jt-text-dim) !important;
-  font-weight: 700 !important;
-}
-html[data-theme="light"] .dss-btn-back:hover { color: var(--jt-text) !important; border-color: rgba(0,0,0,.2) !important; }
-html[data-theme="light"] .dss-btn-visit { font-weight: 800 !important; }
-
-html[data-theme="light"] .deploy-ss-close { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; color: var(--jt-text-faint) !important; }
-html[data-theme="light"] .deploy-ss-close:hover { color: var(--jt-text) !important; }
 
 /* ---------------------------------------------------------------------
    LIVE LOGS TERMINAL (xterm.js). The terminal's actual text/background
@@ -10587,86 +10563,13 @@ html[data-theme="light"] #page-domain-add .input,
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   DEPLOY SUCCESS MODAL (default/dark) — flat rebuild, no card, no
-   gradient, no color fills. Same two-step technique used across this
-   rebuild: (1) flatten the card and every descendant, (2) re-add
-   ONLY thickened white hairline dividers (2px) to structure the
-   sections — stat row, URL row, screenshot panel, info grid, action
-   row. The existing html[data-theme="light"] rules above already
-   re-skin this for light mode with higher specificity, so this only
-   takes effect in the default/dark state.
+   DEPLOY SUCCESS MODAL — superseded. The modal was fully redesigned
+   at its source (index.html, .deploy-success-*/.dss-* base rules):
+   serif headline, monospace ledger, a single hairline fold, no icon,
+   no color, no boxes. That base CSS is already flat and correct, so
+   the old "wildcard-flatten + re-add thick !important borders" hack
+   that used to live here has been removed — it would just fight the
+   new design (2px borders, a filled green button) if left in place.
    ══════════════════════════════════════════════════════════════════ */
-.deploy-success-card,
-.deploy-success-card * {
-  background: transparent !important;
-  background-image: none !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-}
-.deploy-success-card {
-  border: 2px solid rgba(255,255,255,.18) !important;
-}
-.deploy-success-header {
-  border-bottom: 2px solid rgba(255,255,255,.18) !important;
-}
-.dss-icon-core {
-  border: 2px solid rgba(255,255,255,.22) !important;
-}
-.dss-icon-core svg { stroke: #fff !important; }
-.deploy-success-title { color: #fff !important; }
-.deploy-success-sub { color: rgba(255,255,255,.5) !important; }
-.dss-stats {
-  gap: 0 !important;
-  margin-top: 1rem !important;
-}
-.dss-stat {
-  padding: 0 .8rem !important;
-  border-right: 2px solid rgba(255,255,255,.18) !important;
-  color: rgba(255,255,255,.7) !important;
-}
-.dss-stat:last-child { border-right: none !important; }
-.dss-stat svg { stroke: rgba(255,255,255,.7) !important; }
-.deploy-success-url-box {
-  border-bottom: 2px solid rgba(255,255,255,.18) !important;
-  padding: 0.75rem 0 !important;
-}
-.deploy-success-url-box a { color: #fff !important; }
-.dss-copy-btn:hover { color: #fff !important; }
-.deploy-ss-wrap {
-  border: 2px solid rgba(255,255,255,.18) !important;
-}
-.dss-loader-arc { stroke: #fff !important; }
-.dss-loader-arc-bg { stroke: rgba(255,255,255,.15) !important; }
-.deploy-ss-loading p { color: rgba(255,255,255,.5) !important; }
-.dss-ss-label { color: #fff !important; }
-.dss-ss-label::before { background: #fff !important; }
-.dss-info-grid {
-  gap: 0 !important;
-  border-top: 2px solid rgba(255,255,255,.18) !important;
-  border-left: 2px solid rgba(255,255,255,.18) !important;
-}
-.dss-info-cell {
-  border-right: 2px solid rgba(255,255,255,.18) !important;
-  border-bottom: 2px solid rgba(255,255,255,.18) !important;
-  padding: 0.65rem 0.85rem !important;
-}
-.dss-info-label { color: rgba(255,255,255,.45) !important; }
-.dss-info-val { color: #fff !important; }
-.dss-info-val.green { color: #fff !important; }
-.dss-btn-visit {
-  background: #10b981 !important;
-  color: #052e16 !important;
-}
-.dss-btn-visit svg { stroke: #052e16 !important; }
-.dss-btn-back {
-  border: 2px solid rgba(255,255,255,.18) !important;
-  color: rgba(255,255,255,.7) !important;
-}
-.dss-btn-back:hover { border-color: rgba(255,255,255,.32) !important; color: #fff !important; }
-.deploy-ss-close {
-  border: 2px solid rgba(255,255,255,.18) !important;
-  color: rgba(255,255,255,.6) !important;
-}
 
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
