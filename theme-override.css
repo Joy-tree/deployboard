@@ -10647,3 +10647,43 @@ html[data-theme="light"] #page-domain-add .input,
   background: var(--primary) !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   DOMAIN MANAGE PAGE (Reassign tab) — "Select a project..." dropdown.
+   This page already had a partial attempt at flattening it below
+   (`[style*="position:absolute"]`), but that never actually matched
+   anything: .custom-select-dropdown gets position:absolute from its
+   CSS class, not from an inline style attribute, so that selector was
+   dead on arrival. The trigger row got flattened; the dropdown menu
+   and its .cs-option rows never did, so opening it still shows the
+   old filled/rounded green pill for the selected row. Targeting the
+   real classes directly here, same treatment as New Deployment and
+   Connect Custom Domain.
+   ══════════════════════════════════════════════════════════════════ */
+#page-domain-manage .custom-select-dropdown,
+#page-domain-manage .custom-select-menu {
+  border-radius: 0 !important;
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  box-shadow: 0 18px 44px rgba(0,0,0,.4) !important;
+}
+#page-domain-manage .cs-option {
+  padding: 12px 16px !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
+  color: var(--text-2) !important;
+}
+#page-domain-manage .cs-option:last-child {
+  border-bottom: none !important;
+}
+#page-domain-manage .cs-option:hover {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+#page-domain-manage .cs-option.selected {
+  background: transparent !important;
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+}
+#page-domain-manage .cs-option.selected::after {
+  background: var(--primary) !important;
+}
+
