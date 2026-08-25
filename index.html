@@ -3151,10 +3151,10 @@ html[data-theme="light"] #app{--cyan:var(--jt-brand-strong);}
 .quantum-steps .deploy-step {
   display: flex !important;
   flex-direction: row !important;
-  align-items: center !important;
+  align-items: stretch !important;
   gap: 12px !important;
   min-height: unset !important;
-  padding: 9px 4px !important;
+  padding: 0 4px !important;
   border: none !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -3163,17 +3163,28 @@ html[data-theme="light"] #app{--cyan:var(--jt-brand-strong);}
   position: relative;
   overflow: visible !important;
 }
-/* Connector line between steps */
-.quantum-steps .deploy-step:not(:last-child)::after {
-  content: '' !important;
-  display: block !important;
-  position: absolute !important;
-  left: 13px !important; top: 36px !important; bottom: -1px !important;
-  width: 1px !important; height: auto !important;
-  background: rgba(16,185,129,.14) !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
+/* Rail: icon on top, a real (not pseudo-element) line stretching
+   down to the next icon. Because the rail is a column flex child
+   that stretches to the full height of the row (icon + description,
+   even when the description wraps to 2 lines), the line always
+   reaches exactly to the next step's icon — no fragile absolute
+   top/bottom math that breaks on variable text height. */
+.quantum-steps .step-rail {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
 }
+.quantum-steps .step-line {
+  flex: 1 !important;
+  width: 1px !important;
+  min-height: 10px;
+  margin: 5px 0 !important;
+  background: rgba(16,185,129,.16) !important;
+}
+.quantum-steps .deploy-step:last-child .step-line { display: none !important; }
+/* Old pseudo-element connector line — superseded by .step-line above */
+.quantum-steps .deploy-step:not(:last-child)::after { display: none !important; content: none !important; }
 /* Step data-phase label (phase kicker) — hide it in compact mode */
 .quantum-steps .deploy-step::before { display: none !important; }
 
@@ -3222,7 +3233,7 @@ html[data-theme="light"] #app{--cyan:var(--jt-brand-strong);}
   line-height: 1.35 !important; margin-top: 1px;
 }
 /* Step body layout */
-.quantum-steps .step-body { flex: 1; min-width: 0; }
+.quantum-steps .step-body { flex: 1; min-width: 0; padding-top: 2px; padding-bottom: 10px; }
 
 /* Highlight active/done steps subtly */
 .quantum-steps .deploy-step:has(.active) {
@@ -5655,7 +5666,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=118" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=119" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -9883,12 +9894,12 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <div class="quantum-telemetry"><div><span>Pipeline</span><strong>Source → Edge</strong></div><div><span>Mode</span><strong>Zero-downtime</strong></div><div><span>Trace</span><strong>Live logs synced</strong></div></div>
           </div>
           <div class="deploy-steps quantum-steps" id="buildSteps">
-            <div class="deploy-step" data-phase="Source Sync"><div class="step-icon" id="step-clone">1</div><div class="step-body"><div class="step-name">Clone Repository</div><div class="step-desc">Mirroring GitHub source into an isolated build cell</div></div></div>
-            <div class="deploy-step" data-phase="Dependency Graph"><div class="step-icon" id="step-install">2</div><div class="step-body"><div class="step-name">Install Dependencies</div><div class="step-desc">Resolving packages, cache layers, and runtime contracts</div></div></div>
-            <div class="deploy-step" data-phase="Compiler Core"><div class="step-icon" id="step-build">3</div><div class="step-body"><div class="step-name">Build Project</div><div class="step-desc">Compiling assets through the production bundling reactor</div></div></div>
-            <div class="deploy-step" data-phase="Edge Publish"><div class="step-icon" id="step-copy">4</div><div class="step-body"><div class="step-name">Copy to Hosting</div><div class="step-desc">Promoting immutable output to the serving fabric</div></div></div>
-            <div class="deploy-step" id="step-start-row" data-phase="Runtime Ignition" style="display:none;"><div class="step-icon" id="step-start">5</div><div class="step-body"><div class="step-name">Start Server</div><div class="step-desc" id="step-start-desc">Booting the process and checking the app port</div></div></div>
-            <div class="deploy-step" data-phase="Sanitize"><div class="step-icon" id="step-cleanup">6</div><div class="step-body"><div class="step-name">Cleanup</div><div class="step-desc">Shredding temporary files and sealing the deployment capsule</div></div></div>
+            <div class="deploy-step" data-phase="Source Sync"><div class="step-rail"><div class="step-icon" id="step-clone">1</div><div class="step-line"></div></div><div class="step-body"><div class="step-name">Clone Repository</div><div class="step-desc">Mirroring GitHub source into an isolated build cell</div></div></div>
+            <div class="deploy-step" data-phase="Dependency Graph"><div class="step-rail"><div class="step-icon" id="step-install">2</div><div class="step-line"></div></div><div class="step-body"><div class="step-name">Install Dependencies</div><div class="step-desc">Resolving packages, cache layers, and runtime contracts</div></div></div>
+            <div class="deploy-step" data-phase="Compiler Core"><div class="step-rail"><div class="step-icon" id="step-build">3</div><div class="step-line"></div></div><div class="step-body"><div class="step-name">Build Project</div><div class="step-desc">Compiling assets through the production bundling reactor</div></div></div>
+            <div class="deploy-step" data-phase="Edge Publish"><div class="step-rail"><div class="step-icon" id="step-copy">4</div><div class="step-line"></div></div><div class="step-body"><div class="step-name">Copy to Hosting</div><div class="step-desc">Promoting immutable output to the serving fabric</div></div></div>
+            <div class="deploy-step" id="step-start-row" data-phase="Runtime Ignition" style="display:none;"><div class="step-rail"><div class="step-icon" id="step-start">5</div><div class="step-line"></div></div><div class="step-body"><div class="step-name">Start Server</div><div class="step-desc" id="step-start-desc">Booting the process and checking the app port</div></div></div>
+            <div class="deploy-step" data-phase="Sanitize"><div class="step-rail"><div class="step-icon" id="step-cleanup">6</div><div class="step-line"></div></div><div class="step-body"><div class="step-name">Cleanup</div><div class="step-desc">Shredding temporary files and sealing the deployment capsule</div></div></div>
           </div>
         </div>
       </div>
