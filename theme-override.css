@@ -9168,6 +9168,201 @@ html[data-theme="light"] #page-cronjobs {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   ANALYTICS PAGE (Activity Log)
+   ══════════════════════════════════════════════════════════════════ */
+#page-analytics {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+}
+/* Flatten all inline-styled divs */
+html[data-theme="dark"]  #page-analytics .card,
+html[data-theme="light"] #page-analytics .card,
+#page-analytics .card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-analytics .card-header { border-bottom: 1px solid var(--dcx-row-border) !important; }
+#page-analytics .card-title  { color: var(--text) !important; }
+/* Hero (page-header) */
+#page-analytics .page-header {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 0 20px !important;
+}
+#page-analytics .page-title { color: var(--text) !important; font-size: 1.6rem !important; font-weight: 800 !important; }
+/* dcx-kicker on analytics */
+#page-analytics .dcx-kicker { color: var(--primary) !important; }
+#page-analytics .dcx-title  { color: var(--text) !important; }
+#page-analytics .dcx-sub    { color: var(--text-2) !important; }
+/* Buttons */
+#page-analytics .btn-primary { border-radius: 0 !important; box-shadow: none !important; }
+#page-analytics .btn-ghost   { border-radius: 0 !important; background: transparent !important; border-color: var(--dcx-field-border) !important; }
+/* Event log rows */
+#page-analytics .event-row,
+#page-analytics [style*="border-bottom"] { border-color: var(--dcx-row-border) !important; }
+/* KPI stat values — keep green/cyan meaningful but no glow */
+#page-analytics [style*="color:var(--green)"],
+#page-analytics [style*="color: var(--green)"] { text-shadow: none !important; }
+
+/* ══════════════════════════════════════════════════════════════════
+   USAGE & LIMITS PAGE
+   ══════════════════════════════════════════════════════════════════ */
+#page-usage {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+}
+/* Plan banner — kill the green gradient fill */
+html[data-theme="dark"]  #page-usage [style*="linear-gradient"],
+html[data-theme="light"] #page-usage [style*="linear-gradient"],
+#page-usage [style*="linear-gradient"] {
+  background: transparent !important;
+  background-image: none !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-left: 3px solid var(--primary) !important;
+  border-radius: 0 !important;
+}
+/* Active badge */
+#page-usage .badge-success {
+  background: color-mix(in srgb,#2dd4bf 12%,transparent) !important;
+  border: 1px solid color-mix(in srgb,#2dd4bf 35%,transparent) !important;
+  color: #5eead4 !important;
+  border-radius: 3px !important;
+}
+#page-usage .badge-success .badge-dot { background: #5eead4 !important; }
+/* Cards */
+html[data-theme="dark"]  #page-usage .card,
+html[data-theme="light"] #page-usage .card,
+#page-usage .card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-usage .card-header { border-bottom: 1px solid var(--dcx-row-border) !important; }
+#page-usage .card-title  { color: var(--text) !important; }
+/* Progress bars — flat, no radius */
+#page-usage [style*="border-radius:3px"] {
+  border-radius: 0 !important;
+}
+/* progress track */
+#page-usage [style*="rgba(16,185,129,0.1)"] {
+  background: color-mix(in srgb,var(--primary) 8%,transparent) !important;
+}
+/* Page header */
+#page-usage .page-header {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 0 20px !important;
+  margin-bottom: 20px !important;
+}
+#page-usage .page-title { color: var(--text) !important; font-weight: 800 !important; }
+/* Buttons */
+#page-usage .btn-primary { border-radius: 0 !important; box-shadow: none !important; }
+
+/* ══════════════════════════════════════════════════════════════════
+   REALTIME API BUILDER PAGE (#page-realtime-api)
+   ══════════════════════════════════════════════════════════════════ */
+#page-realtime-api {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+}
+/* Hero (app-hero) — kill the dark fill and gradient */
+html[data-theme="dark"]  #page-realtime-api .app-hero,
+html[data-theme="light"] #page-realtime-api .app-hero,
+#page-realtime-api .app-hero {
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding-bottom: 20px !important;
+}
+#page-realtime-api .app-hero-kicker {
+  font-family: var(--font-mono) !important;
+  font-size: .7rem !important; letter-spacing: .14em !important;
+  text-transform: uppercase !important;
+  color: var(--primary) !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+#page-realtime-api .app-hero-title  { color: var(--text) !important; }
+#page-realtime-api .app-hero-subtitle { color: var(--text-2) !important; }
+/* hero-status-pill — flat teal chip, no glow */
+#page-realtime-api .hero-status-pill {
+  background: color-mix(in srgb,#2dd4bf 8%,transparent) !important;
+  border: 1px solid color-mix(in srgb,#2dd4bf 28%,transparent) !important;
+  border-radius: 3px !important;
+  color: #5eead4 !important;
+  box-shadow: none !important;
+}
+/* API v3 badge pill (cyan-bordered) */
+#page-realtime-api [style*="rgba(56,189,248"] {
+  background: transparent !important;
+  border-color: color-mix(in srgb,#67e8f9 25%,transparent) !important;
+  border-radius: 3px !important;
+  box-shadow: none !important;
+}
+/* Prompt textarea card */
+html[data-theme="dark"]  #page-realtime-api .card,
+html[data-theme="light"] #page-realtime-api .card,
+#page-realtime-api .card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-realtime-api .card-header { border-bottom: 1px solid var(--dcx-row-border) !important; }
+/* Prompt textarea */
+#page-realtime-api .input,
+#page-realtime-api textarea {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+/* AI version selector chips */
+#page-realtime-api .jt-ai-option {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+}
+#page-realtime-api .jt-ai-option.active,
+#page-realtime-api .jt-ai-option.selected {
+  border-color: var(--primary) !important;
+  background: color-mix(in srgb,var(--primary) 8%,transparent) !important;
+}
+/* Upload context button */
+#page-realtime-api .btn-ghost,
+#page-realtime-api .btn-sm {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+}
+#page-realtime-api .btn-primary { border-radius: 0 !important; box-shadow: none !important; }
+/* lf-prompt-help text */
+#page-realtime-api .lf-prompt-help { color: var(--text-3) !important; }
+/* Mode badge (v3 large-task mode) */
+#page-realtime-api [style*="color:#f59e0b"],
+#page-realtime-api [style*="color: #f59e0b"] { color: #fbbf24 !important; }
+/* Any remaining filled elements */
+#page-realtime-api [style*="background:rgba(0,0,0"] { background: transparent !important; }
+#page-realtime-api [style*="border-radius:999px"] { border-radius: 3px !important; }
+#page-realtime-api [style*="border-radius:12px"],
+#page-realtime-api [style*="border-radius:14px"],
+#page-realtime-api [style*="border-radius:16px"],
+#page-realtime-api [style*="border-radius:20px"] { border-radius: 0 !important; }
+#page-realtime-api [style*="box-shadow"] { box-shadow: none !important; }
+
+/* ══════════════════════════════════════════════════════════════════
    DEPLOY STREAKS PAGE — the most heavily "AI generated" page in the
    app: radial gradients, glowing rings, glowing text-shadows, and
    box-shadows throughout. Flattened to the same flat/lines system
