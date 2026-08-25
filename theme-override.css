@@ -8767,6 +8767,145 @@ html[data-theme="light"] #page-webhooks {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   BACKGROUND WORKERS PAGE — flat treatment
+   ══════════════════════════════════════════════════════════════════ */
+#page-workers .surface-hero {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 0 24px !important;
+  margin-bottom: 24px !important;
+}
+#page-workers .surface-hero::after { display: none !important; }
+#page-workers .surface-kicker {
+  font-family: var(--font-mono) !important;
+  font-size: .7rem !important; letter-spacing: .16em !important;
+  text-transform: uppercase !important;
+  color: var(--primary) !important;
+}
+#page-workers .surface-title {
+  font-size: clamp(1.6rem,3vw,2.4rem) !important;
+  font-weight: 800 !important; letter-spacing: -.04em !important;
+  color: var(--text) !important;
+}
+#page-workers .surface-sub { color: var(--text-2) !important; font-size: .9rem !important; }
+#page-workers .card {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+}
+#page-workers .card-header { border-bottom: 1px solid var(--border) !important; }
+#page-workers .card-title { color: var(--text) !important; }
+#page-workers .list-shell { background: transparent !important; border-radius: 0 !important; }
+#page-workers .btn-primary { border-radius: 0 !important; }
+/* Alert info box — flat, no blue tint */
+#page-workers .alert {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  border-left: 3px solid var(--primary) !important;
+  color: var(--text-2) !important;
+}
+#page-workers .alert strong { color: var(--text) !important; }
+#page-workers .alert code {
+  background: color-mix(in srgb,var(--text-3) 10%,transparent) !important;
+  border-radius: 0 !important;
+  padding: 1px 5px !important;
+  font-family: var(--font-mono) !important;
+  color: var(--text) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   DATA MIGRATION PAGE — remaining elements not covered by inline CSS rewrite
+   ══════════════════════════════════════════════════════════════════ */
+#page-db-migration {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+  --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
+}
+/* Source option active state */
+#page-db-migration .mig-source-opt:hover {
+  border-color: var(--primary) !important;
+  background: color-mix(in srgb,var(--primary) 6%,transparent) !important;
+  transform: none !important;
+}
+#page-db-migration .mig-source-opt.selected,
+#page-db-migration .mig-source-opt.active {
+  border-color: var(--primary) !important;
+  background: color-mix(in srgb,var(--primary) 10%,transparent) !important;
+  border-width: 2px !important;
+}
+/* Inputs inside migration */
+#page-db-migration input,
+#page-db-migration select,
+#page-db-migration textarea {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+}
+#page-db-migration input:focus,
+#page-db-migration select:focus,
+#page-db-migration textarea:focus {
+  outline: none !important;
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+}
+/* Job log terminal */
+#page-db-migration .mig-job-logs {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--primary) !important;
+}
+/* Run/submit buttons */
+#page-db-migration button[class*="btn"],
+#page-db-migration button[class*="mig-run"],
+#page-db-migration .btn-primary,
+#page-db-migration .btn-ghost {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+/* Progress bars */
+#page-db-migration [style*="border-radius"] {
+  border-radius: 0 !important;
+}
+#page-db-migration [style*="background:#111"],
+#page-db-migration [style*="background: #111"] {
+  background: transparent !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   DATABASE COMPARISON (DIFF) PAGE
+   ══════════════════════════════════════════════════════════════════ */
+#page-db-diff {
+  --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
+}
+/* Any remaining filled elements */
+#page-db-diff [style*="background:#111"],
+#page-db-diff [style*="background: #111"],
+#page-db-diff [style*="background:#0b0b0b"],
+#page-db-diff [style*="background: #0b0b0b"] {
+  background: transparent !important;
+}
+#page-db-diff [style*="border-radius"] {
+  border-radius: 0 !important;
+}
+#page-db-diff [style*="box-shadow"] {
+  box-shadow: none !important;
+}
+#page-db-diff .btn-primary { border-radius: 0 !important; box-shadow: none !important; }
+#page-db-diff .btn-ghost { border-radius: 0 !important; background: transparent !important; border-color: var(--dcx-field-border) !important; }
+/* Results table */
+#page-db-diff table { border-collapse: collapse !important; }
+#page-db-diff thead tr { border-bottom: 1px solid var(--dcx-field-border) !important; }
+#page-db-diff tbody tr { border-bottom: 1px solid color-mix(in srgb,var(--border) 50%,transparent) !important; background: transparent !important; }
+#page-db-diff td, #page-db-diff th { background: transparent !important; }
+
+/* ══════════════════════════════════════════════════════════════════
    CRON JOBS PAGE + CREATE CRON JOB PAGE — flat treatment. Header
    converted to dcx-header above. Active Jobs / Recent Executions
    cards, Basic Configuration / Schedule cards, purple icon boxes
