@@ -3736,7 +3736,6 @@ html[data-theme="light"] .jt-leaves-fall {
 #page-projects .tree-project-node .tree-node-footer {
   border-left:  2px solid var(--primary) !important;
   border-right: 2px solid var(--primary) !important;
-  border-bottom: 2px solid var(--primary) !important;
 }
 
 /* Project cards stay their own flat dark #111 on both themes -- this
@@ -3777,12 +3776,10 @@ html[data-theme="light"] #page-projects .tree-project-node {
   top: auto !important;
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
   border-radius: 0 !important;
   padding-bottom: 18px !important;
 }
 .tree-project-node:hover {
-  border-bottom-color: var(--primary) !important;
   transform: none;
 }
 @media(min-width: 640px) {
