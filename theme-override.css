@@ -10592,3 +10592,58 @@ html[data-theme="light"] #page-domain-add .input,
   background: var(--bg-2) !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   CONNECT CUSTOM DOMAIN PAGE — "Select a project..." dropdown had no
+   page-scoped override at all, so it fell back to the site's default
+   .cs-option styling: a filled, rounded, green-tinted pill for the
+   selected row. New Deployment's "Node.js Version" (and every other)
+   dropdown on that page instead uses a flat treatment: transparent
+   background, sharp corners, thin hairline row dividers, and the
+   selected row shown as plain green text + a small dot marker, no
+   fill. Matching that same treatment here so every dropdown on the
+   site looks the same regardless of which page it's on.
+   ══════════════════════════════════════════════════════════════════ */
+#page-domain-add .custom-select-trigger,
+#page-domain-add .custom-select-btn {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border, var(--border)) !important;
+  color: var(--text) !important;
+  box-shadow: none !important;
+}
+#page-domain-add .custom-select-trigger:hover {
+  border-bottom-color: color-mix(in srgb, var(--text-2) 55%, var(--dcx-field-border, var(--border)));
+}
+#page-domain-add .custom-select-trigger.open {
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+}
+#page-domain-add .custom-select-dropdown,
+#page-domain-add .custom-select-menu {
+  border-radius: 0 !important;
+  background: var(--bg, #000) !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  box-shadow: 0 18px 44px rgba(0,0,0,.4);
+}
+#page-domain-add .cs-option {
+  padding: 12px 16px !important;
+  border-bottom: 1px solid var(--dcx-row-border, var(--border)) !important;
+  color: var(--text-2) !important;
+}
+#page-domain-add .cs-option:last-child {
+  border-bottom: none !important;
+}
+#page-domain-add .cs-option:hover {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+#page-domain-add .cs-option.selected {
+  background: transparent !important;
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+}
+#page-domain-add .cs-option.selected::after {
+  background: var(--primary) !important;
+}
+
