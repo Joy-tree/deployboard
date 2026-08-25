@@ -9839,4 +9839,71 @@ html[data-theme="light"] #page-team [id="teamOwnerAvatar"],
 }
 #inviteModal .btn-primary { border-radius: 0 !important; box-shadow: none !important; }
 
+/* ══════════════════════════════════════════════════════════════════
+   MIGRATION + COMPARISON PAGE DROPDOWNS — the "uidb (mongodb)" DB
+   selector uses .custom-select-btn (shared component), which has a
+   dark rgba(0,0,0,.7) fill and a near-invisible var(--border) line.
+   Flatten to underline-only with a visible hairline matching the
+   rest of the redesign, and brighten row-border tokens so section
+   dividers are actually visible instead of nearly-invisible.
+   ══════════════════════════════════════════════════════════════════ */
+html[data-theme="dark"]  #page-db-migration .custom-select-btn,
+html[data-theme="light"] #page-db-migration .custom-select-btn,
+#page-db-migration .custom-select-btn,
+html[data-theme="dark"]  #page-db-diff .custom-select-btn,
+html[data-theme="light"] #page-db-diff .custom-select-btn,
+#page-db-diff .custom-select-btn {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid color-mix(in srgb,var(--text-3) 45%,var(--border)) !important;
+  border-radius: 0 !important;
+  height: auto !important;
+  padding: 10px 2px !important;
+}
+#page-db-migration .custom-select:hover .custom-select-btn,
+#page-db-diff .custom-select:hover .custom-select-btn {
+  border-bottom-color: var(--primary) !important;
+}
+#page-db-migration .custom-select.open .custom-select-btn,
+#page-db-diff .custom-select.open .custom-select-btn {
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+}
+#page-db-migration .custom-select-menu,
+#page-db-diff .custom-select-menu {
+  background: var(--bg, #000) !important;
+  border: 1px solid color-mix(in srgb,var(--text-3) 40%,var(--border)) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.55) !important;
+}
+#page-db-migration .custom-select-item,
+#page-db-diff .custom-select-item {
+  border-bottom: 1px solid color-mix(in srgb,var(--text-3) 20%,transparent) !important;
+}
+#page-db-migration .custom-select-item:last-child,
+#page-db-diff .custom-select-item:last-child { border-bottom: none !important; }
+#page-db-migration .custom-select-item:hover,
+#page-db-diff .custom-select-item:hover {
+  background: color-mix(in srgb,var(--primary) 8%,transparent) !important;
+}
+
+/* Brighten the section/row divider lines on both pages — the
+   original --dcx-row-border mix was too subtle to see clearly */
+#page-db-migration {
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border)) !important;
+}
+#page-db-diff {
+  --dcx-row-border: color-mix(in srgb, var(--text-2) 45%, var(--border)) !important;
+}
+/* mig-source-opts grid divider + diff-source-opts grid divider */
+#page-db-migration .mig-source-opt,
+#page-db-diff .diff-source-opt {
+  border-color: color-mix(in srgb,var(--text-3) 45%,var(--border)) !important;
+}
+#page-db-migration .mig-card,
+#page-db-diff .diff-card,
+#page-db-migration .mig-job {
+  border-color: color-mix(in srgb,var(--text-3) 42%,var(--border)) !important;
+}
+
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
