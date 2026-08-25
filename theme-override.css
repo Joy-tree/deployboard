@@ -10573,3 +10573,22 @@ html[data-theme="light"] #page-domain-add .input,
    ══════════════════════════════════════════════════════════════════ */
 
 /* [INTEGRITY MARKER — END] */ .jt-css-integrity-end{--jt-loaded-end:1;}
+
+/* ══════════════════════════════════════════════════════════════════
+   LANDING PAGE — hero section reads as a subtly blue-black instead of
+   the flat neutral black used by the "Powered by Trusted
+   Infrastructure" strip right below it. Root cause: #landing-view nav
+   has a hardcoded NAVY gradient (rgba(3,8,20,...) -- literal blue,
+   not the site's neutral/green-black tokens), and since that nav is
+   position:fixed with a 16px backdrop blur sitting right on top of
+   the hero, that navy cast bleeds into the top of the page visually.
+   The infra-strip below correctly uses var(--bg-2). Making the nav
+   and the hero both use that same token guarantees they're pixel-
+   identical, not just similar. */
+#landing-view nav {
+  background: linear-gradient(180deg, var(--bg-2), var(--bg-2)) !important;
+}
+.hero {
+  background: var(--bg-2) !important;
+}
+
