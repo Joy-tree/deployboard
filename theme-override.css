@@ -8696,14 +8696,26 @@ html[data-theme="light"] #page-webhooks {
   border-radius: 0 !important;
 }
 /* Buttons */
-#page-domain-manage .btn-primary,
+#page-domain-manage .btn-primary {
+  border-radius: 0 !important;
+  background: var(--primary) !important;
+  color: #052e16 !important;
+  border: none !important;
+  font-weight: 700 !important;
+}
+#page-domain-manage .btn-primary:hover {
+  background: color-mix(in srgb,var(--primary) 80%,#000) !important;
+}
 #page-domain-manage .btn-ghost,
 #page-domain-manage .btn-sm {
   border-radius: 0 !important;
-}
-#page-domain-manage .btn-ghost {
   background: transparent !important;
-  border-color: var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  color: var(--text-2) !important;
+}
+#page-domain-manage .btn-ghost:hover {
+  border-color: var(--primary) !important;
+  color: var(--text) !important;
 }
 #page-domain-manage select.input,
 #page-domain-manage .input {
@@ -8724,7 +8736,7 @@ html[data-theme="light"] #page-webhooks {
   --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
 }
 /* Flatten everything */
-#page-domain-cpanel [style] {
+#page-domain-cpanel [style]:not(.btn):not(.btn-primary):not(.btn-ghost):not(button) {
   background: transparent !important;
   background-color: transparent !important;
   border-radius: 0 !important;
@@ -8758,6 +8770,24 @@ html[data-theme="light"] #page-webhooks {
   border: 1px solid color-mix(in srgb, #2dd4bf 35%, transparent) !important;
   color: #5eead4 !important;
 }
+/* DNS record add form inputs — killed by wildcard, restore underline */
+#page-domain-cpanel input[type="text"],
+#page-domain-cpanel input[type="number"],
+#page-domain-cpanel select {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text) !important;
+  padding: 9px 2px !important;
+}
+#page-domain-cpanel input:focus,
+#page-domain-cpanel select:focus {
+  outline: none !important;
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+}
+
 /* Dropdown trigger → underline only */
 #page-domain-cpanel #dcpDomainSelectBtn {
   background: transparent !important;
@@ -8809,14 +8839,29 @@ html[data-theme="light"] #page-webhooks {
   color: #fbbf24 !important;
 }
 /* Buttons */
-#page-domain-cpanel .btn-primary,
+#page-domain-cpanel .btn-primary {
+  border-radius: 0 !important;
+  background: var(--primary) !important;
+  color: #052e16 !important;
+  border: none !important;
+  font-weight: 700 !important;
+}
+#page-domain-cpanel .btn-primary:hover {
+  background: color-mix(in srgb,var(--primary) 80%,#000) !important;
+}
+#page-domain-cpanel .btn-primary:disabled {
+  opacity: .5 !important;
+}
 #page-domain-cpanel .btn-ghost,
 #page-domain-cpanel .btn-sm {
   border-radius: 0 !important;
-}
-#page-domain-cpanel .btn-ghost {
   background: transparent !important;
-  border-color: var(--dcx-field-border) !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  color: var(--text-2) !important;
+}
+#page-domain-cpanel .btn-ghost:hover {
+  border-color: var(--primary) !important;
+  color: var(--text) !important;
 }
 /* Tab bar */
 #page-domain-cpanel [role="tablist"],
