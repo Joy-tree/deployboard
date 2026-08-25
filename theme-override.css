@@ -151,6 +151,15 @@ html[data-theme="light"] body{
   background: var(--jt-bg) !important;
 }
 #sidebar, #topbar{ background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+/* [FIX] The rule above sets border-color to --jt-border, which on dark
+   theme is #1F1F23 -- a near-invisible dark grey against the black
+   topbar, effectively no visible line at all under the nav icons.
+   Every other divider in this rebuild uses a bright, thickened white
+   hairline instead; this was the one shared/global element that never
+   got that treatment. */
+#topbar {
+  border-bottom: 2px solid rgba(255,255,255,0.85) !important;
+}
 /* [FIX] This wildcard was silently overriding .vp-card (email
    verification, deliberately flattened/transparent) and .dep-card
    (deployment cards, intentionally flat #111) on BOTH themes since it
@@ -3719,11 +3728,16 @@ html[data-theme="light"] .jt-leaves-fall {
 #page-projects .proj-stat-label {
   color: var(--text-3) !important;
 }
+/* [FIX] This was overriding the stat strip's border back to the dim
+   default var(--border) with !important -- undoing the bright white
+   var(--dcx-row-border) the base .proj-stat-strip rule already set,
+   which is why the line under the subtitle read as faint/greyish
+   instead of matching the crisp white box right below it. */
 #page-projects .proj-stat-strip {
-  border-top-color: var(--border) !important;
+  border-top-color: var(--dcx-row-border) !important;
 }
 #page-projects .proj-stat-sep {
-  background: var(--border) !important;
+  background: var(--dcx-row-border) !important;
 }
 
 /* [FIX] The card's own container (.tree-project-node) was the one
@@ -6752,7 +6766,7 @@ html[data-theme="light"] #page-new-resource {
 #page-new-resource .resource-search-wrap .input {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid var(--dcx-field-border) !important;
+  border-bottom: 2px solid var(--dcx-field-border) !important;
   color: var(--text) !important;
   border-radius: 0 !important;
   padding-left: 30px !important;
