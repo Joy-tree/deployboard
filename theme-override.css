@@ -10280,6 +10280,20 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 #page-db-detail {
   --dcx-field-border: rgba(255,255,255,0.85);
 }
+/* [FIX] The hero header ("DATABASE INSTANCE" / name / engine) was
+   never flattened — every other block on this page (Instance Details,
+   Connection String, Actions, SDK cards) already got the flat
+   treatment, but .app-hero itself still carried its rounded corners
+   and dark fill from the shared base style used across other pages. */
+#page-db-detail .app-hero {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border-bottom: 2px solid var(--dcx-field-border) !important;
+  padding-bottom: 20px !important;
+  margin-bottom: 20px !important;
+}
 /* Quick-stat pills in the hero (Port / RAM / Created date) —
    inline-styled rgba(255,255,255,.04) filled boxes */
 #page-db-detail div[style*="rgba(255,255,255,.08)"][style*="border-radius:8px"] {
