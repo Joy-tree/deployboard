@@ -5655,7 +5655,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=95" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=96" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5728,7 +5728,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     var token = Date.now() + '-' + Math.random().toString(36).slice(2);
     var fresh = document.createElement('link');
     fresh.rel = 'stylesheet';
-    fresh.href = 'theme-override.css?v=95&recover=' + token;
+    fresh.href = 'theme-override.css?v=96&recover=' + token;
     document.head.appendChild(fresh);
   }
 
@@ -11749,7 +11749,6 @@ document.addEventListener('keydown', function(e){
       <div class="tabs" id="settingsTabs">
         <div class="tab active" id="settingsGeneralTabBtn" onclick="switchSettingsTab('general',this)">General</div>
         <div class="tab" id="settingsGithubTabBtn" onclick="switchSettingsTab('github',this)">GitHub</div>
-        <div class="tab" onclick="switchSettingsTab('domain',this)">Domain</div>
         <div class="tab" onclick="switchSettingsTab('account',this)">Account</div>
         <div class="tab" onclick="switchSettingsTab('referrals',this)">Referrals</div>
       </div>
@@ -11973,7 +11972,7 @@ document.addEventListener('keydown', function(e){
               <div class="acct-qs-label">Billing</div>
             </div>
           </div>
-          <div class="acct-qs-item" onclick="switchSettingsTab('domain', document.querySelectorAll('#settingsTabs .tab')[0])">
+          <div class="acct-qs-item" onclick="showPage('domains')">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             <div>
               <div class="acct-qs-value" id="acctStatDomains">0</div>
@@ -12237,16 +12236,16 @@ document.addEventListener('keydown', function(e){
               </div>
             </div>
 
-            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;">
-              <div style="flex:1;min-width:140px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+            <div style="display:flex;gap:0;flex-wrap:wrap;margin-top:20px;border:1px solid var(--border);">
+              <div style="flex:1;min-width:140px;background:transparent;border-right:1px solid var(--border);padding:14px 16px;">
                 <div style="font-size:1.6rem;font-weight:800;color:var(--text);" id="refStatCount">0</div>
                 <div style="font-size:0.78rem;color:var(--text-3);">Friends referred</div>
               </div>
-              <div style="flex:1;min-width:140px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+              <div style="flex:1;min-width:140px;background:transparent;border-right:1px solid var(--border);padding:14px 16px;">
                 <div style="font-size:1.6rem;font-weight:800;color:var(--text);" id="refStatMinutes">0</div>
                 <div style="font-size:0.78rem;color:var(--text-3);">Bonus build minutes earned</div>
               </div>
-              <div style="flex:1;min-width:140px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+              <div style="flex:1;min-width:140px;background:transparent;padding:14px 16px;">
                 <div style="font-size:1.6rem;font-weight:800;color:var(--text);" id="refStatBonusProjects">0</div>
                 <div style="font-size:0.78rem;color:var(--text-3);">Extra project slots unlocked</div>
               </div>
