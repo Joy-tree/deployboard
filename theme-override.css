@@ -8845,41 +8845,89 @@ html[data-theme="light"] #page-webhooks {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   DATA MIGRATION PAGE — remaining elements not covered by inline CSS rewrite
+   DATA MIGRATION PAGE — !important overrides beat the page's own
+   inline <style> block which loads after theme-override.css
    ══════════════════════════════════════════════════════════════════ */
 #page-db-migration {
   --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
   --dcx-row-border:   color-mix(in srgb, var(--text-2) 28%, var(--border));
 }
-/* Source option active state */
+/* Source option cards — kill the dark fill */
+html[data-theme="dark"]  #page-db-migration .mig-source-opt,
+html[data-theme="light"] #page-db-migration .mig-source-opt,
+#page-db-migration .mig-source-opt {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
 #page-db-migration .mig-source-opt:hover {
   border-color: var(--primary) !important;
   background: color-mix(in srgb,var(--primary) 6%,transparent) !important;
-  transform: none !important;
 }
-#page-db-migration .mig-source-opt.selected,
-#page-db-migration .mig-source-opt.active {
+#page-db-migration .mig-source-opt[data-source].active,
+#page-db-migration .mig-source-opt.active,
+#page-db-migration .mig-source-opt.selected {
   border-color: var(--primary) !important;
-  background: color-mix(in srgb,var(--primary) 10%,transparent) !important;
   border-width: 2px !important;
+  background: color-mix(in srgb,var(--primary) 10%,transparent) !important;
+  box-shadow: none !important;
 }
-/* Inputs inside migration */
-#page-db-migration input,
-#page-db-migration select,
-#page-db-migration textarea {
+/* Select/input — kill dark bg */
+html[data-theme="dark"]  #page-db-migration .mig-input,
+html[data-theme="dark"]  #page-db-migration .mig-select,
+html[data-theme="light"] #page-db-migration .mig-input,
+html[data-theme="light"] #page-db-migration .mig-select,
+#page-db-migration .mig-input,
+#page-db-migration .mig-select {
   background: transparent !important;
   border: none !important;
   border-bottom: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   color: var(--text) !important;
+  padding: 10px 2px !important;
 }
-#page-db-migration input:focus,
-#page-db-migration select:focus,
-#page-db-migration textarea:focus {
-  outline: none !important;
+html[data-theme="dark"]  #page-db-migration .mig-input:focus,
+html[data-theme="dark"]  #page-db-migration .mig-select:focus,
+html[data-theme="light"] #page-db-migration .mig-input:focus,
+html[data-theme="light"] #page-db-migration .mig-select:focus,
+#page-db-migration .mig-input:focus,
+#page-db-migration .mig-select:focus {
   border-bottom: 2px solid var(--primary) !important;
   box-shadow: 0 1px 0 0 var(--primary) !important;
+  outline: none !important;
+}
+/* Job cards */
+html[data-theme="dark"]  #page-db-migration .mig-job,
+html[data-theme="light"] #page-db-migration .mig-job,
+#page-db-migration .mig-job {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+/* mig-card */
+html[data-theme="dark"]  #page-db-migration .mig-card,
+html[data-theme="light"] #page-db-migration .mig-card,
+#page-db-migration .mig-card {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+/* Start button */
+#page-db-migration .mig-btn-start {
+  background: var(--primary) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+#page-db-migration .mig-btn-start:hover {
+  background: color-mix(in srgb,var(--primary) 80%,#000) !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 /* Job log terminal */
 #page-db-migration .mig-job-logs {
@@ -8906,23 +8954,57 @@ html[data-theme="light"] #page-webhooks {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   DATABASE COMPARISON (DIFF) PAGE
+   DATABASE COMPARISON (DIFF) PAGE — !important to beat inline <style>
    ══════════════════════════════════════════════════════════════════ */
 #page-db-diff {
   --dcx-field-border: color-mix(in srgb, var(--text-3) 38%, var(--border));
 }
-/* Any remaining filled elements */
-#page-db-diff [style*="background:#111"],
-#page-db-diff [style*="background: #111"],
-#page-db-diff [style*="background:#0b0b0b"],
-#page-db-diff [style*="background: #0b0b0b"] {
+/* Kill dark fills on diff-card and diff-source-opt */
+html[data-theme="dark"]  #page-db-diff .diff-card,
+html[data-theme="light"] #page-db-diff .diff-card,
+#page-db-diff .diff-card {
   background: transparent !important;
-}
-#page-db-diff [style*="border-radius"] {
+  border: 1px solid var(--border) !important;
   border-radius: 0 !important;
-}
-#page-db-diff [style*="box-shadow"] {
   box-shadow: none !important;
+}
+html[data-theme="dark"]  #page-db-diff .diff-source-opt,
+html[data-theme="light"] #page-db-diff .diff-source-opt,
+#page-db-diff .diff-source-opt {
+  background: transparent !important;
+  border-right: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-db-diff .diff-source-opt.active {
+  background: color-mix(in srgb,var(--primary) 10%,transparent) !important;
+  color: var(--primary) !important;
+  border-bottom: 2px solid var(--primary) !important;
+}
+/* Kill dark bg on diff-select and diff-input */
+html[data-theme="dark"]  #page-db-diff .diff-select,
+html[data-theme="dark"]  #page-db-diff .diff-input,
+html[data-theme="light"] #page-db-diff .diff-select,
+html[data-theme="light"] #page-db-diff .diff-input,
+#page-db-diff .diff-select,
+#page-db-diff .diff-input {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  padding: 10px 2px !important;
+}
+html[data-theme="dark"]  #page-db-diff .diff-select:focus,
+html[data-theme="dark"]  #page-db-diff .diff-input:focus,
+html[data-theme="light"] #page-db-diff .diff-select:focus,
+html[data-theme="light"] #page-db-diff .diff-input:focus,
+#page-db-diff .diff-select:focus,
+#page-db-diff .diff-input:focus {
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+  outline: none !important;
 }
 #page-db-diff .btn-primary { border-radius: 0 !important; box-shadow: none !important; }
 #page-db-diff .btn-ghost { border-radius: 0 !important; background: transparent !important; border-color: var(--dcx-field-border) !important; }
