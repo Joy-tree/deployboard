@@ -10691,3 +10691,34 @@ html[data-theme="light"] #page-domain-add .input,
   background: var(--primary) !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   DEPLOYMENT SUCCESSFUL MODAL ("It's live.") — the card itself has
+   background:transparent, so its only visible surface is the overlay
+   behind it (rgba(0,0,0,0.86) + 4px blur sitting on top of the still-
+   visible, still-colorful dashboard page). That leftover ~14% of
+   whatever's behind it (green accents, leaf decorations) is exactly
+   what reads as an "ash" tint instead of a clean flat dark panel.
+   Giving the card its own solid, opaque background — the same token
+   used elsewhere on the site — fixes that regardless of what's behind
+   it. Also: Visit Site becomes a real filled green CTA like the
+   site's other primary buttons; Back to Dashboard stays the plain
+   secondary text button. The grayscale live-preview treatment
+   (.deploy-ss-wrap img) is untouched — that's the "shadow" look
+   that's already working correctly. */
+.deploy-success-card {
+  background: var(--bg-2) !important;
+  border: 1px solid var(--border) !important;
+  padding: 1.75rem 1.5rem !important;
+}
+.dss-btn-visit {
+  background: var(--primary) !important;
+  color: #052e16 !important;
+  border-right: none !important;
+  font-weight: 800 !important;
+}
+.dss-btn-visit svg { stroke: #052e16 !important; }
+.dss-btn-visit:hover { opacity: 0.88 !important; }
+.dss-btn-back {
+  border-left: 1px solid var(--border) !important;
+}
+
