@@ -3371,31 +3371,103 @@ html[data-theme="light"] #settingsTabReferrals [style*="border-radius"] {
 
 /* ══════════════════════════════════════════════════════════════════
    SSH KEYS PAGE (#page-ssh-keys)
+   The previous rules here targeted .card/.card-header/.btn-primary/
+   .btn-ghost/.btn-sm — none of which exist on this page. The real
+   markup uses its own .sshk-* class set entirely, so none of that
+   ever applied. Rewritten against the actual classes below.
    ══════════════════════════════════════════════════════════════════ */
 #page-ssh-keys {
   --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
-#page-ssh-keys .dcx-kicker { color: var(--primary) !important; }
-html[data-theme="dark"]  #page-ssh-keys .card,
-html[data-theme="light"] #page-ssh-keys .card,
-#page-ssh-keys .card {
-  background: transparent !important;
-  border: 1px solid var(--dcx-field-border) !important;
+#page-ssh-keys .sshk-hero-kicker { color: var(--primary) !important; }
+#page-ssh-keys .sshk-hero-title  { color: var(--text) !important; }
+#page-ssh-keys .sshk-hero-sub    { color: var(--text-2) !important; }
+
+/* "New Key" / other solid primary buttons — keep the solid brand-green
+   fill (same as Save/Register/Deploy elsewhere) but flatten corners */
+#page-ssh-keys .sshk-btn-primary {
   border-radius: 0 !important;
   box-shadow: none !important;
 }
-#page-ssh-keys .card-header { border-bottom: 1px solid var(--dcx-field-border) !important; }
-#page-ssh-keys .btn-primary { border-radius: 0 !important; box-shadow: none !important; }
-#page-ssh-keys .btn-ghost, #page-ssh-keys .btn-sm {
-  border-radius: 0 !important;
-  background: transparent !important;
-  border-color: var(--dcx-field-border) !important;
-}
-/* SSH command block */
-#page-ssh-keys pre, #page-ssh-keys code {
+
+/* Section cards (Installed Keys, How to connect, Generate form,
+   Result card) — flat, hairline border, no fill, sharp corners */
+#page-ssh-keys .sshk-card {
   background: transparent !important;
   border: 1px solid var(--dcx-field-border) !important;
   border-radius: 0 !important;
+}
+#page-ssh-keys .sshk-card-hd {
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+}
+#page-ssh-keys .sshk-card-title { color: var(--text) !important; }
+
+/* Secondary buttons (Cancel, refresh icon, Copy Command, Done) */
+#page-ssh-keys .sshk-btn {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-2) !important;
+}
+#page-ssh-keys .sshk-btn:hover {
+  background: var(--bg-hover) !important;
+  border-color: var(--dcx-row-border) !important;
+}
+
+/* Key Label / Project inputs — underline-only, matching every other
+   form field across the app instead of the filled rounded box */
+#page-ssh-keys .sshk-input {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text) !important;
+}
+#page-ssh-keys .sshk-input:focus {
+  border-bottom-color: var(--primary) !important;
+}
+#page-ssh-keys .sshk-label { color: var(--text-3) !important; }
+
+/* SSH command / private key / public key / example config blocks */
+#page-ssh-keys .sshk-code-box {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+
+/* Installed key rows */
+#page-ssh-keys .sshk-key-row {
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+}
+#page-ssh-keys .sshk-key-icon {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-ssh-keys .sshk-key-name { color: var(--text) !important; }
+#page-ssh-keys .sshk-key-fp   { color: var(--text-3) !important; }
+#page-ssh-keys .sshk-tag {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  color: var(--text-3) !important;
+}
+#page-ssh-keys .sshk-tag.proj {
+  color: var(--primary) !important;
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--dcx-field-border)) !important;
+}
+#page-ssh-keys .sshk-empty { color: var(--text-3) !important; }
+
+/* How-to-connect body text */
+#page-ssh-keys .sshk-howto p { color: var(--text-2) !important; }
+#page-ssh-keys .sshk-howto strong { color: var(--text) !important; }
+#page-ssh-keys .sshk-howto code {
+  color: var(--primary) !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  padding: 1px 5px !important;
 }
 
 /* ══════════════════════════════════════════════════════════════════
