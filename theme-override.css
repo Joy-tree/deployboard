@@ -10980,3 +10980,47 @@ html[data-theme="light"] #page-domain-add .input,
   color: var(--text-3);
   margin-top: 3px;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   TOP BAR — "New Deploy" (+) button, notification bell icon button,
+   and the notification dropdown panel. Global (not page-scoped, this
+   bar is shared across every page). Previously used the app's old
+   rounded/green-tinted-border look (border-radius 8-12px,
+   var(--border) green tint, box-shadow) — never went through the
+   flat redesign at all.
+   ══════════════════════════════════════════════════════════════════ */
+.topbar-btn,
+.topbar-icon-btn {
+  border-radius: 0 !important;
+  border-color: rgba(255,255,255,0.16) !important;
+}
+.topbar-btn:hover,
+.topbar-icon-btn:hover {
+  border-color: rgba(255,255,255,0.3) !important;
+}
+.topbar-btn.primary {
+  border-radius: 0 !important;
+}
+
+/* Notification dropdown panel */
+.notif-panel {
+  background: var(--bg) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.notif-panel-head,
+.notif-panel [style*="border-bottom:1px solid rgba(16,185,129"] {
+  border-bottom-color: rgba(255,255,255,0.2) !important;
+}
+.notif-item {
+  border-bottom-color: rgba(255,255,255,0.16) !important;
+}
+.notif-panel-title { color: var(--primary) !important; }
+.notif-view-all-btn {
+  border-radius: 0 !important;
+  border-color: rgba(255,255,255,0.16) !important;
+}
+.notif-view-all-btn:hover {
+  border-color: rgba(255,255,255,0.3) !important;
+}
