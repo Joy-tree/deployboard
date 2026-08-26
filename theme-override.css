@@ -158,7 +158,7 @@ html[data-theme="light"] body{
    hairline instead; this was the one shared/global element that never
    got that treatment. */
 #topbar {
-  border-bottom: 2px solid rgba(255,255,255,0.85) !important;
+  border-bottom: 2px solid rgba(255,255,255,0.16) !important;
 }
 /* [FIX] This wildcard was silently overriding .vp-card (email
    verification, deliberately flattened/transparent) and .dep-card
@@ -2795,7 +2795,7 @@ html[data-theme="light"] .sdk-test-indicator.idle {
 .code-block .cn { color: #6ee7b7 !important; }
 .alert-info {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-left: 3px solid color-mix(in srgb,var(--green) 50%,transparent) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
@@ -2803,7 +2803,7 @@ html[data-theme="light"] .sdk-test-indicator.idle {
 .alert-info strong { color: var(--green) !important; }
 .alert-success {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-left: 3px solid color-mix(in srgb,var(--primary) 55%,transparent) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
@@ -2811,7 +2811,7 @@ html[data-theme="light"] .sdk-test-indicator.idle {
 .alert-success strong { color: var(--primary) !important; }
 .alert-warning {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-left: 3px solid color-mix(in srgb,#f59e0b 55%,transparent) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
@@ -2819,7 +2819,7 @@ html[data-theme="light"] .sdk-test-indicator.idle {
 .alert-warning strong { color: #fbbf24 !important; }
 .alert-error {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-left: 3px solid color-mix(in srgb,#f87171 55%,transparent) !important;
   border-radius: 0 !important;
   color: var(--text-2) !important;
@@ -3131,7 +3131,7 @@ html[data-theme="light"] .dnp-btn:hover{ background:var(--jt-brand)!important; }
    quick actions, etc) -- no separate darker/lighter treatment */
 .auth-github, .auth-google {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   color: var(--text) !important;
 }
@@ -3238,7 +3238,7 @@ html[data-theme="light"] .hero-trust-item { color: #4b5563 !important; }
 
 .acct-inline-notice {
   display:flex; align-items:center; justify-content:space-between; gap:12px;
-  padding:12px 0; border-top:1px solid rgba(255,255,255,0.9); border-bottom:1px solid rgba(255,255,255,0.9);
+  padding:12px 0; border-top:1px solid rgba(255,255,255,0.2); border-bottom:1px solid rgba(255,255,255,0.2);
 }
 
 .acct-progress {
@@ -3263,7 +3263,7 @@ html[data-theme="light"] .hero-trust-item { color: #4b5563 !important; }
   display: flex;
   align-items: center;
   gap: 0;
-  border-bottom: 1px solid rgba(255,255,255,0.9);
+  border-bottom: 1px solid rgba(255,255,255,0.2);
   margin-bottom: 22px;
   background: transparent;
   border-top: none;
@@ -3323,7 +3323,7 @@ html[data-theme="light"] #settingsTabReferrals [style*="border-radius"] {
 }
 #settingsTabReferrals .card {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
 }
 #settingsTabReferrals #referralLink,
 #settingsTabReferrals input[readonly] {
@@ -3339,7 +3339,7 @@ html[data-theme="light"] #settingsTabReferrals [style*="border-radius"] {
    ══════════════════════════════════════════════════════════════════ */
 #settingsTabGithub .card {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
 }
 #settingsTabGithub .btn-primary { border-radius: 0 !important; box-shadow: none !important; }
@@ -3355,13 +3355,13 @@ html[data-theme="light"] #settingsTabReferrals [style*="border-radius"] {
    ══════════════════════════════════════════════════════════════════ */
 #settingsTabAccount .card {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
 }
 #settingsTabAccount .acct-qs-item {
   border-radius: 0 !important;
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
 }
 #settingsTabAccount .acct-qs-item:hover {
   border-color: var(--primary) !important;
@@ -3373,7 +3373,7 @@ html[data-theme="light"] #settingsTabReferrals [style*="border-radius"] {
    SSH KEYS PAGE (#page-ssh-keys)
    ══════════════════════════════════════════════════════════════════ */
 #page-ssh-keys {
-  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-field-border: rgba(255,255,255,0.16);
 }
 #page-ssh-keys .dcx-kicker { color: var(--primary) !important; }
 html[data-theme="dark"]  #page-ssh-keys .card,
@@ -3402,7 +3402,7 @@ html[data-theme="light"] #page-ssh-keys .card,
    FOUNDERS PAGE (#page-founders)
    ══════════════════════════════════════════════════════════════════ */
 #page-founders {
-  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-field-border: rgba(255,255,255,0.16);
 }
 html[data-theme="dark"]  #page-founders .card,
 html[data-theme="light"] #page-founders .card,
@@ -3476,7 +3476,7 @@ html[data-theme="light"] .jt-leaves-fall {
   display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;
 }
 
-.dash-divider { height: 1px; background: rgba(255,255,255,0.9); margin: 26px 0; }
+.dash-divider { height: 1px; background: rgba(255,255,255,0.2); margin: 26px 0; }
 
 .dash-section-title { font-size: 1rem; font-weight: 800; color: var(--text); }
 .dash-section-sub { font-size: .8rem; color: var(--text-3); margin-top: 3px; }
@@ -3516,18 +3516,18 @@ html[data-theme="light"] .jt-leaves-fall {
    (no individual card boxes, just a bordered grid with dividers)
    ══════════════════════════════════════════════════════════════════ */
 #page-dashboard .stats-grid {
-  border-top:    1px solid rgba(255,255,255,0.9);
-  border-bottom: 1px solid rgba(255,255,255,0.9);
-  border-left:   1px solid rgba(255,255,255,0.9);
-  border-right:  1px solid rgba(255,255,255,0.9);
+  border-top:    1px solid rgba(255,255,255,0.2);
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  border-left:   1px solid rgba(255,255,255,0.2);
+  border-right:  1px solid rgba(255,255,255,0.2);
   border-radius: 0 !important;
   gap: 0 !important;
 }
 #page-dashboard .stat-card {
   background: transparent !important;
   border: none !important;
-  border-right: 1px solid rgba(255,255,255,0.9) !important;
-  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
+  border-right: 1px solid rgba(255,255,255,0.2) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   padding: 16px 14px !important;
   transition: background .15s;
@@ -4016,12 +4016,12 @@ html[data-theme="light"] .tree-node-btn-danger:hover {
   display: flex;
   flex-direction: column;
   gap: 0;
-  border-top: 1px solid rgba(255,255,255,0.9);
+  border-top: 1px solid rgba(255,255,255,0.2);
 }
 .dep-card {
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(255,255,255,0.9);
+  border-bottom: 1px solid rgba(255,255,255,0.2);
   border-radius: 0;
   padding: 16px 4px;
   cursor: pointer;
@@ -4613,12 +4613,12 @@ html[data-theme="light"] .cs-option.selected {
    lines and the underline-field style used throughout this page.
    ══════════════════════════════════════════════════════════════════ */
 #page-new-deploy {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-new-deploy {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -5251,12 +5251,12 @@ html[data-theme="light"] #page-new-deploy {
    all three deployment-composer pages look and behave consistently.
    ══════════════════════════════════════════════════════════════════ */
 #page-dockerfile-deploy ,#page-worker-create {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page-worker-create {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -5680,12 +5680,12 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
    strip, and group-box toolbar look and behave identically.
    ══════════════════════════════════════════════════════════════════ */
 #page-repos {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-repos {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -6087,12 +6087,12 @@ html[data-theme="light"] #page-repos {
    dcx-* input styling to Settings without touching its layout.
    ══════════════════════════════════════════════════════════════════ */
 #page-settings {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-settings {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 #page-settings .input,
 #page-settings select.input,
@@ -6177,12 +6177,12 @@ html[data-theme="light"] #page-settings {
    in the CODE UPLOAD PAGE section above.
    ══════════════════════════════════════════════════════════════════ */
 #page-code-upload {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-code-upload {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -6583,12 +6583,12 @@ html[data-theme="light"] #page-code-upload {
    borders only, sharp corners, no fill.
    ══════════════════════════════════════════════════════════════════ */
 #page-dashboard {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-dashboard {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 /* Header buttons — Browse Repos / New Deployment */
@@ -6677,12 +6677,12 @@ html[data-theme="light"] #page-dashboard {
    everywhere else.
    ══════════════════════════════════════════════════════════════════ */
 #page-deployments {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-deployments {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 /* Each deployment card → its own thin bordered box, reasonable gap
@@ -6775,12 +6775,12 @@ html[data-theme="light"] #page-deployments {
    Repos/Deployments/Dashboard.
    ══════════════════════════════════════════════════════════════════ */
 #page-new-resource {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-new-resource {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 /* Search bar → matches #page-repos exactly: underline-only, no box,
@@ -6945,12 +6945,12 @@ html[data-theme="light"] #dbCreateFormFlat2 .db-create-input {
    on the card still reads as a rounded filled box.
    ══════════════════════════════════════════════════════════════════ */
 #page-projects {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-projects {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 /* Header buttons — Import from GitHub / New Project */
@@ -7073,12 +7073,12 @@ html[data-theme="light"] #page-projects {
    else around it goes flat.
    ══════════════════════════════════════════════════════════════════ */
 #page-databases {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-databases {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 /* Stat tiles → flat, thin border, sharp corners */
@@ -7215,12 +7215,12 @@ html[data-theme="light"] #page-databases {
    codebase already uses as its own light-theme fallback.
    ══════════════════════════════════════════════════════════════════ */
 #landing-view {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #landing-view {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 /* Hero — remove the two radial glow blobs entirely */
@@ -7459,12 +7459,12 @@ html[data-theme="light"] #landing-view {
    outline instead.
    ══════════════════════════════════════════════════════════════════ */
 #sidebar {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #sidebar {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 #sidebar .nav-item {
@@ -7524,12 +7524,12 @@ html[data-theme="light"] #sidebar {
    badge, and topbar go flat like every other panel on this page.
    ══════════════════════════════════════════════════════════════════ */
 #page-logs {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-logs {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 /* Header action buttons — Restart / Stop / Clear / Download */
@@ -7754,13 +7754,13 @@ html[data-theme="light"] #page-logs {
    re-add lines with higher specificity than the wildcard.
    ══════════════════════════════════════════════════════════════════ */
 #page-domains.pg-domains-v2 {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
   --dcx-section-gap: 32px;
 }
 html[data-theme="light"] #page-domains.pg-domains-v2 {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
 }
 
 /* ── Step 1: flatten everything on this page ─────────────────────── */
@@ -7959,12 +7959,12 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
    pages that still need per-page scoping here.
    ══════════════════════════════════════════════════════════════════ */
 #page-domain-store {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-domain-store {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
 }
 
 /* ── Hero: kicker / title / subtitle — same tokens as every other page ── */
@@ -8155,12 +8155,12 @@ html[data-theme="light"] #page-domain-store {
    same 1px hairline box, flat transparent fill, sharp corners.
    ══════════════════════════════════════════════════════════════════ */
 #page-project-detail {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-project-detail {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 /* Everything on this page sits directly on the page background by
@@ -8279,7 +8279,7 @@ html[data-theme="light"] #page-project-detail {
 /* Deployment History table — no card wrapper, just the table itself */
 #page-project-detail .pdx-table-wrap { overflow-x: auto; }
 #page-project-detail .pdx-table-wrap thead tr { border-bottom: 1px solid var(--dcx-row-border) !important; }
-#page-project-detail .pdx-table-wrap tbody tr { border-bottom: 1px solid rgba(255,255,255,0.9) !important; }
+#page-project-detail .pdx-table-wrap tbody tr { border-bottom: 1px solid rgba(255,255,255,0.2) !important; }
 #page-project-detail .pdx-table-wrap th { color: var(--text-3) !important; text-align: left; padding: 8px 6px; font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
 #page-project-detail .pdx-table-wrap td { padding: 10px 6px; }
 
@@ -8323,12 +8323,12 @@ html[data-theme="light"] #page-project-detail {
    signal, matching the language-badge reasoning used elsewhere.
    ══════════════════════════════════════════════════════════════════ */
 #page-db-create {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-db-create {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 
 /* Hero — flat, no fill, sharp corners */
@@ -8478,12 +8478,12 @@ html[data-theme="light"] #page-db-create {
    corners on the shared .btn-primary/.btn-ghost action buttons.
    ══════════════════════════════════════════════════════════════════ */
 #page-ai-analysis {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-ai-analysis {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 #page-ai-analysis .btn-primary {
   border-radius: 0 !important;
@@ -8505,12 +8505,12 @@ html[data-theme="light"] #page-ai-analysis {
    (a real UI convention, not a boxed-card issue).
    ══════════════════════════════════════════════════════════════════ */
 #page-env-manager {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-env-manager {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 /* High-specificity to beat inline <style> dark fills */
 html[data-theme="dark"]  #page-env-manager .input,
@@ -8543,7 +8543,7 @@ html[data-theme="dark"]  #page-env-manager .card,
 html[data-theme="light"] #page-env-manager .card,
 #page-env-manager .card {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
 }
 #page-env-manager .card {
@@ -8639,12 +8639,12 @@ html[data-theme="light"] #page-env-manager .card,
    donut ring stay as meaningful data signals, not decoration.
    ══════════════════════════════════════════════════════════════════ */
 #page-analytics {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-analytics {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 #page-analytics .card {
   background: transparent !important;
@@ -8664,12 +8664,12 @@ html[data-theme="light"] #page-analytics {
    dialog) but sharpened and de-filled.
    ══════════════════════════════════════════════════════════════════ */
 #page-webhooks {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-webhooks {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 #page-webhooks .card {
   background: transparent !important;
@@ -8746,8 +8746,8 @@ html[data-theme="light"] #page-webhooks {
    DOMAIN MANAGE PAGE (custom domain detail: Overview/DNS/Reassign/Danger)
    ══════════════════════════════════════════════════════════════════ */
 #page-domain-manage {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
 }
 /* Flatten all inline-styled divs */
 #page-domain-manage [style*="background"] {
@@ -8919,8 +8919,8 @@ html[data-theme="light"] #page-webhooks {
    re-add only the intentional hairlines.
    ══════════════════════════════════════════════════════════════════ */
 #page-domain-cpanel {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
 }
 /* Flatten everything */
 #page-domain-cpanel [style]:not(.btn):not(.btn-primary):not(.btn-ghost):not(button) {
@@ -9065,7 +9065,7 @@ html[data-theme="light"] #page-webhooks {
 #page-workers .surface-hero {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding: 0 0 24px !important;
@@ -9086,17 +9086,17 @@ html[data-theme="light"] #page-webhooks {
 #page-workers .surface-sub { color: var(--text-2) !important; font-size: .9rem !important; }
 #page-workers .card {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
 }
-#page-workers .card-header { border-bottom: 1px solid rgba(255,255,255,0.9) !important; }
+#page-workers .card-header { border-bottom: 1px solid rgba(255,255,255,0.2) !important; }
 #page-workers .card-title { color: var(--text) !important; }
 #page-workers .list-shell { background: transparent !important; border-radius: 0 !important; }
 #page-workers .btn-primary { border-radius: 0 !important; }
 /* Alert info box — flat, no blue tint */
 #page-workers .alert {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   border-left: 3px solid var(--primary) !important;
   color: var(--text-2) !important;
@@ -9115,15 +9115,15 @@ html[data-theme="light"] #page-webhooks {
    inline <style> block which loads after theme-override.css
    ══════════════════════════════════════════════════════════════════ */
 #page-db-migration {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
 }
 /* Source option cards — kill the dark fill */
 html[data-theme="dark"]  #page-db-migration .mig-source-opt,
 html[data-theme="light"] #page-db-migration .mig-source-opt,
 #page-db-migration .mig-source-opt {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   transform: none !important;
@@ -9170,7 +9170,7 @@ html[data-theme="dark"]  #page-db-migration .mig-job,
 html[data-theme="light"] #page-db-migration .mig-job,
 #page-db-migration .mig-job {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -9179,7 +9179,7 @@ html[data-theme="dark"]  #page-db-migration .mig-card,
 html[data-theme="light"] #page-db-migration .mig-card,
 #page-db-migration .mig-card {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -9223,14 +9223,14 @@ html[data-theme="light"] #page-db-migration .mig-card,
    DATABASE COMPARISON (DIFF) PAGE — !important to beat inline <style>
    ══════════════════════════════════════════════════════════════════ */
 #page-db-diff {
-  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-field-border: rgba(255,255,255,0.16);
 }
 /* Kill dark fills on diff-card and diff-source-opt */
 html[data-theme="dark"]  #page-db-diff .diff-card,
 html[data-theme="light"] #page-db-diff .diff-card,
 #page-db-diff .diff-card {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -9238,7 +9238,7 @@ html[data-theme="dark"]  #page-db-diff .diff-source-opt,
 html[data-theme="light"] #page-db-diff .diff-source-opt,
 #page-db-diff .diff-source-opt {
   background: transparent !important;
-  border-right: 1px solid rgba(255,255,255,0.9) !important;
+  border-right: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -9287,12 +9287,12 @@ html[data-theme="light"] #page-db-diff .diff-input:focus,
    (already flattened inline), preset chips, and inputs flattened.
    ══════════════════════════════════════════════════════════════════ */
 #page-cronjobs {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-cronjobs {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 #page-cronjobs .card,
 #page-cron-create .card {
@@ -9358,8 +9358,8 @@ html[data-theme="light"] #page-cronjobs {
    ANALYTICS PAGE (Activity Log)
    ══════════════════════════════════════════════════════════════════ */
 #page-analytics {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
 }
 /* Flatten all inline-styled divs */
 html[data-theme="dark"]  #page-analytics .card,
@@ -9376,7 +9376,7 @@ html[data-theme="light"] #page-analytics .card,
 #page-analytics .page-header {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding: 0 0 20px !important;
@@ -9400,8 +9400,8 @@ html[data-theme="light"] #page-analytics .card,
    USAGE & LIMITS PAGE
    ══════════════════════════════════════════════════════════════════ */
 #page-usage {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
 }
 /* Plan banner — kill the green gradient fill */
 html[data-theme="dark"]  #page-usage [style*="linear-gradient"],
@@ -9444,7 +9444,7 @@ html[data-theme="light"] #page-usage .card,
 #page-usage .page-header {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding: 0 0 20px !important;
@@ -9458,8 +9458,8 @@ html[data-theme="light"] #page-usage .card,
    REALTIME API BUILDER PAGE (#page-realtime-api)
    ══════════════════════════════════════════════════════════════════ */
 #page-realtime-api {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
 }
 /* Hero (app-hero) — kill the dark fill and gradient */
 html[data-theme="dark"]  #page-realtime-api .app-hero,
@@ -9468,7 +9468,7 @@ html[data-theme="light"] #page-realtime-api .app-hero,
   background: transparent !important;
   background-image: none !important;
   border: none !important;
-  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding-bottom: 20px !important;
@@ -9556,12 +9556,12 @@ html[data-theme="light"] #page-realtime-api .card,
    as everywhere else. Heatmap intensity colors stay meaningful.
    ══════════════════════════════════════════════════════════════════ */
 #page-streaks {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 html[data-theme="light"] #page-streaks {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border: rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border: rgba(255,255,255,0.2);
 }
 #page-streaks .streak-command-hero {
   background: transparent !important;
@@ -9673,7 +9673,7 @@ html[data-theme="light"] #landing-view .snippet-card,
 #landing-view .flow-step,
 #landing-view .snippet-card {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -9691,7 +9691,7 @@ html[data-theme="light"] #landing-view .snippet-card,
    colour-washed rounded boxes */
 #landing-view .feature-icon {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   color: var(--primary) !important;
 }
@@ -9717,7 +9717,7 @@ html[data-theme="light"] #landing-view .snippet-card,
 }
 #landing-view .how-code-wrap {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
 }
 
@@ -9725,7 +9725,7 @@ html[data-theme="light"] #landing-view .snippet-card,
    fill boxes, go flat hairline */
 #landing-view .infra-logo {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
 }
 #landing-view .infra-logo:hover {
@@ -9743,7 +9743,7 @@ html[data-theme="light"] #landing-view .snippet-card,
 }
 #landing-view .btn-hero-ghost {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
 }
 #landing-view .btn-hero-ghost:hover {
   border-color: var(--primary) !important;
@@ -9760,7 +9760,7 @@ html[data-theme="light"] #landing-view .snippet-card,
    ══════════════════════════════════════════════════════════════════ */
 .install-prompt {
   background: var(--bg, #000) !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: 0 -4px 24px rgba(0,0,0,.35) !important;
 }
@@ -9802,8 +9802,8 @@ html[data-theme="light"] #landing-view .snippet-card,
    SECRETS PAGE (#page-secrets)
    ══════════════════════════════════════════════════════════════════ */
 #page-secrets {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
 }
 html[data-theme="dark"]  #page-secrets .card,
 html[data-theme="light"] #page-secrets .card,
@@ -9818,7 +9818,7 @@ html[data-theme="light"] #page-secrets .card,
 #page-secrets .app-hero {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding-bottom: 20px !important;
@@ -9832,15 +9832,15 @@ html[data-theme="light"] #page-secrets .card,
    SCHEMA EXPLORER PAGE (#page-db-schema)
    ══════════════════════════════════════════════════════════════════ */
 #page-db-schema {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
 }
 html[data-theme="dark"]  #page-db-schema .app-hero,
 html[data-theme="light"] #page-db-schema .app-hero,
 #page-db-schema .app-hero {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding-bottom: 20px !important;
@@ -9893,15 +9893,15 @@ html[data-theme="light"] #page-db-schema .card,
    SDK STUDIO PAGE (#page-db-sdk)
    ══════════════════════════════════════════════════════════════════ */
 #page-db-sdk {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
 }
 html[data-theme="dark"]  #page-db-sdk .app-hero,
 html[data-theme="light"] #page-db-sdk .app-hero,
 #page-db-sdk .app-hero {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding-bottom: 20px !important;
@@ -9959,14 +9959,14 @@ html[data-theme="light"] #page-db-sdk .card,
    TEAM PAGE (#page-team)
    ══════════════════════════════════════════════════════════════════ */
 #page-team {
-  --dcx-field-border: rgba(255,255,255,0.85);
-  --dcx-row-border:   rgba(255,255,255,0.9);
+  --dcx-field-border: rgba(255,255,255,0.16);
+  --dcx-row-border:   rgba(255,255,255,0.2);
 }
 /* Page header */
 #page-team .page-header {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding: 0 0 20px !important;
@@ -10083,10 +10083,10 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 /* Brighten the section/row divider lines on both pages — the
    original --dcx-row-border mix was too subtle to see clearly */
 #page-db-migration {
-  --dcx-row-border: rgba(255,255,255,0.9) !important;
+  --dcx-row-border: rgba(255,255,255,0.2) !important;
 }
 #page-db-diff {
-  --dcx-row-border: rgba(255,255,255,0.9) !important;
+  --dcx-row-border: rgba(255,255,255,0.2) !important;
 }
 /* mig-source-opts grid divider + diff-source-opts grid divider */
 #page-db-migration .mig-source-opt,
@@ -10107,7 +10107,7 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 .dbv-shell { background: transparent !important; }
 .dbv-topbar {
   background: transparent !important;
-  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.2) !important;
 }
 .dbv-topbar-dbname {
   background: transparent !important;
@@ -10133,12 +10133,12 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 }
 .dbv-stat-card {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
 }
 .dbv-card {
   background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
 }
 
@@ -10148,7 +10148,7 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
 #page-db-query .qstudio-sidebar,
 #page-db-query [class*="qstudio-side"] {
   background: transparent !important;
-  border-right: 1px solid rgba(255,255,255,0.9) !important;
+  border-right: 1px solid rgba(255,255,255,0.2) !important;
 }
 #page-db-query .custom-select-btn,
 #page-db-query .dbv-table-select {
@@ -10328,7 +10328,7 @@ html[data-theme="light"] #page-db-diff .custom-select-btn,
    String / Actions / Quick SDK cards.
    ══════════════════════════════════════════════════════════════════ */
 #page-db-detail {
-  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-field-border: rgba(255,255,255,0.16);
 }
 /* [FIX] The hero header ("DATABASE INSTANCE" / name / engine) was
    never flattened — every other block on this page (Instance Details,
@@ -10426,14 +10426,14 @@ html[data-theme="light"] #page-db-detail .db-btn,
    domain?) still had #0d0d0d fills, glow shadows, and rounded pills.
    ══════════════════════════════════════════════════════════════════ */
 #page-domain-add {
-  --dcx-field-border: rgba(255,255,255,0.85);
+  --dcx-field-border: rgba(255,255,255,0.16);
 }
 html[data-theme="dark"]  #page-domain-add .wizard-hero,
 html[data-theme="light"] #page-domain-add .wizard-hero,
 #page-domain-add .wizard-hero {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(255,255,255,0.9) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.2) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   padding: 0 0 20px !important;
@@ -10604,8 +10604,8 @@ html[data-theme="light"] #page-domain-add .input,
    Straight solid white at fixed opacity, no color-mix, no green tint:
    matches the crisp, high-contrast hairline look of Render's dashboard. */
 :root {
-  --dcx-field-border: rgba(255,255,255,0.85) !important;
-  --dcx-row-border: rgba(255,255,255,0.9) !important;
+  --dcx-field-border: rgba(255,255,255,0.16) !important;
+  --dcx-row-border: rgba(255,255,255,0.2) !important;
 }
 
 /* ══════════════════════════════════════════════════════════════════
