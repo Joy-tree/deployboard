@@ -4711,6 +4711,49 @@ html[data-theme="light"] #page-new-deploy {
 #page-databases .btn-ghost:hover {
   border-color: var(--primary) !important;
 }
+
+/* [FIX] #page-env-manager was missing this hero block entirely -- every
+   other page (Databases, New Deploy, Repos, Code Upload, Domains, etc.)
+   has its own .dcx-kicker/.dcx-title/.dcx-sub sizing here, but this one
+   never got it, so "Secrets & Config" / "Environment Variables" / the
+   subtitle all rendered as plain, same-size, unstyled text stacked on
+   top of each other. Matched pixel-for-pixel to Databases. */
+#page-env-manager .dcx-header { margin-bottom: 22px; }
+#page-env-manager .dcx-header .back-link { margin-bottom: 16px; }
+#page-env-manager .dcx-kicker {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+#page-env-manager .dcx-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.15;
+}
+#page-env-manager .dcx-sub {
+  font-size: .86rem;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin-top: 8px;
+  max-width: 66ch;
+}
+#page-env-manager .btn-primary {
+  border-radius: 0 !important;
+}
+#page-env-manager .btn-ghost {
+  border-radius: 0 !important;
+  border-color: var(--dcx-field-border) !important;
+  background: transparent !important;
+}
+#page-env-manager .btn-ghost:hover {
+  border-color: var(--primary) !important;
+}
 #page-new-resource .dcx-header { margin-bottom: 22px; }
 #page-new-resource .dcx-header .back-link { margin-bottom: 16px; }
 #page-new-resource .dcx-kicker {
