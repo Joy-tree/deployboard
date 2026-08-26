@@ -3691,6 +3691,17 @@ html[data-theme="light"] .jt-leaves-fall {
    Dashboard/Settings, with !important so no stale or unscoped rule
    elsewhere in this file can leak a different background onto it.
    ══════════════════════════════════════════════════════════════════ */
+/* [FIX] #topbar's bottom divider was still using the old var(--border)
+   token, which resolves to a green-tinted rgba(16,185,129,...) in dark
+   mode -- the one border on the whole site that isn't the flat white
+   hairline every other box/divider was migrated to. Matches the same
+   var(--dcx-row-border) the stat strip and every other flattened box
+   use, so the topbar's bottom edge is now a plain solid line, not a
+   green tint. */
+#topbar {
+  border-bottom-color: var(--dcx-row-border) !important;
+}
+
 #page-projects,
 #page-projects .proj-header {
   background: transparent !important;
