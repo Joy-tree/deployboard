@@ -10843,3 +10843,44 @@ html[data-theme="light"] #page-domain-add .input,
   background: #991b1b !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   ACTIVITY LOG PAGE (#page-activity) — flattened to match the plain,
+   no-card treatment requested: no borders, no filled backgrounds, no
+   boxes anywhere on this page. Same two-step technique used elsewhere
+   (wildcard nuke, then re-add only what's structurally necessary) —
+   except here nothing is re-added, per an explicit "no borders at
+   all" request, unlike Project Detail/Domains which kept hairline
+   section outlines. Hero kicker/title/subtitle keep their existing
+   text colors (untouched by this — only background/border/shadow are
+   stripped), so the page still reads with the same hierarchy as
+   every other page, just with nothing boxed.
+   ══════════════════════════════════════════════════════════════════ */
+#page-activity * {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Hero and "All Events" card had padding sized for a boxed container;
+   drop the inset padding so headings/subtext/list sit flush against
+   the page edge instead of looking indented into an invisible box. */
+#page-activity .app-hero {
+  padding: 0 0 22px 0 !important;
+}
+#page-activity .card {
+  padding: 0 !important;
+}
+#page-activity .card-header {
+  padding: 0 0 14px !important;
+  margin-bottom: 14px !important;
+}
+
+/* Individual activity rows: plain text stacked with breathing room,
+   no divider line, no row background on hover/alternate rows. */
+#page-activity #activityFeed > * {
+  padding: 14px 0 !important;
+  margin: 0 !important;
+}
