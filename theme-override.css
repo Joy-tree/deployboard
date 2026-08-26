@@ -3472,18 +3472,6 @@ html[data-theme="light"] .jt-leaves-fall {
   line-height: 1.5;
   max-width: 56ch;
 }
-.dash-status-row { margin-top: 12px; }
-.dash-status-pill {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-size: .78rem; font-weight: 600; color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--primary) 24%, transparent);
-  border-radius: 999px; padding: 6px 14px;
-}
-.dash-status-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--primary); display: inline-block;
-}
 .dash-header-actions {
   display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;
 }
