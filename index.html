@@ -31146,11 +31146,11 @@ async function renderActivity() {
   el.innerHTML = feed.slice(0,100).map(ev => {
     const color = typeColors[ev.type] || 'var(--text-3)';
     const icon  = typeIcons[ev.type]  || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="4"/></svg>';
-    return '<div style="display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-bottom:1px solid var(--border);">' +
-      '<div style="width:28px;height:28px;border-radius:8px;background:rgba(0,0,0,0.2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:' + color + ';margin-top:1px;">' + icon + '</div>' +
-      '<div style="flex:1;min-width:0;">' +
-        '<div style="font-size:0.83rem;color:var(--text);word-break:break-word;">' + escHtml(ev.message || '') + '</div>' +
-        '<div style="font-size:0.7rem;color:var(--text-3);margin-top:3px;">' + timeAgo(ev.time || Date.now()) + '</div>' +
+    return '<div class="activity-row">' +
+      '<div class="activity-row-icon" style="color:' + color + ';">' + icon + '</div>' +
+      '<div class="activity-row-body">' +
+        '<div class="activity-row-message">' + escHtml(ev.message || '') + '</div>' +
+        '<div class="activity-row-time">' + timeAgo(ev.time || Date.now()) + '</div>' +
       '</div>' +
     '</div>';
   }).join('');
