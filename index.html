@@ -32428,35 +32428,35 @@ initCustomSelects();
 #jtContactBtn::after{content:'';position:absolute;top:4px;right:4px;width:11px;height:11px;border-radius:50%;background:#f59e0b;border:2px solid #09090b;animation:jt-dot-blink 3s ease-in-out infinite;}
 @keyframes jt-contact-pulse{0%,100%{}50%{}}
 @keyframes jt-dot-blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
-#jtContactTooltip{position:fixed;bottom:94px;right:22px;z-index:9998;background:#111114;border:1px solid rgba(255,255,255,.1);border-radius:14px 14px 4px 14px;padding:10px 14px;font-size:.8rem;color:#a1a1aa;white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.4);pointer-events:none;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;}
+#jtContactTooltip{position:fixed;bottom:94px;right:22px;z-index:9998;background:#0a0a0b;border:1px solid rgba(255,255,255,0.2);border-radius:0;padding:10px 14px;font-size:.8rem;color:#a1a1aa;white-space:nowrap;box-shadow:none;pointer-events:none;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;}
 #jtContactTooltip.show{opacity:1;transform:translateY(0);}
 #jtContactTooltip strong{color:#22c55e;}
 #jtContactModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:flex-end;justify-content:flex-end;padding:0 18px 96px;pointer-events:none;}
 #jtContactModal.open{pointer-events:all;}
-#jtContactCard{width:min(380px,100%);background:#111114;border:1px solid rgba(255,255,255,.1);border-radius:20px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6);transform:translateY(24px) scale(.96);opacity:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .25s;pointer-events:none;}
+#jtContactCard{width:min(380px,100%);background:#0a0a0b;border:1px solid rgba(255,255,255,0.2);border-radius:0;overflow:hidden;box-shadow:none;transform:translateY(24px) scale(.96);opacity:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .25s;pointer-events:none;}
 #jtContactModal.open #jtContactCard{transform:translateY(0) scale(1);opacity:1;pointer-events:all;}
-.jt-modal-header{background:#111114;padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:12px;}
-.jt-modal-avatar{width:42px;height:42px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.12);flex-shrink:0;}
+.jt-modal-header{background:transparent;padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;gap:12px;}
+.jt-modal-avatar{width:42px;height:42px;border-radius:0;overflow:hidden;border:1px solid rgba(255,255,255,0.2);flex-shrink:0;}
 .jt-modal-avatar img{width:100%;height:100%;object-fit:cover;}
 .jt-modal-info{flex:1;}
 .jt-modal-name{font-weight:700;font-size:.9rem;color:#f4f4f5;}
 .jt-modal-role{font-size:.72rem;color:#22c55e;display:flex;align-items:center;gap:5px;margin-top:2px;}
 .jt-modal-online{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;}
-.jt-modal-close{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#71717a;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;}
-.jt-modal-close:hover{background:rgba(255,255,255,.1);color:#f4f4f5;}
-.jt-modal-body{padding:18px 20px 20px;background:#111114;}
-.jt-welcome-bubble{background:#0f0f12;border:1px solid rgba(255,255,255,.08);border-radius:4px 14px 14px 14px;padding:11px 14px;font-size:.82rem;color:#a1a1aa;line-height:1.55;margin-bottom:18px;}
+.jt-modal-close{width:30px;height:30px;border-radius:0;background:transparent;border:1px solid rgba(255,255,255,0.16);color:#71717a;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;}
+.jt-modal-close:hover{background:rgba(255,255,255,.06);color:#f4f4f5;}
+.jt-modal-body{padding:18px 20px 20px;background:transparent;}
+.jt-welcome-bubble{background:transparent;border:1px solid rgba(255,255,255,0.16);border-radius:0;padding:11px 14px;font-size:.82rem;color:#a1a1aa;line-height:1.55;margin-bottom:18px;}
 .jt-welcome-bubble strong{color:#22c55e;}
 .jt-form-group{margin-bottom:12px;}
-.jt-form-group input,.jt-form-group textarea{width:100%;background:#0f0f12;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 13px;font-size:.82rem;color:#f4f4f5;font-family:inherit;outline:none;transition:border-color .2s,background .2s;box-sizing:border-box;}
+.jt-form-group input,.jt-form-group textarea{width:100%;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.16);border-radius:0;padding:10px 2px;font-size:.82rem;color:#f4f4f5;font-family:inherit;outline:none;transition:border-color .2s;box-sizing:border-box;}
 .jt-form-group input::placeholder,.jt-form-group textarea::placeholder{color:#52525b;}
-.jt-form-group input:focus,.jt-form-group textarea:focus{border-color:rgba(34,197,94,.45);background:#111114;}
+.jt-form-group input:focus,.jt-form-group textarea:focus{border-bottom-color:rgba(255,255,255,0.55);background:transparent;}
 .jt-form-group textarea{resize:none;height:90px;line-height:1.5;}
-.jt-send-btn{width:100%;padding:12px;border-radius:11px;background:#10b981;border:none;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s,transform .15s;letter-spacing:.02em;}
-.jt-send-btn:hover{background:#059669;transform:translateY(-1px);}
+.jt-send-btn{width:100%;padding:12px;border-radius:0;background:#10b981;border:none;color:#052e16;font-weight:700;font-size:.88rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s;letter-spacing:.02em;}
+.jt-send-btn:hover{background:#059669;}
 .jt-send-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
 .jt-success{display:none;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px 24px;text-align:center;gap:10px;}
-.jt-success-icon{width:52px;height:52px;border-radius:50%;background:#111114;border:1px solid rgba(34,197,94,.35);display:flex;align-items:center;justify-content:center;font-size:1.4rem;}
+.jt-success-icon{width:52px;height:52px;border-radius:0;background:transparent;border:1px solid rgba(34,197,94,.35);display:flex;align-items:center;justify-content:center;font-size:1.4rem;}
 .jt-success h4{color:#f4f4f5;font-size:1rem;margin:0;}
 .jt-success p{color:#71717a;font-size:.8rem;margin:0;line-height:1.5;}
 html.app-mode #jtContactBtn,html.app-mode #jtContactModal,html.app-mode #jtContactTooltip{display:none!important;}
