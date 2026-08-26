@@ -10722,3 +10722,40 @@ html[data-theme="light"] #page-domain-add .input,
   border-left: 1px solid var(--border) !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   TOAST / NOTIFICATION SYSTEM — never went through the flat redesign,
+   so it still used the old soft 22px rounded-bubble look while
+   everything else on the site moved to sharp corners + thin hairline
+   borders. Flattened here to match. Also adds visual treatment for
+   the new 'warning' (soft validation nudges, amber triangle),
+   'network' (connectivity failures, wifi-off icon), and 'auth'
+   (session/permission failures, lock icon) toast types added to the
+   toast() function — so a required-field nudge no longer gets the
+   same alarming red circle-X treatment as a real failure.
+   ══════════════════════════════════════════════════════════════════ */
+.toast {
+  border-radius: 0 !important;
+  background: var(--bg-2) !important;
+  border: 1px solid var(--border) !important;
+}
+.toast-icon {
+  border-radius: 3px !important;
+}
+.toast-close {
+  border-radius: 0 !important;
+}
+.toast.warning { border-color: rgba(245,158,11,0.35) !important; }
+.toast.warning .toast-icon {
+  color: #f59e0b !important;
+  background: rgba(245,158,11,.1) !important;
+  border-color: rgba(245,158,11,.22) !important;
+}
+.toast.network,
+.toast.auth { border-color: rgba(239,68,68,0.35) !important; }
+.toast.network .toast-icon,
+.toast.auth .toast-icon {
+  color: var(--red) !important;
+  background: rgba(239,68,68,.1) !important;
+  border-color: rgba(239,68,68,.22) !important;
+}
+
