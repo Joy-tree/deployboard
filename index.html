@@ -5661,7 +5661,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=124" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=125" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -20876,20 +20876,20 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
             <button onclick="cdShowScenario('other')" id="cdSc-other" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-size:0.78rem;font-weight:700;cursor:pointer;">Other</button>
           </div>
           <!-- CNAME table — NAME updates live as user types their domain -->
-          <div style="background:rgba(0,0,0,0.25);border-radius:8px;overflow:hidden;">
+          <div style="background:transparent;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;overflow:hidden;">
             <div style="display:grid;grid-template-columns:auto 1fr 1fr;font-size:0.7rem;">
-              <div style="padding:8px 14px;background:rgba(16,185,129,0.08);color:var(--text-3);font-weight:700;letter-spacing:.05em;">TYPE</div>
-              <div style="padding:8px 14px;background:rgba(16,185,129,0.08);color:var(--text-3);font-weight:700;letter-spacing:.05em;">NAME</div>
-              <div style="padding:8px 14px;background:rgba(16,185,129,0.08);color:var(--text-3);font-weight:700;letter-spacing:.05em;">VALUE</div>
-              <div style="padding:10px 14px;border-top:1px solid rgba(16,185,129,0.1);color:var(--cyan);font-family:var(--font-mono);">CNAME</div>
-              <div style="padding:10px 14px;border-top:1px solid rgba(16,185,129,0.1);color:var(--text);font-family:var(--font-mono);font-size:0.75rem;" id="cdDnsName">@</div>
-              <div style="padding:10px 14px;border-top:1px solid rgba(16,185,129,0.1);color:var(--green);font-family:var(--font-mono);font-size:0.72rem;word-break:break-all;" id="cdDnsValue">—  will appear after tunnel is set up</div>
+              <div style="padding:8px 14px;background:transparent;color:var(--text-3);font-weight:700;letter-spacing:.05em;">TYPE</div>
+              <div style="padding:8px 14px;background:transparent;color:var(--text-3);font-weight:700;letter-spacing:.05em;">NAME</div>
+              <div style="padding:8px 14px;background:transparent;color:var(--text-3);font-weight:700;letter-spacing:.05em;">VALUE</div>
+              <div style="padding:10px 14px;border-top:1px solid var(--dcx-row-border, var(--border));color:var(--cyan);font-family:var(--font-mono);">CNAME</div>
+              <div style="padding:10px 14px;border-top:1px solid var(--dcx-row-border, var(--border));color:var(--text);font-family:var(--font-mono);font-size:0.75rem;" id="cdDnsName">@</div>
+              <div style="padding:10px 14px;border-top:1px solid var(--dcx-row-border, var(--border));color:var(--green);font-family:var(--font-mono);font-size:0.72rem;word-break:break-all;" id="cdDnsValue">—  will appear after tunnel is set up</div>
             </div>
           </div>
           <!-- Per-registrar step-by-step guide -->
-          <div id="cdScenarioGuide" style="font-size:0.82rem;line-height:1.75;color:var(--text-2);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px;"></div>
+          <div id="cdScenarioGuide" style="font-size:0.82rem;line-height:1.75;color:var(--text-2);background:transparent;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;padding:14px;"></div>
           <!-- Fresh domain tip -->
-          <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:14px;">
+          <div style="background:transparent;border:1px solid var(--dcx-field-border, var(--border));border-left:3px solid color-mix(in srgb, var(--green) 50%, transparent);border-radius:0;padding:14px;">
             <div style="font-size:0.8rem;font-weight:800;color:var(--green);margin-bottom:8px;">Just bought a fresh domain?</div>
             <div style="font-size:0.78rem;color:var(--text-2);line-height:1.75;">
               Fresh domains come with default nameservers at your registrar. Two options:<br><br>
@@ -21114,18 +21114,18 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
               <button onclick="dmShowScenario('google')" id="dmSc-google" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-size:0.78rem;font-weight:700;cursor:pointer;">Google Domains</button>
               <button onclick="dmShowScenario('other')" id="dmSc-other" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-size:0.78rem;font-weight:700;cursor:pointer;">Other</button>
             </div>
-            <div style="background:rgba(0,0,0,0.25);border-radius:8px;overflow:hidden;">
+            <div style="background:transparent;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;overflow:hidden;">
               <div style="display:grid;grid-template-columns:auto 1fr 1fr;font-size:0.7rem;">
-                <div style="padding:8px 14px;background:rgba(16,185,129,0.08);color:var(--text-3);font-weight:700;letter-spacing:.05em;">TYPE</div>
-                <div style="padding:8px 14px;background:rgba(16,185,129,0.08);color:var(--text-3);font-weight:700;letter-spacing:.05em;">NAME</div>
-                <div style="padding:8px 14px;background:rgba(16,185,129,0.08);color:var(--text-3);font-weight:700;letter-spacing:.05em;">VALUE</div>
-                <div style="padding:10px 14px;border-top:1px solid rgba(16,185,129,0.1);color:var(--cyan);font-family:var(--font-mono);">CNAME</div>
-                <div style="padding:10px 14px;border-top:1px solid rgba(16,185,129,0.1);color:var(--text);font-family:var(--font-mono);font-size:0.75rem;" id="dmDnsName">@</div>
-                <div style="padding:10px 14px;border-top:1px solid rgba(16,185,129,0.1);color:var(--green);font-family:var(--font-mono);font-size:0.72rem;word-break:break-all;" id="dmDnsValue">YOUR_TUNNEL.cfargotunnel.com</div>
+                <div style="padding:8px 14px;background:transparent;color:var(--text-3);font-weight:700;letter-spacing:.05em;">TYPE</div>
+                <div style="padding:8px 14px;background:transparent;color:var(--text-3);font-weight:700;letter-spacing:.05em;">NAME</div>
+                <div style="padding:8px 14px;background:transparent;color:var(--text-3);font-weight:700;letter-spacing:.05em;">VALUE</div>
+                <div style="padding:10px 14px;border-top:1px solid var(--dcx-row-border, var(--border));color:var(--cyan);font-family:var(--font-mono);">CNAME</div>
+                <div style="padding:10px 14px;border-top:1px solid var(--dcx-row-border, var(--border));color:var(--text);font-family:var(--font-mono);font-size:0.75rem;" id="dmDnsName">@</div>
+                <div style="padding:10px 14px;border-top:1px solid var(--dcx-row-border, var(--border));color:var(--green);font-family:var(--font-mono);font-size:0.72rem;word-break:break-all;" id="dmDnsValue">YOUR_TUNNEL.cfargotunnel.com</div>
               </div>
             </div>
-            <div id="dmScenarioGuide" style="font-size:0.82rem;line-height:1.75;color:var(--text-2);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px;"></div>
-            <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:14px;">
+            <div id="dmScenarioGuide" style="font-size:0.82rem;line-height:1.75;color:var(--text-2);background:transparent;border:1px solid var(--dcx-field-border, var(--border));border-radius:0;padding:14px;"></div>
+            <div style="background:transparent;border:1px solid var(--dcx-field-border, var(--border));border-left:3px solid color-mix(in srgb, var(--green) 50%, transparent);border-radius:0;padding:14px;">
               <div style="font-size:0.8rem;font-weight:800;color:var(--green);margin-bottom:8px;">Just bought a fresh domain?</div>
               <div style="font-size:0.78rem;color:var(--text-2);line-height:1.75;">
                 Fresh domains come with default nameservers at your registrar. Two options:<br><br>
@@ -21160,7 +21160,7 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
             </div>
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
-            <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:12px 14px;font-size:0.8rem;color:var(--text-2);line-height:1.7;">
+            <div style="background:transparent;border:1px solid var(--dcx-field-border, var(--border));border-left:3px solid color-mix(in srgb, var(--green) 50%, transparent);border-radius:0;padding:12px 14px;font-size:0.8rem;color:var(--text-2);line-height:1.7;">
               Added the CNAME record above? Click <strong style="color:var(--text);">Transfer &amp; Activate</strong> below. The system will verify your DNS and wire the domain to your project in real time.
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;" id="dmDnsTransferBtnRow">

@@ -2832,13 +2832,17 @@ html[data-theme="light"] .sdk-test-indicator.idle {
 .jt-log-text { color: #6ee7b7 !important; }
 
 /* Custom-domain "Using a subdomain?" tip boxes (was inline, duplicated
-   in two places on the domain setup page) */
+   in two places on the domain setup page). Flattened to match the
+   site's alert-info pattern: transparent fill, thin white hairline
+   border all around, plus a green left-accent to mark it as a tip —
+   not a filled/rounded green card. */
 .jt-tip-box {
-  background: rgba(16,185,129,0.08) !important;
-  border: 1px solid rgba(16,185,129,0.2) !important;
-  border-radius: 10px !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  border-left: 3px solid color-mix(in srgb, var(--green) 50%, transparent) !important;
+  border-radius: 0 !important;
 }
-.jt-tip-heading { color: #6ee7b7 !important; }
+.jt-tip-heading { color: var(--green) !important; }
 
 /* Restart-deployment ghost button (had a green border but hardcoded
    blue text) */
