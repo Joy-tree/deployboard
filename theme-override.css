@@ -11215,3 +11215,43 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
 #page-domain-import .btn-ghost {
   border-radius: 0 !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ADD SECRET MODAL (#addSecretModal) — never touched by the flat
+   redesign, still using the base rounded/shadowed/glowing-border
+   styling: 16px-rounded modal with a green-tinted border and heavy
+   drop shadow, a 10px-rounded filled icon chip, 8px-rounded inputs
+   with a dark fill and a bright green glow on focus.
+   ══════════════════════════════════════════════════════════════════ */
+#addSecretModal .modal {
+  background: var(--bg) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#addSecretModal .modal-header {
+  border-bottom: 1px solid rgba(255,255,255,0.2) !important;
+}
+#addSecretModal .modal-icon {
+  border-radius: 0 !important;
+  border: 1px solid rgba(16,185,129,0.35) !important;
+}
+#addSecretModal .modal-close {
+  border-radius: 0 !important;
+}
+#addSecretModal .modal-footer {
+  border-top: 1px solid rgba(255,255,255,0.2) !important;
+}
+#addSecretModal .input {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255,255,255,0.16) !important;
+  border-radius: 0 !important;
+}
+#addSecretModal .input:focus {
+  border-bottom-color: var(--primary) !important;
+}
+#addSecretModal .btn-primary,
+#addSecretModal .btn-ghost {
+  border-radius: 0 !important;
+}
