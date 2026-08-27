@@ -11261,3 +11261,57 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
 #addSecretModal .btn-ghost {
   border-radius: 0 !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   STATUS BADGES — GLOBAL, BULLETPROOF PIN. .badge-success/.badge-error/
+   .badge-warning/.badge-building/.badge-pending/.badge-idle already
+   have correct values in the base stylesheet (solid fill, no border,
+   4px radius) but WITHOUT !important, so anything else touching these
+   elements — an inline style set by JS, a leftover rule, a stale
+   cached bundle — can silently win over them since specificity ties
+   go to whatever comes last or is more specific. This file loads last
+   and every rule here carries !important, so these values are now
+   structurally impossible to override by accident, regardless of
+   where a conflicting rule might be hiding. Applies everywhere
+   (Dashboard, Deployments, Analytics, Domains, Project Detail, etc.)
+   since these are the single shared classes every one of those pages
+   calls through statusBadge().
+   ══════════════════════════════════════════════════════════════════ */
+.badge {
+  border-radius: 4px !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.badge-dot {
+  border-radius: 50% !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.badge-success, .badge-building {
+  background: #14532d !important;
+  color: #fff !important;
+  border: none !important;
+}
+.badge-success .badge-dot, .badge-building .badge-dot {
+  background: #fff !important;
+}
+.badge-error {
+  background: #7f1d1d !important;
+  color: #fff !important;
+  border: none !important;
+}
+.badge-error .badge-dot { background: #fff !important; }
+.badge-warning, .badge-pending {
+  background: #78350f !important;
+  color: #fff !important;
+  border: none !important;
+}
+.badge-warning .badge-dot, .badge-pending .badge-dot {
+  background: #fff !important;
+}
+.badge-idle {
+  background: #334155 !important;
+  color: #fff !important;
+  border: none !important;
+}
+.badge-idle .badge-dot { background: #fff !important; }
