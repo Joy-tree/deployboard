@@ -11369,3 +11369,34 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
   color: #fff !important;
   border: none !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   BADGE CORNERS — SHARP, EVERYWHERE, NO EXCEPTIONS. Turns out "no
+   borders" meant no border-radius (rounded corners), not the border/
+   outline stroke property — the stroke was already `none` this whole
+   time, which is why nothing in the earlier passes changed anything
+   visible. Every badge variant, old class names and the new
+   .jt-stbadge* ones alike, forced flat/square corners here with
+   !important so no page-scoped 3px/4px radius override (webhooks,
+   cronjobs, domain-manage, etc.) can survive either.
+   ══════════════════════════════════════════════════════════════════ */
+.badge,
+.badge-success, .badge-error, .badge-warning,
+.badge-building, .badge-pending, .badge-idle,
+.jt-stbadge,
+.jt-stbadge-success, .jt-stbadge-error, .jt-stbadge-warning,
+.jt-stbadge-building, .jt-stbadge-pending, .jt-stbadge-idle,
+#page-domains.pg-domains-v2 .badge-success,
+#page-domains.pg-domains-v2 .badge-pending,
+#page-domain-store .badge-success,
+#page-domain-store .badge-warning,
+#page-domain-store .badge-error,
+#page-webhooks .badge-success,
+#page-domain-manage .badge-success,
+#page-domain-manage .badge-pending,
+#page-cronjobs .badge-success,
+#page-cronjobs .badge-warning,
+#page-cronjobs .badge-error,
+#page-usage .badge-success {
+  border-radius: 0 !important;
+}
