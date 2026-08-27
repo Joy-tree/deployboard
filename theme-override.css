@@ -11063,3 +11063,57 @@ html[data-theme="light"] #page-domain-add .input,
 .notif-view-all-btn:hover {
   border-color: rgba(255,255,255,0.3) !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   LANDING PAGE MOBILE DRAWER ("hamburger" menu — Launch App/Quick
+   Tour, Platform section, Language Kickstarts, etc.) + desktop nav
+   link bar (.nav-link). Never went through the flat redesign — an
+   old pre-existing dark-theme patch (index.html line ~5125) gives
+   every .ld-link a persistent filled #111114 pill background with a
+   green-tinted border on ALL FOUR sides + 12px rounded corners,
+   regardless of hover state, which is what reads as "generic rounded
+   boxes" in the screenshot. That old rule also targets some dead
+   selectors (.sidebar-nav a/button, .sidebar-section a/button) that
+   don't match anything in the real logged-in app sidebar (those use
+   plain divs with onclick, not <a>/<button>), so this override only
+   affects the landing page drawer + top nav — the real app sidebar
+   is untouched.
+   Matched to the same specificity (html[data-theme="dark"] + class)
+   so it wins regardless of source order, same as everywhere else.
+   ══════════════════════════════════════════════════════════════════ */
+html[data-theme="dark"] .ld-link,
+html[data-theme="dark"] .nav-link {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255,255,255,0.16) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] .ld-link:last-child { border-bottom: none !important; }
+html[data-theme="dark"] .ld-link:hover,
+html[data-theme="dark"] .ld-link:active,
+html[data-theme="dark"] .nav-link:hover {
+  background: rgba(255,255,255,0.05) !important;
+  border-bottom-color: rgba(255,255,255,0.16) !important;
+}
+html[data-theme="dark"] .ld-link.active {
+  background: rgba(255,255,255,0.05) !important;
+  border-bottom-color: var(--primary) !important;
+}
+html[data-theme="dark"] .ld-link-icon {
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,0.16) !important;
+  border-radius: 0 !important;
+}
+html[data-theme="dark"] .ld-action-btn.primary {
+  border-radius: 0 !important;
+}
+html[data-theme="dark"] .ld-action-btn.ghost {
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  border-radius: 0 !important;
+}
+html[data-theme="dark"] .ld-action-btn.ghost:hover {
+  background: rgba(255,255,255,0.05) !important;
+  border-color: rgba(255,255,255,0.3) !important;
+}
