@@ -11315,3 +11315,57 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
   border: none !important;
 }
 .badge-idle .badge-dot { background: #fff !important; }
+
+/* ══════════════════════════════════════════════════════════════════
+   DEPLOYMENT STATUS BADGES — brand-new class namespace (.jt-stbadge*),
+   output by statusBadge() in place of the old .badge/.badge-success
+   set. The old classes' styling has proven unfixable even with a
+   global !important pass, meaning something outside both CSS files
+   is touching them that couldn't be found by static search. A class
+   name that never existed before this can't possibly be targeted by
+   anything old — this sidesteps the mystery instead of chasing it
+   further. Used by Dashboard's Recent Deployments, the Deployments
+   page's build-run list, and the terminal/live-logs status pill.
+   ══════════════════════════════════════════════════════════════════ */
+.jt-stbadge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 3px 9px !important;
+  border-radius: 4px !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.jt-stbadge-dot {
+  width: 5px !important;
+  height: 5px !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+  background: #fff !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.jt-stbadge-success, .jt-stbadge-building {
+  background: #14532d !important;
+  color: #fff !important;
+  border: none !important;
+}
+.jt-stbadge-building .jt-stbadge-dot { animation: pulse 1s infinite !important; }
+.jt-stbadge-error {
+  background: #7f1d1d !important;
+  color: #fff !important;
+  border: none !important;
+}
+.jt-stbadge-pending {
+  background: #78350f !important;
+  color: #fff !important;
+  border: none !important;
+}
+.jt-stbadge-idle {
+  background: #334155 !important;
+  color: #fff !important;
+  border: none !important;
+}

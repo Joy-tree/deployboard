@@ -5672,7 +5672,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=143" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=144" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -29243,12 +29243,22 @@ function relTime(value) {
 }
 function timeAgo(value) { return relTime(value); }
 function statusBadge(status) {
+  // [FIX] Renamed to a brand-new class namespace (jt-stbadge*) instead
+  // of the old .badge/.badge-success/etc — those old classes have
+  // proven impossible to fully pin down (even a global !important pass
+  // didn't stick everywhere they're used), which means something is
+  // touching them that isn't visible to a static grep across both CSS
+  // files — possibly a dynamically-generated style tag, a browser
+  // extension, or an inline style applied by code we haven't traced
+  // yet. A brand-new, never-before-used class name sidesteps the whole
+  // question: nothing existing can possibly have a rule for a
+  // selector that didn't exist until this edit.
   const map = {
-    success: 'badge-success', failed: 'badge-error',
-    building: 'badge-building', pending: 'badge-pending'
+    success: 'jt-stbadge-success', failed: 'jt-stbadge-error',
+    building: 'jt-stbadge-building', pending: 'jt-stbadge-pending'
   };
-  const cls = map[status] || 'badge-idle';
-  return `<span class="badge ${cls}"><span class="badge-dot"></span>${status||'unknown'}</span>`;
+  const cls = map[status] || 'jt-stbadge-idle';
+  return `<span class="jt-stbadge ${cls}"><span class="jt-stbadge-dot"></span>${status||'unknown'}</span>`;
 }
 
 // ══════════════════════════════════════════════════════════════════
