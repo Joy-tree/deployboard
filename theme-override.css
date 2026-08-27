@@ -11117,3 +11117,100 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
   background: rgba(255,255,255,0.05) !important;
   border-color: rgba(255,255,255,0.3) !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   IMPORT EXTERNAL SITE PAGE (#page-domain-import)
+   Never touched by the flat redesign — pure legacy inline-styled
+   markup: 22px-rounded hero with a filled #0d0d0d background, cards
+   with a green-tinted fill ("How it works"), rgba(0,0,0,.3) code
+   chips, a rounded filled dropdown with a green "selected" highlight
+   row (a different custom-select variant than the one used on repo/
+   branch pickers elsewhere), and a JS-driven result banner that gets
+   its background/border/radius set inline on success/error.
+   ══════════════════════════════════════════════════════════════════ */
+#page-domain-import .wizard-hero {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 0 20px !important;
+}
+#page-domain-import .card {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+/* "How it works" card — was tinted green, now neutral like every
+   other card on this page; kept the "How it works" label green as
+   an intentional section accent */
+#page-domain-import .card[style*="rgba(16,185,129,0.04)"] {
+  background: transparent !important;
+  border-color: var(--dcx-field-border) !important;
+}
+#page-domain-import .card-header { border-bottom: 1px solid var(--dcx-row-border) !important; }
+#page-domain-import .card-title { color: var(--text) !important; }
+#page-domain-import .card-subtitle { color: var(--text-2) !important; }
+/* Numbered step badges (1/2/3) — flat square accent instead of a
+   solid-filled green circle, matching the step-badge treatment used
+   on New Deployment/Repos/Databases */
+#page-domain-import [style*="border-radius:50%"][style*="background:var(--primary)"] {
+  background: transparent !important;
+  border: 1px solid var(--primary) !important;
+  border-radius: 6px !important;
+  color: var(--primary) !important;
+}
+/* Inline code chips (myapp.joytree.site / myapp.vercel.app / etc.) */
+#page-domain-import code {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+/* Routing preview box */
+#page-domain-import #epPreview {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+/* Result banner (success/error) — JS sets background/border/radius
+   inline on submit; these !important rules win regardless of that
+   since author !important beats inline non-important */
+#page-domain-import #epResultBanner {
+  background: transparent !important;
+  border-radius: 0 !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+/* Project dropdown — same flat/hairline treatment as every other
+   custom-select in the app instead of the filled rounded trigger +
+   green-highlighted "selected" row */
+#page-domain-import .custom-select-trigger {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+}
+#page-domain-import .custom-select-trigger.open {
+  border-color: var(--primary) !important;
+}
+#page-domain-import .custom-select-dropdown {
+  background: var(--bg) !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-domain-import .cs-option {
+  border-bottom: 1px solid var(--dcx-row-border) !important;
+  color: var(--text-2) !important;
+}
+#page-domain-import .cs-option:last-child { border-bottom: none !important; }
+#page-domain-import .cs-option:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text) !important;
+}
+#page-domain-import .cs-option.selected {
+  background: transparent !important;
+  color: var(--primary) !important;
+}
+#page-domain-import .btn-primary,
+#page-domain-import .btn-ghost {
+  border-radius: 0 !important;
+}
