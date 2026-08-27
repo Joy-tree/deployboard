@@ -8028,13 +8028,13 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
    this page — now reverted to the solid flat fill used everywhere
    else, per the site-wide badge fix. */
 #page-domains.pg-domains-v2 .badge-success {
-  background: #15803d !important;
+  background: #14532d !important;
   color: #fff !important;
   border: none !important;
 }
 #page-domains.pg-domains-v2 .badge-success .badge-dot { background: #fff !important; }
 #page-domains.pg-domains-v2 .badge-pending {
-  background: #b45309 !important;
+  background: #78350f !important;
   color: #fff !important;
   border: none !important;
 }
@@ -8161,19 +8161,19 @@ html[data-theme="light"] #page-domain-store {
   background: transparent !important;
 }
 #page-domain-store .badge-success {
-  background: #15803d !important;
+  background: #14532d !important;
   border: none !important;
   color: #fff !important;
 }
 #page-domain-store .badge-success .badge-dot { background: #fff !important; }
 #page-domain-store .badge-warning {
-  background: #b45309 !important;
+  background: #78350f !important;
   border: none !important;
   color: #fff !important;
 }
 #page-domain-store .badge-warning .badge-dot { background: #fff !important; }
 #page-domain-store .badge-error {
-  background: #b91c1c !important;
+  background: #7f1d1d !important;
   border: none !important;
   color: #fff !important;
 }
@@ -8318,12 +8318,12 @@ html[data-theme="light"] #page-project-detail {
   border: 1px solid var(--dcx-field-border) !important;
 }
 #page-project-detail .btn-danger {
-  background: #b91c1c !important;
+  background: #7f1d1d !important;
   color: #fff !important;
   border: none !important;
 }
 #page-project-detail .btn-danger:hover {
-  background: #991b1b !important;
+  background: #6b1919 !important;
 }
 
 /* [FIX] The page-wide "#page-project-detail *" flatten rule above also
@@ -8816,7 +8816,7 @@ html[data-theme="light"] #page-webhooks {
 /* "Supported" badge — solid flat fill, no glow, matching the
    site-wide badge fix */
 #page-webhooks .badge-success {
-  background: #15803d !important;
+  background: #14532d !important;
   border: none !important;
   color: #fff !important;
   border-radius: 3px !important;
@@ -8921,13 +8921,13 @@ html[data-theme="light"] #page-webhooks {
 }
 /* Status badges — solid flat fill, no glow */
 #page-domain-manage .badge-success {
-  background: #15803d !important;
+  background: #14532d !important;
   border: none !important;
   color: #fff !important;
   border-radius: 3px !important;
 }
 #page-domain-manage .badge-pending {
-  background: #b45309 !important;
+  background: #78350f !important;
   border: none !important;
   color: #fff !important;
   border-radius: 3px !important;
@@ -9429,9 +9429,9 @@ html[data-theme="light"] #page-cronjobs {
   box-shadow: none !important;
 }
 /* Cron status badges — flat teal/amber/red chips */
-#page-cronjobs .badge-success { background: #15803d !important; border: none !important; color: #fff !important; border-radius: 3px !important; }
-#page-cronjobs .badge-warning { background: #b45309 !important; border: none !important; color: #fff !important; border-radius: 3px !important; }
-#page-cronjobs .badge-error   { background: #b91c1c !important; border: none !important; color: #fff !important; border-radius: 3px !important; }
+#page-cronjobs .badge-success { background: #14532d !important; border: none !important; color: #fff !important; border-radius: 3px !important; }
+#page-cronjobs .badge-warning { background: #78350f !important; border: none !important; color: #fff !important; border-radius: 3px !important; }
+#page-cronjobs .badge-error   { background: #7f1d1d !important; border: none !important; color: #fff !important; border-radius: 3px !important; }
 #page-cronjobs .btn-primary { border-radius: 0 !important; }
 #page-cronjobs .btn-ghost, #page-cronjobs .btn-sm { border-radius: 0 !important; background: transparent !important; border-color: var(--dcx-field-border) !important; }
 #page-cronjobs .input { background: transparent !important; border: none !important; border-bottom: 1px solid var(--dcx-field-border) !important; border-radius: 0 !important; box-shadow: none !important; }
@@ -9535,7 +9535,7 @@ html[data-theme="light"] #page-usage [style*="linear-gradient"],
 }
 /* Active badge */
 #page-usage .badge-success {
-  background: #15803d !important;
+  background: #14532d !important;
   border: none !important;
   color: #fff !important;
   border-radius: 3px !important;
@@ -10930,7 +10930,7 @@ html[data-theme="light"] #page-domain-add .input,
    modals don't have, since they explicitly use the plain neutral
    var(--border) instead; (2) its confirm button uses the weak,
    translucent .btn-danger (10% red fill, red text) instead of the
-   solid red fill (#b91c1c, white text) every other delete modal on
+   solid red fill (#7f1d1d, white text) every other delete modal on
    the site uses. Also the icon chip was missing the thin red border
    ring the other delete icons have. Matched pixel-for-pixel to
    Delete Database's exact values, scoped only to this modal.
@@ -10943,12 +10943,12 @@ html[data-theme="light"] #page-domain-add .input,
   border: 1px solid rgba(239,68,68,.22) !important;
 }
 #deleteModal .btn-danger {
-  background: #b91c1c !important;
+  background: #7f1d1d !important;
   color: #fff !important;
   border: none !important;
 }
 #deleteModal .btn-danger:hover {
-  background: #991b1b !important;
+  background: #6b1919 !important;
 }
 
 /* ══════════════════════════════════════════════════════════════════
