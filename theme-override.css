@@ -8024,16 +8024,21 @@ html[data-theme="light"] #page-domains.pg-domains-v2 {
 }
 
 /* Verified / DNS Pending badges — outlined instead of filled tint */
+/* [FIX] Was outlined/transparent to match an earlier "no fill" pass on
+   this page — now reverted to the solid flat fill used everywhere
+   else, per the site-wide badge fix. */
 #page-domains.pg-domains-v2 .badge-success {
-  border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent) !important;
-  color: var(--primary) !important;
+  background: #15803d !important;
+  color: #fff !important;
+  border: none !important;
 }
-#page-domains.pg-domains-v2 .badge-success .badge-dot { background: var(--primary) !important; }
+#page-domains.pg-domains-v2 .badge-success .badge-dot { background: #fff !important; }
 #page-domains.pg-domains-v2 .badge-pending {
-  border: 1px solid color-mix(in srgb, var(--jt-accent, #f59e0b) 45%, transparent) !important;
-  color: var(--jt-accent, #f59e0b) !important;
+  background: #b45309 !important;
+  color: #fff !important;
+  border: none !important;
 }
-#page-domains.pg-domains-v2 .badge-pending .badge-dot { background: var(--jt-accent, #f59e0b) !important; }
+#page-domains.pg-domains-v2 .badge-pending .badge-dot { background: #fff !important; }
 
 /* Buttons — Add Domain (primary fill) + ghost (hairline outline).
    Wildcard strips fill/border from both, same as project-detail's
@@ -8156,23 +8161,23 @@ html[data-theme="light"] #page-domain-store {
   background: transparent !important;
 }
 #page-domain-store .badge-success {
-  background: transparent !important;
-  border-color: color-mix(in srgb, var(--primary) 45%, transparent) !important;
-  color: var(--primary) !important;
+  background: #15803d !important;
+  border: none !important;
+  color: #fff !important;
 }
-#page-domain-store .badge-success .badge-dot { background: var(--primary) !important; }
+#page-domain-store .badge-success .badge-dot { background: #fff !important; }
 #page-domain-store .badge-warning {
-  background: transparent !important;
-  border-color: color-mix(in srgb, var(--jt-accent, #f59e0b) 45%, transparent) !important;
-  color: var(--jt-accent, #f59e0b) !important;
+  background: #b45309 !important;
+  border: none !important;
+  color: #fff !important;
 }
-#page-domain-store .badge-warning .badge-dot { background: var(--jt-accent, #f59e0b) !important; }
+#page-domain-store .badge-warning .badge-dot { background: #fff !important; }
 #page-domain-store .badge-error {
-  background: transparent !important;
-  border-color: color-mix(in srgb, var(--jt-danger, #ef4444) 45%, transparent) !important;
-  color: var(--jt-danger, #ef4444) !important;
+  background: #b91c1c !important;
+  border: none !important;
+  color: #fff !important;
 }
-#page-domain-store .badge-error .badge-dot { background: var(--jt-danger, #ef4444) !important; }
+#page-domain-store .badge-error .badge-dot { background: #fff !important; }
 #page-domain-store .btn-primary,
 #page-domain-store .btn-sm {
   border-radius: 0 !important;
@@ -8808,18 +8813,19 @@ html[data-theme="light"] #page-webhooks {
 #page-webhooks .webhook-event-card:last-child {
   border-bottom: none !important;
 }
-/* "Supported" badge — professional muted teal chip, no glow */
+/* "Supported" badge — solid flat fill, no glow, matching the
+   site-wide badge fix */
 #page-webhooks .badge-success {
-  background: color-mix(in srgb, var(--green) 12%, transparent) !important;
-  border: 1px solid color-mix(in srgb, var(--green) 35%, transparent) !important;
-  color: var(--green) !important;
+  background: #15803d !important;
+  border: none !important;
+  color: #fff !important;
   border-radius: 3px !important;
   font-size: .68rem !important;
   font-weight: 700 !important;
   letter-spacing: .04em !important;
 }
 #page-webhooks .badge-success .badge-dot {
-  background: var(--green) !important;
+  background: #fff !important;
   width: 5px !important; height: 5px !important;
 }
 
@@ -8913,21 +8919,21 @@ html[data-theme="light"] #page-webhooks {
   color: var(--primary) !important;
   border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent) !important;
 }
-/* Status badges */
+/* Status badges — solid flat fill, no glow */
 #page-domain-manage .badge-success {
-  background: color-mix(in srgb, var(--green) 12%, transparent) !important;
-  border: 1px solid color-mix(in srgb, var(--green) 35%, transparent) !important;
-  color: var(--green) !important;
+  background: #15803d !important;
+  border: none !important;
+  color: #fff !important;
   border-radius: 3px !important;
 }
 #page-domain-manage .badge-pending {
-  background: color-mix(in srgb, #f59e0b 10%, transparent) !important;
-  border: 1px solid color-mix(in srgb, #f59e0b 30%, transparent) !important;
-  color: #fbbf24 !important;
+  background: #b45309 !important;
+  border: none !important;
+  color: #fff !important;
   border-radius: 3px !important;
 }
-#page-domain-manage .badge-success .badge-dot { background: var(--green) !important; }
-#page-domain-manage .badge-pending .badge-dot { background: #fbbf24 !important; }
+#page-domain-manage .badge-success .badge-dot { background: #fff !important; }
+#page-domain-manage .badge-pending .badge-dot { background: #fff !important; }
 /* Verified ✓ Yes and SSL text already use var(--green) inline — leave them alone. */
 #page-domain-manage [style*="color:var(--primary)"],
 #page-domain-manage [style*="color: var(--primary)"] {
@@ -9423,9 +9429,9 @@ html[data-theme="light"] #page-cronjobs {
   box-shadow: none !important;
 }
 /* Cron status badges — flat teal/amber/red chips */
-#page-cronjobs .badge-success { background: color-mix(in srgb,var(--green) 12%,transparent) !important; border: 1px solid color-mix(in srgb,var(--green) 35%,transparent) !important; color: var(--green) !important; border-radius: 3px !important; }
-#page-cronjobs .badge-warning { background: color-mix(in srgb,#f59e0b 10%,transparent) !important; border: 1px solid color-mix(in srgb,#f59e0b 28%,transparent) !important; color: #fbbf24 !important; border-radius: 3px !important; }
-#page-cronjobs .badge-error   { background: color-mix(in srgb,#f87171 10%,transparent) !important; border: 1px solid color-mix(in srgb,#f87171 28%,transparent) !important; color: #f87171 !important; border-radius: 3px !important; }
+#page-cronjobs .badge-success { background: #15803d !important; border: none !important; color: #fff !important; border-radius: 3px !important; }
+#page-cronjobs .badge-warning { background: #b45309 !important; border: none !important; color: #fff !important; border-radius: 3px !important; }
+#page-cronjobs .badge-error   { background: #b91c1c !important; border: none !important; color: #fff !important; border-radius: 3px !important; }
 #page-cronjobs .btn-primary { border-radius: 0 !important; }
 #page-cronjobs .btn-ghost, #page-cronjobs .btn-sm { border-radius: 0 !important; background: transparent !important; border-color: var(--dcx-field-border) !important; }
 #page-cronjobs .input { background: transparent !important; border: none !important; border-bottom: 1px solid var(--dcx-field-border) !important; border-radius: 0 !important; box-shadow: none !important; }
@@ -9529,12 +9535,12 @@ html[data-theme="light"] #page-usage [style*="linear-gradient"],
 }
 /* Active badge */
 #page-usage .badge-success {
-  background: color-mix(in srgb,var(--green) 12%,transparent) !important;
-  border: 1px solid color-mix(in srgb,var(--green) 35%,transparent) !important;
-  color: var(--green) !important;
+  background: #15803d !important;
+  border: none !important;
+  color: #fff !important;
   border-radius: 3px !important;
 }
-#page-usage .badge-success .badge-dot { background: var(--green) !important; }
+#page-usage .badge-success .badge-dot { background: #fff !important; }
 /* Cards */
 html[data-theme="dark"]  #page-usage .card,
 html[data-theme="light"] #page-usage .card,
