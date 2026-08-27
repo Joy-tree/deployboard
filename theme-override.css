@@ -10945,52 +10945,56 @@ html[data-theme="light"] #page-domain-add .input,
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   ACTIVITY LOG PAGE (#page-activity) — flattened to match the plain,
-   no-card treatment requested: no borders, no filled backgrounds, no
-   boxes anywhere on this page. Same two-step technique used elsewhere
-   (wildcard nuke, then re-add only what's structurally necessary) —
-   except here nothing is re-added, per an explicit "no borders at
-   all" request, unlike Project Detail/Domains which kept hairline
-   section outlines. Hero kicker/title/subtitle keep their existing
-   text colors (untouched by this — only background/border/shadow are
-   stripped), so the page still reads with the same hierarchy as
-   every other page, just with nothing boxed.
+   ACTIVITY LOG PAGE (#page-activity)
+   [FIX] Previous pass used a wildcard `* { border:none; background:
+   transparent; box-shadow:none }` nuke across the entire page. That
+   stripped the Refresh button's solid fill down to plain unstyled
+   text, removed the "All Events" panel's border entirely (no visible
+   container), and left zero separation between activity rows — the
+   whole feed just ran together with no structure. Every other list
+   page in the app (Project Detail, Repos, Domains, Deployments) kept
+   a flat hairline-bordered container + row dividers; this page is
+   now brought in line with that same pattern instead of having
+   nothing at all.
    ══════════════════════════════════════════════════════════════════ */
-#page-activity * {
+#page-activity .app-hero {
   background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
   border: none !important;
+  box-shadow: none !important;
+  padding: 0 0 22px 0 !important;
+}
+/* Refresh button — keep the same solid brand-green fill every other
+   primary button in the app uses, just flatten the corners */
+#page-activity .btn-primary {
   border-radius: 0 !important;
   box-shadow: none !important;
 }
 
-/* Hero and "All Events" card had padding sized for a boxed container;
-   drop the inset padding so headings/subtext/list sit flush against
-   the page edge instead of looking indented into an invisible box. */
-#page-activity .app-hero {
-  padding: 0 0 22px 0 !important;
-}
+/* "All Events" panel — flat, hairline border, sharp corners */
 #page-activity .card {
-  padding: 0 !important;
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 18px !important;
 }
 #page-activity .card-header {
+  border-bottom: 1px solid var(--dcx-row-border) !important;
   padding: 0 0 14px !important;
-  margin-bottom: 14px !important;
+  margin-bottom: 4px !important;
 }
 
-/* Individual activity rows: plain text stacked with breathing room,
-   no divider line, no row background on hover/alternate rows.
-   [FIX] Previously the wildcard above had to fight inline style=""
-   attributes hardcoded directly in renderActivity()'s JS (border-
-   bottom, icon chip background/border) -- moved that markup onto
-   these dedicated classes instead, so there is no inline styling left
-   for anything to conflict with. */
+/* Individual activity rows — divider line between each event,
+   matching every other row-based list in the app */
 #page-activity .activity-row {
   display: flex;
   gap: 12px;
   align-items: flex-start;
   padding: 14px 0;
+  border-bottom: 1px solid var(--dcx-row-border);
+}
+#page-activity .activity-row:last-child {
+  border-bottom: none;
 }
 #page-activity .activity-row-icon {
   width: 24px;
