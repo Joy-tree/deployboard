@@ -8313,11 +8313,12 @@ html[data-theme="light"] #page-project-detail {
   border: 1px solid var(--dcx-field-border) !important;
 }
 #page-project-detail .btn-danger {
-  border: 1px solid var(--dcx-field-border) !important;
-  color: var(--text-2) !important;
+  background: #b91c1c !important;
+  color: #fff !important;
+  border: none !important;
 }
 #page-project-detail .btn-danger:hover {
-  color: var(--jt-danger, #ef4444) !important;
+  background: #991b1b !important;
 }
 
 /* [FIX] The page-wide "#page-project-detail *" flatten rule above also
