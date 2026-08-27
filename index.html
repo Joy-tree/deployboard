@@ -2609,8 +2609,8 @@ textarea.input { resize: vertical; min-height: 80px; }
 .repo-lang-emblem {
   width:74px; height:74px; border-radius:18px; flex-shrink:0;
   display:grid; place-items:center;
-  background:#1a1a1a;
-  border:1px solid rgba(255,255,255,.08);
+  background:var(--primary);
+  border:none;
   box-shadow:none;
 }
 .repo-lang-emblem img,.repo-lang-emblem svg { width:48px; height:48px; object-fit:contain; filter:drop-shadow(0 8px 16px rgba(0,0,0,.28)); }
@@ -3558,8 +3558,8 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
   box-shadow: 0 8px 28px rgba(0,0,0,.22) !important;
 }
 #page-new-resource .resource-icon {
-  background: rgba(16,185,129,.08) !important;
-  border-color: rgba(16,185,129,.18) !important;
+  background: var(--primary) !important;
+  border-color: transparent !important;
   box-shadow: none !important;
 }
 #page-new-resource .resource-section-label { color: #86efac; }
@@ -5672,7 +5672,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=146" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=147" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat

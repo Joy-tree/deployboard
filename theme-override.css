@@ -6380,8 +6380,8 @@ html[data-theme="light"] #page-code-upload {
   padding: 0 6px;
   border-radius: 4px;
   display: grid; place-items: center;
-  background: color-mix(in srgb, var(--primary) 14%, transparent);
-  color: var(--primary);
+  background: var(--primary);
+  color: #fff;
   font-family: var(--font-mono);
   font-weight: 800;
   font-size: .74rem;
@@ -6943,8 +6943,8 @@ html[data-theme="light"] #page-new-resource {
   gap: 12px !important;
 }
 #page-new-resource .resource-icon {
-  background: transparent !important;
-  border: 1px solid var(--dcx-field-border) !important;
+  background: var(--primary) !important;
+  border: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
