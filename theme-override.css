@@ -688,7 +688,7 @@ html[data-theme="light"] .query-db-chip { background: var(--jt-bg-raised) !impor
 html[data-theme="light"] .query-mini-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .query-side { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .repo-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] .repo-lang-emblem { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .repo-lang-emblem { background: var(--primary) !important; border-color: transparent !important; }
 html[data-theme="light"] .repo-metric { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .repo-stat { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .resource-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
@@ -4487,9 +4487,14 @@ html[data-theme="light"] .cs-option.selected {
   gap: 16px !important;
 }
 #page-repos .repo-lang-emblem {
-  background: transparent !important;
-  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  background: var(--primary) !important;
+  border: none !important;
   border-radius: 0 !important;
+  box-shadow: none !important;
+}
+#page-repos .repo-lang-emblem img,
+#page-repos .repo-lang-emblem svg {
+  filter: brightness(0) invert(1) !important;
 }
 #page-repos .repo-title { color: var(--text) !important; }
 #page-repos .repo-fullname { color: var(--primary) !important; }
