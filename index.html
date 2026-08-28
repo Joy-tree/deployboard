@@ -2911,6 +2911,57 @@ textarea.input { resize: vertical; min-height: 80px; }
 }
 .deploy-ss-close:hover { color: rgba(255,255,255,0.8); }
 
+/* ── Skeleton Loading ─────────────────────────────────────────────────── */
+@keyframes jt-shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+.jt-skel {
+  display: inline-block;
+  border-radius: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,.045) 25%,
+    rgba(255,255,255,.09)  50%,
+    rgba(255,255,255,.045) 75%
+  );
+  background-size: 600px 100%;
+  animation: jt-shimmer 1.4s infinite linear;
+}
+/* Card-shaped skeleton for project/repo/db cards */
+.jt-skel-card {
+  border: 1px solid rgba(255,255,255,.07);
+  padding: 18px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.jt-skel-card .jt-skel-icon  { width: 60px; height: 60px; flex-shrink: 0; }
+.jt-skel-card .jt-skel-h     { height: 14px; }
+.jt-skel-card .jt-skel-line  { height: 10px; }
+.jt-skel-card .jt-skel-row   { display: flex; gap: 8px; }
+/* Row-shaped skeleton for deployments/domains/workers list rows */
+.jt-skel-row-item {
+  display: flex; align-items: center; gap: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  padding: 14px 0;
+}
+.jt-skel-row-item .jt-skel-dot   { width: 8px;  height: 8px;  flex-shrink: 0; border-radius: 50%; }
+.jt-skel-row-item .jt-skel-badge { width: 60px; height: 20px; flex-shrink: 0; }
+.jt-skel-row-item .jt-skel-body  { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.jt-skel-row-item .jt-skel-h     { height: 12px; }
+.jt-skel-row-item .jt-skel-line  { height: 9px; }
+html[data-theme="light"] .jt-skel {
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,.06) 25%,
+    rgba(0,0,0,.12) 50%,
+    rgba(0,0,0,.06) 75%
+  );
+  background-size: 600px 100%;
+  animation: jt-shimmer 1.4s infinite linear;
+}
+html[data-theme="light"] .jt-skel-card { border-color: rgba(0,0,0,.08); }
+html[data-theme="light"] .jt-skel-row-item { border-color: rgba(0,0,0,.06); }
+
 /* ── Empty State ───────────────────────────────────────────────────────── */
 .empty-state {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -5672,7 +5723,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=149" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=150" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -23541,6 +23592,17 @@ function showPage(id, navEl, _skipPush) {
     if (match) match.classList.add('active');
   }
 
+  // ── Skeleton placeholders — show immediately before async render fills content ──
+  // showSkel() only injects when the container is currently empty, so it never
+  // flashes over already-rendered real content on subsequent navigation.
+  if (id === 'projects')    showSkel('projectsGrid',      'cards', 4);
+  if (id === 'deployments') showSkel('deploymentsTable',  'rows',  6);
+  if (id === 'repos')       showSkel('reposGrid',         'cards', 4);
+  if (id === 'databases')   showSkel('dbGrid',            'cards', 3);
+  if (id === 'domains')     showSkel('customDomainsList', 'rows',  4);
+  if (id === 'cronjobs')    showSkel('cronJobsList',      'rows',  4);
+  if (id === 'workers')     showSkel('workersList',       'rows',  3);
+
   // Page-specific setup
   if (id === 'projects')      renderProjects.now();
   if (id === 'deployments')   renderDeployments();
@@ -24024,6 +24086,64 @@ function closeLandingDrawer() {
   document.getElementById('landingDrawer')?.classList.remove('open');
   document.getElementById('landingDrawerOverlay')?.classList.remove('open');
   document.body.classList.remove('landing-drawer-open');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SKELETON LOADING — show pulsing placeholders while data arrives
+// ══════════════════════════════════════════════════════════════════
+
+// Build N card-shaped skeleton blocks (for grids: projects, repos, databases)
+function skelCards(n = 4) {
+  return Array.from({ length: n }, () => `
+    <div class="jt-skel-card">
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div class="jt-skel jt-skel-icon"></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px;padding-top:4px;">
+          <div class="jt-skel jt-skel-h" style="width:55%;"></div>
+          <div class="jt-skel jt-skel-line" style="width:80%;"></div>
+          <div class="jt-skel jt-skel-line" style="width:65%;"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <div class="jt-skel jt-skel-line" style="width:22%;height:18px;"></div>
+        <div class="jt-skel jt-skel-line" style="width:22%;height:18px;"></div>
+        <div class="jt-skel jt-skel-line" style="width:22%;height:18px;"></div>
+      </div>
+    </div>`).join('');
+}
+
+// Build N row-shaped skeleton blocks (for lists: deployments, domains, workers, cron)
+function skelRows(n = 5) {
+  const widths = ['70%','85%','60%','75%','50%'];
+  const sub    = ['45%','55%','40%','60%','35%'];
+  return Array.from({ length: n }, (_, i) => `
+    <div class="jt-skel-row-item">
+      <div class="jt-skel jt-skel-dot"></div>
+      <div class="jt-skel jt-skel-badge"></div>
+      <div class="jt-skel-body">
+        <div class="jt-skel jt-skel-h" style="width:${widths[i % 5]};"></div>
+        <div class="jt-skel jt-skel-line" style="width:${sub[i % 5]};"></div>
+      </div>
+      <div class="jt-skel jt-skel-line" style="width:52px;height:9px;flex-shrink:0;"></div>
+    </div>`).join('');
+}
+
+// Show skeleton in a container; returns true if the container was empty (so
+// callers only inject it when there's nothing already rendered to avoid flash)
+function showSkel(containerId, type = 'cards', n) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  // Don't overwrite real content — only show skeleton when container is empty
+  if (el.children.length > 0) return;
+  el.innerHTML = type === 'rows' ? skelRows(n || 5) : skelCards(n || 4);
+}
+
+// Clear skeleton from a container (called just before real content renders)
+function clearSkel(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  // Only wipe it if it's still skeleton content (no real data nodes yet)
+  if (el.querySelector('.jt-skel-card, .jt-skel-row-item')) el.innerHTML = '';
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -25036,6 +25156,7 @@ function _doRenderProjectsNow() {
   if (_autoDeployStateFixed) save();
 
   updateCoreHeroMetrics();
+  clearSkel('projectsGrid');
   const g = document.getElementById('projectsGrid');
   const emptyEl = document.getElementById('projectsTreeEmpty');
   const svgEl   = document.getElementById('projectsTreeSvg');
@@ -25205,6 +25326,7 @@ function renderDeployments() {
   // View Logs action -- but laid out to actually fit a phone screen
   // without horizontal scrolling, matching the visual language already
   // used for project cards on the Projects page.
+  clearSkel('deploymentsTable');
   updateCoreHeroMetrics();
   const filter = document.getElementById('deployFilterStatus')?.value || '';
   const filtered = filter ? deployments.filter(d => d.status === filter) : deployments;
@@ -29984,6 +30106,7 @@ async function renderAnalytics() {
 // DOMAINS
 // ══════════════════════════════════════════════════════════════════
 async function renderDomains() {
+  clearSkel('customDomainsList');
   const baseDomain = (settings && settings.baseDomain) ? settings.baseDomain : 'joytree.site';
   const mini = document.getElementById('domainWildcardMini'); if (mini) mini.textContent = '*.' + baseDomain;
   const wild = document.getElementById('domainWildcardDisplay'); if (wild) wild.textContent = '*.' + baseDomain;
@@ -31512,6 +31635,7 @@ async function executeCronJob(job) {
 }
 
 function renderCronJobs() {
+  clearSkel('cronJobsList');
   const el = document.getElementById('cronJobsList');
   if (!el) return;
   try {
@@ -31613,6 +31737,7 @@ function renderWorkerEnvList() {
 }
 
 function renderWorkers() {
+  clearSkel('workersList');
   const el = document.getElementById('workersList');
   if (!el) return;
   // Workers are deployed via same API as server apps - show from deployments
@@ -32131,6 +32256,7 @@ function setRepoReconnectVisible(visible) {
 
 async function renderReposPage(force = false) {
   const wrap = document.getElementById('reposGrid');
+  clearSkel('reposGrid');
   try {
     if (force || !githubReposLoaded) {
       if (wrap) wrap.innerHTML = '<div class="repo-loading" style="grid-column:1/-1;">Syncing live repository metadata from GitHub…</div>';
@@ -33401,6 +33527,7 @@ function updateDbStats() {
 
 // ── Render: Databases grid ────────────────────────────────────────
 function renderDatabasesPage() {
+  clearSkel('dbGrid');
   const grid = document.getElementById('dbGrid');
   if (!grid) return;
   if (!hasAuthToken()) { grid.innerHTML = `<div class="db-empty"><div class="db-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div style="font-weight:700;color:var(--text);margin-bottom:8px;">Sign in required</div><div style="color:var(--text-2);font-size:.84rem;">Log in to manage databases.</div></div>`; return; }
