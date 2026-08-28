@@ -5723,7 +5723,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=151" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=152" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -6274,7 +6274,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
     <a href="#" class="nav-link" onclick="showPublicFounders();return false;">Founders</a>
   </div>
   <div class="nav-actions">
-    <button class="btn-nav-menu" id="landingThemeToggle" onclick="landingToggleTheme()" aria-label="Toggle theme" title="Toggle theme" style="margin-right:4px;">
+    <button class="btn-nav-menu" id="landingThemeToggle" onclick="landingToggleTheme()" aria-label="Toggle theme" title="Toggle theme" style="margin-right:4px;display:none;">
       <svg id="landingThemeIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="19" height="19"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
     <button class="btn-nav-menu" id="hamburgerBtn" onclick="openLandingDrawer()" aria-label="Open menu">
@@ -23680,6 +23680,17 @@ function refreshAdminOnlyUi() {
       el.classList.remove('active');
     }
   });
+  // Landing page theme toggle — admin-only until maintenance is complete
+  const landingThemeBtn = document.getElementById('landingThemeToggle');
+  if (landingThemeBtn) {
+    landingThemeBtn.style.display = isAdmin ? '' : 'none';
+  }
+  // Dashboard theme toggle (inside .emails-admin-only wrapper, but belt-and-suspenders)
+  const dashThemeBtn = document.getElementById('themeToggleBtn');
+  if (dashThemeBtn) {
+    const wrapper = dashThemeBtn.closest('.emails-admin-only');
+    if (!wrapper) dashThemeBtn.style.display = isAdmin ? '' : 'none';
+  }
 }
 
 function initEmailsPage() {
