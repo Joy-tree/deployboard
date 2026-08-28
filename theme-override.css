@@ -11312,33 +11312,33 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
   box-shadow: none !important;
 }
 .badge-success, .badge-building {
-  background: #14532d !important;
-  color: #fff !important;
+  background: rgba(52,211,153,.12) !important;
+  color: #6ee7b7 !important;
   border: none !important;
 }
 .badge-success .badge-dot, .badge-building .badge-dot {
-  background: #fff !important;
+  background: #34d399 !important;
 }
 .badge-error {
-  background: #7f1d1d !important;
-  color: #fff !important;
+  background: rgba(248,113,113,.12) !important;
+  color: #fca5a5 !important;
   border: none !important;
 }
-.badge-error .badge-dot { background: #fff !important; }
+.badge-error .badge-dot { background: #f87171 !important; }
 .badge-warning, .badge-pending {
-  background: #78350f !important;
-  color: #fff !important;
+  background: rgba(251,191,36,.12) !important;
+  color: #fcd34d !important;
   border: none !important;
 }
 .badge-warning .badge-dot, .badge-pending .badge-dot {
-  background: #fff !important;
+  background: #fbbf24 !important;
 }
 .badge-idle {
-  background: #334155 !important;
-  color: #fff !important;
+  background: rgba(148,163,184,.12) !important;
+  color: #cbd5e1 !important;
   border: none !important;
 }
-.badge-idle .badge-dot { background: #fff !important; }
+.badge-idle .badge-dot { background: #94a3b8 !important; }
 
 /* ══════════════════════════════════════════════════════════════════
    DEPLOYMENT STATUS BADGES — brand-new class namespace (.jt-stbadge*),
@@ -11373,26 +11373,30 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
   box-shadow: none !important;
 }
 .jt-stbadge-success, .jt-stbadge-building {
-  background: #14532d !important;
-  color: #fff !important;
+  background: rgba(52,211,153,.12) !important;
+  color: #6ee7b7 !important;
   border: none !important;
 }
+.jt-stbadge-success .jt-stbadge-dot, .jt-stbadge-building .jt-stbadge-dot { background: #34d399 !important; }
 .jt-stbadge-building .jt-stbadge-dot { animation: pulse 1s infinite !important; }
 .jt-stbadge-error {
-  background: #7f1d1d !important;
-  color: #fff !important;
+  background: rgba(248,113,113,.12) !important;
+  color: #fca5a5 !important;
   border: none !important;
 }
+.jt-stbadge-error .jt-stbadge-dot { background: #f87171 !important; }
 .jt-stbadge-pending {
-  background: #78350f !important;
-  color: #fff !important;
+  background: rgba(251,191,36,.12) !important;
+  color: #fcd34d !important;
   border: none !important;
 }
+.jt-stbadge-pending .jt-stbadge-dot { background: #fbbf24 !important; }
 .jt-stbadge-idle {
-  background: #334155 !important;
-  color: #fff !important;
+  background: rgba(148,163,184,.12) !important;
+  color: #cbd5e1 !important;
   border: none !important;
 }
+.jt-stbadge-idle .jt-stbadge-dot { background: #94a3b8 !important; }
 
 /* ══════════════════════════════════════════════════════════════════
    BADGE CORNERS — SHARP, EVERYWHERE, NO EXCEPTIONS. Turns out "no
