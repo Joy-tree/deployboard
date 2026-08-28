@@ -1,0 +1,194 @@
+/* ── Block 25 ───────────────────────────── */
+
+/* ══ API Link Modal — dark board theme ══════════════════════════ */
+#jtApiLinkModal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.88); backdrop-filter: blur(8px);
+  z-index: 2000; align-items: center; justify-content: center;
+  padding: 16px;
+}
+#jtApiLinkModal.open { display: flex; }
+#jtApiLinkModal .alm-box {
+  width: min(96vw, 420px);
+  background: #111114;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 20px;
+  box-shadow: 0 32px 80px rgba(0,0,0,.8);
+  animation: modalIn 0.22s ease;
+  overflow: hidden;
+}
+#jtApiLinkModal .alm-head {
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  display: flex; align-items: center; gap: 14px;
+}
+#jtApiLinkModal .alm-icon {
+  width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
+  background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.2);
+  display: flex; align-items: center; justify-content: center;
+}
+#jtApiLinkModal .alm-head-text { flex: 1; min-width: 0; }
+#jtApiLinkModal .alm-title { font-family: var(--font-ui); font-size: 1rem; font-weight: 800; letter-spacing: -.02em; color: #f1f5f9; }
+#jtApiLinkModal .alm-sub { font-size: .78rem; color: #64748b; margin-top: 3px; }
+#jtApiLinkModal .alm-close {
+  width: 28px; height: 28px; border-radius: 7px; border: none; cursor: pointer;
+  background: rgba(255,255,255,.06); color: #64748b; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: background .15s, color .15s;
+}
+#jtApiLinkModal .alm-close:hover { background: rgba(255,255,255,.12); color: #f1f5f9; }
+#jtApiLinkModal .alm-body { padding: 18px 22px 22px; }
+/* confirm step */
+#jtApiLinkModal .alm-confirm-msg {
+  font-size: .9rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 20px;
+}
+#jtApiLinkModal .alm-confirm-msg span { color: #34d399; font-weight: 700; }
+/* project list step */
+#jtApiLinkModal .alm-proj-label {
+  font-family: var(--font-mono); font-size: .68rem; letter-spacing: .12em;
+  text-transform: uppercase; color: #475569; margin-bottom: 10px;
+}
+#jtApiLinkModal .alm-proj-list {
+  display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px;
+  max-height: 200px; overflow-y: auto;
+}
+#jtApiLinkModal .alm-proj-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  border: 1px solid rgba(255,255,255,.07); border-radius: 11px;
+  background: #111; cursor: pointer; transition: border-color .15s, background .15s;
+  color: #e2e8f0; font-size: .86rem; font-weight: 600;
+}
+#jtApiLinkModal .alm-proj-item:hover { border-color: rgba(16,185,129,.35); background: rgba(16,185,129,.07); }
+#jtApiLinkModal .alm-proj-item.selected { border-color: rgba(16,185,129,.55); background: rgba(16,185,129,.1); }
+#jtApiLinkModal .alm-proj-dot {
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(16,185,129,.3); border: 1px solid rgba(16,185,129,.5);
+}
+#jtApiLinkModal .alm-proj-item.selected .alm-proj-dot {
+  background: #10b981; box-shadow: none;
+}
+#jtApiLinkModal .alm-footer {
+  display: flex; gap: 10px; justify-content: flex-end;
+}
+
+/* ── Block 26 ───────────────────────────── */
+
+/* ══ Edit Prompt Modal — dark board theme ══════════════════════ */
+#jtEditPromptModal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.88); backdrop-filter: blur(8px);
+  z-index: 2000; align-items: center; justify-content: center;
+  padding: 16px;
+}
+#jtEditPromptModal.open { display: flex; }
+#jtEditPromptModal .epm-box {
+  width: min(96vw, 480px);
+  background: #0d0d0d;
+  border: 1px solid rgba(16,185,129,.22);
+  border-radius: 20px;
+  box-shadow: 0 0 0 1px rgba(16,185,129,.06), 0 32px 80px rgba(0,0,0,.8);
+  animation: modalIn 0.22s ease;
+  overflow: hidden;
+}
+#jtEditPromptModal .epm-head {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  display: flex; align-items: center; gap: 12px;
+}
+#jtEditPromptModal .epm-icon {
+  width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.2);
+  display: flex; align-items: center; justify-content: center;
+}
+#jtEditPromptModal .epm-head-text { flex: 1; }
+#jtEditPromptModal .epm-title { font-family: var(--font-ui); font-size: .96rem; font-weight: 800; letter-spacing: -.02em; color: #f1f5f9; }
+#jtEditPromptModal .epm-sub { font-size: .75rem; color: #475569; margin-top: 2px; }
+#jtEditPromptModal .epm-close {
+  width: 28px; height: 28px; border-radius: 7px; border: none; cursor: pointer;
+  background: rgba(255,255,255,.06); color: #64748b; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: background .15s, color .15s;
+}
+#jtEditPromptModal .epm-close:hover { background: rgba(255,255,255,.12); color: #f1f5f9; }
+#jtEditPromptModal .epm-body { padding: 18px 20px 20px; }
+#jtEditPromptModal .epm-label {
+  font-family: var(--font-mono); font-size: .67rem; letter-spacing: .12em;
+  text-transform: uppercase; color: #475569; margin-bottom: 8px;
+}
+#jtEditPromptModal .epm-textarea {
+  width: 100%; box-sizing: border-box;
+  min-height: 120px; resize: vertical;
+  background: #111; border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px; padding: 12px 14px;
+  color: #e2e8f0; font-size: .88rem; line-height: 1.55;
+  font-family: var(--font-ui); outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+#jtEditPromptModal .epm-textarea:focus {
+  border-color: rgba(16,185,129,.45);
+  box-shadow: 0 0 0 3px rgba(16,185,129,.1);
+}
+#jtEditPromptModal .epm-char {
+  font-size: .7rem; color: #334155; margin-top: 6px; text-align: right;
+}
+#jtEditPromptModal .epm-footer {
+  display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;
+}
+
+/* ── Modal overlay (shared base) ─────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+/* ── DB Delete modal ─────────────────────────────────────────── */
+/* dbDeleteModal now uses .modal-backdrop system */
+#dbDeleteModal button:hover { opacity: .85; }
+#dbRecreateModal { display: none; }
+#dbRecreateModal.open { display: flex; align-items: center; justify-content: center; }
+#dbRecreateModal button:hover { opacity: .85; }
+
+/* ── Block 27 ───────────────────────────── */
+
+/* adm-* wrappers now just delegate to the .modal-backdrop theme */
+#apiDeleteModal, #cuDeleteModal {
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,.88); backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px); padding: 16px; box-sizing: border-box;
+}
+#apiDeleteModal.open, #cuDeleteModal.open { display: flex; }
+#apiDeleteModal .adm-box, #cuDeleteModal .adm-box {
+  width: 100%; max-width: 480px; background: #0d0d0d;
+  border: none; border-radius: 0;
+  box-shadow: 0 32px 80px rgba(0,0,0,.9); overflow: hidden;
+  animation: modalIn .18s cubic-bezier(.22,1,.36,1);
+}
+#apiDeleteModal .adm-head, #cuDeleteModal .adm-head {
+  display: flex; align-items: center; gap: 14px;
+  padding: 22px 22px 18px; border-bottom: 1px solid rgba(255,255,255,.06);
+}
+#apiDeleteModal .adm-icon, #cuDeleteModal .adm-icon {
+  width: 38px; height: 38px; flex-shrink: 0; border-radius: 0;
+  background: rgba(185,28,28,.15); display: flex; align-items: center; justify-content: center;
+}
+#apiDeleteModal .adm-title, #cuDeleteModal .adm-title { font-family: var(--font-ui,inherit); font-weight: 800; font-size: .97rem; color: var(--text); letter-spacing: -.02em; }
+#apiDeleteModal .adm-sub,   #cuDeleteModal .adm-sub   { font-size: .78rem; color: var(--text-3); margin-top: 2px; }
+#apiDeleteModal .adm-body,  #cuDeleteModal .adm-body  { padding: 18px 22px 4px; }
+#apiDeleteModal .adm-msg,   #cuDeleteModal .adm-msg   { font-size: .86rem; color: var(--text-2); line-height: 1.6; margin-bottom: 10px; }
+#apiDeleteModal .adm-msg-name, #cuDeleteModal .adm-msg-name { color: var(--text); font-weight: 700; }
+#apiDeleteModal .adm-footer, #cuDeleteModal .adm-footer {
+  display: flex; flex-direction: column; gap: 0; padding: 14px 22px 20px;
+}
+#apiDeleteModal .adm-delete, #cuDeleteModal .adm-delete {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 12px 20px; border-radius: 0; border: none;
+  background: #991b1b; color: #fff; font-size: .84rem; font-weight: 700;
+  cursor: pointer; transition: background .15s; font-family: var(--font-ui,inherit); width: 100%;
+}
+#apiDeleteModal .adm-delete:hover:not(:disabled), #cuDeleteModal .adm-delete:hover:not(:disabled) { background: #7f1d1d; }
+#apiDeleteModal .adm-delete:disabled, #cuDeleteModal .adm-delete:disabled { opacity: .55; cursor: not-allowed; }
+#apiDeleteModal .adm-cancel, #cuDeleteModal .adm-cancel {
+  margin-top: 1px; padding: 12px 20px; border-radius: 0; border: none;
+  background: rgba(255,255,255,.04); color: var(--text-2); width: 100%;
+  font-size: .84rem; font-weight: 600; cursor: pointer; font-family: var(--font-ui,inherit);
+  transition: background .15s, color .15s;
+}
+#apiDeleteModal .adm-cancel:hover, #cuDeleteModal .adm-cancel:hover { background: rgba(255,255,255,.08); color: var(--text); }
