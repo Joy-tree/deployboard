@@ -7793,6 +7793,8 @@ html[data-theme="light"] #page-logs {
 }
 #page-logs .quantum-pulse-mark span {
   box-shadow: none !important;
+  animation: none !important;
+  background: var(--primary) !important;
 }
 #page-logs .quantum-steps .step-line {
   background: var(--dcx-row-border) !important;
