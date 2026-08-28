@@ -7579,10 +7579,12 @@ html[data-theme="light"] #landing-view {
 #sidebar {
   --dcx-field-border: rgba(255,255,255,0.16);
   --dcx-row-border: rgba(255,255,255,0.2);
+  border-right: 1px solid rgba(255,255,255,0.10) !important;
 }
 html[data-theme="light"] #sidebar {
   --dcx-field-border: rgba(255,255,255,0.16);
   --dcx-row-border: rgba(255,255,255,0.2);
+  border-right: 1px solid rgba(0,0,0,0.10) !important;
 }
 
 #sidebar .nav-item {
