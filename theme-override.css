@@ -347,7 +347,7 @@ html[data-theme="light"] .cu-file-name { color: var(--jt-text) !important; font-
 html[data-theme="light"] .cu-meta-label { color: var(--jt-text-faint) !important; font-weight: 700 !important; }
 html[data-theme="light"] .cu-meta-value { color: var(--jt-text) !important; font-weight: 800 !important; }
 html[data-theme="light"] .cu-meta-item { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] .cu-lang-badge { background: var(--jt-bg-sunken) !important; border-color: var(--jt-border) !important; }
+html[data-theme="light"] .cu-lang-badge { background: #fff !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .cu-btn-del { background: var(--jt-danger) !important; border-color: var(--jt-danger) !important; color: #fff !important; }
 html[data-theme="light"] .cu-btn-del:hover { filter: brightness(0.88) !important; }
 html[data-theme="light"] .cu-title { color: var(--jt-text) !important; }
@@ -688,7 +688,7 @@ html[data-theme="light"] .query-db-chip { background: var(--jt-bg-raised) !impor
 html[data-theme="light"] .query-mini-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .query-side { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .repo-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
-html[data-theme="light"] .repo-lang-emblem { background: var(--primary) !important; border-color: transparent !important; }
+html[data-theme="light"] .repo-lang-emblem { background: #fff !important; border-color: rgba(0,0,0,.08) !important; }
 html[data-theme="light"] .repo-metric { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .repo-stat { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 html[data-theme="light"] .resource-card { background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
@@ -4487,14 +4487,18 @@ html[data-theme="light"] .cs-option.selected {
   gap: 16px !important;
 }
 #page-repos .repo-lang-emblem {
-  background: var(--primary) !important;
+  background: #fff !important;
   border: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
+  padding: 8px !important;
 }
 #page-repos .repo-lang-emblem img,
 #page-repos .repo-lang-emblem svg {
-  filter: brightness(0) invert(1) !important;
+  filter: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
 }
 #page-repos .repo-title { color: var(--text) !important; }
 #page-repos .repo-fullname { color: var(--primary) !important; }
@@ -4653,10 +4657,12 @@ html[data-theme="light"] .cs-option.selected {
 #page-code-upload .cu-lang-badge {
   width: 44px !important; height: 44px !important;
   border-radius: 0 !important;
-  background: transparent !important;
-  border: 1px solid var(--dcx-field-border, var(--border)) !important;
+  background: #fff !important;
+  border: none !important;
+  padding: 8px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
 }
-#page-code-upload .cu-lang-badge img { width: 26px; height: 26px; }
+#page-code-upload .cu-lang-badge img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
 #page-code-upload .cu-file-name { color: var(--text) !important; }
 #page-code-upload .cu-meta-item {
   background: transparent !important;
