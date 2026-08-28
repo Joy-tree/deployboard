@@ -1,0 +1,40 @@
+/* ── Block 14 ───────────────────────────── */
+
+    .ds-tld-btn {
+      background:transparent; border:1px solid var(--dcx-field-border, var(--border)); border-radius:0;
+      padding:4px 10px; color:var(--text-2); font-size:.72rem; cursor:pointer;
+      transition:background .15s, color .15s, border-color .15s;
+    }
+    .ds-tld-btn:hover { background:transparent; color:var(--text); border-color:var(--primary); }
+    .ds-tld-btn.ds-tld-active { background:transparent; color:var(--primary); border-color:var(--primary); }
+    .ds-avail-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:0; background:transparent; border:none; border-bottom:1px solid var(--dcx-row-border, var(--border)); margin-bottom:0; flex-wrap:wrap; }
+    .ds-avail-row:first-child { border-top:1px solid var(--dcx-row-border, var(--border)); }
+    .ds-avail-available { border-color:inherit; }
+    .ds-avail-taken { opacity:1; }
+    .ds-domain-row { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--dcx-row-border, var(--border)); flex-wrap:wrap; }
+    .ds-domain-row:last-child { border-bottom:none; }
+    .ds-dns-record-row { display:grid; grid-template-columns:52px 1fr 1fr 36px; gap:6px; align-items:center; padding:6px 0; border-bottom:1px solid var(--dcx-row-border, var(--border)); font-size:.72rem; }
+    .ds-dns-record-row:last-child { border-bottom:none; }
+    .ds-dns-record-row .ds-ttl-col { display:none; }
+    @media(min-width:520px){ .ds-dns-record-row { grid-template-columns:52px 1fr 1fr 52px 36px; } .ds-dns-record-row .ds-ttl-col { display:block; } }
+    
+/* ── Block 15 ───────────────────────────── */
+
+    .dcp-record-row {
+      display:grid; grid-template-columns:56px 90px 1fr 60px 36px;
+      gap:6px; align-items:center; padding:7px 0;
+      border-bottom:1px solid rgba(255,255,255,0.05); font-size:.75rem;
+    }
+    .dcp-record-row:last-child { border-bottom:none; }
+    .dcp-type-badge {
+      display:inline-flex; align-items:center; justify-content:center;
+      font-size:.65rem; font-weight:800; padding:2px 7px; border-radius:5px;
+      background:rgba(16,185,129,0.12); color:var(--primary);
+      border:1px solid rgba(16,185,129,0.2); font-family:monospace; letter-spacing:.04em;
+    }
+    .dcp-del-btn {
+      background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2);
+      border-radius:6px; padding:4px 8px; color:#f87171; cursor:pointer; font-size:.7rem;
+      transition:background .15s;
+    }
+    .dcp-del-btn:hover { background:rgba(239,68,68,0.2); }

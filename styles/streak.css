@@ -1,0 +1,99 @@
+/* ── Block 34 ───────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════════════════
+   PRIVACY CONSENT — shown once per browser, on the visitor's first
+   arrival (landing page), immediately after signup, or on first load
+   for anyone who already had an account before this shipped. Theme-
+   aware (var(--bg)/var(--text)/etc.) so it matches dark and light mode
+   automatically; the accept/reject/later button colors are the only
+   fixed colors, deliberately, since consent actions should read the
+   same regardless of site theme.
+   ═══════════════════════════════════════════════════════════════════ */
+#privacyConsentOverlay {
+  display:none;position:fixed;inset:0;z-index:99998;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(6px);
+  align-items:flex-end;justify-content:center;
+  padding:0;
+}
+#privacyConsentOverlay.open { display:flex; }
+@media(min-width:720px){
+  #privacyConsentOverlay{ align-items:center; padding:24px; }
+}
+
+.pcm-shell{
+  width:100%;max-width:640px;max-height:88vh;
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:20px 20px 0 0;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 -20px 60px rgba(0,0,0,.5);
+  animation:pcmSlideUp .35s cubic-bezier(.16,1,.3,1);
+}
+@media(min-width:720px){
+  .pcm-shell{ border-radius:20px; box-shadow:0 30px 80px rgba(0,0,0,.5); animation:pcmFadeIn .3s ease; }
+}
+@keyframes pcmSlideUp{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
+@keyframes pcmFadeIn{ from{ opacity:0; transform:translateY(16px) scale(.98); } to{ opacity:1; transform:translateY(0) scale(1); } }
+
+.pcm-header{
+  padding:22px 24px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;gap:14px;flex-shrink:0;
+}
+.pcm-header-icon{
+  width:40px;height:40px;border-radius:12px;flex-shrink:0;
+  background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);
+  display:flex;align-items:center;justify-content:center;color:var(--green);
+}
+.pcm-header-icon svg{width:20px;height:20px;}
+.pcm-title{font-size:1.15rem;font-weight:800;letter-spacing:-.02em;color:var(--text);margin-bottom:3px;}
+.pcm-subtitle{font-size:.82rem;color:var(--text-2);line-height:1.5;}
+
+.pcm-body{
+  flex:1;overflow-y:auto;padding:18px 24px;
+  font-size:.85rem;line-height:1.7;color:var(--text-2);
+}
+.pcm-body::-webkit-scrollbar{width:6px;}
+.pcm-body::-webkit-scrollbar-thumb{background:rgba(16,185,129,.18);border-radius:99px;}
+.pcm-body h4{
+  font-size:.78rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--green);margin:20px 0 8px;
+}
+.pcm-body h4:first-child{margin-top:0;}
+.pcm-body p{margin:0 0 10px;}
+.pcm-body ul{margin:0 0 10px;padding-left:20px;}
+.pcm-body li{margin-bottom:5px;}
+.pcm-body strong{color:var(--text);font-weight:700;}
+.pcm-body a{color:var(--green);text-decoration:underline;text-decoration-style:dotted;}
+.pcm-meta-line{
+  font-size:.72rem;color:var(--text-3);font-family:var(--font-mono);
+  margin-top:18px;padding-top:14px;border-top:1px solid var(--border);
+}
+
+.pcm-footer{
+  padding:16px 24px 22px;border-top:1px solid var(--border);flex-shrink:0;
+  display:flex;flex-direction:column;gap:10px;
+}
+.pcm-btn-row{ display:flex; gap:10px; }
+.pcm-btn{
+  flex:1;padding:12px 16px;border-radius:11px;font-size:.85rem;font-weight:700;
+  cursor:pointer;transition:all .15s;text-align:center;
+  border:1.5px solid transparent;
+}
+.pcm-btn-accept{ background:#10b981;color:#052e16;border-color:#10b981; }
+.pcm-btn-accept:hover{ background:#0da271;border-color:#0da271; }
+.pcm-btn-reject{ background:transparent;color:#f87171;border-color:rgba(239,68,68,.4); }
+.pcm-btn-reject:hover{ background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.6); }
+.pcm-btn-later{
+  width:100%;padding:10px 16px;border-radius:11px;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:all .15s;text-align:center;
+  background:transparent;color:var(--text-2);border:1.5px solid var(--border);
+}
+.pcm-btn-later:hover{ background:var(--bg-hover);color:var(--text);border-color:rgba(255,255,255,.18); }
+
+html[data-theme="light"] .pcm-btn-later:hover{ background:var(--jt-bg-sunken)!important; }
+
+@media(max-width:480px){
+  .pcm-header{padding:18px 18px 14px;}
+  .pcm-body{padding:14px 18px;font-size:.82rem;}
+  .pcm-footer{padding:14px 18px 18px;}
+  .pcm-title{font-size:1.05rem;}
+}

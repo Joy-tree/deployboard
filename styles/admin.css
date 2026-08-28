@@ -1,0 +1,8 @@
+/* ── Block 16 ───────────────────────────── */
+
+        .admin-lookup-result { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-top: 18px; }
+        .admin-project-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .admin-project-row:last-child { border-bottom: none; }
+        .admin-log-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; color: var(--text-2); }
+        .admin-impersonate-banner { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: #b91c1c; color: #fff; text-align: center; padding: 10px 16px; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .admin-impersonate-banner button { background: #fff; color: #b91c1c; border: none; border-radius: 6px; padding: 5px 12px; font-weight: 700; font-size: 0.78rem; cursor: pointer; }
