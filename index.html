@@ -5730,7 +5730,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme-override.css?v=154" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="theme-override.css?v=155" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -12318,12 +12318,12 @@ document.addEventListener('keydown', function(e){
               </div>
             </div>
 
-            <div style="display:flex;gap:0;flex-wrap:wrap;margin-top:20px;border:1px solid var(--border);">
-              <div style="flex:1;min-width:140px;background:transparent;border-right:1px solid var(--border);padding:14px 16px;">
+            <div style="display:flex;gap:0;flex-wrap:wrap;margin-top:20px;border:1px solid rgba(255,255,255,.12);">
+              <div style="flex:1;min-width:140px;background:transparent;border-right:1px solid rgba(255,255,255,.12);padding:14px 16px;">
                 <div style="font-size:1.6rem;font-weight:800;color:var(--text);" id="refStatCount">0</div>
                 <div style="font-size:0.78rem;color:var(--text-3);">Friends referred</div>
               </div>
-              <div style="flex:1;min-width:140px;background:transparent;border-right:1px solid var(--border);padding:14px 16px;">
+              <div style="flex:1;min-width:140px;background:transparent;border-right:1px solid rgba(255,255,255,.12);padding:14px 16px;">
                 <div style="font-size:1.6rem;font-weight:800;color:var(--text);" id="refStatMinutes">0</div>
                 <div style="font-size:0.78rem;color:var(--text-3);">Bonus build minutes earned</div>
               </div>
@@ -16031,17 +16031,17 @@ html.app-mode.page-db-create #page-db-create { overflow-x: hidden; overflow-y: a
 }
 .db-logs-modal.open{opacity:1;pointer-events:all;}
 .db-logs-shell{
-  background:#0a0e0d;border:1px solid rgba(16,185,129,.2);border-radius:20px;
+  background:#0d0d0d;border:none;border-radius:0;
   width:100%;max-width:860px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;
 }
 .db-logs-header{
   display:flex;align-items:center;justify-content:space-between;
-  padding:16px 20px;border-bottom:1px solid rgba(16,185,129,.12);flex-shrink:0;
+  padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;
 }
 .db-logs-title{font-weight:700;color:var(--text);font-size:.92rem;}
 .db-logs-body{
   flex:1;overflow-y:auto;padding:18px 20px;
-  font-family:var(--font-mono);font-size:.78rem;color:#86efac;line-height:1.7;
+  font-family:var(--font-mono);font-size:.78rem;color:var(--text-2);line-height:1.7;
   white-space:pre-wrap;word-break:break-all;
 }
 /* Detail view */
@@ -28807,7 +28807,7 @@ function switchSettingsTab(tab, el) {
   document.querySelectorAll('#settingsTabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
   else {
-    const idx = { general:0, github:1, domain:2, account:3, referrals:4 }[tab];
+    const idx = { general:0, github:1, account:2, referrals:3, domain:4 }[tab];
     const tabEl = document.querySelectorAll('#settingsTabs .tab')[idx];
     if (tabEl) tabEl.classList.add('active');
   }
@@ -29051,11 +29051,11 @@ async function previewTransferData() {
   modal.id = modalId;
   modal.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.8);display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;';
   modal.innerHTML =
-    '<div style="background:#0f1f17;border:1px solid rgba(16,185,129,.2);border-radius:16px;width:100%;max-width:740px;padding:24px;position:relative;">' +
-      '<button onclick="document.getElementById(\'' + modalId + '\').remove()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.06);border:none;color:#94a3b8;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:1rem;">&#x2715;</button>' +
+    '<div style="background:#0d0d0d;border:none;border-radius:0;width:100%;max-width:740px;padding:24px;position:relative;">' +
+      '<button onclick="document.getElementById(\'' + modalId + '\').remove()" style="position:absolute;top:14px;right:14px;background:transparent;border:none;color:var(--text-3);width:30px;height:30px;cursor:pointer;font-size:1rem;">&#x2715;</button>' +
       '<div style="font-size:1rem;font-weight:700;color:#e2e8f0;margin-bottom:4px;">Transfer Payload Preview</div>' +
       '<div style="font-size:.75rem;color:#475569;margin-bottom:14px;">Live data your API key sends to other platforms</div>' +
-      '<div id="transferPreviewBody" style="font-size:.72rem;font-family:var(--font-mono);color:#a7f3d0;background:#0d0d0d;border-radius:8px;padding:14px;max-height:60vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;">Loading...</div>' +
+      '<div id="transferPreviewBody" style="font-size:.72rem;font-family:var(--font-mono);color:var(--text-2);background:transparent;border-top:1px solid rgba(255,255,255,.06);padding:14px 0;max-height:60vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;margin-top:8px;">Loading...</div>' +
     '</div>';
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
@@ -34748,8 +34748,8 @@ async function openLinkDbModal(dbId) {
         return `
         <div class="jtLink-row ${i===0?'selected':''}" data-pid="${pid}" onclick="jtLinkSelect(this,'${dbId}')">
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:.88rem;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
-            ${p.subdomain ? `<div style="font-size:.72rem;color:#475569;font-family:var(--font-mono);margin-top:2px;">${p.subdomain}.joytree.site</div>` : ''}
+            <div style="font-weight:700;font-size:.88rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+            ${p.subdomain ? `<div style="font-size:.72rem;color:var(--text-3);font-family:var(--font-mono);margin-top:2px;">${p.subdomain}.joytree.site</div>` : ''}
           </div>
           <div class="jtLink-radio" id="jtRadio-${pid}">
             <div class="jtLink-radio-dot" style="${i===0?'opacity:1;transform:scale(1);':'opacity:0;transform:scale(0);'}"></div>
@@ -34763,84 +34763,81 @@ async function openLinkDbModal(dbId) {
 
   const html = `
   <style>
-    .jtLink-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1px solid transparent;cursor:pointer;transition:all .15s;margin-bottom:6px;}
-    .jtLink-row:last-child{margin-bottom:0;}
-    .jtLink-row:hover{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.09);}
-    .jtLink-row.selected{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.28);}
-    .jtLink-radio{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:border-color .15s;}
-    .jtLink-row.selected .jtLink-radio{border-color:#10b981;}
-    .jtLink-radio-dot{width:10px;height:10px;border-radius:50%;background:#10b981;transition:all .18s;}
-    .jtConnType-row{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.07);cursor:pointer;transition:all .15s;margin-bottom:8px;background:rgba(255,255,255,.02);}
-    .jtConnType-row:last-child{margin-bottom:0;}
-    .jtConnType-row:hover{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);}
-    .jtConnType-row.selected{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.3);}
-    .jtConnType-radio{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:border-color .15s;}
-    .jtConnType-row.selected .jtConnType-radio{border-color:#10b981;}
+    .jtLink-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;transition:background .15s;margin-bottom:0;}
+    .jtLink-row:last-child{border-bottom:none;}
+    .jtLink-row:hover{background:rgba(255,255,255,.03);}
+    .jtLink-row.selected{background:transparent;}
+    .jtLink-radio{width:18px;height:18px;border-radius:50%;border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:border-color .15s;}
+    .jtLink-row.selected .jtLink-radio{border-color:var(--primary);}
+    .jtLink-radio-dot{width:8px;height:8px;border-radius:50%;background:var(--primary);transition:all .18s;}
+    .jtConnType-row{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;transition:background .15s;margin-bottom:0;background:transparent;}
+    .jtConnType-row:last-child{border-bottom:none;}
+    .jtConnType-row:hover{background:rgba(255,255,255,.03);}
+    .jtConnType-row.selected{background:transparent;}
+    .jtConnType-radio{width:18px;height:18px;border-radius:50%;border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:border-color .15s;}
+    .jtConnType-row.selected .jtConnType-radio{border-color:var(--primary);}
     .jtConnType-dot{width:8px;height:8px;border-radius:50%;background:#10b981;transition:all .18s;opacity:0;transform:scale(0);}
     .jtConnType-row.selected .jtConnType-dot{opacity:1;transform:scale(1);}
-    .jtConnType-badge{display:inline-block;font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;margin-left:6px;vertical-align:middle;}
-    .jtConnType-badge.ext{background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid rgba(245,158,11,.25);}
-    .jtConnType-badge.int{background:rgba(99,102,241,.1);color:#818cf8;border:1px solid rgba(99,102,241,.2);}
-    .jtConnType-badge.both{background:rgba(16,185,129,.1);color:#34d399;border:1px solid rgba(16,185,129,.25);}
+    .jtConnType-badge{display:inline-block;font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 5px;margin-left:6px;vertical-align:middle;background:rgba(255,255,255,.07);color:var(--text-3);border:none;}
+    .jtConnType-badge.ext,.jtConnType-badge.int,.jtConnType-badge.both{background:rgba(255,255,255,.07);color:var(--text-3);}
   </style>
-  <div style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.75);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;padding:20px;" id="dbLinkOverlay" onclick="if(event.target===this)this.remove()">
-    <div style="background:#111;border:1px solid rgba(16,185,129,.2);border-radius:20px;padding:0;width:100%;max-width:420px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.6);">
+  <div style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.88);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;" id="dbLinkOverlay" onclick="if(event.target===this)this.remove()">
+    <div style="background:#0d0d0d;border:none;border-radius:0;padding:0;width:100%;max-width:420px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.9);">
       <!-- Modal header -->
       <div style="padding:22px 24px 0;position:relative;">
-        <div style="position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,.08),transparent 70%);pointer-events:none;"></div>
-        <div style="font-family:var(--font-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:#34d399;margin-bottom:6px;">Database Linking</div>
-        <div style="font-family:var(--font-hd,var(--font-ui));font-weight:800;font-size:1.05rem;color:#f8fafc;margin-bottom:6px;">Link to Project</div>
-        <div style="font-size:.82rem;color:#64748b;line-height:1.5;margin-bottom:18px;">The connection string will be auto-injected as an environment variable into the selected project.</div>
+        <div style="font-family:var(--font-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px;">Database Linking</div>
+        <div style="font-family:var(--font-hd,var(--font-ui));font-weight:800;font-size:1.05rem;color:var(--text);margin-bottom:6px;">Link to Project</div>
+        <div style="font-size:.82rem;color:var(--text-3);line-height:1.5;margin-bottom:18px;">The connection string will be auto-injected as an environment variable into the selected project.</div>
       </div>
       <!-- Step indicator -->
       <div style="padding:0 24px;display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-        <div id="dbLinkStep1Ind" style="display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;color:#10b981;">
-          <div style="width:18px;height:18px;border-radius:50%;background:#10b981;color:#000;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;">1</div>
+        <div id="dbLinkStep1Ind" style="display:flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;color:var(--text);">
+          <span style="font-family:var(--font-mono);font-size:.65rem;color:var(--primary);">01</span>
           Select Project
         </div>
-        <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
-        <div id="dbLinkStep2Ind" style="display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;color:#475569;">
-          <div style="width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.12);color:#475569;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;">2</div>
+        <div style="flex:1;height:1px;background:rgba(255,255,255,.08);margin:0 8px;"></div>
+        <div id="dbLinkStep2Ind" style="display:flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;color:var(--text-3);">
+          <span style="font-family:var(--font-mono);font-size:.65rem;">02</span>
           Connection Type
         </div>
       </div>
       <!-- Step 1: Project list -->
-      <div id="dbLinkStep1" style="padding:0 14px;max-height:260px;overflow-y:auto;">
+      <div id="dbLinkStep1" style="padding:0 20px;max-height:260px;overflow-y:auto;">
         <input type="hidden" id="dbLinkProjectSel" value="${firstId}">
         ${rows}
       </div>
       <!-- Step 2: Connection type (hidden initially) -->
-      <div id="dbLinkStep2" style="display:none;padding:0 14px;">
+      <div id="dbLinkStep2" style="display:none;padding:0 20px;">
         <input type="hidden" id="dbLinkConnType" value="external">
         <div class="jtConnType-row selected" data-type="external" onclick="jtConnTypeSelect(this)">
           <div class="jtConnType-radio"><div class="jtConnType-dot"></div></div>
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:.86rem;color:#f1f5f9;">External Connection <span class="jtConnType-badge ext">Recommended</span></div>
-            <div style="font-size:.74rem;color:#64748b;margin-top:3px;line-height:1.4;">Use from outside this server (client apps, other services). Injected as <code style="font-family:var(--font-mono);background:rgba(255,255,255,.07);padding:1px 4px;border-radius:3px;">MONGODB_URI</code> + <code style="font-family:var(--font-mono);background:rgba(255,255,255,.07);padding:1px 4px;border-radius:3px;">DATABASE_URL</code>.</div>
+            <div style="font-weight:700;font-size:.86rem;color:var(--text);">External Connection <span class="jtConnType-badge ext">Recommended</span></div>
+            <div style="font-size:.74rem;color:var(--text-3);margin-top:3px;line-height:1.4);">Use from outside this server (client apps, other services). Injected as <code style="font-family:var(--font-mono);background:rgba(255,255,255,.07);padding:1px 4px;border-radius:3px;">MONGODB_URI</code> + <code style="font-family:var(--font-mono);background:rgba(255,255,255,.07);padding:1px 4px;border-radius:3px;">DATABASE_URL</code>.</div>
           </div>
         </div>
         <div class="jtConnType-row" data-type="internal" onclick="jtConnTypeSelect(this)">
           <div class="jtConnType-radio"><div class="jtConnType-dot"></div></div>
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:.86rem;color:#f1f5f9;">Internal Connection <span class="jtConnType-badge int">Same server</span></div>
-            <div style="font-size:.74rem;color:#64748b;margin-top:3px;line-height:1.4;">Use when your project runs on the same server as this database (Docker network). Faster, no public exposure.</div>
+            <div style="font-weight:700;font-size:.86rem;color:var(--text);">Internal Connection <span class="jtConnType-badge int">Same server</span></div>
+            <div style="font-size:.74rem;color:var(--text-3);margin-top:3px;line-height:1.4);">Use when your project runs on the same server as this database (Docker network). Faster, no public exposure.</div>
           </div>
         </div>
         <div class="jtConnType-row" data-type="both" onclick="jtConnTypeSelect(this)">
           <div class="jtConnType-radio"><div class="jtConnType-dot"></div></div>
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:.86rem;color:#f1f5f9;">Both <span class="jtConnType-badge both">All vars</span></div>
-            <div style="font-size:.74rem;color:#64748b;margin-top:3px;line-height:1.4;">Inject both external and internal strings. External as <code style="font-family:var(--font-mono);background:rgba(255,255,255,.07);padding:1px 4px;border-radius:3px;">MONGODB_URI</code>, internal as <code style="font-family:var(--font-mono);background:rgba(255,255,255,.07);padding:1px 4px;border-radius:3px;">MONGODB_URI_INTERNAL</code>.</div>
+            <div style="font-weight:700;font-size:.86rem;color:var(--text);">Both <span class="jtConnType-badge both">All vars</span></div>
+            <div style="font-size:.74rem;color:var(--text-3);margin-top:3px;line-height:1.4);">Inject both external and internal strings. External as <code style="font-family:var(--font-mono);background:rgba(255,255,255,.07);padding:1px 4px;border-radius:3px;">MONGODB_URI</code>, internal as <code style="font-family:var(--font-mono);background:rgba(255,255,255,.07);padding:1px 4px;border-radius:3px;">MONGODB_URI_INTERNAL</code>.</div>
           </div>
         </div>
       </div>
       <!-- Footer buttons -->
-      <div style="padding:16px 24px 22px;display:flex;gap:10px;border-top:1px solid rgba(255,255,255,.07);margin-top:14px;">
-        <button class="btn btn-ghost" style="flex:1;min-height:42px;" id="dbLinkCancelBtn" onclick="document.getElementById('dbLinkOverlay').remove()">Cancel</button>
-        <button class="btn btn-primary" style="flex:1;min-height:42px;" id="dbLinkNextBtn" onclick="dbLinkNextStep('${dbId}')">
+      <div style="padding:0;margin-top:14px;border-top:1px solid rgba(255,255,255,.06);">
+        <button class="btn btn-primary" style="width:100%;min-height:46px;border-radius:0;border:none;" id="dbLinkNextBtn" onclick="dbLinkNextStep('${dbId}')">
           Next
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13" style="margin-left:4px;"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
+        <button class="btn btn-ghost" style="width:100%;min-height:42px;border-radius:0;border:none;margin-top:1px;background:rgba(255,255,255,.04);" id="dbLinkCancelBtn" onclick="document.getElementById('dbLinkOverlay').remove()">Cancel</button>
       </div>
     </div>
   </div>`;
