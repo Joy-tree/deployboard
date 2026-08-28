@@ -181,7 +181,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/theme-override.css?v=157" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+<link rel="stylesheet" href="/theme-override.css?v=158" id="themeOverrideLink" onerror="this.dataset.failed='1';">
   <link rel="stylesheet" href="/styles/dashboard.css">
   <link rel="stylesheet" href="/styles/auth.css">
   <link rel="stylesheet" href="/styles/landing.css">
@@ -12599,6 +12599,7 @@ function showPage(id, navEl, _skipPush) {
   if (id === 'domains')     showSkel('customDomainsList', 'rows',  4);
   if (id === 'cronjobs')    showSkel('cronJobsList',      'rows',  4);
   if (id === 'workers')     showSkel('workersList',       'rows',  3);
+  if (id === 'ai-analysis') showSkel('aiAnalysisBody',    'cards', 1);
 
   // Page-specific setup
   if (id === 'projects')      renderProjects.now();
@@ -13369,6 +13370,7 @@ function openAiAnalysisFromError(errorText = '', deploymentId = '', projectName 
 function renderAiAnalysisPage() {
   const el = document.getElementById('aiAnalysisBody');
   if (!el) return;
+  clearSkel('aiAnalysisBody');
   if (!latestAiAnalysis) {
     el.innerHTML = `
       <div style="max-width:520px;margin:60px auto 0;width:100%;">
