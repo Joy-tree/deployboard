@@ -6954,14 +6954,19 @@ html[data-theme="light"] #page-new-resource {
   gap: 12px !important;
 }
 #page-new-resource .resource-icon {
-  background: var(--primary) !important;
+  background: #fff !important;
   border: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
+  padding: 12px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
 }
-#page-new-resource .resource-icon img,
-#page-new-resource .resource-icon svg {
+#page-new-resource .resource-icon img {
   filter: none !important;
+  width: 100% !important; height: 100% !important; object-fit: contain !important;
+}
+#page-new-resource .resource-icon svg {
+  width: 60% !important; height: 60% !important;
 }
 #page-new-resource .resource-card-title { color: var(--text) !important; }
 #page-new-resource .resource-card-desc { color: var(--text-2) !important; }
