@@ -27355,11 +27355,11 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
       <p class="adm-msg">Delete <strong style="color:var(--text);" id="apiDeleteModalName"></strong>?</p>
       <p style="font-size:.82rem;color:var(--text-3);line-height:1.5;margin-bottom:28px;">This will permanently stop and remove the Docker container and all stored data.</p>
       <div class="adm-footer">
-        <button class="adm-cancel" onclick="closeApiDeleteModal()">Cancel</button>
         <button class="adm-delete" id="apiDeleteConfirmBtn" onclick="confirmApiDeleteExecute()">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
           Delete API
         </button>
+        <button class="adm-cancel" onclick="closeApiDeleteModal()">Cancel</button>
       </div>
     </div>
   </div>
@@ -27408,11 +27408,11 @@ document.getElementById('jtEditPromptTextarea').addEventListener('keydown', e =>
       <p class="adm-msg">Delete <strong class="adm-msg-name" id="cuDeleteModalName"></strong>?</p>
       <p style="font-size:.82rem;color:var(--text-3);line-height:1.5;margin-bottom:28px;">This will permanently remove all uploaded files and extracted project data from the server.</p>
       <div class="adm-footer">
-        <button class="adm-cancel" onclick="closeCuDeleteModal()">Cancel</button>
         <button class="adm-delete" id="cuDeleteConfirmBtn" onclick="confirmCuDeleteExecute()">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
           Delete Upload
         </button>
+        <button class="adm-cancel" onclick="closeCuDeleteModal()">Cancel</button>
       </div>
     </div>
   </div>
