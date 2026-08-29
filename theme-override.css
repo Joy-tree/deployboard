@@ -61,11 +61,11 @@
   --jt-code-text: #DCEFE3;
 }
 html[data-theme="dark"]{
-  --jt-bg: #09090B;
-  --jt-bg-raised: #111113;
-  --jt-bg-sunken: #050506;
-  --jt-border: #1F1F23;
-  --jt-border-soft: #18181B;
+  --jt-bg: #080808;
+  --jt-bg-raised: #111111;
+  --jt-bg-sunken: #050505;
+  --jt-border: #1f1f1f;
+  --jt-border-soft: #181818;
   --jt-text: #F3F4F6;
   --jt-text-dim: #A1A1AA;
   --jt-text-faint: #6B7280;
