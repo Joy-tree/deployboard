@@ -199,7 +199,7 @@
   <link rel="stylesheet" href="/styles/animations.css?v=1">
   <link rel="stylesheet" href="/styles/onboarding.css?v=1">
   <link rel="stylesheet" href="/styles/streak.css?v=1">
-  <link rel="stylesheet" href="/theme-override.css?v=169" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+  <link rel="stylesheet" href="/theme-override.css?v=170" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -5153,11 +5153,11 @@ document.addEventListener('keydown', function(e){
               <label class="field-label">Project</label>
               <div class="custom-select" id="cs_envProjectSelect" data-onchange="loadEnvForProject">
                 <div class="custom-select-trigger" onclick="csToggle(this)">
-                  <span class="cs-value">— Choose a project —</span>
+                  <span class="cs-value">Choose a project</span>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
                 <div class="custom-select-dropdown">
-                  <div class="cs-option selected" data-value="" onclick="csSelect(this)">— Choose a project —</div>
+                  <div class="cs-option selected" data-value="" onclick="csSelect(this)">Choose a project</div>
                 </div>
                 <input type="hidden" id="envProjectSelect" value="">
               </div>
@@ -6408,15 +6408,15 @@ document.addEventListener('keydown', function(e){
       </div>
 
       <!-- Domain selector -->
-      <div style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;background:#111;padding:20px;margin-bottom:16px;">
+      <div style="border:1px solid rgba(255,255,255,0.08);border-radius:0;background:var(--bg-card);padding:20px;margin-bottom:16px;">
         <div style="font-size:.72rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:10px;">Select a Domain</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <div class="custom-select" id="dcpDomainCustomSelect" style="flex:1;min-width:0;position:relative;user-select:none;">
-            <button type="button" id="dcpDomainSelectBtn" onclick="dcpToggleSelect()" style="width:100%;height:42px;background:#0f0f12;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:0 14px;color:var(--text-3);font-size:.9rem;display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;font-family:inherit;text-align:left;transition:border-color .15s;">
-              <span id="dcpDomainSelectLabel">— Choose a registered domain —</span>
+            <button type="button" id="dcpDomainSelectBtn" onclick="dcpToggleSelect()" style="width:100%;height:42px;background:var(--bg-hover);border:1px solid rgba(255,255,255,.1);border-radius:0;padding:0 14px;color:var(--text-3);font-size:.9rem;display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;font-family:inherit;text-align:left;transition:border-color .15s;">
+              <span id="dcpDomainSelectLabel">Choose a registered domain</span>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" id="dcpDomainSelectChevron" style="flex-shrink:0;opacity:.5;transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
-            <div id="dcpDomainSelectMenu" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 6px);background:#111114;border:1px solid rgba(255,255,255,.1);border-radius:12px;z-index:200;overflow:hidden;box-shadow:0 18px 48px rgba(0,0,0,.5);">
+            <div id="dcpDomainSelectMenu" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--bg-card);border:1px solid rgba(255,255,255,.1);border-radius:0;z-index:200;overflow:hidden;box-shadow:0 18px 48px rgba(0,0,0,.5);">
               <div id="dcpDomainSelectList" style="max-height:220px;overflow-y:auto;">
                 <div style="padding:12px 14px;font-size:.84rem;color:var(--text-3);">Loading domains...</div>
               </div>
@@ -6695,7 +6695,7 @@ document.addEventListener('keydown', function(e){
         const menu = document.getElementById('dcpDomainSelectMenu');
         const chevron = document.getElementById('dcpDomainSelectChevron');
         const btn = document.getElementById('dcpDomainSelectBtn');
-        lbl.textContent = label || '— Choose a registered domain —';
+        lbl.textContent = label || 'Choose a registered domain';
         lbl.style.color = value ? 'var(--text)' : 'var(--text-3)';
         menu.style.display = 'none';
         chevron.style.transform = '';
@@ -8407,7 +8407,7 @@ async function runDatabaseDiff() {
                 <svg class="cdd-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               <div class="cdd-menu" id="cddProjectMenu">
-                <button class="cdd-item cdd-item-selected" type="button" onclick="pickCdd('cddProject','dbCreateLinkProject','','— No project link —')">
+                <button class="cdd-item cdd-item-selected" type="button" onclick="pickCdd('cddProject','dbCreateLinkProject','','No project link')">
                   <span>— No project link —</span>
                   <div class="cdd-check cdd-check-on" id="cddProject-"></div>
                 </button>
@@ -17081,7 +17081,7 @@ function renderEnvManager() {
   const pendingProjectId = window._jtLastLinkedProjectId || null;
   window._jtLastLinkedProjectId = null;
   csPopulate('envProjectSelect',
-    [{value:'', label:'— Choose a project —'}].concat(
+    [{value:'', label:'Choose a project'}].concat(
       projects.map(p => ({value: p._id || p.id, label: escHtml(p.name)}))
     ), pendingProjectId || '');
   // If a project was just linked, auto-select it — csSetValue also fires the onchange → loadEnvForProject
