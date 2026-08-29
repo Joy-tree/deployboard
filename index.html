@@ -199,7 +199,7 @@
   <link rel="stylesheet" href="/styles/animations.css?v=1">
   <link rel="stylesheet" href="/styles/onboarding.css?v=1">
   <link rel="stylesheet" href="/styles/streak.css?v=1">
-  <link rel="stylesheet" href="/theme-override.css?v=168" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+  <link rel="stylesheet" href="/theme-override.css?v=169" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -833,8 +833,8 @@ window.landingToggleTheme = function(){
         <div class="stat-cell-label">Frameworks &amp; runtimes</div>
       </div>
       <div class="stat-cell">
-        <div class="stat-cell-value" id="statBuildTime">&lt;60s</div>
-        <div class="stat-cell-label">Average build time</div>
+        <div class="stat-cell-value" id="statUsers" data-target="0">0</div>
+        <div class="stat-cell-label">Developers on JoyTree</div>
       </div>
     </div>
   </div>
@@ -874,9 +874,11 @@ window.landingToggleTheme = function(){
       const depEl = document.getElementById('statDeployments');
       const upEl  = document.getElementById('statUptime');
       const fwEl  = document.getElementById('statFrameworks');
+      const userEl = document.getElementById('statUsers');
       if (depEl) animateCount(depEl, Number(d.totalDeployments) || 0, { suffix: '+' });
       if (upEl)  animateCount(upEl,  Number(d.uptimePct) || 99.9, { decimals: 1, suffix: '%' });
       if (fwEl)  animateCount(fwEl,  Number(d.frameworksSupported) || 24, { suffix: '+' });
+      if (userEl) animateCount(userEl, Number(d.totalUsers) || 0, { suffix: '+' });
     } catch (_) {
       // Fail soft — leave the static fallback text in place rather than
       // showing a broken 0 if the request itself fails.

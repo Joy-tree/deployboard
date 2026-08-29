@@ -3220,21 +3220,26 @@ app.get('/api/public/stats', async (req, res) => {
     let totalDeployments = 0;
     let successDeployments = 0;
     let totalProjects = 0;
+    let totalUsers = 0;
 
     if (isDbReady()) {
-      const [mDeployTotal, mDeploySuccess, mProjectTotal] = await Promise.all([
+      const [mDeployTotal, mDeploySuccess, mProjectTotal, mUserTotal] = await Promise.all([
         Deployment.countDocuments({}).catch(() => 0),
         Deployment.countDocuments({ status: 'success' }).catch(() => 0),
         Project.countDocuments({}).catch(() => 0),
+        User.countDocuments({}).catch(() => 0),
       ]);
       totalDeployments += mDeployTotal;
       successDeployments += mDeploySuccess;
       totalProjects += mProjectTotal;
+      totalUsers += mUserTotal;
     }
 
     if (FIREBASE_RTDB_URL) {
       const allWorkspaces = await fetchAllWorkspaces().catch(() => ({}));
-      for (const key of Object.keys(allWorkspaces || {})) {
+      const wsKeys = Object.keys(allWorkspaces || {});
+      totalUsers += wsKeys.length; // one workspace record per user
+      for (const key of wsKeys) {
         const ws = allWorkspaces[key];
         if (!ws || typeof ws !== 'object') continue;
         const deps = Array.isArray(ws.deployments) ? ws.deployments : [];
@@ -3261,6 +3266,7 @@ app.get('/api/public/stats', async (req, res) => {
       ok: true,
       totalDeployments,
       totalProjects,
+      totalUsers,
       uptimePct,
       frameworksSupported,
       generatedAt: new Date().toISOString(),
