@@ -22042,8 +22042,16 @@ async function maybeShowDeployNotifPrompt() {
 
   if (!onLogsPage || !isBuilding) { card.style.display = 'none'; return; }
 
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  if (!isStandalone || !('PushManager' in window)) { card.style.display = 'none'; return; }
+  // [FIX] Was gated on window.matchMedia('(display-mode: standalone)') --
+  // i.e. only showed for people who'd installed JoyTree as a home-screen
+  // app. But subscribeToPushNotifications() (below) has no such
+  // requirement at all -- it only needs serviceWorker + PushManager +
+  // an auth token, all of which work fine from a normal browser tab.
+  // The standalone check was an artificial restriction that made this
+  // card silently never appear for the vast majority of visitors who
+  // use the site in-browser, not as an installed PWA. Removed --
+  // anyone whose browser supports Push gets the prompt.
+  if (!('PushManager' in window)) { card.style.display = 'none'; return; }
 
   try {
     const dismissedUntil = Number(localStorage.getItem(DNP_DISMISS_KEY) || 0);
