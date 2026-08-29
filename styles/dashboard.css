@@ -3658,8 +3658,8 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 /* ── Modal ─────────────────────────────────────────────────────────────── */
 .modal-backdrop {
   display: none; position:fixed; inset:0;
-  background:rgba(0,0,0,0.88);
-  backdrop-filter:blur(4px);
+  background:rgba(0,0,0,0.92);
+  backdrop-filter:none;
   z-index:1000;
   align-items:center; justify-content:center;
 }
