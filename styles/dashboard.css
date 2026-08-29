@@ -790,7 +790,13 @@ body.landing-drawer-open { overflow:hidden; }
 .hero-headline-stack > *{min-width:0;}
 .hero-kicker-pro{display:none;}
 .hero-kicker-pro i{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 14px rgba(16,185,129,.9)}
-.hero-h1{font-size:clamp(2.55rem,8.3vw,6.05rem)!important;line-height:1.15;font-weight:800;letter-spacing:-.03em;text-shadow:none;text-align:center;}
+/* [FIX] .hero-h1 rule removed from this dead/orphaned "executive
+   homepage" block (.hero-orb/.hero-headline-stack/.hero-kicker-pro
+   below have zero HTML using them — safe to leave inert — but this
+   specific .hero-h1 override was NOT inert: its !important +
+   text-align:center was fighting the real hero's desktop left-align
+   at 1024px+, forcing the headline back to centered even inside the
+   new two-column layout). */
 .hero-h1 .accent{filter:none}
 .hero-sub{max-width:830px!important;font-size:clamp(1.2rem,2.15vw,1.95rem)!important;line-height:1.55;color:#9ca3af}
 .hero-actions .btn-hero-primary{
@@ -4462,47 +4468,59 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
     gap:56px; max-width:1180px; margin:0 auto;
   }
   .hero-copy{ align-items:flex-start; text-align:left; flex:1 1 520px; max-width:600px; }
+  .hero-h1{ font-size:clamp(2.6rem, 4.4vw, 4.2rem); margin-bottom:22px; }
   .hero-actions{ justify-content:flex-start; }
   .hero-trust{ justify-content:flex-start; }
 
   .hero-visual{
-    display:block; position:relative; flex:1 1 460px; max-width:480px;
-    padding-top:8px;
+    display:flex; flex-direction:column; align-items:center;
+    position:relative; flex:1 1 460px; max-width:480px;
   }
-  .hero-visual-term{
-    display:inline-flex; align-items:center; gap:8px;
-    background:#0d0d0d; border:1px solid rgba(255,255,255,.10);
-    padding:10px 16px; font-family:var(--font-mono); font-size:.82rem;
-    color:var(--text-2);
-    box-shadow:0 18px 40px rgba(0,0,0,.4);
-    animation:heroTermFloat 4s ease-in-out infinite;
+  .hero-visual-window{
+    width:100%; background:#0d0d0d; border:1px solid rgba(255,255,255,.10);
+    position:relative; z-index:1;
+    animation:heroWindowFloat 5s ease-in-out infinite;
   }
-  .hero-visual-term-dot{ color:var(--primary); font-weight:700; }
-  @keyframes heroTermFloat{
+  @keyframes heroWindowFloat{
     0%,100%{ transform:translateY(0); }
-    50%{ transform:translateY(-6px); }
+    50%{ transform:translateY(-8px); }
   }
-  .hero-visual-connector{
-    width:1px; height:32px; margin-left:24px;
-    background:linear-gradient(to bottom, rgba(255,255,255,.18), rgba(255,255,255,.05));
+  .hero-visual-titlebar{
+    display:flex; align-items:center; gap:7px;
+    padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.08);
   }
-  .hero-visual-panel{
-    background:#0d0d0d; border:1px solid rgba(255,255,255,.10);
-    padding:20px 22px 22px;
-    box-shadow:0 24px 60px rgba(0,0,0,.5);
+  .hero-visual-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .dot-red{ background:#f87171; opacity:.7; }
+  .dot-amber{ background:#fbbf24; opacity:.7; }
+  .dot-green{ background:#34d399; opacity:.7; }
+  .hero-visual-titlebar-label{
+    margin-left:6px; font-family:var(--font-mono); font-size:.68rem;
+    font-weight:700; letter-spacing:.08em; color:var(--text-3);
   }
-  .hero-visual-panel-head{
-    padding-bottom:14px; margin-bottom:14px;
-    border-bottom:1px solid rgba(255,255,255,.08);
+  .hero-visual-cmdrow{
+    display:flex; align-items:center; gap:8px;
+    padding:14px 18px; border-bottom:1px solid rgba(255,255,255,.08);
+    font-family:var(--font-mono); font-size:.84rem;
+    background:rgba(16,185,129,.04);
   }
-  .hero-visual-panel-label{
-    font-family:var(--font-mono); font-size:.66rem; font-weight:700;
-    letter-spacing:.14em; color:var(--text-3);
+  .hero-visual-cmd-prompt{ color:var(--primary); font-weight:700; }
+  .hero-visual-cmd-text{ color:var(--text); }
+  .hero-visual-cursor{
+    width:6px; height:14px; background:var(--primary);
+    animation:heroCursorBlink 1s step-end infinite;
+  }
+  @keyframes heroCursorBlink{ 0%,49%{ opacity:1; } 50%,100%{ opacity:0; } }
+  .hero-visual-body{ padding:18px 20px 20px; }
+  .hero-visual-shadow{
+    width:88%; height:36px; margin-top:-14px;
+    background:radial-gradient(ellipse at center, rgba(0,0,0,.5) 0%, transparent 75%);
+    filter:blur(4px);
   }
   .hero-visual-row{
     display:flex; align-items:center; justify-content:space-between;
-    padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,.06);
+    padding:12px 0; border-bottom:1px solid rgba(255,255,255,.06);
   }
+  .hero-visual-row-last{ border-bottom:none; padding-bottom:0; }
   .hero-visual-row-main{
     display:flex; align-items:center; gap:9px;
     font-size:.85rem; font-weight:600; color:var(--text);
