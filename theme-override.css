@@ -10939,23 +10939,14 @@ html[data-theme="light"] #page-domain-add .input,
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   DELETE PROJECT MODAL (#deleteModal) — inconsistent with the other
-   delete-confirmation modals (Delete Database/API/Upload) in two
-   confirmed ways: (1) the generic .modal class borders with
-   var(--border-hi), which resolves to a GREEN-tinted
-   rgba(16,185,129,0.22) — exactly the stray color the other delete
-   modals don't have, since they explicitly use the plain neutral
-   var(--border) instead; (2) its confirm button uses the weak,
-   translucent .btn-danger (10% red fill, red text) instead of the
-   solid red fill (#7f1d1d, white text) every other delete modal on
-   the site uses. Also the icon chip was missing the thin red border
-   ring the other delete icons have. Matched pixel-for-pixel to
-   Delete Database's exact values, scoped only to this modal.
+   DELETE PROJECT MODAL (#deleteModal) — the background/border override
+   below is REMOVED. It was pinning var(--bg-3)/var(--border), which
+   resolve lighter than the base .modal class's #0d0d0d, making this
+   specific delete modal look "ash" next to every other modal on the
+   site that correctly falls through to the unmodified base style.
+   The base .modal class (styles/dashboard.css) already handles this
+   modal correctly — no page-scoped override needed.
    ══════════════════════════════════════════════════════════════════ */
-#deleteModal .modal {
-  background: var(--bg-3) !important;
-  border: 1px solid var(--border) !important;
-}
 #deleteModal .modal-icon {
   border: 1px solid rgba(239,68,68,.22) !important;
 }
