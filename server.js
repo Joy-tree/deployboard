@@ -1090,6 +1090,16 @@ app.use((req, res, next) => {
   if (req.path !== '/') {
     const staticPath = path.join(__dirname, req.path);
     if (fs.existsSync(staticPath) && fs.statSync(staticPath).isFile()) {
+      // [FIX] sendFile() with no explicit Cache-Control sets only
+      // Last-Modified/ETag, which many browsers then cache aggressively
+      // under an implicit heuristic policy — meaning a CSS/JS fix pushed
+      // to this repo could silently never reach a returning visitor's
+      // browser even after a full server rebuild, since the browser
+      // never re-requests the file at all. This is dashboard-only static
+      // serving (deployed user projects use applyCacheHeaders above,
+      // which is unaffected) — force revalidation on every load so a
+      // fresh deploy is always visible on the next page load.
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
       return res.sendFile(staticPath);
     }
   }
