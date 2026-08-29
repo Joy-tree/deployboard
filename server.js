@@ -3207,19 +3207,62 @@ app.get('/api/public/stats', async (req, res) => {
     if (_publicStatsCache.data && (Date.now() - _publicStatsCache.ts) < CACHE_MS) {
       return res.json(_publicStatsCache.data);
     }
-    const [totalDeployments, successDeployments, totalProjects] = await Promise.all([
-      Deployment.countDocuments({}).catch(() => 0),
-      Deployment.countDocuments({ status: 'success' }).catch(() => 0),
-      Project.countDocuments({}).catch(() => 0),
-    ]);
+
+    // [FIX] This endpoint previously only queried Deployment.countDocuments()
+    // in MongoDB — but MongoDB is optional here (isDbReady() gates on an
+    // active connection) and Firebase RTDB (deployboard_workspaces) is the
+    // real source of truth for any instance running on the Firebase
+    // fallback path, which is most of them per /api/health's own
+    // datastore/db fields. An instance with no live Mongo connection was
+    // silently showing 0 for every stat on the public landing page.
+    // Aggregate from whichever store actually has data, and merge both
+    // if both happen to be populated (self-hosted forks may use either).
+    let totalDeployments = 0;
+    let successDeployments = 0;
+    let totalProjects = 0;
+
+    if (isDbReady()) {
+      const [mDeployTotal, mDeploySuccess, mProjectTotal] = await Promise.all([
+        Deployment.countDocuments({}).catch(() => 0),
+        Deployment.countDocuments({ status: 'success' }).catch(() => 0),
+        Project.countDocuments({}).catch(() => 0),
+      ]);
+      totalDeployments += mDeployTotal;
+      successDeployments += mDeploySuccess;
+      totalProjects += mProjectTotal;
+    }
+
+    if (FIREBASE_RTDB_URL) {
+      const allWorkspaces = await fetchAllWorkspaces().catch(() => ({}));
+      for (const key of Object.keys(allWorkspaces || {})) {
+        const ws = allWorkspaces[key];
+        if (!ws || typeof ws !== 'object') continue;
+        const deps = Array.isArray(ws.deployments) ? ws.deployments : [];
+        const projs = Array.isArray(ws.projects) ? ws.projects : [];
+        totalDeployments += deps.length;
+        successDeployments += deps.filter(d => d && d.status === 'success').length;
+        totalProjects += projs.length;
+      }
+    }
+
     const uptimePct = totalDeployments > 0
       ? Math.round((successDeployments / totalDeployments) * 1000) / 10
       : 99.9;
+
+    // Frameworks/runtimes JoyTree's build engine actually auto-detects and
+    // deploys — kept in sync manually with the runtime hint map in
+    // index.html (search "hints = {" in the New Deployment page JS).
+    // Static count, not derived from what users happen to have deployed,
+    // since that would understate real platform capability for a brand
+    // new instance with few projects yet.
+    const frameworksSupported = 24;
+
     const data = {
       ok: true,
       totalDeployments,
       totalProjects,
       uptimePct,
+      frameworksSupported,
       generatedAt: new Date().toISOString(),
     };
     _publicStatsCache = { ts: Date.now(), data };

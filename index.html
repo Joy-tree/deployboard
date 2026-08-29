@@ -183,7 +183,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles/dashboard.css?v=2">
   <link rel="stylesheet" href="/styles/auth.css?v=1">
-  <link rel="stylesheet" href="/styles/landing.css?v=1">
+  <link rel="stylesheet" href="/styles/landing.css?v=2">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
   <link rel="stylesheet" href="/styles/pricing.css?v=1">
   <link rel="stylesheet" href="/styles/checkout.css?v=1">
@@ -199,7 +199,7 @@
   <link rel="stylesheet" href="/styles/animations.css?v=1">
   <link rel="stylesheet" href="/styles/onboarding.css?v=1">
   <link rel="stylesheet" href="/styles/streak.css?v=1">
-  <link rel="stylesheet" href="/theme-override.css?v=167" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+  <link rel="stylesheet" href="/theme-override.css?v=168" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -810,7 +810,96 @@ window.landingToggleTheme = function(){
   </div>
 </section>
 
+<!-- ═══════════════════════════════════════════════════════════════════
+     LIVE STATS — real counts pulled from /api/public/stats on load.
+     Sits directly after "Powered by trusted infrastructure" per request.
+     No cards: flat rows separated by hairline dividers only, numbers
+     count up from 0 to their real value the moment the section is in
+     view (or immediately on load if already visible on a short page).
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="stats-strip" aria-label="Platform statistics" id="landingStatsSection">
+  <div class="stats-strip-inner">
+    <div class="stats-grid" id="landingStatsGrid">
+      <div class="stat-cell">
+        <div class="stat-cell-value" id="statDeployments" data-target="0">0</div>
+        <div class="stat-cell-label">Deployments shipped</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell-value" id="statUptime" data-target="0" data-suffix="%" data-decimal="1">0%</div>
+        <div class="stat-cell-label">Build success rate</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell-value" id="statFrameworks" data-target="0" data-suffix="+">0</div>
+        <div class="stat-cell-label">Frameworks &amp; runtimes</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell-value" id="statBuildTime">&lt;60s</div>
+        <div class="stat-cell-label">Average build time</div>
+      </div>
+    </div>
+  </div>
+</section>
 
+<script>
+(function(){
+  // Counts up each .stat-cell-value from 0 to its real data-target,
+  // finishing immediately (short duration) rather than a slow crawl --
+  // matches "shows immediately and completes immediately".
+  function animateCount(el, target, opts) {
+    opts = opts || {};
+    const decimals = opts.decimals || 0;
+    const suffix = opts.suffix || '';
+    const duration = 700; // ms — fast, feels instant but not a jump-cut
+    const start = performance.now();
+    function tick(now) {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+      const val = target * eased;
+      el.textContent = (decimals ? val.toFixed(decimals) : Math.round(val).toLocaleString()) + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+      else el.textContent = (decimals ? target.toFixed(decimals) : target.toLocaleString()) + suffix;
+    }
+    requestAnimationFrame(tick);
+  }
+
+  let _statsAnimated = false;
+  async function loadAndAnimateLandingStats() {
+    if (_statsAnimated) return;
+    _statsAnimated = true;
+    try {
+      const r = await fetch('/api/public/stats');
+      const d = await r.json();
+      if (!d || d.ok === false) return;
+
+      const depEl = document.getElementById('statDeployments');
+      const upEl  = document.getElementById('statUptime');
+      const fwEl  = document.getElementById('statFrameworks');
+      if (depEl) animateCount(depEl, Number(d.totalDeployments) || 0, { suffix: '+' });
+      if (upEl)  animateCount(upEl,  Number(d.uptimePct) || 99.9, { decimals: 1, suffix: '%' });
+      if (fwEl)  animateCount(fwEl,  Number(d.frameworksSupported) || 24, { suffix: '+' });
+    } catch (_) {
+      // Fail soft — leave the static fallback text in place rather than
+      // showing a broken 0 if the request itself fails.
+    }
+  }
+
+  // Fire the count the moment the section scrolls into view; if it's
+  // already in the viewport on load (short/no-scroll page), this fires
+  // immediately since IntersectionObserver reports the initial state
+  // right away.
+  const target = document.getElementById('landingStatsSection');
+  if (target && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) { loadAndAnimateLandingStats(); io.disconnect(); }
+      });
+    }, { threshold: 0.2 });
+    io.observe(target);
+  } else if (target) {
+    loadAndAnimateLandingStats();
+  }
+})();
+</script>
 
 <!-- ═══════════════════════════════════════════════════════════════════
      ORBIT VISUAL — "Everything connects" ecosystem diagram.

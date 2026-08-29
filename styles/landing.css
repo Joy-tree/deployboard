@@ -905,3 +905,60 @@ html.app-mode #jtContactBtn,html.app-mode #jtContactModal,html.app-mode #jtConta
 .install-prompt-title{font-weight:800;font-size:.88rem;color:#e7fff4}
 .install-prompt-sub{font-size:.74rem;color:#b9f6df;opacity:.95}
 .install-prompt-actions{margin-left:auto;display:flex;gap:8px}
+
+/* ── Live Stats Strip — flat, no cards, hairline dividers only ─────────── */
+.stats-strip {
+  padding: 56px 24px 60px;
+  background: var(--bg);
+}
+.stats-strip-inner {
+  max-width: 960px;
+  margin: 0 auto;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-top: 1px solid rgba(255,255,255,0.10);
+  border-left: 1px solid rgba(255,255,255,0.10);
+}
+.stat-cell {
+  padding: 28px 20px;
+  text-align: center;
+  border-right: 1px solid rgba(255,255,255,0.10);
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+.stat-cell-value {
+  font-family: var(--font-display, var(--font-ui));
+  font-weight: 800;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.1;
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.stat-cell-label {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  letter-spacing: 0.01em;
+}
+html[data-theme="light"] .stats-grid,
+html[data-theme="light"] .stat-cell {
+  border-color: rgba(0,0,0,0.10);
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stats-strip {
+    padding: 44px 16px 48px;
+  }
+  .stat-cell {
+    padding: 22px 12px;
+  }
+  .stat-cell-value {
+    font-size: 1.6rem;
+  }
+}
