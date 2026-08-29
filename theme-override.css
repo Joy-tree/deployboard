@@ -82,8 +82,8 @@ html[data-theme="dark"]{
 }
 /* Site currently defaults dark with no data-theme set on first load */
 :root:not([data-theme]), html:not([data-theme]){
-  --jt-bg: #09090B; --jt-bg-raised: #111113; --jt-bg-sunken: #050506;
-  --jt-border: #1F1F23; --jt-border-soft: #18181B;
+  --jt-bg: #080808; --jt-bg-raised: #111111; --jt-bg-sunken: #050505;
+  --jt-border: #1f1f1f; --jt-border-soft: #181818;
   --jt-text: #F3F4F6; --jt-text-dim: #A1A1AA; --jt-text-faint: #6B7280;
   --jt-brand: #10B981; --jt-brand-strong: #34D399; --jt-brand-tint: #0A2E22;
   --jt-accent: #E8B94A; --jt-accent-strong: #F2CB6E; --jt-accent-tint: #241D0F;
