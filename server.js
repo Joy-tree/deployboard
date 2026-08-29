@@ -2837,10 +2837,12 @@ async function sendVerificationCodeEmail(email = '', code = '') {
   const dashboardUrl = `https://${BASE_DOMAIN}/dashboard`;
   const year = new Date().getFullYear();
 
-  // Split the 6-digit code into individual characters for styled digit boxes
-  const digits = String(code).padStart(6, '0').split('');
-  const digitBoxStyle = 'display:inline-block;width:44px;height:54px;line-height:54px;text-align:center;font-size:26px;font-weight:900;color:#0f172a;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;margin:0 4px;letter-spacing:0;font-family:monospace;';
-  const digitBoxesHtml = digits.map(d => `<span style="${digitBoxStyle}">${d}</span>`).join('');
+  // Plain spaced-letter presentation instead of individual boxed digit
+  // tiles -- matches how GitHub/most professional services present a
+  // verification code: large, monospaced, letter-spaced, no per-digit
+  // borders or background tiles.
+  const code6 = String(code).padStart(6, '0');
+  const codeDisplay = code6.split('').join('&nbsp;&nbsp;');
 
   const html = `<!doctype html>
 <html lang="en">
@@ -2870,8 +2872,8 @@ async function sendVerificationCodeEmail(email = '', code = '') {
           <p style="margin:0 0 24px;color:#5f6368;font-size:14px;line-height:1.6;">
             Enter this code to confirm it's you. It expires in 10 minutes.
           </p>
-          <div style="text-align:center;margin-bottom:24px;">
-            ${digitBoxesHtml}
+          <div style="text-align:center;margin:28px 0;padding:20px 0;border-top:1px solid #e8eaed;border-bottom:1px solid #e8eaed;">
+            <span style="font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;font-size:32px;font-weight:700;color:#202124;letter-spacing:2px;">${codeDisplay}</span>
           </div>
           <p style="margin:0 0 4px;color:#5f6368;font-size:13px;line-height:1.8;">
             This code is single-use and expires automatically after 10 minutes. Don't share it with anyone — JoyTree staff will never ask you for it, and it should only ever be entered on joytree.site.
