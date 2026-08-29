@@ -5004,8 +5004,9 @@ html[data-theme="light"] #page-new-deploy {
 
 /* ── Progress steps — flat row, thin divider between items only ── */
 #page-new-deploy .dcx-steps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  width: 100% !important;
   border-bottom: 1px solid var(--dcx-row-border);
 }
 #page-new-deploy .dcx-step-item {
@@ -5017,6 +5018,9 @@ html[data-theme="light"] #page-new-deploy {
   color: var(--text-2);
   font-size: .82rem;
   font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 #page-new-deploy .dcx-step-item:last-child { border-right: none; }
 #page-new-deploy .dcx-step-badge {
