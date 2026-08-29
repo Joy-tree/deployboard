@@ -1454,14 +1454,14 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
 .sidebar-logo-name {
   font-family:var(--font-ui);
   font-weight: 800;
-  font-size: 1.08rem;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  background: linear-gradient(92deg,#dbeafe 0%,#67e8f9 38%,#22d3ee 58%,#34d399 100%);
+  font-size: 0.85rem;
+  letter-spacing: -.02em;
+  text-transform: none;
+  background: linear-gradient(135deg,#22c55e,#10b981);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 0 18px rgba(56,189,248,.28), 0 0 26px rgba(16,185,129,.22);
+  text-shadow: none;
 }
 .sidebar-logo-badge {
   font-size: 0.55rem;
@@ -3886,10 +3886,10 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
     border-radius: 10px;
   }
 
-  /* Slightly larger logo name */
+  /* Logo name stays consistent size on mobile — matches landing page */
   #sidebar .sidebar-logo-name {
-    font-size: 1.18rem;
-    letter-spacing: 0.05em;
+    font-size: 0.85rem;
+    letter-spacing: -.02em;
   }
 
   /* Nav items: taller touch targets on mobile */
