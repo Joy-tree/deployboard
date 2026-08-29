@@ -573,7 +573,7 @@ html[data-theme="light"] .streak-timeline-row em { color: var(--jt-text-faint) !
 html[data-theme="light"] .surface-kicker { color: var(--jt-brand-strong) !important; }
 html[data-theme="light"] .surface-sub { color: var(--jt-text-faint) !important; }
 html[data-theme="light"] .surface-title { color: var(--jt-text) !important; }
-html[data-theme="light"] .tree-node-status-pill.pill-idle { color: #9ca3af !important; }
+/* .tree-node-status-pill.pill-idle rule removed — project cards now use the shared .badge-idle class */
 html[data-theme="light"] .vp-sub { color: var(--jt-text-faint) !important; }
 html[data-theme="light"] .vp-sub strong { color: var(--jt-text-faint) !important; }/* ---------------------------------------------------------------------
    8. LIGHT-MODE BACKGROUND OVERRIDES — same systematic scan, this time for
@@ -11308,30 +11308,30 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
   box-shadow: none !important;
 }
 .badge-success, .badge-building {
-  background: rgba(52,211,153,.12) !important;
-  color: #6ee7b7 !important;
+  background: rgba(16,185,129,.18) !important;
+  color: #10b981 !important;
   border: none !important;
 }
 .badge-success .badge-dot, .badge-building .badge-dot {
-  background: #34d399 !important;
+  background: #10b981 !important;
 }
 .badge-error {
-  background: rgba(248,113,113,.12) !important;
-  color: #fca5a5 !important;
+  background: rgba(239,68,68,.18) !important;
+  color: #ef4444 !important;
   border: none !important;
 }
-.badge-error .badge-dot { background: #f87171 !important; }
+.badge-error .badge-dot { background: #ef4444 !important; }
 .badge-warning, .badge-pending {
-  background: rgba(251,191,36,.12) !important;
-  color: #fcd34d !important;
+  background: rgba(245,158,11,.18) !important;
+  color: #f59e0b !important;
   border: none !important;
 }
 .badge-warning .badge-dot, .badge-pending .badge-dot {
-  background: #fbbf24 !important;
+  background: #f59e0b !important;
 }
 .badge-idle {
-  background: rgba(148,163,184,.12) !important;
-  color: #cbd5e1 !important;
+  background: rgba(100,116,139,.18) !important;
+  color: #94a3b8 !important;
   border: none !important;
 }
 .badge-idle .badge-dot { background: #94a3b8 !important; }
@@ -11369,27 +11369,27 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
   box-shadow: none !important;
 }
 .jt-stbadge-success, .jt-stbadge-building {
-  background: rgba(52,211,153,.12) !important;
-  color: #6ee7b7 !important;
+  background: rgba(16,185,129,.18) !important;
+  color: #10b981 !important;
   border: none !important;
 }
-.jt-stbadge-success .jt-stbadge-dot, .jt-stbadge-building .jt-stbadge-dot { background: #34d399 !important; }
+.jt-stbadge-success .jt-stbadge-dot, .jt-stbadge-building .jt-stbadge-dot { background: #10b981 !important; }
 .jt-stbadge-building .jt-stbadge-dot { animation: pulse 1s infinite !important; }
 .jt-stbadge-error {
-  background: rgba(248,113,113,.12) !important;
-  color: #fca5a5 !important;
+  background: rgba(239,68,68,.18) !important;
+  color: #ef4444 !important;
   border: none !important;
 }
-.jt-stbadge-error .jt-stbadge-dot { background: #f87171 !important; }
+.jt-stbadge-error .jt-stbadge-dot { background: #ef4444 !important; }
 .jt-stbadge-pending {
-  background: rgba(251,191,36,.12) !important;
-  color: #fcd34d !important;
+  background: rgba(245,158,11,.18) !important;
+  color: #f59e0b !important;
   border: none !important;
 }
-.jt-stbadge-pending .jt-stbadge-dot { background: #fbbf24 !important; }
+.jt-stbadge-pending .jt-stbadge-dot { background: #f59e0b !important; }
 .jt-stbadge-idle {
-  background: rgba(148,163,184,.12) !important;
-  color: #cbd5e1 !important;
+  background: rgba(100,116,139,.18) !important;
+  color: #94a3b8 !important;
   border: none !important;
 }
 .jt-stbadge-idle .jt-stbadge-dot { background: #94a3b8 !important; }

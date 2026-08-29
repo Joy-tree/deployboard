@@ -2280,21 +2280,14 @@ textarea.input { resize: vertical; min-height: 80px; }
   box-shadow:0 0 5px #10b981; animation:jaiDotPulse 2s ease-in-out infinite; flex-shrink:0;
 }
 
-/* Status pill — lives in header row next to project name */
-.tree-node-status-pill {
-  display: inline-flex; align-items:center; gap:5px;
-  padding: 4px 9px; border-radius:4px;
-  font-size: 0.63rem; font-weight:700; letter-spacing:0.04em;
-  white-space: nowrap; flex-shrink: 0; margin-left: auto;
+/* Status pill — lives in header row next to project name.
+   Colors come from the shared .badge/.badge-success/.badge-error system
+   (theme-override.css) — this only adds the layout positioning this
+   pill needs inside the project card header row. */
+.tree-node-header .badge {
+  flex-shrink: 0; margin-left: auto; letter-spacing: 0.04em;
 }
-.tree-node-status-pill.pill-success { background:#14532d; color:#fff; border:none; }
-.tree-node-status-pill.pill-building { background:#78350f; color:#fff; border:none; }
-.tree-node-status-pill.pill-failed { background:#7f1d1d; color:#fff; border:none; }
-.tree-node-status-pill.pill-idle { background:#334155; color:#fff; border:none; }
-.tree-node-status-pill .pill-dot {
-  width:5px; height:5px; border-radius:50%; background:currentColor;
-}
-.pill-building .pill-dot { animation: dpSpin 1s linear infinite; }
+.badge-building .badge-dot { animation: dpSpin 1s linear infinite; }
 
 /* Card body */
 .tree-node-body { padding:13px 14px 11px; }

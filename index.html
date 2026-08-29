@@ -199,7 +199,7 @@
   <link rel="stylesheet" href="/styles/animations.css">
   <link rel="stylesheet" href="/styles/onboarding.css">
   <link rel="stylesheet" href="/styles/streak.css">
-  <link rel="stylesheet" href="/theme-override.css?v=162" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+  <link rel="stylesheet" href="/theme-override.css?v=163" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -14216,10 +14216,10 @@ function _doRenderProjectsNow() {
            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
            <span>Not deployed yet</span></div></div>`;
 
-    let pillClass = 'pill-idle', pillLabel = 'Idle';
-    if (st === 'success')                                            { pillClass = 'pill-success';  pillLabel = 'Live'; }
-    else if (st === 'building' || st === 'pending')                  { pillClass = 'pill-building'; pillLabel = 'Building'; }
-    else if (['failed','error','cancelled','canceled'].includes(st))  { pillClass = 'pill-failed';   pillLabel = 'Failed'; }
+    let pillClass = 'badge-idle', pillLabel = 'Idle';
+    if (st === 'success')                                            { pillClass = 'badge-success';  pillLabel = 'Live'; }
+    else if (st === 'building' || st === 'pending')                  { pillClass = 'badge-building'; pillLabel = 'Building'; }
+    else if (['failed','error','cancelled','canceled'].includes(st))  { pillClass = 'badge-error';   pillLabel = 'Failed'; }
 
     const isDeploying = (lastDeploy && ['pending','building'].includes(String(lastDeploy.status||'').toLowerCase()))
       || ['deploying','waiting-for-active-build','queued'].includes(String(p.autoDeployStatus||'').toLowerCase());
@@ -14245,8 +14245,8 @@ function _doRenderProjectsNow() {
           <div style="min-width:0;flex:1;">
             <div class="tree-node-name">${escHtml(p.name)}</div>
           </div>
-          <div class="tree-node-status-pill ${pillClass}">
-            <span class="pill-dot"></span>${pillLabel}
+          <div class="badge ${pillClass}">
+            <span class="badge-dot"></span>${pillLabel}
           </div>
         </div>
         <div class="tree-node-url">${escHtml(p.subdomain)}.${escHtml(domainBase)}</div>
