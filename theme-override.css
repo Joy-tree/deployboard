@@ -5004,8 +5004,8 @@ html[data-theme="light"] #page-new-deploy {
 
 /* ── Progress steps — flat row, thin divider between items only ── */
 #page-new-deploy .dcx-steps {
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  display: flex !important;
+  align-items: stretch;
   width: 100% !important;
   border-bottom: 1px solid var(--dcx-row-border);
 }
@@ -5018,10 +5018,10 @@ html[data-theme="light"] #page-new-deploy {
   color: var(--text-2);
   font-size: .82rem;
   font-weight: 700;
-  min-width: 0;
-  overflow: hidden;
   white-space: nowrap;
+  flex: 0 0 auto;
 }
+#page-new-deploy .dcx-step-item:last-child { border-right: none; flex: 1 1 auto; }
 #page-new-deploy .dcx-step-item:last-child { border-right: none; }
 #page-new-deploy .dcx-step-badge {
   width: 22px; height: 22px;
@@ -5363,8 +5363,8 @@ html[data-theme="light"] #page-new-deploy {
   #page-new-deploy .dcx-layout { display: block; }
 }
 @media(max-width:640px){
-  #page-new-deploy .dcx-steps { grid-template-columns: 1fr; }
-  #page-new-deploy .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); }
+  #page-new-deploy .dcx-steps { flex-direction: column; }
+  #page-new-deploy .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); flex: 1 1 auto; }
   #page-new-deploy .dcx-step-item:last-child { border-bottom: none; }
 }
 
@@ -5441,8 +5441,9 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
 
 /* ── Progress steps — flat row, thin divider between items only ── */
 #page-dockerfile-deploy .dcx-steps ,#page-worker-create .dcx-steps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  align-items: stretch;
+  width: 100%;
   border-bottom: 1px solid var(--dcx-row-border);
 }
 #page-dockerfile-deploy .dcx-step-item ,#page-worker-create .dcx-step-item {
@@ -5454,8 +5455,10 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
   color: var(--text-2);
   font-size: .82rem;
   font-weight: 700;
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
-#page-dockerfile-deploy .dcx-step-item:last-child ,#page-worker-create .dcx-step-item:last-child { border-right: none; }
+#page-dockerfile-deploy .dcx-step-item:last-child ,#page-worker-create .dcx-step-item:last-child { border-right: none; flex: 1 1 auto; }
 #page-dockerfile-deploy .dcx-step-badge ,#page-worker-create .dcx-step-badge {
   width: 22px; height: 22px;
   border-radius: 6px;
@@ -5794,8 +5797,8 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
   #page-dockerfile-deploy .dcx-layout ,  #page-worker-create .dcx-layout { display: block; }
 }
 @media(max-width:640px){
-  #page-dockerfile-deploy .dcx-steps ,  #page-worker-create .dcx-steps { grid-template-columns: 1fr; }
-  #page-dockerfile-deploy .dcx-step-item ,  #page-worker-create .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); }
+  #page-dockerfile-deploy .dcx-steps ,  #page-worker-create .dcx-steps { flex-direction: column; }
+  #page-dockerfile-deploy .dcx-step-item ,  #page-worker-create .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); flex: 1 1 auto; }
   #page-dockerfile-deploy .dcx-step-item:last-child ,  #page-worker-create .dcx-step-item:last-child { border-bottom: none; }
 }
 
