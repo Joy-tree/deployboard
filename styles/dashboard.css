@@ -1173,7 +1173,7 @@ footer{
 /* ── Design Tokens ─────────────────────────────────────────────────────── */
 :root {
   --bg:        #0a0a0a;
-  --bg-card:   #111111;
+  --bg-card:   #0a0a0a;
   --bg-hover:  #1a1a1a;
   --border:    rgba(16,185,129,0.10);
   --border-hi: rgba(16,185,129,0.22);
@@ -1217,7 +1217,7 @@ footer{
 ══════════════════════════════════════════════════════════════════ */
 html[data-theme="dark"] {
   --bg:        #0a0a0a;
-  --bg-card:   #111111;
+  --bg-card:   #0a0a0a;
   --bg-hover:  #1a1a1a;
   --border:    rgba(255,255,255,0.07);
   --border-hi: rgba(255,255,255,0.14);
@@ -1270,8 +1270,8 @@ html[data-theme="light"] .surface-kicker { color: #059669 !important; }
 /* Dark mode hardcoded-color overrides */
 html[data-theme="dark"] .app-hero { background: #111 !important; border-color: rgba(255,255,255,.07) !important; }
 html[data-theme="dark"] .hero-metric { background: #1a1a1a !important; border-color: rgba(255,255,255,.07) !important; }
-html[data-theme="dark"] #sidebar { background: #111 !important; }
-html[data-theme="dark"] #topbar { background: #111 !important; }
+html[data-theme="dark"] #sidebar { background: #080808 !important; }
+html[data-theme="dark"] #topbar { background: #080808 !important; }
 /* [REMOVED] html[data-theme="dark"] #page-dashboard/.deployments/.env-manager/
    .webhooks .card and .dash-qa-btn force-fills — a THIRD copy of the same
    background:#111!important pattern already removed twice elsewhere in this
@@ -1341,7 +1341,7 @@ ul { list-style:none; }
 /* ── Design Tokens ─────────────────────────────────────────────────────── */
 :root {
   --bg:        #0a0a0a;
-  --bg-card:   #111111;
+  --bg-card:   #0a0a0a;
   --bg-hover:  #1a1a1a;
   --border:    rgba(16,185,129,0.10);
   --border-hi: rgba(16,185,129,0.22);
@@ -4622,9 +4622,9 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 
 /* === Flat board redesign override === */
 :root{
-  --bg:#09090b;
-  --bg-2:#0f0f12;
-  --bg-3:#141419;
+  --bg:#080808;
+  --bg-2:#0d0d0d;
+  --bg-3:#111111;
   --text:#f4f4f5;
   --text-2:#a1a1aa;
   --text-3:#71717a;
@@ -4633,7 +4633,7 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
   --primary:#10b981;
   --primary-d:#059669;
 }
-html,body,#landing-view,#app,#app-shell,.app-layout,[id^="page-"]{background:#09090b!important;}
+html,body,#landing-view,#app,#app-shell,.app-layout,[id^="page-"]{background:#080808!important;}
 html[data-theme="light"] #landing-view { background: var(--jt-bg-sunken) !important; }
 html[data-theme="light"] body { background: var(--jt-bg-sunken) !important; }
 
@@ -5082,8 +5082,8 @@ html[data-theme="light"] .sshk-key-fp    { color: var(--jt-text-faint) !importan
 /* ── DARK THEME ───────────────────────────────────────────────── */
 html[data-theme="dark"] #app,
 html[data-theme="dark"] #app [id^="page-"] { background: #0a0a0a !important; }
-html[data-theme="dark"] #sidebar           { background: #111 !important; }
-html[data-theme="dark"] #topbar            { background: #111 !important; }
+html[data-theme="dark"] #sidebar           { background: #080808 !important; }
+html[data-theme="dark"] #topbar            { background: #080808 !important; }
 /* [REMOVED — see BLUEPRINT comment in theme-override.css] The two rules
    that used to sit here (targeting .card/.app-hero/.stat-card/
    .tree-project-node/.dash-qa-btn/.webhook-event-card/.section/
