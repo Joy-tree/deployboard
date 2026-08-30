@@ -11461,3 +11461,20 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* [SAFETY NET] Project Name / Subdomain field underlines not reaching
+   the section's true right edge, reported after the dcx-layout-solo
+   fix above. Traced every layer (.dcx-section, .field, .input) and
+   found no existing width constraint anywhere — this makes width:100%
+   explicit and box-sizing consistent on all three, removing any
+   ambiguity, in case something in the cascade was quietly relying on
+   a default that isn't 100% in every browser/zoom context. */
+#page-new-deploy .dcx-section,
+#page-new-deploy .field {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+#page-new-deploy .input {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
