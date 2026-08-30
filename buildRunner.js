@@ -2851,6 +2851,65 @@ async function runRustBuild(opts) {
   });
 }
 
+// [FIX] Real .NET solutions almost always contain more than one .csproj --
+// a class library, one or more test projects, sometimes a code-analyzer
+// project -- alongside the actual runnable web app (e.g.
+// ardalis/ApiEndpoints: 5 projects under one root .sln, only one of which
+// is a deployable web app). "dotnet publish" run against a bare directory
+// containing a multi-project .sln is genuinely ambiguous and either errors
+// or resolves an arbitrary project -- never reliably the web app. These
+// two helpers find every .csproj under projectRoot (capped at a reasonable
+// depth so this stays fast on large repos) and identify the one that's
+// actually an ASP.NET Core web app via its Sdk="Microsoft.NET.Sdk.Web"
+// attribute, which is the one authoritative signal that distinguishes a
+// runnable web project from a library/test/tool project.
+function findAllCsprojFiles(dir, depth = 0, maxDepth = 6, results = []) {
+  if (depth > maxDepth) return results;
+  let entries;
+  try { entries = fs.readdirSync(dir); } catch (_) { return results; }
+  for (const entry of entries) {
+    if (['.git', 'bin', 'obj', 'node_modules', '.vs'].includes(entry) || entry.startsWith('.')) continue;
+    const full = path.join(dir, entry);
+    let stat;
+    try { stat = fs.lstatSync(full); } catch (_) { continue; }
+    if (stat.isDirectory()) {
+      findAllCsprojFiles(full, depth + 1, maxDepth, results);
+    } else if (entry.endsWith('.csproj')) {
+      results.push(full);
+    }
+  }
+  return results;
+}
+
+function countCsprojFiles(projectRoot) {
+  return findAllCsprojFiles(projectRoot).length;
+}
+
+function findDotnetWebProject(projectRoot) {
+  const allCsproj = findAllCsprojFiles(projectRoot);
+  if (allCsproj.length === 0) return null;
+  // Return paths relative to projectRoot -- the build command runs with
+  // projectRoot as its working directory inside the container, so a
+  // relative path here is what actually resolves correctly there. An
+  // absolute host path would only work by coincidence if the container's
+  // mount point happened to match the host path exactly.
+  if (allCsproj.length === 1) return path.relative(projectRoot, allCsproj[0]);
+
+  // Multiple .csproj found — the web app is the one using the Web SDK.
+  // A repo could in theory have more than one Sdk.Web project (rare); the
+  // first match is used, same "best effort, not exhaustive" tradeoff every
+  // other language's auto-detection in this file already makes.
+  for (const csprojPath of allCsproj.sort()) {
+    try {
+      const content = fs.readFileSync(csprojPath, 'utf8');
+      if (/Sdk\s*=\s*["']Microsoft\.NET\.Sdk\.Web["']/i.test(content)) {
+        return path.relative(projectRoot, csprojPath);
+      }
+    } catch (_) {}
+  }
+  return null; // No Sdk.Web project found among multiple candidates — fall back to the old bare-directory behavior and let dotnet's own error surface.
+}
+
 // ── .NET ──────────────────────────────────────────────────────────────────────
 async function runDotnetBuild(opts) {
   const dotnetVer = String(opts.project.dotnetVer || '8.0');
@@ -2892,9 +2951,29 @@ async function runDotnetBuild(opts) {
         let cmd = (project.buildCmd || '').trim();
         const warnings = [];
         if (!cmd) {
-          // [FALLBACK] Always include restore in publish in case user skipped install step
-          cmd = 'dotnet publish -c Release -o out';
-          warnings.push('Using default build: "dotnet publish -c Release -o out".');
+          // [FIX] The old default always ran "dotnet publish -c Release -o out"
+          // against whatever directory findRoot landed on. That's correct
+          // when a single .csproj sits there, but real multi-project
+          // solutions (a class library + test project(s) + the actual
+          // runnable web app, all referenced from one root .sln --
+          // e.g. ardalis/ApiEndpoints) land findRoot on the directory
+          // containing the .sln, and "dotnet publish" against a directory
+          // with a solution referencing multiple project types (some
+          // libraries, some non-web executables) is genuinely ambiguous:
+          // dotnet's CLI either errors asking which project to use, or
+          // may resolve an arbitrary/wrong one -- never reliably the
+          // actual web app. Explicitly find the runnable ASP.NET Core
+          // project (Sdk="Microsoft.NET.Sdk.Web") among ALL .csproj files
+          // under projectRoot and publish that one directly instead of
+          // letting `dotnet publish` guess from a bare directory.
+          const webCsproj = findDotnetWebProject(projectRoot);
+          if (webCsproj) {
+            cmd = `dotnet publish "${webCsproj}" -c Release -o out`;
+            warnings.push(`Using default build: "dotnet publish ${path.basename(webCsproj)} -c Release -o out" (auto-selected the ASP.NET Core web project out of ${countCsprojFiles(projectRoot)} project file(s) found).`);
+          } else {
+            cmd = 'dotnet publish -c Release -o out';
+            warnings.push('Using default build: "dotnet publish -c Release -o out".');
+          }
         }
         // [FALLBACK] "--no-restore" without a prior dotnet restore will fail
         if (/--no-restore/.test(cmd) && !/dotnet restore/.test((project.installCmd || ''))) {
