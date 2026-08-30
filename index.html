@@ -13423,8 +13423,12 @@ function restartActiveDeployment() {
   document.getElementById('deploySubdomain').value = p.subdomain || '';
   document.getElementById('deployRepoUrl').value = p.repoUrl || '';
   document.getElementById('deployBranch').value = p.branch || 'main';
-  document.getElementById('deployInstallCmd').value = p.installCmd || 'npm install';
-  document.getElementById('deployBuildCmd').value = p.buildCmd || 'npm run build';
+  // [FIX] Was `|| 'npm install'` / `|| 'npm run build'` -- see the matching
+  // fix + comment in redeploy() for why forcing Node defaults onto a
+  // genuinely empty saved command silently breaks every non-Node runtime's
+  // own auto-detection in buildRunner.js.
+  document.getElementById('deployInstallCmd').value = p.installCmd || '';
+  document.getElementById('deployBuildCmd').value = p.buildCmd || '';
   document.getElementById('deployStartCmd').value = p.startCmd || '';
   document.getElementById('deployOutputDir').value = p.outputDir || 'dist';
   document.getElementById('deployNodeVersion').value    = p.nodeVer    || '20';
@@ -13434,6 +13438,26 @@ function restartActiveDeployment() {
   if (document.getElementById('deployJavaVersion'))   document.getElementById('deployJavaVersion').value   = p.javaVer   || '17';
   if (document.getElementById('deployDotnetVersion')) document.getElementById('deployDotnetVersion').value = p.dotnetVer || '8.0';
   if (document.getElementById('deploySiteType')) document.getElementById('deploySiteType').value = p.siteType || 'static';
+  // [FIX] The runtime hidden field (and its visible custom-select display)
+  // was never restored here either — same gap as redeploy(), meaning a
+  // Restart on a Python/Go/.NET/etc. project silently kept whatever
+  // runtime happened to be in the form from an unrelated previous session.
+  const restartRuntimeInput = document.getElementById('deployRuntime');
+  if (restartRuntimeInput) {
+    const savedRuntime = p.runtime || 'node';
+    restartRuntimeInput.value = savedRuntime;
+    const rrWrap = restartRuntimeInput.closest('.custom-select');
+    if (rrWrap) {
+      const savedOption = rrWrap.querySelector(`.cs-option[data-value="${savedRuntime}"]`);
+      rrWrap.querySelectorAll('.cs-option').forEach(o => o.classList.remove('selected'));
+      if (savedOption) {
+        savedOption.classList.add('selected');
+        const valueSpan = rrWrap.querySelector('.custom-select-trigger .cs-value');
+        if (valueSpan) valueSpan.textContent = savedOption.textContent.trim();
+      }
+    }
+    try { updateVersionFieldVisibility(savedRuntime); } catch (_) {}
+  }
   populateEnvRowsFromProject(p);
   updateSubdomainPreview();
   updateSummary();
@@ -13778,8 +13802,14 @@ function openRedeployFormFromAi() {  const deployment = activeBuildId ? deployme
   document.getElementById('deploySubdomain').value   = project.subdomain || '';
   document.getElementById('deployRepoUrl').value     = project.repoUrl || '';
   document.getElementById('deployBranch').value      = project.branch || 'main';
-  document.getElementById('deployInstallCmd').value  = project.installCmd || 'npm install';
-  document.getElementById('deployBuildCmd').value    = project.buildCmd || 'npm run build';
+  // [FIX] Was `|| 'npm install'` / `|| 'npm run build'` -- see redeploy()'s
+  // matching fix + comment. This function is reached from the AI
+  // Analysis page's Redeploy button, so it's exactly the path that was
+  // silently re-running a stale/wrong Node install command against a
+  // non-Node project even after buildRunner.js's own auto-detection was
+  // fixed to handle it correctly.
+  document.getElementById('deployInstallCmd').value  = project.installCmd || '';
+  document.getElementById('deployBuildCmd').value    = project.buildCmd || '';
   document.getElementById('deployOutputDir').value   = project.outputDir || 'dist';
   document.getElementById('deployNodeVersion').value    = project.nodeVer    || '20';
   if (document.getElementById('deployGoVersion'))     document.getElementById('deployGoVersion').value     = project.goVer     || '1.22';
@@ -13788,6 +13818,24 @@ function openRedeployFormFromAi() {  const deployment = activeBuildId ? deployme
   if (document.getElementById('deployJavaVersion'))   document.getElementById('deployJavaVersion').value   = project.javaVer   || '17';
   if (document.getElementById('deployDotnetVersion')) document.getElementById('deployDotnetVersion').value = project.dotnetVer || '8.0';
   document.getElementById('deployWorkingDir').value  = project.workingDir || '';
+  // [FIX] The runtime hidden field was never restored here either — same
+  // gap as every other redeploy entry point fixed above.
+  const aiRuntimeInput = document.getElementById('deployRuntime');
+  if (aiRuntimeInput) {
+    const savedRuntime = project.runtime || 'node';
+    aiRuntimeInput.value = savedRuntime;
+    const arWrap = aiRuntimeInput.closest('.custom-select');
+    if (arWrap) {
+      const savedOption = arWrap.querySelector(`.cs-option[data-value="${savedRuntime}"]`);
+      arWrap.querySelectorAll('.cs-option').forEach(o => o.classList.remove('selected'));
+      if (savedOption) {
+        savedOption.classList.add('selected');
+        const valueSpan = arWrap.querySelector('.custom-select-trigger .cs-value');
+        if (valueSpan) valueSpan.textContent = savedOption.textContent.trim();
+      }
+    }
+    try { updateVersionFieldVisibility(savedRuntime); } catch (_) {}
+  }
   if (document.getElementById('deploySiteType')) {
     csSetValue('deploySiteType', project.siteType || 'static');
     onSiteTypeChange();
@@ -14890,13 +14938,49 @@ function resetDeployForm() {
   if (envEmpty) envEmpty.style.display = '';
   const defaults = {
     deployProjectName:'', deploySubdomain:'', deployRepoUrl:'', deployBranch:'main',
-    deployInstallCmd:'npm install', deployBuildCmd:'npm run build',
+    // [FIX] Was 'npm install' / 'npm run build' -- hardcoded Node defaults
+    // that populated these fields on EVERY fresh New Deployment, before the
+    // user even picks a runtime. Three separate downstream code paths only
+    // apply their own smarter, runtime-correct default when the field is
+    // genuinely empty (onRuntimeChange's manual dropdown pick check,
+    // applyPresetToForm's pasted-URL auto-detect check, and every
+    // buildRunner.js resolveInstall/resolveBuild smart-hook's `if (!cmd)`
+    // check) -- so a field that already contains 'npm install' the moment
+    // the page loads means a user who deploys a Python/Go/PHP/Ruby/Java/
+    // Rust/.NET/Elixir repo without manually touching the runtime dropdown
+    // silently gets Node's install command run against their non-Node repo.
+    // Leaving these blank restores the intended behavior: every one of
+    // those downstream checks gets a genuine chance to apply the correct
+    // command for whatever runtime actually ends up selected.
+    deployInstallCmd:'', deployBuildCmd:'',
     deployOutputDir:'dist', deployStartCmd:''
   };
   Object.entries(defaults).forEach(([id,val]) => {
     const el = document.getElementById(id);
     if (el) el.value = val;
   });
+  // [FIX] Reset the runtime dropdown to its default (node) and populate
+  // ITS correct defaults explicitly, since onRuntimeChange only ever runs
+  // from the dropdown's own click handler -- never automatically on page
+  // load. Without this, a user who deploys without ever opening the
+  // runtime dropdown (the common case for a plain Node.js project) would
+  // now see genuinely blank install/build commands instead of npm's
+  // correct ones, since the hardcoded defaults above were removed.
+  const runtimeInput = document.getElementById('deployRuntime');
+  if (runtimeInput) {
+    runtimeInput.value = 'node';
+    const wrap = runtimeInput.closest('.custom-select');
+    if (wrap) {
+      const nodeOption = wrap.querySelector('.cs-option[data-value="node"]');
+      wrap.querySelectorAll('.cs-option').forEach(o => o.classList.remove('selected'));
+      if (nodeOption) {
+        nodeOption.classList.add('selected');
+        const valueSpan = wrap.querySelector('.custom-select-trigger .cs-value');
+        if (valueSpan) valueSpan.textContent = nodeOption.textContent.trim();
+      }
+    }
+    try { onRuntimeChange(); } catch (_) {}
+  }
   const sub = document.getElementById('deploySubdomain');
   if (sub) delete sub.dataset.manuallyEdited;
   if (document.getElementById('deploySiteType')) {
@@ -15629,7 +15713,9 @@ async function startDeployment() {
     const subdomain  = document.getElementById('deploySubdomain').value.trim().toLowerCase();
     const siteType   = document.getElementById('deploySiteType')?.value || 'static';
     const buildCmd   = document.getElementById('deployBuildCmd').value.trim() || '';
-    const installCmd = document.getElementById('deployInstallCmd').value.trim() || 'npm install';
+    // [FIX] Was `|| 'npm install'` -- same fallback pattern fixed in the
+    // main GitHub deploy submission above.
+    const installCmd = document.getElementById('deployInstallCmd').value.trim();
     const startCmd   = (document.getElementById('deployStartCmd')?.value || '').trim();
     const outputDir  = document.getElementById('deployOutputDir').value.trim() || 'dist';
     const nodeVer    = document.getElementById('deployNodeVersion').value || '20';
@@ -15829,8 +15915,18 @@ async function startDeployment() {
   const subdomain = document.getElementById('deploySubdomain').value.trim().toLowerCase();
   const repoUrl   = document.getElementById('deployRepoUrl').value.trim();
   const branch    = document.getElementById('deployBranch').value.trim() || 'main';
-  const installCmd= document.getElementById('deployInstallCmd').value.trim() || 'npm install';
-  const buildCmd  = document.getElementById('deployBuildCmd').value.trim()   || 'npm run build';
+  // [FIX] Was `|| 'npm install'` / `|| 'npm run build'` -- this is the
+  // actual submission point, the last gate before the request reaches
+  // /api/deploy. Even with every earlier fix (resetDeployForm, redeploy,
+  // restartActiveDeployment, openRedeployFormFromAi all leaving these
+  // fields genuinely blank for non-Node runtimes), THIS line would have
+  // silently forced npm defaults into the real payload at the moment of
+  // submission -- undoing every one of those fixes at the very last
+  // step. buildRunner.js's own resolveInstall/resolveBuild smart-hooks
+  // need a genuinely empty string to apply their correct runtime-specific
+  // default; sending 'npm install' here means they never get the chance.
+  const installCmd= document.getElementById('deployInstallCmd').value.trim();
+  const buildCmd  = document.getElementById('deployBuildCmd').value.trim();
   const startCmd  = (document.getElementById('deployStartCmd')?.value || '').trim();
   const outputDir = document.getElementById('deployOutputDir').value.trim()  || 'dist';
   const nodeVer    = document.getElementById('deployNodeVersion')?.value   || '20';
@@ -16108,10 +16204,44 @@ async function redeploy(projectId) {
   setVal('deploySubdomain',   p.subdomain  || '');
   setVal('deployRepoUrl',     p.repoUrl    || '');
   setVal('deployBranch',      p.branch     || 'main');
-  setVal('deployInstallCmd',  p.installCmd || 'npm install');
-  setVal('deployBuildCmd',    p.buildCmd   || 'npm run build');
+  // [FIX] Was `p.installCmd || 'npm install'` / `p.buildCmd || 'npm run
+  // build'` -- if a project's saved commands were ever genuinely empty
+  // (e.g. created before these fields existed, or via the CLI/v1 API),
+  // this silently injected Node defaults into the form regardless of the
+  // project's actual runtime, with no way for buildRunner.js's own
+  // resolveInstall/resolveBuild smart-hooks to apply the CORRECT default
+  // instead, since those hooks only act `if (!cmd)` and the field was
+  // never actually blank once this ran. Leave genuinely empty so the
+  // right-runtime default gets a chance to apply during the build.
+  setVal('deployInstallCmd',  p.installCmd || '');
+  setVal('deployBuildCmd',    p.buildCmd   || '');
   setVal('deployOutputDir',   p.outputDir  || 'dist');
   setVal('deployStartCmd',    p.startCmd   || '');
+  // [FIX] The runtime hidden field was never restored from the saved
+  // project at all -- redeploying a Python/Go/.NET/etc. project left
+  // #deployRuntime at whatever value happened to be in the form from
+  // browsing a completely unrelated previous session, silently routing
+  // the redeploy through the wrong language's build path.
+  const redeployRuntimeInput = document.getElementById('deployRuntime');
+  if (redeployRuntimeInput) {
+    const savedRuntime = p.runtime || 'node';
+    redeployRuntimeInput.value = savedRuntime;
+    const rWrap = redeployRuntimeInput.closest('.custom-select');
+    if (rWrap) {
+      const savedOption = rWrap.querySelector(`.cs-option[data-value="${savedRuntime}"]`);
+      rWrap.querySelectorAll('.cs-option').forEach(o => o.classList.remove('selected'));
+      if (savedOption) {
+        savedOption.classList.add('selected');
+        const valueSpan = rWrap.querySelector('.custom-select-trigger .cs-value');
+        if (valueSpan) valueSpan.textContent = savedOption.textContent.trim();
+      }
+    }
+    // Sync version-field visibility + hint text to match, WITHOUT
+    // calling onRuntimeChange() (which would clobber the install/build/
+    // start commands just restored above with generic per-language
+    // defaults instead of this project's own saved values).
+    try { updateVersionFieldVisibility(savedRuntime); } catch (_) {}
+  }
   if (typeof csSetValue === 'function') csSetValue('deploySiteType', p.siteType || 'static');
   if (typeof onSiteTypeChange === 'function') onSiteTypeChange();
   populateEnvRowsFromProject(p);
@@ -16233,7 +16363,12 @@ function _triggerNewVersionUploadFlowEditable(existingProject) {
   if (subEl)  subEl.value  = existingProject.subdomain  || '';
 
   const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
-  setVal('deployInstallCmd', existingProject.installCmd || 'npm install');
+  // [FIX] Was `existingProject.installCmd || 'npm install'` -- same class
+  // of bug as the GitHub redeploy flow above: forcing a Node default onto
+  // a field that should stay genuinely blank when the saved value is
+  // empty, so any future runtime-aware logic for uploads gets a real
+  // chance to apply its own correct default instead.
+  setVal('deployInstallCmd', existingProject.installCmd || '');
   setVal('deployBuildCmd',   existingProject.buildCmd   || '');
   setVal('deployStartCmd',   existingProject.startCmd   || '');
   setVal('deployOutputDir',  existingProject.outputDir  || 'dist');
@@ -30664,7 +30799,10 @@ function _triggerNewVersionUploadFlow(existingProject) {
   const buildEl   = document.getElementById('deployBuildCmd');
   const startEl   = document.getElementById('deployStartCmd');
   const outputEl  = document.getElementById('deployOutputDir');
-  if (installEl) installEl.value = existingProject.installCmd || 'npm install';
+  // [FIX] Same class of bug fixed in the other redeploy/upload flows above --
+  // was `|| 'npm install'`, forcing a Node default onto a genuinely empty
+  // saved value instead of leaving it blank for future runtime-aware logic.
+  if (installEl) installEl.value = existingProject.installCmd || '';
   if (buildEl)   buildEl.value   = existingProject.buildCmd   || '';
   if (startEl)   startEl.value   = existingProject.startCmd   || '';
   if (outputEl)  outputEl.value  = existingProject.outputDir  || 'dist';

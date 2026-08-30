@@ -2920,12 +2920,36 @@ async function runDotnetBuild(opts) {
     extraEnv: { DOTNET_ENVIRONMENT: 'Production', ASPNETCORE_ENVIRONMENT: 'Production', ASPNETCORE_URLS: `http://0.0.0.0:${port}` },
     smartHooks: {
       resolveInstall(projectRoot, project) {
-        let cmd = (project.installCmd || '').trim() || 'dotnet restore';
+        let cmd = (project.installCmd || '').trim();
         const warnings = [];
         // [FALLBACK] Scan for .csproj / .sln to confirm this is a .NET project
         const hasCsproj = (() => { try { return fs.readdirSync(projectRoot).some(f => f.endsWith('.csproj') || f.endsWith('.sln')); } catch(_) { return false; } })();
         if (!hasCsproj) {
           warnings.push('⚠ No .csproj or .sln file found at the project root. Make sure your .NET project files are committed and set Working Directory if they are in a subfolder.');
+        }
+        if (!cmd) {
+          // [FIX] "dotnet restore" with no project argument, run against a
+          // bare directory containing a multi-project .sln (a library +
+          // tests + the actual web app -- the normal shape of any
+          // non-trivial .NET solution, not an edge case), can genuinely
+          // fail with "NuGet.targets: Unable to find a project to
+          // restore!" even though a perfectly restorable web project
+          // exists right there in a subfolder. This is the same
+          // ambiguity resolveBuild's dotnet publish step already had to
+          // solve -- restore needs the identical fix, since it runs
+          // FIRST and its failure was previously masked (swallowed as a
+          // non-fatal warning by installErrorHandler below), silently
+          // leaving the web project's actual NuGet packages unrestored
+          // before the build step ever got a chance to matter.
+          const webCsproj = findDotnetWebProject(projectRoot);
+          if (webCsproj) {
+            cmd = `dotnet restore "${webCsproj}"`;
+            if (countCsprojFiles(projectRoot) > 1) {
+              warnings.push(`Using default install: "dotnet restore ${path.basename(webCsproj)}" (auto-selected the ASP.NET Core web project out of ${countCsprojFiles(projectRoot)} project file(s) found).`);
+            }
+          } else {
+            cmd = 'dotnet restore';
+          }
         }
         return { cmd, warnings };
       },

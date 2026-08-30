@@ -2469,13 +2469,38 @@ async function syncDeploymentProjectToFirebase(user, { project, deployment, stat
       subdomain: project.subdomain || existingProject.subdomain || '',
       repoUrl: project.repoUrl || existingProject.repoUrl || '',
       branch: project.branch || existingProject.branch || 'main',
-      installCmd: project.installCmd || existingProject.installCmd || 'npm install',
-      buildCmd: project.buildCmd || existingProject.buildCmd || 'npm run build',
+      // [FIX] Was `|| 'npm install'` / `|| 'npm run build'` / (siteType)
+      // `|| 'static'` -- this is the Firebase workspace persistence path
+      // (ws.projects), the actual data store this account runs on per
+      // /api/health's own datastore field. Same root-cause bug as the
+      // Mongo-backed /api/deploy fix: forcing these defaults here means
+      // buildRunner.js's per-language resolveInstall/resolveBuild hooks
+      // (and _runBuildDispatch's own siteType-based routing) never see a
+      // genuinely blank value to detect against, for every project ever
+      // saved through this path.
+      installCmd: project.installCmd || existingProject.installCmd || '',
+      buildCmd: project.buildCmd || existingProject.buildCmd || '',
       startCmd: project.startCmd || existingProject.startCmd || '',
       outputDir: project.outputDir || existingProject.outputDir || 'dist',
       workingDir: project.workingDir || '',
       nodeVer: project.nodeVer || existingProject.nodeVer || '20',
-      siteType: project.siteType || existingProject.siteType || 'static',
+      // [FIX] runtime and per-language version fields were never forwarded
+      // into this snapshot at all -- /api/deploy's own project object
+      // already has these set correctly (after the runtime-routing fix),
+      // but this sync function silently dropped them on their way into
+      // Firebase, meaning the persisted record (the one actually read back
+      // on the next redeploy/restart) never had project.runtime, exactly
+      // reproducing the original "buildRunner.js falls back to file-based
+      // auto-detection instead of respecting the chosen runtime" bug one
+      // layer further down the save path.
+      runtime: project.runtime || existingProject.runtime || '',
+      pythonVer: project.pythonVer || existingProject.pythonVer || '3.11',
+      goVer: project.goVer || existingProject.goVer || '1.22',
+      phpVer: project.phpVer || existingProject.phpVer || '8.2',
+      rubyVer: project.rubyVer || existingProject.rubyVer || '3.2',
+      javaVer: project.javaVer || existingProject.javaVer || '17',
+      dotnetVer: project.dotnetVer || existingProject.dotnetVer || '8.0',
+      siteType: project.siteType || existingProject.siteType || '',
       billingPlan: project.billingPlan || existingProject.billingPlan || 'free',
       memoryLimit: project.memoryLimit || existingProject.memoryLimit || '',
       cpuShares: project.cpuShares || existingProject.cpuShares || 0,
@@ -12152,8 +12177,23 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       { subdomain: cleanSub },
       { name, subdomain: cleanSub, repoUrl,
         branch:     branch     || 'main',
-        installCmd: installCmd || 'npm install',
-        buildCmd:   buildCmd   || 'npm run build',
+        // [FIX] Was `installCmd || 'npm install'` / `buildCmd || 'npm run
+        // build'` -- this is the actual root of the whole install/build
+        // command bug chain: even after fixing the frontend to leave these
+        // fields genuinely blank on a fresh deploy (see resetDeployForm),
+        // the SERVER was still permanently baking 'npm install'/'npm run
+        // build' into the saved project record the very first time any
+        // project was created here -- meaning buildRunner.js's own
+        // per-language resolveInstall/resolveBuild smart-hooks (which only
+        // apply their correct runtime-specific default `if (!cmd)`) never
+        // got a genuine chance to run for ANY project, ever, regardless of
+        // what the frontend sent. This is why a .NET deploy with a blank
+        // form still somehow ended up running an npm-flavored command
+        // downstream -- it wasn't the frontend or the redeploy prefill,
+        // it was this line saving the wrong default the moment the
+        // project record was first created.
+        installCmd: installCmd || '',
+        buildCmd:   buildCmd   || '',
         startCmd:   startCmd   || '',
         outputDir:  outputDir  || 'dist',
         workingDir: cleanWorkingDir,
@@ -13314,7 +13354,15 @@ app.post('/api/upload-deploy', requireAuth, async (req, res) => {
     subdomain: cleanSub,
     repoUrl: uploadRepoUrl,
     branch: 'upload',
-    installCmd: installCmd || 'npm install',
+    // [FIX] Was `installCmd || 'npm install'` / `buildCmd || ''` -- same
+    // root cause as the primary /api/deploy fix above: forcing a Node
+    // default into the saved record instead of leaving it genuinely blank
+    // meant runUploadBuild's own auto-detection (autoDetectUploadServerApp,
+    // referenced in the siteType comment just below) never got a truly
+    // empty installCmd to detect against on any project that happened to
+    // reuse this same subdomain from an earlier attempt -- identical
+    // mechanism to the siteType bug already fixed and documented here.
+    installCmd: installCmd || '',
     buildCmd: buildCmd || '',
     startCmd: startCmd || '',
     outputDir: outputDir || 'dist',
@@ -18243,9 +18291,19 @@ async function triggerProjectDeploy(p, branchOverride = null, options = {}) {
   if (!owner) throw new Error('owner_not_found');
   const payload = {
     name: p.name, subdomain: p.subdomain, repoUrl: p.repoUrl, branch: branchOverride || p.branch || 'main',
-    installCmd: p.installCmd || 'npm install', buildCmd: p.buildCmd || 'npm run build',
+    // [FIX] Was `|| 'npm install'` / `|| 'npm run build'` / (siteType)
+    // `|| 'static'`, and runtime/version fields were missing from this
+    // payload entirely. This function fires on every GitHub push
+    // auto-deploy -- without runtime being forwarded, an auto-deploy
+    // triggered by a webhook would silently lose the project's actual
+    // runtime on every single automatic build, even after every other fix
+    // made tonight, since this is the payload that actually reaches
+    // /api/deploy for that path.
+    installCmd: p.installCmd || '', buildCmd: p.buildCmd || '',
     startCmd: p.startCmd || '', outputDir: p.outputDir || 'dist', nodeVer: p.nodeVer || '20',
-    siteType: p.siteType || 'static', envVars: p.envVars || {}, isDockerfileDeploy: !!p.isDockerfileDeploy,
+    runtime: p.runtime || '', pythonVer: p.pythonVer || '3.11', goVer: p.goVer || '1.22',
+    phpVer: p.phpVer || '8.2', rubyVer: p.rubyVer || '3.2', javaVer: p.javaVer || '17', dotnetVer: p.dotnetVer || '8.0',
+    siteType: p.siteType || '', envVars: p.envVars || {}, isDockerfileDeploy: !!p.isDockerfileDeploy,
     isWorker: !!p.isWorker, dockerfilePath: p.dockerfilePath || 'Dockerfile', exposedPort: p.exposedPort || 3000,
     source: options.source || 'auto', autoDeploy: true, triggerSha: String(options.sha || '')
   };
@@ -18282,12 +18340,16 @@ function normalizeWorkspaceAutoDeployProject(project, fallbackId = '') {
     subdomain,
     repoUrl,
     branch: project?.branch || 'main',
-    installCmd: project?.installCmd || 'npm install',
-    buildCmd: project?.buildCmd || 'npm run build',
+    // [FIX] Was `|| 'npm install'` / `|| 'npm run build'` / (siteType)
+    // `|| 'static'` -- same root-cause bug fixed throughout tonight.
+    // runtime/version fields already pass through correctly here via the
+    // `...project` spread above, so no explicit fallback needed for those.
+    installCmd: project?.installCmd || '',
+    buildCmd: project?.buildCmd || '',
     startCmd: project?.startCmd || '',
     outputDir: project?.outputDir || 'dist',
     nodeVer: project?.nodeVer || '20',
-    siteType: project?.siteType || 'static',
+    siteType: project?.siteType || '',
     envVars: project?.envVars || {},
     isDockerfileDeploy: !!project?.isDockerfileDeploy,
     isWorker: !!project?.isWorker,
@@ -18313,9 +18375,15 @@ function updateLocalWorkspaceProject(user, projectId, patch = {}) {
 async function triggerWorkspaceProjectDeploy(user, project, authorization = '', options = {}) {
   const payload = {
     name: project.name, subdomain: project.subdomain, repoUrl: project.repoUrl, branch: project.branch || 'main',
-    installCmd: project.installCmd || 'npm install', buildCmd: project.buildCmd || 'npm run build',
+    // [FIX] Was `|| 'npm install'` / `|| 'npm run build'` / (siteType)
+    // `|| 'static'`, and runtime/version fields were missing entirely --
+    // identical gap to triggerProjectDeploy's fix above, just for the
+    // Firebase-workspace-mode auto-deploy path instead of the Mongo one.
+    installCmd: project.installCmd || '', buildCmd: project.buildCmd || '',
     startCmd: project.startCmd || '', outputDir: project.outputDir || 'dist', nodeVer: project.nodeVer || '20',
-    siteType: project.siteType || 'static', envVars: project.envVars || {}, isDockerfileDeploy: !!project.isDockerfileDeploy,
+    runtime: project.runtime || '', pythonVer: project.pythonVer || '3.11', goVer: project.goVer || '1.22',
+    phpVer: project.phpVer || '8.2', rubyVer: project.rubyVer || '3.2', javaVer: project.javaVer || '17', dotnetVer: project.dotnetVer || '8.0',
+    siteType: project.siteType || '', envVars: project.envVars || {}, isDockerfileDeploy: !!project.isDockerfileDeploy,
     isWorker: !!project.isWorker, dockerfilePath: project.dockerfilePath || 'Dockerfile', exposedPort: project.exposedPort || 3000,
     source: options.source || 'auto', autoDeploy: true, triggerSha: String(options.sha || '')
   };
