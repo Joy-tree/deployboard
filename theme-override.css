@@ -62,7 +62,7 @@
 }
 html[data-theme="dark"]{
   --jt-bg: #080808;
-  --jt-bg-raised: #111111;
+  --jt-bg-raised: #080808;
   --jt-bg-sunken: #050505;
   --jt-border: #1f1f1f;
   --jt-border-soft: #181818;
