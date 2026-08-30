@@ -11442,3 +11442,22 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
 #page-usage .badge-success {
   border-radius: 0 !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   NEW DEPLOYMENT PAGE — "Project Details" section desktop layout fix
+   This section's wrapper (.dcx-layout) shares the same 2-column grid
+   CSS (minmax(0,1fr) minmax(300px,360px)) as the Build Settings /
+   Deployment Summary section further down the page, but only has ONE
+   child (the form) — there's no second element to fill the reserved
+   ~360px right column, so on desktop CSS Grid reserved that entire
+   track as permanent empty space next to the form. Marked this
+   specific instance with .dcx-layout-solo (see index.html) so it can
+   collapse to a single full-width column without touching the
+   Build Settings/Deployment Summary layout below it, which genuinely
+   needs both columns.
+   ══════════════════════════════════════════════════════════════════ */
+@media(min-width:1100px){
+  #page-new-deploy .dcx-layout-solo {
+    grid-template-columns: 1fr !important;
+  }
+}
