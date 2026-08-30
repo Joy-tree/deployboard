@@ -12523,6 +12523,7 @@ async function bootstrapSession(){
     applyUserProfile(meD.user);
     if (typeof adminShowImpersonationBannerIfNeeded === 'function') adminShowImpersonationBannerIfNeeded(meD.user);
     if (typeof claimPendingReferralIfAny === 'function') claimPendingReferralIfAny();
+    if (typeof claimPendingImportRepoIfAny === 'function') claimPendingImportRepoIfAny();
     let wsD = null;
     const wsR = await apiFetch('/api/workspace', { signal: AbortSignal.timeout(5000) });
     const localWs = await wsR.json();
@@ -18187,6 +18188,36 @@ function copyReferralLink() {
     if (ref) localStorage.setItem('db_pending_referral_code', ref);
   } catch (_) {}
 })();
+
+// "Import and Deploy" link from the new-repository email — captures the
+// ?import=owner/repo query param early (mirrors captureReferralCodeFromUrl
+// just above), acted on once the dashboard has actually loaded (see
+// claimPendingImportRepoIfAny, triggered alongside claimPendingReferralIfAny
+// inside bootstrapSession).
+(function capturePendingImportRepoFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const importRepo = params.get('import');
+    if (importRepo) localStorage.setItem('db_pending_import_repo', importRepo);
+  } catch (_) {}
+})();
+
+function claimPendingImportRepoIfAny() {
+  try {
+    const repoFullName = localStorage.getItem('db_pending_import_repo');
+    if (!repoFullName) return;
+    localStorage.removeItem('db_pending_import_repo');
+    // Same real path the Repos page's own "Import Repository" button uses
+    // -- navigates to New Deployment, fills the repo URL, derives project
+    // name/subdomain, and loads branches (which in turn runs the same
+    // auto-detect-and-prefill pipeline fixed earlier tonight).
+    const url = `https://github.com/${repoFullName}`;
+    if (typeof importRepoToDeploy === 'function') {
+      importRepoToDeploy(url, 'main');
+      toast(`Imported ${repoFullName} — review the detected settings below and deploy.`, 'success');
+    }
+  } catch (_) {}
+}
 
 async function claimPendingReferralIfAny() {
   try {

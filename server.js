@@ -2181,6 +2181,10 @@ const userSchema = new mongoose.Schema({
   githubUsername: { type: String, default: '' },
   githubAccessToken: { type: String, default: '' },
   githubAvatarUrl: { type: String, default: '' },
+  // Repo IDs (GitHub's numeric repo.id, stable across renames) this user has
+  // already been emailed about via the "new repo ready to import" notifier.
+  // Prevents re-notifying on every poll cycle for the same repo.
+  knownGithubRepoIds: { type: Array, default: [] },
   googleId: { type: String, default: '', index: true },
   googleAvatarUrl: { type: String, default: '' },
   firebaseUid: { type: String, default: '', index: true },
@@ -18592,6 +18596,185 @@ async function checkProjectAutoDeploy(projectLike, { manual = false } = {}) {
 }
 
 let autoDeployPollRunning = false;
+// ══════════════════════════════════════════════════════════════════
+// NEW REPOSITORY NOTIFIER — emails a user when a new repo shows up on
+// their connected GitHub account, with a real "Import and Deploy"
+// button that lands them on New Deployment with everything pre-filled.
+//
+// This is polling-based, not an instant webhook push: JoyTree currently
+// connects to GitHub via a per-user OAuth App token (see GITHUB_CLIENT_ID
+// above), and GitHub only pushes account-wide "a repo was just created"
+// events (the `repository` webhook event) to GitHub Apps with that
+// subscription enabled at the App/installation level — not to OAuth Apps.
+// Building that would mean registering and installing a GitHub App, a
+// separate, larger integration. This polls each connected user's repo
+// list on an interval instead and diffs against what they were already
+// notified about, which gets the same practical outcome (an email
+// arrives, one click lands you pre-filled) without inventing new GitHub
+// infrastructure.
+// ══════════════════════════════════════════════════════════════════
+const NEW_REPO_POLL_INTERVAL_MS = Math.max(60_000, Number(process.env.NEW_REPO_POLL_INTERVAL_MS || 10 * 60_000) || 10 * 60_000);
+let newRepoPollRunning = false;
+
+async function fetchUserGithubRepoIds(token) {
+  // Lightweight variant of /api/github/repos's fetch loop -- only the
+  // fields the notifier actually needs (id, full_name, language, html_url,
+  // description, private, created_at), sorted by creation date so the
+  // newest repos are easy to reason about.
+  let all = [];
+  for (let page = 1; page <= 3; page++) {
+    const r = await fetch(`https://api.github.com/user/repos?per_page=100&page=${page}&sort=created&direction=desc&visibility=all&affiliation=owner,collaborator,organization_member`, {
+      headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'deployboard', 'Accept': 'application/vnd.github+json' }
+    });
+    if (!r.ok) return null; // Fail closed -- never treat an API error as "user has zero repos"
+    const data = await r.json();
+    if (!Array.isArray(data) || !data.length) break;
+    all = all.concat(data);
+    if (data.length < 100) break;
+  }
+  return all.map(repo => ({
+    id: repo.id,
+    fullName: repo.full_name,
+    language: repo.language || '',
+    private: !!repo.private,
+    description: repo.description || '',
+    htmlUrl: repo.html_url,
+    createdAt: repo.created_at,
+  }));
+}
+
+async function notifyUserOfNewRepos(user, allKnownIdsBefore, freshRepos) {
+  const knownSet = new Set((allKnownIdsBefore || []).map(String));
+  const newOnes = freshRepos.filter(r => !knownSet.has(String(r.id)));
+  if (!newOnes.length) return;
+  for (const repo of newOnes) {
+    try { await sendNewRepoAvailableEmail(user.email, repo); } catch (_) {}
+  }
+}
+
+async function checkAndNotifyNewRepos() {
+  if (newRepoPollRunning) return;
+  newRepoPollRunning = true;
+  try {
+    const users = isDbReady()
+      ? await User.find({ githubAccessToken: { $exists: true, $ne: '' } }).maxTimeMS(8000).catch(() => [])
+      : (localAuth.users || []).filter(u => u.githubAccessToken);
+    for (const user of users) {
+      try {
+        const freshRepos = await fetchUserGithubRepoIds(user.githubAccessToken);
+        if (!freshRepos) continue; // API error this cycle -- try again next tick, don't punish the user for a transient GitHub hiccup
+        const knownBefore = Array.isArray(user.knownGithubRepoIds) ? user.knownGithubRepoIds : [];
+        // First time we've ever seen this user's repo list: record everything
+        // as "known" WITHOUT emailing -- otherwise every pre-existing repo
+        // on a user's account looks "new" the moment they connect GitHub,
+        // and they'd get flooded with emails for repos they made months ago.
+        const isFirstRun = knownBefore.length === 0;
+        if (!isFirstRun) await notifyUserOfNewRepos(user, knownBefore, freshRepos);
+        const updatedIds = freshRepos.map(r => r.id);
+        if (isDbReady()) {
+          await User.updateOne({ _id: user._id }, { $set: { knownGithubRepoIds: updatedIds } }).catch(() => {});
+        } else {
+          user.knownGithubRepoIds = updatedIds;
+          saveLocalAuth();
+        }
+      } catch (_) {}
+    }
+  } finally {
+    newRepoPollRunning = false;
+  }
+}
+setInterval(checkAndNotifyNewRepos, NEW_REPO_POLL_INTERVAL_MS);
+setTimeout(checkAndNotifyNewRepos, 30_000); // small initial delay so this doesn't compete with server startup
+
+async function sendNewRepoAvailableEmail(email = '', repo = {}) {
+  if (!RESEND_API_KEY || !RESEND_FROM_EMAIL || !email) return;
+  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
+  const year = new Date().getFullYear();
+  const importUrl = `https://${BASE_DOMAIN}/dashboard/new-deploy?import=${encodeURIComponent(repo.fullName)}`;
+  const visibility = repo.private ? 'Private' : 'Public';
+  const langLine = repo.language ? `${escapeHtmlEmail(repo.language)} · ${visibility}` : visibility;
+
+  const subject = `New repository ready to import: ${repo.fullName}`;
+  const text = `A new repository on your GitHub account is ready to import and deploy on JoyTree.\n\n${repo.fullName}\n${langLine}\n\nImport and deploy: ${importUrl}\n\nYou can turn these emails off in your JoyTree notification settings.`;
+
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>JoyTree — New repository ready to import</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;">
+        <tr>
+          <td style="padding:24px 32px 0;">
+            <table role="presentation" width="100%"><tr>
+              <td style="width:32px;vertical-align:middle;">
+                <img src="${logoUrl}" alt="JoyTree" width="28" height="28" style="width:28px;height:28px;border-radius:6px;display:block;object-fit:cover;">
+              </td>
+              <td style="vertical-align:middle;padding-left:10px;">
+                <span style="font-size:15px;font-weight:600;color:#202124;">JoyTree</span>
+              </td>
+            </tr></table>
+          </td>
+        </tr>
+        <tr><td style="padding:24px 32px 4px;">
+          <h2 style="margin:0 0 4px;font-size:19px;font-weight:500;color:#202124;">New repository ready to import</h2>
+          <p style="margin:0 0 24px;color:#5f6368;font-size:14px;line-height:1.6;">
+            A new repository on your GitHub account is ready to import and deploy on JoyTree.
+          </p>
+          <table role="presentation" width="100%" style="background:#f8f9fa;margin:0 0 24px;">
+            <tr><td style="padding:16px 18px;">
+              <div style="font-size:15px;font-weight:600;color:#202124;margin-bottom:4px;">${escapeHtmlEmail(repo.fullName)}</div>
+              <div style="font-size:13px;color:#5f6368;">${langLine}</div>
+            </td></tr>
+          </table>
+          <table role="presentation" width="100%"><tr><td align="center">
+            <a href="${importUrl}" style="display:inline-block;background:#10b981;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;">Import and Deploy</a>
+          </td></tr></table>
+          <p style="margin:24px 0 0;color:#80868b;font-size:12px;line-height:1.6;">
+            You can turn new repository emails off in <a href="https://${BASE_DOMAIN}/dashboard/settings" style="color:#1a73e8;text-decoration:none;">notification settings</a>.
+          </p>
+        </td></tr>
+        <tr><td style="padding:24px 32px 24px;">
+          <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 16px;">
+          <p style="margin:0;color:#80868b;font-size:12px;line-height:1.6;">© ${year} JoyTree. This repository was detected on the GitHub account connected to your JoyTree account.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const payload = { from: RESEND_FROM_EMAIL, to: [email], subject, html, text };
+  if (RESEND_REPLY_TO_EMAIL) payload.reply_to = RESEND_REPLY_TO_EMAIL;
+
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => '');
+      console.error(`[new-repo-email] Resend HTTP ${r.status}: ${detail.slice(0, 300)}`);
+    }
+  } catch (e) {
+    console.error(`[new-repo-email] send failed: ${e.message}`);
+  }
+}
+
+// Small HTML-escaping helper for values interpolated into the email
+// template above (repo names/descriptions can contain arbitrary text).
+function escapeHtmlEmail(str = '') {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 async function checkAndAutoDeployProjects() {
   if (autoDeployPollRunning) return;
   autoDeployPollRunning = true;
