@@ -11989,7 +11989,22 @@ async function getUserPlanKey(user) {
 app.post('/api/deploy', requireAuth, async (req, res) => {
   const { name, subdomain, repoUrl, branch, installCmd, buildCmd,
           startCmd, outputDir, workingDir, nodeVer, siteType, envVars,
-          isDockerfileDeploy, isWorker, dockerfilePath, exposedPort } = req.body;
+          isDockerfileDeploy, isWorker, dockerfilePath, exposedPort,
+          // [FIX] runtime (and every per-language version field) was never
+          // destructured from req.body here at all -- the frontend has
+          // always sent it (see the /api/deploy fetch call in index.html),
+          // but this endpoint silently dropped it on the floor. Since
+          // buildRunner.js's dispatcher checks project.runtime FIRST before
+          // falling back to file-based auto-detection, every deploy with
+          // an explicitly chosen non-Node runtime (Python, Go, PHP, Ruby,
+          // Java, Rust, .NET, Elixir, Bun, Deno) was silently ignored and
+          // fell through to heuristic detection instead -- which itself
+          // only recognizes a handful of keyword patterns and defaults to
+          // the static/Node path otherwise. This is why a real .NET repo
+          // (dotnet/dotnet-docker) got built as a static site: runtime:
+          // 'dotnet' was sent, received, and then thrown away before ever
+          // reaching the project record or buildRunner.
+          runtime, pythonVer, goVer, phpVer, rubyVer, javaVer, dotnetVer } = req.body;
   const deploySource = (req.body?.source === 'auto' || req.body?.autoDeploy === true || req.headers['x-deployboard-deploy-source'] === 'auto') ? 'auto' : 'manual';
   const triggerSha = String(req.body?.triggerSha || req.headers['x-deployboard-trigger-sha'] || '').trim();
 
@@ -12143,6 +12158,20 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
         outputDir:  outputDir  || 'dist',
         workingDir: cleanWorkingDir,
         nodeVer:    nodeVer    || '20',
+        // [FIX] runtime (and every per-language version field) was never
+        // saved onto the project record at all -- see the req.body
+        // destructuring comment above /api/deploy for the full chain of
+        // why this silently broke every non-Node deploy. Storing all
+        // version fields unconditionally is harmless: each language's own
+        // build function in buildRunner.js only reads the one it needs
+        // (runPythonBuild reads pythonVer, runGoBuild reads goVer, etc.).
+        runtime:    runtime    || '',
+        pythonVer:  pythonVer  || '3.11',
+        goVer:      goVer      || '1.22',
+        phpVer:     phpVer     || '8.2',
+        rubyVer:    rubyVer    || '3.2',
+        javaVer:    javaVer    || '17',
+        dotnetVer:  dotnetVer  || '8.0',
         // [FIX] Was `siteType || 'static'` -- this is the actual Project
         // record used to build with (via runBuild -> _runBuildDispatch in
         // buildRunner.js), completely independent of the v1 API layer fix
@@ -12179,6 +12208,14 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
       branch: branch||'main', installCmd: installCmd||'npm install',
       buildCmd: buildCmd||'npm run build', startCmd: startCmd||'',
       outputDir: outputDir||'dist', workingDir: cleanWorkingDir, nodeVer: nodeVer||'20',
+      // [FIX] runtime and version fields were missing here too -- this is
+      // the branch that actually runs on this account's Firebase-only
+      // setup (per the comment below), so THIS was the exact line
+      // responsible for every explicitly-chosen non-Node runtime being
+      // silently discarded before ever reaching buildRunner.js's
+      // project.runtime check.
+      runtime: runtime||'', pythonVer: pythonVer||'3.11', goVer: goVer||'1.22',
+      phpVer: phpVer||'8.2', rubyVer: rubyVer||'3.2', javaVer: javaVer||'17', dotnetVer: dotnetVer||'8.0',
       // [FIX] Same as the primary upsert above -- pass blank through instead
       // of forcing 'static', so _runBuildDispatch's real detection runs.
       // This fallback branch is the one actually used whenever Mongo isn't
@@ -16566,7 +16603,14 @@ v1.delete('/projects/:id', async (req, res) => {
 v1.post('/deploy', async (req, res) => {
   try {
     const { name, subdomain, repoUrl, branch, buildCmd, startCmd, installCmd,
-            siteType, nodeVer, outputDir, workingDir, source } = req.body || {};
+            siteType, nodeVer, outputDir, workingDir, source,
+            // [FIX] Same gap as /api/deploy itself -- runtime was never
+            // accepted or forwarded here either, so a CLI/MCP deploy could
+            // never specify an explicit runtime any more than the web UI
+            // could before this fix. Forwarded through unconditionally;
+            // buildRunner.js's dispatcher already falls back to its own
+            // auto-detection when this is blank, same as before.
+            runtime, pythonVer, goVer, phpVer, rubyVer, javaVer, dotnetVer } = req.body || {};
 
     if (!name || !repoUrl) {
       return res.status(400).json({ ok: false, error: 'name and repoUrl are required' });
@@ -16597,6 +16641,15 @@ v1.post('/deploy', async (req, res) => {
         // deployed via the CLI or MCP without an explicit siteType override.
         siteType:   siteType   || '',
         nodeVer:    nodeVer    || '20',
+        // [FIX] Forwarding runtime + version fields through to the real
+        // /api/deploy call -- see the destructuring comment above for why.
+        runtime:    runtime    || '',
+        pythonVer:  pythonVer  || '3.11',
+        goVer:      goVer      || '1.22',
+        phpVer:     phpVer     || '8.2',
+        rubyVer:    rubyVer    || '3.2',
+        javaVer:    javaVer    || '17',
+        dotnetVer:  dotnetVer  || '8.0',
         outputDir:  outputDir  || '',
         workingDir: workingDir || '',
         source:     source     || 'cli',
