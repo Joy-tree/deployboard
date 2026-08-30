@@ -1485,6 +1485,112 @@ function findDjangoWsgiModule(projectRoot) {
 }
 
 // Generates the best possible start command from scratch by scanning the project.
+// [FIX] The old detector only checked a fixed filename list
+// (app/wsgi/main/run/server .py) against the project root. Real-world
+// Flask apps very often use a custom entry-point filename with an
+// application-factory pattern -- e.g. miguelgrinberg/microblog's
+// microblog.py, which does `app = create_app()` -- and would have been
+// completely invisible to the old check, silently falling through to
+// "python app.py" (a file that doesn't exist) and crashing the
+// container with a confusing FileNotFoundError instead of a clear
+// "couldn't find your entry point" message.
+//
+// This scans every top-level .py file's actual CONTENT for the
+// variable-assignment pattern that exposes the WSGI/ASGI app object
+// Python web servers need to import (`<name> = Flask(...)`,
+// `<name> = create_app(...)`, `<name> = FastAPI(...)`), regardless of
+// what the file itself is named. The fixed-filename list is still
+// tried FIRST as a fast path (covers the overwhelming majority of
+// repos without needing to open every file), and content scanning
+// only kicks in when that fast path finds nothing.
+// [FIX] Package-folder layouts are extremely common in real FastAPI/Flask
+// repos (e.g. nsidnev/fastapi-realworld-example-app has its entry point at
+// app/main.py, not main.py at the project root). Checked AFTER the root
+// scan, and restricted to this small, deliberate list of conventional
+// package names -- not a fully recursive walk -- to avoid matching test
+// fixtures, migrations, or vendored dependencies several folders deep.
+const PYTHON_PACKAGE_DIRS = ['app', 'src', 'backend', 'api'];
+
+function findPythonEntryFile(projectRoot, patterns, frameworkKeyword) {
+  // Fast path: try the common filenames first (app.py, main.py, etc.) at
+  // the project root.
+  const commonNames = ['app', 'main', 'wsgi', 'server', 'run', 'api', 'application'];
+  for (const name of commonNames) {
+    const filePath = path.join(projectRoot, name + '.py');
+    if (!fs.existsSync(filePath)) continue;
+    try {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const varMatch = patterns.map(p => content.match(p)).find(m => m);
+      if (varMatch) return { module: name, varName: varMatch[1] };
+    } catch (_) {}
+  }
+
+  // Content scan: any .py file directly at project root (not recursing
+  // into subfolders yet -- covers custom entry-point filenames like
+  // microblog.py that use a standard create_app()/Flask()/FastAPI()
+  // assignment).
+  let entries;
+  try { entries = fs.readdirSync(projectRoot); } catch (_) { entries = []; }
+  const pyFiles = entries.filter(e => e.endsWith('.py') && !commonNames.includes(e.replace(/\.py$/, '')));
+  for (const fname of pyFiles) {
+    try {
+      const content = fs.readFileSync(path.join(projectRoot, fname), 'utf8');
+      const varMatch = patterns.map(p => content.match(p)).find(m => m);
+      if (varMatch) return { module: fname.replace(/\.py$/, ''), varName: varMatch[1] };
+    } catch (_) {}
+  }
+
+  // Package-folder scan: check app/main.py, src/main.py, etc. -- covers
+  // real-world package layouts where the entry point lives one level
+  // inside a conventionally-named package directory. Reports the dotted
+  // module path (e.g. "app.main") so the generated gunicorn/uvicorn
+  // command imports it correctly.
+  for (const pkg of PYTHON_PACKAGE_DIRS) {
+    const pkgDir = path.join(projectRoot, pkg);
+    if (!fs.existsSync(pkgDir) || !fs.lstatSync(pkgDir).isDirectory()) continue;
+    for (const name of commonNames) {
+      const filePath = path.join(pkgDir, name + '.py');
+      if (!fs.existsSync(filePath)) continue;
+      try {
+        const content = fs.readFileSync(filePath, 'utf8');
+        const varMatch = patterns.map(p => content.match(p)).find(m => m);
+        if (varMatch) return { module: `${pkg}.${name}`, varName: varMatch[1] };
+      } catch (_) {}
+    }
+  }
+
+  // Last resort: a generalized factory-function pattern -- catches
+  // `<var> = <any_function_name>()` (zero-arg call) in any file that
+  // also imports the given framework somewhere in its content. This is
+  // deliberately broader/fuzzier than the exact create_app()/Flask()
+  // checks above, so it only runs once everything more precise has
+  // already failed to match -- covers real repos like
+  // nsidnev/fastapi-realworld-example-app's `app = get_application()`
+  // where the factory function has an arbitrary, non-conventional name.
+  if (frameworkKeyword) {
+    const searchDirs = [projectRoot, ...PYTHON_PACKAGE_DIRS.map(p => path.join(projectRoot, p))];
+    for (const dir of searchDirs) {
+      let dirEntries;
+      try { dirEntries = fs.readdirSync(dir); } catch (_) { continue; }
+      for (const fname of dirEntries.filter(e => e.endsWith('.py'))) {
+        try {
+          const content = fs.readFileSync(path.join(dir, fname), 'utf8');
+          if (!new RegExp(frameworkKeyword, 'i').test(content)) continue;
+          const factoryMatch = content.match(/^(\w+)\s*=\s*\w+\(\s*\)\s*$/m);
+          if (factoryMatch) {
+            const relDir = path.relative(projectRoot, dir);
+            const moduleName = fname.replace(/\.py$/, '');
+            const modulePath = relDir ? `${relDir.replace(/[\\/]/g, '.')}.${moduleName}` : moduleName;
+            return { module: modulePath, varName: factoryMatch[1] };
+          }
+        } catch (_) {}
+      }
+    }
+  }
+
+  return null;
+}
+
 function autoDetectPythonStartCmd(projectRoot, runtime, expectedPort, log) {
   const hasManagePy = fs.existsSync(path.join(projectRoot, 'manage.py'));
 
@@ -1495,27 +1601,38 @@ function autoDetectPythonStartCmd(projectRoot, runtime, expectedPort, log) {
     return `gunicorn ${wsgiModule}:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120`;
   }
 
-  // FastAPI / uvicorn
-  const hasUvicorn = ['main', 'app', 'server', 'api'].some(f =>
-    fs.existsSync(path.join(projectRoot, f + '.py')) &&
-    (() => {
-      try { return fs.readFileSync(path.join(projectRoot, f + '.py'), 'utf8').includes('fastapi'); } catch(_) { return false; }
-    })()
-  );
-  if (runtime.framework === 'FastAPI' || hasUvicorn) {
-    const module = ['main', 'app', 'server', 'api'].find(f =>
-      fs.existsSync(path.join(projectRoot, f + '.py'))
-    ) || 'main';
-    return `uvicorn ${module}:app --host 0.0.0.0 --port $PORT --workers 2`;
+  // FastAPI / uvicorn — checks (in order): common root filenames with a
+  // direct FastAPI(...) assignment, any root .py file with the same,
+  // app/main.py-style package layouts, then a fuzzy factory-function
+  // fallback for repos like nsidnev/fastapi-realworld-example-app where
+  // `app = get_application()` wraps FastAPI() inside an arbitrarily named
+  // factory function several calls deep.
+  const fastapiEntry = findPythonEntryFile(projectRoot, [
+    /^(\w+)\s*=\s*FastAPI\s*\(/m,
+  ], 'fastapi');
+  if (runtime.framework === 'FastAPI' || fastapiEntry) {
+    if (fastapiEntry) {
+      log(`\x1b[90m[python] Auto-detected FastAPI entry point: ${fastapiEntry.module} (${fastapiEntry.varName})\x1b[0m`);
+      return `uvicorn ${fastapiEntry.module}:${fastapiEntry.varName} --host 0.0.0.0 --port $PORT --workers 2`;
+    }
+    return `uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2`;
   }
 
-  // Flask / generic gunicorn
-  const flaskFile = ['app', 'wsgi', 'main', 'run', 'server'].find(f =>
-    fs.existsSync(path.join(projectRoot, f + '.py'))
-  );
-  if (runtime.framework === 'Flask' || flaskFile) {
-    const module = flaskFile ? `${flaskFile}:app` : 'app:app';
-    return `gunicorn ${module} --bind 0.0.0.0:$PORT --workers 2 --timeout 120`;
+  // Flask / generic gunicorn — same layered approach: direct Flask(...)
+  // assignment, the standard create_app() application-factory pattern
+  // (covers miguelgrinberg/microblog's microblog.py and most real-world
+  // Flask tutorials/boilerplates), package-folder layouts, then the fuzzy
+  // factory-function fallback for anything more custom.
+  const flaskEntry = findPythonEntryFile(projectRoot, [
+    /^(\w+)\s*=\s*Flask\s*\(/m,
+    /^(\w+)\s*=\s*create_app\s*\(/m,
+  ], 'flask');
+  if (runtime.framework === 'Flask' || flaskEntry) {
+    if (flaskEntry) {
+      log(`\x1b[90m[python] Auto-detected Flask entry point: ${flaskEntry.module} (${flaskEntry.varName})\x1b[0m`);
+      return `gunicorn ${flaskEntry.module}:${flaskEntry.varName} --bind 0.0.0.0:$PORT --workers 2 --timeout 120`;
+    }
+    return `gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120`;
   }
 
   // Plain Python fallback
