@@ -5096,8 +5096,17 @@ html[data-theme="dark"] #landing-view nav,html[data-theme="dark"] .topbar,html[d
 html[data-theme="dark"] .table-shell tbody tr,html[data-theme="dark"] .deployment-table-shell tbody tr{background:#111114!important;box-shadow:none!important;}
 
 /* header + sidebar + hamburger normalization (dark theme only) */
+/* [FIX] This was #09090b (Tailwind zinc-950) -- NOT the same neutral
+   black as the rest of the app's #080808. zinc-950 carries a slight
+   blue tint (R:9 G:9 B:11, blue channel 2 points higher), which is
+   exactly the "AI blue dark" mismatch reported: sidebar/topbar were
+   never actually unstyled or broken, they were rendering a real,
+   different, deliberately-picked hex value this whole time. This rule
+   sits later in the file than the earlier #080808 rule for the same
+   elements, so being equal specificity + both !important, this one
+   was winning by source order. */
 html[data-theme="dark"] #sidebar,html[data-theme="dark"] .landing-drawer,html[data-theme="dark"] .sidebar-logo,html[data-theme="dark"] .sidebar-bottom,html[data-theme="dark"] #topbar,html[data-theme="dark"] .topbar-right,html[data-theme="dark"] .topbar-breadcrumb,html[data-theme="dark"] .app-toolbar,html[data-theme="dark"] .app-header{
-  background:#09090b!important;
+  background:#080808!important;
   background-image:none!important;
   border-color:var(--border)!important;
   box-shadow:none!important;
@@ -5108,16 +5117,23 @@ html[data-theme="dark"] #sidebar,html[data-theme="dark"] .landing-drawer,html[da
   box-shadow:none!important;
   filter:none!important;
 }
+/* [FIX] Same blue-tinted zinc-scale mismatch on the interactive pieces
+   inside the chrome -- hamburger button, nav links, topbar icon
+   buttons were #111114 (zinc-900, blue-tinted) and the active nav
+   item was #18181b (zinc-900, also blue-tinted). Replaced with a
+   neutral grey one step above #080808 with no blue channel bias, so
+   hover/active states read as "slightly raised" without reintroducing
+   the off-hue cast. */
 html[data-theme="dark"] .sidebar-nav a,html[data-theme="dark"] .sidebar-nav button,html[data-theme="dark"] .sidebar-section a,html[data-theme="dark"] .sidebar-section button,html[data-theme="dark"] .nav-link,html[data-theme="dark"] .ld-link,html[data-theme="dark"] .ld-action,
 html[data-theme="dark"] .topbar-btn,html[data-theme="dark"] .topbar-icon-btn,html[data-theme="dark"] .btn-nav-menu,html[data-theme="dark"] .hbg span,html[data-theme="dark"] .mobile-menu-btn,html[data-theme="dark"] .hamburger{
-  background:#111114!important;
+  background:#141414!important;
   background-image:none!important;
   border:1px solid var(--border)!important;
   color:var(--text)!important;
   box-shadow:none!important;
 }
 html[data-theme="dark"] .sidebar-nav a.active,html[data-theme="dark"] .sidebar-nav button.active,html[data-theme="dark"] .sidebar-nav .is-active,html[data-theme="dark"] .nav-link.active,html[data-theme="dark"] .ld-link.active{
-  background:#18181b!important;
+  background:#1a1a1a!important;
   border-color:var(--border-h)!important;
   color:#e4e4e7!important;
 }
