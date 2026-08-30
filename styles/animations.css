@@ -1,151 +1,50 @@
 /* ── Block 31 ───────────────────────────── */
 
-  /* Logo: soft pulsing halo — makes the brand mark read as "iconic" at a glance */
-  .home-logo-showcase{ position:relative; }
-  .home-logo-showcase img{
-    animation: jtLogoPulse 3.2s ease-in-out infinite;
-    border-radius:14px;
-  }
-  @keyframes jtLogoPulse{
-    0%,100%{ box-shadow:0 0 18px rgba(34,197,94,.28), 0 0 0 0 rgba(16,185,129,.35); }
-    50%{ box-shadow:0 0 30px rgba(34,197,94,.5), 0 0 0 9px rgba(16,185,129,0); }
-  }
+/* Logo showcase — flat, no pulsing glow halo. Matches the site-wide
+   removal of ambient glow/light-bleed effects (box-shadow blur pulses
+   read as decorative "AI glow" rather than professional polish). */
+.home-logo-showcase{ position:relative; }
+.home-logo-showcase img{
+  border-radius:14px;
+}
 
-  /* Headline: tasteful ambient glow instead of flat text (typewriter line untouched) */
-  .hero-h1{
-    text-shadow: none !important;
-  }
+/* Headline: flat text, no glow */
+.hero-h1{
+  text-shadow: none !important;
+}
 
-  /* Primary CTA: premium glow + lift, so it reads as the obvious next action */
-  .btn-hero-primary{
-    box-shadow: none !important;
-    transition: transform .18s ease, background .18s, border-color .18s !important;
-  }
-  .btn-hero-primary:hover{
-    transform: translateY(-2px);
-    box-shadow: 0 16px 38px rgba(16,185,129,.42), 0 0 0 1px rgba(16,185,129,.28) inset !important;
-  }
-  .btn-hero-primary:active{ transform: translateY(0); }
+/* Primary CTA: flat, simple lift on hover — no colored glow shadow */
+.btn-hero-primary{
+  box-shadow: none !important;
+  transition: transform .18s ease, background .18s, border-color .18s !important;
+}
+.btn-hero-primary:hover{
+  transform: translateY(-2px);
+  box-shadow: none !important;
+}
+.btn-hero-primary:active{ transform: translateY(0); }
 
-  /* Ghost CTA: subtle glass treatment so it doesn't look like a plain outline */
-  .btn-hero-ghost{
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    transition: transform .18s ease, border-color .18s, background .18s !important;
-  }
-  .btn-hero-ghost:hover{ transform: translateY(-2px); }
-  .btn-hero-ghost:active{ transform: translateY(0); }
+/* Ghost CTA: flat, no backdrop blur/glass effect */
+.btn-hero-ghost{
+  transition: transform .18s ease, border-color .18s, background .18s !important;
+}
+.btn-hero-ghost:hover{ transform: translateY(-2px); }
+.btn-hero-ghost:active{ transform: translateY(0); }
 
-  /* Mobile: the heavier .hero-orb / .hero-aurora are disabled here for performance,
-     so give the existing lightweight ::before/::after glows more presence instead
-     of leaving the hero looking flat, plus a slow cheap breathing pulse (opacity
-     only — no layout/paint cost beyond what's already there). */
-  @media (max-width:768px){
-    .hero::before{ display:none; }
-    .hero::after{ display:none; }
-        .home-logo-showcase{ margin:4px auto 10px; }
-    .home-logo-showcase img{ width:60px; height:60px; }
-    .home-logo-showcase .home-logo-name{ font-size:1.28rem; }
+@media (max-width:768px){
+  .hero::before{ display:none; }
+  .hero::after{ display:none; }
+      .home-logo-showcase{ margin:4px auto 10px; }
+  .home-logo-showcase img{ width:60px; height:60px; }
+  .home-logo-showcase .home-logo-name{ font-size:1.28rem; }
 
-    .hero-sub{ padding:0 4px; }
-    .hero-actions{ margin-bottom:36px; gap:14px; }
-    .btn-hero-primary, .btn-hero-ghost{ padding:15px 24px !important; font-size:1.02rem; }
-  }
+  .hero-sub{ padding:0 4px; }
+  .hero-actions{ margin-bottom:36px; gap:14px; }
+  .btn-hero-primary, .btn-hero-ghost{ padding:15px 24px !important; font-size:1.02rem; }
+}
 
 /* ── Block 32 ───────────────────────────── */
-
-  .jt-leaves-fall {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-    z-index: 50; /* above page content, below dropdowns/modals (960+) */
-  }
-
-  .jt-leaf {
-    position: absolute;
-    top: -12%;
-    will-change: transform;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-  }
-
-  .jt-leaf-flutter {
-    width: 100%; height: 100%;
-  }
-  .jt-leaf-flutter svg { display: block; width: 100%; height: 100%; }
-  .jt-leaf-flutter.jt-is-fluttering {
-    animation-name: jt-leaf-flutter;
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
-  }
-
-  @keyframes jt-leaf-flutter {
-    0%   { transform: scaleX(1) rotateY(0deg); }
-    50%  { transform: scaleX(0.35) rotateY(180deg); }
-    100% { transform: scaleX(1) rotateY(360deg); }
-  }
-
-  @keyframes jt-wind-a {
-    0%   { transform: translate3d(0, -12vh, 0) rotate(0deg); }
-    8%   { transform: translate3d(4vw, -2vh, 0) rotate(20deg); }
-    14%  { transform: translate3d(16vw, 6vh, 0) rotate(70deg); }
-    18%  { transform: translate3d(20vw, 12vh, 0) rotate(90deg); }
-    32%  { transform: translate3d(10vw, 32vh, 0) rotate(170deg); }
-    46%  { transform: translate3d(25vw, 50vh, 0) rotate(230deg); }
-    52%  { transform: translate3d(29vw, 57vh, 0) rotate(255deg); }
-    68%  { transform: translate3d(16vw, 75vh, 0) rotate(330deg); }
-    80%  { transform: translate3d(27vw, 90vh, 0) rotate(390deg); }
-    100% { transform: translate3d(22vw, 112vh, 0) rotate(470deg); }
-  }
-  @keyframes jt-wind-b {
-    0%   { transform: translate3d(0, -12vh, 0) rotate(-12deg); }
-    10%  { transform: translate3d(-6vw, 0vh, 0) rotate(-40deg); }
-    16%  { transform: translate3d(-18vw, 8vh, 0) rotate(-85deg); }
-    30%  { transform: translate3d(-11vw, 28vh, 0) rotate(-150deg); }
-    44%  { transform: translate3d(-24vw, 48vh, 0) rotate(-220deg); }
-    50%  { transform: translate3d(-28vw, 55vh, 0) rotate(-250deg); }
-    64%  { transform: translate3d(-15vw, 72vh, 0) rotate(-320deg); }
-    78%  { transform: translate3d(-26vw, 88vh, 0) rotate(-380deg); }
-    100% { transform: translate3d(-19vw, 112vh, 0) rotate(-450deg); }
-  }
-  @keyframes jt-wind-c {
-    0%   { transform: translate3d(0, -12vh, 0) rotate(6deg); }
-    12%  { transform: translate3d(9vw, 4vh, 0) rotate(55deg); }
-    20%  { transform: translate3d(23vw, 14vh, 0) rotate(100deg); }
-    26%  { transform: translate3d(25vw, 20vh, 0) rotate(120deg); }
-    40%  { transform: translate3d(8vw, 40vh, 0) rotate(200deg); }
-    54%  { transform: translate3d(27vw, 58vh, 0) rotate(270deg); }
-    60%  { transform: translate3d(31vw, 64vh, 0) rotate(300deg); }
-    76%  { transform: translate3d(13vw, 84vh, 0) rotate(370deg); }
-    100% { transform: translate3d(24vw, 112vh, 0) rotate(440deg); }
-  }
-  @keyframes jt-wind-d {
-    0%   { transform: translate3d(0, -12vh, 0) rotate(-6deg); }
-    9%   { transform: translate3d(-7vw, -1vh, 0) rotate(-35deg); }
-    15%  { transform: translate3d(-20vw, 7vh, 0) rotate(-80deg); }
-    28%  { transform: translate3d(-9vw, 26vh, 0) rotate(-140deg); }
-    42%  { transform: translate3d(-25vw, 46vh, 0) rotate(-210deg); }
-    58%  { transform: translate3d(-11vw, 62vh, 0) rotate(-280deg); }
-    72%  { transform: translate3d(-27vw, 80vh, 0) rotate(-350deg); }
-    86%  { transform: translate3d(-13vw, 96vh, 0) rotate(-400deg); }
-    100% { transform: translate3d(-20vw, 112vh, 0) rotate(-460deg); }
-  }
-  @keyframes jt-wind-calm-a {
-    0%   { transform: translate3d(0, -12vh, 0) rotate(0deg); }
-    25%  { transform: translate3d(6vw, 25vh, 0) rotate(25deg); }
-    50%  { transform: translate3d(11vw, 55vh, 0) rotate(45deg); }
-    75%  { transform: translate3d(7vw, 85vh, 0) rotate(20deg); }
-    100% { transform: translate3d(13vw, 112vh, 0) rotate(60deg); }
-  }
-  @keyframes jt-wind-calm-b {
-    0%   { transform: translate3d(0, -12vh, 0) rotate(0deg); }
-    25%  { transform: translate3d(-7vw, 25vh, 0) rotate(-20deg); }
-    50%  { transform: translate3d(-12vw, 55vh, 0) rotate(-40deg); }
-    75%  { transform: translate3d(-8vw, 85vh, 0) rotate(-15deg); }
-    100% { transform: translate3d(-14vw, 112vh, 0) rotate(-55deg); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .jt-leaves-fall { display: none; }
-  }
+/* Falling-leaves ambient animation system removed entirely — flat,
+   dense, no decorative motion, matching the site-wide flat redesign
+   (compare: Pxxl/Vercel/Render's deep, clean black backgrounds with
+   zero background noise). */
