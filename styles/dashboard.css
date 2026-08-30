@@ -1373,7 +1373,7 @@ ul { list-style:none; }
 #pageLoader {
   position:fixed;inset:0;z-index:9999;display:flex;
   align-items:center;justify-content:center;
-  background:#0a0a0a;
+  background:#080808;
   transition:opacity .4s ease;
 }
 #pageLoader.hidden { opacity:0; pointer-events:none; }
@@ -4132,7 +4132,7 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 /* Animated background */
 .auth-bg {
   position:absolute;inset:0;pointer-events:none;z-index:0;
-  background:#0a0a0a;
+  background:#080808;
 }
 .auth-bg-grid {
   display:none;
@@ -5063,7 +5063,7 @@ html[data-theme="light"] .sshk-key-fp    { color: var(--jt-text-faint) !importan
 
 /* ── DARK THEME ───────────────────────────────────────────────── */
 html[data-theme="dark"] #app,
-html[data-theme="dark"] #app [id^="page-"] { background: #0a0a0a !important; }
+html[data-theme="dark"] #app [id^="page-"] { background: #080808 !important; }
 html[data-theme="dark"] #sidebar           { background: #080808 !important; }
 html[data-theme="dark"] #topbar            { background: #080808 !important; }
 /* [REMOVED — see BLUEPRINT comment in theme-override.css] The two rules

@@ -82,7 +82,15 @@ html[data-theme="dark"]{
 }
 /* Site currently defaults dark with no data-theme set on first load */
 :root:not([data-theme]), html:not([data-theme]){
-  --jt-bg: #080808; --jt-bg-raised: #111111; --jt-bg-sunken: #050505;
+  /* [FIX] This block is what's actually in effect during the loading
+     screen and any first paint before JS sets data-theme="dark" on
+     <html> -- and --jt-bg-raised here was STILL #111111, the exact
+     stale value the "critical" --jt-bg-raised fix (commit 4d9d75c)
+     changed everywhere else. That fix only touched the
+     html[data-theme="dark"] block, not this separate no-theme-yet
+     fallback, so the loader kept flashing the lighter/ashy grey this
+     whole time regardless of that fix. Matched to #080808 here too. */
+  --jt-bg: #080808; --jt-bg-raised: #080808; --jt-bg-sunken: #050505;
   --jt-border: #1f1f1f; --jt-border-soft: #181818;
   --jt-text: #F3F4F6; --jt-text-dim: #A1A1AA; --jt-text-faint: #6B7280;
   --jt-brand: #10B981; --jt-brand-strong: #34D399; --jt-brand-tint: #0A2E22;
