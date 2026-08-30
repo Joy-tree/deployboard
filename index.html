@@ -14705,8 +14705,44 @@ function viewDeployLogs(deployId) {
 // ══════════════════════════════════════════════════════════════════
 // NEW DEPLOY FORM
 // ══════════════════════════════════════════════════════════════════
-function onRuntimeChange() {
-  const runtime = document.getElementById('deployRuntime')?.value || 'node';
+// [FIX] Hoisted out of onRuntimeChange to a top-level constant so
+// updateVersionFieldVisibility (below) can also read it without duplicating
+// the whole map, or needing onRuntimeChange to have run first.
+const RUNTIME_HINTS = {
+  'node':           'JavaScript/TypeScript — auto-detects npm/yarn/pnpm. Joytree warns if start command is missing $PORT.',
+  'node-nextjs':    'Next.js — Joytree auto-runs "next build". Use Static Site for export mode, Server App for SSR.',
+  'node-nestjs':    'NestJS — compiled TypeScript, served with "node dist/main.js".',
+  'bun':            'Bun runtime — Joytree auto-detects start script from package.json, falls back to index.ts.',
+  'deno':           'Deno runtime — Joytree runs your "start" task from deno.json, or falls back to main.ts/mod.ts with --allow-* flags.',
+  'python-django':  'Django — Joytree auto-detects wsgi.py, sets DJANGO_SETTINGS_MODULE, runs collectstatic + migrate, starts gunicorn. ALLOWED_HOSTS auto-set.',
+  'python-flask':   'Flask — gunicorn serves the WSGI app. Joytree auto-detects app.py entry point and auto-installs gunicorn.',
+  'python-fastapi': 'FastAPI — uvicorn serves the ASGI app. Joytree auto-detects main.py entry point and auto-installs uvicorn.',
+  'python-generic': 'Generic Python server — customize install, build, and start commands below.',
+  'go-generic':     'Go — Joytree compiles with "go build -o server", auto-detects cmd/ subfolders. App must read os.Getenv("PORT").',
+  'go-gin':         'Go + Gin — compiled to binary, served directly. Make sure your app reads os.Getenv("PORT").',
+  'go-echo':        'Go + Echo — compiled to binary, served directly. Make sure your app reads os.Getenv("PORT").',
+  'php-laravel':    'Laravel — Joytree runs composer install, artisan optimize, and conditionally migrates if DATABASE_URL is set. APP_KEY auto-generated if missing.',
+  'php-symfony':    'Symfony — Joytree clears and warms cache, serves via PHP built-in server from public/.',
+  'php-generic':    'Plain PHP — served via PHP built-in server from public/ directory.',
+  'ruby-rails':     'Ruby on Rails — Joytree runs asset precompile, conditionally migrates if DATABASE_URL is set. SECRET_KEY_BASE auto-generated if missing.',
+  'ruby-sinatra':   'Sinatra — served via rackup. Make sure your app reads ENV["PORT"].',
+  'java-spring':    'Spring Boot — Joytree auto-detects Maven vs Gradle, chmod’s wrapper scripts, builds JAR, runs with --server.port=$PORT.',
+  'java-quarkus':   'Quarkus — built with Maven, JAR served with Java. App must read $SERVER_PORT.',
+  'kotlin-spring':  'Kotlin + Spring Boot — built with Gradle bootJar, served as a JAR with --server.port=$PORT.',
+  'rust-axum':      'Rust + Axum — Joytree reads binary name from Cargo.toml [[bin]] and runs the release binary with PORT=$PORT.',
+  'rust-actix':     'Rust + Actix-web — Joytree reads binary name from Cargo.toml and runs the release binary with PORT=$PORT.',
+  'rust-generic':   'Generic Rust — compiled with cargo build --release. App must read PORT env var.',
+  'dotnet':         '.NET / ASP.NET Core — Joytree runs dotnet publish, sets ASPNETCORE_URLS automatically. No port config needed.',
+  'elixir-phoenix': 'Elixir Phoenix — Joytree installs Node.js for asset compilation, conditionally migrates if DATABASE_URL is set. SECRET_KEY_BASE auto-generated.',
+};
+
+// [FIX] Extracted from onRuntimeChange so applyPresetToForm can sync the
+// version-field visibility + hint text after an auto-detected preset
+// changes the runtime, WITHOUT also re-running onRuntimeChange's
+// unconditional install/build/start overwrite (see the comment at its
+// call site in applyPresetToForm for why that matters).
+function updateVersionFieldVisibility(runtime) {
+  runtime = runtime || document.getElementById('deployRuntime')?.value || 'node';
   const isPython = runtime.startsWith('python');
   const isGo     = runtime.startsWith('go');
   const isPHP    = runtime.startsWith('php');
@@ -14719,7 +14755,6 @@ function onRuntimeChange() {
   const isDeno   = runtime === 'deno';
   const isNode   = !isPython && !isGo && !isPHP && !isRuby && !isJava && !isRust && !isDotnet && !isElixir && !isBun && !isDeno;
 
-  // ── Show/hide ALL version pickers ───────────────────────────────────────────────────────────────
   const verFieldMap = {
     nodeVersionField:   isNode,
     pythonVersionField: isPython,
@@ -14734,36 +14769,13 @@ function onRuntimeChange() {
     if (el) el.style.display = show ? '' : 'none';
   });
 
-  // ── Hint text ─────────────────────────────────────────────────────────────────────────────
-  const hints = {
-    'node':           'JavaScript/TypeScript — auto-detects npm/yarn/pnpm. Joytree warns if start command is missing $PORT.',
-    'node-nextjs':    'Next.js — Joytree auto-runs "next build". Use Static Site for export mode, Server App for SSR.',
-    'node-nestjs':    'NestJS — compiled TypeScript, served with "node dist/main.js".',
-    'bun':            'Bun runtime — Joytree auto-detects start script from package.json, falls back to index.ts.',
-    'deno':           'Deno runtime — Joytree runs your "start" task from deno.json, or falls back to main.ts/mod.ts with --allow-* flags.',
-    'python-django':  'Django — Joytree auto-detects wsgi.py, sets DJANGO_SETTINGS_MODULE, runs collectstatic + migrate, starts gunicorn. ALLOWED_HOSTS auto-set.',
-    'python-flask':   'Flask — gunicorn serves the WSGI app. Joytree auto-detects app.py entry point and auto-installs gunicorn.',
-    'python-fastapi': 'FastAPI — uvicorn serves the ASGI app. Joytree auto-detects main.py entry point and auto-installs uvicorn.',
-    'python-generic': 'Generic Python server — customize install, build, and start commands below.',
-    'go-generic':     'Go — Joytree compiles with "go build -o server", auto-detects cmd/ subfolders. App must read os.Getenv("PORT").',
-    'go-gin':         'Go + Gin — compiled to binary, served directly. Make sure your app reads os.Getenv("PORT").',
-    'go-echo':        'Go + Echo — compiled to binary, served directly. Make sure your app reads os.Getenv("PORT").',
-    'php-laravel':    'Laravel — Joytree runs composer install, artisan optimize, and conditionally migrates if DATABASE_URL is set. APP_KEY auto-generated if missing.',
-    'php-symfony':    'Symfony — Joytree clears and warms cache, serves via PHP built-in server from public/.',
-    'php-generic':    'Plain PHP — served via PHP built-in server from public/ directory.',
-    'ruby-rails':     'Ruby on Rails — Joytree runs asset precompile, conditionally migrates if DATABASE_URL is set. SECRET_KEY_BASE auto-generated if missing.',
-    'ruby-sinatra':   'Sinatra — served via rackup. Make sure your app reads ENV["PORT"].',
-    'java-spring':    'Spring Boot — Joytree auto-detects Maven vs Gradle, chmod’s wrapper scripts, builds JAR, runs with --server.port=$PORT.',
-    'java-quarkus':   'Quarkus — built with Maven, JAR served with Java. App must read $SERVER_PORT.',
-    'kotlin-spring':  'Kotlin + Spring Boot — built with Gradle bootJar, served as a JAR with --server.port=$PORT.',
-    'rust-axum':      'Rust + Axum — Joytree reads binary name from Cargo.toml [[bin]] and runs the release binary with PORT=$PORT.',
-    'rust-actix':     'Rust + Actix-web — Joytree reads binary name from Cargo.toml and runs the release binary with PORT=$PORT.',
-    'rust-generic':   'Generic Rust — compiled with cargo build --release. App must read PORT env var.',
-    'dotnet':         '.NET / ASP.NET Core — Joytree runs dotnet publish, sets ASPNETCORE_URLS automatically. No port config needed.',
-    'elixir-phoenix': 'Elixir Phoenix — Joytree installs Node.js for asset compilation, conditionally migrates if DATABASE_URL is set. SECRET_KEY_BASE auto-generated.',
-  };
   const hint = document.getElementById('runtimeHint');
-  if (hint) hint.textContent = hints[runtime] || '';
+  if (hint) hint.textContent = RUNTIME_HINTS[runtime] || '';
+}
+
+function onRuntimeChange() {
+  const runtime = document.getElementById('deployRuntime')?.value || 'node';
+  updateVersionFieldVisibility(runtime);
 
   // ── Command presets (synced with buildRunner.js smart defaults) ──────────────────────────────
   const presets = {
@@ -15221,15 +15233,15 @@ function isSkipBuildCmd(cmd = '') {
 }
 
 const DEPLOY_PRESETS = [
-  { key: 'nextjs', label: 'Next.js', match: (s) => s.has('next.config.js') || s.has('next.config.mjs'), install: 'npm install', build: 'npm run build', start: 'npm start', output: '.next', siteType: 'server' },
-  { key: 'nuxt', label: 'Nuxt', match: (s) => s.has('nuxt.config.ts') || s.has('nuxt.config.js'), install: 'npm install', build: 'npm run build', start: 'npm run start', output: '.output', siteType: 'server' },
-  { key: 'vite', label: 'Vite', match: (s) => s.has('vite.config.ts') || s.has('vite.config.js'), install: 'npm install', build: 'npm run build', start: '', output: 'dist', siteType: 'static' },
-  { key: 'python', label: 'Python', match: (s) => s.has('requirements.txt') || s.has('pyproject.toml'), install: 'pip install -r requirements.txt', build: 'echo skip', start: 'python app.py', output: '.', siteType: 'server' },
-  { key: 'go', label: 'Go', match: (s) => s.has('go.mod'), install: 'go mod download', build: 'go build -o app .', start: './app', output: '.', siteType: 'server' },
-  { key: 'rust', label: 'Rust', match: (s) => s.has('cargo.toml'), install: 'cargo fetch', build: 'cargo build --release', start: './target/release/app', output: '.', siteType: 'server' },
-  { key: 'java', label: 'Java', match: (s) => s.has('pom.xml') || s.has('build.gradle') || s.has('build.gradle.kts'), install: './mvnw -q -DskipTests dependency:resolve', build: './mvnw -q -DskipTests package', start: 'java -jar target/*.jar', output: '.', siteType: 'server' },
-  { key: 'dotnet', label: '.NET', match: (s) => Array.from(s).some(p => p.endsWith('.csproj')), install: 'dotnet restore', build: 'dotnet publish -c Release', start: 'dotnet run --no-build', output: '.', siteType: 'server' },
-  { key: 'php', label: 'PHP', match: (s) => s.has('composer.json'), install: 'composer install --no-dev --optimize-autoloader', build: 'echo skip', start: 'php -S 0.0.0.0:${PORT:-3000} -t public', output: 'public', siteType: 'server' },
+  { key: 'nextjs', label: 'Next.js', match: (s) => s.has('next.config.js') || s.has('next.config.mjs'), install: 'npm install', build: 'npm run build', start: 'npm start', output: '.next', siteType: 'server', runtime: 'node-nextjs' },
+  { key: 'nuxt', label: 'Nuxt', match: (s) => s.has('nuxt.config.ts') || s.has('nuxt.config.js'), install: 'npm install', build: 'npm run build', start: 'npm run start', output: '.output', siteType: 'server', runtime: 'node' },
+  { key: 'vite', label: 'Vite', match: (s) => s.has('vite.config.ts') || s.has('vite.config.js'), install: 'npm install', build: 'npm run build', start: '', output: 'dist', siteType: 'static', runtime: 'node' },
+  { key: 'python', label: 'Python', match: (s) => s.has('requirements.txt') || s.has('pyproject.toml'), install: 'pip install -r requirements.txt', build: 'echo skip', start: 'python app.py', output: '.', siteType: 'server', runtime: 'python-generic' },
+  { key: 'go', label: 'Go', match: (s) => s.has('go.mod'), install: 'go mod download', build: 'go build -o app .', start: './app', output: '.', siteType: 'server', runtime: 'go-generic' },
+  { key: 'rust', label: 'Rust', match: (s) => s.has('cargo.toml'), install: 'cargo fetch', build: 'cargo build --release', start: './target/release/app', output: '.', siteType: 'server', runtime: 'rust-generic' },
+  { key: 'java', label: 'Java', match: (s) => s.has('pom.xml') || s.has('build.gradle') || s.has('build.gradle.kts'), install: './mvnw -q -DskipTests dependency:resolve', build: './mvnw -q -DskipTests package', start: 'java -jar target/*.jar', output: '.', siteType: 'server', runtime: 'java-spring' },
+  { key: 'dotnet', label: '.NET', match: (s) => Array.from(s).some(p => p.endsWith('.csproj')), install: 'dotnet restore', build: 'dotnet publish -c Release', start: 'dotnet run --no-build', output: '.', siteType: 'server', runtime: 'dotnet' },
+  { key: 'php', label: 'PHP', match: (s) => s.has('composer.json'), install: 'composer install --no-dev --optimize-autoloader', build: 'echo skip', start: 'php -S 0.0.0.0:${PORT:-3000} -t public', output: 'public', siteType: 'server', runtime: 'php-generic' },
 ];
 
 async function detectDeployPreset(repoUrl, branch = 'main') {
@@ -15262,6 +15274,37 @@ function applyPresetToForm(preset, type = 'deploy') {
       siteType.value = preset.siteType;
       try {
     onSiteTypeChange(siteType.value); } catch (_) {}
+    }
+    // [FIX] This function set siteType and the install/build/start commands
+    // correctly, but never touched the #deployRuntime hidden field at all --
+    // meaning a pasted repo URL that auto-detected as e.g. a .NET project
+    // (via the .csproj match above) got the right siteType/commands, but
+    // silently kept whatever runtime was selected before (default 'node'
+    // if the user never manually opened the runtime dropdown). Since the
+    // backend now correctly respects project.runtime end-to-end, that
+    // mismatch meant the build engine picked the Node.js build path for a
+    // .NET repo instead of runDotnetBuild -- same failure shape as the
+    // backend bug, just from a different cause. Update both the hidden
+    // input AND its visible custom-select display/hint so what's shown
+    // on screen matches what's actually about to be sent.
+    const runtimeInput = document.getElementById('deployRuntime');
+    if (preset.runtime && runtimeInput && runtimeInput.value !== preset.runtime) {
+      runtimeInput.value = preset.runtime;
+      const wrap = runtimeInput.closest('.custom-select');
+      const targetOption = wrap?.querySelector(`.cs-option[data-value="${preset.runtime}"]`);
+      if (targetOption) {
+        wrap.querySelectorAll('.cs-option').forEach(o => o.classList.remove('selected'));
+        targetOption.classList.add('selected');
+        const valueSpan = wrap.querySelector('.custom-select-trigger .cs-value');
+        if (valueSpan) valueSpan.textContent = targetOption.textContent.trim();
+      }
+      // Deliberately NOT calling onRuntimeChange() here -- it unconditionally
+      // overwrites install/build/start with generic per-language defaults,
+      // which would immediately clobber the smarter, repo-specific values
+      // this function just set a few lines above (e.g. Next.js's actual
+      // "npm run build" + ".next" output vs the generic Node preset).
+      // Only the version-field visibility needs to match the new runtime.
+      try { updateVersionFieldVisibility(preset.runtime); } catch (_) {}
     }
     toast(`Detected ${preset.label}. Suggested production commands applied.`, 'success');
     return;
