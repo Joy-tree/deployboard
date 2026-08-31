@@ -158,6 +158,21 @@ html[data-theme="light"] #landing-view,
 html[data-theme="light"] body{
   background: var(--jt-bg) !important;
 }
+/* [FIX] #app directly sets --border/--border-h to green-tinted values
+   on itself (styles/dashboard.css line 151-156), which shadows the
+   neutral :root/html[data-theme] --border definition for EVERY
+   descendant of #app that doesn't have its own closer override --
+   basically the entire logged-in app. Any element using plain
+   var(--border) without a page-specific override (mobile sidebar
+   drawer's header divider, Dashboard's Recent Deployments row
+   dividers, etc.) was inheriting this green tint instead. Overriding
+   it directly on #app fixes it at the source for all of them at once,
+   rather than patching each individual element that happens to use
+   var(--border) one at a time. */
+#app {
+  --border: rgba(255,255,255,0.16) !important;
+  --border-h: rgba(255,255,255,0.3) !important;
+}
 #sidebar, #topbar{ background: var(--jt-bg-raised) !important; border-color: var(--jt-border) !important; }
 /* [FIX] The rule above sets border-color to --jt-border, which on dark
    theme is #1F1F23 -- a near-invisible dark grey against the black
