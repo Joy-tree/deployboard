@@ -5678,8 +5678,8 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 .dqs-upload-icon {
   width: 44px; height: 44px; margin-bottom: 14px;
   display: flex; align-items: center; justify-content: center;
-  color: var(--primary);
-  background: rgba(16,185,129,.10);
+  color: #fff;
+  background: var(--primary);
   flex-shrink: 0;
 }
 .dqs-upload-icon svg { width: 20px; height: 20px; }
