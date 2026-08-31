@@ -61,7 +61,7 @@
   --jt-code-text: #DCEFE3;
 }
 html[data-theme="dark"]{
-  --jt-bg: #080808;
+  --jt-bg: #040404;
   --jt-bg-raised: #080808;
   --jt-bg-sunken: #050505;
   --jt-border: #1f1f1f;
@@ -90,7 +90,7 @@ html[data-theme="dark"]{
      html[data-theme="dark"] block, not this separate no-theme-yet
      fallback, so the loader kept flashing the lighter/ashy grey this
      whole time regardless of that fix. Matched to #080808 here too. */
-  --jt-bg: #080808; --jt-bg-raised: #080808; --jt-bg-sunken: #050505;
+  --jt-bg: #040404; --jt-bg-raised: #080808; --jt-bg-sunken: #050505;
   --jt-border: #1f1f1f; --jt-border-soft: #181818;
   --jt-text: #F3F4F6; --jt-text-dim: #A1A1AA; --jt-text-faint: #6B7280;
   --jt-brand: #10B981; --jt-brand-strong: #34D399; --jt-brand-tint: #0A2E22;
@@ -153,6 +153,34 @@ html[data-theme="light"]{
    --------------------------------------------------------------------- */
 html, body, #landing-view, #app, #app-shell, .app-layout, [id^="page-"]{
   background: var(--jt-bg) !important;
+}
+/* [Deepened background + restrained "liquid glass" depth treatment]
+   Requested darker than a flat reference black, but avoiding the
+   typical AI-generated look of a loud, obvious gradient blob or glow.
+   Two very low-contrast layers instead:
+   1. A barely-perceptible radial gradient — a few percent lighter at
+      top-center, fading back to the deep base color within the first
+      40% of the viewport. Reads as subtle depth/light falloff, not a
+      visible "glow."
+   2. A fine grain/noise texture at ~2.5% opacity (the technique used
+      by Linear/Vercel/Raycast for a tactile, glassy surface feel)
+      instead of a smooth flat fill.
+   #app, #landing-view, and every #page-* div all separately paint an
+   opaque var(--jt-bg) fill (see rule above) and stack on top of body
+   at full viewport size, so putting this only on body would never
+   actually be visible — applied to all of them together instead, so
+   whichever one is the topmost visible layer for a given view shows
+   it. Fixed background-attachment so it doesn't repeat/shift oddly on
+   scroll. Light theme is untouched — dark theme only. */
+html[data-theme="dark"] body,
+html[data-theme="dark"] #landing-view,
+html[data-theme="dark"] #app,
+html[data-theme="dark"] [id^="page-"] {
+  background:
+    radial-gradient(ellipse 1400px 800px at 50% -10%, rgba(255,255,255,0.025), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E"),
+    var(--jt-bg) !important;
+  background-attachment: fixed, fixed, fixed;
 }
 html[data-theme="light"] #landing-view,
 html[data-theme="light"] body{
