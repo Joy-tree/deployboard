@@ -408,13 +408,13 @@ img{max-width:100%;}
 .btn-hero-primary svg{width:16px;height:16px;}
 .btn-hero-ghost{
   display:inline-flex;align-items:center;gap:9px;
-  padding:13px 26px;border-radius:10px;
-  background:transparent;border:1px solid var(--border-h);
-  color:var(--text);font-size:0.95rem;font-weight:600;
+  padding:13px 26px;border-radius:0;
+  background:#fff;border:none;
+  color:#0a0a0a;font-size:0.95rem;font-weight:600;
   transition:all 0.2s;
 }
-.btn-hero-ghost:hover{background:rgba(255,255,255,0.04);border-color:var(--border-h);}
-.btn-hero-ghost svg{width:16px;height:16px;color:var(--text-2);}
+.btn-hero-ghost:hover{background:#e5e5e5;}
+.btn-hero-ghost svg{width:16px;height:16px;color:#0a0a0a;}
 
 /* ── Hero trust bar ──────────────────────────────────────────────── */
 .hero-trust{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0.5rem 0.75rem;margin-top:1.25rem;}

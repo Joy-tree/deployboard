@@ -284,9 +284,17 @@ html[data-theme="light"] [style*="background: #111"]{
   border: 1px solid var(--jt-border) !important;
   color: var(--jt-text) !important;
 }
+.btn-hero-ghost{
+  background: #fff !important;
+  border: none !important;
+  color: #0a0a0a !important;
+}
 .btn-hero-ghost:hover, .btn-ghost:hover{
   background: var(--jt-bg-sunken) !important;
   border-color: var(--jt-text-faint) !important;
+}
+.btn-hero-ghost:hover{
+  background: #e5e5e5 !important;
 }
 .dash-qa-btn{
   background: var(--jt-bg-raised) !important;
@@ -7423,12 +7431,12 @@ html[data-theme="light"] #landing-view {
 }
 #landing-view .btn-hero-ghost {
   border-radius: 0 !important;
-  border-color: var(--dcx-field-border) !important;
-  background: transparent !important;
+  background: #fff !important;
+  border: none !important;
+  color: #0a0a0a !important;
 }
 #landing-view .btn-hero-ghost:hover {
-  border-color: var(--primary) !important;
-  background: transparent !important;
+  background: #e5e5e5 !important;
 }
 
 /* Hero top marquee (scrolling "STATIC · SERVER · DOCKER" cards) and
@@ -9940,11 +9948,12 @@ html[data-theme="light"] #landing-view .snippet-card,
   box-shadow: none !important;
 }
 #landing-view .btn-hero-ghost {
-  background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.2) !important;
+  background: #fff !important;
+  border: none !important;
+  color: #0a0a0a !important;
 }
 #landing-view .btn-hero-ghost:hover {
-  border-color: var(--primary) !important;
+  background: #e5e5e5 !important;
 }
 
 /* Deploy code snippet tabs (deploy.sh / database.json / api-prompt.txt) */
