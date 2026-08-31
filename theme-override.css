@@ -11521,3 +11521,21 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
   width: 100% !important;
   box-sizing: border-box !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   LANDING PAGE — hamburger menu button + theme toggle button
+   (#landingThemeToggle / #hamburgerBtn, both .btn-nav-menu). Had a
+   rounded box (10px radius) with a tinted border-color:var(--border-h)
+   and no background — the "ash box" look. Flattened to match the
+   borderless flat icon-button style used everywhere else: no box, no
+   border, just the icon, with a plain hover state instead of a
+   colored border.
+   ══════════════════════════════════════════════════════════════════ */
+#landing-view .btn-nav-menu {
+  border-radius: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+#landing-view .btn-nav-menu:hover {
+  background: rgba(255,255,255,0.06) !important;
+}
