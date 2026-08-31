@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=18">
+<link rel="stylesheet" href="/styles/dashboard.css?v=19">
   <link rel="stylesheet" href="/styles/auth.css?v=1">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -681,43 +681,35 @@ window.landingToggleTheme = function(){
 
   <div class="ld-scroll">
 
-    <div class="ld-actions ld-animate">
-      <a class="ld-action-btn primary" href="#" onclick="showDashboard();closeLandingDrawer();return false;">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        Launch App
-      </a>
-      <a class="ld-action-btn ghost" href="#how-it-works" onclick="closeLandingDrawer()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Quick Tour
-      </a>
+    <div class="ld-menu-list">
+      <a class="ld-menu-link ld-animate" href="#features" onclick="closeLandingDrawer()">Platform</a>
+      <a class="ld-menu-link ld-animate" href="#pricing" onclick="closeLandingDrawer()">Pricing</a>
+      <a class="ld-menu-link ld-animate" href="#" onclick="showPublicFounders();closeLandingDrawer();return false;">Founders</a>
+      <a class="ld-menu-link ld-animate" href="https://docs.joytree.site" onclick="closeLandingDrawer()">Docs</a>
     </div>
 
-    <div class="ld-section-label ld-animate">Platform</div>
-    <a class="ld-link ld-animate" href="#features" onclick="closeLandingDrawer()"><div class="ld-link-icon" style="color:#10b981"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div><span>Platform Features</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
-    <a class="ld-link ld-animate" href="#how-it-works" onclick="closeLandingDrawer()"><div class="ld-link-icon" style="color:#06b6d4"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></div><span>How It Works</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
-    <a class="ld-link ld-animate" href="#" onclick="showPublicDocs();closeLandingDrawer();return false;"><div class="ld-link-icon" style="color:#8b5cf6"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><span>Docs &amp; Snippets</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
-    <a class="ld-link ld-animate" href="#" onclick="showPublicFounders();closeLandingDrawer();return false;"><div class="ld-link-icon" style="color:#34d399"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7z"/><circle cx="12" cy="10" r="2.2"/><path d="M8.5 16c1.2-1.6 2.5-2.4 3.5-2.4s2.3.8 3.5 2.4"/></svg></div><span>Founders</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
-    <a class="ld-link ld-animate" href="#" onclick="closeLandingDrawer();document.getElementById('pricing').scrollIntoView({behavior:'smooth',block:'start'});return false;"><div class="ld-link-icon" style="color:#f59e0b"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><span>Pricing Plans</span><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
+    <div class="ld-divider"></div>
 
-    <div class="ld-section-label ld-animate">Language Kickstarts</div>
-    <a class="ld-link lang ld-animate" href="#lang-nodejs" onclick="closeLandingDrawer()"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js"><div class="ld-lang-info"><span class="ld-lang-name">Node.js</span><span class="ld-lang-sub">Express · Fastify · NestJS</span></div><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
-    <a class="ld-link lang ld-animate" href="#lang-python" onclick="closeLandingDrawer()"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python"><div class="ld-lang-info"><span class="ld-lang-name">Python</span><span class="ld-lang-sub">Django · FastAPI · Flask</span></div><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
-    <a class="ld-link lang ld-animate" href="#lang-java" onclick="closeLandingDrawer()"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" alt="Java"><div class="ld-lang-info"><span class="ld-lang-name">Java</span><span class="ld-lang-sub">Spring Boot · Quarkus</span></div><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
-    <a class="ld-link lang ld-animate" href="#lang-go" onclick="closeLandingDrawer()"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg" alt="Go"><div class="ld-lang-info"><span class="ld-lang-name">Go</span><span class="ld-lang-sub">Gin · Echo · Fiber</span></div><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
-    <a class="ld-link lang ld-animate" href="#lang-dotnet" onclick="closeLandingDrawer()"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg" alt=".NET"><div class="ld-lang-info"><span class="ld-lang-name">.NET</span><span class="ld-lang-sub">ASP.NET Core · Blazor</span></div><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
-    <a class="ld-link lang ld-animate" href="#lang-rust" onclick="closeLandingDrawer()"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/rust/rust-original.svg" alt="Rust"><div class="ld-lang-info"><span class="ld-lang-name">Rust</span><span class="ld-lang-sub">Axum · Actix · Rocket</span></div><span class="ld-link-arrow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span></a>
-
-    <div class="ld-section-label ld-animate">Frontend Frameworks</div>
-    <div class="ld-chips ld-animate">
-      <span class="ld-chip">React</span><span class="ld-chip">Next.js</span><span class="ld-chip">Vue</span><span class="ld-chip">Nuxt</span>
-      <span class="ld-chip">Svelte</span><span class="ld-chip">Astro</span><span class="ld-chip">Remix</span><span class="ld-chip">SolidJS</span>
+    <div class="ld-tools-title ld-animate">Get Started</div>
+    <div class="ld-tools-list">
+      <a class="ld-tool-link ld-animate" href="https://docs.joytree.site/#/deploy-github" onclick="closeLandingDrawer()">Deploy from GitHub</a>
+      <a class="ld-tool-link ld-animate" href="https://docs.joytree.site/#/deploy-upload" onclick="closeLandingDrawer()">Deploy by Upload</a>
+      <a class="ld-tool-link ld-animate" href="https://docs.joytree.site/#/db-overview" onclick="closeLandingDrawer()">Databases</a>
+      <a class="ld-tool-link ld-animate" href="https://docs.joytree.site/#/domains-custom" onclick="closeLandingDrawer()">Custom Domains</a>
+      <a class="ld-tool-link ld-animate" href="https://docs.joytree.site/#/dev-flows-overview" onclick="closeLandingDrawer()">AI Dev Agent</a>
+      <a class="ld-tool-link ld-animate" href="https://docs.joytree.site/#/cli-install" onclick="closeLandingDrawer()">CLI Install</a>
     </div>
 
-    <div class="ld-status-bar">
-      <div class="ld-stat"><span class="ld-stat-val">&lt;60s</span><span class="ld-stat-lbl">Deploy time</span></div>
-      <div class="ld-stat"><span class="ld-stat-val">99.9%</span><span class="ld-stat-lbl">Uptime</span></div>
-      <div class="ld-stat"><span class="ld-stat-val">Free</span><span class="ld-stat-lbl">To start</span></div>
+    <div class="ld-tools-title ld-animate">Resources</div>
+    <div class="ld-tools-list">
+      <a class="ld-tool-link ld-animate" href="https://support.joytree.site/" target="_blank" rel="noopener" onclick="closeLandingDrawer()">Support</a>
+      <a class="ld-tool-link ld-animate" href="https://docs.joytree.site/#/github-linking" onclick="closeLandingDrawer()">GitHub Integration</a>
+      <a class="ld-tool-link ld-animate" href="https://docs.joytree.site/#/account-apikey" onclick="closeLandingDrawer()">API Keys</a>
     </div>
+  </div>
+
+  <div class="ld-footer-cta">
+    <a class="ld-footer-btn dark" href="#" onclick="showDashboard();closeLandingDrawer();return false;">Dashboard</a>
   </div>
 
 </aside>
