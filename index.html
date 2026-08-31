@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=14">
+<link rel="stylesheet" href="/styles/dashboard.css?v=15">
   <link rel="stylesheet" href="/styles/auth.css?v=1">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -21861,6 +21861,20 @@ function renderDashRecentProjects() {
 
     const statusKey = st === 'success' ? 'success' : (['building','pending'].includes(st) ? 'building' : (['failed','error','cancelled','canceled'].includes(st) ? 'failed' : ''));
 
+    // Framework icon — reuses the same devicon-based detector already used
+    // for deployment cards elsewhere, not a separate icon set.
+    const frameworkIcon = typeof getDeploymentFrameworkIcon === 'function' ? getDeploymentFrameworkIcon(p) : '';
+
+    const subdomainDisplay = p.subdomain ? `${p.subdomain}.${domainBase}` : '';
+    const durationText = lastDeploy && lastDeploy.duration ? `${lastDeploy.duration}s build` : '';
+    const branchText = lastDeploy && lastDeploy.branch ? lastDeploy.branch : (p.branch || '');
+
+    const visitBtn = hasDeployed
+      ? `<a class="dqs-project-visit" href="${liveUrl}" target="_blank" onclick="event.stopPropagation()" title="Visit live site">
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+         </a>`
+      : '';
+
     const card = document.createElement('div');
     card.className = 'dqs-project-card';
     if (statusKey) card.setAttribute('data-status', statusKey);
@@ -21869,11 +21883,20 @@ function renderDashRecentProjects() {
       ${thumbHtml}
       <div class="dqs-project-body">
         <div class="dqs-project-name-row">
-          <div class="dqs-project-name">${escHtml(p.name || p.subdomain || 'Untitled')}</div>
-          <svg class="dqs-project-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+          <div class="dqs-project-name-wrap">
+            <span class="dqs-project-fw-icon">${frameworkIcon}</span>
+            <div class="dqs-project-name">${escHtml(p.name || p.subdomain || 'Untitled')}</div>
+          </div>
+          <div class="dqs-project-actions">
+            ${visitBtn}
+            <svg class="dqs-project-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
         </div>
+        ${subdomainDisplay ? `<div class="dqs-project-url">${escHtml(subdomainDisplay)}</div>` : ''}
         <div class="dqs-project-meta">
           <span class="badge ${pillClass}"><span class="badge-dot"></span>${pillLabel}</span>
+          ${branchText ? `<span class="dqs-project-branch"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>${escHtml(branchText)}</span>` : ''}
+          ${durationText ? `<span class="dqs-project-duration">${durationText}</span>` : ''}
           <span class="dqs-project-time">${lastDeploy ? relTime(lastDeploy.startedAt) : 'Never deployed'}</span>
         </div>
       </div>`;

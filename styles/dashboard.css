@@ -5747,8 +5747,8 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 .dqs-project-card[data-status="building"] { border-left-color: rgba(245,158,11,.5); }
 .dqs-project-card[data-status="failed"] { border-left-color: rgba(239,68,68,.5); }
 .dqs-project-thumb {
-  width: 64px;
-  height: 40px;
+  width: 72px;
+  height: 48px;
   flex-shrink: 0;
   aspect-ratio: unset;
   overflow: hidden;
@@ -5780,10 +5780,30 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   min-width: 0;
 }
+.dqs-project-name-wrap { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.dqs-project-fw-icon { width: 14px; height: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.dqs-project-fw-icon img, .dqs-project-fw-icon svg { width: 100%; height: 100%; object-fit: contain; }
+.dqs-project-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.dqs-project-visit {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3); width: 20px; height: 20px;
+  transition: color .15s;
+}
+.dqs-project-visit:hover { color: var(--primary); }
 .dqs-project-arrow { color: var(--text-3); flex-shrink: 0; transition: transform .15s, color .15s; width: 12px; height: 12px; }
 .dqs-project-card:hover .dqs-project-arrow { color: var(--primary); transform: translateX(2px); }
-.dqs-project-meta { display: flex; align-items: center; gap: 8px; }
+.dqs-project-url {
+  font-family: var(--font-mono); font-size: .68rem; color: var(--text-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.dqs-project-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dqs-project-time { font-size: .68rem; color: var(--text-3); }
+.dqs-project-branch {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: .68rem; color: var(--text-3); font-family: var(--font-mono);
+}
+.dqs-project-duration { font-size: .68rem; color: var(--text-3); }
 
 /* Trailing "see all N projects" row — same compact row height as a real
    project row, no thumbnail, just a centered label + chevron. */
