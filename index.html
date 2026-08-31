@@ -23017,9 +23017,19 @@ const DB_ENGINE_COLORS = {
 function dbEngineColor(engine) { return DB_ENGINE_COLORS[engine] || DB_ENGINE_COLORS.mongodb; }
 
 function dbStatusHtml(status) {
+  // [FIX] Was outputting .db-status-pill/.db-status-dot -- a separate,
+  // differently-styled (outlined border, uppercase) pill system from the
+  // shared .badge/.badge-dot classes used everywhere else in the app
+  // (Deployments, Projects, Recent Projects, Streaks). Switched to the
+  // same shared classes so database status reads identically to every
+  // other status pill on the site, not its own inconsistent style.
   const s = String(status||'').toLowerCase();
-  const dotCls = s === 'running' ? 'running' : s === 'stopped' ? 'stopped' : s === 'provisioning' ? 'provisioning' : 'error';
-  return `<span class="db-status-pill ${dotCls}"><span class="db-status-dot ${dotCls}"></span>${s || 'unknown'}</span>`;
+  let cls = 'badge-idle', label = s || 'Unknown';
+  if (s === 'running')            { cls = 'badge-success';  label = 'Running'; }
+  else if (s === 'provisioning')  { cls = 'badge-building'; label = 'Provisioning'; }
+  else if (s === 'stopped')       { cls = 'badge-idle';     label = 'Stopped'; }
+  else if (s === 'error')         { cls = 'badge-error';    label = 'Error'; }
+  return `<span class="badge ${cls}"><span class="badge-dot"></span>${label}</span>`;
 }
 
 // Real SVG logos for the engines we actually have artwork for. Anything not
