@@ -5722,3 +5722,44 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 .dqs-repo-name { font-size: .84rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dqs-repo-meta { font-size: .7rem; color: var(--text-3); margin-top: 1px; }
 .dqs-repo-arrow { color: var(--text-3); flex-shrink: 0; }
+
+/* ── Dashboard Recent Projects — real live-preview thumbnails, same
+   iframe-reveal mechanism as the Projects page, shown above Upload/Repos. ── */
+.dqs-recent-projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.dqs-project-card {
+  border: 1px solid rgba(255,255,255,.08);
+  background: var(--bg-card);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color .15s;
+}
+.dqs-project-card:hover { border-color: rgba(255,255,255,.18); }
+.dqs-project-thumb {
+  aspect-ratio: 16/10;
+  width: 100%;
+  overflow: hidden;
+  background: #050505;
+  position: relative;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.dqs-project-thumb iframe {
+  width: 400%; height: 400%;
+  transform: scale(.25);
+  transform-origin: top left;
+  border: none;
+  pointer-events: none;
+  transition: opacity .3s;
+  position: absolute; top: 0; left: 0;
+}
+.dqs-project-body { padding: 12px 14px; }
+.dqs-project-name {
+  font-size: .85rem; font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 8px;
+}
+.dqs-project-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dqs-project-time { font-size: .7rem; color: var(--text-3); }

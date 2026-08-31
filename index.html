@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=10">
+<link rel="stylesheet" href="/styles/dashboard.css?v=11">
   <link rel="stylesheet" href="/styles/auth.css?v=1">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -2677,6 +2677,22 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Deployment
           </button>
+        </div>
+      </div>
+
+      <!-- ══ Recent Projects — real live-preview thumbnails, same mechanism
+           the Projects page itself uses (lazy iframe reveal), shown before
+           the upload/repos sources per request ══ -->
+      <div class="dash-section" id="dashRecentProjectsSection" style="margin-bottom:20px;">
+        <div class="dash-row-header">
+          <div>
+            <div class="dash-section-title">Recent Projects</div>
+            <div class="dash-section-sub">Your latest deployed projects</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="showPage('projects')">View all</button>
+        </div>
+        <div id="dashRecentProjectsGrid" class="dqs-recent-projects-grid">
+          <div class="dqs-repo-loading">Loading projects…</div>
         </div>
       </div>
 
@@ -14040,6 +14056,7 @@ function renderDashboard() {
   try {
     updateCoreHeroMetrics();
     if (typeof renderDashRepoList === 'function') renderDashRepoList();
+    if (typeof renderDashRecentProjects === 'function') renderDashRecentProjects();
     const total   = projects.length;
     const success = deployments.filter(d => d.status === 'success').length;
   const failed  = deployments.filter(d => d.status === 'failed').length;
@@ -21800,6 +21817,68 @@ function connectGitHubFromReposPage() {
 // Repo list: reuses the exact same /api/github/repos cache (githubRepos)
 // and language-icon helper the Repos page itself uses -- not a separate
 // fetch or a separate icon system.
+// Recent Projects: reuses the exact same thumbnail mechanism as the
+// Projects page (lazy live-iframe preview via getProjectThumbObserver,
+// same status-badge classes, same liveUrl/hasDeployed logic) instead of
+// a separate static-screenshot system. Shows the 4 most recently active
+// projects; "View all" goes to the full Projects page.
+function renderDashRecentProjects() {
+  const wrap = document.getElementById('dashRecentProjectsGrid');
+  if (!wrap) return;
+  if (!projects.length) {
+    wrap.innerHTML = '<div class="dqs-repo-empty">No projects yet — import a repo or upload a project below to get started.</div>';
+    return;
+  }
+  const domainBase = (settings && settings.baseDomain) ? settings.baseDomain : 'joytree.site';
+  const sorted = [...projects].sort((a, b) => {
+    const aTime = [...deployments].reverse().find(d => d.projectId === a.id)?.startedAt || a.createdAt || 0;
+    const bTime = [...deployments].reverse().find(d => d.projectId === b.id)?.startedAt || b.createdAt || 0;
+    return new Date(bTime) - new Date(aTime);
+  });
+  const shown = sorted.slice(0, 4);
+
+  wrap.innerHTML = '';
+  shown.forEach(p => {
+    const lastDeploy = [...deployments].reverse().find(d => d.projectId === p.id);
+    let displayStatus = p.lastStatus || (lastDeploy ? lastDeploy.status : null);
+    const st = String(displayStatus || '').toLowerCase();
+    const liveUrl = p.liveUrl || ('https://' + p.subdomain + '.' + domainBase);
+    const hasDeployed = !!p.liveUrl || displayStatus === 'success';
+
+    const thumbHtml = hasDeployed
+      ? `<div class="tree-node-thumb tree-thumb-iframe-wrap dqs-project-thumb" data-live-url="${liveUrl}">
+           <div class="tree-thumb-placeholder">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+             <span>Loading preview…</span>
+           </div>
+         </div>`
+      : `<div class="tree-node-thumb dqs-project-thumb"><div class="tree-thumb-placeholder">
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+           <span>Not deployed yet</span></div></div>`;
+
+    let pillClass = 'badge-idle', pillLabel = 'Idle';
+    if (st === 'success')                                            { pillClass = 'badge-success';  pillLabel = 'Live'; }
+    else if (st === 'building' || st === 'pending')                   { pillClass = 'badge-building'; pillLabel = 'Building'; }
+    else if (['failed','error','cancelled','canceled'].includes(st))  { pillClass = 'badge-error';    pillLabel = 'Failed'; }
+
+    const card = document.createElement('div');
+    card.className = 'dqs-project-card';
+    card.setAttribute('onclick', `showProjectDetail('${p.id}')`);
+    card.innerHTML = `
+      ${thumbHtml}
+      <div class="dqs-project-body">
+        <div class="dqs-project-name">${escHtml(p.name || p.subdomain || 'Untitled')}</div>
+        <div class="dqs-project-meta">
+          <span class="badge ${pillClass}"><span class="badge-dot"></span>${pillLabel}</span>
+          <span class="dqs-project-time">${lastDeploy ? relTime(lastDeploy.startedAt) : 'Never deployed'}</span>
+        </div>
+      </div>`;
+    wrap.appendChild(card);
+    const thumbWrap = card.querySelector('.tree-thumb-iframe-wrap');
+    if (thumbWrap) getProjectThumbObserver().observe(thumbWrap);
+  });
+}
+
 async function renderDashRepoList() {
   const wrap = document.getElementById('dashRepoList');
   if (!wrap) return;
