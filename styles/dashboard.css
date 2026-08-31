@@ -5664,7 +5664,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 .dqs-upload {
   border: 1px dashed rgba(255,255,255,.16);
   background: var(--bg-card);
-  padding: 32px 20px;
+  padding: 28px 20px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   text-align: center;
   cursor: pointer;
@@ -5676,13 +5676,26 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
   background: rgba(16,185,129,.04);
 }
 .dqs-upload-icon {
-  width: 40px; height: 40px; margin-bottom: 12px;
+  width: 44px; height: 44px; margin-bottom: 14px;
   display: flex; align-items: center; justify-content: center;
-  color: var(--text-3);
+  color: var(--primary);
+  background: rgba(16,185,129,.10);
+  flex-shrink: 0;
 }
-.dqs-upload-icon svg { width: 100%; height: 100%; }
+.dqs-upload-icon svg { width: 20px; height: 20px; }
 .dqs-upload-title { font-size: .92rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-.dqs-upload-sub { font-size: .78rem; color: var(--text-2); line-height: 1.5; max-width: 320px; }
+.dqs-upload-sub { font-size: .78rem; color: var(--text-2); line-height: 1.5; max-width: 320px; margin-bottom: 16px; }
+.dqs-upload-formats {
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px;
+}
+.dqs-upload-chip {
+  font-family: var(--font-mono); font-size: .68rem; font-weight: 600;
+  color: var(--text-2); background: rgba(255,255,255,.05);
+  padding: 3px 8px;
+}
+.dqs-upload-limit {
+  font-size: .68rem; color: var(--text-3); margin-left: 4px;
+}
 
 .dqs-repos {
   border: 1px solid rgba(255,255,255,.08);

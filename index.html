@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=15">
+<link rel="stylesheet" href="/styles/dashboard.css?v=16">
   <link rel="stylesheet" href="/styles/auth.css?v=1">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -2700,10 +2700,17 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <div class="dash-quick-sources">
         <div class="dqs-upload" id="dashUploadDropzone" onclick="dashTriggerUpload()" ondragover="dashUploadDragOver(event)" ondragleave="dashUploadDragLeave(event)" ondrop="dashUploadDrop(event)">
           <div class="dqs-upload-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           </div>
           <div class="dqs-upload-title">Drop your project here</div>
-          <div class="dqs-upload-sub">ZIP archive or a single HTML file — drag, drop, or click to upload and deploy instantly</div>
+          <div class="dqs-upload-sub">No GitHub required — we extract, detect your stack, and deploy automatically</div>
+          <div class="dqs-upload-formats">
+            <span class="dqs-upload-chip">.html</span>
+            <span class="dqs-upload-chip">.zip</span>
+            <span class="dqs-upload-chip">.tar.gz</span>
+            <span class="dqs-upload-chip">.tgz</span>
+            <span class="dqs-upload-limit">Max 250 MB</span>
+          </div>
         </div>
 
         <div class="dqs-repos">
