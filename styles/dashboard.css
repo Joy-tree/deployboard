@@ -5647,3 +5647,78 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 .rlc-result.rlc-fail .rlc-result-code { color:var(--red); }
 .rlc-result-text { font-size:.78rem; color:var(--text-2); }
 .rlc-close-btn { width:100%; margin-top:16px; padding:11px; border-radius:10px; background:rgba(148,163,184,.08); border:1px solid rgba(148,163,184,.18); color:var(--text-2); font-size:.82rem; font-weight:700; cursor:pointer; }
+
+/* ── Dashboard Quick Deploy Sources — Upload dropzone + GitHub repo list,
+   shown above the stat grid. Flat, hairline dividers, no rounded pill
+   shapes, matching the rest of the flat redesign. ── */
+.dash-quick-sources {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+@media (min-width: 860px) {
+  .dash-quick-sources { grid-template-columns: 1fr 1.15fr; align-items: stretch; }
+}
+
+.dqs-upload {
+  border: 1px dashed rgba(255,255,255,.16);
+  background: var(--bg-card);
+  padding: 32px 20px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  min-height: 160px;
+}
+.dqs-upload:hover, .dqs-upload.dqs-drag-over {
+  border-color: var(--primary);
+  background: rgba(16,185,129,.04);
+}
+.dqs-upload-icon {
+  width: 40px; height: 40px; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3);
+}
+.dqs-upload-icon svg { width: 100%; height: 100%; }
+.dqs-upload-title { font-size: .92rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.dqs-upload-sub { font-size: .78rem; color: var(--text-2); line-height: 1.5; max-width: 320px; }
+
+.dqs-repos {
+  border: 1px solid rgba(255,255,255,.08);
+  background: var(--bg-card);
+  display: flex; flex-direction: column;
+}
+.dqs-repos-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.dqs-repos-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .85rem; font-weight: 700; color: var(--text);
+}
+.dqs-repo-list { flex: 1; overflow-y: auto; max-height: 260px; }
+.dqs-repo-loading, .dqs-repo-empty {
+  padding: 24px 16px; text-align: center; font-size: .8rem; color: var(--text-3);
+}
+.dqs-repo-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  cursor: pointer;
+  transition: background .12s;
+}
+.dqs-repo-item:last-child { border-bottom: none; }
+.dqs-repo-item:hover { background: rgba(255,255,255,.03); }
+.dqs-repo-icon {
+  width: 28px; height: 28px; flex-shrink: 0;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  padding: 5px;
+}
+.dqs-repo-icon img, .dqs-repo-icon svg { width: 100%; height: 100%; object-fit: contain; }
+.dqs-repo-info { flex: 1; min-width: 0; }
+.dqs-repo-name { font-size: .84rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dqs-repo-meta { font-size: .7rem; color: var(--text-3); margin-top: 1px; }
+.dqs-repo-arrow { color: var(--text-3); flex-shrink: 0; }
