@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=17">
+<link rel="stylesheet" href="/styles/dashboard.css?v=18">
   <link rel="stylesheet" href="/styles/auth.css?v=1">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -2724,6 +2724,51 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
           <div id="dashRepoList" class="dqs-repo-list">
             <div class="dqs-repo-loading">Loading repositories…</div>
           </div>
+        </div>
+      </div>
+
+      <!-- ══ Quick Create Database — real engines, big real SVG logos, then
+           recently created DBs, matching the same pattern as
+           Repos/Projects above ══ -->
+      <div class="dash-section" id="dashQuickDbSection" style="margin-bottom:20px;">
+        <div class="dash-row-header">
+          <div>
+            <div class="dash-section-title">Databases</div>
+            <div class="dash-section-sub">Spin up a real Docker-backed database in one tap</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="showPage('databases')">View all</button>
+        </div>
+
+        <div class="dqs-db-engines">
+          <div class="dqs-db-engine-tile" onclick="dashQuickCreateDb('mongodb')" data-engine="mongodb">
+            <div class="dqs-db-engine-icon"><img src="/icons/mongodb.svg" alt="MongoDB"></div>
+            <div class="dqs-db-engine-name">MongoDB</div>
+            <div class="dqs-db-engine-ver">mongo:7 · document</div>
+          </div>
+          <div class="dqs-db-engine-tile" onclick="dashQuickCreateDb('postgres')" data-engine="postgres">
+            <div class="dqs-db-engine-icon"><img src="/icons/postgresql.svg" alt="PostgreSQL"></div>
+            <div class="dqs-db-engine-name">PostgreSQL</div>
+            <div class="dqs-db-engine-ver">postgres:16 · relational</div>
+          </div>
+          <div class="dqs-db-engine-tile" onclick="dashQuickCreateDb('mysql')" data-engine="mysql">
+            <div class="dqs-db-engine-icon"><img src="/icons/mysql.svg" alt="MySQL"></div>
+            <div class="dqs-db-engine-name">MySQL</div>
+            <div class="dqs-db-engine-ver">mysql:8 · relational</div>
+          </div>
+          <div class="dqs-db-engine-tile" onclick="dashQuickCreateDb('mariadb')" data-engine="mariadb">
+            <div class="dqs-db-engine-icon"><img src="/icons/mariadb.svg" alt="MariaDB"></div>
+            <div class="dqs-db-engine-name">MariaDB</div>
+            <div class="dqs-db-engine-ver">mariadb:11 · relational</div>
+          </div>
+          <div class="dqs-db-engine-tile" onclick="dashQuickCreateDb('redis')" data-engine="redis">
+            <div class="dqs-db-engine-icon"><img src="/icons/redis.svg" alt="Redis"></div>
+            <div class="dqs-db-engine-name">Redis</div>
+            <div class="dqs-db-engine-ver">redis:7 · key-value cache</div>
+          </div>
+        </div>
+
+        <div id="dashRecentDbList" class="dqs-db-list">
+          <div class="dqs-repo-loading">Loading databases…</div>
         </div>
       </div>
 
@@ -14064,6 +14109,7 @@ function renderDashboard() {
     updateCoreHeroMetrics();
     if (typeof renderDashRepoList === 'function') renderDashRepoList();
     if (typeof renderDashRecentProjects === 'function') renderDashRecentProjects();
+    if (typeof renderDashRecentDbList === 'function') renderDashRecentDbList();
     const total   = projects.length;
     const success = deployments.filter(d => d.status === 'success').length;
   const failed  = deployments.filter(d => d.status === 'failed').length;
@@ -21829,6 +21875,51 @@ function connectGitHubFromReposPage() {
 // same status-badge classes, same liveUrl/hasDeployed logic) instead of
 // a separate static-screenshot system. Shows the 4 most recently active
 // projects; "View all" goes to the full Projects page.
+// ── Dashboard Quick Create Database ─────────────────────────────────────
+// Tapping an engine tile pre-selects it on the REAL create-database form
+// (same _selectedDbEngine global the Databases page's own engine picker
+// sets) then navigates there — not a separate creation flow.
+function dashQuickCreateDb(engine) {
+  _selectedDbEngine = engine;
+  showPage('db-create');
+  // Sync the create form's own dropdown display to match — same function
+  // its own engine picker calls when a user clicks an option there.
+  setTimeout(() => {
+    if (typeof selectDbEngineDD === 'function') selectDbEngineDD(engine);
+  }, 60);
+}
+
+// Recent Databases list: reuses the exact same _databases cache and
+// dbEngineIconHtml()/dbStatusHtml() helpers the real Databases page uses
+// — not a separate fetch or icon system.
+async function renderDashRecentDbList() {
+  const wrap = document.getElementById('dashRecentDbList');
+  if (!wrap) return;
+  try {
+    if (!_databases.length) await loadDatabases();
+    if (!_databases.length) {
+      wrap.innerHTML = '<div class="dqs-repo-empty">No databases yet — tap an engine above to create your first one.</div>';
+      return;
+    }
+    const sorted = [..._databases].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    const shown = sorted.slice(0, 4);
+    wrap.innerHTML = shown.map(db => {
+      const date = db.createdAt ? new Date(db.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—';
+      return `<div class="dqs-db-item" onclick="openDbDetail('${db.id}')">
+        ${dbEngineIconHtml(db.engine)}
+        <div class="dqs-db-info">
+          <div class="dqs-db-name">${escHtml(db.name || 'Untitled')}</div>
+          <div class="dqs-db-meta">${escHtml(DB_ENGINE_LABELS[db.engine] || db.engine)} · Created ${date}</div>
+        </div>
+        ${dbStatusHtml(db.status)}
+        <svg class="dqs-repo-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    wrap.innerHTML = `<div class="dqs-repo-empty">Couldn't load databases. <a href="#" onclick="renderDashRecentDbList();return false;" style="color:var(--primary);">Retry</a></div>`;
+  }
+}
+
 function renderDashRecentProjects() {
   const wrap = document.getElementById('dashRecentProjectsGrid');
   if (!wrap) return;

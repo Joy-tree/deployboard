@@ -5829,3 +5829,61 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
   color: var(--text-2); font-size: .8rem; font-weight: 600;
 }
 .dqs-project-seeall:hover .dqs-seeall-body { color: var(--primary); }
+
+/* ── Dashboard Quick Create Database — big real engine logos, scrollable
+   row on mobile, then a compact recent-DB list matching the repo/project
+   row pattern. Flat, hairline dividers, no rounded pill shapes. ── */
+.dqs-db-engines {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.dqs-db-engines::-webkit-scrollbar { display: none; }
+.dqs-db-engine-tile {
+  flex: 0 0 auto;
+  width: 128px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: var(--bg-card);
+  padding: 16px 14px;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  cursor: pointer;
+  transition: border-color .15s, transform .15s;
+}
+.dqs-db-engine-tile:hover {
+  border-color: rgba(255,255,255,.2);
+  transform: translateY(-2px);
+}
+.dqs-db-engine-icon {
+  width: 44px; height: 44px; margin-bottom: 10px;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px;
+  flex-shrink: 0;
+}
+.dqs-db-engine-icon img { width: 100%; height: 100%; object-fit: contain; }
+.dqs-db-engine-name { font-size: .82rem; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.dqs-db-engine-ver { font-size: .64rem; color: var(--text-3); font-family: var(--font-mono); line-height: 1.3; }
+
+.dqs-db-list {
+  border-top: 1px solid rgba(255,255,255,.08);
+  margin-top: 14px;
+}
+.dqs-db-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 4px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  cursor: pointer;
+  transition: background .12s;
+}
+.dqs-db-item:last-child { border-bottom: none; }
+.dqs-db-item:hover { background: rgba(255,255,255,.03); }
+.dqs-db-info { flex: 1; min-width: 0; }
+.dqs-db-name {
+  font-size: .84rem; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dqs-db-meta { font-size: .7rem; color: var(--text-3); margin-top: 1px; }
