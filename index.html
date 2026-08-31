@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=11">
+<link rel="stylesheet" href="/styles/dashboard.css?v=12">
   <link rel="stylesheet" href="/styles/auth.css?v=1">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -21867,7 +21867,10 @@ function renderDashRecentProjects() {
     card.innerHTML = `
       ${thumbHtml}
       <div class="dqs-project-body">
-        <div class="dqs-project-name">${escHtml(p.name || p.subdomain || 'Untitled')}</div>
+        <div class="dqs-project-name-row">
+          <div class="dqs-project-name">${escHtml(p.name || p.subdomain || 'Untitled')}</div>
+          <svg class="dqs-project-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
         <div class="dqs-project-meta">
           <span class="badge ${pillClass}"><span class="badge-dot"></span>${pillLabel}</span>
           <span class="dqs-project-time">${lastDeploy ? relTime(lastDeploy.startedAt) : 'Never deployed'}</span>
@@ -21877,6 +21880,21 @@ function renderDashRecentProjects() {
     const thumbWrap = card.querySelector('.tree-thumb-iframe-wrap');
     if (thumbWrap) getProjectThumbObserver().observe(thumbWrap);
   });
+
+  // Trailing "see all" card — only shown when there are more projects
+  // than the 4 displayed, so the affordance to see everything doesn't
+  // clutter a dashboard for someone with just a couple of projects.
+  if (projects.length > shown.length) {
+    const seeAllCard = document.createElement('div');
+    seeAllCard.className = 'dqs-project-card dqs-project-seeall';
+    seeAllCard.setAttribute('onclick', "showPage('projects')");
+    seeAllCard.innerHTML = `
+      <div class="dqs-seeall-body">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>See all ${projects.length} projects</span>
+      </div>`;
+    wrap.appendChild(seeAllCard);
+  }
 }
 
 async function renderDashRepoList() {

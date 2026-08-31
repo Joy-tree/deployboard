@@ -5756,10 +5756,32 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
   position: absolute; top: 0; left: 0;
 }
 .dqs-project-body { padding: 12px 14px; }
+.dqs-project-name-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-bottom: 8px;
+}
 .dqs-project-name {
   font-size: .85rem; font-weight: 700; color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  margin-bottom: 8px;
+  min-width: 0;
 }
+.dqs-project-arrow { color: var(--text-3); flex-shrink: 0; transition: transform .15s, color .15s; }
+.dqs-project-card:hover .dqs-project-arrow { color: var(--primary); transform: translateX(2px); }
 .dqs-project-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .dqs-project-time { font-size: .7rem; color: var(--text-3); }
+
+/* Trailing "see all N projects" card — same card shape as a real
+   project card so it sits naturally at the end of the grid, but
+   without a thumbnail; centers a chevron + label instead. */
+.dqs-project-seeall {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 160px;
+  border-style: dashed;
+}
+.dqs-seeall-body {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: var(--text-2); font-size: .82rem; font-weight: 700;
+  padding: 20px;
+}
+.dqs-project-seeall:hover .dqs-seeall-body { color: var(--primary); }
+.dqs-project-seeall:hover { border-color: var(--primary); }
