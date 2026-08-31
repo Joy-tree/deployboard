@@ -628,10 +628,11 @@ body.landing-drawer-open { overflow:hidden; }
 .ld-tool-link{display:flex;align-items:center;padding:9px 0;color:#94a3b8;text-decoration:none;font-size:.95rem;font-weight:500;transition:color .16s ease;}
 .ld-tool-link:hover,.ld-tool-link:active{color:#f1f5f9;}
 .ld-footer-cta{flex-shrink:0;padding:16px 24px calc(20px + env(safe-area-inset-bottom));display:grid;gap:12px;border-top:1px solid rgba(148,163,184,.1);background:#080808;}
-.ld-footer-btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;border-radius:999px;text-decoration:none;font-weight:700;font-size:1rem;letter-spacing:-.01em;transition:transform .2s ease,filter .2s ease;}
-.ld-footer-btn.dark{background:#fff;border:1px solid #fff;color:#0a0a0a;}
-.ld-footer-btn.purple{background:#8b3ba6;border:1px solid #8b3ba6;color:#f8fafc;}
-.ld-footer-btn:hover{transform:translateY(-1px);filter:brightness(1.06);}
+.ld-footer-btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;border-radius:0;text-decoration:none;font-weight:700;font-size:1rem;letter-spacing:-.01em;transition:background .16s ease,border-color .16s ease;}
+.ld-footer-btn.dark{background:transparent;border:1px solid var(--primary);color:var(--primary);}
+.ld-footer-btn.dark:hover{background:var(--primary);color:#fff;}
+.ld-footer-btn.purple{background:transparent;border:1px solid #8b3ba6;color:#c084ea;}
+.ld-footer-btn:hover{filter:none;}
 @media(max-width:560px){
   .landing-drawer{top:62px;height:calc(100dvh - 62px)}
   .ld-scroll{padding:14px 16px 28px}
@@ -4694,7 +4695,8 @@ html[data-theme="light"] .ld-tool-link { color: #64748b !important; }
 html[data-theme="light"] .ld-tool-link:hover { color: #0f172a !important; }
 html[data-theme="light"] .ld-tools-title { color: #94a3b8 !important; }
 html[data-theme="light"] .ld-divider { background: rgba(0,0,0,.1) !important; }
-html[data-theme="light"] .ld-footer-btn.dark { background: #0f172a !important; border-color: #0f172a !important; color: #fff !important; }
+html[data-theme="light"] .ld-footer-btn.dark { background: transparent !important; border-color: var(--primary) !important; color: var(--primary) !important; }
+html[data-theme="light"] .ld-footer-btn.dark:hover { background: var(--primary) !important; color: #fff !important; }
 
 /* ── LIGHT: Notifications panel ── */
 html[data-theme="light"] .notif-panel { background: var(--jt-bg-raised) !important; border-color: rgba(0,0,0,.1) !important; box-shadow: 0 8px 32px rgba(0,0,0,.12) !important; color: #0f172a !important; }
