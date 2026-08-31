@@ -18704,43 +18704,43 @@ async function sendNewRepoAvailableEmail(email = '', repo = {}) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>JoyTree — New repository ready to import</title>
 </head>
-<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
+<body style="margin:0;padding:0;background:#050505;font-family:Arial,Helvetica,sans-serif;color:#f1f5f9;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:40px 12px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#0d0d0d;border:1px solid rgba(255,255,255,.08);">
         <tr>
-          <td style="padding:24px 32px 0;">
+          <td style="padding:26px 32px;border-bottom:1px solid rgba(255,255,255,.08);">
             <table role="presentation" width="100%"><tr>
-              <td style="width:32px;vertical-align:middle;">
-                <img src="${logoUrl}" alt="JoyTree" width="28" height="28" style="width:28px;height:28px;border-radius:6px;display:block;object-fit:cover;">
+              <td style="width:28px;vertical-align:middle;">
+                <img src="${logoUrl}" alt="JoyTree" width="26" height="26" style="width:26px;height:26px;display:block;object-fit:cover;">
               </td>
               <td style="vertical-align:middle;padding-left:10px;">
-                <span style="font-size:15px;font-weight:600;color:#202124;">JoyTree</span>
+                <span style="font-size:14px;font-weight:700;color:#10b981;letter-spacing:.02em;">JOYTREE</span>
               </td>
             </tr></table>
           </td>
         </tr>
-        <tr><td style="padding:24px 32px 4px;">
-          <h2 style="margin:0 0 4px;font-size:19px;font-weight:500;color:#202124;">New repository ready to import</h2>
-          <p style="margin:0 0 24px;color:#5f6368;font-size:14px;line-height:1.6;">
-            A new repository on your GitHub account is ready to import and deploy on JoyTree.
+        <tr><td style="padding:32px 32px 8px;">
+          <div style="font-family:'Courier New',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#6ee7b7;margin-bottom:10px;">Repository Detected</div>
+          <h2 style="margin:0 0 10px;font-size:20px;font-weight:700;letter-spacing:-.01em;color:#f1f5f9;">New repository ready to import</h2>
+          <p style="margin:0 0 28px;color:#94a3b8;font-size:14px;line-height:1.6;">
+            A new repository showed up on the GitHub account connected to your JoyTree workspace.
           </p>
-          <table role="presentation" width="100%" style="background:#f8f9fa;margin:0 0 24px;">
-            <tr><td style="padding:16px 18px;">
-              <div style="font-size:15px;font-weight:600;color:#202124;margin-bottom:4px;">${escapeHtmlEmail(repo.fullName)}</div>
-              <div style="font-size:13px;color:#5f6368;">${langLine}</div>
+          <table role="presentation" width="100%" style="border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);margin:0 0 28px;">
+            <tr><td style="padding:18px 0;">
+              <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#f1f5f9;margin-bottom:6px;">${escapeHtmlEmail(repo.fullName)}</div>
+              <div style="font-family:'Courier New',monospace;font-size:12px;color:#64748b;letter-spacing:.02em;">${langLine.toUpperCase()}</div>
             </td></tr>
           </table>
           <table role="presentation" width="100%"><tr><td align="center">
-            <a href="${importUrl}" style="display:inline-block;background:#10b981;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;">Import and Deploy</a>
+            <a href="${importUrl}" style="display:block;width:100%;box-sizing:border-box;background:#10b981;color:#052e16;font-size:14px;font-weight:700;text-decoration:none;padding:14px 28px;text-align:center;">Import and Deploy</a>
           </td></tr></table>
-          <p style="margin:24px 0 0;color:#80868b;font-size:12px;line-height:1.6;">
-            You can turn new repository emails off in <a href="https://${BASE_DOMAIN}/dashboard/settings" style="color:#1a73e8;text-decoration:none;">notification settings</a>.
+          <p style="margin:22px 0 0;color:#475569;font-size:12px;line-height:1.6;">
+            Turn new repository emails off in <a href="https://${BASE_DOMAIN}/dashboard/settings" style="color:#10b981;text-decoration:none;">notification settings</a>.
           </p>
         </td></tr>
-        <tr><td style="padding:24px 32px 24px;">
-          <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 16px;">
-          <p style="margin:0;color:#80868b;font-size:12px;line-height:1.6;">© ${year} JoyTree. This repository was detected on the GitHub account connected to your JoyTree account.</p>
+        <tr><td style="padding:20px 32px 26px;border-top:1px solid rgba(255,255,255,.08);">
+          <p style="margin:0;color:#475569;font-size:11px;line-height:1.6;">© ${year} JoyTree. Detected on the GitHub account connected to your JoyTree account.</p>
         </td></tr>
       </table>
     </td></tr>
