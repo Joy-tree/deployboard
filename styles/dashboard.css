@@ -5726,62 +5726,73 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 /* ── Dashboard Recent Projects — real live-preview thumbnails, same
    iframe-reveal mechanism as the Projects page, shown above Upload/Repos. ── */
 .dqs-recent-projects-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(255,255,255,.08);
 }
 .dqs-project-card {
-  border: 1px solid rgba(255,255,255,.08);
-  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px 10px 10px;
+  border: none;
+  border-left: 2px solid transparent;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  background: transparent;
   cursor: pointer;
-  overflow: hidden;
-  transition: border-color .15s;
+  transition: background .12s, border-left-color .12s;
 }
-.dqs-project-card:hover { border-color: rgba(255,255,255,.18); }
+.dqs-project-card:hover { background: rgba(255,255,255,.03); }
+.dqs-project-card[data-status="success"] { border-left-color: rgba(16,185,129,.5); }
+.dqs-project-card[data-status="building"] { border-left-color: rgba(245,158,11,.5); }
+.dqs-project-card[data-status="failed"] { border-left-color: rgba(239,68,68,.5); }
 .dqs-project-thumb {
-  aspect-ratio: 16/10;
-  width: 100%;
+  width: 64px;
+  height: 40px;
+  flex-shrink: 0;
+  aspect-ratio: unset;
   overflow: hidden;
   background: #050505;
   position: relative;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  border-bottom: none;
 }
 .dqs-project-thumb iframe {
-  width: 400%; height: 400%;
-  transform: scale(.25);
+  width: 1200%; height: 1200%;
+  transform: scale(.0833);
   transform-origin: top left;
   border: none;
   pointer-events: none;
   transition: opacity .3s;
   position: absolute; top: 0; left: 0;
 }
-.dqs-project-body { padding: 12px 14px; }
+.dqs-project-thumb-placeholder {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3);
+}
+.dqs-project-body { padding: 0; flex: 1; min-width: 0; }
 .dqs-project-name-row {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 3px;
 }
 .dqs-project-name {
-  font-size: .85rem; font-weight: 700; color: var(--text);
+  font-size: .82rem; font-weight: 600; color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   min-width: 0;
 }
-.dqs-project-arrow { color: var(--text-3); flex-shrink: 0; transition: transform .15s, color .15s; }
+.dqs-project-arrow { color: var(--text-3); flex-shrink: 0; transition: transform .15s, color .15s; width: 12px; height: 12px; }
 .dqs-project-card:hover .dqs-project-arrow { color: var(--primary); transform: translateX(2px); }
-.dqs-project-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.dqs-project-time { font-size: .7rem; color: var(--text-3); }
+.dqs-project-meta { display: flex; align-items: center; gap: 8px; }
+.dqs-project-time { font-size: .68rem; color: var(--text-3); }
 
-/* Trailing "see all N projects" card — same card shape as a real
-   project card so it sits naturally at the end of the grid, but
-   without a thumbnail; centers a chevron + label instead. */
+/* Trailing "see all N projects" row — same compact row height as a real
+   project row, no thumbnail, just a centered label + chevron. */
 .dqs-project-seeall {
   display: flex; align-items: center; justify-content: center;
-  min-height: 160px;
-  border-style: dashed;
+  padding: 12px 4px;
 }
 .dqs-seeall-body {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  color: var(--text-2); font-size: .82rem; font-weight: 700;
-  padding: 20px;
+  display: flex; align-items: center; gap: 6px;
+  color: var(--text-2); font-size: .8rem; font-weight: 600;
 }
 .dqs-project-seeall:hover .dqs-seeall-body { color: var(--primary); }
-.dqs-project-seeall:hover { border-color: var(--primary); }

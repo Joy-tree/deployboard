@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=13">
+<link rel="stylesheet" href="/styles/dashboard.css?v=14">
   <link rel="stylesheet" href="/styles/auth.css?v=1">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -21847,22 +21847,23 @@ function renderDashRecentProjects() {
 
     const thumbHtml = hasDeployed
       ? `<div class="tree-node-thumb tree-thumb-iframe-wrap dqs-project-thumb" data-live-url="${liveUrl}">
-           <div class="tree-thumb-placeholder">
-             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-             <span>Loading preview…</span>
+           <div class="tree-thumb-placeholder dqs-project-thumb-placeholder">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>
            </div>
          </div>`
-      : `<div class="tree-node-thumb dqs-project-thumb"><div class="tree-thumb-placeholder">
-           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-           <span>Not deployed yet</span></div></div>`;
+      : `<div class="tree-node-thumb dqs-project-thumb"><div class="tree-thumb-placeholder dqs-project-thumb-placeholder">
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><rect x="2" y="3" width="20" height="14" rx="2"/></svg></div></div>`;
 
     let pillClass = 'badge-idle', pillLabel = 'Idle';
     if (st === 'success')                                            { pillClass = 'badge-success';  pillLabel = 'Live'; }
     else if (st === 'building' || st === 'pending')                   { pillClass = 'badge-building'; pillLabel = 'Building'; }
     else if (['failed','error','cancelled','canceled'].includes(st))  { pillClass = 'badge-error';    pillLabel = 'Failed'; }
 
+    const statusKey = st === 'success' ? 'success' : (['building','pending'].includes(st) ? 'building' : (['failed','error','cancelled','canceled'].includes(st) ? 'failed' : ''));
+
     const card = document.createElement('div');
     card.className = 'dqs-project-card';
+    if (statusKey) card.setAttribute('data-status', statusKey);
     card.setAttribute('onclick', `showProjectDetail('${p.id}')`);
     card.innerHTML = `
       ${thumbHtml}
