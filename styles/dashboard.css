@@ -5954,24 +5954,43 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
 html[data-theme="light"] .dcx-dropzone { background:var(--primary) !important; }
 html[data-theme="light"] .dcx-dropzone-label { color:#052e18 !important; }
 
-/* Dashboard homepage upload dropzone (.dqs-upload) — same treatment for consistency */
+/* Dashboard homepage upload dropzone (.dqs-upload) — was forced to a
+   solid saturated var(--primary) fill "for consistency" with the
+   Code Upload page's dropzone, which is exactly what read as a flat,
+   AI-generated block instead of a real product's drop-zone. Rebuilt
+   to match Netlify's actual dropzone: roomy padding, a plain dashed
+   outline sitting flat on the page (no fill), and a refined gradient
+   icon instead of a flat white glyph. This block now REPLACES the
+   forced fill entirely rather than re-overriding it. */
 .dqs-upload {
-  border:none !important;
-  background:var(--primary) !important;
+  border: 2px dashed var(--dcx-field-border, rgba(255,255,255,.16)) !important;
+  background: transparent !important;
+  padding: 56px 32px !important;
+  min-height: 260px !important;
 }
 .dqs-upload:hover, .dqs-upload.dqs-drag-over {
-  border:none !important;
-  filter:brightness(1.06);
+  border-color: var(--primary) !important;
+  background: rgba(16,185,129,.04) !important;
+  filter: none !important;
 }
 .dqs-upload-icon {
-  color:rgba(6,15,10,.62) !important;
-  border:none;
+  width: 64px !important; height: 64px !important;
+  border: none;
 }
 .dqs-upload-icon::before {
-  background: radial-gradient(circle, rgba(6,15,10,.16) 0%, rgba(6,15,10,0) 72%) !important;
+  background: radial-gradient(circle, rgba(16,185,129,.22) 0%, rgba(16,185,129,0) 72%) !important;
 }
-.dqs-upload-title { color:#052e18 !important; }
-.dqs-upload-sub { color:rgba(5,46,24,.72) !important; }
-.dqs-upload-chip { background:rgba(6,15,10,.1) !important; color:rgba(5,46,24,.8) !important; }
-.dqs-upload-limit { color:rgba(5,46,24,.6) !important; }
-html[data-theme="light"] .dqs-upload { background:var(--primary) !important; border:none !important; }
+.dqs-upload-icon svg { width: 34px !important; height: 34px !important; }
+.dqs-upload-title { color: var(--text) !important; font-size: 1rem !important; }
+.dqs-upload-sub { color: var(--text-2) !important; }
+.dqs-upload-chip {
+  background: transparent !important;
+  border: 1px solid var(--dcx-field-border, rgba(255,255,255,.14));
+  color: var(--text-2) !important;
+}
+.dqs-upload-limit { color: var(--text-3) !important; }
+html[data-theme="light"] .dqs-upload {
+  background: transparent !important;
+  border: 2px dashed rgba(0,0,0,.14) !important;
+}
+html[data-theme="light"] .dqs-upload-title { color: var(--text) !important; }

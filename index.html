@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=32">
+<link rel="stylesheet" href="/styles/dashboard.css?v=33">
   <link rel="stylesheet" href="/styles/auth.css?v=1">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -2777,7 +2777,15 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
       <div class="dash-quick-sources">
         <div class="dqs-upload" id="dashUploadDropzone" onclick="dashTriggerUpload()" ondragover="dashUploadDragOver(event)" ondragleave="dashUploadDragLeave(event)" ondrop="dashUploadDrop(event)">
           <div class="dqs-upload-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h9"/><polyline points="14 2 14 8 20 8"/><line x1="7" y1="12.5" x2="12" y2="12.5"/><line x1="7" y1="16" x2="10" y2="16"/><circle cx="18" cy="18" r="5.3"/><path d="M18 20.4v-4.8M15.8 17.8l2.2-2.2 2.2 2.2"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="url(#dqsUploadGrad)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <defs>
+                <linearGradient id="dqsUploadGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6ee7b7"/>
+                  <stop offset="100%" stop-color="#059669"/>
+                </linearGradient>
+              </defs>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h9"/><polyline points="14 2 14 8 20 8"/><line x1="7" y1="12.5" x2="12" y2="12.5"/><line x1="7" y1="16" x2="10" y2="16"/><circle cx="18" cy="18" r="5.3"/><path d="M18 20.4v-4.8M15.8 17.8l2.2-2.2 2.2 2.2"/>
+            </svg>
           </div>
           <div class="dqs-upload-title">Drop your project here</div>
           <div class="dqs-upload-sub">No GitHub required — we extract, detect your stack, and deploy automatically</div>
