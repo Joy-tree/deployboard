@@ -14619,7 +14619,7 @@ function getDeploymentFrameworkIcon(project) {
   else if (start.includes('php'))                                         lang = 'PHP';
   else if (/\bgo\b/.test(start) || start.includes('golang'))             lang = 'Go';
   else if (start.includes('bun ') || build.includes('bun '))             lang = 'Node.js';
-  else if (isStatic && !build && !start)                                  lang = 'HTML';
+  else if (isStatic)                                                      lang = 'HTML';
   else if (project.nodeVer || start.includes('node') ||
            start.includes('npm') || start.includes('yarn'))               lang = 'Node.js';
 
