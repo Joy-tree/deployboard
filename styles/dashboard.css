@@ -5990,15 +5990,15 @@ html[data-theme="light"] .dcx-dropzone-label { color:#052e18 !important; }
   50%      { opacity: 1;   transform: scale(1.12); }
 }
 .dqs-upload-icon {
-  width: 64px !important; height: 64px !important;
+  width: 84px !important; height: 84px !important;
   border: none;
 }
 .dqs-upload-icon::before {
-  background: radial-gradient(circle, rgba(16,185,129,.28) 0%, rgba(16,185,129,0) 72%) !important;
+  background: radial-gradient(circle, rgba(16,185,129,.34) 0%, rgba(16,185,129,0) 72%) !important;
   animation: dqsGlowBreathe 2.8s ease-in-out infinite;
 }
 .dqs-upload-icon svg {
-  width: 34px !important; height: 34px !important;
+  width: 46px !important; height: 46px !important;
   animation: dqsIconFloat 2.8s ease-in-out infinite;
 }
 .dqs-upload:hover .dqs-upload-icon::before,
