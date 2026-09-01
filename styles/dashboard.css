@@ -4456,86 +4456,40 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
   .hero-trust{ justify-content:flex-start; }
 
   .hero-visual{
-    display:flex; flex-direction:column; align-items:center;
-    position:relative; flex:1 1 460px; max-width:480px;
+    display:flex; flex-direction:column; align-items:stretch;
+    position:relative; flex:1 1 460px; max-width:520px;
   }
-  .hero-visual-window{
-    width:100%; background:#0d0d0d; border:1px solid rgba(255,255,255,.10);
-    position:relative; z-index:1;
-    animation:heroWindowFloat 5s ease-in-out infinite;
+  /* Raw log stream, no card/border/background — sits directly on the
+     page's own dark background. Fixed height + hidden overflow so it
+     doesn't reflow the hero as lines stream in; internal scroll keeps
+     the newest lines visible, like watching a real terminal. */
+  .hero-term{
+    height:400px; overflow:hidden;
+    font-family:var(--font-mono); font-size:.82rem; line-height:1.85;
+    -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
+            mask-image:linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
   }
-  @keyframes heroWindowFloat{
-    0%,100%{ transform:translateY(0); }
-    50%{ transform:translateY(-8px); }
-  }
-  .hero-visual-titlebar{
-    display:flex; align-items:center; gap:7px;
-    padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.08);
-  }
-  .hero-visual-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-  .dot-red{ background:#f87171; opacity:.7; }
-  .dot-amber{ background:#fbbf24; opacity:.7; }
-  .dot-green{ background:#34d399; opacity:.7; }
-  .hero-visual-titlebar-label{
-    margin-left:6px; font-family:var(--font-mono); font-size:.68rem;
-    font-weight:700; letter-spacing:.08em; color:var(--text-3);
-  }
-  .hero-visual-cmdrow{
-    display:flex; align-items:center; gap:8px;
-    padding:14px 18px; border-bottom:1px solid rgba(255,255,255,.08);
-    font-family:var(--font-mono); font-size:.84rem;
-    background:rgba(16,185,129,.04);
-  }
-  .hero-visual-cmd-prompt{ color:var(--primary); font-weight:700; }
-  .hero-visual-cmd-text{ color:var(--text); }
-  .hero-visual-cursor{
-    width:6px; height:14px; background:var(--primary);
+  .hero-term-line{ white-space:pre-wrap; word-break:break-word; }
+  .hero-term-prompt{ color:var(--primary); font-weight:700; margin-right:8px; }
+  .hero-term-cmd{ color:var(--text); }
+  .hero-term-cursor{
+    display:inline-block; width:6px; height:13px; margin-left:2px;
+    background:var(--primary); vertical-align:-2px;
     animation:heroCursorBlink 1s step-end infinite;
   }
   @keyframes heroCursorBlink{ 0%,49%{ opacity:1; } 50%,100%{ opacity:0; } }
-  .hero-visual-body{ padding:18px 20px 20px; }
-  .hero-visual-shadow{
-    width:88%; height:36px; margin-top:-14px;
-    background:radial-gradient(ellipse at center, rgba(0,0,0,.5) 0%, transparent 75%);
-    filter:blur(4px);
-  }
-  .hero-visual-row{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:12px 0; border-bottom:1px solid rgba(255,255,255,.06);
-  }
-  .hero-visual-row-last{ border-bottom:none; padding-bottom:0; }
-  .hero-visual-row-main{
-    display:flex; align-items:center; gap:9px;
-    font-size:.85rem; font-weight:600; color:var(--text);
-  }
-  .hero-visual-row-main svg{ width:15px; height:15px; color:var(--text-3); flex-shrink:0; }
-  .hero-visual-badge{
-    display:inline-flex; align-items:center; gap:6px;
-    font-family:var(--font-mono); font-size:.68rem; font-weight:700;
-    padding:3px 9px; letter-spacing:.02em;
-  }
-  .hero-visual-badge-dot{ width:6px; height:6px; border-radius:50%; flex-shrink:0; }
-  .hero-visual-badge.success{ background:rgba(16,185,129,.18); color:#10b981; }
-  .hero-visual-badge.success .hero-visual-badge-dot{ background:#10b981; }
-  .hero-visual-badge.building{ background:rgba(245,158,11,.18); color:#f59e0b; }
-  .hero-visual-badge.building .hero-visual-badge-dot{
-    background:#f59e0b; animation:heroDotPulse 1.2s ease-in-out infinite;
-  }
-  @keyframes heroDotPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
-  .hero-visual-metrics{
-    display:grid; grid-template-columns:1fr 1fr; gap:14px;
-    padding:14px 0; border-bottom:1px solid rgba(255,255,255,.06);
-  }
-  .hero-visual-metric{ display:flex; flex-direction:column; gap:6px; }
-  .hero-visual-metric-label{
-    font-family:var(--font-mono); font-size:.62rem; font-weight:700;
-    letter-spacing:.1em; color:var(--text-3);
-  }
-  .hero-visual-spark{ width:100%; height:24px; }
-  .hero-visual-spark polyline{
-    fill:none; stroke:var(--primary); stroke-width:1.6;
-    stroke-linecap:round; stroke-linejoin:round; opacity:.85;
-  }
+  .hero-term-line.building{ color:var(--text-3); }
+  .hero-term-line.building.ok{ color:var(--text-2); }
+  .hero-term-line.step{ color:var(--text-3); padding-left:2px; }
+  .hero-term-line.ok{ color:var(--text-2); }
+  .hero-term-line.ok.strong{ color:var(--text); font-weight:700; margin-top:4px; }
+  .hero-term-mark{ display:inline-block; width:16px; margin-right:2px; }
+  .hero-term-mark.arrow{ color:var(--text-3); }
+  .hero-term-mark.ok{ color:var(--primary); }
+  .hero-term-mark.step{ color:var(--text-3); }
+  .hero-term-mark.cached{ color:var(--text-3); opacity:.6; }
+  .hero-term-dim{ color:var(--text-3); }
+  .hero-term-link{ color:var(--primary); }
 }
 @keyframes contactPulse{0%{transform:scale(.9);opacity:.85}100%{transform:scale(1.22);opacity:0}}
 

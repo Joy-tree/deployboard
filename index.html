@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=24">
+<link rel="stylesheet" href="/styles/dashboard.css?v=25">
   <link rel="stylesheet" href="/styles/auth.css?v=1">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -765,71 +765,131 @@ window.landingToggleTheme = function(){
       </div>
     </div>
 
-    <!-- ── Desktop-only live product visual ──────────────────────────────
+    <!-- ── Desktop-only live build stream ─────────────────────────────────
          Hidden on mobile via CSS (.hero-visual display:none below 1024px).
-         A single unified window frame (title bar with traffic-light dots
-         + "Live Deployment" label, exactly like a real screenshot of the
-         dashboard) containing the deploy command as its first row and the
-         service statuses below it — one cohesive product screenshot
-         instead of separate floating pieces. Built entirely in JoyTree's
-         own flat/hairline visual language. -->
+         No card, no window frame, no border — just raw terminal text
+         sitting directly on the page's own background, styled like real
+         `docker compose up --build` output (the [+] Building N.Ns (x/y)
+         counter, => step lines, cached markers) streaming continuously
+         in a loop via heroTerminalLoop() below. Genuine line-by-line
+         typewriter animation, not a static screenshot. -->
     <div class="hero-visual" aria-hidden="true">
-      <div class="hero-visual-window">
-        <div class="hero-visual-titlebar">
-          <span class="hero-visual-dot dot-red"></span>
-          <span class="hero-visual-dot dot-amber"></span>
-          <span class="hero-visual-dot dot-green"></span>
-          <span class="hero-visual-titlebar-label">Live Deployment</span>
-        </div>
-        <div class="hero-visual-cmdrow">
-          <span class="hero-visual-cmd-prompt">$</span>
-          <span class="hero-visual-cmd-text">joytree deploy</span>
-          <span class="hero-visual-cursor"></span>
-        </div>
-        <div class="hero-visual-body">
-          <div class="hero-visual-row">
-            <div class="hero-visual-row-main">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="0"/><path d="M3 9h18M9 4v16"/></svg>
-              <span>joytree-frontend</span>
-            </div>
-            <span class="hero-visual-badge building">
-              <span class="hero-visual-badge-dot"></span>Deploying
-            </span>
-          </div>
-          <div class="hero-visual-metrics">
-            <div class="hero-visual-metric">
-              <span class="hero-visual-metric-label">MEMORY</span>
-              <svg class="hero-visual-spark" viewBox="0 0 100 28" preserveAspectRatio="none"><polyline points="0,20 12,16 24,18 36,10 48,14 60,6 72,12 84,8 100,10" /></svg>
-            </div>
-            <div class="hero-visual-metric">
-              <span class="hero-visual-metric-label">CPU</span>
-              <svg class="hero-visual-spark" viewBox="0 0 100 28" preserveAspectRatio="none"><polyline points="0,22 12,18 24,20 36,12 48,16 60,8 72,14 84,10 100,6" /></svg>
-            </div>
-          </div>
-          <div class="hero-visual-row">
-            <div class="hero-visual-row-main">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
-              <span>joytree-db</span>
-            </div>
-            <span class="hero-visual-badge success">
-              <span class="hero-visual-badge-dot"></span>Live
-            </span>
-          </div>
-          <div class="hero-visual-row hero-visual-row-last">
-            <div class="hero-visual-row-main">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l9 4.9V17L12 22l-9-4.9V6.9L12 2z"/></svg>
-              <span>joytree-api</span>
-            </div>
-            <span class="hero-visual-badge success">
-              <span class="hero-visual-badge-dot"></span>Live
-            </span>
-          </div>
-        </div>
-      </div>
-      <div class="hero-visual-shadow"></div>
+      <div class="hero-term" id="heroTerm"></div>
     </div>
   </div>
 </section>
+
+<script>
+/* ── Hero build-log loop ──────────────────────────────────────────────
+   Streams a realistic `docker compose up --build` log directly onto
+   the page background — no card, no border, just terminal text. Each
+   line types in, the [+] Building counter line updates in place
+   (rewriting its own last line, exactly like a real terminal does),
+   then it auto-scrolls, holds briefly on the finished state, clears,
+   and loops. Self-pauses when the tab isn't visible; renders once
+   statically for prefers-reduced-motion. */
+(function heroTerminalLoop(){
+  var el = document.getElementById('heroTerm');
+  if (!el) return;
+
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var visible = true;
+  document.addEventListener('visibilitychange', function(){ visible = !document.hidden; });
+
+  function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  async function untilVisible(){ while (!visible) await wait(150); }
+
+  function appendLine(cls, html){
+    var row = document.createElement('div');
+    row.className = 'hero-term-line' + (cls ? ' ' + cls : '');
+    row.innerHTML = html;
+    el.appendChild(row);
+    el.scrollTop = el.scrollHeight;
+    return row;
+  }
+
+  // Typed prompt + command line, character by character.
+  async function typeCommand(prompt, text){
+    var row = appendLine('cmd');
+    row.innerHTML = '<span class="hero-term-prompt">' + prompt + '</span><span class="hero-term-cmd"></span><span class="hero-term-cursor"></span>';
+    var cmdSpan = row.querySelector('.hero-term-cmd');
+    var cursor = row.querySelector('.hero-term-cursor');
+    for (var i = 1; i <= text.length; i++) {
+      await untilVisible();
+      cmdSpan.textContent = text.slice(0, i);
+      el.scrollTop = el.scrollHeight;
+      await wait(38 + Math.random() * 35);
+    }
+    await wait(280);
+    cursor.remove();
+  }
+
+  // A line that rewrites itself in place a few times (the "[+] Building
+  // 0.0s (0/1)" ticking counter every real build tool shows), then
+  // settles on a final state.
+  async function tickingLine(prefix, frames, finalCls){
+    var row = appendLine('building');
+    for (var i = 0; i < frames.length; i++) {
+      await untilVisible();
+      row.textContent = prefix + frames[i];
+      el.scrollTop = el.scrollHeight;
+      await wait(90 + Math.random() * 70);
+    }
+    if (finalCls) row.classList.add(finalCls);
+  }
+
+  // A plain instant log line (the => step-by-step build output).
+  async function instantLine(cls, html, pause){
+    appendLine(cls, html);
+    await wait(pause || 40);
+  }
+
+  async function run(){
+    el.innerHTML = '';
+
+    await typeCommand('$', 'docker compose up --build -d');
+    await wait(180);
+
+    await tickingLine('[+] Building ', [
+      '0.0s (0/1)', '0.2s (1/1)', '0.4s (3/3)', '0.6s (5/12)',
+      '1.4s (5/12)', '2.1s (6/12)', '2.9s (11/12)', '3.4s (13/13)'
+    ], 'ok');
+
+    var steps = [
+      '<span class="hero-term-mark step">=></span> [internal] load build definition from Dockerfile',
+      '<span class="hero-term-mark step">=></span> transferring dockerfile: 1.11kB',
+      '<span class="hero-term-mark step">=></span> [internal] load metadata for docker.io/library/node:20-alpine',
+      '<span class="hero-term-mark cached">=></span> <span class="hero-term-dim">CACHED</span> [2/7] RUN apk add --no-cache git docker-cli curl',
+      '<span class="hero-term-mark cached">=></span> <span class="hero-term-dim">CACHED</span> [3/7] WORKDIR /app',
+      '<span class="hero-term-mark cached">=></span> <span class="hero-term-dim">CACHED</span> [4/7] COPY package*.json .',
+      '<span class="hero-term-mark cached">=></span> <span class="hero-term-dim">CACHED</span> [5/7] RUN npm install --only=production',
+      '<span class="hero-term-mark step">=></span> [7/7] RUN mkdir -p /var/www/user-sites',
+      '<span class="hero-term-mark step">=></span> exporting to image',
+      '<span class="hero-term-mark step">=></span> naming to docker.io/library/joytree-app:latest'
+    ];
+    for (var s = 0; s < steps.length; s++) {
+      await untilVisible();
+      await instantLine('step', steps[s], 55 + Math.random() * 70);
+    }
+
+    await wait(150);
+    await instantLine('ok', '<span class="hero-term-mark ok">✓</span> Container <span class="hero-term-dim">joytree-app</span> &nbsp;Started', 180);
+    await instantLine('ok strong', '<span class="hero-term-mark ok">✓</span> Deployed &nbsp;→&nbsp; <span class="hero-term-link">https://myapp.joytree.site</span>', 0);
+
+    // Hold on the finished state, then clear and loop.
+    await wait(2800);
+    run();
+  }
+
+  if (reduced) {
+    el.innerHTML =
+      '<div class="hero-term-line cmd"><span class="hero-term-prompt">$</span><span class="hero-term-cmd">docker compose up --build -d</span></div>' +
+      '<div class="hero-term-line ok"><span class="hero-term-mark ok">✓</span> Deployed &nbsp;→&nbsp; <span class="hero-term-link">https://myapp.joytree.site</span></div>';
+    return;
+  }
+  run();
+})();
+</script>
 
 <!-- ═════════════════ Powered-by infrastructure strip ═════════════════ -->
 <section class="infra-strip" aria-label="Powered by trusted infrastructure">
