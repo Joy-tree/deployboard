@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=26">
+<link rel="stylesheet" href="/styles/dashboard.css?v=27">
   <link rel="stylesheet" href="/styles/auth.css?v=1">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -851,20 +851,27 @@ window.landingToggleTheme = function(){
     await wait(180);
 
     await tickingLine('[+] Building ', [
-      '0.0s (0/1)', '0.2s (1/1)', '0.4s (3/3)', '0.6s (5/12)',
-      '1.4s (5/12)', '2.1s (6/12)', '2.9s (11/12)', '3.4s (13/13)'
+      '0.0s (0/1)', '0.2s (1/1)', '0.4s (2/9)', '0.7s (4/9)',
+      '1.3s (5/9)', '2.0s (6/9)', '2.6s (8/9)', '3.1s (9/9)'
     ], 'ok');
 
     var steps = [
       '<span class="hero-term-mark step">=></span> [internal] load build definition from Dockerfile',
       '<span class="hero-term-mark step">=></span> transferring dockerfile: 1.11kB',
       '<span class="hero-term-mark step">=></span> [internal] load metadata for docker.io/library/node:20-alpine',
-      '<span class="hero-term-mark cached">=></span> <span class="hero-term-dim">CACHED</span> [2/7] RUN apk add --no-cache git docker-cli curl',
-      '<span class="hero-term-mark cached">=></span> <span class="hero-term-dim">CACHED</span> [3/7] WORKDIR /app',
-      '<span class="hero-term-mark cached">=></span> <span class="hero-term-dim">CACHED</span> [4/7] COPY package*.json .',
-      '<span class="hero-term-mark cached">=></span> <span class="hero-term-dim">CACHED</span> [5/7] RUN npm install --only=production',
-      '<span class="hero-term-mark step">=></span> [7/7] RUN mkdir -p /var/www/user-sites',
+      '<span class="hero-term-mark step">=></span> [internal] load .dockerignore',
+      '<span class="hero-term-mark cached">=></span> <span class="hero-term-dim">CACHED</span> [1/9] FROM docker.io/library/node:20-alpine',
+      '<span class="hero-term-mark cached">=></span> <span class="hero-term-dim">CACHED</span> [2/9] RUN apk add --no-cache git docker-cli curl',
+      '<span class="hero-term-mark cached">=></span> <span class="hero-term-dim">CACHED</span> [3/9] WORKDIR /app',
+      '<span class="hero-term-mark cached">=></span> <span class="hero-term-dim">CACHED</span> [4/9] COPY package*.json .',
+      '<span class="hero-term-mark cached">=></span> <span class="hero-term-dim">CACHED</span> [5/9] RUN npm install --only=production',
+      '<span class="hero-term-mark step">=></span> [6/9] COPY . .',
+      '<span class="hero-term-mark step">=></span> [7/9] RUN npm run build',
+      '<span class="hero-term-mark step">=></span> [8/9] RUN mkdir -p /var/www/user-sites',
+      '<span class="hero-term-mark step">=></span> [9/9] RUN chown -R node:node /app',
       '<span class="hero-term-mark step">=></span> exporting to image',
+      '<span class="hero-term-mark step">=></span> exporting layers',
+      '<span class="hero-term-mark step">=></span> writing image sha256:9f2a1c...',
       '<span class="hero-term-mark step">=></span> naming to docker.io/library/joytree-app:latest'
     ];
     for (var s = 0; s < steps.length; s++) {
@@ -872,12 +879,30 @@ window.landingToggleTheme = function(){
       await instantLine('step', steps[s], 55 + Math.random() * 70);
     }
 
+    // Green deployment checklist — the "real work" phase every deploy
+    // pipeline runs after the image is built. Deliberately the longest
+    // and greenest section of the loop, so the stream reads as mostly
+    // successful/ongoing rather than a short blue build flashing by.
     await wait(150);
-    await instantLine('ok', '<span class="hero-term-mark ok">✓</span> Container <span class="hero-term-dim">joytree-app</span> &nbsp;Started', 180);
+    var greenSteps = [
+      'Image built successfully',
+      'Pushing image to registry',
+      'Container <span class="hero-term-dim">joytree-app</span> started',
+      'Health check passed on port 3000',
+      'SSL certificate provisioned',
+      'DNS propagated — <span class="hero-term-dim">myapp.joytree.site</span>',
+      'CDN cache warmed across 14 edge nodes',
+      'Routing table updated'
+    ];
+    for (var g = 0; g < greenSteps.length; g++) {
+      await untilVisible();
+      await instantLine('ok', '<span class="hero-term-mark ok">✓</span> ' + greenSteps[g], 140 + Math.random() * 90);
+    }
+    await wait(150);
     await instantLine('ok strong', '<span class="hero-term-mark ok">✓</span> Deployed &nbsp;→&nbsp; <span class="hero-term-link">https://myapp.joytree.site</span>', 0);
 
     // Hold on the finished state, then clear and loop.
-    await wait(2800);
+    await wait(3200);
     run();
   }
 

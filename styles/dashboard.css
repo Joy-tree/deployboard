@@ -4460,15 +4460,26 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
     position:relative; flex:1 1 460px; max-width:520px;
   }
   /* Raw log stream, no card/border/background — sits directly on the
-     page's own dark background. Fixed height + hidden overflow so it
-     doesn't reflow the hero as lines stream in; internal scroll keeps
-     the newest lines visible, like watching a real terminal. */
+     page's own dark background. Fixed height, internal scroll keeps
+     the newest lines visible, like watching a real terminal.
+     [FIX] This was overflow:hidden, which has no scrollable area at
+     all -- every el.scrollTop assignment in the JS was a no-op, so
+     once content passed 400px tall it just got clipped off invisibly
+     instead of scrolling into view. That's why the loop felt short:
+     it wasn't short, most of it was being silently cut off. Switched
+     to overflow-y:auto (scrolling now actually does something) with
+     the scrollbar hidden since this is a decorative background
+     element, plus native smooth scroll-behavior so the JS's scrollTop
+     jumps glide instead of snapping instantly. */
   .hero-term{
-    height:400px; overflow:hidden;
+    height:400px; overflow-y:auto; overflow-x:hidden;
+    scroll-behavior:smooth;
+    scrollbar-width:none; -ms-overflow-style:none;
     font-family:var(--font-mono); font-size:.82rem; line-height:1.85;
     -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
             mask-image:linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
   }
+  .hero-term::-webkit-scrollbar{ display:none; }
   .hero-term-line{ white-space:pre-wrap; word-break:break-word; }
   .hero-term-prompt{ color:#22c55e; font-weight:700; margin-right:8px; }
   .hero-term-cmd{ color:#22c55e; }
