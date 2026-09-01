@@ -5697,13 +5697,19 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
   background: rgba(16,185,129,.04);
 }
 .dqs-upload-icon {
-  width: 44px; height: 44px; margin-bottom: 14px;
+  width: 56px; height: 56px; margin-bottom: 14px;
   display: flex; align-items: center; justify-content: center;
+  position: relative;
   color: #fff;
-  background: var(--primary);
   flex-shrink: 0;
 }
-.dqs-upload-icon svg { width: 20px; height: 20px; }
+.dqs-upload-icon::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16,185,129,.35) 0%, rgba(16,185,129,0) 72%);
+}
+.dqs-upload-icon svg { width: 30px; height: 30px; position: relative; z-index: 1; }
 .dqs-upload-title { font-size: .92rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
 .dqs-upload-sub { font-size: .78rem; color: var(--text-2); line-height: 1.5; max-width: 320px; margin-bottom: 16px; }
 .dqs-upload-formats {
@@ -5928,14 +5934,20 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
   filter:brightness(1.06);
 }
 .dcx-dropzone-icon {
-  width:46px; height:46px; margin-bottom:14px;
+  width:56px; height:56px; margin-bottom:14px;
   display:flex; align-items:center; justify-content:center;
-  color:rgba(6,15,10,.55);
-  background:rgba(6,15,10,.12);
+  position: relative;
+  color:rgba(6,15,10,.62);
   border:none;
   flex-shrink:0;
 }
-.dcx-dropzone-icon svg { width:20px; height:20px; }
+.dcx-dropzone-icon::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(6,15,10,.18) 0%, rgba(6,15,10,0) 72%);
+}
+.dcx-dropzone-icon svg { width:30px; height:30px; position: relative; z-index: 1; }
 .dcx-dropzone-label { font-size:.95rem; font-weight:700; color:#052e18; margin-bottom:6px; letter-spacing:-.01em; }
 .dcx-dropzone-sub { font-size:.78rem; color:rgba(5,46,24,.72); }
 
@@ -5952,9 +5964,11 @@ html[data-theme="light"] .dcx-dropzone-label { color:#052e18 !important; }
   filter:brightness(1.06);
 }
 .dqs-upload-icon {
-  background:rgba(6,15,10,.12) !important;
-  color:rgba(6,15,10,.55) !important;
+  color:rgba(6,15,10,.62) !important;
   border:none;
+}
+.dqs-upload-icon::before {
+  background: radial-gradient(circle, rgba(6,15,10,.16) 0%, rgba(6,15,10,0) 72%) !important;
 }
 .dqs-upload-title { color:#052e18 !important; }
 .dqs-upload-sub { color:rgba(5,46,24,.72) !important; }
