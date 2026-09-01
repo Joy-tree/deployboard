@@ -5892,3 +5892,55 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .dqs-db-meta { font-size: .7rem; color: var(--text-3); margin-top: 1px; }
+
+/* ══ New Deploy page — upload dropzone (.dcx-*) — previously unstyled ══ */
+.dcx-or-divider { display:flex; align-items:center; gap:14px; margin:20px 0 16px; }
+.dcx-or-divider span { flex:1; height:1px; background:rgba(148,163,184,.16); }
+.dcx-or-divider em { font-style:normal; font-size:.7rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-3); white-space:nowrap; }
+
+.dcx-dropzone {
+  border:1px dashed rgba(16,185,129,.4);
+  background:rgba(16,185,129,.08);
+  padding:32px 20px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center;
+  cursor:pointer;
+  transition:border-color .16s ease, background .16s ease;
+  min-height:170px;
+}
+.dcx-dropzone:hover, .dcx-dropzone.drag-over {
+  border-color:var(--primary);
+  background:rgba(16,185,129,.13);
+}
+.dcx-dropzone-icon {
+  width:46px; height:46px; margin-bottom:14px;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--primary);
+  background:rgba(16,185,129,.14);
+  border:1px solid rgba(16,185,129,.3);
+  flex-shrink:0;
+}
+.dcx-dropzone-icon svg { width:20px; height:20px; }
+.dcx-dropzone-label { font-size:.95rem; font-weight:700; color:var(--text); margin-bottom:6px; letter-spacing:-.01em; }
+.dcx-dropzone-sub { font-size:.78rem; color:var(--text-2); }
+
+html[data-theme="light"] .dcx-dropzone { background:rgba(16,185,129,.06) !important; border-color:rgba(16,185,129,.3) !important; }
+html[data-theme="light"] .dcx-dropzone:hover { background:rgba(16,185,129,.1) !important; }
+html[data-theme="light"] .dcx-dropzone-label { color:#0f172a !important; }
+
+/* Dashboard homepage upload dropzone (.dqs-upload) — same treatment for consistency */
+.dqs-upload {
+  border:1px dashed rgba(16,185,129,.4) !important;
+  background:rgba(16,185,129,.08) !important;
+}
+.dqs-upload:hover, .dqs-upload.dqs-drag-over {
+  border-color:var(--primary) !important;
+  background:rgba(16,185,129,.13) !important;
+}
+.dqs-upload-icon {
+  background:rgba(16,185,129,.14) !important;
+  color:var(--primary) !important;
+  border:1px solid rgba(16,185,129,.3);
+}
+html[data-theme="light"] .dqs-upload { background:rgba(16,185,129,.06) !important; border-color:rgba(16,185,129,.3) !important; }
+html[data-theme="light"] .dqs-upload:hover { background:rgba(16,185,129,.1) !important; }
