@@ -4160,7 +4160,14 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
   50%{transform:translate(12px,-18px);}
 }
 
-/* Auth content — no card/box, sits directly on the page background */
+/* Auth content — no card/box on mobile (full-bleed), bordered on
+   desktop. [FIX] Previously "no card, sits directly on background"
+   everywhere, but on a wide desktop viewport that left the whole
+   sign-up form floating in a large empty black area with nothing
+   defining its edges -- looked unfinished rather than intentionally
+   flat. Added a hairline border + padding at wider viewports only,
+   matching the same flat/sharp-corner/no-fill language used
+   throughout the rest of the site. */
 .auth-wrap {
   position:relative;z-index:1;
   width:min(96vw, 440px);
@@ -4170,6 +4177,12 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
   box-shadow:none;
   overflow:visible;
   animation:authCardIn .45s cubic-bezier(.23,1,.32,1) both;
+}
+@media (min-width: 640px) {
+  .auth-wrap {
+    border: 1px solid rgba(255,255,255,0.16);
+    padding: 8px;
+  }
 }
 @keyframes authCardIn {
   from { opacity:0; transform:translateY(20px); }
@@ -4598,6 +4611,17 @@ html[data-theme="light"] .auth-wrap {
   background: #ffffff !important;
   border-color: rgba(0,0,0,.09) !important;
   box-shadow: 0 20px 60px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06) !important;
+}
+/* [FIX] Same bug as the badges elsewhere: this only ever set
+   border-color, but the base .auth-wrap rule is border:none (no
+   style/width at all), so a color-only override renders nothing.
+   Light theme's auth card border was invisible for the same structural
+   reason the dark one was missing entirely. */
+@media (min-width: 640px) {
+  html[data-theme="light"] .auth-wrap {
+    border-style: solid !important;
+    border-width: 1px !important;
+  }
 }
 html[data-theme="light"] .auth-title { color: #111827 !important; }
 html[data-theme="light"] .auth-title-accent { color: #059669 !important; }
