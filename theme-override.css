@@ -3178,10 +3178,28 @@ html[data-theme="light"] .dnp-btn:hover{ background:var(--jt-brand)!important; }
    background, underline input border opacity, and the page's own
    background tint).
    ══════════════════════════════════════════════════════════════════ */
-.auth-wrap {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+/* [FIX] This unconditional border:none!important was overriding the
+   desktop-only bordered box added to .auth-wrap in
+   styles/dashboard.css -- theme-override.css loads AFTER
+   dashboard.css, and both rules are plain ".auth-wrap" with
+   !important, so this one always won regardless of viewport width,
+   silently erasing the desktop border every time. Scoped this to
+   mobile only and added the real desktop border here instead, since
+   this file is what actually has the last word. */
+@media (max-width: 639px) {
+  .auth-wrap {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
+@media (min-width: 640px) {
+  .auth-wrap {
+    background: transparent !important;
+    border: 1px solid rgba(255,255,255,0.16) !important;
+    padding: 8px !important;
+    box-shadow: none !important;
+  }
 }
 #auth-view { background: var(--bg) !important; }
 
