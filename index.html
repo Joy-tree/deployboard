@@ -203,7 +203,7 @@
   <link rel="stylesheet" href="/styles/animations.css?v=3">
   <link rel="stylesheet" href="/styles/onboarding.css?v=1">
   <link rel="stylesheet" href="/styles/streak.css?v=2">
-  <link rel="stylesheet" href="/theme-override.css?v=192" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+  <link rel="stylesheet" href="/theme-override.css?v=193" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -3182,10 +3182,10 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         <div class="dcx-kicker">GitHub workspace</div>
         <div class="dcx-title">Repositories</div>
         <div class="dcx-sub">Browse live GitHub metadata, inspect stack signals, and import the right repository into a deployment-ready workflow.</div>
-        <div class="dcx-steps" style="grid-template-columns:repeat(3,1fr);margin-top:20px;">
-          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="repoStatTotal" style="width:auto;padding:0 6px;">—</span><span>Total</span></div>
-          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="repoStatPrivate" style="width:auto;padding:0 6px;">—</span><span>Private</span></div>
-          <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="repoStatLanguages" style="width:auto;padding:0 6px;">—</span><span>Stacks</span></div>
+        <div class="dcx-steps" id="repoFilterTabs" style="grid-template-columns:repeat(3,1fr);margin-top:20px;">
+          <button type="button" class="dcx-step-item repo-filter-tab active" data-filter="all" style="justify-content:flex-start;gap:8px;" onclick="setRepoFilter('all')"><span class="dcx-step-badge" id="repoStatTotal" style="width:auto;padding:0 6px;">—</span><span>All</span></button>
+          <button type="button" class="dcx-step-item repo-filter-tab" data-filter="public" style="justify-content:flex-start;gap:8px;" onclick="setRepoFilter('public')"><span class="dcx-step-badge" id="repoStatPublic" style="width:auto;padding:0 6px;">—</span><span>Public</span></button>
+          <button type="button" class="dcx-step-item repo-filter-tab" data-filter="private" style="justify-content:flex-start;gap:8px;" onclick="setRepoFilter('private')"><span class="dcx-step-badge" id="repoStatPrivate" style="width:auto;padding:0 6px;">—</span><span>Private</span></button>
         </div>
       </div>
       <div class="dcx-group-box" style="margin-bottom:24px;">
@@ -21939,15 +21939,28 @@ function repoSearchText(repo) {
 }
 function updateRepoStats(repos) {
   const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
-  const languages = new Set();
-  repos.forEach(repo => {
-    const detected = detectRepoLanguage(repo).label;
-    if (detected && detected !== 'Code') languages.add(detected);
-    Object.keys(repo.languages || {}).forEach(lang => languages.add(lang));
-  });
   set('repoStatTotal', repos.length);
+  set('repoStatPublic', repos.filter(r => !r.private).length);
   set('repoStatPrivate', repos.filter(r => r.private).length);
-  set('repoStatLanguages', languages.size || '—');
+}
+
+// [FEATURE] Turns the All/Public/Private stat strip into real filter tabs,
+// matching how pxxl's Overview/Deployments/Live Logs segmented tabs work --
+// clicking one narrows the repo grid to just that visibility, with the
+// active tab highlighted the same green used for the active state
+// everywhere else on the site (.nav-item.active), not a one-off color.
+let repoVisibilityFilter = 'all';
+function setRepoFilter(filter) {
+  repoVisibilityFilter = filter;
+  document.querySelectorAll('#repoFilterTabs .repo-filter-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+  renderReposPage();
+}
+function repoMatchesVisibility(repo) {
+  if (repoVisibilityFilter === 'public')  return !repo.private;
+  if (repoVisibilityFilter === 'private') return !!repo.private;
+  return true;
 }
 
 function repoReconnectActionsHtml() {
@@ -22010,9 +22023,11 @@ async function renderReposPage(force = false) {
 
     updateRepoStats(githubRepos);
     const q = (document.getElementById('repoSearchInput')?.value || '').toLowerCase().trim();
-    const filtered = githubRepos.filter(repo => !q || repoSearchText(repo).includes(q));
+    const filtered = githubRepos.filter(repo => (!q || repoSearchText(repo).includes(q)) && repoMatchesVisibility(repo));
     if (!filtered.length) {
-      wrap.innerHTML = '<div class="repo-empty" style="grid-column:1/-1;"><strong>No repositories found</strong><span>Try a different search term or refresh your GitHub connection.</span></div>';
+      wrap.innerHTML = '<div class="repo-empty" style="grid-column:1/-1;"><strong>No repositories found</strong><span>' +
+        (repoVisibilityFilter !== 'all' ? 'No ' + repoVisibilityFilter + ' repositories match' + (q ? ' that search.' : '.') : 'Try a different search term or refresh your GitHub connection.') +
+        '</span></div>';
       return;
     }
 

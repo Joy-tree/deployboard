@@ -5987,6 +5987,43 @@ html[data-theme="light"] #page-repos {
   flex-shrink: 0;
 }
 
+/* [FEATURE] All/Public/Private are real filter tabs now, not static
+   stat boxes -- they're rendered as <button> elements so they need the
+   native button chrome reset, plus hover/active states using the exact
+   same green treatment as .nav-item.active everywhere else on the site
+   (not a one-off color), so a selected tab reads consistently with the
+   rest of the app. */
+#page-repos .repo-filter-tab {
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--dcx-row-border) !important;
+  border-radius: 0;
+  margin: 0;
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+#page-repos .repo-filter-tab:last-child { border-right: none !important; }
+#page-repos .repo-filter-tab:focus-visible {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+#page-repos .repo-filter-tab:hover {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  color: var(--primary);
+}
+#page-repos .repo-filter-tab:hover .dcx-step-badge {
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+}
+#page-repos .repo-filter-tab.active {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+#page-repos .repo-filter-tab.active .dcx-step-badge {
+  background: var(--primary);
+  color: var(--bg);
+}
+
 /* ── Section title/subtitle — flat typography, no box ── */
 #page-repos .dcx-section-title {
   font-size: 1.1rem;
