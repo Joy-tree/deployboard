@@ -11947,6 +11947,65 @@ async function runDatabaseDiff() {
   </div>
 </div>
 
+<!-- ── Edit Project (Configuration) modal ──────────────────────────────────
+     Implements the "Edit" button on Project Detail's Configuration card,
+     which previously just showed a "coming soon" toast. Only edits fields
+     that don't change how the project is *run* (branch, install/build/
+     start commands, output dir, language version) -- Site Type is left
+     read-only here since switching static↔server (or the runtime
+     language) changes which Dockerfile/container template applies and
+     needs a full redeploy, not a quiet field patch. -->
+<div class="modal-backdrop" id="editProjectModal" onclick="if(event.target===this)closeEditProjectModal()">
+  <div class="modal" style="width:min(96vw,480px);">
+    <div class="modal-header">
+      <div class="modal-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+      </div>
+      <div>
+        <div class="modal-title">Edit Configuration</div>
+        <div class="modal-subtitle" id="editProjectSubtitle">Changes apply on the next deploy</div>
+      </div>
+      <button class="modal-close" onclick="closeEditProjectModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+      <input type="hidden" id="editProjId">
+      <div class="form-group" id="editBranchGroup">
+        <label class="form-label">Branch</label>
+        <input class="input input-mono" id="editBranch" placeholder="main">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Install Command</label>
+        <input class="input input-mono" id="editInstallCmd" placeholder="npm install">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Build Command</label>
+        <input class="input input-mono" id="editBuildCmd" placeholder="npm run build">
+      </div>
+      <div class="form-group" id="editStartGroup">
+        <label class="form-label">Start Command</label>
+        <input class="input input-mono" id="editStartCmd" placeholder="npm start">
+      </div>
+      <div style="display:flex;gap:14px;">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Output Dir</label>
+          <input class="input input-mono" id="editOutputDir" placeholder="dist">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Node.js Version</label>
+          <input class="input input-mono" id="editNodeVer" placeholder="20">
+        </div>
+      </div>
+      <div class="field-hint" style="margin:0;">To change Site Type (static/server) or runtime language, use <strong>Redeploy</strong> / <strong>Upload New Archive</strong> instead — that rebuilds the container from scratch with the new setup.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeEditProjectModal()">Cancel</button>
+      <button class="btn btn-primary" id="editProjectSaveBtn" onclick="saveEditProject()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Logout confirm modal ──────────────────────────────────────────────── -->
 <div class="modal-backdrop" id="logoutModal">
   <div class="modal" style="width:min(96vw,420px);">
@@ -14892,6 +14951,30 @@ document.addEventListener('click', (e)=>{ if(!e.target.closest('#manualDeployMen
 // crash-looping containers was also about avoiding).
 let _terminalAttachedRuntimeProjectId = null;
 
+// [FIX] Project Detail's "Live Logs" button used to call showPage('logs')
+// directly with no deployment context. resolveLogsContextDeployment()
+// then had no way to know which project you came from -- it falls back
+// to whichever deployment is *currently building anywhere on the
+// account*, or failing that the single most-recent deployment across
+// every project, which is very often not this project's. That's why it
+// looked like the button "didn't respond": it either silently opened a
+// different project's logs or landed on an empty state. This resolves
+// the right deployment for THIS project specifically (its active build
+// if one is running, otherwise its own most recent deployment) and
+// reuses the existing viewDeployLogs() plumbing so the terminal buffer,
+// HUD, and hero all populate exactly like clicking a row in Deployment
+// History does.
+function openProjectLiveLogs(projectId) {
+  const projectDeploys = deployments.filter(d => d.projectId === projectId);
+  if (!projectDeploys.length) {
+    toast('No deployment logs recorded for this project yet.', 'info');
+    return;
+  }
+  const active = projectDeploys.find(d => d.status === 'building');
+  const target = active || [...projectDeploys].sort((a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0))[0];
+  viewDeployLogs(target.id);
+}
+
 function viewDeployLogs(deployId) {
   activeBuildId = deployId;
   showPage('logs');
@@ -17769,7 +17852,7 @@ function showProjectDetail(projectId) {
           '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
           (isUploadProj ? ' Upload New Version' : ' Redeploy') +
         '</button>' +
-        '<button class="btn btn-ghost" onclick="showPage(\"logs\")" style="flex:1;min-width:120px;justify-content:center;">' +
+        '<button class="btn btn-ghost" data-id="' + p.id + '" onclick="openProjectLiveLogs(this.dataset.id)" style="flex:1;min-width:120px;justify-content:center;">' +
           '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' +
           ' Live Logs' +
         '</button>' +
@@ -18215,8 +18298,72 @@ function _configRow(label, valueHtml) {
 }
 
 function showEditProject(id) {
-  // TODO: open edit modal
-  toast('Edit settings — coming soon', 'info');
+  const p = projects.find(x => x.id === id);
+  if (!p) { toast('Project not found', 'error'); return; }
+  const isUploadProj = p.source === 'upload' || !p.repoUrl;
+
+  document.getElementById('editProjId').value = p.id;
+  document.getElementById('editBranch').value    = isUploadProj ? '' : (p.branch || 'main');
+  document.getElementById('editInstallCmd').value= p.installCmd || '';
+  document.getElementById('editBuildCmd').value  = p.buildCmd || '';
+  document.getElementById('editStartCmd').value  = p.startCmd || '';
+  document.getElementById('editOutputDir').value = p.outputDir || 'dist';
+  document.getElementById('editNodeVer').value   = p.nodeVer || '20';
+
+  // Branch only exists for repo-backed projects -- uploaded archives have
+  // no branch to speak of, so hide that field entirely rather than show
+  // an editable box for something that doesn't apply.
+  document.getElementById('editBranchGroup').style.display = isUploadProj ? 'none' : '';
+  // Start command only matters for server-type projects; static sites
+  // don't run a process, so hide it to avoid implying it does something.
+  document.getElementById('editStartGroup').style.display = p.siteType === 'server' ? '' : 'none';
+
+  document.getElementById('editProjectSubtitle').textContent = p.name + ' · changes apply on the next deploy';
+  document.getElementById('editProjectModal').classList.add('open');
+}
+
+function closeEditProjectModal() {
+  document.getElementById('editProjectModal').classList.remove('open');
+}
+
+async function saveEditProject() {
+  const id = document.getElementById('editProjId').value;
+  const p = projects.find(x => x.id === id);
+  if (!p) { closeEditProjectModal(); return; }
+
+  const payload = {
+    installCmd: document.getElementById('editInstallCmd').value.trim(),
+    buildCmd:   document.getElementById('editBuildCmd').value.trim(),
+    outputDir:  document.getElementById('editOutputDir').value.trim() || 'dist',
+    nodeVer:    document.getElementById('editNodeVer').value.trim() || '20',
+  };
+  const isUploadProj = p.source === 'upload' || !p.repoUrl;
+  if (!isUploadProj) payload.branch = document.getElementById('editBranch').value.trim() || 'main';
+  if (p.siteType === 'server') payload.startCmd = document.getElementById('editStartCmd').value.trim();
+
+  const btn = document.getElementById('editProjectSaveBtn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  try {
+    const res = await apiFetch('/api/projects/' + encodeURIComponent(id) + '/config', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Failed to save changes');
+
+    Object.assign(p, payload);
+    save();
+    closeEditProjectModal();
+    toast('Configuration updated — will apply on the next deploy.', 'success');
+    if (typeof showProjectDetail === 'function') showProjectDetail(id);
+  } catch (e) {
+    toast(e.message || 'Failed to save changes', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = originalLabel;
+  }
 }
 
 
