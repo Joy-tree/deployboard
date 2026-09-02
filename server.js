@@ -4233,6 +4233,193 @@ app.post('/api/admin/emails/upload-image', requireAuth, async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════
+// PROMO CAMPAIGNS — full-screen promotional popups the admin builds (a
+// discount on a specific TLD, a plan offer, a domain+plan bundle, etc.)
+// that surface on a user's screen when they hit a chosen trigger event
+// (login, dashboard visit, a successful deploy, opening the Domain Store).
+// Stored as one global list in Firebase RTDB (not tied to any single
+// user's workspace, since this is admin-managed site content), with
+// uploaded background media saved the same way email broadcast images
+// already are: a plain folder under the project root that the existing
+// catch-all express.static middleware serves publicly with no extra
+// route needed.
+// ═══════════════════════════════════════════════════════════════════════
+const PROMO_ASSETS_DIR = path.join(__dirname, 'promo-assets');
+
+function promosUrl() {
+  if (!FIREBASE_RTDB_URL) return '';
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  return `${FIREBASE_RTDB_URL}/deployboard_site_promos.json${authQuery}`;
+}
+async function readPromos() {
+  try {
+    const url = promosUrl();
+    if (!url) return [];
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    let r;
+    try { r = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' }, signal: controller.signal }); }
+    finally { clearTimeout(timer); }
+    if (!r.ok) return [];
+    const data = await r.json();
+    if (!data || typeof data !== 'object') return [];
+    // Stored as an object keyed by id (Firebase-idiomatic); return as an array.
+    return Object.values(data);
+  } catch { return []; }
+}
+async function writePromo(promo) {
+  const url = promosUrl();
+  if (!url || !promo || !promo.id) return false;
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  const itemUrl = `${FIREBASE_RTDB_URL}/deployboard_site_promos/${promo.id}.json${authQuery}`;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    let r;
+    try { r = await fetch(itemUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(promo), signal: controller.signal }); }
+    finally { clearTimeout(timer); }
+    return r.ok;
+  } catch { return false; }
+}
+async function deletePromoById(id) {
+  if (!FIREBASE_RTDB_URL || !id) return false;
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  const itemUrl = `${FIREBASE_RTDB_URL}/deployboard_site_promos/${id}.json${authQuery}`;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    let r;
+    try { r = await fetch(itemUrl, { method: 'DELETE', signal: controller.signal }); }
+    finally { clearTimeout(timer); }
+    return r.ok;
+  } catch { return false; }
+}
+
+const PROMO_ALLOWED_EVENTS = ['login', 'dashboard_view', 'deploy_success', 'domain_store_view', 'any_page'];
+const PROMO_ALLOWED_THEMES = ['green', 'white', 'yellow', 'red'];
+const PROMO_ALLOWED_FREQ   = ['once', 'daily', 'always'];
+
+function sanitizePromoInput(body = {}) {
+  const clean = {
+    name:        String(body.name || '').slice(0, 120).trim(),
+    badgeText:   String(body.badgeText || '').slice(0, 40).trim(),
+    title:       String(body.title || '').slice(0, 160).trim(),
+    subtitle:    String(body.subtitle || '').slice(0, 300).trim(),
+    ctaText:     String(body.ctaText || 'Learn more').slice(0, 40).trim(),
+    ctaUrl:      String(body.ctaUrl || '').slice(0, 500).trim(),
+    theme:       PROMO_ALLOWED_THEMES.includes(body.theme) ? body.theme : 'green',
+    intensity:   Math.max(0, Math.min(100, Number(body.intensity) || 50)),
+    triggerEvent: PROMO_ALLOWED_EVENTS.includes(body.triggerEvent) ? body.triggerEvent : 'dashboard_view',
+    frequency:   PROMO_ALLOWED_FREQ.includes(body.frequency) ? body.frequency : 'once',
+    active:      !!body.active,
+    mediaUrl:    String(body.mediaUrl || '').slice(0, 500).trim(),
+    mediaType:   body.mediaType === 'video' ? 'video' : 'image',
+  };
+  return clean;
+}
+
+app.get('/api/admin/promos', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const promos = await readPromos();
+    promos.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    res.json({ ok: true, promos });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/promos', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const clean = sanitizePromoInput(req.body);
+    if (!clean.title) return res.status(400).json({ error: 'Title is required' });
+    const id = `promo_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    const promo = { ...clean, id, createdAt: Date.now(), updatedAt: Date.now() };
+    const saved = await writePromo(promo);
+    if (!saved) return res.status(502).json({ error: 'Could not save promo' });
+    res.json({ ok: true, promo });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/admin/promos/:id', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const existing = (await readPromos()).find(p => p.id === req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Promo not found' });
+    const clean = sanitizePromoInput(req.body);
+    if (!clean.title) return res.status(400).json({ error: 'Title is required' });
+    const promo = { ...existing, ...clean, id: existing.id, createdAt: existing.createdAt, updatedAt: Date.now() };
+    const saved = await writePromo(promo);
+    if (!saved) return res.status(502).json({ error: 'Could not save promo' });
+    res.json({ ok: true, promo });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/admin/promos/:id', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const ok = await deletePromoById(req.params.id);
+    if (!ok) return res.status(502).json({ error: 'Could not delete promo' });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Background image or video upload for a promo. Video is capped higher
+// than the 5MB email-image limit since a short muted background clip is
+// legitimately bigger, but still bounded so one admin upload can't fill
+// the disk.
+app.post('/api/admin/promos/upload-media', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const ct = req.headers['content-type'] || '';
+    if (!ct.includes('multipart/form-data')) return res.status(400).json({ error: 'multipart/form-data required' });
+
+    let parsed;
+    try { parsed = await parseMultipart(req); }
+    catch (e) { return res.status(400).json({ error: 'Failed to parse upload: ' + e.message }); }
+
+    const { fileBuffer, fileName } = parsed;
+    if (!fileBuffer || !fileBuffer.length) return res.status(400).json({ error: 'No file received' });
+
+    const ext = (path.extname(fileName || '').toLowerCase() || '.png').replace(/[^.a-z0-9]/g, '') || '.png';
+    const imageExts = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+    const videoExts = ['.mp4', '.webm', '.mov'];
+    const isVideo = videoExts.includes(ext);
+    const isImage = imageExts.includes(ext);
+    if (!isVideo && !isImage) return res.status(400).json({ error: 'Only PNG, JPG, GIF, WEBP images or MP4, WEBM, MOV videos are supported' });
+
+    const MAX_BYTES = isVideo ? 40 * 1024 * 1024 : 8 * 1024 * 1024; // 40MB video, 8MB image
+    if (fileBuffer.length > MAX_BYTES) {
+      return res.status(400).json({ error: `${isVideo ? 'Video' : 'Image'} must be under ${MAX_BYTES / (1024*1024)}MB` });
+    }
+
+    fs.mkdirSync(PROMO_ASSETS_DIR, { recursive: true });
+    const safeName = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
+    fs.writeFileSync(path.join(PROMO_ASSETS_DIR, safeName), fileBuffer);
+
+    res.json({ ok: true, url: `https://${BASE_DOMAIN}/promo-assets/${safeName}`, mediaType: isVideo ? 'video' : 'image' });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not upload media' });
+  }
+});
+
+// User-facing: which active promo(s) match a given trigger event. Any
+// signed-in user can call this (not admin-only) -- it's how their own
+// dashboard checks whether to show a popup. Frequency capping (once /
+// daily / always) is enforced client-side via localStorage, since a
+// missed or repeated promo view has no real consequence and doing it
+// client-side avoids a server round trip on every qualifying event.
+app.get('/api/promos/active', requireAuth, async (req, res) => {
+  try {
+    const event = String(req.query.event || '').trim();
+    if (!PROMO_ALLOWED_EVENTS.includes(event)) return res.json({ ok: true, promos: [] });
+    const all = await readPromos();
+    const matching = all.filter(p => p.active && (p.triggerEvent === event || p.triggerEvent === 'any_page'));
+    res.json({ ok: true, promos: matching });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+
 function normalizeGitHubClientId(value) {
   return String(value || '').trim();
 }

@@ -7471,6 +7471,121 @@ document.addEventListener('keydown', function(e){
         </div>
         <div id="adminUsersList" style="margin-top:14px;color:var(--text-3);font-size:0.85rem;">Click Refresh to load.</div>
       </div>
+
+      <!-- ══ Promotional Popups ══ -->
+      <div style="margin-top:36px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <h3 style="margin:0;font-size:1rem;">Promotional popups</h3>
+            <div style="color:var(--text-3);font-size:0.8rem;margin-top:4px;">Full-screen offers (a domain discount, a plan deal, a bundle) that pop up on a user's screen when they hit a trigger event — login, visiting the dashboard, a successful deploy, or opening the Domain Store.</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openPromoBuilder()">+ New promo</button>
+        </div>
+        <div id="adminPromoList" style="margin-top:14px;color:var(--text-3);font-size:0.85rem;">Loading…</div>
+      </div>
+    </div>
+
+    <!-- ══ Promo builder modal ══ -->
+    <div class="modal-backdrop" id="promoBuilderModal" style="display:none;">
+      <div class="modal" style="max-width:620px;max-height:88vh;overflow-y:auto;">
+        <div class="modal-header">
+          <h3 id="promoBuilderTitle" style="margin:0;">New promo</h3>
+          <button class="modal-close" onclick="closePromoBuilder()">&times;</button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
+          <input type="hidden" id="pbId" value="">
+
+          <div class="field">
+            <label class="field-label">Internal name</label>
+            <input type="text" id="pbName" class="input" placeholder="e.g. .cv launch discount — Sept">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Badge text <span style="color:var(--text-3);font-weight:400;">(the small pill, e.g. "21% OFF")</span></label>
+            <input type="text" id="pbBadgeText" class="input" placeholder="21% OFF">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Title</label>
+            <input type="text" id="pbTitle" class="input" placeholder="Get a .CV domain — 40% off">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Description</label>
+            <textarea id="pbSubtitle" class="input" rows="3" placeholder="Buy a .cv domain this week and unlock a free month of the Pro plan."></textarea>
+          </div>
+
+          <div style="display:flex;gap:12px;">
+            <div class="field" style="flex:1;">
+              <label class="field-label">Button text</label>
+              <input type="text" id="pbCtaText" class="input" placeholder="Claim offer">
+            </div>
+            <div class="field" style="flex:2;">
+              <label class="field-label">Button link</label>
+              <input type="text" id="pbCtaUrl" class="input" placeholder="/dashboard/domain-store or a full URL">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Color theme</label>
+            <div id="pbThemeSwatches" style="display:flex;gap:10px;margin-top:4px;">
+              <button type="button" class="pb-swatch" data-theme="green" onclick="pbSelectTheme('green')" style="background:#10b981;" title="Green"></button>
+              <button type="button" class="pb-swatch" data-theme="white" onclick="pbSelectTheme('white')" style="background:#f8fafc;" title="White"></button>
+              <button type="button" class="pb-swatch" data-theme="yellow" onclick="pbSelectTheme('yellow')" style="background:#eab308;" title="Yellow"></button>
+              <button type="button" class="pb-swatch" data-theme="red" onclick="pbSelectTheme('red')" style="background:#ef4444;" title="Red"></button>
+            </div>
+            <input type="hidden" id="pbTheme" value="green">
+          </div>
+
+          <div class="field" id="pbIntensityField">
+            <label class="field-label">Green deepness <span id="pbIntensityVal" style="color:var(--text-3);font-weight:400;">50%</span></label>
+            <input type="range" id="pbIntensity" min="0" max="100" value="50" oninput="document.getElementById('pbIntensityVal').textContent = this.value + '%'; pbUpdatePreview();" style="width:100%;">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Background media <span style="color:var(--text-3);font-weight:400;">(image or short video, optional)</span></label>
+            <input type="file" id="pbMediaFile" accept="image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/quicktime" onchange="pbUploadMedia(this)" style="display:none;">
+            <button type="button" class="btn btn-ghost" onclick="document.getElementById('pbMediaFile').click()" style="width:100%;">Choose image or video</button>
+            <div id="pbMediaStatus" style="font-size:0.78rem;color:var(--text-3);margin-top:6px;"></div>
+            <input type="hidden" id="pbMediaUrl" value="">
+            <input type="hidden" id="pbMediaType" value="image">
+          </div>
+
+          <div style="display:flex;gap:12px;">
+            <div class="field" style="flex:1;">
+              <label class="field-label">Show when</label>
+              <select id="pbTriggerEvent" class="input">
+                <option value="login">User logs in</option>
+                <option value="dashboard_view" selected>User visits Dashboard</option>
+                <option value="deploy_success">A deployment succeeds</option>
+                <option value="domain_store_view">User opens Domain Store</option>
+                <option value="any_page">Any page (first qualifying view)</option>
+              </select>
+            </div>
+            <div class="field" style="flex:1;">
+              <label class="field-label">Frequency</label>
+              <select id="pbFrequency" class="input">
+                <option value="once" selected>Once ever, per user</option>
+                <option value="daily">Once per day</option>
+                <option value="always">Every qualifying visit</option>
+              </select>
+            </div>
+          </div>
+
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;color:var(--text-2);">
+            <input type="checkbox" id="pbActive" checked style="width:auto;"> Active — live for users immediately
+          </label>
+
+          <div style="border-top:1px solid var(--border);padding-top:16px;">
+            <div style="font-size:0.78rem;color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">Preview</div>
+            <div id="pbPreviewWrap" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closePromoBuilder()">Cancel</button>
+          <button class="btn btn-primary" onclick="savePromo()">Save promo</button>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -7733,6 +7848,288 @@ document.addEventListener('keydown', function(e){
         banner.innerHTML = `Viewing as ${escapeHtml(user.email)} (as ${escapeHtml(user.impersonating.by)}) <button onclick="adminExitImpersonation()">Exit</button>`;
         document.body.prepend(banner);
         document.body.style.paddingTop = '42px';
+      };
+
+      // ══════════════════════════════════════════════════════════════════
+      // PROMO CAMPAIGNS — admin builder (list, create, edit, delete, media
+      // upload, live preview). The actual runtime popup shown to users
+      // lives in a separate global script further down (showPromoModal /
+      // checkPromos), since that code needs to run on every page, not
+      // just inside the admin panel.
+      // ══════════════════════════════════════════════════════════════════
+      let _promoCache = [];
+
+      window.loadAdminPromos = async function() {
+        const el = document.getElementById('adminPromoList');
+        if (!el) return;
+        el.textContent = 'Loading…';
+        try {
+          const res = await apiFetch('/api/admin/promos');
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load promos');
+          _promoCache = data.promos || [];
+          if (!_promoCache.length) {
+            el.innerHTML = '<div style="padding:14px 0;color:var(--text-3);">No promos yet. Click "+ New promo" to create one.</div>';
+            return;
+          }
+          const eventLabels = { login: 'On login', dashboard_view: 'On dashboard visit', deploy_success: 'On deploy success', domain_store_view: 'On Domain Store visit', any_page: 'Any page' };
+          const freqLabels = { once: 'Once ever', daily: 'Once/day', always: 'Every time' };
+          el.innerHTML = _promoCache.map(p => `
+            <div class="admin-promo-row">
+              <div>
+                <div class="apr-name">${escapeHtml(p.name || p.title)} ${p.active ? '<span style="color:var(--green);font-size:0.72rem;">● live</span>' : '<span style="color:var(--text-3);font-size:0.72rem;">○ inactive</span>'}</div>
+                <div class="apr-meta">${escapeHtml(eventLabels[p.triggerEvent] || p.triggerEvent)} · ${escapeHtml(freqLabels[p.frequency] || p.frequency)} · theme: ${escapeHtml(p.theme)}</div>
+              </div>
+              <div style="display:flex;gap:8px;flex-shrink:0;">
+                <button class="btn btn-ghost btn-sm" onclick="openPromoBuilder('${p.id}')">Edit</button>
+                <button class="btn btn-ghost btn-sm" style="color:#f87171;border-color:rgba(239,68,68,.3);" onclick="deletePromo('${p.id}')">Delete</button>
+              </div>
+            </div>
+          `).join('');
+        } catch (e) {
+          el.innerHTML = `<div style="padding:14px 0;color:var(--red);">${escapeHtml(e.message || 'Could not load promos')}</div>`;
+        }
+      };
+
+      window.openPromoBuilder = function(id) {
+        const modal = document.getElementById('promoBuilderModal');
+        const existing = id ? _promoCache.find(p => p.id === id) : null;
+        document.getElementById('promoBuilderTitle').textContent = existing ? 'Edit promo' : 'New promo';
+        document.getElementById('pbId').value = existing?.id || '';
+        document.getElementById('pbName').value = existing?.name || '';
+        document.getElementById('pbBadgeText').value = existing?.badgeText || '';
+        document.getElementById('pbTitle').value = existing?.title || '';
+        document.getElementById('pbSubtitle').value = existing?.subtitle || '';
+        document.getElementById('pbCtaText').value = existing?.ctaText || 'Claim offer';
+        document.getElementById('pbCtaUrl').value = existing?.ctaUrl || '';
+        document.getElementById('pbIntensity').value = existing?.intensity ?? 50;
+        document.getElementById('pbIntensityVal').textContent = (existing?.intensity ?? 50) + '%';
+        document.getElementById('pbMediaUrl').value = existing?.mediaUrl || '';
+        document.getElementById('pbMediaType').value = existing?.mediaType || 'image';
+        document.getElementById('pbMediaStatus').textContent = existing?.mediaUrl ? `Current: ${existing.mediaType === 'video' ? 'video' : 'image'} attached` : '';
+        document.getElementById('pbTriggerEvent').value = existing?.triggerEvent || 'dashboard_view';
+        document.getElementById('pbFrequency').value = existing?.frequency || 'once';
+        document.getElementById('pbActive').checked = existing ? !!existing.active : true;
+        pbSelectTheme(existing?.theme || 'green');
+        modal.style.display = 'flex';
+      };
+
+      window.closePromoBuilder = function() {
+        document.getElementById('promoBuilderModal').style.display = 'none';
+      };
+
+      window.pbSelectTheme = function(theme) {
+        document.getElementById('pbTheme').value = theme;
+        document.querySelectorAll('.pb-swatch').forEach(s => s.classList.toggle('selected', s.dataset.theme === theme));
+        document.getElementById('pbIntensityField').style.display = theme === 'green' ? '' : 'none';
+        pbUpdatePreview();
+      };
+
+      window.pbUploadMedia = async function(input) {
+        const file = input.files?.[0];
+        if (!file) return;
+        const statusEl = document.getElementById('pbMediaStatus');
+        statusEl.textContent = 'Uploading…';
+        try {
+          const form = new FormData();
+          form.append('file', file, file.name);
+          const res = await apiFetch('/api/admin/promos/upload-media', { method: 'POST', body: form });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Upload failed');
+          document.getElementById('pbMediaUrl').value = data.url;
+          document.getElementById('pbMediaType').value = data.mediaType;
+          statusEl.textContent = `Uploaded: ${data.mediaType}`;
+          pbUpdatePreview();
+        } catch (e) {
+          statusEl.textContent = '';
+          toast(e.message || 'Could not upload media', 'error');
+        }
+      };
+
+      function pbThemeColors(theme, intensity) {
+        // "Deepness" only applies to green — the other three are fixed
+        // brand colors an admin picks for a specific look (a red flash
+        // sale, a yellow heads-up, a neutral white/light card).
+        if (theme === 'white') return { accent: '#f8fafc', badgeText: '#0f172a', ctaBg: '#f8fafc', ctaText: '#0f172a', tint: 'rgba(255,255,255,.14)' };
+        if (theme === 'yellow') return { accent: '#eab308', badgeText: '#1c1400', ctaBg: '#eab308', ctaText: '#1c1400', tint: 'rgba(234,179,8,.16)' };
+        if (theme === 'red') return { accent: '#ef4444', badgeText: '#fff', ctaBg: '#ef4444', ctaText: '#fff', tint: 'rgba(239,68,68,.16)' };
+        // green, with adjustable deepness: 0 = light mint, 100 = deep forest
+        const pct = Math.max(0, Math.min(100, Number(intensity) || 50));
+        const lightness = 62 - (pct / 100) * 32; // 62% down to 30%
+        const accent = `hsl(158, 64%, ${lightness}%)`;
+        return { accent, badgeText: '#052e18', ctaBg: accent, ctaText: '#052e18', tint: `hsla(158,64%,${lightness}%,.18)` };
+      }
+
+      window.pbUpdatePreview = function() {
+        const wrap = document.getElementById('pbPreviewWrap');
+        if (!wrap) return;
+        const theme = document.getElementById('pbTheme').value;
+        const intensity = document.getElementById('pbIntensity').value;
+        const colors = pbThemeColors(theme, intensity);
+        const badgeText = document.getElementById('pbBadgeText').value || '';
+        const title = document.getElementById('pbTitle').value || 'Your title here';
+        const subtitle = document.getElementById('pbSubtitle').value || '';
+        const ctaText = document.getElementById('pbCtaText').value || 'Claim offer';
+        const mediaUrl = document.getElementById('pbMediaUrl').value;
+        const mediaType = document.getElementById('pbMediaType').value;
+        wrap.innerHTML = `
+          <div style="background:#0a0a0a;">
+            <div class="promo-media-wrap" style="height:150px;">
+              ${mediaUrl ? (mediaType === 'video'
+                ? `<video src="${escapeHtml(mediaUrl)}" muted loop autoplay playsinline></video>`
+                : `<img src="${escapeHtml(mediaUrl)}" alt="">`)
+                : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:0.78rem;">No media attached</div>`}
+              <div class="promo-media-tint" style="background:${colors.tint};"></div>
+              ${badgeText ? `<div class="promo-badge" style="background:${colors.accent};color:${colors.badgeText};">${escapeHtml(badgeText)}</div>` : ''}
+            </div>
+            <div class="promo-body" style="padding:18px;">
+              <div class="promo-title" style="font-size:1.05rem;">${escapeHtml(title)}</div>
+              ${subtitle ? `<div class="promo-subtitle" style="font-size:0.82rem;">${escapeHtml(subtitle)}</div>` : ''}
+              <div class="promo-cta" style="background:${colors.ctaBg};color:${colors.ctaText};pointer-events:none;">${escapeHtml(ctaText)}</div>
+            </div>
+          </div>
+        `;
+      };
+      ['pbBadgeText','pbTitle','pbSubtitle','pbCtaText'].forEach(id => {
+        document.addEventListener('input', e => { if (e.target && e.target.id === id) pbUpdatePreview(); });
+      });
+
+      window.savePromo = async function() {
+        const id = document.getElementById('pbId').value;
+        const payload = {
+          name: document.getElementById('pbName').value,
+          badgeText: document.getElementById('pbBadgeText').value,
+          title: document.getElementById('pbTitle').value,
+          subtitle: document.getElementById('pbSubtitle').value,
+          ctaText: document.getElementById('pbCtaText').value,
+          ctaUrl: document.getElementById('pbCtaUrl').value,
+          theme: document.getElementById('pbTheme').value,
+          intensity: Number(document.getElementById('pbIntensity').value),
+          mediaUrl: document.getElementById('pbMediaUrl').value,
+          mediaType: document.getElementById('pbMediaType').value,
+          triggerEvent: document.getElementById('pbTriggerEvent').value,
+          frequency: document.getElementById('pbFrequency').value,
+          active: document.getElementById('pbActive').checked,
+        };
+        if (!payload.title.trim()) return toast('Title is required.', 'error');
+        try {
+          const res = await apiFetch(id ? `/api/admin/promos/${id}` : '/api/admin/promos', {
+            method: id ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not save promo');
+          toast(id ? 'Promo updated.' : 'Promo created.', 'success');
+          closePromoBuilder();
+          loadAdminPromos();
+        } catch (e) {
+          toast(e.message || 'Could not save promo', 'error');
+        }
+      };
+
+      window.deletePromo = async function(id) {
+        if (!confirm('Delete this promo? This cannot be undone.')) return;
+        try {
+          const res = await apiFetch(`/api/admin/promos/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not delete promo');
+          toast('Promo deleted.', 'success');
+          loadAdminPromos();
+        } catch (e) {
+          toast(e.message || 'Could not delete promo', 'error');
+        }
+      };
+    })();
+    </script>
+
+    <!-- ════════ PROMO RUNTIME ENGINE (site-wide) ════════ -->
+    <script>
+    (function() {
+      // Frequency capping lives in localStorage since a promo popup
+      // being shown once too often (or once too few) on a cleared
+      // browser has no real consequence — not worth a server round trip
+      // or per-user DB field for.
+      function promoSeenKey(id) { return 'jt_promo_seen_' + id; }
+      function promoAlreadyShown(promo) {
+        try {
+          const raw = localStorage.getItem(promoSeenKey(promo.id));
+          if (!raw) return false;
+          if (promo.frequency === 'always') return false;
+          if (promo.frequency === 'once') return true;
+          if (promo.frequency === 'daily') {
+            const last = Number(raw);
+            return Number.isFinite(last) && (Date.now() - last) < 24 * 60 * 60 * 1000;
+          }
+          return false;
+        } catch { return false; }
+      }
+      function promoMarkShown(promo) {
+        try { localStorage.setItem(promoSeenKey(promo.id), String(Date.now())); } catch {}
+      }
+
+      window.checkPromos = async function(eventName) {
+        if (!hasAuthToken || !hasAuthToken()) return;
+        try {
+          const res = await apiFetch('/api/promos/active?event=' + encodeURIComponent(eventName));
+          if (!res.ok) return;
+          const data = await res.json();
+          const candidates = (data.promos || []).filter(p => !promoAlreadyShown(p));
+          if (!candidates.length) return;
+          showPromoModal(candidates[0]);
+        } catch {}
+      };
+
+      function promoThemeColors(theme, intensity) {
+        if (theme === 'white') return { accent: '#f8fafc', badgeText: '#0f172a', ctaBg: '#f8fafc', ctaText: '#0f172a', tint: 'rgba(255,255,255,.14)' };
+        if (theme === 'yellow') return { accent: '#eab308', badgeText: '#1c1400', ctaBg: '#eab308', ctaText: '#1c1400', tint: 'rgba(234,179,8,.16)' };
+        if (theme === 'red') return { accent: '#ef4444', badgeText: '#fff', ctaBg: '#ef4444', ctaText: '#fff', tint: 'rgba(239,68,68,.16)' };
+        const pct = Math.max(0, Math.min(100, Number(intensity) || 50));
+        const lightness = 62 - (pct / 100) * 32;
+        const accent = `hsl(158, 64%, ${lightness}%)`;
+        return { accent, badgeText: '#052e18', ctaBg: accent, ctaText: '#052e18', tint: `hsla(158,64%,${lightness}%,.18)` };
+      }
+
+      window.showPromoModal = function(promo) {
+        const overlay = document.getElementById('promoOverlay');
+        if (!overlay) return;
+        const colors = promoThemeColors(promo.theme, promo.intensity);
+        const mediaHtml = promo.mediaUrl
+          ? (promo.mediaType === 'video'
+              ? `<video src="${escapeHtml(promo.mediaUrl)}" autoplay muted loop playsinline></video>`
+              : `<img src="${escapeHtml(promo.mediaUrl)}" alt="">`)
+          : '';
+        overlay.innerHTML = `
+          <div class="promo-card">
+            <button class="promo-close" onclick="dismissPromoModal('${promo.id}')" aria-label="Close">&times;</button>
+            ${promo.mediaUrl ? `
+              <div class="promo-media-wrap">
+                ${mediaHtml}
+                <div class="promo-media-tint" style="background:${colors.tint};"></div>
+                ${promo.badgeText ? `<div class="promo-badge" style="background:${colors.accent};color:${colors.badgeText};">${escapeHtml(promo.badgeText)}</div>` : ''}
+              </div>
+            ` : (promo.badgeText ? `<div style="padding:18px 18px 0;text-align:right;"><span class="promo-badge" style="position:static;display:inline-block;background:${colors.accent};color:${colors.badgeText};">${escapeHtml(promo.badgeText)}</span></div>` : '')}
+            <div class="promo-body">
+              <div class="promo-title">${escapeHtml(promo.title)}</div>
+              ${promo.subtitle ? `<div class="promo-subtitle">${escapeHtml(promo.subtitle)}</div>` : ''}
+              <a href="${escapeHtml(promo.ctaUrl || '#')}" class="promo-cta" style="background:${colors.ctaBg};color:${colors.ctaText};" onclick="promoMarkShownAndMaybeNavigate(event,'${promo.id}')">${escapeHtml(promo.ctaText || 'Claim offer')}</a>
+            </div>
+          </div>
+        `;
+        overlay.classList.add('active');
+        promoMarkShown(promo);
+      };
+
+      window.promoMarkShownAndMaybeNavigate = function(ev, id) {
+        dismissPromoModal(id);
+        // Let the click's default navigation (href) proceed normally.
+      };
+
+      window.dismissPromoModal = function(id) {
+        const overlay = document.getElementById('promoOverlay');
+        if (!overlay) return;
+        overlay.classList.remove('active');
+        setTimeout(() => { overlay.innerHTML = ''; }, 200);
       };
     })();
     </script>
@@ -11974,6 +12371,9 @@ async function runDatabaseDiff() {
   </div>
 </div>
 
+<!-- ── Promo campaign popup (runtime, filled in by JS) ─────────────────────── -->
+<div class="promo-overlay" id="promoOverlay"></div>
+
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
@@ -12313,6 +12713,7 @@ async function ensureBackendSessionFromFirebase() {
     if (typeof resetWorkspaceState === 'function') resetWorkspaceState();
     localStorage.setItem('db_auth_token', d.token);
     applyUserProfile(d.user || null);
+    if (typeof checkPromos === 'function') checkPromos('login');
     return true;
   } catch (_) { return false; }
 }
@@ -12871,6 +13272,18 @@ function showPage(id, navEl, _skipPush) {
   }
   if (id === 'settings' && typeof checkPushNotifStatus === 'function') {
     setTimeout(checkPushNotifStatus, 0);
+  }
+  // Promo popup triggers — fire on the qualifying page view. checkPromos()
+  // itself no-ops silently if there's nothing active for that event, so
+  // this is safe to call unconditionally on every navigation to these pages.
+  if (id === 'dashboard' && typeof checkPromos === 'function') {
+    setTimeout(() => checkPromos('dashboard_view'), 400);
+  }
+  if (id === 'domain-store' && typeof checkPromos === 'function') {
+    setTimeout(() => checkPromos('domain_store_view'), 400);
+  }
+  if (id === 'admin-panel' && typeof loadAdminPromos === 'function') {
+    setTimeout(loadAdminPromos, 100);
   }
   // ── If navigating AWAY from new-deploy, clean up any new-version upload state ──
   // This prevents locked name/subdomain fields and the new-version banner from
@@ -17445,6 +17858,7 @@ function initSocket() {
       const isAutoDeployDone = (source === 'auto') || (d && d.source === 'auto');
       if (status === 'success') {
         toast((isAutoDeployDone ? 'Automatic deployment completed in ' : 'Build succeeded in ') + duration + 's!', 'success');
+        if (typeof checkPromos === 'function') checkPromos('deploy_success');
         if (liveUrl && !isAutoDeployDone) {
           writeTerm('');
           writeTerm('\x1b[32m┌─────────────────────────────────────────┐\x1b[0m');
@@ -19014,6 +19428,7 @@ function statusBadge(status) {
         const clean = window.location.origin + window.location.pathname;
         window.history.replaceState({}, '', clean);
         applyUserProfile(d.user || null);
+        if (typeof checkPromos === 'function') checkPromos('login');
         if (d.firebaseLinked === false) {
           toast('GitHub connected, but Firebase account link failed. Check Firebase GitHub provider config.', 'error');
         } else {
@@ -19071,6 +19486,7 @@ function statusBadge(status) {
           if (typeof resetWorkspaceState === 'function') resetWorkspaceState();
           localStorage.setItem('db_auth_token', d.token);
           applyUserProfile(d.user || null);
+          if (typeof checkPromos === 'function') checkPromos('login');
           toast('Signed in with Google successfully!', 'success');
           preferPricingAfterAuth = true;
         } else {
@@ -19218,6 +19634,7 @@ async function submitAuth(){
       if (typeof resetWorkspaceState === 'function') resetWorkspaceState();
       localStorage.setItem('db_auth_token', d.token);
       applyUserProfile(d.user || null);
+      if (typeof checkPromos === 'function') checkPromos('login');
       toast('Welcome! Account ready.', 'success');
       showDashboard('pricing');
     } else throw new Error('Authentication failed');
@@ -19268,6 +19685,7 @@ async function submitEmailVerification(){
   if (typeof resetWorkspaceState === 'function') resetWorkspaceState();
   localStorage.setItem('db_auth_token', d.token);
   applyUserProfile(d.user || null);
+  if (typeof checkPromos === 'function') checkPromos('login');
   // Pull canonical workspace immediately so we don't render/overwrite with stale local state.
   try {
     await bootstrapSession();
