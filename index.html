@@ -203,7 +203,7 @@
   <link rel="stylesheet" href="/styles/animations.css?v=3">
   <link rel="stylesheet" href="/styles/onboarding.css?v=1">
   <link rel="stylesheet" href="/styles/streak.css?v=2">
-  <link rel="stylesheet" href="/theme-override.css?v=195" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+  <link rel="stylesheet" href="/theme-override.css?v=196" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -11387,10 +11387,10 @@ async function runDatabaseDiff() {
           <div class="dcx-kicker">No GitHub Required</div>
           <div class="dcx-title">Code Upload</div>
           <div class="dcx-sub">Upload a single HTML file or a ZIP archive. We'll extract, analyze, and deploy it — just like GitHub, without the GitHub.</div>
-          <div class="dcx-steps" style="grid-template-columns:repeat(3,1fr);margin-top:20px;">
-            <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="cuStatProjects" style="width:auto;padding:0 6px;">0</span><span>Projects</span></div>
-            <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="cuStatFiles" style="width:auto;padding:0 6px;">0</span><span>Files</span></div>
-            <div class="dcx-step-item" style="justify-content:flex-start;gap:8px;"><span class="dcx-step-badge" id="cuStatSize" style="width:auto;padding:0 6px;">0 B</span><span>Total Size</span></div>
+          <div class="dcx-steps" id="cuFilterTabs" style="grid-template-columns:repeat(3,1fr);margin-top:20px;">
+            <button type="button" class="dcx-step-item cu-filter-tab active" data-filter="all" style="justify-content:flex-start;gap:8px;" onclick="setCuFilter('all')"><span class="dcx-step-badge" id="cuStatProjects" style="width:auto;padding:0 6px;">0</span><span>All</span></button>
+            <button type="button" class="dcx-step-item cu-filter-tab" data-filter="html" style="justify-content:flex-start;gap:8px;" onclick="setCuFilter('html')"><span class="dcx-step-badge" id="cuStatHtml" style="width:auto;padding:0 6px;">0</span><span>HTML</span></button>
+            <button type="button" class="dcx-step-item cu-filter-tab" data-filter="zip" style="justify-content:flex-start;gap:8px;" onclick="setCuFilter('zip')"><span class="dcx-step-badge" id="cuStatZip" style="width:auto;padding:0 6px;">0</span><span>ZIP</span></button>
           </div>
         </div>
         <div class="cu-dropzone" id="cuDropzone" onclick="document.getElementById('cuFileInput').click()" ondragover="cuOnDragOver(event)" ondragleave="cuOnDragLeave(event)" ondrop="cuOnDrop(event)">
@@ -11412,9 +11412,10 @@ async function runDatabaseDiff() {
           </div>
         </div>
         <input type="file" id="cuFileInput" accept=".html,.htm,.zip,.tar.gz,.tgz" style="display:none" onchange="cuHandleFileSelect(this.files[0])">
-        <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+        <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <div style="font-family:var(--font-ui);font-size:1.05rem;font-weight:800;letter-spacing:-.03em;color:var(--text);">Uploaded Projects</div>
           <span class="nav-badge green" id="cuUploadCount">0</span>
+          <span style="font-size:.78rem;color:var(--text-3);" id="cuFilesSizeLine">0 files · 0 B</span>
         </div>
         <div id="cuFileGrid" class="cu-file-grid">
           <div class="cu-empty" id="cuEmptyState">
@@ -21963,6 +21964,20 @@ function repoMatchesVisibility(repo) {
   return true;
 }
 
+let cuTypeFilter = 'all';
+function setCuFilter(filter) {
+  cuTypeFilter = filter;
+  document.querySelectorAll('#cuFilterTabs .cu-filter-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+  _renderCuGrid();
+}
+function cuMatchesFilter(proj) {
+  if (cuTypeFilter === 'html') return proj.lang === 'html';
+  if (cuTypeFilter === 'zip')  return proj.lang === 'zip';
+  return true;
+}
+
 function repoReconnectActionsHtml() {
   return `<div class="repo-empty-actions">
     <button class="btn btn-primary" type="button" onclick="connectGitHubFromReposPage()">
@@ -29551,22 +29566,34 @@ function _renderCuGrid() {
   if (!grid) return;
   if (count) count.textContent = _cuProjects.length;
 
-  // Update hero stats
-  const statP = document.getElementById('cuStatProjects');
-  const statF = document.getElementById('cuStatFiles');
-  const statS = document.getElementById('cuStatSize');
-  if (statP) statP.textContent = _cuProjects.length;
-  if (statF) { const totalFiles = _cuProjects.reduce((s,p) => s + (p.fileCount || Object.keys(p.files||{}).length), 0); statF.textContent = totalFiles; }
-  if (statS) { const totalSize = _cuProjects.reduce((s,p) => s + (p.size||0), 0); statS.textContent = cuFmtBytes(totalSize); }
+  // Update hero filter-tab counts (All / HTML / ZIP) — same pattern as
+  // Repos page's All/Public/Private, matched to the two real upload
+  // types (proj.lang is set to 'html' or 'zip' at upload time).
+  const statAll = document.getElementById('cuStatProjects');
+  const statHtml = document.getElementById('cuStatHtml');
+  const statZip = document.getElementById('cuStatZip');
+  if (statAll) statAll.textContent = _cuProjects.length;
+  if (statHtml) statHtml.textContent = _cuProjects.filter(p => p.lang === 'html').length;
+  if (statZip) statZip.textContent = _cuProjects.filter(p => p.lang === 'zip').length;
 
-  if (!_cuProjects.length) {
+  // Files/Total Size moved next to the "Uploaded Projects" heading —
+  // reflects the current filter, not just the unfiltered total.
+  const filtered = _cuProjects.filter(cuMatchesFilter);
+  const filesSizeLine = document.getElementById('cuFilesSizeLine');
+  if (filesSizeLine) {
+    const totalFiles = filtered.reduce((s,p) => s + (p.fileCount || Object.keys(p.files||{}).length), 0);
+    const totalSize = filtered.reduce((s,p) => s + (p.size||0), 0);
+    filesSizeLine.textContent = totalFiles + ' file' + (totalFiles===1?'':'s') + ' · ' + cuFmtBytes(totalSize);
+  }
+
+  if (!filtered.length) {
     grid.innerHTML = '';
     if (empty) { empty.style.display=''; grid.appendChild(empty); }
     return;
   }
   if (empty) empty.style.display = 'none';
 
-  const cards = _cuProjects.map(proj => {
+  const cards = filtered.map(proj => {
     const langExt = proj.lang||'zip';
     const langInfo = cuLangInfo(langExt);
     const extracted = proj.extracted;

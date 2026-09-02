@@ -6024,6 +6024,41 @@ html[data-theme="light"] #page-repos {
   color: #fff;
 }
 
+/* [FEATURE] Same All/Public/Private-style filter tabs as Repos, now
+   for Code Upload's All/HTML/ZIP -- identical structure, identical
+   hover/active treatment, just a different pair of real categories
+   (proj.lang is 'html' or 'zip' at upload time). */
+#page-code-upload .cu-filter-tab {
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--dcx-row-border) !important;
+  border-radius: 0;
+  margin: 0;
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+#page-code-upload .cu-filter-tab:last-child { border-right: none !important; }
+#page-code-upload .cu-filter-tab:focus-visible {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+#page-code-upload .cu-filter-tab:hover {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  color: var(--primary);
+}
+#page-code-upload .cu-filter-tab:hover .dcx-step-badge {
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+}
+#page-code-upload .cu-filter-tab.active {
+  background: var(--primary);
+  color: #fff;
+}
+#page-code-upload .cu-filter-tab.active .dcx-step-badge {
+  background: rgba(255,255,255,.25);
+  color: #fff;
+}
+
 /* ── Section title/subtitle — flat typography, no box ── */
 #page-repos .dcx-section-title {
   font-size: 1.1rem;
