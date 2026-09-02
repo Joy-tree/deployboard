@@ -11603,3 +11603,27 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
 #landing-view .btn-nav-menu:hover {
   background: rgba(255,255,255,0.06) !important;
 }
+
+/* Edit Configuration modal — match the underline input style already
+   used on the New Deployment page (flat, no box border, thickens to
+   solid green on focus) instead of the boxed .input default. */
+#editProjectModal .input {
+  min-height: 46px;
+  border-radius: 0;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255,255,255,0.16) !important;
+  color: var(--text) !important;
+  font-size: .92rem;
+  padding: 0 2px;
+  box-shadow: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+#editProjectModal .input::placeholder { color: var(--text-3); }
+#editProjectModal .input:hover {
+  border-bottom-color: color-mix(in srgb, var(--text-2) 55%, rgba(255,255,255,0.16));
+}
+#editProjectModal .input:focus {
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
+}
