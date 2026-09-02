@@ -6016,12 +6016,12 @@ html[data-theme="light"] #page-repos {
   background: color-mix(in srgb, var(--primary) 22%, transparent);
 }
 #page-repos .repo-filter-tab.active {
-  background: color-mix(in srgb, var(--primary) 14%, transparent);
-  color: var(--primary);
+  background: var(--primary);
+  color: #fff;
 }
 #page-repos .repo-filter-tab.active .dcx-step-badge {
-  background: var(--primary);
-  color: var(--bg);
+  background: rgba(255,255,255,.25);
+  color: #fff;
 }
 
 /* ── Section title/subtitle — flat typography, no box ── */
