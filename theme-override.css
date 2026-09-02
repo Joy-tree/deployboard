@@ -3905,6 +3905,20 @@ html[data-theme="light"] .jt-leaves-fall {
 #page-projects .proj-stat-sep {
   background: var(--dcx-row-border) !important;
 }
+/* [FEATURE] Same hover treatment as Repos'/Code Upload's filter tabs
+   (.repo-filter-tab:hover) applied here for visual consistency across
+   the three stat-strip headers in the app. */
+#page-projects .proj-stat {
+  transition: background .15s ease, color .15s ease;
+  cursor: pointer;
+}
+#page-projects .proj-stat:hover {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+#page-projects .proj-stat:hover .proj-stat-value,
+#page-projects .proj-stat:hover .proj-stat-label {
+  color: var(--primary) !important;
+}
 
 /* [FIX] The card's own container (.tree-project-node) was the one
    piece never flattened — thumb corners, footer, and buttons on this
@@ -5987,6 +6001,78 @@ html[data-theme="light"] #page-repos {
   flex-shrink: 0;
 }
 
+/* [FEATURE] All/Public/Private are real filter tabs now, not static
+   stat boxes -- they're rendered as <button> elements so they need the
+   native button chrome reset, plus hover/active states using the exact
+   same green treatment as .nav-item.active everywhere else on the site
+   (not a one-off color), so a selected tab reads consistently with the
+   rest of the app. */
+#page-repos .repo-filter-tab {
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--dcx-row-border) !important;
+  border-radius: 0;
+  margin: 0;
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+#page-repos .repo-filter-tab:last-child { border-right: none !important; }
+#page-repos .repo-filter-tab:focus-visible {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+#page-repos .repo-filter-tab:hover {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  color: var(--primary);
+}
+#page-repos .repo-filter-tab:hover .dcx-step-badge {
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+}
+#page-repos .repo-filter-tab.active {
+  background: var(--primary);
+  color: #fff;
+}
+#page-repos .repo-filter-tab.active .dcx-step-badge {
+  background: rgba(255,255,255,.25);
+  color: #fff;
+}
+
+/* [FEATURE] Same All/Public/Private-style filter tabs as Repos, now
+   for Code Upload's All/HTML/ZIP -- identical structure, identical
+   hover/active treatment, just a different pair of real categories
+   (proj.lang is 'html' or 'zip' at upload time). */
+#page-code-upload .cu-filter-tab {
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--dcx-row-border) !important;
+  border-radius: 0;
+  margin: 0;
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+#page-code-upload .cu-filter-tab:last-child { border-right: none !important; }
+#page-code-upload .cu-filter-tab:focus-visible {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+#page-code-upload .cu-filter-tab:hover {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  color: var(--primary);
+}
+#page-code-upload .cu-filter-tab:hover .dcx-step-badge {
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+}
+#page-code-upload .cu-filter-tab.active {
+  background: var(--primary);
+  color: #fff;
+}
+#page-code-upload .cu-filter-tab.active .dcx-step-badge {
+  background: rgba(255,255,255,.25);
+  color: #fff;
+}
+
 /* ── Section title/subtitle — flat typography, no box ── */
 #page-repos .dcx-section-title {
   font-size: 1.1rem;
@@ -6367,6 +6453,9 @@ html[data-theme="light"] #page-settings {
   background: transparent !important;
 }
 #page-settings .btn-primary {
+  border-radius: 0 !important;
+}
+#page-settings .btn-danger {
   border-radius: 0 !important;
 }
 
@@ -11035,15 +11124,18 @@ html[data-theme="light"] #page-domain-add .input,
    The base .modal class (styles/dashboard.css) already handles this
    modal correctly — no page-scoped override needed.
    ══════════════════════════════════════════════════════════════════ */
-#deleteModal .modal-icon {
+#deleteModal .modal-icon,
+#deleteAllModal .modal-icon {
   border: 1px solid rgba(239,68,68,.22) !important;
 }
-#deleteModal .btn-danger {
+#deleteModal .btn-danger,
+#deleteAllModal .btn-danger {
   background: #7f1d1d !important;
   color: #fff !important;
   border: none !important;
 }
-#deleteModal .btn-danger:hover {
+#deleteModal .btn-danger:hover,
+#deleteAllModal .btn-danger:hover {
   background: #6b1919 !important;
 }
 
@@ -11565,4 +11657,28 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
 }
 #landing-view .btn-nav-menu:hover {
   background: rgba(255,255,255,0.06) !important;
+}
+
+/* Edit Configuration modal — match the underline input style already
+   used on the New Deployment page (flat, no box border, thickens to
+   solid green on focus) instead of the boxed .input default. */
+#editProjectModal .input {
+  min-height: 46px;
+  border-radius: 0;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255,255,255,0.16) !important;
+  color: var(--text) !important;
+  font-size: .92rem;
+  padding: 0 2px;
+  box-shadow: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+#editProjectModal .input::placeholder { color: var(--text-3); }
+#editProjectModal .input:hover {
+  border-bottom-color: color-mix(in srgb, var(--text-2) 55%, rgba(255,255,255,0.16));
+}
+#editProjectModal .input:focus {
+  border-bottom: 2px solid var(--primary) !important;
+  box-shadow: 0 1px 0 0 var(--primary) !important;
 }

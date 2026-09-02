@@ -5492,6 +5492,56 @@ app.get('/api/projects/:id', requireAuth, async (req, res) => {
 });
 
 
+// [FEATURE] Backs the Project Detail "Edit" button, which previously did
+// nothing but show a "coming soon" toast. Deliberately only accepts fields
+// that don't change *how the container is built or run* -- branch and the
+// install/build/start commands and output dir are just parameters fed into
+// the existing build pipeline next time it runs, so patching them in place
+// is safe. Site Type (static vs server) and the runtime language are
+// intentionally NOT editable here: changing those picks a different
+// Dockerfile/container template entirely, which needs a full redeploy to
+// take effect correctly, not a quiet field write that would leave the
+// live container out of sync with what the dashboard claims is configured.
+// Same Firebase-as-source-of-truth pattern as GET/DELETE above -- this
+// project does not use Mongo as its real datastore.
+const EDITABLE_PROJECT_CONFIG_FIELDS = ['branch', 'installCmd', 'buildCmd', 'startCmd', 'outputDir', 'nodeVer'];
+app.patch('/api/projects/:id/config', requireAuth, async (req, res) => {
+  try {
+    const reqId = String(req.params.id || '').trim();
+    const ws = (await readWorkspaceFromFirebase(req.user)) || {};
+    const p = (ws.projects || []).find(pr => pr.id === reqId || pr.subdomain === reqId || pr.name === reqId);
+    if (!p) return res.status(404).json({ error: 'Project not found' });
+
+    const body = req.body || {};
+    const updates = {};
+    for (const key of EDITABLE_PROJECT_CONFIG_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(body, key)) {
+        const val = String(body[key] ?? '').trim();
+        // installCmd/buildCmd/outputDir/nodeVer are allowed to be blank
+        // (falls back to a sensible default at build time); branch isn't,
+        // since an empty branch would break the next git checkout.
+        if (key === 'branch' && !val) continue;
+        updates[key] = val;
+      }
+    }
+    if (!Object.keys(updates).length) {
+      return res.status(400).json({ error: 'No editable fields provided' });
+    }
+
+    Object.assign(p, updates);
+    const wroteOk = await writeWorkspaceToFirebase(req.user, ws);
+    if (!wroteOk) {
+      return res.status(502).json({ error: 'Failed to save changes to Firebase workspace' });
+    }
+
+    res.json({ ok: true, project: p });
+  } catch (e) {
+    console.error('[Edit Config] Unexpected error updating project config:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
 app.delete('/api/projects/:id', requireAuth, async (req, res) => {
   try {
     const reqId = req.params.id;
