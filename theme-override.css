@@ -3905,6 +3905,20 @@ html[data-theme="light"] .jt-leaves-fall {
 #page-projects .proj-stat-sep {
   background: var(--dcx-row-border) !important;
 }
+/* [FEATURE] Same hover treatment as Repos'/Code Upload's filter tabs
+   (.repo-filter-tab:hover) applied here for visual consistency across
+   the three stat-strip headers in the app. */
+#page-projects .proj-stat {
+  transition: background .15s ease, color .15s ease;
+  cursor: pointer;
+}
+#page-projects .proj-stat:hover {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+#page-projects .proj-stat:hover .proj-stat-value,
+#page-projects .proj-stat:hover .proj-stat-label {
+  color: var(--primary) !important;
+}
 
 /* [FIX] The card's own container (.tree-project-node) was the one
    piece never flattened — thumb corners, footer, and buttons on this
