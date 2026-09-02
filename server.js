@@ -4301,11 +4301,25 @@ const PROMO_ALLOWED_THEMES = ['green', 'white', 'yellow', 'red'];
 const PROMO_ALLOWED_FREQ   = ['once', 'daily', 'always'];
 
 function sanitizePromoInput(body = {}) {
+  // extraFields lets the admin bolt on arbitrary additional lines (e.g.
+  // "Highest Trustpilot rating.", "Among all leading GenAI companies.")
+  // beyond the fixed badge/title/subtitle set, so the popup isn't locked
+  // to one rigid shape. Capped at 6 fields, 140 chars each, plain text
+  // only (rendered escaped on the client either way, but no reason to
+  // let an admin store something huge here).
+  let extraFields = [];
+  if (Array.isArray(body.extraFields)) {
+    extraFields = body.extraFields
+      .map(f => String(f || '').slice(0, 140).trim())
+      .filter(Boolean)
+      .slice(0, 6);
+  }
   const clean = {
     name:        String(body.name || '').slice(0, 120).trim(),
     badgeText:   String(body.badgeText || '').slice(0, 40).trim(),
     title:       String(body.title || '').slice(0, 160).trim(),
     subtitle:    String(body.subtitle || '').slice(0, 300).trim(),
+    extraFields,
     ctaText:     String(body.ctaText || 'Learn more').slice(0, 40).trim(),
     ctaUrl:      String(body.ctaUrl || '').slice(0, 500).trim(),
     theme:       PROMO_ALLOWED_THEMES.includes(body.theme) ? body.theme : 'green',

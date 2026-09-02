@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=37">
+<link rel="stylesheet" href="/styles/dashboard.css?v=38">
   <link rel="stylesheet" href="/styles/auth.css?v=2">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -7501,18 +7501,24 @@ document.addEventListener('keydown', function(e){
           </div>
 
           <div class="field">
-            <label class="field-label">Badge text <span style="color:var(--text-3);font-weight:400;">(the small pill, e.g. "21% OFF")</span></label>
+            <label class="field-label">Badge text <span style="color:var(--text-3);font-weight:400;">(big pill over the media, e.g. "21% OFF")</span></label>
             <input type="text" id="pbBadgeText" class="input" placeholder="21% OFF">
           </div>
 
           <div class="field">
-            <label class="field-label">Title</label>
+            <label class="field-label">Title <span style="color:var(--text-3);font-weight:400;">(big bold headline over the media, e.g. "SPECIAL OFFER")</span></label>
             <input type="text" id="pbTitle" class="input" placeholder="Get a .CV domain — 40% off">
           </div>
 
           <div class="field">
             <label class="field-label">Description</label>
             <textarea id="pbSubtitle" class="input" rows="3" placeholder="Buy a .cv domain this week and unlock a free month of the Pro plan."></textarea>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Additional lines <span style="color:var(--text-3);font-weight:400;">(optional extra text, e.g. "Highest Trustpilot rating." — add as many as you want)</span></label>
+            <div id="pbExtraFieldsList" style="display:flex;flex-direction:column;gap:8px;"></div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="pbAddExtraField()" style="margin-top:8px;">+ Add line</button>
           </div>
 
           <div style="display:flex;gap:12px;">
@@ -7910,8 +7916,31 @@ document.addEventListener('keydown', function(e){
         document.getElementById('pbTriggerEvent').value = existing?.triggerEvent || 'dashboard_view';
         document.getElementById('pbFrequency').value = existing?.frequency || 'once';
         document.getElementById('pbActive').checked = existing ? !!existing.active : true;
+        document.getElementById('pbExtraFieldsList').innerHTML = '';
+        (existing?.extraFields && existing.extraFields.length ? existing.extraFields : []).forEach(text => pbAddExtraField(text));
         pbSelectTheme(existing?.theme || 'green');
         modal.style.display = 'flex';
+      };
+
+      // Additional-lines list: a plain array of text inputs the admin can
+      // freely add to or remove from, so the popup isn't locked to the
+      // fixed badge/title/subtitle set — e.g. a Trustpilot-style line, a
+      // "no card required" reassurance, a countdown note, etc.
+      window.pbAddExtraField = function(value = '') {
+        const list = document.getElementById('pbExtraFieldsList');
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:8px;align-items:center;';
+        row.innerHTML = `
+          <input type="text" class="input pb-extra-field-input" value="${value ? escapeHtml(value) : ''}" placeholder="e.g. Highest Trustpilot rating." oninput="pbUpdatePreview()" style="flex:1;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="this.parentElement.remove(); pbUpdatePreview();" title="Remove">✕</button>
+        `;
+        list.appendChild(row);
+        pbUpdatePreview();
+      };
+      window.pbCollectExtraFields = function() {
+        return Array.from(document.querySelectorAll('.pb-extra-field-input'))
+          .map(el => el.value.trim())
+          .filter(Boolean);
       };
 
       window.closePromoBuilder = function() {
@@ -7946,49 +7975,21 @@ document.addEventListener('keydown', function(e){
         }
       };
 
-      function pbThemeColors(theme, intensity) {
-        // "Deepness" only applies to green — the other three are fixed
-        // brand colors an admin picks for a specific look (a red flash
-        // sale, a yellow heads-up, a neutral white/light card).
-        if (theme === 'white') return { accent: '#f8fafc', badgeText: '#0f172a', ctaBg: '#f8fafc', ctaText: '#0f172a', tint: 'rgba(255,255,255,.14)' };
-        if (theme === 'yellow') return { accent: '#eab308', badgeText: '#1c1400', ctaBg: '#eab308', ctaText: '#1c1400', tint: 'rgba(234,179,8,.16)' };
-        if (theme === 'red') return { accent: '#ef4444', badgeText: '#fff', ctaBg: '#ef4444', ctaText: '#fff', tint: 'rgba(239,68,68,.16)' };
-        // green, with adjustable deepness: 0 = light mint, 100 = deep forest
-        const pct = Math.max(0, Math.min(100, Number(intensity) || 50));
-        const lightness = 62 - (pct / 100) * 32; // 62% down to 30%
-        const accent = `hsl(158, 64%, ${lightness}%)`;
-        return { accent, badgeText: '#052e18', ctaBg: accent, ctaText: '#052e18', tint: `hsla(158,64%,${lightness}%,.18)` };
-      }
-
       window.pbUpdatePreview = function() {
         const wrap = document.getElementById('pbPreviewWrap');
         if (!wrap) return;
-        const theme = document.getElementById('pbTheme').value;
-        const intensity = document.getElementById('pbIntensity').value;
-        const colors = pbThemeColors(theme, intensity);
-        const badgeText = document.getElementById('pbBadgeText').value || '';
-        const title = document.getElementById('pbTitle').value || 'Your title here';
-        const subtitle = document.getElementById('pbSubtitle').value || '';
-        const ctaText = document.getElementById('pbCtaText').value || 'Claim offer';
-        const mediaUrl = document.getElementById('pbMediaUrl').value;
-        const mediaType = document.getElementById('pbMediaType').value;
-        wrap.innerHTML = `
-          <div style="background:#0a0a0a;">
-            <div class="promo-media-wrap" style="height:150px;">
-              ${mediaUrl ? (mediaType === 'video'
-                ? `<video src="${escapeHtml(mediaUrl)}" muted loop autoplay playsinline></video>`
-                : `<img src="${escapeHtml(mediaUrl)}" alt="">`)
-                : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:0.78rem;">No media attached</div>`}
-              <div class="promo-media-tint" style="background:${colors.tint};"></div>
-              ${badgeText ? `<div class="promo-badge" style="background:${colors.accent};color:${colors.badgeText};">${escapeHtml(badgeText)}</div>` : ''}
-            </div>
-            <div class="promo-body" style="padding:18px;">
-              <div class="promo-title" style="font-size:1.05rem;">${escapeHtml(title)}</div>
-              ${subtitle ? `<div class="promo-subtitle" style="font-size:0.82rem;">${escapeHtml(subtitle)}</div>` : ''}
-              <div class="promo-cta" style="background:${colors.ctaBg};color:${colors.ctaText};pointer-events:none;">${escapeHtml(ctaText)}</div>
-            </div>
-          </div>
-        `;
+        const promo = {
+          theme: document.getElementById('pbTheme').value,
+          intensity: document.getElementById('pbIntensity').value,
+          badgeText: document.getElementById('pbBadgeText').value || '',
+          title: document.getElementById('pbTitle').value || 'Your title here',
+          subtitle: document.getElementById('pbSubtitle').value || '',
+          extraFields: (typeof pbCollectExtraFields === 'function') ? pbCollectExtraFields() : [],
+          ctaText: document.getElementById('pbCtaText').value || 'Claim offer',
+          mediaUrl: document.getElementById('pbMediaUrl').value,
+          mediaType: document.getElementById('pbMediaType').value,
+        };
+        wrap.innerHTML = buildPromoCardHtml(promo, { preview: true });
       };
       ['pbBadgeText','pbTitle','pbSubtitle','pbCtaText'].forEach(id => {
         document.addEventListener('input', e => { if (e.target && e.target.id === id) pbUpdatePreview(); });
@@ -8001,6 +8002,7 @@ document.addEventListener('keydown', function(e){
           badgeText: document.getElementById('pbBadgeText').value,
           title: document.getElementById('pbTitle').value,
           subtitle: document.getElementById('pbSubtitle').value,
+          extraFields: pbCollectExtraFields(),
           ctaText: document.getElementById('pbCtaText').value,
           ctaUrl: document.getElementById('pbCtaUrl').value,
           theme: document.getElementById('pbTheme').value,
@@ -8080,42 +8082,60 @@ document.addEventListener('keydown', function(e){
         } catch {}
       };
 
-      function promoThemeColors(theme, intensity) {
-        if (theme === 'white') return { accent: '#f8fafc', badgeText: '#0f172a', ctaBg: '#f8fafc', ctaText: '#0f172a', tint: 'rgba(255,255,255,.14)' };
-        if (theme === 'yellow') return { accent: '#eab308', badgeText: '#1c1400', ctaBg: '#eab308', ctaText: '#1c1400', tint: 'rgba(234,179,8,.16)' };
-        if (theme === 'red') return { accent: '#ef4444', badgeText: '#fff', ctaBg: '#ef4444', ctaText: '#fff', tint: 'rgba(239,68,68,.16)' };
+      window.promoThemeColors = function(theme, intensity) {
+        if (theme === 'white') return { accent: '#f8fafc', badgeText: '#0f172a', ctaBg: '#f8fafc', ctaText: '#0f172a' };
+        if (theme === 'yellow') return { accent: '#eab308', badgeText: '#1c1400', ctaBg: '#eab308', ctaText: '#1c1400' };
+        if (theme === 'red') return { accent: '#ef4444', badgeText: '#fff', ctaBg: '#ef4444', ctaText: '#fff' };
+        // green, with adjustable deepness: 0 = light mint, 100 = deep forest
         const pct = Math.max(0, Math.min(100, Number(intensity) || 50));
-        const lightness = 62 - (pct / 100) * 32;
+        const lightness = 62 - (pct / 100) * 32; // 62% down to 30%
         const accent = `hsl(158, 64%, ${lightness}%)`;
-        return { accent, badgeText: '#052e18', ctaBg: accent, ctaText: '#052e18', tint: `hsla(158,64%,${lightness}%,.18)` };
-      }
+        return { accent, badgeText: '#052e18', ctaBg: accent, ctaText: '#052e18' };
+      };
 
-      window.showPromoModal = function(promo) {
-        const overlay = document.getElementById('promoOverlay');
-        if (!overlay) return;
+      // Single source of truth for the popup's markup — used by BOTH the
+      // admin builder's live preview and the real runtime popup, so the
+      // two can never drift apart. Full-bleed media behind a big stacked
+      // headline (badge pill + title), fading to a solid dark body
+      // section with the description, any admin-added extra lines, and
+      // the CTA. No border, no rounded corners, no gradient text — flat
+      // solid colors throughout.
+      window.buildPromoCardHtml = function(promo, opts = {}) {
         const colors = promoThemeColors(promo.theme, promo.intensity);
-        const mediaHtml = promo.mediaUrl
+        const hasMedia = !!promo.mediaUrl;
+        const mediaHtml = hasMedia
           ? (promo.mediaType === 'video'
               ? `<video src="${escapeHtml(promo.mediaUrl)}" autoplay muted loop playsinline></video>`
               : `<img src="${escapeHtml(promo.mediaUrl)}" alt="">`)
           : '';
-        overlay.innerHTML = `
-          <div class="promo-card">
-            <button class="promo-close" onclick="dismissPromoModal('${promo.id}')" aria-label="Close">&times;</button>
-            ${promo.mediaUrl ? `
-              <div class="promo-media-wrap">
-                ${mediaHtml}
-                <div class="promo-media-tint" style="background:${colors.tint};"></div>
-                ${promo.badgeText ? `<div class="promo-badge" style="background:${colors.accent};color:${colors.badgeText};">${escapeHtml(promo.badgeText)}</div>` : ''}
+        const extraFieldsHtml = (promo.extraFields || []).map(line =>
+          `<div class="promo-extra-line">${escapeHtml(line)}</div>`
+        ).join('');
+        const closeBtn = opts.preview ? '' : `<button class="promo-close" onclick="dismissPromoModal('${promo.id}')" aria-label="Close">&times;</button>`;
+        return `
+          <div class="promo-card-inner">
+            ${closeBtn}
+            <div class="promo-media-full ${!hasMedia ? 'promo-media-full-empty' : ''}" style="${!hasMedia ? `background:color-mix(in srgb, ${colors.accent} 18%, #0a0a0a);` : ''}">
+              ${mediaHtml}
+              <div class="promo-media-gradient"></div>
+              <div class="promo-overlay-stack">
+                ${promo.badgeText ? `<div class="promo-overlay-badge" style="background:${colors.accent};color:${colors.badgeText};">${escapeHtml(promo.badgeText)}</div>` : ''}
+                ${promo.title ? `<div class="promo-overlay-title"><span class="promo-overlay-title-accent" style="color:${colors.accent};">${escapeHtml(promo.title)}</span></div>` : ''}
               </div>
-            ` : (promo.badgeText ? `<div style="padding:18px 18px 0;text-align:right;"><span class="promo-badge" style="position:static;display:inline-block;background:${colors.accent};color:${colors.badgeText};">${escapeHtml(promo.badgeText)}</span></div>` : '')}
+            </div>
             <div class="promo-body">
-              <div class="promo-title">${escapeHtml(promo.title)}</div>
               ${promo.subtitle ? `<div class="promo-subtitle">${escapeHtml(promo.subtitle)}</div>` : ''}
-              <a href="${escapeHtml(promo.ctaUrl || '#')}" class="promo-cta" style="background:${colors.ctaBg};color:${colors.ctaText};" onclick="promoMarkShownAndMaybeNavigate(event,'${promo.id}')">${escapeHtml(promo.ctaText || 'Claim offer')}</a>
+              ${extraFieldsHtml}
+              <a href="${escapeHtml(promo.ctaUrl || '#')}" class="promo-cta" style="background:${colors.ctaBg};color:${colors.ctaText};" ${opts.preview ? 'onclick="return false;"' : `onclick="promoMarkShownAndMaybeNavigate(event,'${promo.id}')"`}>${escapeHtml(promo.ctaText || 'Claim offer')}</a>
             </div>
           </div>
         `;
+      };
+
+      window.showPromoModal = function(promo) {
+        const overlay = document.getElementById('promoOverlay');
+        if (!overlay) return;
+        overlay.innerHTML = buildPromoCardHtml(promo, { preview: false });
         overlay.classList.add('active');
         promoMarkShown(promo);
       };
