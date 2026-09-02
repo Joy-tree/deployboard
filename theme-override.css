@@ -6455,6 +6455,9 @@ html[data-theme="light"] #page-settings {
 #page-settings .btn-primary {
   border-radius: 0 !important;
 }
+#page-settings .btn-danger {
+  border-radius: 0 !important;
+}
 
 /* Personal API Key field + Copy/Rotate buttons */
 #page-settings .btn-sm {
