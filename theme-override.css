@@ -11124,15 +11124,18 @@ html[data-theme="light"] #page-domain-add .input,
    The base .modal class (styles/dashboard.css) already handles this
    modal correctly — no page-scoped override needed.
    ══════════════════════════════════════════════════════════════════ */
-#deleteModal .modal-icon {
+#deleteModal .modal-icon,
+#deleteAllModal .modal-icon {
   border: 1px solid rgba(239,68,68,.22) !important;
 }
-#deleteModal .btn-danger {
+#deleteModal .btn-danger,
+#deleteAllModal .btn-danger {
   background: #7f1d1d !important;
   color: #fff !important;
   border: none !important;
 }
-#deleteModal .btn-danger:hover {
+#deleteModal .btn-danger:hover,
+#deleteAllModal .btn-danger:hover {
   background: #6b1919 !important;
 }
 
