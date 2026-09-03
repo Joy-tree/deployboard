@@ -6131,7 +6131,23 @@ html[data-theme="light"] .dqs-upload-title { color: var(--text) !important; }
 }
 .promo-overlay-title-accent { color: inherit; }
 
-.promo-body { padding: 18px 22px 16px; text-align: center; }
+/* [FIX] Body content (subtitle/extra fields/price/CTA) had no flex-grow,
+   so on a short promo it just clustered right under the media with all
+   the remaining screen height left as dead black space below the CTA --
+   "stuck in the middle" instead of spanning the full screen. Now fills
+   every pixel left after the media and vertically centers its content,
+   so the CTA naturally lands at the true bottom of the screen on short
+   promos, while longer promos that need to scroll still work exactly as
+   before (flex:1 on a flex-column child doesn't fight overflow-y:auto
+   on the ancestor). */
+.promo-body {
+  padding: 18px 22px 16px;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 .promo-subtitle { font-size: 0.88rem; color: rgba(255,255,255,.72); line-height: 1.5; margin-bottom: 10px; }
 .promo-extra-line {
   font-size: 0.8rem;
@@ -6161,7 +6177,7 @@ html[data-theme="light"] .dqs-upload-title { color: var(--text) !important; }
   padding: 15px; font-weight: 800; font-size: 0.95rem;
   border-radius: 0; border: none; cursor: pointer;
   text-decoration: none;
-  margin-top: 14px;
+  margin-top: auto;
   box-shadow: 0 -8px 16px -4px rgba(0,0,0,.4);
 }
 @media (min-width: 640px) {

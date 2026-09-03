@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=40">
+<link rel="stylesheet" href="/styles/dashboard.css?v=41">
   <link rel="stylesheet" href="/styles/auth.css?v=2">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -8179,10 +8179,19 @@ document.addEventListener('keydown', function(e){
       window.buildPromoCardHtml = function(promo, opts = {}) {
         const colors = promoThemeColors(promo.theme, promo.intensity);
         const hasMedia = !!promo.mediaUrl;
+        const mediaDomId = 'promoMediaWrap-' + (promo.id || 'preview');
+        // [FIX] If the media URL 404s (e.g. the uploaded file was wiped by
+        // a server rebuild that didn't have promo-assets/ on a persistent
+        // volume), the bare <img> just showed a tiny broken-image icon in
+        // the corner with everything else stuck below a big empty gap.
+        // onerror now degrades this exactly like a promo with no media
+        // configured at all: hide the broken img and fall back to the
+        // same solid theme-tinted panel .promo-media-full-empty uses.
+        const mediaErrorFallback = `this.style.display='none'; var w=document.getElementById('${mediaDomId}'); if(w){ w.classList.add('promo-media-full-empty'); w.style.background='color-mix(in srgb, ${colors.accent} 18%, #0a0a0a)'; }`;
         const mediaHtml = hasMedia
           ? (promo.mediaType === 'video'
-              ? `<video src="${escapeHtml(promo.mediaUrl)}" autoplay muted loop playsinline></video>`
-              : `<img src="${escapeHtml(promo.mediaUrl)}" alt="">`)
+              ? `<video src="${escapeHtml(promo.mediaUrl)}" autoplay muted loop playsinline onerror="${mediaErrorFallback}"></video>`
+              : `<img src="${escapeHtml(promo.mediaUrl)}" alt="" onerror="${mediaErrorFallback}">`)
           : '';
         // Each extra line is either plain text, or a "Label: value" pair
         // where the label is highlighted in its own chosen color (reusing
@@ -8217,7 +8226,7 @@ document.addEventListener('keydown', function(e){
         return `
           <div class="promo-card-inner">
             ${closeBtn}
-            <div class="promo-media-full ${!hasMedia ? 'promo-media-full-empty' : ''}" style="${!hasMedia ? `background:color-mix(in srgb, ${colors.accent} 18%, #0a0a0a);` : ''}">
+            <div class="promo-media-full ${!hasMedia ? 'promo-media-full-empty' : ''}" id="${mediaDomId}" style="${!hasMedia ? `background:color-mix(in srgb, ${colors.accent} 18%, #0a0a0a);` : ''}">
               ${mediaHtml}
               <div class="promo-media-gradient"></div>
               <div class="promo-overlay-stack">
