@@ -8129,8 +8129,19 @@ document.addEventListener('keydown', function(e){
       // browser has no real consequence — not worth a server round trip
       // or per-user DB field for.
       function promoSeenKey(id) { return 'jt_promo_seen_' + id; }
+      // Claiming is a more deliberate action than just seeing the popup,
+      // so it overrides whatever frequency the admin chose entirely --
+      // once a user clicks the CTA, this exact promo (same id) is done
+      // for them, permanently, regardless of 'always'/'daily'/'once'.
+      // It stays gone until the admin creates a genuinely new promo
+      // (a new id), not just re-shows the same one.
+      function promoClaimedKey(id) { return 'jt_promo_claimed_' + id; }
+      function promoMarkClaimed(id) {
+        try { localStorage.setItem(promoClaimedKey(id), '1'); } catch {}
+      }
       function promoAlreadyShown(promo) {
         try {
+          if (localStorage.getItem(promoClaimedKey(promo.id))) return true;
           const raw = localStorage.getItem(promoSeenKey(promo.id));
           if (!raw) return false;
           if (promo.frequency === 'always') return false;
@@ -8258,6 +8269,7 @@ document.addEventListener('keydown', function(e){
       };
 
       window.promoMarkShownAndMaybeNavigate = function(ev, id) {
+        promoMarkClaimed(id);
         dismissPromoModal(id);
         // Let the click's default navigation (href) proceed normally.
       };
@@ -8269,6 +8281,7 @@ document.addEventListener('keydown', function(e){
       // the search immediately — as if the user had typed it themselves.
       // A toast nudges them to edit it to what they actually want.
       window.promoClaimDomainSearch = function(id, suggestion) {
+        promoMarkClaimed(id);
         dismissPromoModal(id);
         if (typeof showPage === 'function') showPage('domain-store');
         setTimeout(() => {
