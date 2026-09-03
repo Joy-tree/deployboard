@@ -4337,7 +4337,15 @@ function sanitizePromoInput(body = {}) {
     extraFields,
     prevPrice:   String(body.prevPrice || '').slice(0, 40).trim(),
     ctaText:     String(body.ctaText || 'Learn more').slice(0, 40).trim(),
+    // ctaAction 'domain_search' means: instead of navigating anywhere,
+    // clicking the button opens the Domain Store in-app and pre-fills +
+    // runs a search for ctaDomainSuggestion (e.g. "yourdomain.cv") so the
+    // admin doesn't have to wire up a URL at all for a "go buy this kind
+    // of domain" offer -- it behaves exactly like the user clicked
+    // Domain Store themselves and typed a starting point to edit.
+    ctaAction:   body.ctaAction === 'domain_search' ? 'domain_search' : 'url',
     ctaUrl:      String(body.ctaUrl || '').slice(0, 500).trim(),
+    ctaDomainSuggestion: String(body.ctaDomainSuggestion || '').slice(0, 80).trim().toLowerCase(),
     theme:       PROMO_ALLOWED_THEMES.includes(body.theme) ? body.theme : 'green',
     intensity:   Math.max(0, Math.min(100, Number(body.intensity) || 50)),
     triggerEvent: PROMO_ALLOWED_EVENTS.includes(body.triggerEvent) ? body.triggerEvent : 'dashboard_view',

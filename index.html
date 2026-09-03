@@ -7526,15 +7526,27 @@ document.addEventListener('keydown', function(e){
             <input type="text" id="pbPrevPrice" class="input" placeholder="$29/month">
           </div>
 
-          <div style="display:flex;gap:12px;">
-            <div class="field" style="flex:1;">
-              <label class="field-label">Button text</label>
-              <input type="text" id="pbCtaText" class="input" placeholder="Claim offer">
-            </div>
-            <div class="field" style="flex:2;">
-              <label class="field-label">Button link</label>
-              <input type="text" id="pbCtaUrl" class="input" placeholder="/dashboard/domain-store or a full URL">
-            </div>
+          <div class="field">
+            <label class="field-label">Button text</label>
+            <input type="text" id="pbCtaText" class="input" placeholder="Claim offer">
+          </div>
+
+          <div class="field">
+            <label class="field-label">When the button is clicked</label>
+            <select id="pbCtaAction" class="input" onchange="pbToggleCtaAction()">
+              <option value="url">Go to a link</option>
+              <option value="domain_search" selected>Open Domain Store with a domain pre-filled</option>
+            </select>
+          </div>
+
+          <div class="field" id="pbCtaUrlField" style="display:none;">
+            <label class="field-label">Button link</label>
+            <input type="text" id="pbCtaUrl" class="input" placeholder="/dashboard/domain-store or a full URL">
+          </div>
+
+          <div class="field" id="pbCtaDomainField">
+            <label class="field-label">Suggested domain <span style="color:var(--text-3);font-weight:400;">(pre-fills the Domain Store search — user can edit it)</span></label>
+            <input type="text" id="pbCtaDomainSuggestion" class="input" placeholder="yourdomain.cv">
           </div>
 
           <div class="field">
@@ -7914,6 +7926,9 @@ document.addEventListener('keydown', function(e){
         document.getElementById('pbPrevPrice').value = existing?.prevPrice || '';
         document.getElementById('pbCtaText').value = existing?.ctaText || 'Claim offer';
         document.getElementById('pbCtaUrl').value = existing?.ctaUrl || '';
+        document.getElementById('pbCtaAction').value = existing?.ctaAction || 'domain_search';
+        document.getElementById('pbCtaDomainSuggestion').value = existing?.ctaDomainSuggestion || '';
+        pbToggleCtaAction();
         document.getElementById('pbIntensity').value = existing?.intensity ?? 50;
         document.getElementById('pbIntensityVal').textContent = (existing?.intensity ?? 50) + '%';
         document.getElementById('pbMediaUrl').value = existing?.mediaUrl || '';
@@ -7978,6 +7993,12 @@ document.addEventListener('keydown', function(e){
         pbUpdatePreview();
       };
 
+      window.pbToggleCtaAction = function() {
+        const action = document.getElementById('pbCtaAction').value;
+        document.getElementById('pbCtaUrlField').style.display = action === 'url' ? '' : 'none';
+        document.getElementById('pbCtaDomainField').style.display = action === 'domain_search' ? '' : 'none';
+      };
+
       window.pbUploadMedia = async function(input) {
         const file = input.files?.[0];
         if (!file) return;
@@ -8031,6 +8052,8 @@ document.addEventListener('keydown', function(e){
           prevPrice: document.getElementById('pbPrevPrice').value,
           ctaText: document.getElementById('pbCtaText').value,
           ctaUrl: document.getElementById('pbCtaUrl').value,
+          ctaAction: document.getElementById('pbCtaAction').value,
+          ctaDomainSuggestion: document.getElementById('pbCtaDomainSuggestion').value,
           theme: document.getElementById('pbTheme').value,
           intensity: Number(document.getElementById('pbIntensity').value),
           mediaUrl: document.getElementById('pbMediaUrl').value,
@@ -8151,6 +8174,19 @@ document.addEventListener('keydown', function(e){
           ? `<div class="promo-prev-price">${escapeHtml(promo.prevPrice)}</div>`
           : '';
         const closeBtn = opts.preview ? '' : `<button class="promo-close" onclick="dismissPromoModal('${promo.id}')" aria-label="Close">&times;</button>`;
+        // "Open Domain Store with a domain pre-filled" renders as a plain
+        // <button> (no href, no page navigation, no loading state) so
+        // clicking it behaves exactly like the user clicked Domain Store
+        // themselves — the admin never has to wire up a URL for this.
+        const isDomainSearch = promo.ctaAction === 'domain_search';
+        const ctaTag = isDomainSearch ? 'button' : 'a';
+        const ctaHrefAttr = isDomainSearch ? '' : `href="${escapeHtml(promo.ctaUrl || '#')}"`;
+        const suggestionEscaped = escapeHtml(promo.ctaDomainSuggestion || '').replace(/'/g, "\\'");
+        const ctaOnclick = opts.preview
+          ? 'onclick="return false;"'
+          : (isDomainSearch
+              ? `onclick="promoClaimDomainSearch('${promo.id}', '${suggestionEscaped}')"`
+              : `onclick="promoMarkShownAndMaybeNavigate(event,'${promo.id}')"`);
         return `
           <div class="promo-card-inner">
             ${closeBtn}
@@ -8166,7 +8202,7 @@ document.addEventListener('keydown', function(e){
               ${promo.subtitle ? `<div class="promo-subtitle">${escapeHtml(promo.subtitle)}</div>` : ''}
               ${extraFieldsHtml}
               ${prevPriceHtml}
-              <a href="${escapeHtml(promo.ctaUrl || '#')}" class="promo-cta" style="background:${colors.ctaBg};color:${colors.ctaText};" ${opts.preview ? 'onclick="return false;"' : `onclick="promoMarkShownAndMaybeNavigate(event,'${promo.id}')"`}>${escapeHtml(promo.ctaText || 'Claim offer')}</a>
+              <${ctaTag} ${ctaHrefAttr} class="promo-cta" style="background:${colors.ctaBg};color:${colors.ctaText};" ${ctaOnclick}>${escapeHtml(promo.ctaText || 'Claim offer')}</${ctaTag}>
             </div>
           </div>
         `;
@@ -8183,6 +8219,25 @@ document.addEventListener('keydown', function(e){
       window.promoMarkShownAndMaybeNavigate = function(ev, id) {
         dismissPromoModal(id);
         // Let the click's default navigation (href) proceed normally.
+      };
+
+      // "Open Domain Store with a domain pre-filled" — no href, no page
+      // load, no in-between routing screen. This just closes the promo,
+      // opens Domain Store the same way clicking it in the sidebar does,
+      // drops the admin's suggested name into the search box, and runs
+      // the search immediately — as if the user had typed it themselves.
+      // A toast nudges them to edit it to what they actually want.
+      window.promoClaimDomainSearch = function(id, suggestion) {
+        dismissPromoModal(id);
+        if (typeof showPage === 'function') showPage('domain-store');
+        setTimeout(() => {
+          const input = document.getElementById('dsSearchInput');
+          if (input && suggestion) {
+            input.value = suggestion;
+            if (typeof dsSearch === 'function') dsSearch();
+          }
+          toast('Edit the domain name below to match what you want, then hit Check.', 'info', 5000);
+        }, 250);
       };
 
       window.dismissPromoModal = function(id) {
