@@ -4455,11 +4455,11 @@ app.post('/api/admin/promos/:id/send-email', requireAuth, async (req, res) => {
       if (!field || !field.value) return '';
       const labelColor = promoThemeColorsServer(field.color || 'green', promo.intensity).accent;
       const labelHtml = field.label ? `<strong style="color:${labelColor};">${escapeEmailHtml(field.label)}:</strong> ` : '';
-      return `<p style="margin:0 0 6px;font-size:14px;color:#3c4043;line-height:1.6;">${labelHtml}${escapeEmailHtml(field.value)}</p>`;
+      return `<p style="margin:0 0 6px;font-size:14px;color:#d4d4d8;line-height:1.6;">${labelHtml}${escapeEmailHtml(field.value)}</p>`;
     }).join('');
 
     const prevPriceHtml = promo.prevPrice
-      ? `<p style="margin:0 0 14px;font-size:14px;color:#9aa0a6;text-decoration:line-through;">${escapeEmailHtml(promo.prevPrice)}</p>`
+      ? `<p style="margin:0 0 14px;font-size:14px;color:#71717a;text-decoration:line-through;">${escapeEmailHtml(promo.prevPrice)}</p>`
       : '';
 
     const dashboardUrl = `https://${BASE_DOMAIN}/dashboard`;
@@ -4468,31 +4468,34 @@ app.post('/api/admin/promos/:id/send-email', requireAuth, async (req, res) => {
     const supportUrl    = `https://${BASE_DOMAIN}/dashboard/support`;
 
     const html = `<!doctype html>
-<html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
+<html><body style="margin:0;padding:0;background:#050505;font-family:Arial,Helvetica,sans-serif;color:#e4e4e7;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;background:#050505;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#0a0a0a;border:1px solid rgba(255,255,255,.08);">
+        <tr><td align="center" style="padding:24px 32px 4px;">
+          <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:15px;letter-spacing:.02em;color:#10b981;">JOYTREE</span>
+        </td></tr>
         ${mediaHtml}
-        <tr><td style="padding:26px 32px 4px;">
+        <tr><td style="padding:22px 32px 4px;">
           ${badgeHtml}
-          ${promo.title ? `<h1 style="margin:0 0 10px;font-size:24px;line-height:1.3;font-weight:800;color:#202124;">${escapeEmailHtml(promo.title)}</h1>` : ''}
-          ${promo.subtitle ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#3c4043;">${escapeEmailHtml(promo.subtitle)}</p>` : ''}
+          ${promo.title ? `<h1 style="margin:0 0 10px;font-size:24px;line-height:1.3;font-weight:800;color:#f5f5f5;">${escapeEmailHtml(promo.title)}</h1>` : ''}
+          ${promo.subtitle ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#a1a1aa;">${escapeEmailHtml(promo.subtitle)}</p>` : ''}
           ${extraFieldsHtml}
           ${prevPriceHtml}
         </td></tr>
-        <tr><td align="center" style="padding:6px 32px 22px;">
-          <a href="${escapeEmailHtml(ctaUrl)}" style="display:inline-block;background:${colors.ctaBg};color:${colors.ctaText};font-weight:700;font-size:15px;padding:13px 32px;border-radius:8px;text-decoration:none;">${escapeEmailHtml(promo.ctaText || 'Claim offer')}</a>
+        <tr><td align="center" style="padding:6px 32px 24px;">
+          <a href="${escapeEmailHtml(ctaUrl)}" style="display:inline-block;background:${colors.ctaBg};color:${colors.ctaText};font-weight:700;font-size:15px;padding:13px 32px;border-radius:0;text-decoration:none;">${escapeEmailHtml(promo.ctaText || 'Claim offer')}</a>
         </td></tr>
         <tr><td style="padding:0 32px 20px;">
-          <p style="margin:0;color:#5f6368;font-size:13px;line-height:1.8;">
-            <a href="${deployUrl}" style="color:#1a73e8;text-decoration:none;">Create a deployment</a> &nbsp;&middot;&nbsp;
-            <a href="${docsUrl}" style="color:#1a73e8;text-decoration:none;">Documentation</a> &nbsp;&middot;&nbsp;
-            <a href="${supportUrl}" style="color:#1a73e8;text-decoration:none;">Support</a>
+          <p style="margin:0;color:#a1a1aa;font-size:13px;line-height:1.8;">
+            <a href="${deployUrl}" style="color:#10b981;text-decoration:none;">Create a deployment</a> &nbsp;&middot;&nbsp;
+            <a href="${docsUrl}" style="color:#10b981;text-decoration:none;">Documentation</a> &nbsp;&middot;&nbsp;
+            <a href="${supportUrl}" style="color:#10b981;text-decoration:none;">Support</a>
           </p>
         </td></tr>
         <tr><td style="padding:8px 32px 24px;">
-          <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 16px;">
-          <p style="margin:0;color:#80868b;font-size:12px;line-height:1.6;">You're receiving this email because you have a JoyTree account. <a href="${dashboardUrl}" style="color:#80868b;">Manage your account</a>.</p>
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,.1);margin:0 0 16px;">
+          <p style="margin:0;color:#71717a;font-size:12px;line-height:1.6;">You're receiving this email because you have a JoyTree account. <a href="${dashboardUrl}" style="color:#71717a;">Manage your account</a>.</p>
         </td></tr>
       </table>
     </td></tr>
