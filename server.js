@@ -4402,6 +4402,132 @@ app.delete('/api/admin/promos/:id', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// [FEATURE] "Send to all users via email" for a promo. Rebuilds the exact
+// same visual (media banner, badge pill, title, subtitle, extra fields,
+// struck-through previous price, single solid CTA button) as an
+// email-safe table layout, in the promo's own chosen theme color, then
+// appends the same standard docs/support footer every other JoyTree
+// transactional email already uses -- so this doesn't look like a
+// one-off, it looks like it belongs.
+//
+// Colors mirror window.promoThemeColors() in index.html exactly -- keep
+// these two in sync if that ever changes.
+function promoThemeColorsServer(theme, intensity) {
+  if (theme === 'white')  return { accent: '#f8fafc', badgeText: '#0f172a', ctaBg: '#f8fafc', ctaText: '#0f172a' };
+  if (theme === 'yellow') return { accent: '#eab308', badgeText: '#1c1400', ctaBg: '#eab308', ctaText: '#1c1400' };
+  if (theme === 'red')    return { accent: '#ef4444', badgeText: '#fff',    ctaBg: '#ef4444', ctaText: '#fff' };
+  const pct = Math.max(0, Math.min(100, Number(intensity) || 50));
+  const lightness = 62 - (pct / 100) * 32;
+  const accent = `hsl(158, 64%, ${lightness}%)`;
+  return { accent, badgeText: '#052e18', ctaBg: accent, ctaText: '#052e18' };
+}
+
+app.post('/api/admin/promos/:id/send-email', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return res.status(500).json({ error: 'Resend is not configured on server' });
+
+    const promo = (await readPromos()).find(p => p.id === req.params.id);
+    if (!promo) return res.status(404).json({ error: 'Promo not found' });
+
+    const colors = promoThemeColorsServer(promo.theme, promo.intensity);
+
+    // Same "no href / query-param handshake" trick as the in-app
+    // promoClaimDomainSearch() button: clicking this in the email lands
+    // signed-in users on Domain Store with the suggested name already
+    // searched, exactly like clicking it inside the app does. See the
+    // matching `promoDomainSearch` URL param handler in index.html.
+    const isDomainSearch = promo.ctaAction === 'domain_search';
+    const ctaUrl = isDomainSearch
+      ? `https://${BASE_DOMAIN}/dashboard?promoDomainSearch=${encodeURIComponent(promo.ctaDomainSuggestion || '')}`
+      : sanitizeEmailUrl(promo.ctaUrl) || `https://${BASE_DOMAIN}/dashboard`;
+
+    const mediaHtml = (promo.mediaUrl && promo.mediaType !== 'video')
+      ? `<tr><td style="background:#0a0a0a;"><img src="${escapeEmailHtml(promo.mediaUrl)}" alt="" width="560" style="width:100%;max-width:560px;height:auto;display:block;"></td></tr>`
+      : '';
+
+    const badgeHtml = promo.badgeText
+      ? `<span style="display:inline-block;background:${colors.accent};color:${colors.badgeText};font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 12px;border-radius:999px;margin-bottom:12px;">${escapeEmailHtml(promo.badgeText)}</span><br>`
+      : '';
+
+    const extraFieldsHtml = (Array.isArray(promo.extraFields) ? promo.extraFields : []).map(f => {
+      const field = typeof f === 'string' ? { label: '', value: f, color: 'green' } : f;
+      if (!field || !field.value) return '';
+      const labelColor = promoThemeColorsServer(field.color || 'green', promo.intensity).accent;
+      const labelHtml = field.label ? `<strong style="color:${labelColor};">${escapeEmailHtml(field.label)}:</strong> ` : '';
+      return `<p style="margin:0 0 6px;font-size:14px;color:#3c4043;line-height:1.6;">${labelHtml}${escapeEmailHtml(field.value)}</p>`;
+    }).join('');
+
+    const prevPriceHtml = promo.prevPrice
+      ? `<p style="margin:0 0 14px;font-size:14px;color:#9aa0a6;text-decoration:line-through;">${escapeEmailHtml(promo.prevPrice)}</p>`
+      : '';
+
+    const dashboardUrl = `https://${BASE_DOMAIN}/dashboard`;
+    const deployUrl    = `https://${BASE_DOMAIN}/dashboard/new-deploy`;
+    const docsUrl       = `https://${BASE_DOMAIN}/dashboard/docs`;
+    const supportUrl    = `https://${BASE_DOMAIN}/dashboard/support`;
+
+    const html = `<!doctype html>
+<html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#202124;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;">
+        ${mediaHtml}
+        <tr><td style="padding:26px 32px 4px;">
+          ${badgeHtml}
+          ${promo.title ? `<h1 style="margin:0 0 10px;font-size:24px;line-height:1.3;font-weight:800;color:#202124;">${escapeEmailHtml(promo.title)}</h1>` : ''}
+          ${promo.subtitle ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#3c4043;">${escapeEmailHtml(promo.subtitle)}</p>` : ''}
+          ${extraFieldsHtml}
+          ${prevPriceHtml}
+        </td></tr>
+        <tr><td align="center" style="padding:6px 32px 22px;">
+          <a href="${escapeEmailHtml(ctaUrl)}" style="display:inline-block;background:${colors.ctaBg};color:${colors.ctaText};font-weight:700;font-size:15px;padding:13px 32px;border-radius:8px;text-decoration:none;">${escapeEmailHtml(promo.ctaText || 'Claim offer')}</a>
+        </td></tr>
+        <tr><td style="padding:0 32px 20px;">
+          <p style="margin:0;color:#5f6368;font-size:13px;line-height:1.8;">
+            <a href="${deployUrl}" style="color:#1a73e8;text-decoration:none;">Create a deployment</a> &nbsp;&middot;&nbsp;
+            <a href="${docsUrl}" style="color:#1a73e8;text-decoration:none;">Documentation</a> &nbsp;&middot;&nbsp;
+            <a href="${supportUrl}" style="color:#1a73e8;text-decoration:none;">Support</a>
+          </p>
+        </td></tr>
+        <tr><td style="padding:8px 32px 24px;">
+          <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 16px;">
+          <p style="margin:0;color:#80868b;font-size:12px;line-height:1.6;">You're receiving this email because you have a JoyTree account. <a href="${dashboardUrl}" style="color:#80868b;">Manage your account</a>.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+    const textLines = [promo.title, promo.subtitle].filter(Boolean);
+    if (promo.prevPrice) textLines.push(`Was ${promo.prevPrice}`);
+    textLines.push(`${promo.ctaText || 'Claim offer'}: ${ctaUrl}`);
+    const text = textLines.join('\n\n');
+
+    const dbEmails = isDbReady()
+      ? (await User.find({}).select('email').lean()).map(u => String(u?.email || '').trim().toLowerCase()).filter(Boolean)
+      : (localAuth.users || []).map(u => String(u?.email || '').trim().toLowerCase()).filter(Boolean);
+    const firebaseAuthEmails = await collectFirebaseAuthEmails();
+    const firebaseRtdbEmails = await collectFirebaseIndexedEmails();
+    const recipients = Array.from(new Set([...dbEmails, ...firebaseAuthEmails, ...firebaseRtdbEmails]));
+    if (!recipients.length) return res.status(400).json({ error: 'No users found to receive email' });
+
+    const subject = promo.title || promo.name || 'A JoyTree offer for you';
+    let sent = 0, failed = 0;
+    for (const to of recipients) {
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: RESEND_FROM_EMAIL, to: [to], subject, html, text })
+      });
+      if (r.ok) sent += 1; else failed += 1;
+    }
+    res.json({ ok: true, sent, failed, total: recipients.length });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not send promo email' });
+  }
+});
+
 // Background image or video upload for a promo. Video is capped higher
 // than the 5MB email-image limit since a short muted background clip is
 // legitimately bigger, but still bounded so one admin upload can't fill

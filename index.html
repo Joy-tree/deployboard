@@ -7903,8 +7903,9 @@ document.addEventListener('keydown', function(e){
                 <div class="apr-name">${escapeHtml(p.name || p.title)} ${p.active ? '<span style="color:var(--green);font-size:0.72rem;">● live</span>' : '<span style="color:var(--text-3);font-size:0.72rem;">○ inactive</span>'}</div>
                 <div class="apr-meta">${escapeHtml(eventLabels[p.triggerEvent] || p.triggerEvent)} · ${escapeHtml(freqLabels[p.frequency] || p.frequency)} · theme: ${escapeHtml(p.theme)}</div>
               </div>
-              <div style="display:flex;gap:8px;flex-shrink:0;">
+              <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;">
                 <button class="btn btn-ghost btn-sm" onclick="openPromoBuilder('${p.id}')">Edit</button>
+                <button class="btn btn-ghost btn-sm" id="sendPromoEmailBtn-${p.id}" onclick="sendPromoEmail('${p.id}')">Send Email</button>
                 <button class="btn btn-ghost btn-sm" style="color:#f87171;border-color:rgba(239,68,68,.3);" onclick="deletePromo('${p.id}')">Delete</button>
               </div>
             </div>
@@ -8089,6 +8090,32 @@ document.addEventListener('keydown', function(e){
           loadAdminPromos();
         } catch (e) {
           toast(e.message || 'Could not delete promo', 'error');
+        }
+      };
+
+      // [FEATURE] "Send Email" on a promo row emails every user the exact
+      // same card (media, badge, title, subtitle, extra fields, struck
+      // price, CTA) rebuilt as an email-safe layout server-side, with the
+      // same standard docs/support footer every other JoyTree
+      // transactional email has. Clicking the CTA in the email does the
+      // same thing clicking it in-app does -- see the promoDomainSearch
+      // URL param handler further down for the domain-search case.
+      window.sendPromoEmail = async function(id) {
+        const promo = _promoCache.find(p => p.id === id);
+        const label = promo ? (promo.name || promo.title) : 'this promo';
+        if (!confirm(`Email "${label}" to every JoyTree user right now? This cannot be undone.`)) return;
+        const btn = document.getElementById('sendPromoEmailBtn-' + id);
+        const originalLabel = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+        try {
+          const res = await apiFetch(`/api/admin/promos/${id}/send-email`, { method: 'POST' });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not send promo email');
+          toast(`Promo email sent. Sent: ${data.sent || 0}, failed: ${data.failed || 0}.`, 'success', 5500);
+        } catch (e) {
+          toast(e.message || 'Could not send promo email', 'error');
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
         }
       };
     })();
@@ -13218,6 +13245,39 @@ function applyUserProfile(user){
     socket.emit('auth:join', { userId: String(_uid) });
   }
   if (typeof renderAccountHero === 'function') renderAccountHero(user);
+
+  // [FEATURE] Promo emails with a "search this domain" CTA link to
+  // /dashboard?promoDomainSearch=<name> instead of a plain href, so
+  // clicking it from an email does the exact same thing clicking the
+  // button inside the app does: open Domain Store, drop the suggested
+  // name into the search box, and run the search immediately. Runs once
+  // per page load, right after we know the user is authenticated and the
+  // app shell (including Domain Store's own DOM) is in place.
+  if (!window._promoDomainSearchHandled) {
+    window._promoDomainSearchHandled = true;
+    const params = new URLSearchParams(window.location.search);
+    const suggestion = params.get('promoDomainSearch');
+    if (suggestion && typeof promoClaimDomainSearch === 'function') {
+      // No specific promo id to dismiss here (email links land signed-in
+      // users straight on the site, bypassing the in-app modal entirely),
+      // so drive Domain Store directly instead of routing through the
+      // promo-dismiss step that function also does.
+      setTimeout(() => {
+        if (typeof showPage === 'function') showPage('domain-store');
+        setTimeout(() => {
+          const input = document.getElementById('dsSearchInput');
+          if (input) {
+            input.value = suggestion;
+            if (typeof dsSearch === 'function') dsSearch();
+          }
+          toast('Edit the domain name below to match what you want, then hit Check.', 'info', 5000);
+        }, 250);
+      }, 300);
+      params.delete('promoDomainSearch');
+      const cleanUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+  }
 }
 
 // ── Account tab hero + connected-account rendering ──────────────────────────
