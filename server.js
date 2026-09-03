@@ -4442,17 +4442,37 @@ app.post('/api/admin/promos/:id/send-email', requireAuth, async (req, res) => {
       ? `https://${BASE_DOMAIN}/dashboard?promoDomainSearch=${encodeURIComponent(promo.ctaDomainSuggestion || '')}`
       : sanitizeEmailUrl(promo.ctaUrl) || `https://${BASE_DOMAIN}/dashboard`;
 
-    const mediaHtml = (promo.mediaUrl && promo.mediaType !== 'video')
-      ? `<tr><td bgcolor="#000000" style="background:#000000;"><img src="${escapeEmailHtml(promo.mediaUrl)}" alt="" width="560" style="width:100%;max-width:560px;height:auto;display:block;"></td></tr>`
-      : '';
-
     // Matches .promo-overlay-badge exactly: sharp corners (no pill radius),
     // bold 800, ~1rem, NOT uppercase/letter-spaced, slight -3deg rotation
-    // like a stamp. Table-based centering + a transform for clients that
-    // support it (Apple Mail, Gmail app); degrades to unrotated in Outlook,
-    // which is an acceptable, expected email fallback.
+    // like a stamp. Degrades to unrotated in clients that ignore
+    // transform, which is an acceptable, expected email fallback.
     const badgeHtml = promo.badgeText
-      ? `<div style="margin:0 0 12px;"><span style="display:inline-block;background:${colors.accent};color:${colors.badgeText};font-size:16px;font-weight:800;padding:7px 18px;transform:rotate(-3deg);">${escapeEmailHtml(promo.badgeText)}</span></div>`
+      ? `<span style="display:inline-block;background:${colors.accent};color:${colors.badgeText};font-size:16px;font-weight:800;padding:7px 18px;transform:rotate(-3deg);">${escapeEmailHtml(promo.badgeText)}</span><br>`
+      : '';
+
+    const titleHtml = promo.title
+      ? `<span style="display:inline-block;margin-top:10px;font-size:26px;line-height:1.2;font-weight:800;font-style:italic;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6);">${escapeEmailHtml(promo.title)}</span>`
+      : '';
+
+    // Same technique as the live popup's .promo-media-full (position:
+    // relative) + .promo-overlay-stack (position:absolute, top:50%,
+    // translateY(-50%)) -- badge+title sit ON the image, vertically
+    // centered over its full height, not in a separate section below
+    // it. position:relative/absolute renders correctly in Gmail (web
+    // and app) and Apple Mail; legacy Outlook desktop ignores it and
+    // stacks the overlay div below the image instead of over it --
+    // an acceptable degrade there, since the primary target (Gmail,
+    // per the screenshots) renders it exactly like the site.
+    const mediaHtml = (promo.mediaUrl && promo.mediaType !== 'video')
+      ? `<tr><td bgcolor="#000000" style="background:#000000;padding:0;">
+           <div style="position:relative;background:#000000;">
+             <img src="${escapeEmailHtml(promo.mediaUrl)}" alt="" width="560" style="width:100%;max-width:560px;height:auto;display:block;">
+             <div style="position:absolute;top:50%;left:0;right:0;transform:translateY(-50%);text-align:center;padding:0 24px;">
+               ${badgeHtml}
+               ${titleHtml}
+             </div>
+           </div>
+         </td></tr>`
       : '';
 
     const extraFieldsHtml = (Array.isArray(promo.extraFields) ? promo.extraFields : []).map(f => {
@@ -4472,17 +4492,14 @@ app.post('/api/admin/promos/:id/send-email', requireAuth, async (req, res) => {
     const docsUrl       = `https://${BASE_DOMAIN}/dashboard/docs`;
     const supportUrl    = `https://${BASE_DOMAIN}/dashboard/support`;
 
-    // Structure mirrors buildPromoCardHtml() in index.html section for
-    // section: logo -> full-bleed media -> badge+title (the site overlays
-    // these ON the image with a gradient; true text-over-image overlay
-    // isn't reliable across Outlook/Gmail without VML hacks, so this
-    // renders them directly beneath the image on the same #0a0a0a
-    // background instead, reading as one continuous dark block rather
-    // than two disconnected sections) -> subtitle -> extra lines -> prev
-    // price -> ONE full-width CTA button, exactly like .promo-cta being a
-    // block-level, full-width, sharp-cornered button rather than a small
-    // inline pill. Colors pulled from the exact same promoThemeColors()
-    // the live popup uses, not approximations.
+    // Structure mirrors buildPromoCardHtml() in index.html: logo -> full-
+    // bleed media with badge+title overlaid on it (see mediaHtml above,
+    // same position:relative/absolute technique as .promo-media-full/
+    // .promo-overlay-stack) -> subtitle -> extra lines -> prev price ->
+    // ONE full-width CTA button, exactly like .promo-cta being block-
+    // level and full-width rather than a small inline pill. Colors
+    // pulled from the exact same promoThemeColors() the live popup uses,
+    // not approximations.
     const html = `<!doctype html>
 <html><body style="margin:0;padding:0;background:#050505;font-family:Arial,Helvetica,sans-serif;color:#e4e4e7;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#050505" style="padding:32px 12px;background:#050505;">
@@ -4493,8 +4510,8 @@ app.post('/api/admin/promos/:id/send-email', requireAuth, async (req, res) => {
         </td></tr>
         ${mediaHtml}
         <tr><td align="center" bgcolor="#0a0a0a" style="background:#0a0a0a;padding:22px 32px 4px;">
-          ${badgeHtml}
-          ${promo.title ? `<h1 style="margin:0 0 10px;font-size:26px;line-height:1.2;font-weight:800;font-style:italic;color:#fff;">${escapeEmailHtml(promo.title)}</h1>` : ''}
+          ${!promo.mediaUrl ? badgeHtml : ''}
+          ${!promo.mediaUrl ? `<h1 style="margin:0 0 10px;font-size:26px;line-height:1.2;font-weight:800;font-style:italic;color:#fff;">${escapeEmailHtml(promo.title || '')}</h1>` : ''}
           ${promo.subtitle ? `<p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#b8b8b8;">${escapeEmailHtml(promo.subtitle)}</p>` : ''}
           ${extraFieldsHtml}
           ${prevPriceHtml}
