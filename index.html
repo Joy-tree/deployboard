@@ -7582,7 +7582,7 @@ document.addEventListener('keydown', function(e){
                 <option value="dashboard_view" selected>User visits Dashboard</option>
                 <option value="deploy_success">A deployment succeeds</option>
                 <option value="domain_store_view">User opens Domain Store</option>
-                <option value="any_page">Any page (first qualifying view)</option>
+                <option value="any_page">Any page load</option>
               </select>
             </div>
             <div class="field" style="flex:1;">
@@ -13482,6 +13482,15 @@ function showPage(id, navEl, _skipPush) {
   }
   if (id === 'domain-store' && typeof checkPromos === 'function') {
     setTimeout(() => checkPromos('domain_store_view'), 400);
+  }
+  // [FIX] "Any page" has existed as a trigger option in the admin promo
+  // dropdown this whole time, but nothing ever actually called
+  // checkPromos('any_page') -- it was silently dead. This is the missing
+  // wire: fires on every single page navigation, regardless of which page
+  // id it is (dashboard/domain-store above still fire their own specific
+  // events too, in case an admin has a promo targeting just one of those).
+  if (typeof checkPromos === 'function') {
+    setTimeout(() => checkPromos('any_page'), 400);
   }
   if (id === 'admin-panel' && typeof loadAdminPromos === 'function') {
     setTimeout(loadAdminPromos, 100);
