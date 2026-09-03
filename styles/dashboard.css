@@ -6124,6 +6124,15 @@ html[data-theme="light"] .dqs-upload-title { color: var(--text) !important; }
   color: rgba(255,255,255,.55);
   line-height: 1.6;
 }
+.promo-extra-label {
+  font-weight: 800;
+}
+.promo-prev-price {
+  font-size: 0.88rem;
+  color: rgba(255,255,255,.45);
+  text-decoration: line-through;
+  margin-top: 4px;
+}
 .promo-cta {
   display: inline-block; width: 100%;
   padding: 15px; font-weight: 800; font-size: 0.95rem;

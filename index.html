@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=38">
+<link rel="stylesheet" href="/styles/dashboard.css?v=39">
   <link rel="stylesheet" href="/styles/auth.css?v=2">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -7521,6 +7521,11 @@ document.addEventListener('keydown', function(e){
             <button type="button" class="btn btn-ghost btn-sm" onclick="pbAddExtraField()" style="margin-top:8px;">+ Add line</button>
           </div>
 
+          <div class="field">
+            <label class="field-label">Previous price <span style="color:var(--text-3);font-weight:400;">(optional — shown with a strikethrough, e.g. "$29/month")</span></label>
+            <input type="text" id="pbPrevPrice" class="input" placeholder="$29/month">
+          </div>
+
           <div style="display:flex;gap:12px;">
             <div class="field" style="flex:1;">
               <label class="field-label">Button text</label>
@@ -7906,6 +7911,7 @@ document.addEventListener('keydown', function(e){
         document.getElementById('pbBadgeText').value = existing?.badgeText || '';
         document.getElementById('pbTitle').value = existing?.title || '';
         document.getElementById('pbSubtitle').value = existing?.subtitle || '';
+        document.getElementById('pbPrevPrice').value = existing?.prevPrice || '';
         document.getElementById('pbCtaText').value = existing?.ctaText || 'Claim offer';
         document.getElementById('pbCtaUrl').value = existing?.ctaUrl || '';
         document.getElementById('pbIntensity').value = existing?.intensity ?? 50;
@@ -7917,30 +7923,48 @@ document.addEventListener('keydown', function(e){
         document.getElementById('pbFrequency').value = existing?.frequency || 'once';
         document.getElementById('pbActive').checked = existing ? !!existing.active : true;
         document.getElementById('pbExtraFieldsList').innerHTML = '';
-        (existing?.extraFields && existing.extraFields.length ? existing.extraFields : []).forEach(text => pbAddExtraField(text));
+        (existing?.extraFields && existing.extraFields.length ? existing.extraFields : []).forEach(f => {
+          // Backward compat: promos saved before label/color existed stored
+          // extraFields as plain strings.
+          if (typeof f === 'string') pbAddExtraField({ label: '', value: f, color: 'green' });
+          else pbAddExtraField(f);
+        });
         pbSelectTheme(existing?.theme || 'green');
         modal.style.display = 'flex';
       };
 
-      // Additional-lines list: a plain array of text inputs the admin can
-      // freely add to or remove from, so the popup isn't locked to the
-      // fixed badge/title/subtitle set — e.g. a Trustpilot-style line, a
-      // "no card required" reassurance, a countdown note, etc.
-      window.pbAddExtraField = function(value = '') {
+      // Additional-lines list: the admin can freely add or remove lines,
+      // each either plain text ("just start writing") or a highlighted
+      // "Label: value" pair — e.g. "Name: Jaja" with "Name" rendered in
+      // a chosen accent color. Leaving Label blank falls back to plain
+      // text automatically.
+      window.pbAddExtraField = function(field = {}) {
+        const { label = '', value = '', color = 'green' } = typeof field === 'string' ? { value: field } : field;
         const list = document.getElementById('pbExtraFieldsList');
         const row = document.createElement('div');
-        row.style.cssText = 'display:flex;gap:8px;align-items:center;';
+        row.style.cssText = 'display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--border);';
+        const colorOptions = ['green','white','yellow','red'].map(c =>
+          `<option value="${c}" ${c === color ? 'selected' : ''}>${c[0].toUpperCase()+c.slice(1)}</option>`
+        ).join('');
         row.innerHTML = `
-          <input type="text" class="input pb-extra-field-input" value="${value ? escapeHtml(value) : ''}" placeholder="e.g. Highest Trustpilot rating." oninput="pbUpdatePreview()" style="flex:1;">
-          <button type="button" class="btn btn-ghost btn-sm" onclick="this.parentElement.remove(); pbUpdatePreview();" title="Remove">✕</button>
+          <div style="display:flex;gap:8px;">
+            <input type="text" class="input pb-extra-label" value="${escapeHtml(label)}" placeholder="Label (optional) — e.g. Name" oninput="pbUpdatePreview()" style="flex:1;">
+            <select class="input pb-extra-color" onchange="pbUpdatePreview()" style="flex:0 0 100px;">${colorOptions}</select>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('div[style*=\\'flex-direction:column\\']').remove(); pbUpdatePreview();" title="Remove">✕</button>
+          </div>
+          <input type="text" class="input pb-extra-value" value="${escapeHtml(value)}" placeholder="e.g. Highest Trustpilot rating. Or, with a label above: Jaja" oninput="pbUpdatePreview()">
+          <div style="font-size:0.7rem;color:var(--text-3);">Leave Label blank to show this line as plain text. The color/deepness only applies to the Label.</div>
         `;
         list.appendChild(row);
         pbUpdatePreview();
       };
       window.pbCollectExtraFields = function() {
-        return Array.from(document.querySelectorAll('.pb-extra-field-input'))
-          .map(el => el.value.trim())
-          .filter(Boolean);
+        const rows = document.querySelectorAll('#pbExtraFieldsList > div');
+        return Array.from(rows).map(row => ({
+          label: row.querySelector('.pb-extra-label')?.value.trim() || '',
+          value: row.querySelector('.pb-extra-value')?.value.trim() || '',
+          color: row.querySelector('.pb-extra-color')?.value || 'green',
+        })).filter(f => f.value);
       };
 
       window.closePromoBuilder = function() {
@@ -7985,13 +8009,14 @@ document.addEventListener('keydown', function(e){
           title: document.getElementById('pbTitle').value || 'Your title here',
           subtitle: document.getElementById('pbSubtitle').value || '',
           extraFields: (typeof pbCollectExtraFields === 'function') ? pbCollectExtraFields() : [],
+          prevPrice: document.getElementById('pbPrevPrice').value || '',
           ctaText: document.getElementById('pbCtaText').value || 'Claim offer',
           mediaUrl: document.getElementById('pbMediaUrl').value,
           mediaType: document.getElementById('pbMediaType').value,
         };
         wrap.innerHTML = buildPromoCardHtml(promo, { preview: true });
       };
-      ['pbBadgeText','pbTitle','pbSubtitle','pbCtaText'].forEach(id => {
+      ['pbBadgeText','pbTitle','pbSubtitle','pbCtaText','pbPrevPrice'].forEach(id => {
         document.addEventListener('input', e => { if (e.target && e.target.id === id) pbUpdatePreview(); });
       });
 
@@ -8003,6 +8028,7 @@ document.addEventListener('keydown', function(e){
           title: document.getElementById('pbTitle').value,
           subtitle: document.getElementById('pbSubtitle').value,
           extraFields: pbCollectExtraFields(),
+          prevPrice: document.getElementById('pbPrevPrice').value,
           ctaText: document.getElementById('pbCtaText').value,
           ctaUrl: document.getElementById('pbCtaUrl').value,
           theme: document.getElementById('pbTheme').value,
@@ -8108,9 +8134,22 @@ document.addEventListener('keydown', function(e){
               ? `<video src="${escapeHtml(promo.mediaUrl)}" autoplay muted loop playsinline></video>`
               : `<img src="${escapeHtml(promo.mediaUrl)}" alt="">`)
           : '';
-        const extraFieldsHtml = (promo.extraFields || []).map(line =>
-          `<div class="promo-extra-line">${escapeHtml(line)}</div>`
-        ).join('');
+        // Each extra line is either plain text, or a "Label: value" pair
+        // where the label is highlighted in its own chosen color (reusing
+        // the same green-deepness slider for any label set to green, so
+        // there's no need for a separate per-line deepness control).
+        const extraFieldsHtml = (promo.extraFields || []).map(f => {
+          const field = typeof f === 'string' ? { label: '', value: f, color: 'green' } : f;
+          if (!field || !field.value) return '';
+          const labelColor = promoThemeColors(field.color || 'green', promo.intensity).accent;
+          const labelHtml = field.label
+            ? `<span class="promo-extra-label" style="color:${labelColor};">${escapeHtml(field.label)}:</span> `
+            : '';
+          return `<div class="promo-extra-line">${labelHtml}${escapeHtml(field.value)}</div>`;
+        }).join('');
+        const prevPriceHtml = promo.prevPrice
+          ? `<div class="promo-prev-price">${escapeHtml(promo.prevPrice)}</div>`
+          : '';
         const closeBtn = opts.preview ? '' : `<button class="promo-close" onclick="dismissPromoModal('${promo.id}')" aria-label="Close">&times;</button>`;
         return `
           <div class="promo-card-inner">
@@ -8126,6 +8165,7 @@ document.addEventListener('keydown', function(e){
             <div class="promo-body">
               ${promo.subtitle ? `<div class="promo-subtitle">${escapeHtml(promo.subtitle)}</div>` : ''}
               ${extraFieldsHtml}
+              ${prevPriceHtml}
               <a href="${escapeHtml(promo.ctaUrl || '#')}" class="promo-cta" style="background:${colors.ctaBg};color:${colors.ctaText};" ${opts.preview ? 'onclick="return false;"' : `onclick="promoMarkShownAndMaybeNavigate(event,'${promo.id}')"`}>${escapeHtml(promo.ctaText || 'Claim offer')}</a>
             </div>
           </div>

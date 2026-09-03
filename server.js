@@ -4304,15 +4304,30 @@ function sanitizePromoInput(body = {}) {
   // extraFields lets the admin bolt on arbitrary additional lines (e.g.
   // "Highest Trustpilot rating.", "Among all leading GenAI companies.")
   // beyond the fixed badge/title/subtitle set, so the popup isn't locked
-  // to one rigid shape. Capped at 6 fields, 140 chars each, plain text
-  // only (rendered escaped on the client either way, but no reason to
-  // let an admin store something huge here).
+  // to one rigid shape. Each line is either plain text, or a "label:
+  // value" pair where the label gets highlighted in a chosen color (the
+  // admin can freely switch a line between the two -- an empty label
+  // just renders as plain text). Capped at 6 fields, 140 chars each.
+  // Old promos saved before this existed stored extraFields as plain
+  // strings -- handled below for backward compatibility.
   let extraFields = [];
   if (Array.isArray(body.extraFields)) {
-    extraFields = body.extraFields
-      .map(f => String(f || '').slice(0, 140).trim())
-      .filter(Boolean)
-      .slice(0, 6);
+    extraFields = body.extraFields.map(f => {
+      if (typeof f === 'string') {
+        const value = f.slice(0, 140).trim();
+        return value ? { label: '', value, color: 'green' } : null;
+      }
+      if (f && typeof f === 'object') {
+        const value = String(f.value || '').slice(0, 140).trim();
+        if (!value) return null;
+        return {
+          label: String(f.label || '').slice(0, 40).trim(),
+          value,
+          color: PROMO_ALLOWED_THEMES.includes(f.color) ? f.color : 'green',
+        };
+      }
+      return null;
+    }).filter(Boolean).slice(0, 6);
   }
   const clean = {
     name:        String(body.name || '').slice(0, 120).trim(),
@@ -4320,6 +4335,7 @@ function sanitizePromoInput(body = {}) {
     title:       String(body.title || '').slice(0, 160).trim(),
     subtitle:    String(body.subtitle || '').slice(0, 300).trim(),
     extraFields,
+    prevPrice:   String(body.prevPrice || '').slice(0, 40).trim(),
     ctaText:     String(body.ctaText || 'Learn more').slice(0, 40).trim(),
     ctaUrl:      String(body.ctaUrl || '').slice(0, 500).trim(),
     theme:       PROMO_ALLOWED_THEMES.includes(body.theme) ? body.theme : 'green',
