@@ -8273,11 +8273,24 @@ document.addEventListener('keydown', function(e){
         if (typeof showPage === 'function') showPage('domain-store');
         setTimeout(() => {
           const input = document.getElementById('dsSearchInput');
+          // [FIX] This toast fired unconditionally, saying "edit the domain
+          // name below" even when `suggestion` was empty and nothing
+          // actually got filled in -- giving the illusion the pre-fill
+          // worked when it silently did nothing. That's exactly why this
+          // looked broken: the promo's "Suggested domain" field in the
+          // builder was never filled in (easy to skip when a custom flyer
+          // image already shows the domain visually), so `suggestion` here
+          // was just an empty string the whole time. The click handler,
+          // Domain Store input, and backend save/load were all fine --
+          // there was simply nothing to pre-fill with. Message now matches
+          // what actually happened either way.
           if (input && suggestion) {
             input.value = suggestion;
             if (typeof dsSearch === 'function') dsSearch();
+            toast('Edit the domain name below to match what you want, then hit Check.', 'info', 5000);
+          } else {
+            toast('Search for the domain you want below.', 'info', 4000);
           }
-          toast('Edit the domain name below to match what you want, then hit Check.', 'info', 5000);
         }, 250);
       };
 
