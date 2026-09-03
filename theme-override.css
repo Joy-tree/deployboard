@@ -11667,7 +11667,7 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
   border-radius: 0;
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(255,255,255,0.16) !important;
+  border-bottom: 1px solid var(--dcx-field-border) !important;
   color: var(--text) !important;
   font-size: .92rem;
   padding: 0 2px;
@@ -11676,7 +11676,7 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
 }
 #editProjectModal .input::placeholder { color: var(--text-3); }
 #editProjectModal .input:hover {
-  border-bottom-color: color-mix(in srgb, var(--text-2) 55%, rgba(255,255,255,0.16));
+  border-bottom-color: color-mix(in srgb, var(--text-2) 55%, var(--dcx-field-border));
 }
 #editProjectModal .input:focus {
   border-bottom: 2px solid var(--primary) !important;
