@@ -4443,23 +4443,28 @@ app.post('/api/admin/promos/:id/send-email', requireAuth, async (req, res) => {
       : sanitizeEmailUrl(promo.ctaUrl) || `https://${BASE_DOMAIN}/dashboard`;
 
     const mediaHtml = (promo.mediaUrl && promo.mediaType !== 'video')
-      ? `<tr><td style="background:#0a0a0a;"><img src="${escapeEmailHtml(promo.mediaUrl)}" alt="" width="560" style="width:100%;max-width:560px;height:auto;display:block;"></td></tr>`
+      ? `<tr><td bgcolor="#000000" style="background:#000000;"><img src="${escapeEmailHtml(promo.mediaUrl)}" alt="" width="560" style="width:100%;max-width:560px;height:auto;display:block;"></td></tr>`
       : '';
 
+    // Matches .promo-overlay-badge exactly: sharp corners (no pill radius),
+    // bold 800, ~1rem, NOT uppercase/letter-spaced, slight -3deg rotation
+    // like a stamp. Table-based centering + a transform for clients that
+    // support it (Apple Mail, Gmail app); degrades to unrotated in Outlook,
+    // which is an acceptable, expected email fallback.
     const badgeHtml = promo.badgeText
-      ? `<span style="display:inline-block;background:${colors.accent};color:${colors.badgeText};font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 12px;border-radius:999px;margin-bottom:12px;">${escapeEmailHtml(promo.badgeText)}</span><br>`
+      ? `<div style="margin:0 0 12px;"><span style="display:inline-block;background:${colors.accent};color:${colors.badgeText};font-size:16px;font-weight:800;padding:7px 18px;transform:rotate(-3deg);">${escapeEmailHtml(promo.badgeText)}</span></div>`
       : '';
 
     const extraFieldsHtml = (Array.isArray(promo.extraFields) ? promo.extraFields : []).map(f => {
       const field = typeof f === 'string' ? { label: '', value: f, color: 'green' } : f;
       if (!field || !field.value) return '';
       const labelColor = promoThemeColorsServer(field.color || 'green', promo.intensity).accent;
-      const labelHtml = field.label ? `<strong style="color:${labelColor};">${escapeEmailHtml(field.label)}:</strong> ` : '';
-      return `<p style="margin:0 0 6px;font-size:14px;color:#d4d4d8;line-height:1.6;">${labelHtml}${escapeEmailHtml(field.value)}</p>`;
+      const labelHtml = field.label ? `<strong style="color:${labelColor};font-weight:800;">${escapeEmailHtml(field.label)}:</strong> ` : '';
+      return `<p style="margin:0 0 6px;font-size:13px;color:#8c8c8c;line-height:1.6;">${labelHtml}${escapeEmailHtml(field.value)}</p>`;
     }).join('');
 
     const prevPriceHtml = promo.prevPrice
-      ? `<p style="margin:0 0 14px;font-size:14px;color:#71717a;text-decoration:line-through;">${escapeEmailHtml(promo.prevPrice)}</p>`
+      ? `<p style="margin:0 0 14px;font-size:14px;color:#747474;text-decoration:line-through;">${escapeEmailHtml(promo.prevPrice)}</p>`
       : '';
 
     const dashboardUrl = `https://${BASE_DOMAIN}/dashboard`;
@@ -4467,33 +4472,44 @@ app.post('/api/admin/promos/:id/send-email', requireAuth, async (req, res) => {
     const docsUrl       = `https://${BASE_DOMAIN}/dashboard/docs`;
     const supportUrl    = `https://${BASE_DOMAIN}/dashboard/support`;
 
+    // Structure mirrors buildPromoCardHtml() in index.html section for
+    // section: logo -> full-bleed media -> badge+title (the site overlays
+    // these ON the image with a gradient; true text-over-image overlay
+    // isn't reliable across Outlook/Gmail without VML hacks, so this
+    // renders them directly beneath the image on the same #0a0a0a
+    // background instead, reading as one continuous dark block rather
+    // than two disconnected sections) -> subtitle -> extra lines -> prev
+    // price -> ONE full-width CTA button, exactly like .promo-cta being a
+    // block-level, full-width, sharp-cornered button rather than a small
+    // inline pill. Colors pulled from the exact same promoThemeColors()
+    // the live popup uses, not approximations.
     const html = `<!doctype html>
 <html><body style="margin:0;padding:0;background:#050505;font-family:Arial,Helvetica,sans-serif;color:#e4e4e7;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;background:#050505;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#050505" style="padding:32px 12px;background:#050505;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#0a0a0a;border:1px solid rgba(255,255,255,.08);">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#0a0a0a" style="max-width:560px;background:#0a0a0a;">
         <tr><td align="center" style="padding:24px 32px 4px;">
           <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:15px;letter-spacing:.02em;color:#10b981;">JOYTREE</span>
         </td></tr>
         ${mediaHtml}
-        <tr><td style="padding:22px 32px 4px;">
+        <tr><td align="center" bgcolor="#0a0a0a" style="background:#0a0a0a;padding:22px 32px 4px;">
           ${badgeHtml}
-          ${promo.title ? `<h1 style="margin:0 0 10px;font-size:24px;line-height:1.3;font-weight:800;color:#f5f5f5;">${escapeEmailHtml(promo.title)}</h1>` : ''}
-          ${promo.subtitle ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#a1a1aa;">${escapeEmailHtml(promo.subtitle)}</p>` : ''}
+          ${promo.title ? `<h1 style="margin:0 0 10px;font-size:26px;line-height:1.2;font-weight:800;font-style:italic;color:#fff;">${escapeEmailHtml(promo.title)}</h1>` : ''}
+          ${promo.subtitle ? `<p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#b8b8b8;">${escapeEmailHtml(promo.subtitle)}</p>` : ''}
           ${extraFieldsHtml}
           ${prevPriceHtml}
         </td></tr>
-        <tr><td align="center" style="padding:6px 32px 24px;">
-          <a href="${escapeEmailHtml(ctaUrl)}" style="display:inline-block;background:${colors.ctaBg};color:${colors.ctaText};font-weight:700;font-size:15px;padding:13px 32px;border-radius:0;text-decoration:none;">${escapeEmailHtml(promo.ctaText || 'Claim offer')}</a>
+        <tr><td style="padding:10px 0 24px;">
+          <a href="${escapeEmailHtml(ctaUrl)}" style="display:block;width:100%;box-sizing:border-box;background:${colors.ctaBg};color:${colors.ctaText};font-weight:800;font-size:16px;padding:15px;text-align:center;text-decoration:none;">${escapeEmailHtml(promo.ctaText || 'Claim offer')}</a>
         </td></tr>
-        <tr><td style="padding:0 32px 20px;">
+        <tr><td bgcolor="#0a0a0a" style="background:#0a0a0a;padding:0 32px 20px;">
           <p style="margin:0;color:#a1a1aa;font-size:13px;line-height:1.8;">
             <a href="${deployUrl}" style="color:#10b981;text-decoration:none;">Create a deployment</a> &nbsp;&middot;&nbsp;
             <a href="${docsUrl}" style="color:#10b981;text-decoration:none;">Documentation</a> &nbsp;&middot;&nbsp;
             <a href="${supportUrl}" style="color:#10b981;text-decoration:none;">Support</a>
           </p>
         </td></tr>
-        <tr><td style="padding:8px 32px 24px;">
+        <tr><td bgcolor="#0a0a0a" style="background:#0a0a0a;padding:8px 32px 24px;">
           <hr style="border:none;border-top:1px solid rgba(255,255,255,.1);margin:0 0 16px;">
           <p style="margin:0;color:#71717a;font-size:12px;line-height:1.6;">You're receiving this email because you have a JoyTree account. <a href="${dashboardUrl}" style="color:#71717a;">Manage your account</a>.</p>
         </td></tr>
