@@ -6088,20 +6088,30 @@ html[data-theme="light"] .dqs-upload-title { color: var(--text) !important; }
    heavy promos with lots of extra lines will still scroll, but the
    close button and CTA now stay reliably reachable either way (see
    below), instead of ending up stranded mid-layout. */
+/* [FIX] object-fit:cover inside a fixed 32vh/280px-capped box was
+   cropping tall promo images down to whatever middle slice happened
+   to fit that aspect ratio -- for a portrait flyer-style upload (logo
+   + headline + price box + feature grid, all baked into one tall
+   image), that meant most of the actual content got cut off entirely,
+   with the header pushed off-screen above the visible crop. Switched
+   to object-fit:contain (never crops, only ever letterboxes) and
+   raised the height ceiling from 280px to 70vh so the full image
+   actually has room to render at a reasonable size instead of being
+   squeezed into a short banner strip. */
 .promo-media-full {
   position: relative;
   width: 100%;
-  height: 32vh;
   min-height: 190px;
-  max-height: 280px;
+  max-height: 70vh;
   flex-shrink: 0;
   overflow: hidden;
   background: #000;
+  display: flex; align-items: center; justify-content: center;
 }
 .promo-media-full-empty { min-height: 170px; max-height: 220px; }
 .promo-media-full img, .promo-media-full video {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%; object-fit: cover; display: block;
+  position: relative;
+  width: 100%; height: 100%; object-fit: contain; display: block;
 }
 .promo-media-gradient {
   position: absolute; inset: 0;
