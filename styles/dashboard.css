@@ -6117,8 +6117,17 @@ html[data-theme="light"] .dqs-upload-title { color: var(--text) !important; }
   position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(0,0,0,.15) 0%, rgba(0,0,0,.35) 55%, #0a0a0a 100%);
 }
+/* [FIX] Was pinned to bottom:18px, which worked when .promo-media-full
+   was a short fixed-height crop box -- but now that it sizes to the
+   full uploaded image (up to 70vh, see object-fit:contain fix above),
+   pinning to the bottom means this overlay lands wherever the image
+   happens to end, overlapping whatever content is actually down there
+   (e.g. a feature-icon row baked into the image) instead of sitting
+   cleanly over empty space. Centered vertically instead, so it's
+   always in the middle of the media area regardless of image height. */
 .promo-overlay-stack {
-  position: absolute; left: 0; right: 0; bottom: 18px;
+  position: absolute; left: 0; right: 0; top: 50%;
+  transform: translateY(-50%);
   padding: 0 24px;
   text-align: center;
   z-index: 1;
