@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=40">
+<link rel="stylesheet" href="/styles/dashboard.css?v=47">
   <link rel="stylesheet" href="/styles/auth.css?v=2">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -203,7 +203,7 @@
   <link rel="stylesheet" href="/styles/animations.css?v=3">
   <link rel="stylesheet" href="/styles/onboarding.css?v=1">
   <link rel="stylesheet" href="/styles/streak.css?v=2">
-  <link rel="stylesheet" href="/theme-override.css?v=199" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+  <link rel="stylesheet" href="/theme-override.css?v=202" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -647,7 +647,6 @@
     <a href="#features" class="nav-link">Features</a>
     <a href="#how-it-works" class="nav-link">How it works</a>
     <a href="#" class="nav-link" onclick="showPublicDocs();return false;">Docs</a>
-    <a href="#" class="nav-link" onclick="showPublicFounders();return false;">Founders</a>
   </div>
   <div class="nav-actions">
     <button class="btn-nav-menu" id="landingThemeToggle" onclick="landingToggleTheme()" aria-label="Toggle theme" title="Toggle theme" style="margin-right:4px;display:none;">
@@ -684,7 +683,6 @@ window.landingToggleTheme = function(){
     <div class="ld-menu-list">
       <a class="ld-menu-link ld-animate" href="#features" onclick="closeLandingDrawer()">Platform</a>
       <a class="ld-menu-link ld-animate" href="#pricing" onclick="closeLandingDrawer()">Pricing</a>
-      <a class="ld-menu-link ld-animate" href="#" onclick="showPublicFounders();closeLandingDrawer();return false;">Founders</a>
       <a class="ld-menu-link ld-animate" href="https://docs.joytree.site" onclick="closeLandingDrawer()">Docs</a>
     </div>
 
@@ -2240,7 +2238,6 @@ window.landingToggleTheme = function(){
     <a href="#how-it-works" class="footer-link">How it works</a>
     <a href="#" onclick="showDashboard();return false;" class="footer-link">Dashboard</a>
     <a href="#" onclick="showPublicDocs();return false;" class="footer-link">Docs</a>
-    <a href="#" onclick="showPublicFounders();return false;" class="footer-link">Founders</a>
     <a href="https://www.linkedin.com/company/joytree" target="_blank" rel="noopener" class="footer-link">LinkedIn</a>
   </div>
   <div class="footer-copy">Built by developers, for developers.</div>
@@ -6636,6 +6633,7 @@ document.addEventListener('keydown', function(e){
           const r = _orig.apply(this, arguments);
           if (page === 'domain-store') { dsPreloadTlds(); dsLoadMyDomains(); }
           if (page === 'domain-cpanel') { dcpInit(); }
+          if (page === 'team' && typeof loadTeam === 'function') { loadTeam(); }
           return r;
         };
       }
@@ -7483,6 +7481,111 @@ document.addEventListener('keydown', function(e){
         </div>
         <div id="adminPromoList" style="margin-top:14px;color:var(--text-3);font-size:0.85rem;">Loading…</div>
       </div>
+
+      <!-- ══ Sidebar Announcement ══ -->
+      <div style="margin-top:36px;">
+        <div>
+          <h3 style="margin:0;font-size:1rem;">Sidebar announcement</h3>
+          <div style="color:var(--text-3);font-size:0.8rem;margin-top:4px;">A small card in the dashboard's own sidebar nav — heading, a short message, an optional "Learn more" link, and an optional small image. Sits permanently wherever you place it (top, bottom, or right after a specific nav item) until you turn it off, unlike the full-screen popups above.</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:18px;max-width:480px;">
+          <input type="hidden" id="sbaId" value="">
+
+          <div class="field">
+            <label class="field-label">Heading</label>
+            <input type="text" id="sbaHeading" class="input" placeholder="Introducing Workflows" maxlength="80">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Message</label>
+            <textarea id="sbaMessage" class="input" rows="3" maxlength="300" placeholder="An orchestration and execution engine for long-running, distributed tasks."></textarea>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Link text</label>
+            <input type="text" id="sbaLinkText" class="input" placeholder="Learn more" maxlength="40">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Link URL <span style="color:var(--text-3);font-weight:400;">(e.g. a specific docs route)</span></label>
+            <input type="text" id="sbaLinkUrl" class="input" placeholder="https://docs.joytree.site/workflows">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Image <span style="color:var(--text-3);font-weight:400;">(small thumbnail, optional)</span></label>
+            <input type="file" id="sbaImageFile" accept="image/png,image/jpeg,image/gif,image/webp" onchange="sbaUploadImage(this)" style="display:none;">
+            <button type="button" class="btn btn-ghost" onclick="document.getElementById('sbaImageFile').click()" style="width:100%;">Choose image</button>
+            <div id="sbaImageStatus" style="font-size:0.78rem;color:var(--text-3);margin-top:6px;"></div>
+            <input type="hidden" id="sbaImageUrl" value="">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Position in the sidebar</label>
+            <select id="sbaPosition" class="input">
+              <option value="top">Top of the sidebar</option>
+              <option value="bottom" selected>Bottom of the sidebar</option>
+              <optgroup label="Overview">
+                <option value="after:dashboard">After: Dashboard</option>
+                <option value="after:projects">After: Projects</option>
+                <option value="after:deployments">After: Deployments</option>
+                <option value="after:repos">After: Repositories</option>
+                <option value="after:code-upload">After: Code Upload / IDE</option>
+              </optgroup>
+              <optgroup label="Tools">
+                <option value="after:new-resource">After: New Resource</option>
+                <option value="after:new-deploy">After: New Deployment</option>
+                <option value="after:logs">After: Live Logs</option>
+                <option value="after:ai-analysis">After: AI Analysis</option>
+                <option value="after:env-manager">After: Env Variables</option>
+                <option value="after:domains">After: Domains</option>
+                <option value="after:domain-store">After: Domain Store</option>
+                <option value="after:domain-cpanel">After: Domain cPanel</option>
+                <option value="after:analytics">After: Analytics</option>
+                <option value="after:webhooks">After: Webhooks</option>
+                <option value="after:cronjobs">After: Cron Jobs</option>
+                <option value="after:workers">After: Background Workers</option>
+                <option value="after:streaks">After: Deploy Streaks</option>
+              </optgroup>
+              <optgroup label="Developer Tools">
+                <option value="after:ssh-keys">After: SSH Keys</option>
+              </optgroup>
+              <optgroup label="Data">
+                <option value="after:databases">After: Databases</option>
+                <option value="after:db-migration">After: Migration</option>
+                <option value="after:db-diff">After: Diff</option>
+                <option value="after:db-query">After: Query Studio</option>
+                <option value="after:db-schema">After: Schema</option>
+                <option value="after:db-sdk">After: SDK</option>
+                <option value="after:realtime-api">After: Realtime API</option>
+              </optgroup>
+              <optgroup label="Platform">
+                <option value="after:team">After: Team</option>
+                <option value="after:pricing">After: Pricing</option>
+                <option value="after:usage">After: Usage</option>
+                <option value="after:activity">After: Activity</option>
+                <option value="after:secrets">After: Secrets</option>
+              </optgroup>
+              <optgroup label="System">
+                <option value="after:settings">After: Settings</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;color:var(--text-2);">
+            <input type="checkbox" id="sbaActive" style="width:auto;"> Active — visible to users immediately
+          </label>
+
+          <div style="border-top:1px solid var(--border);padding-top:16px;">
+            <div style="font-size:0.78rem;color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">Preview</div>
+            <div style="max-width:260px;"><div id="sbaPreviewWrap"></div></div>
+          </div>
+
+          <div>
+            <button class="btn btn-primary" onclick="saveSidebarAnnouncement()">Save</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ══ Promo builder modal ══ -->
@@ -7903,8 +8006,9 @@ document.addEventListener('keydown', function(e){
                 <div class="apr-name">${escapeHtml(p.name || p.title)} ${p.active ? '<span style="color:var(--green);font-size:0.72rem;">● live</span>' : '<span style="color:var(--text-3);font-size:0.72rem;">○ inactive</span>'}</div>
                 <div class="apr-meta">${escapeHtml(eventLabels[p.triggerEvent] || p.triggerEvent)} · ${escapeHtml(freqLabels[p.frequency] || p.frequency)} · theme: ${escapeHtml(p.theme)}</div>
               </div>
-              <div style="display:flex;gap:8px;flex-shrink:0;">
+              <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;">
                 <button class="btn btn-ghost btn-sm" onclick="openPromoBuilder('${p.id}')">Edit</button>
+                <button class="btn btn-ghost btn-sm" id="sendPromoEmailBtn-${p.id}" onclick="sendPromoEmail('${p.id}')">Send Email</button>
                 <button class="btn btn-ghost btn-sm" style="color:#f87171;border-color:rgba(239,68,68,.3);" onclick="deletePromo('${p.id}')">Delete</button>
               </div>
             </div>
@@ -8091,6 +8195,119 @@ document.addEventListener('keydown', function(e){
           toast(e.message || 'Could not delete promo', 'error');
         }
       };
+
+      // [FEATURE] "Send Email" on a promo row emails every user the exact
+      // same card (media, badge, title, subtitle, extra fields, struck
+      // price, CTA) rebuilt as an email-safe layout server-side, with the
+      // same standard docs/support footer every other JoyTree
+      // transactional email has. Clicking the CTA in the email does the
+      // same thing clicking it in-app does -- see the promoDomainSearch
+      // URL param handler further down for the domain-search case.
+      window.sendPromoEmail = async function(id) {
+        const promo = _promoCache.find(p => p.id === id);
+        const label = promo ? (promo.name || promo.title) : 'this promo';
+        if (!confirm(`Email "${label}" to every JoyTree user right now? This cannot be undone.`)) return;
+        const btn = document.getElementById('sendPromoEmailBtn-' + id);
+        const originalLabel = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+        try {
+          const res = await apiFetch(`/api/admin/promos/${id}/send-email`, { method: 'POST' });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not send promo email');
+          toast(`Promo email sent. Sent: ${data.sent || 0}, failed: ${data.failed || 0}.`, 'success', 5500);
+        } catch (e) {
+          toast(e.message || 'Could not send promo email', 'error');
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
+        }
+      };
+
+      // ── Sidebar announcement admin ──────────────────────────────────
+      window.loadSidebarAnnouncementAdmin = async function() {
+        try {
+          const res = await apiFetch('/api/admin/sidebar-announcement');
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load');
+          const ann = data.announcement || {};
+          document.getElementById('sbaId').value = ann.id || '';
+          document.getElementById('sbaHeading').value = ann.heading || '';
+          document.getElementById('sbaMessage').value = ann.message || '';
+          document.getElementById('sbaLinkText').value = ann.linkText || 'Learn more';
+          document.getElementById('sbaLinkUrl').value = ann.linkUrl || '';
+          document.getElementById('sbaImageUrl').value = ann.imageUrl || '';
+          document.getElementById('sbaImageStatus').textContent = ann.imageUrl ? 'Image set' : '';
+          document.getElementById('sbaPosition').value = ann.position || 'bottom';
+          document.getElementById('sbaActive').checked = !!ann.active;
+          sbaUpdatePreview();
+        } catch (e) {
+          toast(e.message || 'Could not load sidebar announcement', 'error');
+        }
+      };
+
+      window.sbaUploadImage = async function(input) {
+        const file = input.files?.[0];
+        if (!file) return;
+        const statusEl = document.getElementById('sbaImageStatus');
+        statusEl.textContent = 'Uploading…';
+        try {
+          const form = new FormData();
+          form.append('file', file, file.name);
+          const res = await apiFetch('/api/admin/sidebar-announcement/upload-image', { method: 'POST', body: form });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Upload failed');
+          document.getElementById('sbaImageUrl').value = data.url;
+          statusEl.textContent = 'Image uploaded';
+          sbaUpdatePreview();
+        } catch (e) {
+          statusEl.textContent = '';
+          toast(e.message || 'Could not upload image', 'error');
+        }
+      };
+
+      window.sbaUpdatePreview = function() {
+        const wrap = document.getElementById('sbaPreviewWrap');
+        if (!wrap || typeof buildSidebarAnnouncementHtml !== 'function') return;
+        const ann = {
+          id: 'preview',
+          heading: document.getElementById('sbaHeading').value || 'Heading goes here',
+          message: document.getElementById('sbaMessage').value,
+          linkText: document.getElementById('sbaLinkText').value || 'Learn more',
+          linkUrl: document.getElementById('sbaLinkUrl').value,
+          imageUrl: document.getElementById('sbaImageUrl').value,
+        };
+        wrap.innerHTML = buildSidebarAnnouncementHtml(ann);
+        // Preview shouldn't actually be dismissable/clickable-away in the admin form
+        wrap.querySelector('.sidebar-announcement-close')?.setAttribute('onclick', 'return false;');
+      };
+      ['sbaHeading','sbaMessage','sbaLinkText','sbaLinkUrl'].forEach(id => {
+        document.addEventListener('input', (e) => { if (e.target && e.target.id === id) sbaUpdatePreview(); });
+      });
+
+      window.saveSidebarAnnouncement = async function() {
+        const btn = event?.target;
+        const originalLabel = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+        try {
+          const body = {
+            heading:  document.getElementById('sbaHeading').value,
+            message:  document.getElementById('sbaMessage').value,
+            linkText: document.getElementById('sbaLinkText').value,
+            linkUrl:  document.getElementById('sbaLinkUrl').value,
+            imageUrl: document.getElementById('sbaImageUrl').value,
+            position: document.getElementById('sbaPosition').value,
+            active:   document.getElementById('sbaActive').checked,
+          };
+          const res = await apiFetch('/api/admin/sidebar-announcement', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not save');
+          document.getElementById('sbaId').value = data.announcement.id;
+          toast('Sidebar announcement saved.', 'success');
+        } catch (e) {
+          toast(e.message || 'Could not save sidebar announcement', 'error');
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
+        }
+      };
     })();
     </script>
 
@@ -8102,8 +8319,19 @@ document.addEventListener('keydown', function(e){
       // browser has no real consequence — not worth a server round trip
       // or per-user DB field for.
       function promoSeenKey(id) { return 'jt_promo_seen_' + id; }
+      // Claiming is a more deliberate action than just seeing the popup,
+      // so it overrides whatever frequency the admin chose entirely --
+      // once a user clicks the CTA, this exact promo (same id) is done
+      // for them, permanently, regardless of 'always'/'daily'/'once'.
+      // It stays gone until the admin creates a genuinely new promo
+      // (a new id), not just re-shows the same one.
+      function promoClaimedKey(id) { return 'jt_promo_claimed_' + id; }
+      function promoMarkClaimed(id) {
+        try { localStorage.setItem(promoClaimedKey(id), '1'); } catch {}
+      }
       function promoAlreadyShown(promo) {
         try {
+          if (localStorage.getItem(promoClaimedKey(promo.id))) return true;
           const raw = localStorage.getItem(promoSeenKey(promo.id));
           if (!raw) return false;
           if (promo.frequency === 'always') return false;
@@ -8152,10 +8380,19 @@ document.addEventListener('keydown', function(e){
       window.buildPromoCardHtml = function(promo, opts = {}) {
         const colors = promoThemeColors(promo.theme, promo.intensity);
         const hasMedia = !!promo.mediaUrl;
+        const mediaDomId = 'promoMediaWrap-' + (promo.id || 'preview');
+        // [FIX] If the media URL 404s (e.g. the uploaded file was wiped by
+        // a server rebuild that didn't have promo-assets/ on a persistent
+        // volume), the bare <img> just showed a tiny broken-image icon in
+        // the corner with everything else stuck below a big empty gap.
+        // onerror now degrades this exactly like a promo with no media
+        // configured at all: hide the broken img and fall back to the
+        // same solid theme-tinted panel .promo-media-full-empty uses.
+        const mediaErrorFallback = `this.style.display='none'; var w=document.getElementById('${mediaDomId}'); if(w){ w.classList.add('promo-media-full-empty'); w.style.background='color-mix(in srgb, ${colors.accent} 18%, #0a0a0a)'; }`;
         const mediaHtml = hasMedia
           ? (promo.mediaType === 'video'
-              ? `<video src="${escapeHtml(promo.mediaUrl)}" autoplay muted loop playsinline></video>`
-              : `<img src="${escapeHtml(promo.mediaUrl)}" alt="">`)
+              ? `<video src="${escapeHtml(promo.mediaUrl)}" autoplay muted loop playsinline onerror="${mediaErrorFallback}"></video>`
+              : `<img src="${escapeHtml(promo.mediaUrl)}" alt="" onerror="${mediaErrorFallback}">`)
           : '';
         // Each extra line is either plain text, or a "Label: value" pair
         // where the label is highlighted in its own chosen color (reusing
@@ -8190,7 +8427,7 @@ document.addEventListener('keydown', function(e){
         return `
           <div class="promo-card-inner">
             ${closeBtn}
-            <div class="promo-media-full ${!hasMedia ? 'promo-media-full-empty' : ''}" style="${!hasMedia ? `background:color-mix(in srgb, ${colors.accent} 18%, #0a0a0a);` : ''}">
+            <div class="promo-media-full ${!hasMedia ? 'promo-media-full-empty' : ''}" id="${mediaDomId}" style="${!hasMedia ? `background:color-mix(in srgb, ${colors.accent} 18%, #0a0a0a);` : ''}">
               ${mediaHtml}
               <div class="promo-media-gradient"></div>
               <div class="promo-overlay-stack">
@@ -8222,6 +8459,7 @@ document.addEventListener('keydown', function(e){
       };
 
       window.promoMarkShownAndMaybeNavigate = function(ev, id) {
+        promoMarkClaimed(id);
         dismissPromoModal(id);
         // Let the click's default navigation (href) proceed normally.
       };
@@ -8233,15 +8471,29 @@ document.addEventListener('keydown', function(e){
       // the search immediately — as if the user had typed it themselves.
       // A toast nudges them to edit it to what they actually want.
       window.promoClaimDomainSearch = function(id, suggestion) {
+        promoMarkClaimed(id);
         dismissPromoModal(id);
         if (typeof showPage === 'function') showPage('domain-store');
         setTimeout(() => {
           const input = document.getElementById('dsSearchInput');
+          // [FIX] This toast fired unconditionally, saying "edit the domain
+          // name below" even when `suggestion` was empty and nothing
+          // actually got filled in -- giving the illusion the pre-fill
+          // worked when it silently did nothing. That's exactly why this
+          // looked broken: the promo's "Suggested domain" field in the
+          // builder was never filled in (easy to skip when a custom flyer
+          // image already shows the domain visually), so `suggestion` here
+          // was just an empty string the whole time. The click handler,
+          // Domain Store input, and backend save/load were all fine --
+          // there was simply nothing to pre-fill with. Message now matches
+          // what actually happened either way.
           if (input && suggestion) {
             input.value = suggestion;
             if (typeof dsSearch === 'function') dsSearch();
+            toast('Edit the domain name below to match what you want, then hit Check.', 'info', 5000);
+          } else {
+            toast('Search for the domain you want below.', 'info', 4000);
           }
-          toast('Edit the domain name below to match what you want, then hit Check.', 'info', 5000);
         }, 250);
       };
 
@@ -8250,6 +8502,69 @@ document.addEventListener('keydown', function(e){
         if (!overlay) return;
         overlay.classList.remove('active');
         setTimeout(() => { overlay.innerHTML = ''; }, 200);
+      };
+    })();
+    </script>
+
+    <!-- ════════ SIDEBAR ANNOUNCEMENT RUNTIME (site-wide) ════════ -->
+    <script>
+    (function() {
+      // Dismissal is keyed by the announcement's id (which the server
+      // regenerates whenever the admin actually changes the visible
+      // content), so closing an old announcement doesn't hide a newer
+      // one the admin posts later — same pattern as the promo popup's
+      // claimed/seen flags.
+      function sbaDismissKey(id) { return 'jt_sidebar_ann_dismissed_' + id; }
+
+      window.buildSidebarAnnouncementHtml = function(ann) {
+        const linkHtml = ann.linkUrl
+          ? `<a class="sidebar-announcement-link" href="${escapeHtml(ann.linkUrl)}" target="_blank" rel="noopener">${escapeHtml(ann.linkText || 'Learn more')} &rarr;</a>`
+          : '';
+        const imageHtml = ann.imageUrl
+          ? `<img class="sidebar-announcement-image" src="${escapeHtml(ann.imageUrl)}" alt="">`
+          : '';
+        return `<div class="sidebar-announcement" id="sidebarAnnouncementCard">
+          <button type="button" class="sidebar-announcement-close" aria-label="Dismiss" onclick="dismissSidebarAnnouncement('${escapeHtml(ann.id)}')">&times;</button>
+          <div class="sidebar-announcement-heading">${escapeHtml(ann.heading)}</div>
+          ${ann.message ? `<div class="sidebar-announcement-message">${escapeHtml(ann.message)}</div>` : ''}
+          ${linkHtml}
+          ${imageHtml}
+        </div>`;
+      };
+
+      window.dismissSidebarAnnouncement = function(id) {
+        try { localStorage.setItem(sbaDismissKey(id), '1'); } catch {}
+        document.getElementById('sidebarAnnouncementCard')?.remove();
+      };
+
+      window.initSidebarAnnouncement = async function() {
+        if (!hasAuthToken || !hasAuthToken()) return;
+        if (document.getElementById('sidebarAnnouncementCard')) return; // already inserted
+        try {
+          const res = await apiFetch('/api/sidebar-announcement/active');
+          if (!res.ok) return;
+          const data = await res.json();
+          const ann = data && data.announcement;
+          if (!ann || !ann.id || !ann.heading) return;
+          try { if (localStorage.getItem(sbaDismissKey(ann.id))) return; } catch {}
+
+          const nav = document.querySelector('.sidebar-nav');
+          if (!nav) return;
+          const wrap = document.createElement('div');
+          wrap.innerHTML = buildSidebarAnnouncementHtml(ann);
+          const card = wrap.firstElementChild;
+
+          if (ann.position === 'top') {
+            nav.insertBefore(card, nav.firstChild);
+          } else if (ann.position && ann.position.startsWith('after:')) {
+            const key = ann.position.slice(6);
+            const target = nav.querySelector(`.nav-item[data-page="${CSS.escape(key)}"]`);
+            if (target) target.insertAdjacentElement('afterend', card);
+            else nav.appendChild(card); // target not found (hidden for this user, etc.) — fall back to the end
+          } else {
+            nav.appendChild(card); // 'bottom' (default)
+          }
+        } catch {}
       };
     })();
     </script>
@@ -11107,7 +11422,7 @@ async function runDatabaseDiff() {
           <div class="page-title">Team</div>
           <div class="page-subtitle">Manage who has access to your joytree platform.</div>
         </div>
-        <button class="btn btn-primary" onclick="openInviteModal()">
+        <button class="btn btn-primary" id="teamInviteBtn" onclick="openInviteModal()">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Invite Member
         </button>
@@ -11810,7 +12125,12 @@ async function runDatabaseDiff() {
         <div class="card streak-activity-card"><div class="card-header streak-card-header"><div><div class="card-title">Deployment Activity Galaxy</div><div class="card-subtitle">365 days of releases rendered as a density map.</div></div><div class="streak-legend"><span>Quiet</span><i></i><i></i><i></i><i></i><i></i><span>Launch storm</span></div></div><div class="card-body streak-calendar-body"><div id="streakCalendar" class="streak-calendar-shell"></div></div></div>
         <aside class="streak-intel-stack"><div class="streak-intel-card"><span>Best shipping day</span><strong id="streakBestDay">—</strong><p>Peak weekday based on deployment frequency.</p></div><div class="streak-intel-card"><span>Momentum</span><strong id="streakMomentum">Dormant</strong><p>Compares the last 7 days against the prior 7-day window.</p></div><div class="streak-intel-card"><span>Reliability</span><strong id="streakReliability">0%</strong><p>Successful deploy ratio across tracked releases.</p></div></aside>
       </section>
-      <section class="streak-bottom-grid"><div class="card streak-timeline-card"><div class="card-header"><div class="card-title">Recent Launch Sequence</div><div class="card-subtitle">Newest deployment events become a tactical release timeline.</div></div><div class="card-body" id="streakTimeline"></div></div><div class="card streak-achievement-card"><div class="card-header"><div class="card-title">Operating System</div><div class="card-subtitle">Functional modules unlocked by consistent shipping.</div></div><div class="card-body streak-modules"><div><b>🔥 Streak Engine</b><span>Tracks daily release continuity.</span></div><div><b>🛰️ Cadence Radar</b><span>Surfaces active and quiet windows.</span></div><div><b>🧬 Density Genome</b><span>Maps yearly deployment behavior.</span></div><div><b>🛡️ Reliability Core</b><span>Audits successful deployment ratio.</span></div></div></div></section>
+      <section class="streak-bottom-grid"><div class="card streak-timeline-card"><div class="card-header"><div class="card-title">Recent Launch Sequence</div><div class="card-subtitle">Newest deployment events become a tactical release timeline.</div></div><div class="card-body" id="streakTimeline"></div></div><div class="card streak-achievement-card"><div class="card-header"><div class="card-title">Operating System</div><div class="card-subtitle">Functional modules unlocked by consistent shipping.</div></div><div class="card-body streak-modules">
+        <div><b><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Streak Engine</b><span>Tracks daily release continuity.</span><div class="streak-mod-stat"><strong id="streakModCurrent">0</strong> day streak <em>Best <span id="streakModLongest">0</span></em></div></div>
+        <div><b><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-8.49a6 6 0 0 0 0 8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg> Cadence Radar</b><span>Surfaces active and quiet windows.</span><div class="streak-mod-stat"><strong id="streakModBestDay">—</strong> <em id="streakModMomentum">—</em></div></div>
+        <div><b><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 5-6"/></svg> Density Genome</b><span>Maps yearly deployment behavior.</span><div class="streak-mod-stat"><strong id="streakModConsistency">0%</strong> days active <em><span id="streakModAvg">0</span>/day avg</em></div></div>
+        <div><b><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Reliability Core</b><span>Audits successful deployment ratio.</span><div class="streak-mod-stat"><strong id="streakModReliability">0%</strong> success rate</div></div>
+      </div></div></section>
     </div>
 
     <div class="page" id="page-emails">
@@ -12915,6 +13235,7 @@ async function ensureBackendSessionFromFirebase() {
     localStorage.setItem('db_auth_token', d.token);
     applyUserProfile(d.user || null);
     if (typeof checkPromos === 'function') checkPromos('login');
+    if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
     return true;
   } catch (_) { return false; }
 }
@@ -13218,6 +13539,46 @@ function applyUserProfile(user){
     socket.emit('auth:join', { userId: String(_uid) });
   }
   if (typeof renderAccountHero === 'function') renderAccountHero(user);
+
+  // [FEATURE] Promo emails with a "search this domain" CTA link to
+  // /dashboard?promoDomainSearch=<name> instead of a plain href, so
+  // clicking it from an email does the exact same thing clicking the
+  // button inside the app does: open Domain Store, drop the suggested
+  // name into the search box, and run the search immediately. Runs once
+  // per page load, right after we know the user is authenticated and the
+  // app shell (including Domain Store's own DOM) is in place.
+  if (!window._promoDomainSearchHandled) {
+    window._promoDomainSearchHandled = true;
+    const params = new URLSearchParams(window.location.search);
+    const suggestion = params.get('promoDomainSearch');
+    if (suggestion && typeof promoClaimDomainSearch === 'function') {
+      // No specific promo id to dismiss here (email links land signed-in
+      // users straight on the site, bypassing the in-app modal entirely),
+      // so drive Domain Store directly instead of routing through the
+      // promo-dismiss step that function also does.
+      setTimeout(() => {
+        if (typeof showPage === 'function') showPage('domain-store');
+        setTimeout(() => {
+          const input = document.getElementById('dsSearchInput');
+          if (input) {
+            input.value = suggestion;
+            if (typeof dsSearch === 'function') dsSearch();
+          }
+          toast('Edit the domain name below to match what you want, then hit Check.', 'info', 5000);
+        }, 250);
+      }, 300);
+      params.delete('promoDomainSearch');
+      const cleanUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+  }
+
+  // [FEATURE] Team invite emails link to /dashboard?acceptInvite=<token>.
+  // Same run-once-after-auth pattern as promoDomainSearch above.
+  if (!window._teamInviteAcceptHandled) {
+    window._teamInviteAcceptHandled = true;
+    if (typeof handlePendingInviteAccept === 'function') handlePendingInviteAccept();
+  }
 }
 
 // ── Account tab hero + connected-account rendering ──────────────────────────
@@ -13489,8 +13850,16 @@ function showPage(id, navEl, _skipPush) {
   } else if (typeof checkPromos === 'function') {
     setTimeout(() => checkPromos('any_page'), 400);
   }
+  // Sidebar announcement — inserts at most once (it no-ops if already
+  // present), so it's safe to call on every dashboard view too.
+  if (id === 'dashboard' && typeof initSidebarAnnouncement === 'function') {
+    setTimeout(() => initSidebarAnnouncement(), 250);
+  }
   if (id === 'admin-panel' && typeof loadAdminPromos === 'function') {
     setTimeout(loadAdminPromos, 100);
+  }
+  if (id === 'admin-panel' && typeof loadSidebarAnnouncementAdmin === 'function') {
+    setTimeout(loadSidebarAnnouncementAdmin, 100);
   }
   // ── If navigating AWAY from new-deploy, clean up any new-version upload state ──
   // This prevents locked name/subdomain fields and the new-version banner from
@@ -19729,6 +20098,7 @@ function statusBadge(status) {
         window.history.replaceState({}, '', clean);
         applyUserProfile(d.user || null);
         if (typeof checkPromos === 'function') checkPromos('login');
+    if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
         if (d.firebaseLinked === false) {
           toast('GitHub connected, but Firebase account link failed. Check Firebase GitHub provider config.', 'error');
         } else {
@@ -19787,6 +20157,7 @@ function statusBadge(status) {
           localStorage.setItem('db_auth_token', d.token);
           applyUserProfile(d.user || null);
           if (typeof checkPromos === 'function') checkPromos('login');
+    if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
           toast('Signed in with Google successfully!', 'success');
           preferPricingAfterAuth = true;
         } else {
@@ -19935,6 +20306,7 @@ async function submitAuth(){
       localStorage.setItem('db_auth_token', d.token);
       applyUserProfile(d.user || null);
       if (typeof checkPromos === 'function') checkPromos('login');
+    if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
       toast('Welcome! Account ready.', 'success');
       showDashboard('pricing');
     } else throw new Error('Authentication failed');
@@ -19986,6 +20358,7 @@ async function submitEmailVerification(){
   localStorage.setItem('db_auth_token', d.token);
   applyUserProfile(d.user || null);
   if (typeof checkPromos === 'function') checkPromos('login');
+    if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
   // Pull canonical workspace immediately so we don't render/overwrite with stale local state.
   try {
     await bootstrapSession();
@@ -21122,35 +21495,81 @@ async function dmRunCleanup() {
 
 
 // ══════════════════════════════════════════════════════════════════
-// TEAM
 // ══════════════════════════════════════════════════════════════════
-let teamInvites = JSON.parse(localStorage.getItem('db_team_invites') || '[]');
+// TEAM — real invites, real membership, real shared workspace access.
+//
+// [FIX] This whole feature used to be fake: sendInvite() pushed into a
+// local array and saved to localStorage. No email ever went out, no
+// other account could ever see or act on the invite, and there was no
+// mechanism at all for a second person to access the same workspace --
+// "inviting" someone did nothing anyone else could observe. Now backed
+// by real endpoints (/api/team/*) that send an actual email and grant
+// actual shared access to projects/deployments/settings once accepted.
+// ══════════════════════════════════════════════════════════════════
+let teamState = { isOwner: true, role: 'owner', owner: null, members: [], invites: [] };
+
+async function loadTeam() {
+  try {
+    const r = await apiFetch('/api/team');
+    const data = await r.json();
+    if (r.ok && data.ok) teamState = data;
+  } catch (e) { console.warn('[team] load failed', e); }
+  renderTeam();
+}
 
 function renderTeam() {
-  // Update owner info from settings
   const nameEl  = document.getElementById('teamOwnerName');
   const emailEl = document.getElementById('teamOwnerEmail');
   const avatarEl= document.getElementById('teamOwnerAvatar');
-  if (nameEl && settings && settings.ownerName) nameEl.textContent = settings.ownerName;
-  if (emailEl && settings && settings.ownerEmail) emailEl.textContent = settings.ownerEmail;
-  if (avatarEl && settings && settings.ownerName) {
-    avatarEl.textContent = settings.ownerName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const ownerName = teamState.owner?.name || teamState.owner?.email || settings?.ownerName || '';
+  const ownerEmail = teamState.owner?.email || settings?.ownerEmail || '';
+  if (nameEl) nameEl.textContent = ownerName || ownerEmail || 'Owner';
+  if (emailEl) emailEl.textContent = ownerEmail;
+  if (avatarEl) {
+    const initials = (ownerName || ownerEmail || '?').trim();
+    avatarEl.textContent = initials.includes(' ')
+      ? initials.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
+      : initials.slice(0,2).toUpperCase();
+  }
+
+  // Invite button + role management only make sense for the actual
+  // owner -- an invited member viewing their own Team page sees who
+  // else is on the team but can't invite/remove anyone themselves.
+  const inviteBtn = document.getElementById('teamInviteBtn');
+  if (inviteBtn) inviteBtn.style.display = teamState.isOwner ? '' : 'none';
+
+  const membersEl = document.getElementById('teamInvitesList');
+  if (membersEl) {
+    membersEl.innerHTML = (teamState.members || []).map(m => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;color:#fff;flex-shrink:0;">${escapeHtml((m.name || m.email || '?').slice(0,2).toUpperCase())}</div>
+          <div>
+            <div style="font-size:0.85rem;font-weight:600;color:var(--text);">${escapeHtml(m.name || m.email)}</div>
+            <div style="font-size:0.72rem;color:var(--text-2);">${escapeHtml(m.email)}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:0.72rem;background:rgba(16,185,129,0.1);color:var(--green);border:1px solid rgba(16,185,129,0.2);border-radius:6px;padding:3px 10px;font-weight:600;text-transform:capitalize;">${escapeHtml(m.role || 'admin')}</span>
+          ${teamState.isOwner ? `<button data-email="${escapeHtml(m.email)}" onclick="removeMember(this.dataset.email)" style="font-size:0.72rem;padding:4px 8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--red);border-radius:6px;cursor:pointer;">Remove</button>` : ''}
+        </div>
+      </div>`).join('');
   }
 
   const pendingEl = document.getElementById('teamPendingList');
   if (!pendingEl) return;
-  if (!teamInvites.length) {
+  if (!teamState.invites || !teamState.invites.length) {
     pendingEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-3);font-size:0.82rem;">No pending invites.</div>';
   } else {
-    pendingEl.innerHTML = teamInvites.map((inv, i) => `
+    pendingEl.innerHTML = teamState.invites.map(inv => `
       <div class="list-row">
         <div>
-          <div style="font-size:0.85rem;color:var(--text);">${inv.email}</div>
-          <div style="font-size:0.72rem;color:var(--text-2);margin-top:2px;">Role: ${inv.role} • Sent ${timeAgo(new Date(inv.sentAt))}</div>
+          <div style="font-size:0.85rem;color:var(--text);">${escapeHtml(inv.email)}</div>
+          <div style="font-size:0.72rem;color:var(--text-2);margin-top:2px;">Role: ${escapeHtml(inv.role)} • Sent ${timeAgo(new Date(inv.invitedAt))}</div>
         </div>
         <div style="display:flex;gap:8px;">
           <span class="badge badge-pending"><span class="badge-dot"></span>Pending</span>
-          <button data-i="${i}" onclick="cancelInvite(parseInt(this.dataset.i))" style="font-size:0.72rem;padding:4px 8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--red);border-radius:6px;cursor:pointer;">Cancel</button>
+          ${teamState.isOwner ? `<button data-id="${escapeHtml(inv.id)}" onclick="cancelInvite(this.dataset.id)" style="font-size:0.72rem;padding:4px 8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--red);border-radius:6px;cursor:pointer;">Cancel</button>` : ''}
         </div>
       </div>`).join('');
   }
@@ -21166,23 +21585,73 @@ function closeInviteModal() {
   const m = document.getElementById('inviteModal');
   if (m) { m.style.display = 'none'; m.classList.remove('active'); }
 }
-function sendInvite() {
+async function sendInvite() {
   const email = (document.getElementById('inviteEmail').value || '').trim();
   const role  = document.getElementById('inviteRole').value;
   if (!email || !email.includes('@')) { toast('Enter a valid email', 'error'); return; }
-  teamInvites.push({ email, role, sentAt: new Date().toISOString() });
-  localStorage.setItem('db_team_invites', JSON.stringify(teamInvites));
-  closeInviteModal();
-  renderTeam();
-  toast('Invite sent to ' + email, 'success');
-  logActivity('team', 'Team invite sent to ' + email + ' (' + role + ')');
+  const btn = document.querySelector('#inviteModal .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  try {
+    const r = await apiFetch('/api/team/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, role })
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) { toast(data.error || 'Could not send invite', 'error'); return; }
+    closeInviteModal();
+    await loadTeam();
+    toast('Invite sent to ' + email, 'success');
+    logActivity('team', 'Team invite sent to ' + email + ' (' + role + ')');
+  } catch (e) {
+    toast('Could not send invite — check your connection', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Send Invite'; }
+  }
 }
-function cancelInvite(i) {
-  const email = teamInvites[i].email;
-  teamInvites.splice(i, 1);
-  localStorage.setItem('db_team_invites', JSON.stringify(teamInvites));
-  renderTeam();
-  toast('Invite to ' + email + ' cancelled', 'success');
+async function cancelInvite(id) {
+  const invite = (teamState.invites || []).find(i => i.id === id);
+  try {
+    const r = await apiFetch('/api/team/invites/' + encodeURIComponent(id), { method: 'DELETE' });
+    const data = await r.json();
+    if (!r.ok || !data.ok) { toast(data.error || 'Could not cancel invite', 'error'); return; }
+    await loadTeam();
+    toast('Invite to ' + (invite?.email || 'that address') + ' cancelled', 'success');
+  } catch (e) {
+    toast('Could not cancel invite — check your connection', 'error');
+  }
+}
+async function removeMember(email) {
+  if (!confirm('Remove ' + email + ' from the team? They will lose access to this workspace immediately.')) return;
+  try {
+    const r = await apiFetch('/api/team/members/' + encodeURIComponent(email), { method: 'DELETE' });
+    const data = await r.json();
+    if (!r.ok || !data.ok) { toast(data.error || 'Could not remove member', 'error'); return; }
+    await loadTeam();
+    toast(email + ' removed from the team', 'success');
+    logActivity('team', 'Removed ' + email + ' from the team');
+  } catch (e) {
+    toast('Could not remove member — check your connection', 'error');
+  }
+}
+
+// Handles ?acceptInvite=<token> in the URL -- same "no href / query-
+// param handshake" pattern already used for promoDomainSearch. Runs
+// once on load, after the user is confirmed signed in.
+async function handlePendingInviteAccept() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('acceptInvite');
+  if (!token) return;
+  window.history.replaceState({}, '', window.location.pathname);
+  try {
+    const r = await apiFetch('/api/team/invites/' + encodeURIComponent(token) + '/accept', { method: 'POST' });
+    const data = await r.json();
+    if (!r.ok || !data.ok) { toast(data.error || 'Could not accept invite', 'error', 6000); return; }
+    toast("You're now on the team! Reloading your workspace…", 'success', 4000);
+    setTimeout(() => window.location.reload(), 1500);
+  } catch (e) {
+    toast('Could not accept invite — check your connection', 'error');
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -22146,6 +22615,18 @@ function renderStreaks() {
   if (el('streakBestDay')) el('streakBestDay').textContent = bestDay;
   if (el('streakMomentum')) el('streakMomentum').textContent = momentum;
   if (el('streakReliability')) el('streakReliability').textContent = reliability + '%';
+
+  // [FEATURE] "Operating System" module cards used to be static placeholder
+  // text with no data at all. Every stat they need is already computed
+  // above for the hero/intel cards -- just wire the same values in here
+  // too instead of leaving them purely decorative.
+  if (el('streakModCurrent'))     el('streakModCurrent').textContent = current;
+  if (el('streakModLongest'))     el('streakModLongest').textContent = longest;
+  if (el('streakModBestDay'))     el('streakModBestDay').textContent = bestDay;
+  if (el('streakModMomentum'))    el('streakModMomentum').textContent = momentum;
+  if (el('streakModConsistency')) el('streakModConsistency').textContent = consistency + '%';
+  if (el('streakModAvg'))         el('streakModAvg').textContent = avg;
+  if (el('streakModReliability')) el('streakModReliability').textContent = reliability + '%';
 
   const timeline = el('streakTimeline');
   if (timeline) {

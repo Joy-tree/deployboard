@@ -63,6 +63,29 @@ services:
     volumes:
       - sites-data:/var/www/user-sites
       - /tmp/deployboard-builds:/tmp/deployboard-builds
+      # [FIX] promo-assets/ and email-assets/ were being written to
+      # /app/promo-assets and /app/email-assets inside the container with
+      # no volume mount -- same exact bug class as the vapid-keys.json fix
+      # below. Every `docker compose up --build` recreates the container
+      # from the fresh image layer, silently wiping every uploaded promo
+      # image/video and every uploaded broadcast-email image, while the
+      # Firebase promo/email record still points at the old filename.
+      # That's why a promo's media shows a broken image after any rebuild
+      # that happens after it was uploaded -- the file is just gone.
+      # Bind-mounted to the host now so uploads survive every future
+      # rebuild.
+      - ./promo-assets:/app/promo-assets
+      - ./email-assets:/app/email-assets
+      # [FIX] Same exact bug class as promo-assets/email-assets above,
+      # just introduced later when the Sidebar Announcement feature was
+      # added -- sidebar-assets/ (the admin-uploaded thumbnail image for
+      # the sidebar nav card) was never given the same volume mount, so
+      # every rebuild after an upload silently wiped the file while the
+      # saved announcement record still pointed at its now-missing
+      # filename. This is exactly why the image the admin uploaded and
+      # saved didn't show on the live site: any redeploy in between
+      # (and this session redeploys constantly) erased it.
+      - ./sidebar-assets:/app/sidebar-assets
       # [FIX] Was missing entirely -- vapid-keys.json was being written to
       # /app/vapid-keys.json inside the container with no volume mount,
       # meaning it lived only in that container's own writable layer. Every

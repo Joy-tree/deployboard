@@ -2188,6 +2188,13 @@ const userSchema = new mongoose.Schema({
   googleId: { type: String, default: '', index: true },
   googleAvatarUrl: { type: String, default: '' },
   firebaseUid: { type: String, default: '', index: true },
+  // [FEATURE] Team collaboration. When set, this user's workspace reads/
+  // writes are transparently redirected to another user's workspace key
+  // (see firebaseWorkspaceKey below) instead of their own -- i.e. they've
+  // accepted an invite and are now a member of someone else's team,
+  // sharing the exact same projects/deployments/settings.
+  memberOf: { type: String, default: '' },
+  memberRole: { type: String, default: '' }, // 'admin' | 'viewer' -- only meaningful when memberOf is set
   workspace: {
     projects: { type: Array, default: [] },
     deployments: { type: Array, default: [] },
@@ -2297,6 +2304,19 @@ function syncLocalDbsFromMongo() {
 setInterval(syncLocalDbsFromMongo, 30000);
 
 function firebaseWorkspaceKey(user = {}) {
+  // [FEATURE] Team members share their inviter's workspace. If this user
+  // has accepted a team invite, memberOf holds the OWNER's stable
+  // workspace key -- redirect every read/write for this user to that
+  // shared workspace instead of deriving a key from their own email.
+  // This is the single choke point every workspace read/write in the
+  // app already goes through (readWorkspaceFromFirebase, writeWorkspace-
+  // ToFirebase, and everything built on them), so team members
+  // transparently see and can modify the exact same projects/
+  // deployments/settings/domains as the owner with zero changes needed
+  // to any of those individual routes.
+  if (user.memberOf) {
+    return String(user.memberOf).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+  }
   // STABILITY FIX: Always prefer email as the canonical Firebase RTDB key.
   // email is the only identifier that is consistent across VPS rebuilds, new
   // MongoDB _id values, new firebaseUid tokens, and local-auth.json resets.
@@ -4402,6 +4422,168 @@ app.delete('/api/admin/promos/:id', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// [FEATURE] "Send to all users via email" for a promo. Rebuilds the exact
+// same visual (media banner, badge pill, title, subtitle, extra fields,
+// struck-through previous price, single solid CTA button) as an
+// email-safe table layout, in the promo's own chosen theme color, then
+// appends the same standard docs/support footer every other JoyTree
+// transactional email already uses -- so this doesn't look like a
+// one-off, it looks like it belongs.
+//
+// Colors mirror window.promoThemeColors() in index.html exactly -- keep
+// these two in sync if that ever changes.
+function promoThemeColorsServer(theme, intensity) {
+  if (theme === 'white')  return { accent: '#f8fafc', badgeText: '#0f172a', ctaBg: '#f8fafc', ctaText: '#0f172a' };
+  if (theme === 'yellow') return { accent: '#eab308', badgeText: '#1c1400', ctaBg: '#eab308', ctaText: '#1c1400' };
+  if (theme === 'red')    return { accent: '#ef4444', badgeText: '#fff',    ctaBg: '#ef4444', ctaText: '#fff' };
+  const pct = Math.max(0, Math.min(100, Number(intensity) || 50));
+  const lightness = 62 - (pct / 100) * 32;
+  const accent = `hsl(158, 64%, ${lightness}%)`;
+  return { accent, badgeText: '#052e18', ctaBg: accent, ctaText: '#052e18' };
+}
+
+app.post('/api/admin/promos/:id/send-email', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return res.status(500).json({ error: 'Resend is not configured on server' });
+
+    const promo = (await readPromos()).find(p => p.id === req.params.id);
+    if (!promo) return res.status(404).json({ error: 'Promo not found' });
+
+    const colors = promoThemeColorsServer(promo.theme, promo.intensity);
+
+    // Same "no href / query-param handshake" trick as the in-app
+    // promoClaimDomainSearch() button: clicking this in the email lands
+    // signed-in users on Domain Store with the suggested name already
+    // searched, exactly like clicking it inside the app does. See the
+    // matching `promoDomainSearch` URL param handler in index.html.
+    const isDomainSearch = promo.ctaAction === 'domain_search';
+    const ctaUrl = isDomainSearch
+      ? `https://${BASE_DOMAIN}/dashboard?promoDomainSearch=${encodeURIComponent(promo.ctaDomainSuggestion || '')}`
+      : sanitizeEmailUrl(promo.ctaUrl) || `https://${BASE_DOMAIN}/dashboard`;
+
+    // Matches .promo-overlay-badge exactly: sharp corners (no pill radius),
+    // bold 800, ~1rem, NOT uppercase/letter-spaced, slight -3deg rotation
+    // like a stamp. Degrades to unrotated in clients that ignore
+    // transform, which is an acceptable, expected email fallback.
+    const badgeHtml = promo.badgeText
+      ? `<span style="display:inline-block;background:${colors.accent};color:${colors.badgeText};font-size:16px;font-weight:800;padding:7px 18px;transform:rotate(-3deg);">${escapeEmailHtml(promo.badgeText)}</span><br>`
+      : '';
+
+    const titleHtml = promo.title
+      ? `<span style="display:inline-block;margin-top:10px;font-size:26px;line-height:1.2;font-weight:800;font-style:italic;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6);">${escapeEmailHtml(promo.title)}</span>`
+      : '';
+
+    // Same technique as the live popup's .promo-media-full (position:
+    // relative) + .promo-overlay-stack (position:absolute, top:50%,
+    // translateY(-50%)) -- badge+title sit ON the image, vertically
+    // centered over its full height, not in a separate section below
+    // it. position:relative/absolute renders correctly in Gmail (web
+    // and app) and Apple Mail; legacy Outlook desktop ignores it and
+    // stacks the overlay div below the image instead of over it --
+    // an acceptable degrade there, since the primary target (Gmail,
+    // per the screenshots) renders it exactly like the site.
+    const mediaHtml = (promo.mediaUrl && promo.mediaType !== 'video')
+      ? `<tr><td bgcolor="#000000" style="background:#000000;padding:0;">
+           <div style="position:relative;background:#000000;">
+             <img src="${escapeEmailHtml(promo.mediaUrl)}" alt="" width="560" style="width:100%;max-width:560px;height:auto;display:block;">
+             <div style="position:absolute;top:50%;left:0;right:0;transform:translateY(-50%);text-align:center;padding:0 24px;">
+               ${badgeHtml}
+               ${titleHtml}
+             </div>
+           </div>
+         </td></tr>`
+      : '';
+
+    const extraFieldsHtml = (Array.isArray(promo.extraFields) ? promo.extraFields : []).map(f => {
+      const field = typeof f === 'string' ? { label: '', value: f, color: 'green' } : f;
+      if (!field || !field.value) return '';
+      const labelColor = promoThemeColorsServer(field.color || 'green', promo.intensity).accent;
+      const labelHtml = field.label ? `<strong style="color:${labelColor};font-weight:800;">${escapeEmailHtml(field.label)}:</strong> ` : '';
+      return `<p style="margin:0 0 6px;font-size:13px;color:#8c8c8c;line-height:1.6;">${labelHtml}${escapeEmailHtml(field.value)}</p>`;
+    }).join('');
+
+    const prevPriceHtml = promo.prevPrice
+      ? `<p style="margin:0 0 14px;font-size:14px;color:#747474;text-decoration:line-through;">${escapeEmailHtml(promo.prevPrice)}</p>`
+      : '';
+
+    const dashboardUrl = `https://${BASE_DOMAIN}/dashboard`;
+    const deployUrl    = `https://${BASE_DOMAIN}/dashboard/new-deploy`;
+    const docsUrl       = `https://${BASE_DOMAIN}/dashboard/docs`;
+    const supportUrl    = `https://${BASE_DOMAIN}/dashboard/support`;
+
+    // Structure mirrors buildPromoCardHtml() in index.html: logo -> full-
+    // bleed media with badge+title overlaid on it (see mediaHtml above,
+    // same position:relative/absolute technique as .promo-media-full/
+    // .promo-overlay-stack) -> subtitle -> extra lines -> prev price ->
+    // ONE full-width CTA button, exactly like .promo-cta being block-
+    // level and full-width rather than a small inline pill. Colors
+    // pulled from the exact same promoThemeColors() the live popup uses,
+    // not approximations.
+    const html = `<!doctype html>
+<html><body style="margin:0;padding:0;background:#050505;font-family:Arial,Helvetica,sans-serif;color:#e4e4e7;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#050505" style="padding:32px 12px;background:#050505;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#0a0a0a" style="max-width:560px;background:#0a0a0a;">
+        <tr><td align="center" style="padding:24px 32px 4px;">
+          <span style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:15px;letter-spacing:.02em;color:#10b981;">JOYTREE</span>
+        </td></tr>
+        ${mediaHtml}
+        <tr><td align="center" bgcolor="#0a0a0a" style="background:#0a0a0a;padding:22px 32px 4px;">
+          ${!promo.mediaUrl ? badgeHtml : ''}
+          ${!promo.mediaUrl ? `<h1 style="margin:0 0 10px;font-size:26px;line-height:1.2;font-weight:800;font-style:italic;color:#fff;">${escapeEmailHtml(promo.title || '')}</h1>` : ''}
+          ${promo.subtitle ? `<p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#b8b8b8;">${escapeEmailHtml(promo.subtitle)}</p>` : ''}
+          ${extraFieldsHtml}
+          ${prevPriceHtml}
+        </td></tr>
+        <tr><td style="padding:10px 0 24px;">
+          <a href="${escapeEmailHtml(ctaUrl)}" style="display:block;width:100%;box-sizing:border-box;background:${colors.ctaBg};color:${colors.ctaText};font-weight:800;font-size:16px;padding:15px;text-align:center;text-decoration:none;">${escapeEmailHtml(promo.ctaText || 'Claim offer')}</a>
+        </td></tr>
+        <tr><td bgcolor="#0a0a0a" style="background:#0a0a0a;padding:0 32px 20px;">
+          <p style="margin:0;color:#a1a1aa;font-size:13px;line-height:1.8;">
+            <a href="${deployUrl}" style="color:#10b981;text-decoration:none;">Create a deployment</a> &nbsp;&middot;&nbsp;
+            <a href="${docsUrl}" style="color:#10b981;text-decoration:none;">Documentation</a> &nbsp;&middot;&nbsp;
+            <a href="${supportUrl}" style="color:#10b981;text-decoration:none;">Support</a>
+          </p>
+        </td></tr>
+        <tr><td bgcolor="#0a0a0a" style="background:#0a0a0a;padding:8px 32px 24px;">
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,.1);margin:0 0 16px;">
+          <p style="margin:0;color:#71717a;font-size:12px;line-height:1.6;">You're receiving this email because you have a JoyTree account. <a href="${dashboardUrl}" style="color:#71717a;">Manage your account</a>.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+    const textLines = [promo.title, promo.subtitle].filter(Boolean);
+    if (promo.prevPrice) textLines.push(`Was ${promo.prevPrice}`);
+    textLines.push(`${promo.ctaText || 'Claim offer'}: ${ctaUrl}`);
+    const text = textLines.join('\n\n');
+
+    const dbEmails = isDbReady()
+      ? (await User.find({}).select('email').lean()).map(u => String(u?.email || '').trim().toLowerCase()).filter(Boolean)
+      : (localAuth.users || []).map(u => String(u?.email || '').trim().toLowerCase()).filter(Boolean);
+    const firebaseAuthEmails = await collectFirebaseAuthEmails();
+    const firebaseRtdbEmails = await collectFirebaseIndexedEmails();
+    const recipients = Array.from(new Set([...dbEmails, ...firebaseAuthEmails, ...firebaseRtdbEmails]));
+    if (!recipients.length) return res.status(400).json({ error: 'No users found to receive email' });
+
+    const subject = promo.title || promo.name || 'A JoyTree offer for you';
+    let sent = 0, failed = 0;
+    for (const to of recipients) {
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: RESEND_FROM_EMAIL, to: [to], subject, html, text })
+      });
+      if (r.ok) sent += 1; else failed += 1;
+    }
+    res.json({ ok: true, sent, failed, total: recipients.length });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not send promo email' });
+  }
+});
+
 // Background image or video upload for a promo. Video is capped higher
 // than the 5MB email-image limit since a short muted background clip is
 // legitimately bigger, but still bounded so one admin upload can't fill
@@ -4454,6 +4636,179 @@ app.get('/api/promos/active', requireAuth, async (req, res) => {
     const all = await readPromos();
     const matching = all.filter(p => p.active && (p.triggerEvent === event || p.triggerEvent === 'any_page'));
     res.json({ ok: true, promos: matching });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// SIDEBAR ANNOUNCEMENT — a single admin-managed card that can appear
+// anywhere in the dashboard sidebar nav (top, bottom, or right after any
+// specific nav item), the same idea as Render's "Introducing Workflows"
+// card. Unlike promos (a list, shown as a full-screen popup on a trigger
+// event), this is exactly ONE settings object at a time, always visible
+// in-place once active — so it's a single Firebase key, not a list with
+// per-item CRUD.
+// ═══════════════════════════════════════════════════════════════════════
+const SIDEBAR_ASSETS_DIR = path.join(__dirname, 'sidebar-assets');
+
+// Every valid data-page value in #sidebar's nav, in on-screen order —
+// used both to validate an "after:<key>" position and to build the
+// admin's position picker with real, current nav item names instead of
+// a list that silently drifts out of sync with the actual sidebar.
+const SIDEBAR_NAV_KEYS = [
+  'dashboard', 'projects', 'deployments', 'repos', 'code-upload',
+  'new-resource', 'new-deploy', 'logs', 'ai-analysis', 'joytree-ai',
+  'env-manager', 'domains', 'domain-store', 'domain-cpanel',
+  'admin-panel', 'analytics', 'webhooks', 'emails', 'cronjobs',
+  'workers', 'streaks',
+  'ssh-keys',
+  'databases', 'db-migration', 'db-diff', 'db-query', 'db-schema', 'db-sdk', 'realtime-api',
+  'team', 'pricing', 'usage', 'activity', 'secrets',
+  'settings',
+];
+
+function sidebarAnnouncementUrl() {
+  if (!FIREBASE_RTDB_URL) return '';
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  return `${FIREBASE_RTDB_URL}/deployboard_sidebar_announcement.json${authQuery}`;
+}
+async function readSidebarAnnouncement() {
+  try {
+    const url = sidebarAnnouncementUrl();
+    if (!url) {
+      console.warn('[SidebarAnnouncement] readSidebarAnnouncement: no Firebase URL — FIREBASE_RTDB_URL=' + (FIREBASE_RTDB_URL || 'MISSING'));
+      return null;
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    let r;
+    try { r = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' }, signal: controller.signal }); }
+    finally { clearTimeout(timer); }
+    if (!r.ok) {
+      const body = await r.text().catch(() => '');
+      console.warn(`[SidebarAnnouncement] Firebase GET failed: HTTP ${r.status} — ${body.slice(0, 300)}`);
+      return null;
+    }
+    const data = await r.json();
+    return (data && typeof data === 'object') ? data : null;
+  } catch (e) {
+    console.error('[SidebarAnnouncement] readSidebarAnnouncement threw:', e.message);
+    return null;
+  }
+}
+async function writeSidebarAnnouncement(ann) {
+  const url = sidebarAnnouncementUrl();
+  if (!url) {
+    console.warn('[SidebarAnnouncement] writeSidebarAnnouncement: no Firebase URL — FIREBASE_RTDB_URL=' + (FIREBASE_RTDB_URL || 'MISSING'));
+    return false;
+  }
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    let r;
+    try { r = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ann), signal: controller.signal }); }
+    finally { clearTimeout(timer); }
+    if (!r.ok) {
+      const body = await r.text().catch(() => '');
+      console.warn(`[SidebarAnnouncement] Firebase PUT failed: HTTP ${r.status} — ${body.slice(0, 300)}`);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error('[SidebarAnnouncement] writeSidebarAnnouncement threw:', e.message);
+    return false;
+  }
+}
+
+function sanitizeSidebarAnnouncementInput(body = {}) {
+  let position = String(body.position || 'bottom').trim();
+  if (position !== 'top' && position !== 'bottom') {
+    const key = position.replace(/^after:/, '');
+    position = SIDEBAR_NAV_KEYS.includes(key) ? `after:${key}` : 'bottom';
+  }
+  return {
+    heading:  String(body.heading || '').slice(0, 80).trim(),
+    message:  String(body.message || '').slice(0, 300).trim(),
+    linkText: String(body.linkText || 'Learn more').slice(0, 40).trim(),
+    linkUrl:  String(body.linkUrl || '').slice(0, 500).trim(),
+    imageUrl: String(body.imageUrl || '').slice(0, 500).trim(),
+    position,
+    active:   !!body.active,
+  };
+}
+
+app.get('/api/admin/sidebar-announcement', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const announcement = await readSidebarAnnouncement();
+    res.json({ ok: true, announcement, navKeys: SIDEBAR_NAV_KEYS });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/admin/sidebar-announcement', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const existing = await readSidebarAnnouncement();
+    const clean = sanitizeSidebarAnnouncementInput(req.body);
+    if (clean.active && !clean.heading) return res.status(400).json({ error: 'Heading is required to activate this' });
+    // Regenerate the id whenever the visible content actually changes, so
+    // the per-user dismiss flag (keyed by id, client-side) resets and
+    // users see it again -- fresh content is a fresh notice, not a still-
+    // dismissed one. Toggling active/position alone with the same text
+    // keeps the same id, so a dismissed-then-reactivated identical card
+    // doesn't reappear for people who already closed it.
+    const contentChanged = !existing
+      || existing.heading !== clean.heading
+      || existing.message !== clean.message
+      || existing.linkUrl !== clean.linkUrl
+      || existing.linkText !== clean.linkText
+      || existing.imageUrl !== clean.imageUrl;
+    const id = contentChanged
+      ? `sba_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`
+      : (existing.id || `sba_${Date.now()}`);
+    const announcement = { ...clean, id, updatedAt: Date.now() };
+    const saved = await writeSidebarAnnouncement(announcement);
+    if (!saved) return res.status(502).json({ error: 'Could not save' });
+    res.json({ ok: true, announcement });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/sidebar-announcement/upload-image', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const ct = req.headers['content-type'] || '';
+    if (!ct.includes('multipart/form-data')) return res.status(400).json({ error: 'multipart/form-data required' });
+
+    let parsed;
+    try { parsed = await parseMultipart(req); }
+    catch (e) { return res.status(400).json({ error: 'Failed to parse upload: ' + e.message }); }
+
+    const { fileBuffer, fileName } = parsed;
+    if (!fileBuffer || !fileBuffer.length) return res.status(400).json({ error: 'No file received' });
+
+    const ext = (path.extname(fileName || '').toLowerCase() || '.png').replace(/[^.a-z0-9]/g, '') || '.png';
+    const imageExts = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+    if (!imageExts.includes(ext)) return res.status(400).json({ error: 'Only PNG, JPG, GIF, or WEBP images are supported' });
+
+    const MAX_BYTES = 4 * 1024 * 1024; // 4MB — this is a small sidebar thumbnail, not a hero banner
+    if (fileBuffer.length > MAX_BYTES) return res.status(400).json({ error: 'Image must be under 4MB' });
+
+    fs.mkdirSync(SIDEBAR_ASSETS_DIR, { recursive: true });
+    const safeName = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
+    fs.writeFileSync(path.join(SIDEBAR_ASSETS_DIR, safeName), fileBuffer);
+
+    res.json({ ok: true, url: `https://${BASE_DOMAIN}/sidebar-assets/${safeName}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not upload image' });
+  }
+});
+
+// User-facing: any signed-in user's sidebar checks this once on load to
+// decide whether to render the announcement card, and where.
+app.get('/api/sidebar-announcement/active', requireAuth, async (req, res) => {
+  try {
+    const ann = await readSidebarAnnouncement();
+    if (!ann || !ann.active) return res.json({ ok: true, announcement: null });
+    res.json({ ok: true, announcement: ann });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -4848,6 +5203,247 @@ app.post('/api/auth/verify-email', async (req, res) => {
 });
 
 
+async function findUserRecordByEmail(email) {
+  const e = String(email || '').trim().toLowerCase();
+  if (!e) return null;
+  if (isDbReady()) return await User.findOne({ email: e }).catch(() => null);
+  return localAuth.users.find(u => String(u.email || '').toLowerCase() === e) || null;
+}
+async function persistUserRecord(user) {
+  if (isDbReady() && typeof user.save === 'function') { await user.save().catch(() => {}); }
+  else { saveLocalAuth(); }
+}
+// True team owner = an account that is not itself a member of someone
+// else's team. Only the real owner can invite/remove members --
+// prevents an accepted "admin" member from inviting further members or
+// removing others, matching the Owner-only "manage team" permission
+// already described on the Team page's Roles & Permissions card.
+function isTeamOwner(user) { return !user.memberOf; }
+
+// Global token -> invite lookup, same pattern as the existing
+// deployboard_api_keys_index used for jtk_ CLI keys elsewhere in this
+// file. Needed because the invited person doesn't know whose workspace
+// they're being invited into -- the token alone has to resolve to it
+// without scanning every workspace in Firebase.
+async function readTeamIndexEntry(token) {
+  if (!FIREBASE_RTDB_URL) return null;
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  try {
+    const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_invites_index/${token}.json${authQuery}`);
+    if (!r.ok) return null;
+    const data = await r.json();
+    return (data && typeof data === 'object') ? data : null;
+  } catch { return null; }
+}
+async function writeTeamIndexEntry(token, data) {
+  if (!FIREBASE_RTDB_URL) return false;
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  try {
+    const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_invites_index/${token}.json${authQuery}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+    });
+    return r.ok;
+  } catch { return false; }
+}
+async function deleteTeamIndexEntry(token) {
+  if (!FIREBASE_RTDB_URL || !token) return;
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  try { await fetch(`${FIREBASE_RTDB_URL}/deployboard_invites_index/${token}.json${authQuery}`, { method: 'DELETE' }); } catch {}
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEAM COLLABORATION — real invites, real membership, real shared data.
+//
+// Previously the Team page was 100% client-side fake: sendInvite()
+// pushed into a local array and saved to localStorage. No email was
+// ever sent, no other account could ever see or accept the invite, and
+// there was zero mechanism for a second person to actually access the
+// same workspace -- "inviting" someone did literally nothing anyone
+// else could observe.
+//
+// This is now real: invites send an actual email (Resend, same
+// mechanism as promo emails), accepting one sets memberOf on the
+// invited user's own account, and firebaseWorkspaceKey() (see above)
+// redirects that account's workspace reads/writes to the owner's
+// workspace from then on -- so team members see and can modify the
+// exact same projects/deployments/settings/domains as the owner,
+// through every existing endpoint, with no per-endpoint changes needed.
+// Team membership data itself lives inside workspace.team, alongside
+// projects/deployments, reusing the same Firebase persistence already
+// in place rather than a new storage system.
+// ══════════════════════════════════════════════════════════════════
+
+app.get('/api/team', requireAuth, async (req, res) => {
+  try {
+    const ws = (await readWorkspaceFromFirebase(req.user)) || req.user.workspace || {};
+    const team = ws.team && typeof ws.team === 'object' ? ws.team : {};
+    const owner = isTeamOwner(req.user)
+      ? { email: req.user.email, name: req.user.name || '' }
+      : { email: req.user.memberOf, name: '' };
+    if (!isTeamOwner(req.user)) {
+      const ownerRecord = await findUserRecordByEmail(req.user.memberOf);
+      if (ownerRecord) owner.name = ownerRecord.name || '';
+    }
+    res.json({
+      ok: true,
+      isOwner: isTeamOwner(req.user),
+      role: isTeamOwner(req.user) ? 'owner' : (req.user.memberRole || 'admin'),
+      owner,
+      members: Array.isArray(team.members) ? team.members.map(m => ({ email: m.email, name: m.name || '', role: m.role, addedAt: m.addedAt })) : [],
+      invites: Array.isArray(team.invites) ? team.invites.map(i => ({ id: i.id, email: i.email, role: i.role, invitedAt: i.invitedAt, expiresAt: i.expiresAt })) : []
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not load team' });
+  }
+});
+
+app.post('/api/team/invite', requireAuth, async (req, res) => {
+  try {
+    if (!isTeamOwner(req.user)) return res.status(403).json({ error: 'Only the workspace owner can invite team members.' });
+    if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return res.status(500).json({ error: 'Email sending is not configured on this server.' });
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const role  = ['admin', 'viewer'].includes(req.body.role) ? req.body.role : 'admin';
+    if (!email || !email.includes('@')) return res.status(400).json({ error: 'Enter a valid email address.' });
+    if (email === String(req.user.email || '').toLowerCase()) return res.status(400).json({ error: "You can't invite yourself." });
+
+    const ws = (await readWorkspaceFromFirebase(req.user)) || req.user.workspace || {};
+    const team = { members: [], invites: [], ...(ws.team && typeof ws.team === 'object' ? ws.team : {}) };
+    team.members = Array.isArray(team.members) ? team.members : [];
+    team.invites = Array.isArray(team.invites) ? team.invites : [];
+
+    if (team.members.some(m => m.email === email)) return res.status(400).json({ error: 'That person is already a team member.' });
+    if (team.invites.some(i => i.email === email)) return res.status(400).json({ error: 'An invite is already pending for that email.' });
+
+    const token = crypto.randomBytes(24).toString('hex');
+    const invite = {
+      id: crypto.randomBytes(8).toString('hex'),
+      token, email, role,
+      invitedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    };
+    team.invites.push(invite);
+    const workspace = { ...ws, team };
+
+    const inviterName = req.user.name || req.user.email;
+    const acceptUrl = `https://${BASE_DOMAIN}/dashboard?acceptInvite=${encodeURIComponent(token)}`;
+    const html = `<!doctype html>
+<html><body style="margin:0;padding:0;background:#000;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#000000" style="background:#000;padding:32px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#0a0a0a" style="max-width:520px;background:#0a0a0a;">
+        <tr><td style="padding:36px 32px 8px;text-align:center;">
+          <h1 style="margin:0 0 14px;font-size:24px;font-weight:800;color:#ffffff;">You're invited to join ${escapeEmailHtml(inviterName)}'s team on JoyTree</h1>
+          <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:rgba(255,255,255,.7);">You've been invited as <strong style="color:#10b981;">${role === 'admin' ? 'an Admin' : 'a Viewer'}</strong> — ${role === 'admin' ? "you'll be able to deploy, manage projects, and view logs." : "you'll have read-only access to view deployments and logs."}</p>
+        </td></tr>
+        <tr><td align="center" style="padding:6px 32px 30px;">
+          <a href="${acceptUrl}" bgcolor="#10b981" style="display:inline-block;background:#10b981;color:#052e16;font-weight:800;font-size:15px;padding:14px 36px;border-radius:0;text-decoration:none;">Accept Invite</a>
+        </td></tr>
+        <tr><td style="padding:0 32px 30px;">
+          <p style="margin:0;color:rgba(255,255,255,.4);font-size:12px;line-height:1.6;text-align:center;">This invite expires in 7 days. If you don't have a JoyTree account yet, you'll be asked to create one with this email address first.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+    const text = `You're invited to join ${inviterName}'s team on JoyTree as ${role === 'admin' ? 'an Admin' : 'a Viewer'}.\n\nAccept: ${acceptUrl}\n\nThis invite expires in 7 days.`;
+
+    const emailResult = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: RESEND_FROM_EMAIL, to: [email], subject: `${inviterName} invited you to their JoyTree team`, html, text })
+    }).catch(() => null);
+
+    if (!emailResult || !emailResult.ok) {
+      return res.status(502).json({ error: 'Could not send the invite email. Please try again.' });
+    }
+
+    await writeWorkspaceToFirebase(req.user, workspace);
+    await writeTeamIndexEntry(token, { ownerEmail: req.user.email, invitedEmail: email, role, expiresAt: invite.expiresAt });
+
+    res.json({ ok: true, invite: { id: invite.id, email, role, invitedAt: invite.invitedAt, expiresAt: invite.expiresAt } });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not send invite' });
+  }
+});
+
+app.post('/api/team/invites/:token/accept', requireAuth, async (req, res) => {
+  try {
+    const token = String(req.params.token || '');
+    const entry = await readTeamIndexEntry(token);
+    if (!entry) return res.status(404).json({ error: 'This invite is invalid or has already been used.' });
+    if (entry.expiresAt && new Date(entry.expiresAt) < new Date()) {
+      await deleteTeamIndexEntry(token);
+      return res.status(410).json({ error: 'This invite has expired.' });
+    }
+    if (String(req.user.email || '').toLowerCase() !== String(entry.invitedEmail || '').toLowerCase()) {
+      return res.status(403).json({ error: `This invite was sent to ${entry.invitedEmail}. Sign in with that email to accept it.` });
+    }
+    if (!isTeamOwner(req.user)) {
+      return res.status(400).json({ error: "You're already on a team. Leave your current team before accepting a new invite." });
+    }
+
+    const owner = await findUserRecordByEmail(entry.ownerEmail);
+    if (!owner) return res.status(404).json({ error: 'The team you were invited to no longer exists.' });
+
+    const ownerWs = (await readWorkspaceFromFirebase(owner)) || owner.workspace || {};
+    const team = { members: [], invites: [], ...(ownerWs.team && typeof ownerWs.team === 'object' ? ownerWs.team : {}) };
+    team.invites = (Array.isArray(team.invites) ? team.invites : []).filter(i => i.token !== token);
+    team.members = Array.isArray(team.members) ? team.members : [];
+    team.members.push({ email: req.user.email, name: req.user.name || '', role: entry.role, addedAt: new Date().toISOString() });
+    await writeWorkspaceToFirebase(owner, { ...ownerWs, team });
+    await deleteTeamIndexEntry(token);
+
+    req.user.memberOf = String(entry.ownerEmail || '').toLowerCase();
+    req.user.memberRole = entry.role;
+    await persistUserRecord(req.user);
+
+    res.json({ ok: true, ownerEmail: entry.ownerEmail, role: entry.role });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not accept invite' });
+  }
+});
+
+app.delete('/api/team/invites/:id', requireAuth, async (req, res) => {
+  try {
+    if (!isTeamOwner(req.user)) return res.status(403).json({ error: 'Only the workspace owner can manage invites.' });
+    const ws = (await readWorkspaceFromFirebase(req.user)) || req.user.workspace || {};
+    const team = { members: [], invites: [], ...(ws.team && typeof ws.team === 'object' ? ws.team : {}) };
+    const invite = (team.invites || []).find(i => i.id === req.params.id);
+    if (!invite) return res.status(404).json({ error: 'Invite not found.' });
+    team.invites = (team.invites || []).filter(i => i.id !== req.params.id);
+    await writeWorkspaceToFirebase(req.user, { ...ws, team });
+    await deleteTeamIndexEntry(invite.token);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not cancel invite' });
+  }
+});
+
+app.delete('/api/team/members/:email', requireAuth, async (req, res) => {
+  try {
+    if (!isTeamOwner(req.user)) return res.status(403).json({ error: 'Only the workspace owner can remove team members.' });
+    const email = String(req.params.email || '').trim().toLowerCase();
+    const ws = (await readWorkspaceFromFirebase(req.user)) || req.user.workspace || {};
+    const team = { members: [], invites: [], ...(ws.team && typeof ws.team === 'object' ? ws.team : {}) };
+    const wasMember = (team.members || []).some(m => m.email === email);
+    team.members = (team.members || []).filter(m => m.email !== email);
+    await writeWorkspaceToFirebase(req.user, { ...ws, team });
+
+    // Kick the member back to their own (now-empty) workspace instead of
+    // silently leaving them still pointed at data they no longer have
+    // access to.
+    const memberRecord = await findUserRecordByEmail(email);
+    if (memberRecord && String(memberRecord.memberOf || '').toLowerCase() === String(req.user.email || '').toLowerCase()) {
+      memberRecord.memberOf = '';
+      memberRecord.memberRole = '';
+      await persistUserRecord(memberRecord);
+    }
+    res.json({ ok: true, removed: wasMember });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not remove team member' });
+  }
+});
+
 app.get('/api/workspace', requireAuth, async (req, res) => {
   // Firebase is the canonical workspace store for dashboard data persistence
   // across VPS/container restarts.
@@ -4927,6 +5523,14 @@ app.post('/api/workspace', requireAuth, async (req, res) => {
     // carry this same "overwrite everything with whatever the client has"
     // risk.
     if (blockIfImpersonating(req, res)) return;
+    // [FEATURE] Viewer team members get read-only access per the Team
+    // page's own "Viewer: cannot deploy or edit" description -- this is
+    // the main bulk-save endpoint every settings/project change flows
+    // through, so it's the highest-value single place to actually
+    // enforce that rather than leaving the role purely cosmetic.
+    if (req.user.memberOf && req.user.memberRole === 'viewer') {
+      return res.status(403).json({ error: 'Viewers have read-only access and cannot make changes.' });
+    }
     const payload = req.body || {};
     // Read existing workspace first to preserve uploadedProjects (and any other
     // fields the dashboard sync does not send). Without this, every auto-sync
@@ -12314,6 +12918,14 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
 
   if (!name || !subdomain || !repoUrl) {
     return res.status(400).json({ error: 'name, subdomain and repoUrl are required' });
+  }
+  // [FEATURE] Viewer team members are read-only per the Team page's own
+  // role description ("cannot deploy or edit") -- block the actual
+  // deploy trigger, not just the bulk workspace-save endpoint, since a
+  // viewer hitting this directly should never have been able to start
+  // a build regardless of what the UI does or doesn't show them.
+  if (req.user.memberOf && req.user.memberRole === 'viewer') {
+    return res.status(403).json({ error: 'Viewers have read-only access and cannot deploy.' });
   }
 
   const cleanSub = subdomain.toLowerCase()
