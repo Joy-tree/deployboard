@@ -1571,11 +1571,16 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
   line-height: 1.5;
   margin-bottom: 8px;
 }
-/* !important here defeats html[data-theme="dark"] .sidebar-nav a, which
-   boxes every <a> in the sidebar with a background+border — this link
-   should read as a plain "Learn more →"-style link (like Render's),
-   not a bordered button chip. */
-.sidebar-announcement-link {
+/* [FIX] The comment below (and the bare !important) was never actually
+   enough — html[data-theme="dark"] .sidebar-nav a has HIGHER
+   specificity (attribute + class + type selector) than a plain single-
+   class selector, and when both sides use !important, specificity is
+   what decides the winner, not !important itself. That's why this link
+   kept rendering as a boxed/bordered white button even once the CSS
+   file was actually loading correctly. Scoping under #sidebar (ID +
+   class) gives this rule higher specificity than the one it needs to
+   beat, so it reliably wins regardless of cascade order. */
+#sidebar .sidebar-announcement-link {
   display: inline-flex !important;
   align-items: center;
   gap: 4px;
@@ -1587,7 +1592,7 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
   padding: 0 !important;
   text-decoration: none;
 }
-.sidebar-announcement-link:hover { text-decoration: underline; }
+#sidebar .sidebar-announcement-link:hover { text-decoration: underline; }
 .sidebar-announcement-image {
   display: block;
   width: 100%;
