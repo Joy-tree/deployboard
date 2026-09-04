@@ -7582,7 +7582,7 @@ document.addEventListener('keydown', function(e){
                 <option value="dashboard_view" selected>User visits Dashboard</option>
                 <option value="deploy_success">A deployment succeeds</option>
                 <option value="domain_store_view">User opens Domain Store</option>
-                <option value="any_page">Any page (first qualifying view)</option>
+                <option value="any_page">Any page load, anywhere in the app</option>
               </select>
             </div>
             <div class="field" style="flex:1;">
@@ -7590,7 +7590,7 @@ document.addEventListener('keydown', function(e){
               <select id="pbFrequency" class="input">
                 <option value="once" selected>Once ever, per user</option>
                 <option value="daily">Once per day</option>
-                <option value="always">Every qualifying visit</option>
+                <option value="always">Every time it's triggered — e.g. "Any page load" + this shows on every page load</option>
               </select>
             </div>
           </div>
@@ -13476,12 +13476,18 @@ function showPage(id, navEl, _skipPush) {
   }
   // Promo popup triggers — fire on the qualifying page view. checkPromos()
   // itself no-ops silently if there's nothing active for that event, so
-  // this is safe to call unconditionally on every navigation to these pages.
+  // this is safe to call unconditionally on every navigation. Dashboard
+  // and Domain Store fire their own specific event (which the server
+  // also matches 'any_page' promos against); every OTHER page falls
+  // through to 'any_page' directly, so a promo set to "Any page" +
+  // "Every time" genuinely fires on every single page load, not just
+  // these two — 'any_page' was previously never actually called anywhere.
   if (id === 'dashboard' && typeof checkPromos === 'function') {
     setTimeout(() => checkPromos('dashboard_view'), 400);
-  }
-  if (id === 'domain-store' && typeof checkPromos === 'function') {
+  } else if (id === 'domain-store' && typeof checkPromos === 'function') {
     setTimeout(() => checkPromos('domain_store_view'), 400);
+  } else if (typeof checkPromos === 'function') {
+    setTimeout(() => checkPromos('any_page'), 400);
   }
   if (id === 'admin-panel' && typeof loadAdminPromos === 'function') {
     setTimeout(loadAdminPromos, 100);
