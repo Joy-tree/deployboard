@@ -4619,6 +4619,158 @@ app.get('/api/promos/active', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ═══════════════════════════════════════════════════════════════════════
+// SIDEBAR ANNOUNCEMENT — a single admin-managed card that can appear
+// anywhere in the dashboard sidebar nav (top, bottom, or right after any
+// specific nav item), the same idea as Render's "Introducing Workflows"
+// card. Unlike promos (a list, shown as a full-screen popup on a trigger
+// event), this is exactly ONE settings object at a time, always visible
+// in-place once active — so it's a single Firebase key, not a list with
+// per-item CRUD.
+// ═══════════════════════════════════════════════════════════════════════
+const SIDEBAR_ASSETS_DIR = path.join(__dirname, 'sidebar-assets');
+
+// Every valid data-page value in #sidebar's nav, in on-screen order —
+// used both to validate an "after:<key>" position and to build the
+// admin's position picker with real, current nav item names instead of
+// a list that silently drifts out of sync with the actual sidebar.
+const SIDEBAR_NAV_KEYS = [
+  'dashboard', 'projects', 'deployments', 'repos', 'code-upload',
+  'new-resource', 'new-deploy', 'logs', 'ai-analysis', 'joytree-ai',
+  'env-manager', 'domains', 'domain-store', 'domain-cpanel',
+  'admin-panel', 'analytics', 'webhooks', 'emails', 'cronjobs',
+  'workers', 'streaks',
+  'ssh-keys',
+  'databases', 'db-migration', 'db-diff', 'db-query', 'db-schema', 'db-sdk', 'realtime-api',
+  'team', 'pricing', 'usage', 'activity', 'secrets',
+  'settings',
+];
+
+function sidebarAnnouncementUrl() {
+  if (!FIREBASE_RTDB_URL) return '';
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  return `${FIREBASE_RTDB_URL}/deployboard_sidebar_announcement.json${authQuery}`;
+}
+async function readSidebarAnnouncement() {
+  try {
+    const url = sidebarAnnouncementUrl();
+    if (!url) return null;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    let r;
+    try { r = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' }, signal: controller.signal }); }
+    finally { clearTimeout(timer); }
+    if (!r.ok) return null;
+    const data = await r.json();
+    return (data && typeof data === 'object') ? data : null;
+  } catch { return null; }
+}
+async function writeSidebarAnnouncement(ann) {
+  const url = sidebarAnnouncementUrl();
+  if (!url) return false;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    let r;
+    try { r = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ann), signal: controller.signal }); }
+    finally { clearTimeout(timer); }
+    return r.ok;
+  } catch { return false; }
+}
+
+function sanitizeSidebarAnnouncementInput(body = {}) {
+  let position = String(body.position || 'bottom').trim();
+  if (position !== 'top' && position !== 'bottom') {
+    const key = position.replace(/^after:/, '');
+    position = SIDEBAR_NAV_KEYS.includes(key) ? `after:${key}` : 'bottom';
+  }
+  return {
+    heading:  String(body.heading || '').slice(0, 80).trim(),
+    message:  String(body.message || '').slice(0, 300).trim(),
+    linkText: String(body.linkText || 'Learn more').slice(0, 40).trim(),
+    linkUrl:  String(body.linkUrl || '').slice(0, 500).trim(),
+    imageUrl: String(body.imageUrl || '').slice(0, 500).trim(),
+    position,
+    active:   !!body.active,
+  };
+}
+
+app.get('/api/admin/sidebar-announcement', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const announcement = await readSidebarAnnouncement();
+    res.json({ ok: true, announcement, navKeys: SIDEBAR_NAV_KEYS });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/admin/sidebar-announcement', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const existing = await readSidebarAnnouncement();
+    const clean = sanitizeSidebarAnnouncementInput(req.body);
+    if (clean.active && !clean.heading) return res.status(400).json({ error: 'Heading is required to activate this' });
+    // Regenerate the id whenever the visible content actually changes, so
+    // the per-user dismiss flag (keyed by id, client-side) resets and
+    // users see it again -- fresh content is a fresh notice, not a still-
+    // dismissed one. Toggling active/position alone with the same text
+    // keeps the same id, so a dismissed-then-reactivated identical card
+    // doesn't reappear for people who already closed it.
+    const contentChanged = !existing
+      || existing.heading !== clean.heading
+      || existing.message !== clean.message
+      || existing.linkUrl !== clean.linkUrl
+      || existing.linkText !== clean.linkText
+      || existing.imageUrl !== clean.imageUrl;
+    const id = contentChanged
+      ? `sba_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`
+      : (existing.id || `sba_${Date.now()}`);
+    const announcement = { ...clean, id, updatedAt: Date.now() };
+    const saved = await writeSidebarAnnouncement(announcement);
+    if (!saved) return res.status(502).json({ error: 'Could not save' });
+    res.json({ ok: true, announcement });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/sidebar-announcement/upload-image', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const ct = req.headers['content-type'] || '';
+    if (!ct.includes('multipart/form-data')) return res.status(400).json({ error: 'multipart/form-data required' });
+
+    let parsed;
+    try { parsed = await parseMultipart(req); }
+    catch (e) { return res.status(400).json({ error: 'Failed to parse upload: ' + e.message }); }
+
+    const { fileBuffer, fileName } = parsed;
+    if (!fileBuffer || !fileBuffer.length) return res.status(400).json({ error: 'No file received' });
+
+    const ext = (path.extname(fileName || '').toLowerCase() || '.png').replace(/[^.a-z0-9]/g, '') || '.png';
+    const imageExts = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+    if (!imageExts.includes(ext)) return res.status(400).json({ error: 'Only PNG, JPG, GIF, or WEBP images are supported' });
+
+    const MAX_BYTES = 4 * 1024 * 1024; // 4MB — this is a small sidebar thumbnail, not a hero banner
+    if (fileBuffer.length > MAX_BYTES) return res.status(400).json({ error: 'Image must be under 4MB' });
+
+    fs.mkdirSync(SIDEBAR_ASSETS_DIR, { recursive: true });
+    const safeName = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
+    fs.writeFileSync(path.join(SIDEBAR_ASSETS_DIR, safeName), fileBuffer);
+
+    res.json({ ok: true, url: `https://${BASE_DOMAIN}/sidebar-assets/${safeName}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not upload image' });
+  }
+});
+
+// User-facing: any signed-in user's sidebar checks this once on load to
+// decide whether to render the announcement card, and where.
+app.get('/api/sidebar-announcement/active', requireAuth, async (req, res) => {
+  try {
+    const ann = await readSidebarAnnouncement();
+    if (!ann || !ann.active) return res.json({ ok: true, announcement: null });
+    res.json({ ok: true, announcement: ann });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 
 function normalizeGitHubClientId(value) {
   return String(value || '').trim();

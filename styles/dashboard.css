@@ -1529,6 +1529,65 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
   min-width: 18px;
   text-align: center;
 }
+
+/* ── Sidebar announcement card ── admin-managed, appears wherever the
+   admin positions it in the nav (top/bottom/after a specific item),
+   same idea as Render's "Introducing Workflows" card in their sidebar. */
+.sidebar-announcement {
+  position: relative;
+  margin: 14px 4px;
+  padding: 14px 14px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: default;
+}
+.sidebar-announcement-close {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-3);
+  font-size: 15px;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.sidebar-announcement-close:hover { background: var(--bg-hover); color: var(--text); }
+.sidebar-announcement-heading {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 5px;
+  padding-right: 18px;
+  line-height: 1.35;
+}
+.sidebar-announcement-message {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.sidebar-announcement-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}
+.sidebar-announcement-link:hover { text-decoration: underline; }
+.sidebar-announcement-image {
+  display: block;
+  width: 100%;
+  border-radius: 6px;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+}
 .nav-badge.green { background: var(--green); }
 .nav-badge.amber { background: var(--amber); }
 

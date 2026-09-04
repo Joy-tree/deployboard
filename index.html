@@ -7480,6 +7480,111 @@ document.addEventListener('keydown', function(e){
         </div>
         <div id="adminPromoList" style="margin-top:14px;color:var(--text-3);font-size:0.85rem;">Loading…</div>
       </div>
+
+      <!-- ══ Sidebar Announcement ══ -->
+      <div style="margin-top:36px;">
+        <div>
+          <h3 style="margin:0;font-size:1rem;">Sidebar announcement</h3>
+          <div style="color:var(--text-3);font-size:0.8rem;margin-top:4px;">A small card in the dashboard's own sidebar nav — heading, a short message, an optional "Learn more" link, and an optional small image. Sits permanently wherever you place it (top, bottom, or right after a specific nav item) until you turn it off, unlike the full-screen popups above.</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:18px;max-width:480px;">
+          <input type="hidden" id="sbaId" value="">
+
+          <div class="field">
+            <label class="field-label">Heading</label>
+            <input type="text" id="sbaHeading" class="input" placeholder="Introducing Workflows" maxlength="80">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Message</label>
+            <textarea id="sbaMessage" class="input" rows="3" maxlength="300" placeholder="An orchestration and execution engine for long-running, distributed tasks."></textarea>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Link text</label>
+            <input type="text" id="sbaLinkText" class="input" placeholder="Learn more" maxlength="40">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Link URL <span style="color:var(--text-3);font-weight:400;">(e.g. a specific docs route)</span></label>
+            <input type="text" id="sbaLinkUrl" class="input" placeholder="https://docs.joytree.site/workflows">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Image <span style="color:var(--text-3);font-weight:400;">(small thumbnail, optional)</span></label>
+            <input type="file" id="sbaImageFile" accept="image/png,image/jpeg,image/gif,image/webp" onchange="sbaUploadImage(this)" style="display:none;">
+            <button type="button" class="btn btn-ghost" onclick="document.getElementById('sbaImageFile').click()" style="width:100%;">Choose image</button>
+            <div id="sbaImageStatus" style="font-size:0.78rem;color:var(--text-3);margin-top:6px;"></div>
+            <input type="hidden" id="sbaImageUrl" value="">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Position in the sidebar</label>
+            <select id="sbaPosition" class="input">
+              <option value="top">Top of the sidebar</option>
+              <option value="bottom" selected>Bottom of the sidebar</option>
+              <optgroup label="Overview">
+                <option value="after:dashboard">After: Dashboard</option>
+                <option value="after:projects">After: Projects</option>
+                <option value="after:deployments">After: Deployments</option>
+                <option value="after:repos">After: Repositories</option>
+                <option value="after:code-upload">After: Code Upload / IDE</option>
+              </optgroup>
+              <optgroup label="Tools">
+                <option value="after:new-resource">After: New Resource</option>
+                <option value="after:new-deploy">After: New Deployment</option>
+                <option value="after:logs">After: Live Logs</option>
+                <option value="after:ai-analysis">After: AI Analysis</option>
+                <option value="after:env-manager">After: Env Variables</option>
+                <option value="after:domains">After: Domains</option>
+                <option value="after:domain-store">After: Domain Store</option>
+                <option value="after:domain-cpanel">After: Domain cPanel</option>
+                <option value="after:analytics">After: Analytics</option>
+                <option value="after:webhooks">After: Webhooks</option>
+                <option value="after:cronjobs">After: Cron Jobs</option>
+                <option value="after:workers">After: Background Workers</option>
+                <option value="after:streaks">After: Deploy Streaks</option>
+              </optgroup>
+              <optgroup label="Developer Tools">
+                <option value="after:ssh-keys">After: SSH Keys</option>
+              </optgroup>
+              <optgroup label="Data">
+                <option value="after:databases">After: Databases</option>
+                <option value="after:db-migration">After: Migration</option>
+                <option value="after:db-diff">After: Diff</option>
+                <option value="after:db-query">After: Query Studio</option>
+                <option value="after:db-schema">After: Schema</option>
+                <option value="after:db-sdk">After: SDK</option>
+                <option value="after:realtime-api">After: Realtime API</option>
+              </optgroup>
+              <optgroup label="Platform">
+                <option value="after:team">After: Team</option>
+                <option value="after:pricing">After: Pricing</option>
+                <option value="after:usage">After: Usage</option>
+                <option value="after:activity">After: Activity</option>
+                <option value="after:secrets">After: Secrets</option>
+              </optgroup>
+              <optgroup label="System">
+                <option value="after:settings">After: Settings</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;color:var(--text-2);">
+            <input type="checkbox" id="sbaActive" style="width:auto;"> Active — visible to users immediately
+          </label>
+
+          <div style="border-top:1px solid var(--border);padding-top:16px;">
+            <div style="font-size:0.78rem;color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">Preview</div>
+            <div style="max-width:260px;"><div id="sbaPreviewWrap"></div></div>
+          </div>
+
+          <div>
+            <button class="btn btn-primary" onclick="saveSidebarAnnouncement()">Save</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ══ Promo builder modal ══ -->
@@ -8115,6 +8220,93 @@ document.addEventListener('keydown', function(e){
           if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
         }
       };
+
+      // ── Sidebar announcement admin ──────────────────────────────────
+      window.loadSidebarAnnouncementAdmin = async function() {
+        try {
+          const res = await apiFetch('/api/admin/sidebar-announcement');
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load');
+          const ann = data.announcement || {};
+          document.getElementById('sbaId').value = ann.id || '';
+          document.getElementById('sbaHeading').value = ann.heading || '';
+          document.getElementById('sbaMessage').value = ann.message || '';
+          document.getElementById('sbaLinkText').value = ann.linkText || 'Learn more';
+          document.getElementById('sbaLinkUrl').value = ann.linkUrl || '';
+          document.getElementById('sbaImageUrl').value = ann.imageUrl || '';
+          document.getElementById('sbaImageStatus').textContent = ann.imageUrl ? 'Image set' : '';
+          document.getElementById('sbaPosition').value = ann.position || 'bottom';
+          document.getElementById('sbaActive').checked = !!ann.active;
+          sbaUpdatePreview();
+        } catch (e) {
+          toast(e.message || 'Could not load sidebar announcement', 'error');
+        }
+      };
+
+      window.sbaUploadImage = async function(input) {
+        const file = input.files?.[0];
+        if (!file) return;
+        const statusEl = document.getElementById('sbaImageStatus');
+        statusEl.textContent = 'Uploading…';
+        try {
+          const form = new FormData();
+          form.append('file', file, file.name);
+          const res = await apiFetch('/api/admin/sidebar-announcement/upload-image', { method: 'POST', body: form });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Upload failed');
+          document.getElementById('sbaImageUrl').value = data.url;
+          statusEl.textContent = 'Image uploaded';
+          sbaUpdatePreview();
+        } catch (e) {
+          statusEl.textContent = '';
+          toast(e.message || 'Could not upload image', 'error');
+        }
+      };
+
+      window.sbaUpdatePreview = function() {
+        const wrap = document.getElementById('sbaPreviewWrap');
+        if (!wrap || typeof buildSidebarAnnouncementHtml !== 'function') return;
+        const ann = {
+          id: 'preview',
+          heading: document.getElementById('sbaHeading').value || 'Heading goes here',
+          message: document.getElementById('sbaMessage').value,
+          linkText: document.getElementById('sbaLinkText').value || 'Learn more',
+          linkUrl: document.getElementById('sbaLinkUrl').value,
+          imageUrl: document.getElementById('sbaImageUrl').value,
+        };
+        wrap.innerHTML = buildSidebarAnnouncementHtml(ann);
+        // Preview shouldn't actually be dismissable/clickable-away in the admin form
+        wrap.querySelector('.sidebar-announcement-close')?.setAttribute('onclick', 'return false;');
+      };
+      ['sbaHeading','sbaMessage','sbaLinkText','sbaLinkUrl'].forEach(id => {
+        document.addEventListener('input', (e) => { if (e.target && e.target.id === id) sbaUpdatePreview(); });
+      });
+
+      window.saveSidebarAnnouncement = async function() {
+        const btn = event?.target;
+        const originalLabel = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+        try {
+          const body = {
+            heading:  document.getElementById('sbaHeading').value,
+            message:  document.getElementById('sbaMessage').value,
+            linkText: document.getElementById('sbaLinkText').value,
+            linkUrl:  document.getElementById('sbaLinkUrl').value,
+            imageUrl: document.getElementById('sbaImageUrl').value,
+            position: document.getElementById('sbaPosition').value,
+            active:   document.getElementById('sbaActive').checked,
+          };
+          const res = await apiFetch('/api/admin/sidebar-announcement', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not save');
+          document.getElementById('sbaId').value = data.announcement.id;
+          toast('Sidebar announcement saved.', 'success');
+        } catch (e) {
+          toast(e.message || 'Could not save sidebar announcement', 'error');
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
+        }
+      };
     })();
     </script>
 
@@ -8309,6 +8501,69 @@ document.addEventListener('keydown', function(e){
         if (!overlay) return;
         overlay.classList.remove('active');
         setTimeout(() => { overlay.innerHTML = ''; }, 200);
+      };
+    })();
+    </script>
+
+    <!-- ════════ SIDEBAR ANNOUNCEMENT RUNTIME (site-wide) ════════ -->
+    <script>
+    (function() {
+      // Dismissal is keyed by the announcement's id (which the server
+      // regenerates whenever the admin actually changes the visible
+      // content), so closing an old announcement doesn't hide a newer
+      // one the admin posts later — same pattern as the promo popup's
+      // claimed/seen flags.
+      function sbaDismissKey(id) { return 'jt_sidebar_ann_dismissed_' + id; }
+
+      window.buildSidebarAnnouncementHtml = function(ann) {
+        const linkHtml = ann.linkUrl
+          ? `<a class="sidebar-announcement-link" href="${escapeHtml(ann.linkUrl)}" target="_blank" rel="noopener">${escapeHtml(ann.linkText || 'Learn more')} &rarr;</a>`
+          : '';
+        const imageHtml = ann.imageUrl
+          ? `<img class="sidebar-announcement-image" src="${escapeHtml(ann.imageUrl)}" alt="">`
+          : '';
+        return `<div class="sidebar-announcement" id="sidebarAnnouncementCard">
+          <button type="button" class="sidebar-announcement-close" aria-label="Dismiss" onclick="dismissSidebarAnnouncement('${escapeHtml(ann.id)}')">&times;</button>
+          <div class="sidebar-announcement-heading">${escapeHtml(ann.heading)}</div>
+          ${ann.message ? `<div class="sidebar-announcement-message">${escapeHtml(ann.message)}</div>` : ''}
+          ${linkHtml}
+          ${imageHtml}
+        </div>`;
+      };
+
+      window.dismissSidebarAnnouncement = function(id) {
+        try { localStorage.setItem(sbaDismissKey(id), '1'); } catch {}
+        document.getElementById('sidebarAnnouncementCard')?.remove();
+      };
+
+      window.initSidebarAnnouncement = async function() {
+        if (!hasAuthToken || !hasAuthToken()) return;
+        if (document.getElementById('sidebarAnnouncementCard')) return; // already inserted
+        try {
+          const res = await apiFetch('/api/sidebar-announcement/active');
+          if (!res.ok) return;
+          const data = await res.json();
+          const ann = data && data.announcement;
+          if (!ann || !ann.id || !ann.heading) return;
+          try { if (localStorage.getItem(sbaDismissKey(ann.id))) return; } catch {}
+
+          const nav = document.querySelector('.sidebar-nav');
+          if (!nav) return;
+          const wrap = document.createElement('div');
+          wrap.innerHTML = buildSidebarAnnouncementHtml(ann);
+          const card = wrap.firstElementChild;
+
+          if (ann.position === 'top') {
+            nav.insertBefore(card, nav.firstChild);
+          } else if (ann.position && ann.position.startsWith('after:')) {
+            const key = ann.position.slice(6);
+            const target = nav.querySelector(`.nav-item[data-page="${CSS.escape(key)}"]`);
+            if (target) target.insertAdjacentElement('afterend', card);
+            else nav.appendChild(card); // target not found (hidden for this user, etc.) — fall back to the end
+          } else {
+            nav.appendChild(card); // 'bottom' (default)
+          }
+        } catch {}
       };
     })();
     </script>
@@ -13577,6 +13832,11 @@ function showPage(id, navEl, _skipPush) {
   if (id === 'dashboard' && typeof checkPromos === 'function') {
     setTimeout(() => checkPromos('dashboard_view'), 400);
   }
+  // Sidebar announcement — inserts at most once (it no-ops if already
+  // present), so it's safe to call on every dashboard view too.
+  if (id === 'dashboard' && typeof initSidebarAnnouncement === 'function') {
+    setTimeout(() => initSidebarAnnouncement(), 250);
+  }
   if (id === 'domain-store' && typeof checkPromos === 'function') {
     setTimeout(() => checkPromos('domain_store_view'), 400);
   }
@@ -13591,6 +13851,9 @@ function showPage(id, navEl, _skipPush) {
   }
   if (id === 'admin-panel' && typeof loadAdminPromos === 'function') {
     setTimeout(loadAdminPromos, 100);
+  }
+  if (id === 'admin-panel' && typeof loadSidebarAnnouncementAdmin === 'function') {
+    setTimeout(loadSidebarAnnouncementAdmin, 100);
   }
   // ── If navigating AWAY from new-deploy, clean up any new-version upload state ──
   // This prevents locked name/subdomain fields and the new-version banner from
