@@ -76,6 +76,16 @@ services:
       # rebuild.
       - ./promo-assets:/app/promo-assets
       - ./email-assets:/app/email-assets
+      # [FIX] Same exact bug class as promo-assets/email-assets above,
+      # just introduced later when the Sidebar Announcement feature was
+      # added -- sidebar-assets/ (the admin-uploaded thumbnail image for
+      # the sidebar nav card) was never given the same volume mount, so
+      # every rebuild after an upload silently wiped the file while the
+      # saved announcement record still pointed at its now-missing
+      # filename. This is exactly why the image the admin uploaded and
+      # saved didn't show on the live site: any redeploy in between
+      # (and this session redeploys constantly) erased it.
+      - ./sidebar-assets:/app/sidebar-assets
       # [FIX] Was missing entirely -- vapid-keys.json was being written to
       # /app/vapid-keys.json inside the container with no volume mount,
       # meaning it lived only in that container's own writable layer. Every
