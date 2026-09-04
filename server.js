@@ -2188,6 +2188,13 @@ const userSchema = new mongoose.Schema({
   googleId: { type: String, default: '', index: true },
   googleAvatarUrl: { type: String, default: '' },
   firebaseUid: { type: String, default: '', index: true },
+  // [FEATURE] Team collaboration. When set, this user's workspace reads/
+  // writes are transparently redirected to another user's workspace key
+  // (see firebaseWorkspaceKey below) instead of their own -- i.e. they've
+  // accepted an invite and are now a member of someone else's team,
+  // sharing the exact same projects/deployments/settings.
+  memberOf: { type: String, default: '' },
+  memberRole: { type: String, default: '' }, // 'admin' | 'viewer' -- only meaningful when memberOf is set
   workspace: {
     projects: { type: Array, default: [] },
     deployments: { type: Array, default: [] },
@@ -2297,6 +2304,19 @@ function syncLocalDbsFromMongo() {
 setInterval(syncLocalDbsFromMongo, 30000);
 
 function firebaseWorkspaceKey(user = {}) {
+  // [FEATURE] Team members share their inviter's workspace. If this user
+  // has accepted a team invite, memberOf holds the OWNER's stable
+  // workspace key -- redirect every read/write for this user to that
+  // shared workspace instead of deriving a key from their own email.
+  // This is the single choke point every workspace read/write in the
+  // app already goes through (readWorkspaceFromFirebase, writeWorkspace-
+  // ToFirebase, and everything built on them), so team members
+  // transparently see and can modify the exact same projects/
+  // deployments/settings/domains as the owner with zero changes needed
+  // to any of those individual routes.
+  if (user.memberOf) {
+    return String(user.memberOf).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+  }
   // STABILITY FIX: Always prefer email as the canonical Firebase RTDB key.
   // email is the only identifier that is consistent across VPS rebuilds, new
   // MongoDB _id values, new firebaseUid tokens, and local-auth.json resets.
@@ -5183,6 +5203,247 @@ app.post('/api/auth/verify-email', async (req, res) => {
 });
 
 
+async function findUserRecordByEmail(email) {
+  const e = String(email || '').trim().toLowerCase();
+  if (!e) return null;
+  if (isDbReady()) return await User.findOne({ email: e }).catch(() => null);
+  return localAuth.users.find(u => String(u.email || '').toLowerCase() === e) || null;
+}
+async function persistUserRecord(user) {
+  if (isDbReady() && typeof user.save === 'function') { await user.save().catch(() => {}); }
+  else { saveLocalAuth(); }
+}
+// True team owner = an account that is not itself a member of someone
+// else's team. Only the real owner can invite/remove members --
+// prevents an accepted "admin" member from inviting further members or
+// removing others, matching the Owner-only "manage team" permission
+// already described on the Team page's Roles & Permissions card.
+function isTeamOwner(user) { return !user.memberOf; }
+
+// Global token -> invite lookup, same pattern as the existing
+// deployboard_api_keys_index used for jtk_ CLI keys elsewhere in this
+// file. Needed because the invited person doesn't know whose workspace
+// they're being invited into -- the token alone has to resolve to it
+// without scanning every workspace in Firebase.
+async function readTeamIndexEntry(token) {
+  if (!FIREBASE_RTDB_URL) return null;
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  try {
+    const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_invites_index/${token}.json${authQuery}`);
+    if (!r.ok) return null;
+    const data = await r.json();
+    return (data && typeof data === 'object') ? data : null;
+  } catch { return null; }
+}
+async function writeTeamIndexEntry(token, data) {
+  if (!FIREBASE_RTDB_URL) return false;
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  try {
+    const r = await fetch(`${FIREBASE_RTDB_URL}/deployboard_invites_index/${token}.json${authQuery}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+    });
+    return r.ok;
+  } catch { return false; }
+}
+async function deleteTeamIndexEntry(token) {
+  if (!FIREBASE_RTDB_URL || !token) return;
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  try { await fetch(`${FIREBASE_RTDB_URL}/deployboard_invites_index/${token}.json${authQuery}`, { method: 'DELETE' }); } catch {}
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEAM COLLABORATION — real invites, real membership, real shared data.
+//
+// Previously the Team page was 100% client-side fake: sendInvite()
+// pushed into a local array and saved to localStorage. No email was
+// ever sent, no other account could ever see or accept the invite, and
+// there was zero mechanism for a second person to actually access the
+// same workspace -- "inviting" someone did literally nothing anyone
+// else could observe.
+//
+// This is now real: invites send an actual email (Resend, same
+// mechanism as promo emails), accepting one sets memberOf on the
+// invited user's own account, and firebaseWorkspaceKey() (see above)
+// redirects that account's workspace reads/writes to the owner's
+// workspace from then on -- so team members see and can modify the
+// exact same projects/deployments/settings/domains as the owner,
+// through every existing endpoint, with no per-endpoint changes needed.
+// Team membership data itself lives inside workspace.team, alongside
+// projects/deployments, reusing the same Firebase persistence already
+// in place rather than a new storage system.
+// ══════════════════════════════════════════════════════════════════
+
+app.get('/api/team', requireAuth, async (req, res) => {
+  try {
+    const ws = (await readWorkspaceFromFirebase(req.user)) || req.user.workspace || {};
+    const team = ws.team && typeof ws.team === 'object' ? ws.team : {};
+    const owner = isTeamOwner(req.user)
+      ? { email: req.user.email, name: req.user.name || '' }
+      : { email: req.user.memberOf, name: '' };
+    if (!isTeamOwner(req.user)) {
+      const ownerRecord = await findUserRecordByEmail(req.user.memberOf);
+      if (ownerRecord) owner.name = ownerRecord.name || '';
+    }
+    res.json({
+      ok: true,
+      isOwner: isTeamOwner(req.user),
+      role: isTeamOwner(req.user) ? 'owner' : (req.user.memberRole || 'admin'),
+      owner,
+      members: Array.isArray(team.members) ? team.members.map(m => ({ email: m.email, name: m.name || '', role: m.role, addedAt: m.addedAt })) : [],
+      invites: Array.isArray(team.invites) ? team.invites.map(i => ({ id: i.id, email: i.email, role: i.role, invitedAt: i.invitedAt, expiresAt: i.expiresAt })) : []
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not load team' });
+  }
+});
+
+app.post('/api/team/invite', requireAuth, async (req, res) => {
+  try {
+    if (!isTeamOwner(req.user)) return res.status(403).json({ error: 'Only the workspace owner can invite team members.' });
+    if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return res.status(500).json({ error: 'Email sending is not configured on this server.' });
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const role  = ['admin', 'viewer'].includes(req.body.role) ? req.body.role : 'admin';
+    if (!email || !email.includes('@')) return res.status(400).json({ error: 'Enter a valid email address.' });
+    if (email === String(req.user.email || '').toLowerCase()) return res.status(400).json({ error: "You can't invite yourself." });
+
+    const ws = (await readWorkspaceFromFirebase(req.user)) || req.user.workspace || {};
+    const team = { members: [], invites: [], ...(ws.team && typeof ws.team === 'object' ? ws.team : {}) };
+    team.members = Array.isArray(team.members) ? team.members : [];
+    team.invites = Array.isArray(team.invites) ? team.invites : [];
+
+    if (team.members.some(m => m.email === email)) return res.status(400).json({ error: 'That person is already a team member.' });
+    if (team.invites.some(i => i.email === email)) return res.status(400).json({ error: 'An invite is already pending for that email.' });
+
+    const token = crypto.randomBytes(24).toString('hex');
+    const invite = {
+      id: crypto.randomBytes(8).toString('hex'),
+      token, email, role,
+      invitedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    };
+    team.invites.push(invite);
+    const workspace = { ...ws, team };
+
+    const inviterName = req.user.name || req.user.email;
+    const acceptUrl = `https://${BASE_DOMAIN}/dashboard?acceptInvite=${encodeURIComponent(token)}`;
+    const html = `<!doctype html>
+<html><body style="margin:0;padding:0;background:#000;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#000000" style="background:#000;padding:32px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#0a0a0a" style="max-width:520px;background:#0a0a0a;">
+        <tr><td style="padding:36px 32px 8px;text-align:center;">
+          <h1 style="margin:0 0 14px;font-size:24px;font-weight:800;color:#ffffff;">You're invited to join ${escapeEmailHtml(inviterName)}'s team on JoyTree</h1>
+          <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:rgba(255,255,255,.7);">You've been invited as <strong style="color:#10b981;">${role === 'admin' ? 'an Admin' : 'a Viewer'}</strong> — ${role === 'admin' ? "you'll be able to deploy, manage projects, and view logs." : "you'll have read-only access to view deployments and logs."}</p>
+        </td></tr>
+        <tr><td align="center" style="padding:6px 32px 30px;">
+          <a href="${acceptUrl}" bgcolor="#10b981" style="display:inline-block;background:#10b981;color:#052e16;font-weight:800;font-size:15px;padding:14px 36px;border-radius:0;text-decoration:none;">Accept Invite</a>
+        </td></tr>
+        <tr><td style="padding:0 32px 30px;">
+          <p style="margin:0;color:rgba(255,255,255,.4);font-size:12px;line-height:1.6;text-align:center;">This invite expires in 7 days. If you don't have a JoyTree account yet, you'll be asked to create one with this email address first.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+    const text = `You're invited to join ${inviterName}'s team on JoyTree as ${role === 'admin' ? 'an Admin' : 'a Viewer'}.\n\nAccept: ${acceptUrl}\n\nThis invite expires in 7 days.`;
+
+    const emailResult = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: RESEND_FROM_EMAIL, to: [email], subject: `${inviterName} invited you to their JoyTree team`, html, text })
+    }).catch(() => null);
+
+    if (!emailResult || !emailResult.ok) {
+      return res.status(502).json({ error: 'Could not send the invite email. Please try again.' });
+    }
+
+    await writeWorkspaceToFirebase(req.user, workspace);
+    await writeTeamIndexEntry(token, { ownerEmail: req.user.email, invitedEmail: email, role, expiresAt: invite.expiresAt });
+
+    res.json({ ok: true, invite: { id: invite.id, email, role, invitedAt: invite.invitedAt, expiresAt: invite.expiresAt } });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not send invite' });
+  }
+});
+
+app.post('/api/team/invites/:token/accept', requireAuth, async (req, res) => {
+  try {
+    const token = String(req.params.token || '');
+    const entry = await readTeamIndexEntry(token);
+    if (!entry) return res.status(404).json({ error: 'This invite is invalid or has already been used.' });
+    if (entry.expiresAt && new Date(entry.expiresAt) < new Date()) {
+      await deleteTeamIndexEntry(token);
+      return res.status(410).json({ error: 'This invite has expired.' });
+    }
+    if (String(req.user.email || '').toLowerCase() !== String(entry.invitedEmail || '').toLowerCase()) {
+      return res.status(403).json({ error: `This invite was sent to ${entry.invitedEmail}. Sign in with that email to accept it.` });
+    }
+    if (!isTeamOwner(req.user)) {
+      return res.status(400).json({ error: "You're already on a team. Leave your current team before accepting a new invite." });
+    }
+
+    const owner = await findUserRecordByEmail(entry.ownerEmail);
+    if (!owner) return res.status(404).json({ error: 'The team you were invited to no longer exists.' });
+
+    const ownerWs = (await readWorkspaceFromFirebase(owner)) || owner.workspace || {};
+    const team = { members: [], invites: [], ...(ownerWs.team && typeof ownerWs.team === 'object' ? ownerWs.team : {}) };
+    team.invites = (Array.isArray(team.invites) ? team.invites : []).filter(i => i.token !== token);
+    team.members = Array.isArray(team.members) ? team.members : [];
+    team.members.push({ email: req.user.email, name: req.user.name || '', role: entry.role, addedAt: new Date().toISOString() });
+    await writeWorkspaceToFirebase(owner, { ...ownerWs, team });
+    await deleteTeamIndexEntry(token);
+
+    req.user.memberOf = String(entry.ownerEmail || '').toLowerCase();
+    req.user.memberRole = entry.role;
+    await persistUserRecord(req.user);
+
+    res.json({ ok: true, ownerEmail: entry.ownerEmail, role: entry.role });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not accept invite' });
+  }
+});
+
+app.delete('/api/team/invites/:id', requireAuth, async (req, res) => {
+  try {
+    if (!isTeamOwner(req.user)) return res.status(403).json({ error: 'Only the workspace owner can manage invites.' });
+    const ws = (await readWorkspaceFromFirebase(req.user)) || req.user.workspace || {};
+    const team = { members: [], invites: [], ...(ws.team && typeof ws.team === 'object' ? ws.team : {}) };
+    const invite = (team.invites || []).find(i => i.id === req.params.id);
+    if (!invite) return res.status(404).json({ error: 'Invite not found.' });
+    team.invites = (team.invites || []).filter(i => i.id !== req.params.id);
+    await writeWorkspaceToFirebase(req.user, { ...ws, team });
+    await deleteTeamIndexEntry(invite.token);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not cancel invite' });
+  }
+});
+
+app.delete('/api/team/members/:email', requireAuth, async (req, res) => {
+  try {
+    if (!isTeamOwner(req.user)) return res.status(403).json({ error: 'Only the workspace owner can remove team members.' });
+    const email = String(req.params.email || '').trim().toLowerCase();
+    const ws = (await readWorkspaceFromFirebase(req.user)) || req.user.workspace || {};
+    const team = { members: [], invites: [], ...(ws.team && typeof ws.team === 'object' ? ws.team : {}) };
+    const wasMember = (team.members || []).some(m => m.email === email);
+    team.members = (team.members || []).filter(m => m.email !== email);
+    await writeWorkspaceToFirebase(req.user, { ...ws, team });
+
+    // Kick the member back to their own (now-empty) workspace instead of
+    // silently leaving them still pointed at data they no longer have
+    // access to.
+    const memberRecord = await findUserRecordByEmail(email);
+    if (memberRecord && String(memberRecord.memberOf || '').toLowerCase() === String(req.user.email || '').toLowerCase()) {
+      memberRecord.memberOf = '';
+      memberRecord.memberRole = '';
+      await persistUserRecord(memberRecord);
+    }
+    res.json({ ok: true, removed: wasMember });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not remove team member' });
+  }
+});
+
 app.get('/api/workspace', requireAuth, async (req, res) => {
   // Firebase is the canonical workspace store for dashboard data persistence
   // across VPS/container restarts.
@@ -5262,6 +5523,14 @@ app.post('/api/workspace', requireAuth, async (req, res) => {
     // carry this same "overwrite everything with whatever the client has"
     // risk.
     if (blockIfImpersonating(req, res)) return;
+    // [FEATURE] Viewer team members get read-only access per the Team
+    // page's own "Viewer: cannot deploy or edit" description -- this is
+    // the main bulk-save endpoint every settings/project change flows
+    // through, so it's the highest-value single place to actually
+    // enforce that rather than leaving the role purely cosmetic.
+    if (req.user.memberOf && req.user.memberRole === 'viewer') {
+      return res.status(403).json({ error: 'Viewers have read-only access and cannot make changes.' });
+    }
     const payload = req.body || {};
     // Read existing workspace first to preserve uploadedProjects (and any other
     // fields the dashboard sync does not send). Without this, every auto-sync
@@ -12649,6 +12918,14 @@ app.post('/api/deploy', requireAuth, async (req, res) => {
 
   if (!name || !subdomain || !repoUrl) {
     return res.status(400).json({ error: 'name, subdomain and repoUrl are required' });
+  }
+  // [FEATURE] Viewer team members are read-only per the Team page's own
+  // role description ("cannot deploy or edit") -- block the actual
+  // deploy trigger, not just the bulk workspace-save endpoint, since a
+  // viewer hitting this directly should never have been able to start
+  // a build regardless of what the UI does or doesn't show them.
+  if (req.user.memberOf && req.user.memberRole === 'viewer') {
+    return res.status(403).json({ error: 'Viewers have read-only access and cannot deploy.' });
   }
 
   const cleanSub = subdomain.toLowerCase()

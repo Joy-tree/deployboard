@@ -6633,6 +6633,7 @@ document.addEventListener('keydown', function(e){
           const r = _orig.apply(this, arguments);
           if (page === 'domain-store') { dsPreloadTlds(); dsLoadMyDomains(); }
           if (page === 'domain-cpanel') { dcpInit(); }
+          if (page === 'team' && typeof loadTeam === 'function') { loadTeam(); }
           return r;
         };
       }
@@ -11421,7 +11422,7 @@ async function runDatabaseDiff() {
           <div class="page-title">Team</div>
           <div class="page-subtitle">Manage who has access to your joytree platform.</div>
         </div>
-        <button class="btn btn-primary" onclick="openInviteModal()">
+        <button class="btn btn-primary" id="teamInviteBtn" onclick="openInviteModal()">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Invite Member
         </button>
@@ -13570,6 +13571,13 @@ function applyUserProfile(user){
       const cleanUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash;
       window.history.replaceState({}, '', cleanUrl);
     }
+  }
+
+  // [FEATURE] Team invite emails link to /dashboard?acceptInvite=<token>.
+  // Same run-once-after-auth pattern as promoDomainSearch above.
+  if (!window._teamInviteAcceptHandled) {
+    window._teamInviteAcceptHandled = true;
+    if (typeof handlePendingInviteAccept === 'function') handlePendingInviteAccept();
   }
 }
 
@@ -21490,35 +21498,81 @@ async function dmRunCleanup() {
 
 
 // ══════════════════════════════════════════════════════════════════
-// TEAM
 // ══════════════════════════════════════════════════════════════════
-let teamInvites = JSON.parse(localStorage.getItem('db_team_invites') || '[]');
+// TEAM — real invites, real membership, real shared workspace access.
+//
+// [FIX] This whole feature used to be fake: sendInvite() pushed into a
+// local array and saved to localStorage. No email ever went out, no
+// other account could ever see or act on the invite, and there was no
+// mechanism at all for a second person to access the same workspace --
+// "inviting" someone did nothing anyone else could observe. Now backed
+// by real endpoints (/api/team/*) that send an actual email and grant
+// actual shared access to projects/deployments/settings once accepted.
+// ══════════════════════════════════════════════════════════════════
+let teamState = { isOwner: true, role: 'owner', owner: null, members: [], invites: [] };
+
+async function loadTeam() {
+  try {
+    const r = await apiFetch('/api/team');
+    const data = await r.json();
+    if (r.ok && data.ok) teamState = data;
+  } catch (e) { console.warn('[team] load failed', e); }
+  renderTeam();
+}
 
 function renderTeam() {
-  // Update owner info from settings
   const nameEl  = document.getElementById('teamOwnerName');
   const emailEl = document.getElementById('teamOwnerEmail');
   const avatarEl= document.getElementById('teamOwnerAvatar');
-  if (nameEl && settings && settings.ownerName) nameEl.textContent = settings.ownerName;
-  if (emailEl && settings && settings.ownerEmail) emailEl.textContent = settings.ownerEmail;
-  if (avatarEl && settings && settings.ownerName) {
-    avatarEl.textContent = settings.ownerName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const ownerName = teamState.owner?.name || teamState.owner?.email || settings?.ownerName || '';
+  const ownerEmail = teamState.owner?.email || settings?.ownerEmail || '';
+  if (nameEl) nameEl.textContent = ownerName || ownerEmail || 'Owner';
+  if (emailEl) emailEl.textContent = ownerEmail;
+  if (avatarEl) {
+    const initials = (ownerName || ownerEmail || '?').trim();
+    avatarEl.textContent = initials.includes(' ')
+      ? initials.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
+      : initials.slice(0,2).toUpperCase();
+  }
+
+  // Invite button + role management only make sense for the actual
+  // owner -- an invited member viewing their own Team page sees who
+  // else is on the team but can't invite/remove anyone themselves.
+  const inviteBtn = document.getElementById('teamInviteBtn');
+  if (inviteBtn) inviteBtn.style.display = teamState.isOwner ? '' : 'none';
+
+  const membersEl = document.getElementById('teamInvitesList');
+  if (membersEl) {
+    membersEl.innerHTML = (teamState.members || []).map(m => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;color:#fff;flex-shrink:0;">${escapeHtml((m.name || m.email || '?').slice(0,2).toUpperCase())}</div>
+          <div>
+            <div style="font-size:0.85rem;font-weight:600;color:var(--text);">${escapeHtml(m.name || m.email)}</div>
+            <div style="font-size:0.72rem;color:var(--text-2);">${escapeHtml(m.email)}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:0.72rem;background:rgba(16,185,129,0.1);color:var(--green);border:1px solid rgba(16,185,129,0.2);border-radius:6px;padding:3px 10px;font-weight:600;text-transform:capitalize;">${escapeHtml(m.role || 'admin')}</span>
+          ${teamState.isOwner ? `<button data-email="${escapeHtml(m.email)}" onclick="removeMember(this.dataset.email)" style="font-size:0.72rem;padding:4px 8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--red);border-radius:6px;cursor:pointer;">Remove</button>` : ''}
+        </div>
+      </div>`).join('');
   }
 
   const pendingEl = document.getElementById('teamPendingList');
   if (!pendingEl) return;
-  if (!teamInvites.length) {
+  if (!teamState.invites || !teamState.invites.length) {
     pendingEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-3);font-size:0.82rem;">No pending invites.</div>';
   } else {
-    pendingEl.innerHTML = teamInvites.map((inv, i) => `
+    pendingEl.innerHTML = teamState.invites.map(inv => `
       <div class="list-row">
         <div>
-          <div style="font-size:0.85rem;color:var(--text);">${inv.email}</div>
-          <div style="font-size:0.72rem;color:var(--text-2);margin-top:2px;">Role: ${inv.role} • Sent ${timeAgo(new Date(inv.sentAt))}</div>
+          <div style="font-size:0.85rem;color:var(--text);">${escapeHtml(inv.email)}</div>
+          <div style="font-size:0.72rem;color:var(--text-2);margin-top:2px;">Role: ${escapeHtml(inv.role)} • Sent ${timeAgo(new Date(inv.invitedAt))}</div>
         </div>
         <div style="display:flex;gap:8px;">
           <span class="badge badge-pending"><span class="badge-dot"></span>Pending</span>
-          <button data-i="${i}" onclick="cancelInvite(parseInt(this.dataset.i))" style="font-size:0.72rem;padding:4px 8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--red);border-radius:6px;cursor:pointer;">Cancel</button>
+          ${teamState.isOwner ? `<button data-id="${escapeHtml(inv.id)}" onclick="cancelInvite(this.dataset.id)" style="font-size:0.72rem;padding:4px 8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--red);border-radius:6px;cursor:pointer;">Cancel</button>` : ''}
         </div>
       </div>`).join('');
   }
@@ -21534,23 +21588,73 @@ function closeInviteModal() {
   const m = document.getElementById('inviteModal');
   if (m) { m.style.display = 'none'; m.classList.remove('active'); }
 }
-function sendInvite() {
+async function sendInvite() {
   const email = (document.getElementById('inviteEmail').value || '').trim();
   const role  = document.getElementById('inviteRole').value;
   if (!email || !email.includes('@')) { toast('Enter a valid email', 'error'); return; }
-  teamInvites.push({ email, role, sentAt: new Date().toISOString() });
-  localStorage.setItem('db_team_invites', JSON.stringify(teamInvites));
-  closeInviteModal();
-  renderTeam();
-  toast('Invite sent to ' + email, 'success');
-  logActivity('team', 'Team invite sent to ' + email + ' (' + role + ')');
+  const btn = document.querySelector('#inviteModal .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  try {
+    const r = await apiFetch('/api/team/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, role })
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) { toast(data.error || 'Could not send invite', 'error'); return; }
+    closeInviteModal();
+    await loadTeam();
+    toast('Invite sent to ' + email, 'success');
+    logActivity('team', 'Team invite sent to ' + email + ' (' + role + ')');
+  } catch (e) {
+    toast('Could not send invite — check your connection', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Send Invite'; }
+  }
 }
-function cancelInvite(i) {
-  const email = teamInvites[i].email;
-  teamInvites.splice(i, 1);
-  localStorage.setItem('db_team_invites', JSON.stringify(teamInvites));
-  renderTeam();
-  toast('Invite to ' + email + ' cancelled', 'success');
+async function cancelInvite(id) {
+  const invite = (teamState.invites || []).find(i => i.id === id);
+  try {
+    const r = await apiFetch('/api/team/invites/' + encodeURIComponent(id), { method: 'DELETE' });
+    const data = await r.json();
+    if (!r.ok || !data.ok) { toast(data.error || 'Could not cancel invite', 'error'); return; }
+    await loadTeam();
+    toast('Invite to ' + (invite?.email || 'that address') + ' cancelled', 'success');
+  } catch (e) {
+    toast('Could not cancel invite — check your connection', 'error');
+  }
+}
+async function removeMember(email) {
+  if (!confirm('Remove ' + email + ' from the team? They will lose access to this workspace immediately.')) return;
+  try {
+    const r = await apiFetch('/api/team/members/' + encodeURIComponent(email), { method: 'DELETE' });
+    const data = await r.json();
+    if (!r.ok || !data.ok) { toast(data.error || 'Could not remove member', 'error'); return; }
+    await loadTeam();
+    toast(email + ' removed from the team', 'success');
+    logActivity('team', 'Removed ' + email + ' from the team');
+  } catch (e) {
+    toast('Could not remove member — check your connection', 'error');
+  }
+}
+
+// Handles ?acceptInvite=<token> in the URL -- same "no href / query-
+// param handshake" pattern already used for promoDomainSearch. Runs
+// once on load, after the user is confirmed signed in.
+async function handlePendingInviteAccept() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('acceptInvite');
+  if (!token) return;
+  window.history.replaceState({}, '', window.location.pathname);
+  try {
+    const r = await apiFetch('/api/team/invites/' + encodeURIComponent(token) + '/accept', { method: 'POST' });
+    const data = await r.json();
+    if (!r.ok || !data.ok) { toast(data.error || 'Could not accept invite', 'error', 6000); return; }
+    toast("You're now on the team! Reloading your workspace…", 'success', 4000);
+    setTimeout(() => window.location.reload(), 1500);
+  } catch (e) {
+    toast('Could not accept invite — check your connection', 'error');
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
