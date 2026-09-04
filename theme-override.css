@@ -5455,7 +5455,7 @@ html[data-theme="light"] #page-new-deploy {
 }
 @media(max-width:640px){
   #page-new-deploy .dcx-steps { flex-direction: column; }
-  #page-new-deploy .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); flex: 1 1 auto; }
+  #page-new-deploy .dcx-step-item { width: 100%; box-sizing: border-box; padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); flex: 1 1 auto; }
   #page-new-deploy .dcx-step-item:last-child { border-bottom: none; }
 }
 
@@ -5889,7 +5889,7 @@ html[data-theme="light"] #page-dockerfile-deploy ,html[data-theme="light"] #page
 }
 @media(max-width:640px){
   #page-dockerfile-deploy .dcx-steps ,  #page-worker-create .dcx-steps { flex-direction: column; }
-  #page-dockerfile-deploy .dcx-step-item ,  #page-worker-create .dcx-step-item { padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); flex: 1 1 auto; }
+  #page-dockerfile-deploy .dcx-step-item ,  #page-worker-create .dcx-step-item { width: 100%; box-sizing: border-box; padding: 14px 20px; border-right: none; border-bottom: 1px solid var(--dcx-row-border); flex: 1 1 auto; }
   #page-dockerfile-deploy .dcx-step-item:last-child ,  #page-worker-create .dcx-step-item:last-child { border-bottom: none; }
 }
 
