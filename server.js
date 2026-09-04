@@ -4654,28 +4654,49 @@ function sidebarAnnouncementUrl() {
 async function readSidebarAnnouncement() {
   try {
     const url = sidebarAnnouncementUrl();
-    if (!url) return null;
+    if (!url) {
+      console.warn('[SidebarAnnouncement] readSidebarAnnouncement: no Firebase URL — FIREBASE_RTDB_URL=' + (FIREBASE_RTDB_URL || 'MISSING'));
+      return null;
+    }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8000);
     let r;
     try { r = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' }, signal: controller.signal }); }
     finally { clearTimeout(timer); }
-    if (!r.ok) return null;
+    if (!r.ok) {
+      const body = await r.text().catch(() => '');
+      console.warn(`[SidebarAnnouncement] Firebase GET failed: HTTP ${r.status} — ${body.slice(0, 300)}`);
+      return null;
+    }
     const data = await r.json();
     return (data && typeof data === 'object') ? data : null;
-  } catch { return null; }
+  } catch (e) {
+    console.error('[SidebarAnnouncement] readSidebarAnnouncement threw:', e.message);
+    return null;
+  }
 }
 async function writeSidebarAnnouncement(ann) {
   const url = sidebarAnnouncementUrl();
-  if (!url) return false;
+  if (!url) {
+    console.warn('[SidebarAnnouncement] writeSidebarAnnouncement: no Firebase URL — FIREBASE_RTDB_URL=' + (FIREBASE_RTDB_URL || 'MISSING'));
+    return false;
+  }
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8000);
     let r;
     try { r = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ann), signal: controller.signal }); }
     finally { clearTimeout(timer); }
-    return r.ok;
-  } catch { return false; }
+    if (!r.ok) {
+      const body = await r.text().catch(() => '');
+      console.warn(`[SidebarAnnouncement] Firebase PUT failed: HTTP ${r.status} — ${body.slice(0, 300)}`);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error('[SidebarAnnouncement] writeSidebarAnnouncement threw:', e.message);
+    return false;
+  }
 }
 
 function sanitizeSidebarAnnouncementInput(body = {}) {

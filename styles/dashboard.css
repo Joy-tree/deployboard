@@ -1560,7 +1560,7 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
 .sidebar-announcement-heading {
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--text);
+  color: var(--primary);
   margin-bottom: 5px;
   padding-right: 18px;
   line-height: 1.35;
@@ -1571,13 +1571,20 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
   line-height: 1.5;
   margin-bottom: 8px;
 }
+/* !important here defeats html[data-theme="dark"] .sidebar-nav a, which
+   boxes every <a> in the sidebar with a background+border — this link
+   should read as a plain "Learn more →"-style link (like Render's),
+   not a bordered button chip. */
 .sidebar-announcement-link {
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
   gap: 4px;
   font-size: 0.78rem;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--primary) !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
   text-decoration: none;
 }
 .sidebar-announcement-link:hover { text-decoration: underline; }
