@@ -11487,34 +11487,17 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
   border: none !important;
   box-shadow: none !important;
 }
-.badge-success, .badge-building {
-  background: rgba(16,185,129,.18) !important;
-  color: #10b981 !important;
-  border: none !important;
-}
-.badge-success .badge-dot, .badge-building .badge-dot {
-  background: #10b981 !important;
-}
-.badge-error {
-  background: rgba(239,68,68,.18) !important;
-  color: #ef4444 !important;
-  border: none !important;
-}
-.badge-error .badge-dot { background: #ef4444 !important; }
-.badge-warning, .badge-pending {
-  background: rgba(245,158,11,.18) !important;
-  color: #f59e0b !important;
-  border: none !important;
-}
-.badge-warning .badge-dot, .badge-pending .badge-dot {
-  background: #f59e0b !important;
-}
-.badge-idle {
-  background: rgba(100,116,139,.18) !important;
-  color: #94a3b8 !important;
-  border: none !important;
-}
-.badge-idle .badge-dot { background: #94a3b8 !important; }
+/* [FIX] This block used to also override background/color here, turning
+   the deep solid Render-style fills already defined in dashboard.css
+   (.badge-success #14532d, .badge-error #7f1d1d, etc., all white text --
+   see the comment above those rules) into washed-out 18%-opacity tinted
+   pills with colored text instead of white. That undid the "match
+   Render's depth" work rather than complementing it. Removed entirely --
+   dashboard.css's solid fills are the real ones now, this file only
+   normalizes shape (radius/border/shadow), never color, for badges.
+   Colored .badge-dot rules removed too for the same reason: dashboard.css
+   already makes every dot white on every solid-filled badge, matching
+   Render, so a colored dot here would just fight it. */
 
 /* ══════════════════════════════════════════════════════════════════
    DEPLOYMENT STATUS BADGES — brand-new class namespace (.jt-stbadge*),
