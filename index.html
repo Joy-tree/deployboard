@@ -13234,6 +13234,7 @@ async function ensureBackendSessionFromFirebase() {
     localStorage.setItem('db_auth_token', d.token);
     applyUserProfile(d.user || null);
     if (typeof checkPromos === 'function') checkPromos('login');
+    if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
     return true;
   } catch (_) { return false; }
 }
@@ -20092,6 +20093,7 @@ function statusBadge(status) {
         window.history.replaceState({}, '', clean);
         applyUserProfile(d.user || null);
         if (typeof checkPromos === 'function') checkPromos('login');
+    if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
         if (d.firebaseLinked === false) {
           toast('GitHub connected, but Firebase account link failed. Check Firebase GitHub provider config.', 'error');
         } else {
@@ -20150,6 +20152,7 @@ function statusBadge(status) {
           localStorage.setItem('db_auth_token', d.token);
           applyUserProfile(d.user || null);
           if (typeof checkPromos === 'function') checkPromos('login');
+    if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
           toast('Signed in with Google successfully!', 'success');
           preferPricingAfterAuth = true;
         } else {
@@ -20298,6 +20301,7 @@ async function submitAuth(){
       localStorage.setItem('db_auth_token', d.token);
       applyUserProfile(d.user || null);
       if (typeof checkPromos === 'function') checkPromos('login');
+    if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
       toast('Welcome! Account ready.', 'success');
       showDashboard('pricing');
     } else throw new Error('Authentication failed');
@@ -20349,6 +20353,7 @@ async function submitEmailVerification(){
   localStorage.setItem('db_auth_token', d.token);
   applyUserProfile(d.user || null);
   if (typeof checkPromos === 'function') checkPromos('login');
+    if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
   // Pull canonical workspace immediately so we don't render/overwrite with stale local state.
   try {
     await bootstrapSession();
