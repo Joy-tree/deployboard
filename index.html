@@ -15687,7 +15687,7 @@ function renderNetworkMetrics(){
   const area = path + ` L ${W-p} ${H-p} L ${p} ${H-p} Z`;
   const last=ser[ser.length-1]||0;
   chart.setAttribute('viewBox',`0 0 ${W} ${H}`);
-  chart.innerHTML = `<path d="${area}" fill="rgba(16,185,129,.14)"/><path d="${path}" stroke="#10b981" stroke-width="2.2" fill="none"/>${pts.filter((_,i)=>i%Math.ceil(ser.length/8)===0).map(pt=>`<circle cx="${pt.x}" cy="${pt.y}" r="2.8" fill="#22d3ee"/>`).join('')}<line id="metricHoverLine" x1="0" y1="${p}" x2="0" y2="${H-p}" stroke="rgba(148,163,184,.45)" stroke-dasharray="3,4" style="display:none"></line><circle id="metricHoverDot" cx="0" cy="0" r="4.6" fill="#84cc16" stroke="#dcfce7" stroke-width="1.4" style="display:none"></circle>`;
+  chart.innerHTML = `<path d="${area}" fill="rgba(16,185,129,.14)"/><path d="${path}" stroke="#10b981" stroke-width="2.2" fill="none"/>${pts.filter((_,i)=>i%Math.ceil(ser.length/8)===0).map(pt=>`<circle cx="${pt.x}" cy="${pt.y}" r="2.8" fill="#10b981"/>`).join('')}<line id="metricHoverLine" x1="0" y1="${p}" x2="0" y2="${H-p}" stroke="rgba(148,163,184,.45)" stroke-dasharray="3,4" style="display:none"></line><circle id="metricHoverDot" cx="0" cy="0" r="4.6" fill="#6ee7b7" stroke="#052e18" stroke-width="1.4" style="display:none"></circle>`;
   const tooltip = document.getElementById('metricChartTooltip');
   const hoverLine = document.getElementById('metricHoverLine');
   const hoverDot = document.getElementById('metricHoverDot');
