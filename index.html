@@ -20986,6 +20986,16 @@ function showDashboard(defaultPage = 'dashboard') {
     renderDashboard();
     renderProjects();
 
+    // [FIX] Sidebar announcement (and the dashboard-view promo trigger)
+    // were only ever hooked inside showPage('dashboard') -- but this
+    // branch (a genuine first load, !_dashboardInited) returns below
+    // without ever calling showPage() at all. Every *subsequent* visit
+    // to dashboard goes through the showPage(defaultPage) call further
+    // down instead, which is why both only ever appeared after
+    // navigating to another page and back, never on first load.
+    if (typeof checkPromos === 'function') setTimeout(() => checkPromos('dashboard_view'), 400);
+    if (typeof initSidebarAnnouncement === 'function') setTimeout(() => initSidebarAnnouncement(), 250);
+
     // [REVERTED] "Stay on the same page on reload" (restoring whichever
     // page the URL pointed to instead of always landing on Dashboard) was
     // the source of a much worse, harder-to-pin-down bug: every route
