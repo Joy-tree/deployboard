@@ -6296,12 +6296,26 @@ html[data-theme="light"] .dqs-upload-title { color: var(--text) !important; }
    amount so nothing sits underneath it. Flat solid colors, no
    gradients, sharp corners — same design language as every other
    admin-content feature on this site.
-   ══════════════════════════════════════════════════════════════════ */
+
+   body.has-annbar's padding-top alone only pushes normal document
+   flow down — it does nothing for position:fixed elements (they're
+   positioned relative to the viewport, not any ancestor's padding)
+   or for anything explicitly sized to 100vh/100dvh. Both #landing-
+   view nav (fixed, top:0) and #app (the whole dashboard shell, height:
+   100vh) fall into exactly that trap: the nav sat glued to the very
+   top of the screen underneath/behind the banner instead of below it,
+   and #app would overflow off the bottom of the viewport by the
+   banner's height once body's padding pushed it down. --annbar-h is
+   the single source of truth both of those (and the mobile drawer)
+   key off, rather than duplicating "40px" as a separate magic number
+   in four different places. */
+:root { --annbar-h: 0px; }
+body.has-annbar { --annbar-h: 40px; }
 #annBarWrap { position: relative; z-index: 9997; }
 .annbar {
   position: fixed;
   top: 0; left: 0; right: 0;
-  height: 40px;
+  height: var(--annbar-h, 40px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6342,7 +6356,24 @@ html[data-theme="light"] .dqs-upload-title { color: var(--text) !important; }
   font-weight: 800;
   white-space: nowrap;
 }
-body.has-annbar { padding-top: 40px; }
+body.has-annbar { padding-top: var(--annbar-h); }
+
+/* Landing nav — sits fixed at the very top by default (top:0); once
+   the banner is showing, it needs to start exactly where the banner
+   ends instead of being covered by it. */
+body.has-annbar #landing-view nav { top: var(--annbar-h); }
+/* The mobile hamburger drawer assumes the nav is a fixed 62px starting
+   at top:0 (see its base rule) — shift both its top and height by the
+   same amount so it still lines up flush under the (now lower) nav. */
+body.has-annbar .landing-drawer { top: calc(62px + var(--annbar-h)); height: calc(100dvh - 62px - var(--annbar-h)); }
+
+/* Dashboard shell — #app is hardcoded to fill the viewport (100vh/
+   100dvh); once body's padding pushes it down, it must also shrink by
+   the same amount or it overflows off the bottom of the screen. */
+body.has-annbar #app { height: calc(100vh - var(--annbar-h)); }
+@supports (height: 100dvh) {
+  html.app-mode body.has-annbar #app { height: calc(100dvh - var(--annbar-h)); }
+}
 
 /* Admin builder preview — small contained box, not fixed/full-width */
 #abPreviewWrap .annbar { position: static; height: 44px; }
