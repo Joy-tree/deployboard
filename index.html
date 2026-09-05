@@ -30821,7 +30821,7 @@ async function cuSyncToFirebase() {
     await apiFetch('/api/upload-projects-sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projects })
+      body: JSON.stringify({ projects, membershipVersion: workspaceMembershipVersion })
     });
   } catch(_) {}
 }
@@ -31168,7 +31168,7 @@ async function confirmCuDeleteExecute() {
   _cuProjects = _cuProjects.filter(p => p.id !== id);
   try { localStorage.setItem(CU_STORE_KEY, JSON.stringify(_cuProjects)); } catch {}
   _renderCuGrid();
-  try { await apiFetch(`/api/upload-projects/${encodeURIComponent(id)}`, { method: 'DELETE' }); } catch(_e) {}
+  try { await apiFetch(`/api/upload-projects/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ membershipVersion: workspaceMembershipVersion }) }); } catch(_e) {}
   closeCuDeleteModal();
   toast('Upload removed', 'info');
 }

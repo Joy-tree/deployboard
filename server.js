@@ -14114,6 +14114,24 @@ function indexOf(buf, search, from) {
 }
 
 // ── Multipart upload ─────────────────────────────────────────────────────────
+// [FEATURE] Shared version of the same guard used inline in
+// POST /api/workspace -- factored out here since it's needed by every
+// endpoint that replays a client-held snapshot of workspace-scoped data
+// (not endpoints that just record a single fresh action taken right
+// now, like an actual file upload -- those have no "stale copy" to
+// guard against). Returns true (and has already responded) if the
+// request should be rejected.
+function rejectIfStaleMembership(req, res) {
+  if (!Object.prototype.hasOwnProperty.call(req.body || {}, 'membershipVersion')) return false;
+  const current = req.user.memberOfChangedAt || '';
+  const provided = String(req.body.membershipVersion || '');
+  if (provided !== current) {
+    res.status(409).json({ error: 'Your team membership changed since this page loaded. Refresh and try again to avoid overwriting the wrong workspace.' });
+    return true;
+  }
+  return false;
+}
+
 app.post('/api/upload-project', requireAuth, async (req, res) => {
   const userId = String(req.user?._id || req.user?.id || 'anon');
   const ct = req.headers['content-type'] || '';
@@ -14238,6 +14256,15 @@ app.get('/api/upload-projects', requireAuth, async (req, res) => {
 // but the client has local-only entries it wants to persist to the account)
 app.post('/api/upload-projects-sync', requireAuth, async (req, res) => {
   try {
+    // [FIX-CRITICAL] Same race-condition class as POST /api/workspace,
+    // just for uploadedProjects specifically: this endpoint replays
+    // whatever list of uploads the client currently has in memory,
+    // merging it into the resolved workspace. If a stale call landed
+    // here right after accepting/leaving a team (client still holding
+    // its OWN pre-transition uploaded-zips list), it would merge those
+    // entries into the wrong workspace -- exactly the "upload zips also
+    // got mixed into the wrong account" report.
+    if (rejectIfStaleMembership(req, res)) return;
     const userId = String(req.user?._id || req.user?.id || 'anon');
     const incoming = Array.isArray(req.body.projects) ? req.body.projects : [];
     if (incoming.length === 0) return res.json({ ok: true });
@@ -14262,6 +14289,7 @@ app.post('/api/upload-projects-sync', requireAuth, async (req, res) => {
 
 app.delete('/api/upload-projects/:projectId', requireAuth, async (req, res) => {
   try {
+    if (rejectIfStaleMembership(req, res)) return;
     const pId = String(req.params.projectId || '').trim();
     if (!pId) return res.status(400).json({ error: 'projectId required' });
     const userId = String(req.user?._id || req.user?.id || 'anon');
