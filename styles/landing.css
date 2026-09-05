@@ -466,10 +466,10 @@
     display:flex;flex-wrap:wrap;gap:7px;
   }
   .sc-chip{
-    padding:5px 12px;border-radius:8px;font-size:.73rem;font-weight:700;
+    padding:5px 12px;border-radius:0;font-size:.73rem;font-weight:700;
     letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-mono,monospace);
-    background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.22);
-    color:var(--green);
+    background:#14532d;border:none;
+    color:#fff;
   }
 
   /* ── Visual side — shared wrapper ── */

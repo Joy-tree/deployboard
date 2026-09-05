@@ -3258,7 +3258,7 @@ html[data-theme="light"] .hero-trust-item { color: #4b5563 !important; }
   font-size:.7rem; font-weight:700; padding:4px 11px; border-radius:999px;
   background:var(--bg-hover); color:var(--text-2); border:1px solid var(--border);
 }
-.acct-pill.plan { background:color-mix(in srgb, var(--primary) 12%, transparent); color:var(--primary); border-color:color-mix(in srgb, var(--primary) 28%, transparent); }
+.acct-pill.plan { background:#14532d; color:#fff; border:none; border-radius:0; }
 .acct-pill.mono { font-family:var(--font-mono); }
 
 /* Quick stats — flat inline row, no card boxes, just dividers */
