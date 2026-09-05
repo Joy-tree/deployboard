@@ -4666,17 +4666,22 @@ const SIDEBAR_NAV_KEYS = [
   'settings',
 ];
 
-function sidebarAnnouncementUrl() {
+// SIDEBAR ANNOUNCEMENTS — small persistent cards in the dashboard's own
+// sidebar nav (heading, short message, optional link, optional thumbnail).
+// Stored as a list in Firebase RTDB, same collection pattern as the promo
+// campaigns above -- an id-keyed object, read back as an array -- so more
+// than one can exist at once, each independently placed and toggled.
+function sidebarAnnouncementsUrl() {
   if (!FIREBASE_RTDB_URL) return '';
   const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
-  return `${FIREBASE_RTDB_URL}/deployboard_sidebar_announcement.json${authQuery}`;
+  return `${FIREBASE_RTDB_URL}/deployboard_sidebar_announcements.json${authQuery}`;
 }
-async function readSidebarAnnouncement() {
+async function readSidebarAnnouncements() {
   try {
-    const url = sidebarAnnouncementUrl();
+    const url = sidebarAnnouncementsUrl();
     if (!url) {
-      console.warn('[SidebarAnnouncement] readSidebarAnnouncement: no Firebase URL — FIREBASE_RTDB_URL=' + (FIREBASE_RTDB_URL || 'MISSING'));
-      return null;
+      console.warn('[SidebarAnnouncement] readSidebarAnnouncements: no Firebase URL — FIREBASE_RTDB_URL=' + (FIREBASE_RTDB_URL || 'MISSING'));
+      return [];
     }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8000);
@@ -4686,26 +4691,29 @@ async function readSidebarAnnouncement() {
     if (!r.ok) {
       const body = await r.text().catch(() => '');
       console.warn(`[SidebarAnnouncement] Firebase GET failed: HTTP ${r.status} — ${body.slice(0, 300)}`);
-      return null;
+      return [];
     }
     const data = await r.json();
-    return (data && typeof data === 'object') ? data : null;
+    if (!data || typeof data !== 'object') return [];
+    // Stored as an object keyed by id (Firebase-idiomatic); return as an array.
+    return Object.values(data);
   } catch (e) {
-    console.error('[SidebarAnnouncement] readSidebarAnnouncement threw:', e.message);
-    return null;
+    console.error('[SidebarAnnouncement] readSidebarAnnouncements threw:', e.message);
+    return [];
   }
 }
-async function writeSidebarAnnouncement(ann) {
-  const url = sidebarAnnouncementUrl();
-  if (!url) {
-    console.warn('[SidebarAnnouncement] writeSidebarAnnouncement: no Firebase URL — FIREBASE_RTDB_URL=' + (FIREBASE_RTDB_URL || 'MISSING'));
+async function writeSidebarAnnouncementItem(ann) {
+  if (!FIREBASE_RTDB_URL || !ann || !ann.id) {
+    if (!FIREBASE_RTDB_URL) console.warn('[SidebarAnnouncement] writeSidebarAnnouncementItem: no Firebase URL — FIREBASE_RTDB_URL=' + (FIREBASE_RTDB_URL || 'MISSING'));
     return false;
   }
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  const itemUrl = `${FIREBASE_RTDB_URL}/deployboard_sidebar_announcements/${ann.id}.json${authQuery}`;
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8000);
     let r;
-    try { r = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ann), signal: controller.signal }); }
+    try { r = await fetch(itemUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ann), signal: controller.signal }); }
     finally { clearTimeout(timer); }
     if (!r.ok) {
       const body = await r.text().catch(() => '');
@@ -4714,9 +4722,22 @@ async function writeSidebarAnnouncement(ann) {
     }
     return true;
   } catch (e) {
-    console.error('[SidebarAnnouncement] writeSidebarAnnouncement threw:', e.message);
+    console.error('[SidebarAnnouncement] writeSidebarAnnouncementItem threw:', e.message);
     return false;
   }
+}
+async function deleteSidebarAnnouncementById(id) {
+  if (!FIREBASE_RTDB_URL || !id) return false;
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  const itemUrl = `${FIREBASE_RTDB_URL}/deployboard_sidebar_announcements/${id}.json${authQuery}`;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    let r;
+    try { r = await fetch(itemUrl, { method: 'DELETE', signal: controller.signal }); }
+    finally { clearTimeout(timer); }
+    return r.ok;
+  } catch { return false; }
 }
 
 function sanitizeSidebarAnnouncementInput(body = {}) {
@@ -4736,18 +4757,36 @@ function sanitizeSidebarAnnouncementInput(body = {}) {
   };
 }
 
-app.get('/api/admin/sidebar-announcement', requireAuth, async (req, res) => {
+// List all (admin only) — the builder UI's card list.
+app.get('/api/admin/sidebar-announcements', requireAuth, async (req, res) => {
   try {
     if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
-    const announcement = await readSidebarAnnouncement();
-    res.json({ ok: true, announcement, navKeys: SIDEBAR_NAV_KEYS });
+    const announcements = await readSidebarAnnouncements();
+    announcements.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    res.json({ ok: true, announcements, navKeys: SIDEBAR_NAV_KEYS });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.put('/api/admin/sidebar-announcement', requireAuth, async (req, res) => {
+// Create a new one (admin only).
+app.post('/api/admin/sidebar-announcements', requireAuth, async (req, res) => {
   try {
     if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
-    const existing = await readSidebarAnnouncement();
+    const clean = sanitizeSidebarAnnouncementInput(req.body);
+    if (clean.active && !clean.heading) return res.status(400).json({ error: 'Heading is required to activate this' });
+    const id = `sba_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    const announcement = { ...clean, id, createdAt: Date.now(), updatedAt: Date.now() };
+    const saved = await writeSidebarAnnouncementItem(announcement);
+    if (!saved) return res.status(502).json({ error: 'Could not save' });
+    res.json({ ok: true, announcement });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Update an existing one by id (admin only).
+app.put('/api/admin/sidebar-announcements/:id', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const existing = (await readSidebarAnnouncements()).find(a => a.id === req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Announcement not found' });
     const clean = sanitizeSidebarAnnouncementInput(req.body);
     if (clean.active && !clean.heading) return res.status(400).json({ error: 'Heading is required to activate this' });
     // Regenerate the id whenever the visible content actually changes, so
@@ -4755,20 +4794,34 @@ app.put('/api/admin/sidebar-announcement', requireAuth, async (req, res) => {
     // users see it again -- fresh content is a fresh notice, not a still-
     // dismissed one. Toggling active/position alone with the same text
     // keeps the same id, so a dismissed-then-reactivated identical card
-    // doesn't reappear for people who already closed it.
-    const contentChanged = !existing
-      || existing.heading !== clean.heading
+    // doesn't reappear for people who already closed it. Since the id is
+    // also this item's key in Firebase, "regenerating" it here means
+    // deleting the old key and writing a new one, not just changing a
+    // field on the same record.
+    const contentChanged =
+         existing.heading !== clean.heading
       || existing.message !== clean.message
       || existing.linkUrl !== clean.linkUrl
       || existing.linkText !== clean.linkText
       || existing.imageUrl !== clean.imageUrl;
     const id = contentChanged
       ? `sba_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`
-      : (existing.id || `sba_${Date.now()}`);
-    const announcement = { ...clean, id, updatedAt: Date.now() };
-    const saved = await writeSidebarAnnouncement(announcement);
+      : existing.id;
+    const announcement = { ...clean, id, createdAt: existing.createdAt, updatedAt: Date.now() };
+    const saved = await writeSidebarAnnouncementItem(announcement);
     if (!saved) return res.status(502).json({ error: 'Could not save' });
+    if (id !== existing.id) await deleteSidebarAnnouncementById(existing.id);
     res.json({ ok: true, announcement });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Delete one by id (admin only).
+app.delete('/api/admin/sidebar-announcements/:id', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const ok = await deleteSidebarAnnouncementById(req.params.id);
+    if (!ok) return res.status(502).json({ error: 'Could not delete' });
+    res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -4803,12 +4856,14 @@ app.post('/api/admin/sidebar-announcement/upload-image', requireAuth, async (req
 });
 
 // User-facing: any signed-in user's sidebar checks this once on load to
-// decide whether to render the announcement card, and where.
+// decide which announcement(s) to render, and where. Returns every active
+// one (not just one) so multiple can occupy different slots in the
+// sidebar at the same time -- the client renders each at its own position.
 app.get('/api/sidebar-announcement/active', requireAuth, async (req, res) => {
   try {
-    const ann = await readSidebarAnnouncement();
-    if (!ann || !ann.active) return res.json({ ok: true, announcement: null });
-    res.json({ ok: true, announcement: ann });
+    const all = await readSidebarAnnouncements();
+    const announcements = all.filter(a => a && a.active && a.heading);
+    res.json({ ok: true, announcements });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -4951,6 +5006,7 @@ app.get('/api/announcement-bars/active', async (req, res) => {
     res.json({ ok: true, bars: matching });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
 
 
 function normalizeGitHubClientId(value) {
