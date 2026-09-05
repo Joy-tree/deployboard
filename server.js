@@ -341,7 +341,7 @@ async function sendDeploymentStatusEmail({
   const shortSha = String(sha || '').trim().slice(0, 7);
   const sourceLabel = source === 'auto' ? 'Automatic (GitHub push)' : source === 'upload' ? 'Upload (file archive)' : 'Manual (Redeploy click)';
   const safeError = String(errorMessage || '').trim().slice(0, 500);
-  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
+  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg?v=2`;
   const deployedAtText = deployedAt ? new Date(deployedAt).toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'medium', timeStyle: 'short' }) + ' UTC' : '';
   const dashboardUrl = `https://${BASE_DOMAIN}`;
   // Clean, flat status banner -- a colored strip + simple line-icon + label,
@@ -2788,7 +2788,7 @@ async function sendPaymentSuccessEmail({ userEmail = '', plan = '', amountKobo =
   if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return { ok: false, skipped: true, reason: 'resend_not_configured' };
   const recipient = RESEND_AUDIENCE_EMAIL || String(userEmail || '').trim().toLowerCase();
   if (!recipient) return { ok: false, skipped: true, reason: 'missing_recipient' };
-  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
+  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg?v=2`;
   const planLabelMap = { free: 'Free Plan', starter: 'Starter', pro: 'Pro', growth: 'Growth', scale: 'Scale Max' };
   const safePlan = String(plan || '').trim().toLowerCase();
   const planLabel = planLabelMap[safePlan] || (safePlan ? safePlan.toUpperCase() : 'Paid Plan');
@@ -2871,7 +2871,7 @@ async function sendWelcomeEmail({ userEmail = '', userName = '' } = {}) {
   const recipient = RESEND_AUDIENCE_EMAIL || String(userEmail || '').trim().toLowerCase();
   if (!recipient) return { ok: false, skipped: true, reason: 'missing_recipient' };
 
-  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
+  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg?v=2`;
   const firstName = String(userName || '').trim().split(/\s+/)[0] || 'there';
   const dashboardUrl = `https://${BASE_DOMAIN}/dashboard`;
   const deployUrl = `https://${BASE_DOMAIN}/dashboard/new-deploy`;
@@ -2972,7 +2972,7 @@ async function sendWelcomeEmail({ userEmail = '', userName = '' } = {}) {
 
 async function sendVerificationCodeEmail(email = '', code = '') {
   if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return;
-  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
+  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg?v=2`;
   const dashboardUrl = `https://${BASE_DOMAIN}/dashboard`;
   const year = new Date().getFullYear();
 
@@ -8929,8 +8929,8 @@ async function sendDeployPushNotification(user, { status, projectName, subdomain
 
     const payload = JSON.stringify({
       title, body,
-      icon: '/favicon_192.png',
-      badge: '/favicon_192.png',
+      icon: '/favicon_192.png?v=2',
+      badge: '/favicon_192.png?v=2',
       tag: `deploy-${subdomain || projectName}`,
       url: deployId ? `/dashboard?viewDeploy=${encodeURIComponent(deployId)}` : '/dashboard',
     });
@@ -9053,8 +9053,8 @@ app.post('/api/push/test', requireAuth, async (req, res) => {
     const payload = JSON.stringify({
       title: 'Test notification',
       body: 'If you can see this, deploy notifications are working correctly.',
-      icon: '/favicon_192.png',
-      badge: '/favicon_192.png',
+      icon: '/favicon_192.png?v=2',
+      badge: '/favicon_192.png?v=2',
       tag: 'joytree-test',
       url: '/dashboard',
     });
@@ -19961,7 +19961,7 @@ setTimeout(checkAndNotifyNewRepos, 30_000); // small initial delay so this doesn
 
 async function sendNewRepoAvailableEmail(email = '', repo = {}) {
   if (!RESEND_API_KEY || !RESEND_FROM_EMAIL || !email) return;
-  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg`;
+  const logoUrl = RESEND_LOGO_URL || `https://${BASE_DOMAIN}/logo_optimized.jpg?v=2`;
   const year = new Date().getFullYear();
   const importUrl = `https://${BASE_DOMAIN}/dashboard/new-deploy?import=${encodeURIComponent(repo.fullName)}`;
   const visibility = repo.private ? 'Private' : 'Public';
