@@ -3938,6 +3938,13 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
   #sidebar.open {
     transform: translateX(0);
   }
+  /* Same fix as the landing nav and #app: position:fixed escapes normal
+     flex layout entirely, so it never picked up the #app height fix
+     above (that one only helps when #sidebar is a plain flex child --
+     true on desktop, not here on mobile where this override turns it
+     into its own fixed drawer). Push its top down by the banner's
+     height so it starts below the banner instead of underneath it. */
+  body.has-annbar #sidebar { top: var(--annbar-h); }
 
   /* Logo header: taller on mobile so it breathes */
   #sidebar .sidebar-logo {
