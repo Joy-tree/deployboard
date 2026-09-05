@@ -6287,3 +6287,63 @@ html[data-theme="light"] .dqs-upload-title { color: var(--text) !important; }
 #pbPreviewWrap .promo-overlay-badge { font-size: 0.82rem; padding: 5px 14px; margin-bottom: 8px; }
 #pbPreviewWrap .promo-close { display: none; }
 #pbPreviewWrap .promo-body { padding: 16px; }
+
+/* ══════════════════════════════════════════════════════════════════
+   TOP ANNOUNCEMENT BAR — a thin fixed banner above everything (nav
+   included), matching the Render.com/Fischnet reference. Fixed to the
+   viewport like the existing admin-impersonation banner, with
+   body.has-annbar pushing the rest of the page down by the same
+   amount so nothing sits underneath it. Flat solid colors, no
+   gradients, sharp corners — same design language as every other
+   admin-content feature on this site.
+   ══════════════════════════════════════════════════════════════════ */
+#annBarWrap { position: relative; z-index: 9997; }
+.annbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.annbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  overflow: hidden;
+}
+.annbar-text-wrap {
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 70vw;
+}
+.annbar-text {
+  display: inline-block;
+  white-space: nowrap;
+}
+.annbar-text-wrap.annbar-marquee-mode {
+  max-width: min(70vw, 480px);
+}
+.annbar-text-wrap.annbar-marquee-mode .annbar-text {
+  animation: annbarMarquee linear infinite;
+  animation-duration: 18s;
+}
+@keyframes annbarMarquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.annbar-link {
+  flex-shrink: 0;
+  text-decoration: underline;
+  font-weight: 800;
+  white-space: nowrap;
+}
+body.has-annbar { padding-top: 40px; }
+
+/* Admin builder preview — small contained box, not fixed/full-width */
+#abPreviewWrap .annbar { position: static; height: 44px; }
+#abPreviewWrap .annbar-text-wrap { max-width: 60%; }

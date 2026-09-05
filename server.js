@@ -4812,6 +4812,146 @@ app.get('/api/sidebar-announcement/active', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ═══════════════════════════════════════════════════════════════════════
+// TOP ANNOUNCEMENT BAR — the Render.com/Fischnet-style thin banner that
+// sits above the very top of the page (nav included), cycling through
+// several admin-written messages. Unlike the sidebar announcement above
+// (one card, one place, always in-place) or promos (full-screen popup on
+// a trigger event), this is a LIST of bars an admin can create, each
+// with its own messages, color, cycling method (typewriter / marquee /
+// fade), timing, and placement (public landing page, the logged-in
+// dashboard, or both) — since the landing page has no logged-in user at
+// all, the "active" read endpoint below is deliberately public.
+// ═══════════════════════════════════════════════════════════════════════
+const ANNBAR_ALLOWED_THEMES = ['green', 'white', 'yellow', 'red'];
+const ANNBAR_ALLOWED_METHODS = ['typewriter', 'marquee', 'fade'];
+const ANNBAR_ALLOWED_PLACEMENTS = ['landing', 'dashboard', 'both'];
+
+function annBarsUrl() {
+  if (!FIREBASE_RTDB_URL) return '';
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  return `${FIREBASE_RTDB_URL}/deployboard_announcement_bars.json${authQuery}`;
+}
+async function readAnnBars() {
+  try {
+    const url = annBarsUrl();
+    if (!url) return [];
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    let r;
+    try { r = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' }, signal: controller.signal }); }
+    finally { clearTimeout(timer); }
+    if (!r.ok) return [];
+    const data = await r.json();
+    if (!data || typeof data !== 'object') return [];
+    return Object.values(data);
+  } catch { return []; }
+}
+async function writeAnnBar(bar) {
+  const url = annBarsUrl();
+  if (!url || !bar || !bar.id) return false;
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  const itemUrl = `${FIREBASE_RTDB_URL}/deployboard_announcement_bars/${bar.id}.json${authQuery}`;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    let r;
+    try { r = await fetch(itemUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bar), signal: controller.signal }); }
+    finally { clearTimeout(timer); }
+    return r.ok;
+  } catch { return false; }
+}
+async function deleteAnnBarById(id) {
+  if (!FIREBASE_RTDB_URL || !id) return false;
+  const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+  const itemUrl = `${FIREBASE_RTDB_URL}/deployboard_announcement_bars/${id}.json${authQuery}`;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    let r;
+    try { r = await fetch(itemUrl, { method: 'DELETE', signal: controller.signal }); }
+    finally { clearTimeout(timer); }
+    return r.ok;
+  } catch { return false; }
+}
+
+function sanitizeAnnBarInput(body = {}) {
+  let messages = [];
+  if (Array.isArray(body.messages)) {
+    messages = body.messages.map(m => String(m || '').slice(0, 140).trim()).filter(Boolean).slice(0, 10);
+  }
+  return {
+    name:          String(body.name || '').slice(0, 120).trim(),
+    messages,
+    linkText:      String(body.linkText || '').slice(0, 40).trim(),
+    linkUrl:       String(body.linkUrl || '').slice(0, 500).trim(),
+    theme:         ANNBAR_ALLOWED_THEMES.includes(body.theme) ? body.theme : 'green',
+    intensity:     Math.max(0, Math.min(100, Number(body.intensity) || 50)),
+    displayMethod: ANNBAR_ALLOWED_METHODS.includes(body.displayMethod) ? body.displayMethod : 'typewriter',
+    // Seconds each message holds before cycling to the next (typewriter/
+    // fade); loosely doubles as marquee speed control on the client.
+    interval:      Math.max(2, Math.min(20, Number(body.interval) || 4)),
+    placement:     ANNBAR_ALLOWED_PLACEMENTS.includes(body.placement) ? body.placement : 'both',
+    active:        !!body.active,
+  };
+}
+
+app.get('/api/admin/announcement-bars', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const bars = await readAnnBars();
+    bars.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    res.json({ ok: true, bars });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/announcement-bars', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const clean = sanitizeAnnBarInput(req.body);
+    if (!clean.messages.length) return res.status(400).json({ error: 'At least one message is required' });
+    const id = `annbar_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    const bar = { ...clean, id, createdAt: Date.now(), updatedAt: Date.now() };
+    const saved = await writeAnnBar(bar);
+    if (!saved) return res.status(502).json({ error: 'Could not save announcement bar' });
+    res.json({ ok: true, bar });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/admin/announcement-bars/:id', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const existing = (await readAnnBars()).find(b => b.id === req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Announcement bar not found' });
+    const clean = sanitizeAnnBarInput(req.body);
+    if (!clean.messages.length) return res.status(400).json({ error: 'At least one message is required' });
+    const bar = { ...existing, ...clean, id: existing.id, createdAt: existing.createdAt, updatedAt: Date.now() };
+    const saved = await writeAnnBar(bar);
+    if (!saved) return res.status(502).json({ error: 'Could not save announcement bar' });
+    res.json({ ok: true, bar });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/admin/announcement-bars/:id', requireAuth, async (req, res) => {
+  try {
+    if (!isRootEmailAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    const ok = await deleteAnnBarById(req.params.id);
+    if (!ok) return res.status(502).json({ error: 'Could not delete announcement bar' });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Deliberately PUBLIC (no requireAuth) — the landing page has no logged-in
+// user at all, and an announcement bar's content isn't sensitive.
+app.get('/api/announcement-bars/active', async (req, res) => {
+  try {
+    const placement = ANNBAR_ALLOWED_PLACEMENTS.includes(req.query.placement) ? req.query.placement : 'both';
+    const all = await readAnnBars();
+    const matching = all.filter(b => b.active && b.messages.length && (b.placement === placement || b.placement === 'both'));
+    res.json({ ok: true, bars: matching });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 
 function normalizeGitHubClientId(value) {
   return String(value || '').trim();

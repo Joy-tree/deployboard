@@ -313,6 +313,7 @@
 
 
 <div id="toast-wrap"></div>
+<div id="annBarWrap" style="display:none;"></div>
 <div id="auth-view">
 
   <!-- Animated background layers -->
@@ -7482,6 +7483,18 @@ document.addEventListener('keydown', function(e){
         <div id="adminPromoList" style="margin-top:14px;color:var(--text-3);font-size:0.85rem;">Loading…</div>
       </div>
 
+      <!-- ══ Top Announcement Bar ══ -->
+      <div style="margin-top:36px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <h3 style="margin:0;font-size:1rem;">Top announcement bar</h3>
+            <div style="color:var(--text-3);font-size:0.8rem;margin-top:4px;">A thin banner above the very top of the page (like Render.com's) that cycles through several messages you write — typewriter, marquee, or fade. Show it on the public landing page, throughout the dashboard, or both.</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openAnnBarBuilder()">+ New bar</button>
+        </div>
+        <div id="adminAnnBarList" style="margin-top:14px;color:var(--text-3);font-size:0.85rem;">Loading…</div>
+      </div>
+
       <!-- ══ Sidebar Announcement ══ -->
       <div style="margin-top:36px;">
         <div>
@@ -7710,6 +7723,96 @@ document.addEventListener('keydown', function(e){
         <div class="modal-footer">
           <button class="btn btn-ghost" onclick="closePromoBuilder()">Cancel</button>
           <button class="btn btn-primary" onclick="savePromo()">Save promo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ Announcement bar builder modal ══ -->
+    <div class="modal-backdrop" id="annBarBuilderModal" style="display:none;">
+      <div class="modal" style="max-width:560px;max-height:88vh;overflow-y:auto;">
+        <div class="modal-header">
+          <h3 id="annBarBuilderTitle" style="margin:0;">New announcement bar</h3>
+          <button class="modal-close" onclick="closeAnnBarBuilder()">&times;</button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
+          <input type="hidden" id="abId" value="">
+
+          <div class="field">
+            <label class="field-label">Internal name</label>
+            <input type="text" id="abName" class="input" placeholder="e.g. Launch week banner">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Messages <span style="color:var(--text-3);font-weight:400;">(cycles through these, one after another)</span></label>
+            <div id="abMessagesList" style="display:flex;flex-direction:column;gap:8px;"></div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="abAddMessage()" style="margin-top:8px;">+ Add message</button>
+          </div>
+
+          <div style="display:flex;gap:12px;">
+            <div class="field" style="flex:1;">
+              <label class="field-label">Link text <span style="color:var(--text-3);font-weight:400;">(optional)</span></label>
+              <input type="text" id="abLinkText" class="input" placeholder="Get started">
+            </div>
+            <div class="field" style="flex:1;">
+              <label class="field-label">Link URL</label>
+              <input type="text" id="abLinkUrl" class="input" placeholder="/dashboard/pricing">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Color</label>
+            <div id="abThemeSwatches" style="display:flex;gap:10px;margin-top:4px;">
+              <button type="button" class="pb-swatch" data-theme="green" onclick="abSelectTheme('green')" style="background:#10b981;" title="Green"></button>
+              <button type="button" class="pb-swatch" data-theme="white" onclick="abSelectTheme('white')" style="background:#f8fafc;" title="White"></button>
+              <button type="button" class="pb-swatch" data-theme="yellow" onclick="abSelectTheme('yellow')" style="background:#eab308;" title="Yellow"></button>
+              <button type="button" class="pb-swatch" data-theme="red" onclick="abSelectTheme('red')" style="background:#ef4444;" title="Red"></button>
+            </div>
+            <input type="hidden" id="abTheme" value="green">
+          </div>
+
+          <div class="field" id="abIntensityField">
+            <label class="field-label">Green deepness <span id="abIntensityVal" style="color:var(--text-3);font-weight:400;">50%</span></label>
+            <input type="range" id="abIntensity" min="0" max="100" value="50" oninput="document.getElementById('abIntensityVal').textContent = this.value + '%'; abUpdatePreview();" style="width:100%;">
+          </div>
+
+          <div style="display:flex;gap:12px;">
+            <div class="field" style="flex:1;">
+              <label class="field-label">Display method</label>
+              <select id="abDisplayMethod" class="input" onchange="abUpdatePreview()">
+                <option value="typewriter" selected>Typewriter — types, pauses, deletes, types next</option>
+                <option value="fade">Fade — crossfades to the next message</option>
+                <option value="marquee">Marquee — scrolls continuously like a ticker</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;">
+            <div class="field" style="flex:1;">
+              <label class="field-label">Seconds per message <span style="color:var(--text-3);font-weight:400;">(also sets marquee speed)</span></label>
+              <input type="number" id="abInterval" class="input" min="2" max="20" value="4">
+            </div>
+            <div class="field" style="flex:1;">
+              <label class="field-label">Show on</label>
+              <select id="abPlacement" class="input">
+                <option value="both" selected>Everywhere — landing page + dashboard</option>
+                <option value="landing">Public landing page only</option>
+                <option value="dashboard">Logged-in dashboard only</option>
+              </select>
+            </div>
+          </div>
+
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;color:var(--text-2);">
+            <input type="checkbox" id="abActive" checked style="width:auto;"> Active — live immediately
+          </label>
+
+          <div style="border-top:1px solid var(--border);padding-top:16px;">
+            <div style="font-size:0.78rem;color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">Preview</div>
+            <div id="abPreviewWrap" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeAnnBarBuilder()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveAnnBar()">Save bar</button>
         </div>
       </div>
     </div>
@@ -8308,6 +8411,158 @@ document.addEventListener('keydown', function(e){
           if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
         }
       };
+
+      // ══════════════════════════════════════════════════════════════════
+      // TOP ANNOUNCEMENT BAR — admin builder (list, create, edit, delete,
+      // message add/remove, live preview). The real runtime bar users see
+      // lives in a separate global script further down (loadAnnouncementBar
+      // / renderAnnBar), since that code needs to run on every page load,
+      // including the public landing page before any login happens.
+      // ══════════════════════════════════════════════════════════════════
+      let _annBarCache = [];
+
+      window.loadAdminAnnBars = async function() {
+        const el = document.getElementById('adminAnnBarList');
+        if (!el) return;
+        el.textContent = 'Loading…';
+        try {
+          const res = await apiFetch('/api/admin/announcement-bars');
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load announcement bars');
+          _annBarCache = data.bars || [];
+          if (!_annBarCache.length) {
+            el.innerHTML = '<div style="padding:14px 0;color:var(--text-3);">No announcement bars yet. Click "+ New bar" to create one.</div>';
+            return;
+          }
+          const placementLabels = { landing: 'Landing page', dashboard: 'Dashboard', both: 'Everywhere' };
+          const methodLabels = { typewriter: 'Typewriter', fade: 'Fade', marquee: 'Marquee' };
+          el.innerHTML = _annBarCache.map(b => `
+            <div class="admin-promo-row">
+              <div>
+                <div class="apr-name">${escapeHtml(b.name || b.messages[0] || 'Untitled')} ${b.active ? '<span style="color:var(--green);font-size:0.72rem;">● live</span>' : '<span style="color:var(--text-3);font-size:0.72rem;">○ inactive</span>'}</div>
+                <div class="apr-meta">${b.messages.length} message${b.messages.length===1?'':'s'} · ${escapeHtml(methodLabels[b.displayMethod] || b.displayMethod)} · ${escapeHtml(placementLabels[b.placement] || b.placement)} · theme: ${escapeHtml(b.theme)}</div>
+              </div>
+              <div style="display:flex;gap:8px;flex-shrink:0;">
+                <button class="btn btn-ghost btn-sm" onclick="openAnnBarBuilder('${b.id}')">Edit</button>
+                <button class="btn btn-ghost btn-sm" style="color:#f87171;border-color:rgba(239,68,68,.3);" onclick="deleteAnnBar('${b.id}')">Delete</button>
+              </div>
+            </div>
+          `).join('');
+        } catch (e) {
+          el.innerHTML = `<div style="padding:14px 0;color:var(--red);">${escapeHtml(e.message || 'Could not load announcement bars')}</div>`;
+        }
+      };
+
+      window.openAnnBarBuilder = function(id) {
+        const modal = document.getElementById('annBarBuilderModal');
+        const existing = id ? _annBarCache.find(b => b.id === id) : null;
+        document.getElementById('annBarBuilderTitle').textContent = existing ? 'Edit announcement bar' : 'New announcement bar';
+        document.getElementById('abId').value = existing?.id || '';
+        document.getElementById('abName').value = existing?.name || '';
+        document.getElementById('abLinkText').value = existing?.linkText || '';
+        document.getElementById('abLinkUrl').value = existing?.linkUrl || '';
+        document.getElementById('abIntensity').value = existing?.intensity ?? 50;
+        document.getElementById('abIntensityVal').textContent = (existing?.intensity ?? 50) + '%';
+        document.getElementById('abDisplayMethod').value = existing?.displayMethod || 'typewriter';
+        document.getElementById('abInterval').value = existing?.interval ?? 4;
+        document.getElementById('abPlacement').value = existing?.placement || 'both';
+        document.getElementById('abActive').checked = existing ? !!existing.active : true;
+        document.getElementById('abMessagesList').innerHTML = '';
+        const msgs = (existing?.messages && existing.messages.length) ? existing.messages : [''];
+        msgs.forEach(m => abAddMessage(m));
+        abSelectTheme(existing?.theme || 'green');
+        modal.style.display = 'flex';
+      };
+
+      window.closeAnnBarBuilder = function() {
+        document.getElementById('annBarBuilderModal').style.display = 'none';
+      };
+
+      window.abAddMessage = function(value = '') {
+        const list = document.getElementById('abMessagesList');
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:8px;align-items:center;';
+        row.innerHTML = `
+          <input type="text" class="input ab-message-input" value="${escapeHtml(value)}" placeholder="e.g. Full root access — get started" oninput="abUpdatePreview()" style="flex:1;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="this.parentElement.remove(); abUpdatePreview();" title="Remove">✕</button>
+        `;
+        list.appendChild(row);
+        abUpdatePreview();
+      };
+      window.abCollectMessages = function() {
+        return Array.from(document.querySelectorAll('.ab-message-input')).map(el => el.value.trim()).filter(Boolean);
+      };
+
+      window.abSelectTheme = function(theme) {
+        document.getElementById('abTheme').value = theme;
+        document.querySelectorAll('#abThemeSwatches .pb-swatch').forEach(s => s.classList.toggle('selected', s.dataset.theme === theme));
+        document.getElementById('abIntensityField').style.display = theme === 'green' ? '' : 'none';
+        abUpdatePreview();
+      };
+
+      window.abUpdatePreview = function() {
+        const wrap = document.getElementById('abPreviewWrap');
+        if (!wrap) return;
+        const bar = {
+          messages: (typeof abCollectMessages === 'function' ? abCollectMessages() : []).length
+            ? abCollectMessages() : ['Your announcement message here'],
+          linkText: document.getElementById('abLinkText').value || '',
+          linkUrl: document.getElementById('abLinkUrl').value || '',
+          theme: document.getElementById('abTheme').value,
+          intensity: document.getElementById('abIntensity').value,
+          displayMethod: document.getElementById('abDisplayMethod').value,
+          interval: document.getElementById('abInterval').value,
+        };
+        wrap.innerHTML = buildAnnBarHtml(bar);
+        if (typeof startAnnBarCycle === 'function') startAnnBarCycle(wrap.querySelector('.annbar'), bar, { preview: true });
+      };
+      ['abLinkText'].forEach(id => {
+        document.addEventListener('input', e => { if (e.target && e.target.id === id) abUpdatePreview(); });
+      });
+
+      window.saveAnnBar = async function() {
+        const id = document.getElementById('abId').value;
+        const payload = {
+          name: document.getElementById('abName').value,
+          messages: abCollectMessages(),
+          linkText: document.getElementById('abLinkText').value,
+          linkUrl: document.getElementById('abLinkUrl').value,
+          theme: document.getElementById('abTheme').value,
+          intensity: Number(document.getElementById('abIntensity').value),
+          displayMethod: document.getElementById('abDisplayMethod').value,
+          interval: Number(document.getElementById('abInterval').value),
+          placement: document.getElementById('abPlacement').value,
+          active: document.getElementById('abActive').checked,
+        };
+        if (!payload.messages.length) return toast('Add at least one message.', 'error');
+        try {
+          const res = await apiFetch(id ? `/api/admin/announcement-bars/${id}` : '/api/admin/announcement-bars', {
+            method: id ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not save announcement bar');
+          toast(id ? 'Announcement bar updated.' : 'Announcement bar created.', 'success');
+          closeAnnBarBuilder();
+          loadAdminAnnBars();
+        } catch (e) {
+          toast(e.message || 'Could not save announcement bar', 'error');
+        }
+      };
+
+      window.deleteAnnBar = async function(id) {
+        if (!confirm('Delete this announcement bar? This cannot be undone.')) return;
+        try {
+          const res = await apiFetch(`/api/admin/announcement-bars/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not delete announcement bar');
+          toast('Announcement bar deleted.', 'success');
+          loadAdminAnnBars();
+        } catch (e) {
+          toast(e.message || 'Could not delete announcement bar', 'error');
+        }
+      };
     })();
     </script>
 
@@ -8503,6 +8758,151 @@ document.addEventListener('keydown', function(e){
         overlay.classList.remove('active');
         setTimeout(() => { overlay.innerHTML = ''; }, 200);
       };
+    })();
+    </script>
+
+    <!-- ════════ ANNOUNCEMENT BAR RUNTIME ENGINE (site-wide, public) ════════ -->
+    <script>
+    (function() {
+      let _annBarCycleTimer = null;
+      let _annBarCycleFrame = null;
+
+      function annBarThemeColors(theme, intensity) {
+        if (theme === 'white') return { bg: '#f8fafc', text: '#0f172a' };
+        if (theme === 'yellow') return { bg: '#eab308', text: '#1c1400' };
+        if (theme === 'red') return { bg: '#ef4444', text: '#fff' };
+        const pct = Math.max(0, Math.min(100, Number(intensity) || 50));
+        const lightness = 42 - (pct / 100) * 22; // 42% down to 20% -- darker background bar, not a light chip
+        return { bg: `hsl(158, 64%, ${lightness}%)`, text: '#fff' };
+      }
+
+      // Shared by the admin preview and the real bar so they can never
+      // drift apart. Builds the static shell; startAnnBarCycle() below
+      // handles the actual message-cycling animation once this is in the DOM.
+      window.buildAnnBarHtml = function(bar) {
+        const colors = annBarThemeColors(bar.theme, bar.intensity);
+        const linkHtml = bar.linkText
+          ? `<a href="${escapeHtml(bar.linkUrl || '#')}" class="annbar-link" style="color:${colors.text};">${escapeHtml(bar.linkText)} →</a>`
+          : '';
+        return `
+          <div class="annbar" style="background:${colors.bg};color:${colors.text};">
+            <div class="annbar-inner">
+              <div class="annbar-text-wrap"><span class="annbar-text"></span></div>
+              ${linkHtml}
+            </div>
+          </div>
+        `;
+      };
+
+      // Cycles bar.messages inside the given .annbar element using
+      // whichever displayMethod the admin picked. Safe to call repeatedly
+      // (e.g. every keystroke in the admin preview) -- always tears down
+      // any previous timer/animation frame first.
+      window.startAnnBarCycle = function(annbarEl, bar, opts = {}) {
+        if (_annBarCycleTimer) { clearTimeout(_annBarCycleTimer); _annBarCycleTimer = null; }
+        if (_annBarCycleFrame) { cancelAnimationFrame(_annBarCycleFrame); _annBarCycleFrame = null; }
+        if (!annbarEl) return;
+        const textEl = annbarEl.querySelector('.annbar-text');
+        const wrapEl = annbarEl.querySelector('.annbar-text-wrap');
+        if (!textEl || !wrapEl) return;
+        const messages = (bar.messages && bar.messages.length) ? bar.messages : [''];
+        const intervalMs = Math.max(2, Number(bar.interval) || 4) * 1000;
+
+        if (bar.displayMethod === 'marquee') {
+          wrapEl.classList.add('annbar-marquee-mode');
+          const joined = messages.join('  •  ');
+          textEl.textContent = joined + '     ' + joined; // duplicated for a seamless scroll loop
+          // Speed: fewer seconds-per-message = faster scroll.
+          const speed = Math.max(6, Math.min(60, (Number(bar.interval) || 4) * messages.length * 2));
+          textEl.style.animationDuration = speed + 's';
+          return; // CSS keyframe handles the rest, no JS timer needed
+        }
+
+        wrapEl.classList.remove('annbar-marquee-mode');
+        textEl.style.animationDuration = '';
+
+        if (bar.displayMethod === 'fade') {
+          let idx = 0;
+          const showNext = () => {
+            textEl.style.opacity = '0';
+            setTimeout(() => {
+              textEl.textContent = messages[idx % messages.length];
+              textEl.style.opacity = '1';
+              idx++;
+              _annBarCycleTimer = setTimeout(showNext, intervalMs);
+            }, 250);
+          };
+          showNext();
+          return;
+        }
+
+        // Typewriter (default): types the message in, holds, deletes it,
+        // moves to the next message, loops forever.
+        let msgIdx = 0, charIdx = 0, deleting = false;
+        const CPS = 42; // characters per second while typing/deleting
+        function tick() {
+          const current = messages[msgIdx % messages.length];
+          if (!deleting) {
+            charIdx++;
+            textEl.textContent = current.slice(0, charIdx);
+            if (charIdx >= current.length) {
+              _annBarCycleTimer = setTimeout(() => { deleting = true; tick(); }, intervalMs * 1000);
+              return;
+            }
+            _annBarCycleTimer = setTimeout(tick, 1000 / CPS);
+          } else {
+            charIdx--;
+            textEl.textContent = current.slice(0, Math.max(0, charIdx));
+            if (charIdx <= 0) {
+              deleting = false;
+              msgIdx++;
+              _annBarCycleTimer = setTimeout(tick, 350);
+              return;
+            }
+            _annBarCycleTimer = setTimeout(tick, 1000 / (CPS * 1.6));
+          }
+        }
+        tick();
+      };
+
+      // Determines placement context (landing vs dashboard) from whichever
+      // top-level view is currently visible, fetches the first matching
+      // active bar (no auth required -- this must work for signed-out
+      // landing-page visitors too), and renders it above everything else,
+      // pushing the rest of the page down exactly like the existing
+      // admin-impersonation banner already does.
+      window.loadAnnouncementBar = async function() {
+        try {
+          const landingVisible = document.getElementById('landing-view') &&
+            getComputedStyle(document.getElementById('landing-view')).display !== 'none';
+          const placementGuess = landingVisible ? 'landing' : 'dashboard';
+          const res = await fetch('/api/announcement-bars/active?placement=' + placementGuess);
+          if (!res.ok) return;
+          const data = await res.json();
+          const bar = (data.bars || [])[0];
+          const wrap = document.getElementById('annBarWrap');
+          if (!wrap) return;
+          if (!bar) {
+            wrap.style.display = 'none';
+            wrap.innerHTML = '';
+            document.body.classList.remove('has-annbar');
+            return;
+          }
+          wrap.innerHTML = buildAnnBarHtml(bar);
+          wrap.style.display = '';
+          document.body.classList.add('has-annbar');
+          startAnnBarCycle(wrap.querySelector('.annbar'), bar, { preview: false });
+        } catch {}
+      };
+
+      // Fire once the page has settled, and again whenever the user logs
+      // in/out (landing vs dashboard placement can differ), by piggy-
+      // backing on the existing login checkPromos() calls' timing.
+      if (document.readyState === 'complete') {
+        setTimeout(loadAnnouncementBar, 300);
+      } else {
+        window.addEventListener('load', () => setTimeout(loadAnnouncementBar, 300));
+      }
     })();
     </script>
 
@@ -13235,6 +13635,7 @@ async function ensureBackendSessionFromFirebase() {
     localStorage.setItem('db_auth_token', d.token);
     applyUserProfile(d.user || null);
     if (typeof checkPromos === 'function') checkPromos('login');
+        if (typeof loadAnnouncementBar === 'function') setTimeout(loadAnnouncementBar, 300);
     if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
     return true;
   } catch (_) { return false; }
@@ -13868,6 +14269,9 @@ function showPage(id, navEl, _skipPush) {
   }
   if (id === 'admin-panel' && typeof loadSidebarAnnouncementAdmin === 'function') {
     setTimeout(loadSidebarAnnouncementAdmin, 100);
+  }
+  if (id === 'admin-panel' && typeof loadAdminAnnBars === 'function') {
+    setTimeout(loadAdminAnnBars, 100);
   }
   // ── If navigating AWAY from new-deploy, clean up any new-version upload state ──
   // This prevents locked name/subdomain fields and the new-version banner from
@@ -20106,6 +20510,7 @@ function statusBadge(status) {
         window.history.replaceState({}, '', clean);
         applyUserProfile(d.user || null);
         if (typeof checkPromos === 'function') checkPromos('login');
+        if (typeof loadAnnouncementBar === 'function') setTimeout(loadAnnouncementBar, 300);
     if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
         if (d.firebaseLinked === false) {
           toast('GitHub connected, but Firebase account link failed. Check Firebase GitHub provider config.', 'error');
@@ -20165,6 +20570,7 @@ function statusBadge(status) {
           localStorage.setItem('db_auth_token', d.token);
           applyUserProfile(d.user || null);
           if (typeof checkPromos === 'function') checkPromos('login');
+        if (typeof loadAnnouncementBar === 'function') setTimeout(loadAnnouncementBar, 300);
     if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
           toast('Signed in with Google successfully!', 'success');
           preferPricingAfterAuth = true;
@@ -20314,6 +20720,7 @@ async function submitAuth(){
       localStorage.setItem('db_auth_token', d.token);
       applyUserProfile(d.user || null);
       if (typeof checkPromos === 'function') checkPromos('login');
+        if (typeof loadAnnouncementBar === 'function') setTimeout(loadAnnouncementBar, 300);
     if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
       toast('Welcome! Account ready.', 'success');
       showDashboard('pricing');
@@ -20366,6 +20773,7 @@ async function submitEmailVerification(){
   localStorage.setItem('db_auth_token', d.token);
   applyUserProfile(d.user || null);
   if (typeof checkPromos === 'function') checkPromos('login');
+        if (typeof loadAnnouncementBar === 'function') setTimeout(loadAnnouncementBar, 300);
     if (typeof initSidebarAnnouncement === 'function') initSidebarAnnouncement();
   // Pull canonical workspace immediately so we don't render/overwrite with stale local state.
   try {
@@ -22700,6 +23108,7 @@ function showLanding() {
   document.getElementById('app').style.display = 'none';
   window.history.pushState({view:'landing'}, '', '/');
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (typeof loadAnnouncementBar === 'function') setTimeout(loadAnnouncementBar, 300);
 }
 </script>
 
