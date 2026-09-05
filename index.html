@@ -11926,6 +11926,16 @@ async function runDatabaseDiff() {
         </button>
       </div>
 
+      <!-- [FEATURE] Shown only to a non-owner member. Previously there was
+           NO way to leave a team once an invite was accepted -- the only
+           exit was the owner removing you. This is your own workspace's
+           data untouched the whole time (accepting never modified it),
+           so leaving restores access to it immediately. -->
+      <div id="teamMemberBanner" style="display:none;margin-bottom:20px;padding:14px 16px;border:1px solid var(--dcx-field-border, var(--border));align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div style="font-size:0.85rem;color:var(--text-2);">You're a member of <strong id="teamMemberOwnerLabel" style="color:var(--text);">someone's</strong> team.</div>
+        <button class="btn btn-ghost" onclick="leaveTeam()" style="font-size:0.8rem;">Leave Team</button>
+      </div>
+
       <!-- Current members -->
       <div class="card" style="margin-bottom:20px;">
         <div class="card-header">
@@ -13825,6 +13835,12 @@ function save() {
 }
 
 let workspaceSyncTimer = null;
+// [FEATURE] Echoed back on every save so the server can detect a save
+// whose snapshot predates a team-membership change (accept/leave/removed)
+// and reject it instead of blindly overwriting the wrong workspace --
+// see the matching comment on POST /api/workspace in server.js for the
+// full story. Updated every time GET /api/workspace succeeds.
+let workspaceMembershipVersion = null;
 function queueWorkspaceSync(){
   if (!hasAuthToken()) return;
   clearTimeout(workspaceSyncTimer);
@@ -13834,7 +13850,17 @@ function queueWorkspaceSync(){
       const uploadedProjectsMeta = (_cuProjects || [])
         .filter(p => p.extracted && !p.extracting && !p.error)
         .map(p => ({ id: p.id, name: p.name, fileName: p.fileName, size: p.size, lang: p.lang, uploadedAt: p.uploadedAt, fileCount: p.fileCount, extracted: true, serverPath: p.serverPath || '' }));
-      const syncRes = await apiFetch('/api/workspace', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projects, deployments, envStore, settings, uploadedProjects: uploadedProjectsMeta }) });
+      const syncRes = await apiFetch('/api/workspace', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projects, deployments, envStore, settings, uploadedProjects: uploadedProjectsMeta, membershipVersion: workspaceMembershipVersion }) });
+      if (syncRes.status === 409) {
+        // [FEATURE] Server detected this save's snapshot predates a team-
+        // membership change -- refusing it here is the correct outcome
+        // (it means this exact save would otherwise have overwritten the
+        // wrong workspace), but the user still needs to know their most
+        // recent change didn't persist rather than assuming it silently
+        // did.
+        toast('Your team membership changed — refresh the page before making more changes.', 'error', 8000);
+        return;
+      }
       if (!syncRes.ok) throw new Error('Workspace sync failed: ' + syncRes.status);
     } catch(err) {
       console.warn('[workspace-sync]', err?.message || err);
@@ -14219,6 +14245,7 @@ async function bootstrapSession(){
       envStore = wsD.envStore && typeof wsD.envStore === 'object' ? wsD.envStore : {};
       adminQuotaOverrideSeconds = Number.isFinite(wsD.adminQuotaOverrideSeconds) ? wsD.adminQuotaOverrideSeconds : null;
       settings = Object.assign({ baseDomain: 'joytree.site' }, wsD.settings || {});
+      workspaceMembershipVersion = wsD.membershipVersion || null;
       _save();
       // [FIX] The previous version of this always applied settings.theme
       // (the SERVER value) over whatever the synchronous head script had
@@ -22095,6 +22122,13 @@ function renderTeam() {
   const inviteBtn = document.getElementById('teamInviteBtn');
   if (inviteBtn) inviteBtn.style.display = teamState.isOwner ? '' : 'none';
 
+  const banner = document.getElementById('teamMemberBanner');
+  const bannerLabel = document.getElementById('teamMemberOwnerLabel');
+  if (banner) {
+    banner.style.display = teamState.isOwner ? 'none' : 'flex';
+    if (bannerLabel) bannerLabel.textContent = ownerName || ownerEmail || "the owner's";
+  }
+
   const membersEl = document.getElementById('teamInvitesList');
   if (membersEl) {
     membersEl.innerHTML = (teamState.members || []).map(m => `
@@ -22192,6 +22226,23 @@ async function removeMember(email) {
   }
 }
 
+// [FEATURE] Previously there was no way for a member to leave a team --
+// the only exit was the owner removing them. Your own workspace's data
+// was never touched by accepting the invite in the first place, so
+// leaving restores access to it immediately on reload.
+async function leaveTeam() {
+  if (!confirm("Leave this team and go back to your own workspace? You'll lose access to the team's projects immediately.")) return;
+  try {
+    const r = await apiFetch('/api/team/leave', { method: 'POST' });
+    const data = await r.json();
+    if (!r.ok || !data.ok) { toast(data.error || 'Could not leave team', 'error'); return; }
+    toast("You've left the team. Reloading your own workspace…", 'success', 2500);
+    window.location.reload();
+  } catch (e) {
+    toast('Could not leave team — check your connection', 'error');
+  }
+}
+
 // Handles ?acceptInvite=<token> in the URL -- same "no href / query-
 // param handshake" pattern already used for promoDomainSearch. Runs
 // once on load, after the user is confirmed signed in.
@@ -22204,8 +22255,23 @@ async function handlePendingInviteAccept() {
     const r = await apiFetch('/api/team/invites/' + encodeURIComponent(token) + '/accept', { method: 'POST' });
     const data = await r.json();
     if (!r.ok || !data.ok) { toast(data.error || 'Could not accept invite', 'error', 6000); return; }
-    toast("You're now on the team! Reloading your workspace…", 'success', 4000);
-    setTimeout(() => window.location.reload(), 1500);
+    // [FIX-CRITICAL] This used to wait 1.5s before reloading. In that
+    // window, this browser's projects/deployments/settings variables
+    // were still this account's OWN pre-accept data, completely
+    // unchanged -- but the server had ALREADY redirected this account's
+    // workspace key to the owner's the instant accept succeeded (see
+    // firebaseWorkspaceKey in server.js). If ANY debounced
+    // queueWorkspaceSync() timer was already pending from literally
+    // anything that called save() earlier in the session, it would fire
+    // during that window and silently overwrite the OWNER's real
+    // workspace with this account's stale local data. That's a genuine
+    // real-data-loss bug, not a cosmetic one. Clearing the pending timer
+    // and reloading immediately (no artificial delay) closes the window
+    // almost entirely; the matching server-side guard in
+    // POST /api/workspace closes it the rest of the way.
+    if (typeof workspaceSyncTimer !== 'undefined') clearTimeout(workspaceSyncTimer);
+    toast("You're now on the team! Reloading your workspace…", 'success', 2500);
+    window.location.reload();
   } catch (e) {
     toast('Could not accept invite — check your connection', 'error');
   }

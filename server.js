@@ -2195,6 +2195,17 @@ const userSchema = new mongoose.Schema({
   // sharing the exact same projects/deployments/settings.
   memberOf: { type: String, default: '' },
   memberRole: { type: String, default: '' }, // 'admin' | 'viewer' -- only meaningful when memberOf is set
+  // [FEATURE] Bumped every time memberOf changes (accept invite, leave
+  // team, removed by owner). POST /api/workspace requires the client to
+  // echo back whatever value it last saw via GET -- if they don't match,
+  // the client's snapshot predates a team-membership change and the
+  // save is rejected instead of blindly applied. This is what actually
+  // closes the race where accepting an invite redirects this account's
+  // workspace key to the owner's, but the browser is still holding this
+  // account's OWN pre-accept data in memory for a moment -- without this
+  // guard, a stale save landing in that window would silently overwrite
+  // the owner's real workspace with the accepting member's stale data.
+  memberOfChangedAt: { type: String, default: '' },
   workspace: {
     projects: { type: Array, default: [] },
     deployments: { type: Array, default: [] },
@@ -5591,6 +5602,7 @@ app.post('/api/team/invites/:token/accept', requireAuth, async (req, res) => {
 
     req.user.memberOf = String(entry.ownerEmail || '').toLowerCase();
     req.user.memberRole = entry.role;
+    req.user.memberOfChangedAt = new Date().toISOString();
     await persistUserRecord(req.user);
 
     res.json({ ok: true, ownerEmail: entry.ownerEmail, role: entry.role });
@@ -5632,11 +5644,37 @@ app.delete('/api/team/members/:email', requireAuth, async (req, res) => {
     if (memberRecord && String(memberRecord.memberOf || '').toLowerCase() === String(req.user.email || '').toLowerCase()) {
       memberRecord.memberOf = '';
       memberRecord.memberRole = '';
+      memberRecord.memberOfChangedAt = new Date().toISOString();
       await persistUserRecord(memberRecord);
     }
     res.json({ ok: true, removed: wasMember });
   } catch (e) {
     res.status(500).json({ error: e.message || 'Could not remove team member' });
+  }
+});
+
+// [FEATURE] Previously there was NO way for a member to leave a team once
+// they'd accepted an invite -- the only exit was the owner removing them.
+// Self-service leave, mirroring the remove-member logic above but
+// initiated by the member themselves.
+app.post('/api/team/leave', requireAuth, async (req, res) => {
+  try {
+    if (isTeamOwner(req.user)) return res.status(400).json({ error: "You're not a member of anyone else's team." });
+    const ownerEmail = req.user.memberOf;
+    const owner = await findUserRecordByEmail(ownerEmail);
+    if (owner) {
+      const ws = (await readWorkspaceFromFirebase(owner)) || owner.workspace || {};
+      const team = { members: [], invites: [], ...(ws.team && typeof ws.team === 'object' ? ws.team : {}) };
+      team.members = (team.members || []).filter(m => String(m.email || '').toLowerCase() !== String(req.user.email || '').toLowerCase());
+      await writeWorkspaceToFirebase(owner, { ...ws, team });
+    }
+    req.user.memberOf = '';
+    req.user.memberRole = '';
+    req.user.memberOfChangedAt = new Date().toISOString();
+    await persistUserRecord(req.user);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Could not leave team' });
   }
 });
 
@@ -5696,7 +5734,10 @@ app.get('/api/workspace', requireAuth, async (req, res) => {
     // dashboard/settings usage bar, which computed everything from the
     // static plan table alone -- correctly enforced, but confusingly still
     // displayed as e.g. "313/300" even after being raised.
-    adminQuotaOverrideSeconds: Number.isFinite(ws.adminQuotaOverrideSeconds) ? ws.adminQuotaOverrideSeconds : null
+    adminQuotaOverrideSeconds: Number.isFinite(ws.adminQuotaOverrideSeconds) ? ws.adminQuotaOverrideSeconds : null,
+    // [FEATURE] Echoed back on every POST /api/workspace as
+    // membershipVersion -- see that endpoint's own comment for why.
+    membershipVersion: req.user.memberOfChangedAt || null
   });
 });
 
@@ -5726,6 +5767,31 @@ app.post('/api/workspace', requireAuth, async (req, res) => {
     // enforce that rather than leaving the role purely cosmetic.
     if (req.user.memberOf && req.user.memberRole === 'viewer') {
       return res.status(403).json({ error: 'Viewers have read-only access and cannot make changes.' });
+    }
+    // [FIX-CRITICAL] Real bug, reproduced: accepting a team invite
+    // redirects this account's workspace key to the owner's the INSTANT
+    // it succeeds (memberOf is set server-side immediately) -- but the
+    // browser can still have a debounced queueWorkspaceSync() timer
+    // pending from anything that called save() moments earlier in the
+    // same session, carrying this account's OWN pre-accept
+    // projects/settings. If that fires before the client reloads with
+    // fresh data, it silently overwrites the OWNER's real workspace with
+    // the accepting member's stale local data -- exactly the "my
+    // projects got overwritten" report this was built to prevent.
+    // membershipVersion is what GET /api/workspace last handed this
+    // client; if it doesn't match the CURRENT memberOfChangedAt, this
+    // client's snapshot predates a team-membership change (accept,
+    // leave, or being removed) and the save is rejected rather than
+    // blindly applied. Older clients that don't send this field yet
+    // still work normally (skip the check) -- this only activates once
+    // the field is actually present, so it can't itself become a new
+    // source of unexpected save failures for unrelated flows.
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, 'membershipVersion')) {
+      const current = req.user.memberOfChangedAt || '';
+      const provided = String(req.body.membershipVersion || '');
+      if (provided !== current) {
+        return res.status(409).json({ error: 'Your team membership changed since this page loaded. Refresh and try again to avoid overwriting the wrong workspace.' });
+      }
     }
     const payload = req.body || {};
     // Read existing workspace first to preserve uploadedProjects (and any other
