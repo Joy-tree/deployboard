@@ -11531,31 +11531,46 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
   border: none !important;
   box-shadow: none !important;
 }
-.jt-stbadge-success, .jt-stbadge-building {
-  background: rgba(16,185,129,.18) !important;
-  color: #10b981 !important;
+/* [FIX] Was rgba(color, .18) translucent tints with colored text on
+   every state (success/building/error/pending/idle) — exactly the
+   washed-out pill look that was already deliberately fixed for the
+   old .badge/.badge-success/.badge-error system (see the comment
+   above), just reintroduced in this newer, separately-named
+   namespace. Matched to the exact same solid deep fills + white text
+   .badge-success/.badge-building/.badge-error/.badge-pending/
+   .badge-idle already use, so a database's "Running" pill and a
+   deployment's "failed" pill read identically instead of one being
+   solid and the other a translucent tint. */
+.jt-stbadge-success {
+  background: #14532d !important;
+  color: #fff !important;
   border: none !important;
 }
-.jt-stbadge-success .jt-stbadge-dot, .jt-stbadge-building .jt-stbadge-dot { background: #10b981 !important; }
-.jt-stbadge-building .jt-stbadge-dot { animation: pulse 1s infinite !important; }
+.jt-stbadge-success .jt-stbadge-dot { background: #fff !important; }
+.jt-stbadge-building {
+  background: #14532d !important;
+  color: #fff !important;
+  border: none !important;
+}
+.jt-stbadge-building .jt-stbadge-dot { background: #fff !important; animation: pulse 1s infinite !important; }
 .jt-stbadge-error {
-  background: rgba(239,68,68,.18) !important;
-  color: #ef4444 !important;
+  background: #7f1d1d !important;
+  color: #fff !important;
   border: none !important;
 }
-.jt-stbadge-error .jt-stbadge-dot { background: #ef4444 !important; }
+.jt-stbadge-error .jt-stbadge-dot { background: #fff !important; }
 .jt-stbadge-pending {
-  background: rgba(245,158,11,.18) !important;
-  color: #f59e0b !important;
+  background: #78350f !important;
+  color: #fff !important;
   border: none !important;
 }
-.jt-stbadge-pending .jt-stbadge-dot { background: #f59e0b !important; }
+.jt-stbadge-pending .jt-stbadge-dot { background: #fff !important; }
 .jt-stbadge-idle {
-  background: rgba(100,116,139,.18) !important;
-  color: #94a3b8 !important;
+  background: #334155 !important;
+  color: #fff !important;
   border: none !important;
 }
-.jt-stbadge-idle .jt-stbadge-dot { background: #94a3b8 !important; }
+.jt-stbadge-idle .jt-stbadge-dot { background: #fff !important; }
 
 /* ══════════════════════════════════════════════════════════════════
    BADGE CORNERS — SHARP, EVERYWHERE, NO EXCEPTIONS. Turns out "no
