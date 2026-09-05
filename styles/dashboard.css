@@ -969,7 +969,8 @@ body.landing-drawer-open { overflow:hidden; }
 .feature-tag{
   display:inline-block;margin-top:14px;
   font-size:0.7rem;font-weight:700;letter-spacing:0.06em;
-  padding:3px 9px;border-radius:99px;font-family:var(--font-mono);
+  padding:5px 12px;border-radius:0;font-family:var(--font-mono);
+  border:none;
 }
 
 /* ── HOW IT WORKS ────────────────────────────────────────────────── */

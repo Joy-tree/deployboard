@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=52">
+<link rel="stylesheet" href="/styles/dashboard.css?v=53">
   <link rel="stylesheet" href="/styles/auth.css?v=2">
   <link rel="stylesheet" href="/styles/landing.css?v=4">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -203,7 +203,7 @@
   <link rel="stylesheet" href="/styles/animations.css?v=3">
   <link rel="stylesheet" href="/styles/onboarding.css?v=1">
   <link rel="stylesheet" href="/styles/streak.css?v=2">
-  <link rel="stylesheet" href="/theme-override.css?v=205" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+  <link rel="stylesheet" href="/theme-override.css?v=206" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -1718,7 +1718,7 @@ window.landingToggleTheme = function(){
       </div>
       <div class="feature-name">GitHub Deployments</div>
       <div class="feature-desc">Connect any public or private repo. Authenticate with a Personal Access Token, choose your branch, configure your build — and deploy on demand with one click.</div>
-      <span class="feature-tag" style="background:rgba(139,92,246,0.1);color:var(--purple);">Git + PAT Auth</span>
+      <span class="feature-tag" style="background:#4c1d95;color:#fff;">Git + PAT Auth</span>
     </div>
 
     <!-- File Upload Deploy -->
@@ -1731,7 +1731,7 @@ window.landingToggleTheme = function(){
       </div>
       <div class="feature-name">No-GitHub Upload Deploy</div>
       <div class="feature-desc">No repo needed. Drop a ZIP, tar.gz, or single HTML file, extract it in the browser-side IDE, and deploy straight to a live subdomain. Perfect for quick prototypes or client handoffs.</div>
-      <span class="feature-tag" style="background:rgba(16,185,129,0.1);color:var(--green);">ZIP · tar.gz · HTML</span>
+      <span class="feature-tag" style="background:#14532d;color:#fff;">ZIP · tar.gz · HTML</span>
     </div>
 
     <!-- Managed Databases -->
@@ -1745,7 +1745,7 @@ window.landingToggleTheme = function(){
       </div>
       <div class="feature-name">Managed Databases</div>
       <div class="feature-desc">Spin up isolated Redis, MongoDB, MySQL, or PostgreSQL instances in seconds. Each database gets its own container, memory cap, and connection string — ready to wire into any project.</div>
-      <span class="feature-tag" style="background:rgba(245,158,11,0.1);color:var(--amber);">Redis · Mongo · MySQL · Postgres</span>
+      <span class="feature-tag" style="background:#78350f;color:#fff;">Redis · Mongo · MySQL · Postgres</span>
     </div>
 
     <!-- AI API Builder -->
@@ -1758,7 +1758,7 @@ window.landingToggleTheme = function(){
       </div>
       <div class="feature-name">AI API Builder</div>
       <div class="feature-desc">Describe what your API should do in plain English. Joytree AI generates a live, containerised REST API endpoint instantly — with a response template, follow-up prompt support, and a public URL.</div>
-      <span class="feature-tag" style="background:rgba(6,182,212,0.1);color:var(--cyan);">Joytree AI v2</span>
+      <span class="feature-tag" style="background:#164e63;color:#fff;">Joytree AI v2</span>
     </div>
 
     <!-- Real-time Build Logs -->
@@ -1770,7 +1770,7 @@ window.landingToggleTheme = function(){
       </div>
       <div class="feature-name">Real-time Build Logs</div>
       <div class="feature-desc">An Xterm.js-powered terminal streams every line of your build as it happens — install, compile, copy, live. No waiting, no polling, no refresh. Pure transparency from first byte to deployment.</div>
-      <span class="feature-tag" style="background:rgba(34,197,94,0.1);color:var(--primary);">Socket.io + Xterm.js</span>
+      <span class="feature-tag" style="background:#14532d;color:#fff;">Socket.io + Xterm.js</span>
     </div>
 
     <!-- Docker isolation -->
@@ -1783,7 +1783,7 @@ window.landingToggleTheme = function(){
       </div>
       <div class="feature-name">Docker Build Isolation</div>
       <div class="feature-desc">Every build and every database runs in its own fresh container. No dependency leakage, no shared state between projects. Clean disk after every build, even on failures.</div>
-      <span class="feature-tag" style="background:rgba(16,185,129,0.08);color:var(--green);">Docker · Zero waste</span>
+      <span class="feature-tag" style="background:#14532d;color:#fff;">Docker · Zero waste</span>
     </div>
 
     <!-- Code IDE -->
@@ -1796,7 +1796,7 @@ window.landingToggleTheme = function(){
       </div>
       <div class="feature-name">Browser-side Code IDE</div>
       <div class="feature-desc">Upload a ZIP and open it in the built-in IDE — browse files, edit code, and redeploy without leaving your browser. No local toolchain, no terminal, no Git required.</div>
-      <span class="feature-tag" style="background:rgba(139,92,246,0.08);color:var(--purple);">In-browser IDE</span>
+      <span class="feature-tag" style="background:#4c1d95;color:#fff;">In-browser IDE</span>
     </div>
 
     <!-- Rollbacks -->
@@ -1808,7 +1808,7 @@ window.landingToggleTheme = function(){
       </div>
       <div class="feature-name">Instant Rollbacks</div>
       <div class="feature-desc">Every deployment is versioned. One click takes your site back to any previous successful build — no re-cloning, no re-building, just a clean pointer swap.</div>
-      <span class="feature-tag" style="background:rgba(239,68,68,0.08);color:var(--red);">Version history</span>
+      <span class="feature-tag" style="background:#7f1d1d;color:#fff;">Version history</span>
     </div>
   </div>
 </section>
@@ -2013,7 +2013,7 @@ window.landingToggleTheme = function(){
           <div class="snippet-title" style="font-size:0.85rem;font-weight:700;color:var(--text);margin-bottom:2px;">Upload Deploy API</div>
           <div class="snippet-desc" style="font-size:0.72rem;color:var(--text-3);">Deploy a ZIP archive — no GitHub needed</div>
         </div>
-        <span class="snippet-lang" style="background:rgba(16,185,129,0.1);color:var(--green);">HTTP</span>
+        <span class="snippet-lang" style="background:#14532d;color:#fff;">HTTP</span>
       </div>
       <div class="snippet-body">
 <span class="co"># POST a ZIP/tar.gz to deploy instantly</span>
@@ -2036,7 +2036,7 @@ window.landingToggleTheme = function(){
           <div class="snippet-title" style="font-size:0.85rem;font-weight:700;color:var(--text);margin-bottom:2px;">Spin Up a Database</div>
           <div class="snippet-desc" style="font-size:0.72rem;color:var(--text-3);">Redis, MongoDB, MySQL, or PostgreSQL</div>
         </div>
-        <span class="snippet-lang" style="background:rgba(245,158,11,0.1);color:var(--amber);">JSON</span>
+        <span class="snippet-lang" style="background:#78350f;color:#fff;">JSON</span>
       </div>
       <div class="snippet-body">
 <span class="co">// POST /api/databases — create instantly</span>
@@ -2063,7 +2063,7 @@ window.landingToggleTheme = function(){
           <div class="snippet-title" style="font-size:0.85rem;font-weight:700;color:var(--text);margin-bottom:2px;">AI API Builder</div>
           <div class="snippet-desc" style="font-size:0.72rem;color:var(--text-3);">Plain-English → live REST endpoint</div>
         </div>
-        <span class="snippet-lang" style="background:rgba(6,182,212,0.1);color:var(--cyan);">AI</span>
+        <span class="snippet-lang" style="background:#164e63;color:#fff;">AI</span>
       </div>
       <div class="snippet-body">
 <span class="co"># Describe it. Joytree builds it.</span>
@@ -3033,7 +3033,7 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
         <div class="dash-section-sub">Platform events</div>
         <div style="padding-top:10px;" id="dashActivity">
           <div class="activity-item">
-            <div class="activity-avatar" style="background:rgba(16,185,129,0.1);color:var(--primary);">
+            <div class="activity-avatar" style="background:#14532d;color:#fff;">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/></svg>
             </div>
             <div class="activity-content">

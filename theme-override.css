@@ -10027,12 +10027,16 @@ html[data-theme="light"] #landing-view .snippet-card,
   color: var(--primary) !important;
 }
 
-/* Feature tags ("Git + PAT Auth" etc.) — flat teal chip, not purple pill */
+/* [FIX] This used to force every feature tag to the same translucent
+   outlined green, overriding whatever per-card accent color each one
+   had in its inline style -- losing the intentional color variety
+   ("Git + PAT Auth" purple, "Redis · Mongo..." amber, etc). The actual
+   fix belongs at the source: each tag's own inline style is now a
+   solid deep fill (matching .sc-chip's treatment) instead of a
+   translucent one, so this override just needs to stop fighting it. */
 #landing-view .feature-tag {
-  background: color-mix(in srgb,var(--green) 10%,transparent) !important;
-  color: var(--green) !important;
-  border: 1px solid color-mix(in srgb,var(--green) 28%,transparent) !important;
-  border-radius: 3px !important;
+  border-radius: 0 !important;
+  border: none !important;
 }
 
 /* How-it-works step numbers (01/02/03/04) — flat square badge */
