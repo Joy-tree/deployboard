@@ -1701,6 +1701,18 @@ html[data-theme="light"] #pageLoader { background: #F6F8F4 !important; }
   display:none; z-index:500;
 }
 .notif-panel.open { display:block; }
+/* Same bug as the sidebar Projects/Deployments count badges: a broad
+   html[data-theme="dark"] .notif-badge rule elsewhere turns this into
+   a muted, outlined chip (#052e16 fill, #166534 border, pale #86efac
+   text) instead of the solid brand-green fill the base rule above
+   already specifies. #topbar's ID beats that rule's specificity
+   regardless of source order, same technique used to fix the sidebar
+   badges. */
+#topbar .notif-badge {
+  background: var(--primary) !important;
+  border: 1.5px solid var(--bg-card) !important;
+  color: #fff !important;
+}
 
 /* ── Content area ──────────────────────────────────────────────────────── */
 #content-area { flex:1; overflow:hidden; position:relative; }
