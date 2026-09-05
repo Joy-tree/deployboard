@@ -2421,6 +2421,78 @@ async function writeWorkspaceToFirebase(user, workspace) {
   }
 }
 
+// [FIX-CRITICAL] Real bug, reproduced: team invites (and leaves/removals)
+// disappearing shortly after being created. Root cause: EVERY write to
+// this workspace, including this one and the high-frequency dashboard
+// autosync (POST /api/workspace, which fires on essentially every user
+// action anywhere in the app via queueWorkspaceSync()), goes through
+// writeWorkspaceToFirebase()'s read-the-whole-document + PUT-the-whole-
+// document pattern. If an autosync's OWN read of the workspace happens
+// to land before a team-invite write completes, that autosync's later
+// PUT carries forward its now-stale copy of `team` and silently
+// overwrites the invite that was just added -- a classic read-modify-
+// write race, and with dozens of these full-document writes flying
+// around from unrelated features, near-guaranteed to eventually collide
+// with the one team-related write that happens to be rare but important.
+//
+// Rewriting all ~50 call sites of writeWorkspaceToFirebase to avoid this
+// race everywhere would be a much larger, riskier change than this bug
+// warrants. Instead: this helper does a genuine partial update via
+// Firebase RTDB's PATCH verb (as opposed to PUT), touching ONLY the
+// specific top-level keys passed in `fields` and leaving every other key
+// completely alone -- Firebase applies PATCH per-key, so it cannot
+// clobber a sibling key it wasn't told about, no matter how stale this
+// caller's own view of the rest of the document is.
+// Used specifically for the two write paths that actually collide with
+// each other in practice: the team endpoints (PATCH only `team`) and the
+// dashboard autosync (PATCH only projects/deployments/envStore/settings/
+// uploadedProjects, deliberately never including `team`). Since those
+// two now touch fully disjoint keys, there is no longer any ordering
+// between them that can lose data -- not "less likely to race", actually
+// incapable of it, regardless of request timing.
+async function patchWorkspaceFirebase(user, fields) {
+  try {
+    const url = firebaseWorkspaceUrl(user);
+    if (!url) {
+      console.warn('[Firebase] patchWorkspaceFirebase: empty URL — FIREBASE_RTDB_URL=' + (FIREBASE_RTDB_URL||'MISSING') + ' key=' + (firebaseWorkspaceKey(user)||'MISSING'));
+      return false;
+    }
+    const payload = fields && typeof fields === 'object' ? fields : {};
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    let r;
+    try { r = await fetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: controller.signal }); }
+    finally { clearTimeout(timer); }
+    if (!r.ok) {
+      const body = await r.text().catch(()=>'');
+      console.warn('[Firebase] patchWorkspaceFirebase HTTP', r.status, body.slice(0,200));
+      return false;
+    }
+    // Mirror into the localAuth cache too (same reasoning as
+    // writeWorkspaceToFirebase above), but MERGED rather than replaced --
+    // this payload is deliberately partial, so overwriting lu.workspace
+    // wholesale with it would wipe out every field not included here.
+    try {
+      const uid = String(user?._id || user?.id || '');
+      const uemail = String(user?.email || '').trim().toLowerCase();
+      const localMatches = localAuth.users.filter(u =>
+        (uid && String(u.id || u._id || '') === uid) ||
+        (uemail && String(u.email || '').trim().toLowerCase() === uemail)
+      );
+      if (localMatches.length) {
+        for (const lu of localMatches) lu.workspace = { ...(lu.workspace && typeof lu.workspace === 'object' ? lu.workspace : {}), ...payload };
+        saveLocalAuth();
+      }
+    } catch (sy) {
+      console.warn('[Firebase] patchWorkspaceFirebase: localAuth cache sync failed (non-fatal):', sy.message);
+    }
+    return true;
+  } catch(e) {
+    console.warn('[Firebase] patchWorkspaceFirebase exception:', e.message);
+    return false;
+  }
+}
+
 // [FIX] Restored 2026-08 — this and writeWorkspaceByKnownKey right below it
 // were originally defined only inside the "Remix" feature's code, and were
 // accidentally deleted along with it when that feature was later removed
@@ -5625,7 +5697,6 @@ app.post('/api/team/invite', requireAuth, async (req, res) => {
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     };
     team.invites.push(invite);
-    const workspace = { ...ws, team };
 
     const inviterName = req.user.name || req.user.email;
     const acceptUrl = `https://${BASE_DOMAIN}/dashboard?acceptInvite=${encodeURIComponent(token)}`;
@@ -5660,7 +5731,7 @@ app.post('/api/team/invite', requireAuth, async (req, res) => {
       return res.status(502).json({ error: 'Could not send the invite email. Please try again.' });
     }
 
-    await writeWorkspaceToFirebase(req.user, workspace);
+    await patchWorkspaceFirebase(req.user, { team });
     await writeTeamIndexEntry(token, { ownerEmail: req.user.email, invitedEmail: email, role, expiresAt: invite.expiresAt });
 
     res.json({ ok: true, invite: { id: invite.id, email, role, invitedAt: invite.invitedAt, expiresAt: invite.expiresAt } });
@@ -5693,7 +5764,7 @@ app.post('/api/team/invites/:token/accept', requireAuth, async (req, res) => {
     team.invites = (Array.isArray(team.invites) ? team.invites : []).filter(i => i.token !== token);
     team.members = Array.isArray(team.members) ? team.members : [];
     team.members.push({ email: req.user.email, name: req.user.name || '', role: entry.role, addedAt: new Date().toISOString() });
-    await writeWorkspaceToFirebase(owner, { ...ownerWs, team });
+    await patchWorkspaceFirebase(owner, { team });
     await deleteTeamIndexEntry(token);
 
     req.user.memberOf = String(entry.ownerEmail || '').toLowerCase();
@@ -5715,7 +5786,7 @@ app.delete('/api/team/invites/:id', requireAuth, async (req, res) => {
     const invite = (team.invites || []).find(i => i.id === req.params.id);
     if (!invite) return res.status(404).json({ error: 'Invite not found.' });
     team.invites = (team.invites || []).filter(i => i.id !== req.params.id);
-    await writeWorkspaceToFirebase(req.user, { ...ws, team });
+    await patchWorkspaceFirebase(req.user, { team });
     await deleteTeamIndexEntry(invite.token);
     res.json({ ok: true });
   } catch (e) {
@@ -5731,7 +5802,7 @@ app.delete('/api/team/members/:email', requireAuth, async (req, res) => {
     const team = { members: [], invites: [], ...(ws.team && typeof ws.team === 'object' ? ws.team : {}) };
     const wasMember = (team.members || []).some(m => m.email === email);
     team.members = (team.members || []).filter(m => m.email !== email);
-    await writeWorkspaceToFirebase(req.user, { ...ws, team });
+    await patchWorkspaceFirebase(req.user, { team });
 
     // Kick the member back to their own (now-empty) workspace instead of
     // silently leaving them still pointed at data they no longer have
@@ -5762,7 +5833,7 @@ app.post('/api/team/leave', requireAuth, async (req, res) => {
       const ws = (await readWorkspaceFromFirebase(owner)) || owner.workspace || {};
       const team = { members: [], invites: [], ...(ws.team && typeof ws.team === 'object' ? ws.team : {}) };
       team.members = (team.members || []).filter(m => String(m.email || '').toLowerCase() !== String(req.user.email || '').toLowerCase());
-      await writeWorkspaceToFirebase(owner, { ...ws, team });
+      await patchWorkspaceFirebase(owner, { team });
     }
     req.user.memberOf = '';
     req.user.memberRole = '';
@@ -5914,7 +5985,24 @@ app.post('/api/workspace', requireAuth, async (req, res) => {
       settings: payload.settings && typeof payload.settings === 'object' ? payload.settings : {},
       uploadedProjects: mergedUploads.slice(0, 50)
     };
-    const fbSaved = await writeWorkspaceToFirebase(req.user, workspace).catch(() => false);
+    // [FIX-CRITICAL] This used to PUT the entire `workspace` object above
+    // (including whatever `team` it happened to read into existingFbWs)
+    // straight to Firebase. That's the other half of the team-invite
+    // data-loss race described on patchWorkspaceFirebase() above: if this
+    // read landed before a concurrent team-invite/leave/accept write, this
+    // write would carry that stale `team` forward and silently erase it.
+    // PATCHing only the fields this endpoint actually owns means it can
+    // never touch `team` at all, no matter how stale this request's own
+    // view of it is -- `workspace` (built above, still including `team`)
+    // is kept as-is for the Mongo mirror and API key snapshot just below,
+    // which aren't part of this race and don't need the same treatment.
+    const fbSaved = await patchWorkspaceFirebase(req.user, {
+      projects: workspace.projects,
+      deployments: workspace.deployments,
+      envStore: workspace.envStore,
+      settings: workspace.settings,
+      uploadedProjects: workspace.uploadedProjects
+    }).catch(() => false);
     if (!fbSaved) console.warn('[Workspace] Firebase write failed for:', req.user.email, '— continuing with DB fallback');
     // Keep API key snapshot in sync so jtk_ key always reflects current projects
     refreshApiKeySnapshot(req.user, workspace).catch(() => {});
