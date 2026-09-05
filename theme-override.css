@@ -4674,26 +4674,34 @@ html[data-theme="light"] .cs-option.selected {
    ══════════════════════════════════════════════════════════════════ */
 
 /* Dropzone → flat, no fill, thin dashed border */
-#page-code-upload .cu-dropzone {
+#page-code-upload .cu-dropzone,
+#page-dashboard .cu-dropzone {
   background: transparent !important;
   border: 1px dashed var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
   padding: 44px 24px !important;
 }
 #page-code-upload .cu-dropzone:hover,
-#page-code-upload .cu-dropzone.drag-over {
+#page-code-upload .cu-dropzone.drag-over,
+#page-dashboard .cu-dropzone:hover,
+#page-dashboard .cu-dropzone.drag-over {
   background: transparent !important;
   border-color: var(--primary) !important;
 }
-#page-code-upload .cu-dropzone-icon {
+#page-code-upload .cu-dropzone-icon,
+#page-dashboard .cu-dropzone-icon {
   background: transparent !important;
   border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
 }
-#page-code-upload .cu-dropzone-icon svg { color: var(--primary) !important; }
-#page-code-upload .cu-dropzone-title { color: var(--text) !important; }
-#page-code-upload .cu-dropzone-sub { color: var(--text-2) !important; }
-#page-code-upload .cu-fmt-chip {
+#page-code-upload .cu-dropzone-icon svg,
+#page-dashboard .cu-dropzone-icon svg { color: var(--primary) !important; }
+#page-code-upload .cu-dropzone-title,
+#page-dashboard .cu-dropzone-title { color: var(--text) !important; }
+#page-code-upload .cu-dropzone-sub,
+#page-dashboard .cu-dropzone-sub { color: var(--text-2) !important; }
+#page-code-upload .cu-fmt-chip,
+#page-dashboard .cu-fmt-chip {
   background: transparent !important;
   border: 1px solid var(--dcx-field-border, var(--border)) !important;
   border-radius: 0 !important;
@@ -4701,7 +4709,8 @@ html[data-theme="light"] .cs-option.selected {
 }
 
 /* Browse Files → flat rectangle button, sharp corners */
-#page-code-upload .cu-browse-btn {
+#page-code-upload .cu-browse-btn,
+#page-dashboard .cu-browse-btn {
   display: flex !important;
   width: 100%;
   max-width: 320px;
@@ -4712,9 +4721,18 @@ html[data-theme="light"] .cs-option.selected {
   font-size: .92rem !important;
   background: var(--primary) !important;
 }
-#page-code-upload .cu-browse-btn:hover {
+#page-code-upload .cu-browse-btn:hover,
+#page-dashboard .cu-browse-btn:hover {
   filter: brightness(1.06);
   background: var(--primary) !important;
+}
+/* Reused inside .dash-quick-sources' own grid (gap:14px already handles
+   spacing to the repo list beside it) -- code-ide.css's base .cu-dropzone
+   has its own margin-bottom:28px meant for a standalone page, which would
+   double up with that grid gap here. */
+#page-dashboard .cu-dropzone {
+  margin-bottom: 0 !important;
+  min-height: 160px;
 }
 
 /* Uploaded project cards → flat, thin border only, no fill */

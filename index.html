@@ -203,7 +203,7 @@
   <link rel="stylesheet" href="/styles/animations.css?v=3">
   <link rel="stylesheet" href="/styles/onboarding.css?v=1">
   <link rel="stylesheet" href="/styles/streak.css?v=2">
-  <link rel="stylesheet" href="/theme-override.css?v=203" id="themeOverrideLink" onerror="this.dataset.failed='1';">
+  <link rel="stylesheet" href="/theme-override.css?v=204" id="themeOverrideLink" onerror="this.dataset.failed='1';">
 <script>
 // [FIX v2] theme-override.css occasionally rendered unstyled and STAYED
 // unstyled even after a full page reload, on both first load AND repeat
@@ -2773,27 +2773,22 @@ document.querySelectorAll('.snippet-copy').forEach(btn => {
 
       <!-- ══ Quick Deploy Sources — Upload + GitHub repos, before the stat grid ══ -->
       <div class="dash-quick-sources">
-        <div class="dqs-upload" id="dashUploadDropzone" onclick="dashTriggerUpload()" ondragover="dashUploadDragOver(event)" ondragleave="dashUploadDragLeave(event)" ondrop="dashUploadDrop(event)">
-          <div class="dqs-upload-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <!-- Document: outline with a faint flat-tinted fill for visual weight, no gradient -->
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h9" fill="rgba(16,185,129,.08)" stroke="var(--primary,#10b981)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <polyline points="14 2 14 8 20 8" fill="none" stroke="var(--primary,#10b981)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <line x1="7" y1="12.5" x2="12" y2="12.5" stroke="var(--primary,#10b981)" stroke-width="1.5" stroke-linecap="round"/>
-              <line x1="7" y1="16" x2="10" y2="16" stroke="var(--primary,#10b981)" stroke-width="1.5" stroke-linecap="round"/>
-              <!-- Upload badge: solid flat fill, matching the reference icons' duotone weight -->
-              <circle cx="18" cy="18" r="6" fill="var(--primary,#10b981)"/>
-              <path d="M18 21v-6M15.3 17.2 18 14.5l2.7 2.7" fill="none" stroke="#052e18" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+        <div class="cu-dropzone" id="dashUploadDropzone" onclick="dashTriggerUpload()" ondragover="dashUploadDragOver(event)" ondragleave="dashUploadDragLeave(event)" ondrop="dashUploadDrop(event)">
+          <div class="cu-dropzone-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           </div>
-          <div class="dqs-upload-title">Drop your project here</div>
-          <div class="dqs-upload-sub">No GitHub required — we extract, detect your stack, and deploy automatically</div>
-          <div class="dqs-upload-formats">
-            <span class="dqs-upload-chip">.html</span>
-            <span class="dqs-upload-chip">.zip</span>
-            <span class="dqs-upload-chip">.tar.gz</span>
-            <span class="dqs-upload-chip">.tgz</span>
-            <span class="dqs-upload-limit">Max 250 MB</span>
+          <div class="cu-dropzone-title">Drop your project here</div>
+          <div class="cu-dropzone-sub">No GitHub required — we extract, detect your stack, and deploy automatically</div>
+          <button class="cu-browse-btn" onclick="event.stopPropagation();dashTriggerUpload()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Browse Files
+          </button>
+          <div class="cu-dropzone-formats">
+            <span class="cu-fmt-chip">.html</span>
+            <span class="cu-fmt-chip">.zip</span>
+            <span class="cu-fmt-chip">.tar.gz</span>
+            <span class="cu-fmt-chip">.tgz</span>
+            <span style="font-size:.72rem;color:var(--text-3);margin-left:4px;">Max 250 MB</span>
           </div>
         </div>
 
@@ -24010,14 +24005,14 @@ function dashTriggerUpload() {
 }
 function dashUploadDragOver(e) {
   e.preventDefault();
-  e.currentTarget.classList.add('dqs-drag-over');
+  e.currentTarget.classList.add('drag-over');
 }
 function dashUploadDragLeave(e) {
-  e.currentTarget.classList.remove('dqs-drag-over');
+  e.currentTarget.classList.remove('drag-over');
 }
 function dashUploadDrop(e) {
   e.preventDefault();
-  e.currentTarget.classList.remove('dqs-drag-over');
+  e.currentTarget.classList.remove('drag-over');
   const file = e.dataTransfer?.files?.[0];
   if (!file) return;
   showPage('code-upload');
