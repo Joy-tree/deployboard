@@ -5795,6 +5795,7 @@ html[data-theme="dark"] .sidebar-nav .badge,html[data-theme="dark"] .count-pill,
   flex-shrink: 0;
 }
 .dqs-upload-icon svg { width: 30px; height: 30px; position: relative; z-index: 1; }
+.login-history-icon svg { width: 17px; height: 17px; color: var(--text-2); }
 .dqs-upload-title { font-size: .92rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
 .dqs-upload-sub { font-size: .78rem; color: var(--text-2); line-height: 1.5; max-width: 320px; margin-bottom: 16px; }
 .dqs-upload-formats {

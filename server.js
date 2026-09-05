@@ -2634,6 +2634,85 @@ async function deleteDbFromFirebase(user, dbId) {
     return r.ok;
   } catch { return false; }
 }
+
+// ── Login history ──────────────────────────────────────────────────────────
+// Stored at: deployboard_login_history/<userKey>/<pushId> — a dedicated,
+// append-only path (same pattern as deployboard_databases above), not part
+// of the workspace blob, so recording a login never risks a read-modify-
+// write race with a deploy/project/domain change happening at the same time.
+function firebaseLoginHistoryBaseUrl(user) {
+  const key = firebaseWorkspaceKey(user);
+  if (!FIREBASE_RTDB_URL || !key) return '';
+  return `${FIREBASE_RTDB_URL}/deployboard_login_history/${key}`;
+}
+// No app.set('trust proxy', ...) is configured, so req.ip alone would just
+// reflect the immediate connecting peer (a proxy/tunnel hop), not the real
+// visitor. Read X-Forwarded-For directly instead, same as the two existing
+// spots in this file that already do this manually for outbound requests.
+function getClientIp(req) {
+  const xff = req.headers['x-forwarded-for'];
+  if (xff) return String(xff).split(',')[0].trim();
+  return req.ip || req.socket?.remoteAddress || '';
+}
+// Lightweight UA parse, just enough for a "Chrome on Linux" style label —
+// not trying to be a full device-detection library.
+function parseUserAgentLabel(ua) {
+  ua = String(ua || '');
+  let browser = 'Unknown browser';
+  if (/Edg\//.test(ua)) browser = 'Edge';
+  else if (/OPR\//.test(ua) || /Opera/.test(ua)) browser = 'Opera';
+  else if (/Firefox\//.test(ua)) browser = 'Firefox';
+  else if (/CriOS\//.test(ua)) browser = 'Chrome';
+  else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) browser = 'Chrome';
+  else if (/Safari\//.test(ua) && /Version\//.test(ua)) browser = 'Safari';
+  else if (ua) browser = 'Browser';
+  let os = 'Unknown OS';
+  if (/Windows/.test(ua)) os = 'Windows';
+  else if (/Mac OS X/.test(ua) && !/iPhone|iPad/.test(ua)) os = 'macOS';
+  else if (/Android/.test(ua)) os = 'Android';
+  else if (/iPhone|iPad|iPod/.test(ua)) os = 'iOS';
+  else if (/Linux/.test(ua)) os = 'Linux';
+  return `${browser} on ${os}`;
+}
+// Fire-and-forget by design: a login should never be slowed down or fail
+// because the login-history write to Firebase was slow/unavailable.
+function recordLoginEvent(user, { provider, ip, userAgent }) {
+  try {
+    const base = firebaseLoginHistoryBaseUrl(user);
+    if (!base) return;
+    const authQuery = FIREBASE_RTDB_SECRET ? `?auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}` : '';
+    const entry = { provider: provider || 'unknown', ip: ip || '', userAgent: userAgent || '', at: Date.now() };
+    fetch(`${base}.json${authQuery}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    }).catch(e => console.warn('[LoginHistory] Failed to record login event:', e.message));
+  } catch (e) { console.warn('[LoginHistory] Failed to record login event:', e.message); }
+}
+async function readLoginHistory(user, limit = 50) {
+  try {
+    const base = firebaseLoginHistoryBaseUrl(user);
+    if (!base) return [];
+    const params = [];
+    if (FIREBASE_RTDB_SECRET) params.push(`auth=${encodeURIComponent(FIREBASE_RTDB_SECRET)}`);
+    params.push('orderBy="$key"', `limitToLast=${limit}`);
+    const r = await fetch(`${base}.json?${params.join('&')}`, { headers: { Accept: 'application/json' } });
+    if (!r.ok) return [];
+    const data = await r.json();
+    if (!data || typeof data !== 'object') return [];
+    return Object.entries(data)
+      .map(([id, v]) => ({
+        id,
+        provider: v?.provider || 'unknown',
+        ip: v?.ip || '',
+        userAgent: v?.userAgent || '',
+        device: parseUserAgentLabel(v?.userAgent),
+        at: v?.at || 0
+      }))
+      .sort((a, b) => b.at - a.at);
+  } catch { return []; }
+}
+
 // Save db record to all available stores (Firebase + local file)
 async function persistDb(user, db) {
   user = await enrichAuthUser(user);
@@ -2958,10 +3037,10 @@ async function sendVerificationCodeEmail(email = '', code = '') {
     body: JSON.stringify({ from: RESEND_FROM_EMAIL, to: [email], subject: 'Your JOYTREE verification code', html, text: `Your JOYTREE verification code is ${code}. It expires in 10 minutes. Never share this code with anyone — JOYTREE staff will never ask for it.` })
   }).catch(()=>{});
 }
-async function issueEmailVerification(user) {
+async function issueEmailVerification(user, provider = 'password') {
   const pendingToken = createSessionToken();
   const code = generateOtpCode();
-  authOtpStore.set(pendingToken, { userId: String(user._id || user.id), code, email: String(user.email || '').toLowerCase(), expiresAt: Date.now() + 10 * 60 * 1000 });
+  authOtpStore.set(pendingToken, { userId: String(user._id || user.id), code, email: String(user.email || '').toLowerCase(), provider, expiresAt: Date.now() + 10 * 60 * 1000 });
   await sendVerificationCodeEmail(String(user.email || '').toLowerCase(), code);
   return pendingToken;
 }
@@ -3443,7 +3522,7 @@ app.post('/api/auth/firebase', async (req, res) => {
     user.firebaseUid = fbUser.localId || user.firebaseUid || '';
     user.name = user.name || fbUser.displayName || '';
     if (isDbReady()) await user.save(); else saveLocalAuth();
-    const pendingToken = await issueEmailVerification(user);
+    const pendingToken = await issueEmailVerification(user, 'email');
     res.json({ requiresVerification: true, pendingToken, user: { id: user._id || user.id, email: user.email, name: user.name } });
   } catch (e) { res.status(401).json({ error: e.message }); }
 });
@@ -3465,7 +3544,7 @@ app.post('/api/auth/signup', async (req, res) => {
       user = { id: 'u_' + Date.now(), email, name, passwordSalt: salt, passwordHash: hash, githubUsername: '', githubAccessToken: '' };
       localAuth.users.push(user); saveLocalAuth();
     }
-    const pendingToken = await issueEmailVerification(user);
+    const pendingToken = await issueEmailVerification(user, 'password');
     console.log(`[Auth] Signup: email=${email} userId=${user._id || user.id} githubUsername="${user.githubUsername || ''}" (should always be blank for a brand-new signup)`);
     res.json({ requiresVerification: true, pendingToken, user: { id: user._id || user.id, email: user.email, name: user.name } });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -3479,7 +3558,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user || !user.passwordSalt || !user.passwordHash) return res.status(401).json({ error: 'Invalid credentials' });
     const { hash } = createPasswordHash(password, user.passwordSalt);
     if (hash !== user.passwordHash) return res.status(401).json({ error: 'Invalid credentials' });
-    const pendingToken = await issueEmailVerification(user);
+    const pendingToken = await issueEmailVerification(user, 'password');
     res.json({ requiresVerification: true, pendingToken, user: { id: user._id || user.id, email: user.email, name: user.name } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -3487,6 +3566,16 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/auth/me', requireAuth, async (req, res) => {
   console.log(`[Auth] /me resolved: sessionUser.email=${req.user?.email || 'n/a'} sessionUser.id=${req.user?._id || req.user?.id || 'n/a'} githubUsername="${req.user?.githubUsername || ''}" impersonatedBy=${req.user?._impersonatedBy || 'none'}`);
   res.json({ user: { id: req.user._id || req.user.id, email: req.user.email, name: req.user.name, githubUsername: req.user.githubUsername, githubAvatarUrl: req.user.githubAvatarUrl || '', googleAvatarUrl: req.user.googleAvatarUrl || '', firebaseUid: req.user.firebaseUid || '', isAdmin: isRootEmailAdmin(req.user), impersonating: !!req.user._impersonatedBy ? { by: req.user._impersonatedBy } : null } });
+});
+
+// Settings → Login History. Every password/email/GitHub/Google login is
+// recorded at the single choke point where a session token is actually
+// issued (see /api/auth/verify-email) -- this just reads that log back.
+app.get('/api/auth/login-history', requireAuth, async (req, res) => {
+  try {
+    const history = await readLoginHistory(req.user, 50);
+    res.json({ ok: true, history });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ── Referral system ───────────────────────────────────────────────────────────
@@ -5137,7 +5226,7 @@ app.post('/api/auth/github/exchange', async (req, res) => {
       user.firebaseUid = fbGh?.localId || user.firebaseUid || '';
       saveLocalAuth();
     }
-    const pendingToken = await issueEmailVerification(user);
+    const pendingToken = await issueEmailVerification(user, 'github');
     res.json({ requiresVerification: true, pendingToken, user: { id: user._id || user.id, email: user.email, name: user.name, githubUsername: user.githubUsername, githubAvatarUrl: user.githubAvatarUrl || '' }, firebaseLinked });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -5305,7 +5394,7 @@ app.post('/api/auth/google/exchange', async (req, res) => {
       saveLocalAuth();
     }
 
-    const pendingToken = await issueEmailVerification(user);
+    const pendingToken = await issueEmailVerification(user, 'google');
     res.json({ requiresVerification: true, pendingToken, user: { id: user._id || user.id, email: user.email, name: user.name, googleAvatarUrl: user.googleAvatarUrl || '' }, firebaseLinked });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -5394,6 +5483,13 @@ app.post('/api/auth/verify-email', async (req, res) => {
 
     const welcomeResult = await sendWelcomeEmail({ userEmail: user?.email || rec.email, userName: user?.name || '' }).catch((e) => ({ ok:false, reason:e.message || 'send_exception' }));
     if (!welcomeResult?.ok && !welcomeResult?.skipped) console.warn('[Auth] Welcome email not sent:', welcomeResult?.reason || 'unknown');
+
+    // Record this successful login (fire-and-forget -- see recordLoginEvent).
+    // rec.provider was set back when the specific auth endpoint (password/
+    // email/github/google) called issueEmailVerification(), so this single
+    // choke point -- the moment a real session token is actually issued --
+    // correctly logs every login method, not just one.
+    if (user) recordLoginEvent(user, { provider: rec.provider, ip: getClientIp(req), userAgent: req.headers['user-agent'] || '' });
 
     res.json({
       token,

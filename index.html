@@ -185,7 +185,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles/dashboard.css?v=51">
+<link rel="stylesheet" href="/styles/dashboard.css?v=52">
   <link rel="stylesheet" href="/styles/auth.css?v=2">
   <link rel="stylesheet" href="/styles/landing.css?v=3">
   <link rel="stylesheet" href="/styles/joytree-ai.css?v=1">
@@ -4778,6 +4778,7 @@ document.addEventListener('keydown', function(e){
         <div class="tab active" id="settingsGeneralTabBtn" onclick="switchSettingsTab('general',this)">General</div>
         <div class="tab" id="settingsGithubTabBtn" onclick="switchSettingsTab('github',this)">GitHub</div>
         <div class="tab" onclick="switchSettingsTab('account',this)">Account</div>
+        <div class="tab" onclick="switchSettingsTab('logins',this)">Login History</div>
         <div class="tab" onclick="switchSettingsTab('referrals',this)">Referrals</div>
       </div>
 
@@ -5248,6 +5249,17 @@ document.addEventListener('keydown', function(e){
           </button>
         </div>
 
+      </div>
+      <div id="settingsTabLogins" style="display:none;">
+        <div class="card" style="max-width:640px;">
+          <div class="card-header">
+            <div class="card-title">Login History</div>
+            <div class="card-subtitle">Every time you've signed in — password, email, GitHub, or Google — with the device and location, so you can spot anything that wasn't you.</div>
+          </div>
+          <div class="card-body" id="loginHistoryList" style="padding:0;">
+            <div style="padding:24px 20px;text-align:center;color:var(--text-3);font-size:.85rem;">Loading…</div>
+          </div>
+        </div>
       </div>
       <div id="settingsTabReferrals" style="display:none;">
         <div class="card" style="max-width:640px;">
@@ -19953,7 +19965,7 @@ function switchSettingsTab(tab, el) {
   const isWebhookAdmin = meEmail === adminEmail;
   if (tab === 'general' && !isWebhookAdmin) tab = 'account';
   if (tab === 'github' && !isWebhookAdmin) tab = 'account';
-  ['general','github','domain','account','referrals'].forEach(t => {
+  ['general','github','domain','account','logins','referrals'].forEach(t => {
     const p = document.getElementById('settingsTab' + t.charAt(0).toUpperCase() + t.slice(1));
     if (p) p.style.display = t === tab ? '' : 'none';
   });
@@ -19963,12 +19975,54 @@ function switchSettingsTab(tab, el) {
   document.querySelectorAll('#settingsTabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
   else {
-    const idx = { general:0, github:1, account:2, referrals:3, domain:4 }[tab];
+    const idx = { general:0, github:1, account:2, logins:3, referrals:4, domain:5 }[tab];
     const tabEl = document.querySelectorAll('#settingsTabs .tab')[idx];
     if (tabEl) tabEl.classList.add('active');
   }
   if (tab === 'referrals' && typeof loadReferralSettings === 'function') loadReferralSettings();
+  if (tab === 'logins' && typeof loadLoginHistory === 'function') loadLoginHistory();
   if (tab === 'account' && typeof checkPushNotifStatus === 'function') checkPushNotifStatus();
+}
+// [FEATURE] Settings → Login History. Shows every recorded password/email/
+// GitHub/Google login for this account with a device label ("Chrome on
+// Linux"), IP, and timestamp -- pulled from the log recorded server-side at
+// the moment a session is actually issued (see /api/auth/verify-email).
+const LOGIN_HISTORY_PROVIDER_META = {
+  password: { label: 'Password',
+    icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' },
+  email: { label: 'Email link',
+    icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>' },
+  github: { label: 'GitHub',
+    icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.6-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.8 1.4 3.5 1.1.1-.8.4-1.4.8-1.8-2.7-.3-5.5-1.4-5.5-6a4.7 4.7 0 0 1 1.2-3.2 4.3 4.3 0 0 1 .1-3.1s1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.6 5.5 18.6 5.8 18.6 5.8a4.3 4.3 0 0 1 .1 3.1 4.7 4.7 0 0 1 1.2 3.2c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>' },
+  google: { label: 'Google',
+    icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.6 33.9 30 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.4-.1-2.7-.5-4z"/><path fill="#34A853" d="M6.3 14.7l7 5.1C15.1 16 19.2 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3c-7.8 0-14.5 4.7-17.7 11.7z"/><path fill="#FBBC05" d="M24 45c5.8 0 10.8-1.9 14.6-5.2l-6.7-5.5C29.8 36 27 37 24 37c-5.9 0-10.9-4-12.7-9.5l-7 5.4C7.5 40.3 15.2 45 24 45z"/><path fill="#EA4335" d="M44.5 20H24v8.5h11.8c-.9 2.6-2.6 4.8-4.9 6.3l6.7 5.5C41.8 36.7 45 30.8 45 24c0-1.4-.1-2.7-.5-4z"/></svg>' },
+};
+async function loadLoginHistory() {
+  const el = document.getElementById('loginHistoryList');
+  if (!el) return;
+  try {
+    const res = await apiFetch('/api/auth/login-history');
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load login history');
+    const rows = data.history || [];
+    if (!rows.length) {
+      el.innerHTML = '<div style="padding:24px 20px;text-align:center;color:var(--text-3);font-size:.85rem;">No login history recorded yet.</div>';
+      return;
+    }
+    el.innerHTML = rows.map(r => {
+      const meta = LOGIN_HISTORY_PROVIDER_META[r.provider] || { label: r.provider || 'Unknown', icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>' };
+      const when = r.at ? new Date(r.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Unknown time';
+      return `<div style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border);">
+        <div class="login-history-icon" style="width:34px;height:34px;flex-shrink:0;display:grid;place-items:center;border-radius:8px;background:var(--bg-hover);">${meta.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.85rem;color:var(--text);font-weight:600;">${escHtml(when)}</div>
+          <div style="font-size:.76rem;color:var(--text-3);margin-top:2px;">${escHtml(meta.label)} · ${escHtml(r.device || 'Unknown device')}${r.ip ? ' · ' + escHtml(r.ip) : ''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = `<div style="padding:24px 20px;text-align:center;color:var(--text-3);font-size:.85rem;">${escHtml(e.message || 'Could not load login history')}</div>`;
+  }
 }
 async function loadReferralSettings() {
   try {
