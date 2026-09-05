@@ -7497,107 +7497,16 @@ document.addEventListener('keydown', function(e){
 
       <!-- ══ Sidebar Announcement ══ -->
       <div style="margin-top:36px;">
-        <div>
-          <h3 style="margin:0;font-size:1rem;">Sidebar announcement</h3>
-          <div style="color:var(--text-3);font-size:0.8rem;margin-top:4px;">A small card in the dashboard's own sidebar nav — heading, a short message, an optional "Learn more" link, and an optional small image. Sits permanently wherever you place it (top, bottom, or right after a specific nav item) until you turn it off, unlike the full-screen popups above.</div>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:16px;margin-top:18px;max-width:480px;">
-          <input type="hidden" id="sbaId" value="">
-
-          <div class="field">
-            <label class="field-label">Heading</label>
-            <input type="text" id="sbaHeading" class="input" placeholder="Introducing Workflows" maxlength="80">
-          </div>
-
-          <div class="field">
-            <label class="field-label">Message</label>
-            <textarea id="sbaMessage" class="input" rows="3" maxlength="300" placeholder="An orchestration and execution engine for long-running, distributed tasks."></textarea>
-          </div>
-
-          <div class="field">
-            <label class="field-label">Link text</label>
-            <input type="text" id="sbaLinkText" class="input" placeholder="Learn more" maxlength="40">
-          </div>
-
-          <div class="field">
-            <label class="field-label">Link URL <span style="color:var(--text-3);font-weight:400;">(e.g. a specific docs route)</span></label>
-            <input type="text" id="sbaLinkUrl" class="input" placeholder="https://docs.joytree.site/workflows">
-          </div>
-
-          <div class="field">
-            <label class="field-label">Image <span style="color:var(--text-3);font-weight:400;">(small thumbnail, optional)</span></label>
-            <input type="file" id="sbaImageFile" accept="image/png,image/jpeg,image/gif,image/webp" onchange="sbaUploadImage(this)" style="display:none;">
-            <button type="button" class="btn btn-ghost" onclick="document.getElementById('sbaImageFile').click()" style="width:100%;">Choose image</button>
-            <div id="sbaImageStatus" style="font-size:0.78rem;color:var(--text-3);margin-top:6px;"></div>
-            <input type="hidden" id="sbaImageUrl" value="">
-          </div>
-
-          <div class="field">
-            <label class="field-label">Position in the sidebar</label>
-            <select id="sbaPosition" class="input">
-              <option value="top">Top of the sidebar</option>
-              <option value="bottom" selected>Bottom of the sidebar</option>
-              <optgroup label="Overview">
-                <option value="after:dashboard">After: Dashboard</option>
-                <option value="after:projects">After: Projects</option>
-                <option value="after:deployments">After: Deployments</option>
-                <option value="after:repos">After: Repositories</option>
-                <option value="after:code-upload">After: Code Upload / IDE</option>
-              </optgroup>
-              <optgroup label="Tools">
-                <option value="after:new-resource">After: New Resource</option>
-                <option value="after:new-deploy">After: New Deployment</option>
-                <option value="after:logs">After: Live Logs</option>
-                <option value="after:ai-analysis">After: AI Analysis</option>
-                <option value="after:env-manager">After: Env Variables</option>
-                <option value="after:domains">After: Domains</option>
-                <option value="after:domain-store">After: Domain Store</option>
-                <option value="after:domain-cpanel">After: Domain cPanel</option>
-                <option value="after:analytics">After: Analytics</option>
-                <option value="after:webhooks">After: Webhooks</option>
-                <option value="after:cronjobs">After: Cron Jobs</option>
-                <option value="after:workers">After: Background Workers</option>
-                <option value="after:streaks">After: Deploy Streaks</option>
-              </optgroup>
-              <optgroup label="Developer Tools">
-                <option value="after:ssh-keys">After: SSH Keys</option>
-              </optgroup>
-              <optgroup label="Data">
-                <option value="after:databases">After: Databases</option>
-                <option value="after:db-migration">After: Migration</option>
-                <option value="after:db-diff">After: Diff</option>
-                <option value="after:db-query">After: Query Studio</option>
-                <option value="after:db-schema">After: Schema</option>
-                <option value="after:db-sdk">After: SDK</option>
-                <option value="after:realtime-api">After: Realtime API</option>
-              </optgroup>
-              <optgroup label="Platform">
-                <option value="after:team">After: Team</option>
-                <option value="after:pricing">After: Pricing</option>
-                <option value="after:usage">After: Usage</option>
-                <option value="after:activity">After: Activity</option>
-                <option value="after:secrets">After: Secrets</option>
-              </optgroup>
-              <optgroup label="System">
-                <option value="after:settings">After: Settings</option>
-              </optgroup>
-            </select>
-          </div>
-
-          <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;color:var(--text-2);">
-            <input type="checkbox" id="sbaActive" style="width:auto;"> Active — visible to users immediately
-          </label>
-
-          <div style="border-top:1px solid var(--border);padding-top:16px;">
-            <div style="font-size:0.78rem;color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">Preview</div>
-            <div style="max-width:260px;"><div id="sbaPreviewWrap"></div></div>
-          </div>
-
+        <div style="display:flex;justify-content:space-between;align-items:center;">
           <div>
-            <button class="btn btn-primary" onclick="saveSidebarAnnouncement()">Save</button>
+            <h3 style="margin:0;font-size:1rem;">Sidebar announcements</h3>
+            <div style="color:var(--text-3);font-size:0.8rem;margin-top:4px;">Small cards in the dashboard's own sidebar nav — heading, a short message, an optional "Learn more" link, and an optional small image. Each sits permanently wherever you place it (top, bottom, or right after a specific nav item) until you turn it off, unlike the full-screen popups above. Create as many as you like, each at its own position.</div>
           </div>
+          <button class="btn btn-primary btn-sm" onclick="openSidebarAnnouncementBuilder()">+ New announcement</button>
         </div>
+        <div id="adminSbaList" style="margin-top:14px;color:var(--text-3);font-size:0.85rem;">Loading…</div>
+      </div>
+
       </div>
     </div>
 
@@ -7813,6 +7722,112 @@ document.addEventListener('keydown', function(e){
         <div class="modal-footer">
           <button class="btn btn-ghost" onclick="closeAnnBarBuilder()">Cancel</button>
           <button class="btn btn-primary" onclick="saveAnnBar()">Save bar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ Sidebar announcement builder modal ══ -->
+    <div class="modal-backdrop" id="sbaBuilderModal" style="display:none;">
+      <div class="modal" style="max-width:480px;max-height:88vh;overflow-y:auto;">
+        <div class="modal-header">
+          <h3 id="sbaBuilderTitle" style="margin:0;">New sidebar announcement</h3>
+          <button class="modal-close" onclick="closeSidebarAnnouncementBuilder()">&times;</button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
+          <input type="hidden" id="sbaId" value="">
+
+          <div class="field">
+            <label class="field-label">Heading</label>
+            <input type="text" id="sbaHeading" class="input" placeholder="Introducing Workflows" maxlength="80">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Message</label>
+            <textarea id="sbaMessage" class="input" rows="3" maxlength="300" placeholder="An orchestration and execution engine for long-running, distributed tasks."></textarea>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Link text</label>
+            <input type="text" id="sbaLinkText" class="input" placeholder="Learn more" maxlength="40">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Link URL <span style="color:var(--text-3);font-weight:400;">(e.g. a specific docs route)</span></label>
+            <input type="text" id="sbaLinkUrl" class="input" placeholder="https://docs.joytree.site/workflows">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Image <span style="color:var(--text-3);font-weight:400;">(small thumbnail, optional)</span></label>
+            <input type="file" id="sbaImageFile" accept="image/png,image/jpeg,image/gif,image/webp" onchange="sbaUploadImage(this)" style="display:none;">
+            <button type="button" class="btn btn-ghost" onclick="document.getElementById('sbaImageFile').click()" style="width:100%;">Choose image</button>
+            <div id="sbaImageStatus" style="font-size:0.78rem;color:var(--text-3);margin-top:6px;"></div>
+            <input type="hidden" id="sbaImageUrl" value="">
+          </div>
+
+          <div class="field">
+            <label class="field-label">Position in the sidebar</label>
+            <select id="sbaPosition" class="input">
+              <option value="top">Top of the sidebar</option>
+              <option value="bottom" selected>Bottom of the sidebar</option>
+              <optgroup label="Overview">
+                <option value="after:dashboard">After: Dashboard</option>
+                <option value="after:projects">After: Projects</option>
+                <option value="after:deployments">After: Deployments</option>
+                <option value="after:repos">After: Repositories</option>
+                <option value="after:code-upload">After: Code Upload / IDE</option>
+              </optgroup>
+              <optgroup label="Tools">
+                <option value="after:new-resource">After: New Resource</option>
+                <option value="after:new-deploy">After: New Deployment</option>
+                <option value="after:logs">After: Live Logs</option>
+                <option value="after:ai-analysis">After: AI Analysis</option>
+                <option value="after:env-manager">After: Env Variables</option>
+                <option value="after:domains">After: Domains</option>
+                <option value="after:domain-store">After: Domain Store</option>
+                <option value="after:domain-cpanel">After: Domain cPanel</option>
+                <option value="after:analytics">After: Analytics</option>
+                <option value="after:webhooks">After: Webhooks</option>
+                <option value="after:cronjobs">After: Cron Jobs</option>
+                <option value="after:workers">After: Background Workers</option>
+                <option value="after:streaks">After: Deploy Streaks</option>
+              </optgroup>
+              <optgroup label="Developer Tools">
+                <option value="after:ssh-keys">After: SSH Keys</option>
+              </optgroup>
+              <optgroup label="Data">
+                <option value="after:databases">After: Databases</option>
+                <option value="after:db-migration">After: Migration</option>
+                <option value="after:db-diff">After: Diff</option>
+                <option value="after:db-query">After: Query Studio</option>
+                <option value="after:db-schema">After: Schema</option>
+                <option value="after:db-sdk">After: SDK</option>
+                <option value="after:realtime-api">After: Realtime API</option>
+              </optgroup>
+              <optgroup label="Platform">
+                <option value="after:team">After: Team</option>
+                <option value="after:pricing">After: Pricing</option>
+                <option value="after:usage">After: Usage</option>
+                <option value="after:activity">After: Activity</option>
+                <option value="after:secrets">After: Secrets</option>
+              </optgroup>
+              <optgroup label="System">
+                <option value="after:settings">After: Settings</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;color:var(--text-2);">
+            <input type="checkbox" id="sbaActive" checked style="width:auto;"> Active — visible to users immediately
+          </label>
+
+          <div style="border-top:1px solid var(--border);padding-top:16px;">
+            <div style="font-size:0.78rem;color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">Preview</div>
+            <div style="max-width:260px;"><div id="sbaPreviewWrap"></div></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeSidebarAnnouncementBuilder()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveSidebarAnnouncement()">Save announcement</button>
         </div>
       </div>
     </div>
@@ -8325,26 +8340,70 @@ document.addEventListener('keydown', function(e){
         }
       };
 
-      // ── Sidebar announcement admin ──────────────────────────────────
+      // ══════════════════════════════════════════════════════════════════
+      // SIDEBAR ANNOUNCEMENTS — admin builder (list, create, edit, delete,
+      // live preview). Same list+builder+preview pattern as Promotional
+      // Popups and the Top Announcement Bar above. The real cards users
+      // see in their own sidebar are built by buildSidebarAnnouncementHtml/
+      // initSidebarAnnouncement further down, shared with this preview so
+      // they can't drift apart.
+      // ══════════════════════════════════════════════════════════════════
+      let _sbaCache = [];
+
       window.loadSidebarAnnouncementAdmin = async function() {
+        const el = document.getElementById('adminSbaList');
+        if (!el) return;
+        el.textContent = 'Loading…';
         try {
-          const res = await apiFetch('/api/admin/sidebar-announcement');
+          const res = await apiFetch('/api/admin/sidebar-announcements');
           const data = await res.json();
-          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load');
-          const ann = data.announcement || {};
-          document.getElementById('sbaId').value = ann.id || '';
-          document.getElementById('sbaHeading').value = ann.heading || '';
-          document.getElementById('sbaMessage').value = ann.message || '';
-          document.getElementById('sbaLinkText').value = ann.linkText || 'Learn more';
-          document.getElementById('sbaLinkUrl').value = ann.linkUrl || '';
-          document.getElementById('sbaImageUrl').value = ann.imageUrl || '';
-          document.getElementById('sbaImageStatus').textContent = ann.imageUrl ? 'Image set' : '';
-          document.getElementById('sbaPosition').value = ann.position || 'bottom';
-          document.getElementById('sbaActive').checked = !!ann.active;
-          sbaUpdatePreview();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not load sidebar announcements');
+          _sbaCache = data.announcements || [];
+          if (!_sbaCache.length) {
+            el.innerHTML = '<div style="padding:14px 0;color:var(--text-3);">No sidebar announcements yet. Click "+ New announcement" to create one.</div>';
+            return;
+          }
+          const positionLabel = p => {
+            if (p === 'top') return 'Top of sidebar';
+            if (p && p.startsWith('after:')) return 'After: ' + p.slice(6);
+            return 'Bottom of sidebar';
+          };
+          el.innerHTML = _sbaCache.map(a => `
+            <div class="admin-promo-row">
+              <div>
+                <div class="apr-name">${escapeHtml(a.heading || 'Untitled')} ${a.active ? '<span style="color:var(--green);font-size:0.72rem;">● live</span>' : '<span style="color:var(--text-3);font-size:0.72rem;">○ inactive</span>'}</div>
+                <div class="apr-meta">${escapeHtml(positionLabel(a.position))}${a.linkUrl ? ' · has link' : ''}${a.imageUrl ? ' · has image' : ''}</div>
+              </div>
+              <div style="display:flex;gap:8px;flex-shrink:0;">
+                <button class="btn btn-ghost btn-sm" onclick="openSidebarAnnouncementBuilder('${a.id}')">Edit</button>
+                <button class="btn btn-ghost btn-sm" style="color:#f87171;border-color:rgba(239,68,68,.3);" onclick="deleteSidebarAnnouncement('${a.id}')">Delete</button>
+              </div>
+            </div>
+          `).join('');
         } catch (e) {
-          toast(e.message || 'Could not load sidebar announcement', 'error');
+          el.innerHTML = `<div style="padding:14px 0;color:var(--red);">${escapeHtml(e.message || 'Could not load sidebar announcements')}</div>`;
         }
+      };
+
+      window.openSidebarAnnouncementBuilder = function(id) {
+        const modal = document.getElementById('sbaBuilderModal');
+        const existing = id ? _sbaCache.find(a => a.id === id) : null;
+        document.getElementById('sbaBuilderTitle').textContent = existing ? 'Edit sidebar announcement' : 'New sidebar announcement';
+        document.getElementById('sbaId').value = existing?.id || '';
+        document.getElementById('sbaHeading').value = existing?.heading || '';
+        document.getElementById('sbaMessage').value = existing?.message || '';
+        document.getElementById('sbaLinkText').value = existing?.linkText || 'Learn more';
+        document.getElementById('sbaLinkUrl').value = existing?.linkUrl || '';
+        document.getElementById('sbaImageUrl').value = existing?.imageUrl || '';
+        document.getElementById('sbaImageStatus').textContent = existing?.imageUrl ? 'Image set' : '';
+        document.getElementById('sbaPosition').value = existing?.position || 'bottom';
+        document.getElementById('sbaActive').checked = existing ? !!existing.active : true;
+        sbaUpdatePreview();
+        modal.style.display = 'flex';
+      };
+
+      window.closeSidebarAnnouncementBuilder = function() {
+        document.getElementById('sbaBuilderModal').style.display = 'none';
       };
 
       window.sbaUploadImage = async function(input) {
@@ -8387,6 +8446,7 @@ document.addEventListener('keydown', function(e){
       });
 
       window.saveSidebarAnnouncement = async function() {
+        const id = document.getElementById('sbaId').value;
         const btn = event?.target;
         const originalLabel = btn ? btn.textContent : '';
         if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
@@ -8400,15 +8460,33 @@ document.addEventListener('keydown', function(e){
             position: document.getElementById('sbaPosition').value,
             active:   document.getElementById('sbaActive').checked,
           };
-          const res = await apiFetch('/api/admin/sidebar-announcement', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const res = await apiFetch(id ? `/api/admin/sidebar-announcements/${id}` : '/api/admin/sidebar-announcements', {
+            method: id ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
           const data = await res.json();
           if (!res.ok || !data.ok) throw new Error(data.error || 'Could not save');
-          document.getElementById('sbaId').value = data.announcement.id;
-          toast('Sidebar announcement saved.', 'success');
+          toast(id ? 'Sidebar announcement updated.' : 'Sidebar announcement created.', 'success');
+          closeSidebarAnnouncementBuilder();
+          loadSidebarAnnouncementAdmin();
         } catch (e) {
           toast(e.message || 'Could not save sidebar announcement', 'error');
         } finally {
           if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
+        }
+      };
+
+      window.deleteSidebarAnnouncement = async function(id) {
+        if (!confirm('Delete this sidebar announcement? This cannot be undone.')) return;
+        try {
+          const res = await apiFetch(`/api/admin/sidebar-announcements/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || 'Could not delete');
+          toast('Sidebar announcement deleted.', 'success');
+          loadSidebarAnnouncementAdmin();
+        } catch (e) {
+          toast(e.message || 'Could not delete sidebar announcement', 'error');
         }
       };
 
@@ -8915,6 +8993,7 @@ document.addEventListener('keydown', function(e){
       // one the admin posts later — same pattern as the promo popup's
       // claimed/seen flags.
       function sbaDismissKey(id) { return 'jt_sidebar_ann_dismissed_' + id; }
+      function sbaCardElId(id) { return 'sidebarAnnouncementCard-' + id; }
 
       window.buildSidebarAnnouncementHtml = function(ann) {
         const linkHtml = ann.linkUrl
@@ -8923,7 +9002,7 @@ document.addEventListener('keydown', function(e){
         const imageHtml = ann.imageUrl
           ? `<img class="sidebar-announcement-image" src="${escapeHtml(ann.imageUrl)}" alt="">`
           : '';
-        return `<div class="sidebar-announcement" id="sidebarAnnouncementCard">
+        return `<div class="sidebar-announcement" id="${escapeHtml(sbaCardElId(ann.id))}">
           <button type="button" class="sidebar-announcement-close" aria-label="Dismiss" onclick="dismissSidebarAnnouncement('${escapeHtml(ann.id)}')">&times;</button>
           <div class="sidebar-announcement-heading">${escapeHtml(ann.heading)}</div>
           ${ann.message ? `<div class="sidebar-announcement-message">${escapeHtml(ann.message)}</div>` : ''}
@@ -8934,36 +9013,55 @@ document.addEventListener('keydown', function(e){
 
       window.dismissSidebarAnnouncement = function(id) {
         try { localStorage.setItem(sbaDismissKey(id), '1'); } catch {}
-        document.getElementById('sidebarAnnouncementCard')?.remove();
+        document.getElementById(sbaCardElId(id))?.remove();
       };
 
+      // Multiple announcements can be active at once, each independently
+      // placed (top / bottom / after a specific nav item) -- including
+      // more than one sharing the same slot. lastAtPosition tracks the
+      // most recently inserted card for each position key so a second
+      // "top" or "after:dashboard" announcement lands right after the
+      // first one instead of both fighting over the same anchor point
+      // (which would otherwise silently reverse their order, or have
+      // every "top" card insert itself at index 0 ahead of the last).
       window.initSidebarAnnouncement = async function() {
         if (!hasAuthToken || !hasAuthToken()) return;
-        if (document.getElementById('sidebarAnnouncementCard')) return; // already inserted
         try {
           const res = await apiFetch('/api/sidebar-announcement/active');
           if (!res.ok) return;
           const data = await res.json();
-          const ann = data && data.announcement;
-          if (!ann || !ann.id || !ann.heading) return;
-          try { if (localStorage.getItem(sbaDismissKey(ann.id))) return; } catch {}
+          const announcements = Array.isArray(data?.announcements) ? data.announcements : [];
+          if (!announcements.length) return;
 
           const nav = document.querySelector('.sidebar-nav');
           if (!nav) return;
-          const wrap = document.createElement('div');
-          wrap.innerHTML = buildSidebarAnnouncementHtml(ann);
-          const card = wrap.firstElementChild;
 
-          if (ann.position === 'top') {
-            nav.insertBefore(card, nav.firstChild);
-          } else if (ann.position && ann.position.startsWith('after:')) {
-            const key = ann.position.slice(6);
-            const target = nav.querySelector(`.nav-item[data-page="${CSS.escape(key)}"]`);
-            if (target) target.insertAdjacentElement('afterend', card);
-            else nav.appendChild(card); // target not found (hidden for this user, etc.) — fall back to the end
-          } else {
-            nav.appendChild(card); // 'bottom' (default)
-          }
+          const lastAtPosition = {};
+          announcements.forEach(ann => {
+            if (!ann || !ann.id || !ann.heading) return;
+            if (document.getElementById(sbaCardElId(ann.id))) return; // already inserted
+            try { if (localStorage.getItem(sbaDismissKey(ann.id))) return; } catch {}
+
+            const wrap = document.createElement('div');
+            wrap.innerHTML = buildSidebarAnnouncementHtml(ann);
+            const card = wrap.firstElementChild;
+            const posKey = ann.position || 'bottom';
+            const prevCard = lastAtPosition[posKey];
+
+            if (prevCard && prevCard.isConnected) {
+              prevCard.insertAdjacentElement('afterend', card);
+            } else if (posKey === 'top') {
+              nav.insertBefore(card, nav.firstChild);
+            } else if (posKey.startsWith('after:')) {
+              const key = posKey.slice(6);
+              const target = nav.querySelector(`.nav-item[data-page="${CSS.escape(key)}"]`);
+              if (target) target.insertAdjacentElement('afterend', card);
+              else nav.appendChild(card); // target not found (hidden for this user, etc.) — fall back to the end
+            } else {
+              nav.appendChild(card); // 'bottom' (default)
+            }
+            lastAtPosition[posKey] = card;
+          });
         } catch {}
       };
     })();
