@@ -11733,3 +11733,13 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
   border-bottom: 2px solid var(--primary) !important;
   box-shadow: 0 1px 0 0 var(--primary) !important;
 }
+
+/* [FIX] Toast action buttons (e.g. "Analyse error with Tree AI") reuse the
+   shared .btn-primary class, which has an 8px border-radius by default --
+   fine for buttons sitting in cards/forms, but next to a toast's own flat,
+   straight-edged shape it read as a rounded "pill in a box" look. Flatten
+   to match the toast's own sharp edges, no border/radius on the action. */
+.toast .btn-primary {
+  border-radius: 0 !important;
+  border: none !important;
+}
