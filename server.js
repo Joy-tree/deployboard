@@ -9017,8 +9017,8 @@ async function sendDeployPushNotification(user, { status, projectName, subdomain
 
     const payload = JSON.stringify({
       title, body,
-      icon: '/favicon_192.png?v=2',
-      badge: '/favicon_192.png?v=2',
+      icon: '/favicon_192.png?v=3',
+      badge: '/favicon_192.png?v=3',
       tag: `deploy-${subdomain || projectName}`,
       url: deployId ? `/dashboard?viewDeploy=${encodeURIComponent(deployId)}` : '/dashboard',
     });
@@ -9141,8 +9141,8 @@ app.post('/api/push/test', requireAuth, async (req, res) => {
     const payload = JSON.stringify({
       title: 'Test notification',
       body: 'If you can see this, deploy notifications are working correctly.',
-      icon: '/favicon_192.png?v=2',
-      badge: '/favicon_192.png?v=2',
+      icon: '/favicon_192.png?v=3',
+      badge: '/favicon_192.png?v=3',
       tag: 'joytree-test',
       url: '/dashboard',
     });
