@@ -11155,7 +11155,8 @@ html[data-theme="light"] #page-domain-add .input,
    ══════════════════════════════════════════════════════════════════ */
 #deleteModal .modal-icon,
 #deleteAllModal .modal-icon {
-  border: 1px solid rgba(239,68,68,.22) !important;
+  background: #7f1d1d !important;
+  border: 1px solid rgba(239,68,68,.35) !important;
 }
 #deleteModal .btn-danger,
 #deleteAllModal .btn-danger {
@@ -11468,8 +11469,31 @@ html[data-theme="dark"] .ld-action-btn.ghost:hover {
   border-bottom: 1px solid rgba(255,255,255,0.2) !important;
 }
 #addSecretModal .modal-icon {
+  background: transparent !important;
   border-radius: 0 !important;
   border: 1px solid rgba(16,185,129,0.35) !important;
+}
+#addSecretModal .modal-icon svg { color: var(--primary) !important; }
+
+/* [FIX] These four modal-icon boxes had no scoped override at all, so
+   they fell back to the base rule's washed-out translucent red/green
+   tint (or an inline translucent-green style that's just as generic) --
+   the exact same "AI generic" look as the delete modals above. Editing
+   an existing project & joining the community aren't danger actions, so
+   they get the same flat transparent + green-border treatment as
+   Webhook/Invite/Secret; the two delete confirmations get the same
+   solid deep-red fill as Delete/Delete All above. */
+#editProjectModal .modal-icon,
+#deployCommunityModal .modal-icon {
+  background: transparent !important;
+  border: 1px solid rgba(16,185,129,0.35) !important;
+  border-radius: 0 !important;
+}
+#deployDeleteModal .modal-icon,
+#dbDeleteModal .modal-icon {
+  background: #7f1d1d !important;
+  border: 1px solid rgba(239,68,68,.35) !important;
+  border-radius: 0 !important;
 }
 #addSecretModal .modal-close {
   border-radius: 0 !important;
