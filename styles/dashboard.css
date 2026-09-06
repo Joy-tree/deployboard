@@ -3898,7 +3898,7 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 .menu-toggle {
   display: none;
   width: 36px; height: 36px; border-radius: 10px;
-  border: 1px solid var(--border);
+  border: none;
   background: transparent; color: var(--text-2);
   align-items: center; justify-content: center;
   flex-shrink: 0;
