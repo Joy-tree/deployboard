@@ -11124,17 +11124,17 @@ html[data-theme="light"] #page-domain-add .input,
 }
 .toast.warning { border-color: rgba(245,158,11,0.35) !important; }
 .toast.warning .toast-icon {
-  color: #f59e0b !important;
-  background: rgba(245,158,11,.1) !important;
-  border-color: rgba(245,158,11,.22) !important;
+  color: #fff !important;
+  background: #78350f !important;
+  border: none !important;
 }
 .toast.network,
 .toast.auth { border-color: rgba(239,68,68,0.35) !important; }
 .toast.network .toast-icon,
 .toast.auth .toast-icon {
-  color: var(--red) !important;
-  background: rgba(239,68,68,.1) !important;
-  border-color: rgba(239,68,68,.22) !important;
+  color: #fff !important;
+  background: #7f1d1d !important;
+  border: none !important;
 }
 
 /* ══════════════════════════════════════════════════════════════════

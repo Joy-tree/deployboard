@@ -4536,10 +4536,10 @@ html[data-theme="light"] #page-realtime-api .lf-live-tag { color:#0e7490 !import
 .toast-close:hover{background:#222;border-color:rgba(255,255,255,.2);color:var(--text);transform:translateY(-1px);}
 .toast-close svg{width:16px;height:16px;}
 .toast.success { border-color:rgba(16,185,129,0.35); box-shadow:0 8px 40px rgba(0,0,0,.5); }
-.toast.success .toast-icon { color:var(--green); background:rgba(16,185,129,.1); border-color:rgba(16,185,129,.22); }
+.toast.success .toast-icon { color:#fff; background:#14532d; border:none; }
 .toast.error { border-color:rgba(239,68,68,0.35); box-shadow:0 8px 40px rgba(0,0,0,.5); }
-.toast.error .toast-icon { color:var(--red); background:rgba(239,68,68,.1); border-color:rgba(239,68,68,.22); }
-.toast.info .toast-icon { color:var(--primary); background:rgba(16,185,129,.1); border-color:rgba(16,185,129,.2); }
+.toast.error .toast-icon { color:#fff; background:#7f1d1d; border:none; }
+.toast.info .toast-icon { color:#fff; background:#14532d; border:none; }
 @keyframes toastPopIn { from{opacity:0;transform:translateY(22px) scale(.92);filter:blur(6px)} to{opacity:1;transform:none;filter:none} }
 @keyframes fadeOut { to{opacity:0;transform:translateY(14px) scale(.97);filter:blur(4px)} }
 @media (max-width: 520px) { .toast{width:min(95vw,450px);min-height:94px;padding:16px;grid-template-columns:auto 1fr auto;font-size:.9rem}.toast-icon{width:44px;height:44px;border-radius:14px}.toast-message{font-size:.9rem} }
