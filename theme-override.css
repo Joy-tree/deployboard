@@ -11160,18 +11160,21 @@ html[data-theme="light"] #page-domain-add .input,
    modal correctly — no page-scoped override needed.
    ══════════════════════════════════════════════════════════════════ */
 #deleteModal .modal-icon,
-#deleteAllModal .modal-icon {
+#deleteAllModal .modal-icon,
+#rotateKeyModalBackdrop .modal-icon {
   background: #7f1d1d !important;
   border: 1px solid rgba(239,68,68,.35) !important;
 }
 #deleteModal .btn-danger,
-#deleteAllModal .btn-danger {
+#deleteAllModal .btn-danger,
+#rotateKeyModalBackdrop .btn-danger {
   background: #7f1d1d !important;
   color: #fff !important;
   border: none !important;
 }
 #deleteModal .btn-danger:hover,
-#deleteAllModal .btn-danger:hover {
+#deleteAllModal .btn-danger:hover,
+#rotateKeyModalBackdrop .btn-danger:hover {
   background: #6b1919 !important;
 }
 
