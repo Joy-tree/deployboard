@@ -263,7 +263,14 @@ html[data-theme="light"] [style*="background: #111"]{
 }
 
 ::-webkit-scrollbar-thumb{ background: var(--jt-text-faint) !important; opacity: .5; }
-::selection{ background: var(--jt-accent-tint); color: var(--jt-text); }
+/* [FIX] Text selection was tied to --jt-accent-tint, a stale amber/cream
+   variable (#241D0F in dark mode) left over from an old theme -- totally
+   disconnected from the site's actual green brand, and rendered as a
+   muddy, undefined-looking highlight rather than a deliberate color.
+   Solid brand green now, with guaranteed-readable white text regardless
+   of theme or what's underneath, like a real product's selection color
+   instead of an untouched default. */
+::selection{ background: var(--primary); color: #fff; }
 
 /* ---------------------------------------------------------------------
    5. BUTTONS — every primary/ghost/CTA button on the site, remapped to the
