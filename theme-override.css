@@ -3230,7 +3230,13 @@ html[data-theme="light"] .auth-input::placeholder { color: var(--text-3) !import
 /* ══ Logout modal — no red anywhere ══ */
 #logoutModal .modal { border-color: var(--border) !important; box-shadow: 0 20px 60px rgba(0,0,0,.4) !important; }
 #logoutModal .modal-header { background: var(--bg-card) !important; border-bottom-color: var(--border) !important; }
-#logoutModal .modal-icon { background: var(--bg-hover) !important; border-color: var(--border) !important; color: var(--text-2) !important; }
+/* [FIX] Was neutral gray (var(--bg-hover)) -- now red like every other
+   destructive confirmation modal (deleteModal, deleteAllModal), since
+   the sign-out button itself was switched from .btn-primary to
+   .btn-danger to match. */
+#logoutModal .modal-icon { background: #7f1d1d !important; border: 1px solid rgba(239,68,68,.35) !important; color: #fff !important; }
+#logoutModal .btn-danger { background: #7f1d1d !important; color: #fff !important; border: none !important; }
+#logoutModal .btn-danger:hover { background: #6b1919 !important; }
 
 /* ══ Landing hero — solid colors, no gradient clip ══ */
 html[data-theme="light"] .hero-h1 { color: #111827 !important; }
